@@ -3,6 +3,8 @@ import { NodeSelection } from '@tiptap/pm/state';
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 import {
+  normalizeNotebookMediaWidthPercent,
+  notebookMaximumWrappedMediaWidthPercent,
   notebookPageGeometry,
   type NotebookRichDocument,
 } from '../../../../lib/notebook';
@@ -39,11 +41,14 @@ type MediaDragPreview = {
   pointer: { clientX: number; clientY: number };
 };
 
+type MediaFlowTarget = 'square-left' | 'normal' | 'square-right';
+
 type NotebookDirectMediaCanvasCoordinatorOptions = {
   documentRef: RefObject<NotebookRichDocument>;
   editorRef: RefObject<Editor | null>;
   onMediaStatusChange: (status: NotebookMediaStatus | null) => void;
   pageStageRef: RefObject<HTMLDivElement | null>;
+  scrollRegionRef: RefObject<HTMLDivElement | null>;
   viewMode: NotebookViewMode;
 };
 
@@ -64,8 +69,46 @@ function positionMediaDragGhost(
   ghost.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
 }
 
+function positionMediaDropGuide(
+  guide: HTMLDivElement,
+  target: HTMLElement,
+  placement: 'before' | 'after',
+) {
+  const bounds = target.getBoundingClientRect();
+  guide.dataset.placement = placement;
+  guide.dataset.targetNodeId = target.dataset.notebookNodeId ?? '';
+  guide.style.left = `${bounds.left - 10}px`;
+  guide.style.top = `${placement === 'before' ? bounds.top - 5 : bounds.bottom + 3}px`;
+  guide.style.width = `${bounds.width + 20}px`;
+}
+
+function editorContentBounds(element: HTMLElement) {
+  const bounds = element.getBoundingClientRect();
+  const style = getComputedStyle(element);
+  const left = bounds.left + (Number.parseFloat(style.paddingLeft) || 0);
+  const right = bounds.right - (Number.parseFloat(style.paddingRight) || 0);
+  return {
+    bottom: bounds.bottom,
+    height: bounds.height,
+    left,
+    right,
+    top: bounds.top,
+    width: Math.max(0, right - left),
+  };
+}
+
+function pointInside(
+  point: { clientX: number; clientY: number },
+  bounds: { bottom: number; left: number; right: number; top: number },
+) {
+  return point.clientX >= bounds.left
+    && point.clientX <= bounds.right
+    && point.clientY >= bounds.top
+    && point.clientY <= bounds.bottom;
+}
+
 /**
- * Local V10 canvas coordination for direct media gestures. Node views own the
+ * Local current-schema canvas coordination for direct media gestures. Node views own the
  * pointer mechanics; this keeps document reordering, crop mode, and status
  * reporting next to the one Notebook canvas that can resolve them.
  */
@@ -74,6 +117,7 @@ export function useNotebookDirectMediaCanvasCoordinator({
   editorRef,
   onMediaStatusChange,
   pageStageRef,
+  scrollRegionRef,
   viewMode,
 }: NotebookDirectMediaCanvasCoordinatorOptions) {
   const mediaStatusChangeRef = useRef(onMediaStatusChange);
@@ -81,8 +125,14 @@ export function useNotebookDirectMediaCanvasCoordinator({
   const paginationMetricsRef = useRef<NotebookPaginationMetrics | null>(null);
   const cropModeImageIdRef = useRef<string | null>(null);
   const mediaDropTargetRef = useRef<HTMLElement | null>(null);
+  const mediaDropGuideRef = useRef<HTMLDivElement | null>(null);
   const mediaDragGhostRef = useRef<HTMLDivElement | null>(null);
   const mediaDragPreviewRef = useRef<MediaDragPreview | null>(null);
+  const mediaFlowTargetRef = useRef<MediaFlowTarget | null>(null);
+  const mediaFlowTargetsElementRef = useRef<HTMLDivElement | null>(null);
+  const mediaAutoScrollFrameRef = useRef<number | null>(null);
+  const mediaAutoScrollVelocityRef = useRef(0);
+  const latestMediaDragEventRef = useRef<NotebookMediaDragGripEvent | null>(null);
 
   useEffect(() => {
     mediaStatusChangeRef.current = onMediaStatusChange;
@@ -102,15 +152,84 @@ export function useNotebookDirectMediaCanvasCoordinator({
   ), []);
 
   const clearMediaDropTarget = useCallback(() => {
-    mediaDropTargetRef.current?.removeAttribute('data-notebook-media-drop-target');
     mediaDropTargetRef.current = null;
+    mediaDropGuideRef.current?.remove();
+    mediaDropGuideRef.current = null;
+  }, []);
+
+  const renderMediaDropGuide = useCallback((target: HTMLElement, placement: 'before' | 'after') => {
+    let guide = mediaDropGuideRef.current;
+    if (!guide) {
+      guide = globalThis.document.createElement('div');
+      guide.className = 'notebook-media-drop-guide';
+      guide.setAttribute('aria-hidden', 'true');
+      globalThis.document.body.append(guide);
+      mediaDropGuideRef.current = guide;
+    }
+    positionMediaDropGuide(guide, target, placement);
+  }, []);
+
+  const clearMediaFlowTargets = useCallback(() => {
+    mediaFlowTargetsElementRef.current?.remove();
+    mediaFlowTargetsElementRef.current = null;
+    mediaFlowTargetRef.current = null;
+  }, []);
+
+  const stopMediaAutoScroll = useCallback(() => {
+    mediaAutoScrollVelocityRef.current = 0;
+    latestMediaDragEventRef.current = null;
+    if (mediaAutoScrollFrameRef.current !== null) {
+      cancelAnimationFrame(mediaAutoScrollFrameRef.current);
+      mediaAutoScrollFrameRef.current = null;
+    }
   }, []);
 
   const clearMediaDragPreview = useCallback(() => {
+    stopMediaAutoScroll();
+    clearMediaFlowTargets();
     mediaDragGhostRef.current?.remove();
     mediaDragGhostRef.current = null;
     mediaDragPreviewRef.current = null;
-  }, []);
+  }, [clearMediaFlowTargets, stopMediaAutoScroll]);
+
+  const renderMediaFlowTargets = useCallback((active: MediaFlowTarget | null, wrapEnabled: boolean) => {
+    const editorElement = editorRef.current?.view.dom as HTMLElement | undefined;
+    const stage = pageStageRef.current;
+    const scrollRegion = scrollRegionRef.current;
+    if (!editorElement || !stage || !scrollRegion) return;
+    const content = editorContentBounds(editorElement);
+    const stageBounds = stage.getBoundingClientRect();
+    const scrollBounds = scrollRegion.getBoundingClientRect();
+    const top = Math.max(stageBounds.top, scrollBounds.top);
+    const bottom = Math.min(stageBounds.bottom, scrollBounds.bottom);
+    if (content.width <= 0 || bottom <= top) return;
+
+    let element = mediaFlowTargetsElementRef.current;
+    if (!element) {
+      element = globalThis.document.createElement('div');
+      element.className = 'notebook-media-flow-targets';
+      element.setAttribute('aria-hidden', 'true');
+      element.style.pointerEvents = 'none';
+      ([
+        ['square-left', 'Wrap left'],
+        ['normal', 'Normal flow'],
+        ['square-right', 'Wrap right'],
+      ] as const).forEach(([target, label]) => {
+        const item = globalThis.document.createElement('span');
+        item.dataset.notebookMediaFlowTarget = target;
+        item.textContent = label;
+        element?.append(item);
+      });
+      globalThis.document.body.append(element);
+      mediaFlowTargetsElementRef.current = element;
+    }
+    element.style.left = `${content.left}px`;
+    element.style.top = `${top}px`;
+    element.style.width = `${content.width}px`;
+    element.style.height = `${bottom - top}px`;
+    element.dataset.activeTarget = active ?? '';
+    element.dataset.wrapEnabled = wrapEnabled ? 'true' : 'false';
+  }, [editorRef, pageStageRef, scrollRegionRef]);
 
   const publishMediaDragPreview = useCallback((
     frame: MediaFrame,
@@ -195,31 +314,30 @@ export function useNotebookDirectMediaCanvasCoordinator({
     publishMediaStatusForFrame(event.frame);
   }, [publishMediaStatusForFrame]);
 
-  const handleMediaDragGrip = useCallback((event: NotebookMediaDragGripEvent) => {
+  const updateMediaDragDestination = useCallback((event: NotebookMediaDragGripEvent) => {
     const editor = editorRef.current;
-    publishMediaStatusForFrame(event.frame);
-    if (!editor || editor.isDestroyed) return;
+    const editorElement = editor?.view.dom as HTMLElement | undefined;
+    const stage = pageStageRef.current;
+    const scrollRegion = scrollRegionRef.current;
+    if (!editor || editor.isDestroyed || !editorElement || !stage || !scrollRegion) return;
 
-    if (event.phase === 'start') {
-      clearMediaDragPreview();
-      mediaDragPreviewRef.current = { frame: event.frame, pointer: event.pointer };
-      return;
-    }
-
-    if (event.phase === 'move') {
-      publishMediaStatusForFrame(publishMediaDragPreview(event.frame, event.pointer));
-      const candidate = globalThis.document.elementFromPoint(
-        event.pointer.clientX,
-        event.pointer.clientY,
-      )?.closest<HTMLElement>('[data-notebook-node-id]');
-      const isUsableTarget = candidate
-        && editor.view.dom.contains(candidate)
-        && candidate.dataset.notebookNodeId
-        && candidate.dataset.notebookNodeId !== event.nodeId;
-      if (!isUsableTarget) {
-        clearMediaDropTarget();
-        return;
-      }
+    const candidate = globalThis.document.elementFromPoint(
+      event.pointer.clientX,
+      event.pointer.clientY,
+    )?.closest<HTMLElement>('[data-notebook-node-id]');
+    const isUsableTarget = candidate
+      && editorElement.contains(candidate)
+      && candidate.dataset.notebookNodeId
+      && candidate.dataset.notebookNodeId !== event.nodeId;
+    const content = editorContentBounds(editorElement);
+    const maximumWrapWidth = notebookMaximumWrappedMediaWidthPercent(
+      documentRef.current.pageSetup,
+      content.width,
+    );
+    const wrapEnabled = maximumWrapWidth >= 10;
+    if (isUsableTarget) {
+      mediaFlowTargetRef.current = null;
+      renderMediaFlowTargets(null, wrapEnabled);
       const targetBounds = candidate.getBoundingClientRect();
       const placement = event.pointer.clientY < targetBounds.top + targetBounds.height / 2
         ? 'before'
@@ -228,7 +346,107 @@ export function useNotebookDirectMediaCanvasCoordinator({
         clearMediaDropTarget();
         mediaDropTargetRef.current = candidate;
       }
-      candidate.setAttribute('data-notebook-media-drop-target', placement);
+      renderMediaDropGuide(candidate, placement);
+      return;
+    }
+
+    clearMediaDropTarget();
+    const stageBounds = stage.getBoundingClientRect();
+    const scrollBounds = scrollRegion.getBoundingClientRect();
+    const visibleContentBounds = {
+      bottom: Math.min(stageBounds.bottom, scrollBounds.bottom),
+      left: content.left,
+      right: content.right,
+      top: Math.max(stageBounds.top, scrollBounds.top),
+    };
+    if (!pointInside(event.pointer, visibleContentBounds) || content.width <= 0) {
+      mediaFlowTargetRef.current = null;
+      renderMediaFlowTargets(null, wrapEnabled);
+      return;
+    }
+    const horizontalRatio = (event.pointer.clientX - content.left) / content.width;
+    const target = wrapEnabled && horizontalRatio < 1 / 3
+      ? 'square-left'
+      : wrapEnabled && horizontalRatio > 2 / 3
+        ? 'square-right'
+        : 'normal';
+    mediaFlowTargetRef.current = target;
+    renderMediaFlowTargets(target, wrapEnabled);
+  }, [
+    clearMediaDropTarget,
+    documentRef,
+    editorRef,
+    pageStageRef,
+    renderMediaDropGuide,
+    renderMediaFlowTargets,
+    scrollRegionRef,
+  ]);
+
+  const updateMediaAutoScroll = useCallback((event: NotebookMediaDragGripEvent) => {
+    latestMediaDragEventRef.current = event;
+    const scrollRegion = scrollRegionRef.current;
+    if (!scrollRegion) return;
+    const bounds = scrollRegion.getBoundingClientRect();
+    const edgeSize = Math.min(64, Math.max(36, bounds.height * 0.12));
+    let velocity = 0;
+    if (event.pointer.clientY >= bounds.top && event.pointer.clientY < bounds.top + edgeSize) {
+      velocity = -18 * (1 - (event.pointer.clientY - bounds.top) / edgeSize);
+    } else if (event.pointer.clientY <= bounds.bottom
+      && event.pointer.clientY > bounds.bottom - edgeSize) {
+      velocity = 18 * (1 - (bounds.bottom - event.pointer.clientY) / edgeSize);
+    }
+    mediaAutoScrollVelocityRef.current = velocity;
+    if (velocity === 0 || mediaAutoScrollFrameRef.current !== null) return;
+
+    const tick = () => {
+      mediaAutoScrollFrameRef.current = null;
+      const region = scrollRegionRef.current;
+      const nextEvent = latestMediaDragEventRef.current;
+      const currentVelocity = mediaAutoScrollVelocityRef.current;
+      if (!region || !nextEvent || currentVelocity === 0) return;
+      const maximum = Math.max(0, region.scrollHeight - region.clientHeight);
+      const nextScrollTop = clamp(region.scrollTop + currentVelocity, 0, maximum);
+      if (nextScrollTop === region.scrollTop) {
+        mediaAutoScrollVelocityRef.current = 0;
+        updateMediaDragDestination(nextEvent);
+        publishMediaStatusForFrame(publishMediaDragPreview(nextEvent.frame, nextEvent.pointer));
+        return;
+      }
+      region.scrollTop = nextScrollTop;
+      updateMediaDragDestination(nextEvent);
+      publishMediaStatusForFrame(publishMediaDragPreview(nextEvent.frame, nextEvent.pointer));
+      mediaAutoScrollFrameRef.current = requestAnimationFrame(tick);
+    };
+    mediaAutoScrollFrameRef.current = requestAnimationFrame(tick);
+  }, [
+    publishMediaDragPreview,
+    publishMediaStatusForFrame,
+    scrollRegionRef,
+    updateMediaDragDestination,
+  ]);
+
+  const handleMediaDragGrip = useCallback((event: NotebookMediaDragGripEvent) => {
+    const editor = editorRef.current;
+    if (!editor || editor.isDestroyed) return;
+
+    if (event.phase === 'start') {
+      clearMediaDropTarget();
+      clearMediaDragPreview();
+      mediaDragPreviewRef.current = { frame: event.frame, pointer: event.pointer };
+      publishMediaStatusForFrame(event.frame);
+      const editorElement = editor.view.dom as HTMLElement;
+      const content = editorContentBounds(editorElement);
+      renderMediaFlowTargets(null, notebookMaximumWrappedMediaWidthPercent(
+        documentRef.current.pageSetup,
+        content.width,
+      ) >= 10);
+      return;
+    }
+
+    if (event.phase === 'move') {
+      publishMediaStatusForFrame(publishMediaDragPreview(event.frame, event.pointer));
+      updateMediaDragDestination(event);
+      updateMediaAutoScroll(event);
       return;
     }
 
@@ -243,6 +461,7 @@ export function useNotebookDirectMediaCanvasCoordinator({
     const dropTarget = mediaDropTargetRef.current;
     const targetId = dropTarget?.dataset.notebookNodeId ?? null;
     const targetBounds = dropTarget?.getBoundingClientRect();
+    const flowTarget = mediaFlowTargetRef.current;
     clearMediaDropTarget();
     clearMediaDragPreview();
     if (targetId && targetBounds) {
@@ -257,21 +476,39 @@ export function useNotebookDirectMediaCanvasCoordinator({
       }
     }
 
-    const stageBounds = pageStageRef.current?.getBoundingClientRect();
+    if (!flowTarget) {
+      requestAnimationFrame(refreshSelectedMediaStatus);
+      return;
+    }
     const source = notebookEditorNodeById(editor, event.nodeId);
-    if (!stageBounds || !source || stageBounds.width <= 0) return;
+    if (!source) return;
     const node = editor.state.doc.nodeAt(source.from);
     if (!node) return;
-    const horizontalRatio = (event.pointer.clientX - stageBounds.left) / stageBounds.width;
-    const placement = horizontalRatio < 1 / 3
-      ? 'square-left'
-      : horizontalRatio > 2 / 3 ? 'square-right' : null;
-    const alignment = placement === 'square-left' ? 'left' : placement === 'square-right' ? 'right' : null;
-    if (node.attrs.placement === placement && node.attrs.alignment === alignment) return;
+    const placement = flowTarget === 'normal' ? null : flowTarget;
+    const alignment = flowTarget === 'square-left'
+      ? 'left'
+      : flowTarget === 'square-right' ? 'right' : null;
+    const currentWidth = normalizeNotebookMediaWidthPercent(
+      typeof node.attrs.widthPercent === 'number' ? node.attrs.widthPercent : 100,
+    );
+    const contentWidth = editorContentBounds(editor.view.dom as HTMLElement).width;
+    const maximumWrapWidth = normalizeNotebookMediaWidthPercent(
+      notebookMaximumWrappedMediaWidthPercent(documentRef.current.pageSetup, contentWidth),
+    );
+    const widthPercent = flowTarget === 'normal'
+      ? currentWidth
+      : Math.min(currentWidth, maximumWrapWidth);
+    if (node.attrs.placement === placement
+      && node.attrs.alignment === alignment
+      && currentWidth === widthPercent) {
+      requestAnimationFrame(refreshSelectedMediaStatus);
+      return;
+    }
     const transaction = editor.state.tr.setNodeMarkup(source.from, undefined, {
       ...node.attrs,
       placement,
       alignment,
+      widthPercent,
     });
     transaction.setSelection(NodeSelection.create(transaction.doc, source.from));
     editor.view.dispatch(transaction.scrollIntoView());
@@ -279,11 +516,14 @@ export function useNotebookDirectMediaCanvasCoordinator({
   }, [
     clearMediaDragPreview,
     clearMediaDropTarget,
+    documentRef,
     editorRef,
-    pageStageRef,
     publishMediaDragPreview,
     publishMediaStatusForFrame,
     refreshSelectedMediaStatus,
+    renderMediaFlowTargets,
+    updateMediaAutoScroll,
+    updateMediaDragDestination,
   ]);
 
   const setPaginationMetrics = useCallback((metrics: NotebookPaginationMetrics) => {

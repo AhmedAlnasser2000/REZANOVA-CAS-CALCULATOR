@@ -1216,12 +1216,17 @@
 
 .notebook-empty-writing-prompt {
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   top: 36px;
   left: max(26px, calc((100% - 1440px) / 2 + 48px));
   color: var(--page-subtle);
   font-style: italic;
   pointer-events: none;
+}
+
+.notebook-page-stage.is-print > .notebook-empty-writing-prompt {
+  top: calc(var(--notebook-page-margin-top-px, 72px) + 8px);
+  left: var(--notebook-page-margin-left-px, 72px);
 }
 
 .notebook-selection-toolbar {
@@ -1933,7 +1938,8 @@
   pointer-events: none;
 }
 
-.notebook-media-drag-ghost {
+.notebook-media-drag-ghost,
+.notebook-media-drop-guide {
   position: fixed;
   z-index: 1000;
   box-sizing: border-box;
@@ -1943,6 +1949,59 @@
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
   opacity: 0.8;
   pointer-events: none;
+}
+
+.notebook-media-drop-guide {
+  z-index: 1001;
+  height: 2px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--notebook-accent);
+  box-shadow: 0 0 0 1px rgba(16, 32, 33, 0.88);
+}
+
+.notebook-media-flow-targets {
+  position: fixed;
+  z-index: 999;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 12px;
+  pointer-events: none;
+}
+
+.notebook-media-flow-targets > span {
+  display: grid;
+  min-width: 0;
+  place-items: start center;
+  border: 1px dashed color-mix(in srgb, var(--notebook-accent) 42%, transparent);
+  border-radius: 8px;
+  padding: 10px 6px;
+  background: rgba(16, 32, 33, 0.12);
+  color: var(--page-muted);
+  font: 700 0.68rem 'IBM Plex Mono', monospace;
+  text-align: center;
+}
+
+.notebook-media-flow-targets[data-active-target='square-left']
+  > [data-notebook-media-flow-target='square-left'],
+.notebook-media-flow-targets[data-active-target='normal']
+  > [data-notebook-media-flow-target='normal'],
+.notebook-media-flow-targets[data-active-target='square-right']
+  > [data-notebook-media-flow-target='square-right'] {
+  border-style: solid;
+  border-color: var(--notebook-accent);
+  background: color-mix(in srgb, var(--notebook-accent) 18%, transparent);
+  color: var(--page-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--notebook-accent) 45%, transparent);
+}
+
+.notebook-media-flow-targets[data-wrap-enabled='false']
+  > [data-notebook-media-flow-target='square-left'],
+.notebook-media-flow-targets[data-wrap-enabled='false']
+  > [data-notebook-media-flow-target='square-right'] {
+  opacity: 0.32;
 }
 
 .notebook-media-drag-grip,
@@ -2078,27 +2137,6 @@
 .notebook-video-figure.is-media-manipulating {
   user-select: none;
 }
-
-[data-notebook-media-drop-target] {
-  position: relative;
-}
-
-[data-notebook-media-drop-target]::before,
-[data-notebook-media-drop-target]::after {
-  position: absolute;
-  z-index: 8;
-  right: -10px;
-  left: -10px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--notebook-accent);
-  box-shadow: 0 0 0 1px rgba(16, 32, 33, 0.88);
-  content: '';
-  pointer-events: none;
-}
-
-[data-notebook-media-drop-target='before']::before { top: -5px; }
-[data-notebook-media-drop-target='after']::after { bottom: -5px; }
 
 .notebook-section {
   --notebook-accent: #b8d49c;
@@ -2558,19 +2596,40 @@
     forced-color-adjust: auto;
   }
 
-  [data-notebook-media-drop-target]::before,
-  [data-notebook-media-drop-target]::after {
+  .notebook-media-drop-guide {
     background: Highlight;
     box-shadow: none;
     forced-color-adjust: auto;
   }
+
+  .notebook-media-flow-targets > span,
+  .notebook-media-flow-targets > span[data-notebook-media-flow-target] {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-media-flow-targets[data-active-target='square-left']
+    > [data-notebook-media-flow-target='square-left'],
+  .notebook-media-flow-targets[data-active-target='normal']
+    > [data-notebook-media-flow-target='normal'],
+  .notebook-media-flow-targets[data-active-target='square-right']
+    > [data-notebook-media-flow-target='square-right'] {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
 }
 
 .notebook-template-start {
-  position: relative;
+  position: absolute;
   z-index: 7;
-  width: min(920px, calc(100% - 52px));
-  margin: 0 auto 34px;
+  top: clamp(132px, 24vh, 260px);
+  left: 50%;
+  width: min(680px, calc(100% - 52px));
+  margin: 0;
+  transform: translateX(-50%);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;

@@ -105,15 +105,26 @@ export function notebookEffectiveImagePlacement(
   if (placement !== 'square-left' && placement !== 'square-right') {
     return placement;
   }
-  const { usableWidth } = notebookPageGeometry(setup);
   const clampedWidth = Math.max(10, Math.min(100, widthPercent));
-  const remainingTextWidth = usableWidth * (1 - clampedWidth / 100)
-    - NOTEBOOK_IMAGE_WRAP_GAP_PT;
-  if (remainingTextWidth < NOTEBOOK_MIN_WRAPPED_TEXT_COLUMN_PT) return 'normal';
-  if (renderedContentWidthPx !== undefined) {
-    const renderedTextWidth = renderedContentWidthPx * (1 - clampedWidth / 100)
-      - NOTEBOOK_IMAGE_WRAP_GAP_PX;
-    if (renderedTextWidth < NOTEBOOK_MIN_RENDERED_TEXT_COLUMN_PX) return 'normal';
-  }
-  return placement;
+  return clampedWidth <= notebookMaximumWrappedMediaWidthPercent(setup, renderedContentWidthPx)
+    ? placement
+    : 'normal';
+}
+
+export function notebookMaximumWrappedMediaWidthPercent(
+  setup: NotebookPageSetup,
+  renderedContentWidthPx?: number,
+) {
+  const { usableWidth } = notebookPageGeometry(setup);
+  const physicalMaximum = ((
+    usableWidth - NOTEBOOK_MIN_WRAPPED_TEXT_COLUMN_PT - NOTEBOOK_IMAGE_WRAP_GAP_PT
+  ) / usableWidth) * 100;
+  const renderedMaximum = renderedContentWidthPx === undefined
+    ? 100
+    : ((
+      renderedContentWidthPx
+      - NOTEBOOK_MIN_RENDERED_TEXT_COLUMN_PX
+      - NOTEBOOK_IMAGE_WRAP_GAP_PX
+    ) / renderedContentWidthPx) * 100;
+  return Math.max(0, Math.min(100, physicalMaximum, renderedMaximum));
 }

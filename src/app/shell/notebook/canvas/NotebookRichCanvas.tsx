@@ -11,9 +11,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  readClipboardEventFile,
-} from '../../../../lib/clipboard';
+import { readClipboardEventFile } from '../../../../lib/clipboard';
 import {
   NOTEBOOK_STARTER_TEMPLATES,
   createNotebookStarterContent,
@@ -229,6 +227,7 @@ export function NotebookRichCanvas({
     editorRef,
     onMediaStatusChange,
     pageStageRef,
+    scrollRegionRef,
     viewMode,
   });
   const extensions = useMemo(
@@ -874,16 +873,16 @@ export function NotebookRichCanvas({
           }
         }}
       >
-        {isBlank ? (
-          <span className="notebook-empty-writing-prompt" aria-hidden="true">
-            Start writing your explanation...
-          </span>
-        ) : null}
         <div
           ref={pageStageRef}
           className={`notebook-page-stage is-${viewMode}`}
           data-page-count={paginationMetrics.pageCount}
         >
+          {isBlank ? (
+            <span className="notebook-empty-writing-prompt" aria-hidden="true">
+              Start writing your explanation...
+            </span>
+          ) : null}
           {viewMode === 'print' ? (
             <NotebookPageSheets
               activeTarget={runningMatterTarget}
@@ -900,31 +899,31 @@ export function NotebookRichCanvas({
             />
           ) : null}
           <EditorContent className="notebook-rich-editor-host" editor={editor} />
+          {isBlank ? (
+            <div className="notebook-template-start" data-testid="notebook-template-start">
+              <div>
+                <Sparkles aria-hidden="true" size={18} />
+                <span>Prefer a structured starting point?</span>
+              </div>
+              <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
+                Start from template
+              </button>
+              {templateMenu.isOpen ? (
+                <NotebookFloatingLayer align="end" layerId={templateMenu.id} className="notebook-template-menu">
+                  {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
+                    <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
+                      <strong>{template.label}</strong>
+                      <span>{template.description}</span>
+                    </button>
+                  ))}
+                </NotebookFloatingLayer>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {runningMatterOverflow ? (
           <div className="notebook-running-matter-warning" role="status">
             Running matter exceeds the current margin band. Content is preserved.
-          </div>
-        ) : null}
-        {isBlank ? (
-          <div className="notebook-template-start" data-testid="notebook-template-start">
-            <div>
-              <Sparkles aria-hidden="true" size={18} />
-              <span>Prefer a structured starting point?</span>
-            </div>
-            <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
-              Start from template
-            </button>
-            {templateMenu.isOpen ? (
-              <NotebookFloatingLayer align="end" layerId={templateMenu.id} className="notebook-template-menu">
-                {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
-                  <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
-                    <strong>{template.label}</strong>
-                    <span>{template.description}</span>
-                  </button>
-                ))}
-              </NotebookFloatingLayer>
-            ) : null}
           </div>
         ) : null}
       </div>

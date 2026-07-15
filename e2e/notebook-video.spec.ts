@@ -65,6 +65,7 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   await openBlankNotebook(page);
   const ribbonTabs = page.getByRole('tablist', { name: 'Notebook ribbon tabs' });
   const toolbar = page.getByLabel('Notebook formatting toolbar');
+  const editor = page.getByLabel('Notebook rich document');
 
   await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
   await page.getByLabel('Choose video', { exact: true }).setInputFiles({
@@ -145,18 +146,80 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
     .toBeLessThanOrEqual(resizedVideoFrame.y + resizedVideoFrame.height);
   await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
 
-  const stageBounds = await page.locator('.notebook-page-stage').boundingBox();
-  if (!stageBounds) throw new Error('Notebook page stage is not visible.');
-  await dragNotebookControl(
-    page,
-    figure.getByRole('button', { name: 'Drag video to reposition' }),
-    {
-      x: stageBounds.x + stageBounds.width * 0.12,
-      y: stageBounds.y + stageBounds.height * 0.5,
-    },
+  const targetParagraph = editor.locator('p').last();
+  await targetParagraph.click();
+  await page.keyboard.type('Flow insertion target');
+  await figure.click();
+  await page.evaluate(() => {
+    const region = document.querySelector<HTMLElement>('.notebook-rich-scroll-region');
+    const grip = document.querySelector<HTMLElement>('[aria-label="Drag video to reposition"]');
+    const target = document.querySelector<HTMLElement>('.notebook-rich-editor p:last-of-type');
+    if (!region || !grip || !target) return;
+    const regionBounds = region.getBoundingClientRect();
+    const gripBounds = grip.getBoundingClientRect();
+    const targetBounds = target.getBoundingClientRect();
+    const gestureCenter = (gripBounds.top + targetBounds.top) / 2;
+    region.scrollTop += gestureCenter - (regionBounds.top + regionBounds.height / 2);
+  });
+  let dragGrip = figure.getByRole('button', { name: 'Drag video to reposition' });
+  let dragBounds = await dragGrip.boundingBox();
+  const targetBounds = await targetParagraph.boundingBox();
+  if (!dragBounds || !targetBounds) throw new Error('Flow insertion geometry is not visible.');
+  await page.mouse.move(dragBounds.x + dragBounds.width / 2, dragBounds.y + dragBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(targetBounds.x + targetBounds.width / 2, targetBounds.y + 2, { steps: 8 });
+  await expect(page.locator('.notebook-media-drag-ghost')).toHaveCount(1);
+  const insertionGuide = page.locator('.notebook-media-drop-guide');
+  await expect(insertionGuide).toHaveAttribute('data-placement', 'before');
+  await expect(insertionGuide).toHaveAttribute(
+    'data-target-node-id',
+    await targetParagraph.getAttribute('data-notebook-node-id') ?? '',
   );
+  await page.mouse.up();
+  await expect(figure).toHaveAttribute('data-video-placement', 'normal');
+
+  const scrollRegion = page.locator('.notebook-rich-scroll-region');
+  await scrollRegion.evaluate((element) => { element.scrollTop = 0; });
+  await figure.scrollIntoViewIfNeeded();
+  await figure.click();
+  dragGrip = figure.getByRole('button', { name: 'Drag video to reposition' });
+  dragBounds = await dragGrip.boundingBox();
+  const scrollBounds = await scrollRegion.boundingBox();
+  if (!dragBounds || !scrollBounds) throw new Error('Autoscroll geometry is not visible.');
+  await page.mouse.move(dragBounds.x + dragBounds.width / 2, dragBounds.y + dragBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dragBounds.x + dragBounds.width / 2, scrollBounds.y + scrollBounds.height - 3);
+  await expect.poll(() => scrollRegion.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  await expect(page.locator('.notebook-media-drag-ghost')).toHaveCount(0);
+  await expect(page.locator('.notebook-media-flow-targets')).toHaveCount(0);
+  await expect(figure).toHaveAttribute('data-video-placement', 'normal');
+
+  await scrollRegion.evaluate((element) => { element.scrollTop = 0; });
+  await figure.scrollIntoViewIfNeeded();
+  await figure.click();
+  dragGrip = figure.getByRole('button', { name: 'Drag video to reposition' });
+  dragBounds = await dragGrip.boundingBox();
+  const contentBounds = await editor.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const left = bounds.left + Number.parseFloat(style.paddingLeft || '0');
+    const right = bounds.right - Number.parseFloat(style.paddingRight || '0');
+    return { left, right };
+  });
+  if (!dragBounds) throw new Error('Video drag control is not visible.');
+  await page.mouse.move(dragBounds.x + dragBounds.width / 2, dragBounds.y + dragBounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(contentBounds.left + (contentBounds.right - contentBounds.left) * 0.1,
+    dragBounds.y + dragBounds.height / 2, { steps: 8 });
+  await expect(page.locator('.notebook-media-flow-targets'))
+    .toHaveAttribute('data-active-target', 'square-left');
+  await page.mouse.up();
   await expect(figure).toHaveAttribute('data-video-placement', 'square-left');
   await expect(figure).toHaveAttribute('data-video-alignment', 'left');
+  await expect(figure).toHaveAttribute('data-video-wrap-fallback', 'false');
+  await expect(page.locator('.notebook-media-flow-targets')).toHaveCount(0);
   await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
   await attachScreenshot(page, 'notebook-video-direct-media');
 

@@ -720,8 +720,11 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     previewRef.current = mode === 'drag' ? null : initial;
     setPreview(mode === 'drag' ? null : initial);
     setActiveGesture(mode);
-    emitInteraction(gesture, 'start', event, previewRef.current);
-    if (mode === 'drag') emitDrag(gesture, 'start', event);
+    if (mode === 'drag') {
+      emitDrag(gesture, 'start', event);
+    } else {
+      emitInteraction(gesture, 'start', event, previewRef.current);
+    }
   }, [emitDrag, emitInteraction, options]);
 
   const beginResize = useCallback((
@@ -741,7 +744,6 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     event.preventDefault();
     event.stopPropagation();
     if (gesture.mode === 'drag') {
-      emitInteraction(gesture, 'move', event, null);
       emitDrag(gesture, 'move', event);
       return;
     }
@@ -770,7 +772,6 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     cancelPreviewFrame();
     if (gesture.mode === 'drag') {
       const phase = cancelled ? 'cancel' : 'end';
-      emitInteraction(gesture, cancelled ? 'cancel' : 'commit', event, null);
       emitDrag(gesture, phase, event);
       clearGesture();
       return;
@@ -788,23 +789,11 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     clearGesture();
   }, [cancelPreviewFrame, clearGesture, emitDrag, emitInteraction, options, previewAtPointer]);
 
-  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLElement>) => {
-    handlePointerMoveEvent(event);
-  }, [handlePointerMoveEvent]);
-
-  const finishPointer = useCallback((
-    event: ReactPointerEvent<HTMLElement>,
-    cancelled = false,
-  ) => {
-    finishPointerEvent(event, cancelled);
-  }, [finishPointerEvent]);
-
   const cancel = useCallback(() => {
     const gesture = gestureRef.current;
     if (gesture) {
       const event = { clientX: gesture.startClientX, clientY: gesture.startClientY };
       if (gesture.mode === 'drag') {
-        emitInteraction(gesture, 'cancel', event, null);
         emitDrag(gesture, 'cancel', event);
       } else {
         emitInteraction(gesture, 'cancel', event, gesture.initial);
@@ -829,7 +818,6 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
   }, [activeGesture, cancel, options.cropMode, options.selected]);
 
   useEffect(() => {
-    if (!activeGesture) return undefined;
     const onPointerMove = (event: PointerEvent) => handlePointerMoveEvent(event);
     const onPointerUp = (event: PointerEvent) => finishPointerEvent(event);
     const onPointerCancel = (event: PointerEvent) => finishPointerEvent(event, true);
@@ -841,7 +829,7 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
       window.removeEventListener('pointerup', onPointerUp, true);
       window.removeEventListener('pointercancel', onPointerCancel, true);
     };
-  }, [activeGesture, finishPointerEvent, handlePointerMoveEvent]);
+  }, [finishPointerEvent, handlePointerMoveEvent]);
 
   useEffect(() => () => clearGesture(), [clearGesture]);
 
@@ -852,8 +840,6 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     beginResize,
     beginRotation,
     cancel,
-    finishPointer,
-    handlePointerMove,
     preview,
   };
 }

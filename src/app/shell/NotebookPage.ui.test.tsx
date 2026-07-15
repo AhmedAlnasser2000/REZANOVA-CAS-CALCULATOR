@@ -1241,6 +1241,7 @@ describe('NotebookPage', () => {
     } as DOMRect;
     const editorElement = screen.getByLabelText('Notebook rich document');
     const pageStage = document.querySelector<HTMLElement>('.notebook-page-stage')!;
+    const scrollRegion = document.querySelector<HTMLElement>('.notebook-rich-scroll-region')!;
     pageStage.style.setProperty('--notebook-object-max-height-px', '900px');
     Object.defineProperty(mediaShell, 'getBoundingClientRect', {
       configurable: true,
@@ -1254,6 +1255,7 @@ describe('NotebookPage', () => {
       configurable: true,
       value: () => ({ ...mediaRect, left: 0, top: 0, width: 800, right: 800 }),
     });
+    Object.defineProperty(scrollRegion, 'getBoundingClientRect', { configurable: true, value: () => ({ ...mediaRect, left: 0, top: 0, width: 800, right: 800, bottom: 600, height: 600 }) });
     await user.click(figure);
     await waitFor(() => expect(screen.getByText(/Page 1 · X .* pt · Y .* pt/)).toBeInTheDocument());
     const eastHandle = within(figure).getByRole('button', { name: 'Resize video from the right' });
@@ -1263,23 +1265,23 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getByTestId('notebook-video-figure').style
       .getPropertyValue('--notebook-video-width')).toBe('62.5%'));
     figure = screen.getByTestId('notebook-video-figure');
-
     const elementFromPoint = vi.spyOn(document, 'elementFromPoint').mockReturnValue(document.body);
     const dragGrip = within(figure).getByRole('button', { name: 'Drag video to reposition' });
     fireEvent.pointerDown(dragGrip, { button: 0, clientX: 400, clientY: 250, pointerId: 45 });
-    fireEvent.pointerMove(figure, { clientX: 50, clientY: 250, pointerId: 45 });
+    fireEvent.pointerMove(figure, { clientX: 150, clientY: 250, pointerId: 45 });
     await waitFor(() => expect(document.querySelector('.notebook-media-drag-ghost'))
-      .toHaveStyle({ transform: 'translate(-350px, 0px)' }));
+      .toHaveStyle({ transform: 'translate(-250px, 0px)' }));
+    expect(document.querySelector('.notebook-media-flow-targets')).toHaveAttribute('data-active-target', 'square-left');
     await waitFor(() => expect(screen.getByText(/Page 1 · X 0.0 pt · Y .* pt/)).toBeInTheDocument());
-    fireEvent.pointerUp(figure, { clientX: 50, clientY: 250, pointerId: 45 });
+    fireEvent.pointerUp(figure, { clientX: 150, clientY: 250, pointerId: 45 });
     elementFromPoint.mockRestore();
     await waitFor(() => {
       const movedFigure = screen.getByTestId('notebook-video-figure');
       expect(movedFigure).toHaveAttribute('data-video-alignment', 'left');
       expect(movedFigure).toHaveAttribute('data-video-placement', 'square-left');
+      expect(movedFigure.style.getPropertyValue('--notebook-video-width')).toBe('57.454%');
     });
     expect(document.querySelector('.notebook-media-drag-ghost')).not.toBeInTheDocument();
-
     await user.click(screen.getByRole('tab', { name: 'Video Format' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Poster' }));
     await user.upload(screen.getByLabelText('Choose video poster image'), notebookSvgFile('poster.svg'));
@@ -1294,7 +1296,6 @@ describe('NotebookPage', () => {
     expect(captions).toHaveValue('off');
     await user.selectOptions(captions, '0');
     expect(captions).toHaveValue('0');
-
     const volume = within(figure).getByRole('slider', { name: 'Video volume' });
     fireEvent.change(volume, { target: { value: '0.4' } });
     expect(volume).toHaveValue('0.4');
@@ -1302,7 +1303,6 @@ describe('NotebookPage', () => {
     fireEvent.error(videoElement);
     expect(within(figure).getByRole('alert')).toHaveTextContent('could not be decoded or played');
     expect(figure.querySelector('video')).toBe(videoElement);
-
     const presentation = figure.querySelector<HTMLElement>('.notebook-video-presentation')!;
     const originalFullscreen = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
     const originalExitFullscreen = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
@@ -1399,7 +1399,7 @@ describe('NotebookPage', () => {
         description: 'A narrated limit demonstration.',
         caption: 'Approaching a finite limit',
         numbered: true,
-        widthPercent: 62.5,
+        widthPercent: 57.454,
         alignment: 'left',
         placement: 'square-left',
         displayAspectRatio: 1.778,

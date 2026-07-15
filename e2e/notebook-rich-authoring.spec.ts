@@ -303,15 +303,47 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
     const stageBounds = document.querySelector('[data-testid="app-stage"]')!.getBoundingClientRect();
     const notebookBounds = document.querySelector('[data-testid="notebook-page"]')!.getBoundingClientRect();
     const editorBounds = document.querySelector('.notebook-rich-editor')!.getBoundingClientRect();
+    const pageBounds = document.querySelector('.notebook-page-stage')!.getBoundingClientRect();
+    const scrollBounds = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
+    const promptBounds = [...document.querySelectorAll('span')]
+      .find((element) => element.textContent === 'Start writing your explanation...')!
+      .getBoundingClientRect();
     const templateBounds = document.querySelector('[data-testid="notebook-template-start"]')!.getBoundingClientRect();
     return {
       stageWidth: stageBounds.width,
       notebookWidth: notebookBounds.width,
-      templateBelowEditor: templateBounds.top >= editorBounds.bottom - 1,
+      promptInsidePage: promptBounds.left >= editorBounds.left && promptBounds.top >= pageBounds.top,
+      templateInsideViewport: templateBounds.top >= scrollBounds.top
+        && templateBounds.bottom <= scrollBounds.bottom,
     };
   });
   expect(initialGeometry.notebookWidth).toBeGreaterThanOrEqual(initialGeometry.stageWidth - 2);
-  expect(initialGeometry.templateBelowEditor).toBe(true);
+  expect(initialGeometry.promptInsidePage).toBe(true);
+  expect(initialGeometry.templateInsideViewport).toBe(true);
+
+  for (const width of [1440, 1100]) {
+    await page.setViewportSize({ width, height: 900 });
+    const onboardingGeometry = await page.evaluate(() => {
+      const pageBounds = document.querySelector('.notebook-page-stage')!.getBoundingClientRect();
+      const scrollBounds = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
+      const promptBounds = [...document.querySelectorAll('span')]
+        .find((element) => element.textContent === 'Start writing your explanation...')!
+        .getBoundingClientRect();
+      const templateBounds = document.querySelector('[data-testid="notebook-template-start"]')!
+        .getBoundingClientRect();
+      return {
+        pageBounds: { left: pageBounds.left, top: pageBounds.top },
+        promptBounds: { left: promptBounds.left, top: promptBounds.top },
+        scrollBounds: { bottom: scrollBounds.bottom, top: scrollBounds.top },
+        templateBounds: { bottom: templateBounds.bottom, top: templateBounds.top },
+      };
+    });
+    expect(onboardingGeometry.promptBounds.left).toBeGreaterThanOrEqual(onboardingGeometry.pageBounds.left);
+    expect(onboardingGeometry.promptBounds.top).toBeGreaterThanOrEqual(onboardingGeometry.pageBounds.top);
+    expect(onboardingGeometry.templateBounds.top).toBeGreaterThanOrEqual(onboardingGeometry.scrollBounds.top);
+    expect(onboardingGeometry.templateBounds.bottom).toBeLessThanOrEqual(onboardingGeometry.scrollBounds.bottom);
+  }
+  await page.setViewportSize({ width: 2400, height: 1100 });
 
   const outline = page.getByRole('complementary', { name: 'Notebook outline' });
   const outlineWidthBefore = (await outline.boundingBox())!.width;

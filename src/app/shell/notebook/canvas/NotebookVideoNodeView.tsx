@@ -19,12 +19,15 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
 } from 'react';
 
 import {
+  DEFAULT_NOTEBOOK_PAGE_SETUP,
   normalizeNotebookMediaWidthPercent,
+  notebookEffectiveImagePlacement,
   type NotebookAssetPort,
+  type NotebookImagePlacement,
+  type NotebookPageSetup,
   type NotebookVideoTrack,
 } from '../../../../lib/notebook';
 import {
@@ -114,6 +117,7 @@ export function createNotebookVideoNodeView(
     const [fullscreenMode, setFullscreenMode] = useState<NotebookVideoFullscreenMode>(null);
     const [fullscreenPending, setFullscreenPending] = useState(false);
     const [sourceAspectRatio, setSourceAspectRatio] = useState<number | undefined>(displayAspectRatio);
+    const [renderedContentWidth, setRenderedContentWidth] = useState<number>();
     const [controlsVisible, setControlsVisible] = useState(true);
     const [controlsHovered, setControlsHovered] = useState(false);
     const [controlsFocused, setControlsFocused] = useState(false);
@@ -132,6 +136,35 @@ export function createNotebookVideoNodeView(
         return count || null;
       },
     });
+
+    useEffect(() => {
+      const editorElement = editor.view.dom as HTMLElement;
+      let frame = 0;
+      const measure = () => {
+        frame = 0;
+        const computed = getComputedStyle(editorElement);
+        const width = editorElement.clientWidth
+          - (Number.parseFloat(computed.paddingLeft) || 0)
+          - (Number.parseFloat(computed.paddingRight) || 0);
+        if (width <= 0) return;
+        setRenderedContentWidth((current) => (
+          current !== undefined && Math.abs(current - width) < 0.5 ? current : width
+        ));
+      };
+      const schedule = () => {
+        if (frame) cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(measure);
+      };
+      const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
+      observer?.observe(editorElement);
+      schedule();
+      globalThis.addEventListener('resize', schedule);
+      return () => {
+        if (frame) cancelAnimationFrame(frame);
+        observer?.disconnect();
+        globalThis.removeEventListener('resize', schedule);
+      };
+    }, [editor]);
 
     useEffect(() => {
       let cancelled = false;
@@ -511,6 +544,14 @@ export function createNotebookVideoNodeView(
     const widthPercent = typeof rawWidthPercent === 'number' && Number.isFinite(rawWidthPercent)
       ? normalizeNotebookMediaWidthPercent(rawWidthPercent)
       : 100;
+    const requestedPlacement = String(node.attrs.placement ?? 'normal') as NotebookImagePlacement;
+    const pageSetup = useEditorState({
+      editor,
+      selector: ({ editor: currentEditor }) => (
+        (currentEditor.state.doc.attrs.notebookPageSetup as NotebookPageSetup | null)
+          ?? DEFAULT_NOTEBOOK_PAGE_SETUP
+      ),
+    });
     const interaction = useNotebookDirectMediaInteraction({
       alignment: node.attrs.alignment === 'left' || node.attrs.alignment === 'right'
         ? node.attrs.alignment
@@ -532,6 +573,12 @@ export function createNotebookVideoNodeView(
     const effectiveAspectRatio = interaction.preview?.displayAspectRatio
       ?? sourceAspectRatio
       ?? displayAspectRatio;
+    const effectivePlacement = notebookEffectiveImagePlacement(
+      pageSetup,
+      requestedPlacement,
+      effectiveWidthPercent,
+      renderedContentWidth,
+    );
     const style = {
       '--notebook-video-width': interaction.activeGesture === 'resize'
         && interaction.preview?.rectanglePx.width
@@ -556,16 +603,16 @@ export function createNotebookVideoNodeView(
         data-notebook-node-id={nodeId}
         data-testid="notebook-video-figure"
         data-video-alignment={String(node.attrs.alignment ?? 'center')}
-        data-video-placement={String(node.attrs.placement ?? 'normal')}
+        data-video-placement={effectivePlacement}
+        data-video-requested-placement={requestedPlacement}
+        data-video-rendered-content-width={renderedContentWidth?.toFixed(1)}
+        data-video-wrap-fallback={effectivePlacement !== requestedPlacement ? 'true' : 'false'}
         onClick={() => {
           const position = getPos();
           if (typeof position === 'number') {
             editor.chain().focus().setNodeSelection(position).run();
           }
         }}
-        onPointerCancel={(event: ReactPointerEvent<HTMLElement>) => interaction.finishPointer(event, true)}
-        onPointerMove={interaction.handlePointerMove}
-        onPointerUp={interaction.finishPointer}
         style={style}
       >
         <div className="notebook-video-heading">

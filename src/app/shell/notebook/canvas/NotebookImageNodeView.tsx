@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
 } from 'react';
 
 import {
@@ -275,9 +274,6 @@ export function createNotebookImageNodeView(
             editor.chain().focus().setNodeSelection(position).run();
           }
         }}
-        onPointerCancel={(event: ReactPointerEvent<HTMLElement>) => interaction.finishPointer(event, true)}
-        onPointerMove={interaction.handlePointerMove}
-        onPointerUp={interaction.finishPointer}
         style={figureStyle}
       >
         <div ref={frameRef} className="notebook-media-transform-shell notebook-media-transform-shell--image">
