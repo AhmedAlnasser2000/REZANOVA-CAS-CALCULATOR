@@ -9,16 +9,17 @@ import { initStatisticsEChart } from './statistics-echarts';
 type StatisticsEChartProps = {
   view: StatisticsVisualizationViewV1;
   histogramBinCount: StatisticsHistogramBinCount;
+  approxDigits: number;
 };
 
-export function StatisticsEChart({ view, histogramBinCount }: StatisticsEChartProps) {
+export function StatisticsEChart({ view, histogramBinCount, approxDigits }: StatisticsEChartProps) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
     const chart = initStatisticsEChart(host);
-    chart.setOption(statisticsChartOption(view, histogramBinCount), { notMerge: true });
+    chart.setOption(statisticsChartOption(view, histogramBinCount, approxDigits), { notMerge: true });
     const observer = typeof ResizeObserver === 'undefined'
       ? undefined
       : new ResizeObserver(() => chart.resize());
@@ -27,7 +28,7 @@ export function StatisticsEChart({ view, histogramBinCount }: StatisticsEChartPr
       observer?.disconnect();
       chart.dispose();
     };
-  }, [histogramBinCount, view]);
+  }, [approxDigits, histogramBinCount, view]);
 
   return (
     <div
@@ -39,4 +40,3 @@ export function StatisticsEChart({ view, histogramBinCount }: StatisticsEChartPr
     />
   );
 }
-

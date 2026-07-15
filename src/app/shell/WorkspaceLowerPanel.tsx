@@ -16,6 +16,7 @@ type WorkspaceLowerPanelProps = KeypadPanelProps & {
   statisticsVisualization?: StatisticsVisualizationPayloadV1;
   statisticsVisualizationKind?: StatisticsVisualizationKind;
   statisticsHistogramBinCount: StatisticsHistogramBinCount;
+  approxDigits: number;
   statisticsResultIsStale: boolean;
   statisticsOutcomeKind?: 'success' | 'error' | 'prompt';
   runtimeStatusLabel?: string;
@@ -31,6 +32,7 @@ export function WorkspaceLowerPanel({
   statisticsVisualization,
   statisticsVisualizationKind,
   statisticsHistogramBinCount,
+  approxDigits,
   statisticsResultIsStale,
   statisticsOutcomeKind,
   runtimeStatusLabel,
@@ -49,6 +51,7 @@ export function WorkspaceLowerPanel({
       payload={statisticsVisualization}
       selectedKind={statisticsVisualizationKind}
       histogramBinCount={statisticsHistogramBinCount}
+      approxDigits={approxDigits}
       stale={statisticsResultIsStale}
       outcomeKind={statisticsOutcomeKind}
       runtimeStatusLabel={runtimeStatusLabel}

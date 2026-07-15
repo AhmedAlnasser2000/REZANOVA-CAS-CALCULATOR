@@ -26,6 +26,7 @@ export type CommitStatisticsOutcome = (
 
 export type UseStatisticsRuntimeOptions = {
   activeFieldRef: RefObject<MathfieldElement | null>;
+  approxDigits?: number;
   commitOutcome: CommitStatisticsOutcome;
   currentMode: ModeId;
   currentModeRef: RefObject<ModeId>;

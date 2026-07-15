@@ -3,13 +3,11 @@ import type {
   DisplayDetailSection,
   ResultProducerDraft,
   FrequencyRow,
-  RegressionPoint,
   StatisticsParseResult,
   StatisticsRequest,
   StatisticsScreen,
   StatisticsWorkingSource,
 } from '../../types/calculator';
-import { numberToLatex } from '../display/format';
 import {
   computeMeanConfidenceInterval,
   computeMeanHypothesisTest,
@@ -28,10 +26,14 @@ import {
   correlationQualitySection,
   correlationStrength,
   regressionQualitySection,
-  type RegressionDiagnostics,
-  type RegressionFitSummary,
 } from './quality-readback';
-import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
+import { prepareStatisticsRelationshipCalculation } from './relationship-calculation';
+import {
+  formatStatisticsNumber,
+  parseIntegerDraft,
+  parseNumericDraft,
+  statisticsNumberToLatex,
+} from './shared';
 import { profileStatisticsResult } from '../display/printer';
 import {
   descriptiveStatisticsFromFrequencyRows,
@@ -64,11 +66,6 @@ const ownedMathJsonByOutcome = new WeakMap<object, readonly StatisticsOwnedMathJ
 type NumericFrequencyRow = {
   value: number;
   frequency: number;
-};
-
-type NumericPoint = {
-  x: number;
-  y: number;
 };
 
 type StatisticsEvaluation = {
@@ -233,49 +230,6 @@ function parseFrequencyRows(rows: FrequencyRow[]) {
   };
 }
 
-function parsePoints(points: RegressionPoint[]) {
-  const numericPoints: NumericPoint[] = [];
-
-  for (const point of points) {
-    const x = point.x.trim();
-    const y = point.y.trim();
-
-    if (!x && !y) {
-      continue;
-    }
-
-    if (!x || !y) {
-      return {
-        ok: false as const,
-        error: 'Each point needs both x and y values.',
-      };
-    }
-
-    const parsedX = parseNumericDraft(x);
-    const parsedY = parseNumericDraft(y);
-    if (parsedX === null || parsedY === null) {
-      return {
-        ok: false as const,
-        error: `Point (${x}, ${y}) must use finite numeric values.`,
-      };
-    }
-
-    numericPoints.push({ x: parsedX, y: parsedY });
-  }
-
-  if (numericPoints.length < 2) {
-    return {
-      ok: false as const,
-      error: 'Enter at least two valid points before evaluating this Statistics request.',
-    };
-  }
-
-  return {
-    ok: true as const,
-    points: numericPoints,
-  };
-}
-
 function medianFromSortedValues(sortedValues: number[]) {
   const middle = Math.floor(sortedValues.length / 2);
   return sortedValues.length % 2 === 0
@@ -380,30 +334,30 @@ function descriptiveOutcomeFromSummary(
     ? ['Sample variance and sample standard deviation need at least two values.']
     : [];
   const modeLatex = summary.modes.length === 1
-    ? `,\\ \\operatorname{mode}=${numberToLatex(summary.modes[0])}`
+    ? `,\\ \\operatorname{mode}=${statisticsNumberToLatex(summary.modes[0])}`
     : summary.modes.length > 1
-      ? `,\\ \\operatorname{modes}=\\left\\{${summary.modes.map(numberToLatex).join(',\\ ')}\\right\\}`
+      ? `,\\ \\operatorname{modes}=\\left\\{${summary.modes.map(statisticsNumberToLatex).join(',\\ ')}\\right\\}`
       : '';
   const outlierLatex = summary.potentialOutliers.length > 0
-    ? `,\\ \\operatorname{outliers}=\\left\\{${summary.potentialOutliers.map(numberToLatex).join(',\\ ')}\\right\\}`
+    ? `,\\ \\operatorname{outliers}=\\left\\{${summary.potentialOutliers.map(statisticsNumberToLatex).join(',\\ ')}\\right\\}`
     : '';
   const exactLatex = [
       `n=${summary.count}`,
-      `\\sum x=${numberToLatex(summary.sum)}`,
-      `\\bar{x}=${numberToLatex(summary.mean)}`,
-      `\\operatorname{median}=${numberToLatex(summary.median)}`,
-      `\\min=${numberToLatex(summary.min)}`,
-      `Q_1=${numberToLatex(summary.q1)}`,
-      `Q_3=${numberToLatex(summary.q3)}`,
-      `\\max=${numberToLatex(summary.max)}`,
-      `\\operatorname{range}=${numberToLatex(summary.range)}`,
-      `\\operatorname{IQR}=${numberToLatex(summary.iqr)}`,
-      `F_L=${numberToLatex(summary.lowerFence)}`,
-      `F_U=${numberToLatex(summary.upperFence)}`,
-      `\\sigma^2=${numberToLatex(summary.populationVariance)}`,
-      `\\sigma=${numberToLatex(summary.populationStandardDeviation)}`,
-      summary.sampleVariance === null ? '' : `s^2=${numberToLatex(summary.sampleVariance)}`,
-      summary.sampleStandardDeviation === null ? '' : `s=${numberToLatex(summary.sampleStandardDeviation)}`,
+      `\\sum x=${statisticsNumberToLatex(summary.sum)}`,
+      `\\bar{x}=${statisticsNumberToLatex(summary.mean)}`,
+      `\\operatorname{median}=${statisticsNumberToLatex(summary.median)}`,
+      `\\min=${statisticsNumberToLatex(summary.min)}`,
+      `Q_1=${statisticsNumberToLatex(summary.q1)}`,
+      `Q_3=${statisticsNumberToLatex(summary.q3)}`,
+      `\\max=${statisticsNumberToLatex(summary.max)}`,
+      `\\operatorname{range}=${statisticsNumberToLatex(summary.range)}`,
+      `\\operatorname{IQR}=${statisticsNumberToLatex(summary.iqr)}`,
+      `F_L=${statisticsNumberToLatex(summary.lowerFence)}`,
+      `F_U=${statisticsNumberToLatex(summary.upperFence)}`,
+      `\\sigma^2=${statisticsNumberToLatex(summary.populationVariance)}`,
+      `\\sigma=${statisticsNumberToLatex(summary.populationStandardDeviation)}`,
+      summary.sampleVariance === null ? '' : `s^2=${statisticsNumberToLatex(summary.sampleVariance)}`,
+      summary.sampleStandardDeviation === null ? '' : `s=${statisticsNumberToLatex(summary.sampleStandardDeviation)}`,
     ].filter(Boolean).join(',\\ ') + modeLatex + outlierLatex;
   const populationSpread = `Population: variance ${formatStatisticsNumber(summary.populationVariance)}, SD ${formatStatisticsNumber(summary.populationStandardDeviation)}.`;
   const sampleSpread = summary.sampleVariance === null || summary.sampleStandardDeviation === null
@@ -456,7 +410,7 @@ function descriptiveOutcomeFromSummary(
 }
 
 function datasetOutcome(values: number[]): StatisticsEvaluation {
-  const exactLatex = `n=${values.length},\\ \\left[${values.map(numberToLatex).join(',\\ ')}\\right]`;
+  const exactLatex = `n=${values.length},\\ \\left[${values.map(statisticsNumberToLatex).join(',\\ ')}\\right]`;
   const answerReadback = datasetAnswerReadback(values);
   return profileStatisticsResult({
     exactLatex,
@@ -480,10 +434,10 @@ function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvalua
       : [];
   const modeLatex =
     modeRows.length === 1
-      ? `,\\ \\operatorname{mode}=${numberToLatex(modeRows[0].value)}`
+      ? `,\\ \\operatorname{mode}=${statisticsNumberToLatex(modeRows[0].value)}`
       : '';
 
-  const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `(${numberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}${modeLatex}`;
+  const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `(${statisticsNumberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}${modeLatex}`;
   const answerReadback = frequencyAnswerReadback({
     rows,
     totalCount,
@@ -563,14 +517,14 @@ function meanInferenceOutcome(
     }
 
     const exactLatex = [
-        `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
-        `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
+        `\\bar{x}=${statisticsNumberToLatex(summary.summary.mean)}`,
+        `s=${statisticsNumberToLatex(summary.summary.sampleStandardDeviation)}`,
         `n=${summary.summary.count}`,
-        `SE=${numberToLatex(result.standardError)}`,
+        `SE=${statisticsNumberToLatex(result.standardError)}`,
         `df=${summary.summary.count - 1}`,
-        `t_{\\mathrm{critical}}=${numberToLatex(result.criticalValue)}`,
-        `ME=${numberToLatex(result.marginOfError)}`,
-        `CI=${numberToLatex(result.lowerBound)}\\le\\mu\\le${numberToLatex(result.upperBound)}`,
+        `t_{\\mathrm{critical}}=${statisticsNumberToLatex(result.criticalValue)}`,
+        `ME=${statisticsNumberToLatex(result.marginOfError)}`,
+        `CI=${statisticsNumberToLatex(result.lowerBound)}\\le\\mu\\le${statisticsNumberToLatex(result.upperBound)}`,
       ].join(',\\ ');
     const answerReadback = confidenceIntervalAnswerReadback({
       summary: summary.summary,
@@ -608,7 +562,7 @@ function meanInferenceOutcome(
   }
 
   const tStatisticLatex = Number.isFinite(result.tStatistic)
-    ? numberToLatex(result.tStatistic)
+    ? statisticsNumberToLatex(result.tStatistic)
     : result.tStatistic < 0 ? '-\\infty' : '\\infty';
   const tStatisticApprox = Number.isFinite(result.tStatistic)
     ? formatStatisticsNumber(result.tStatistic)
@@ -620,15 +574,15 @@ function meanInferenceOutcome(
       : 'right-tailed';
 
   const exactLatex = [
-      `H_0=(\\mu=${numberToLatex(mu0)})`,
-      `H_a=(\\mu${meanAlternativeSymbol(alternative)}${numberToLatex(mu0)})`,
-      `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
-      `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
-      `SE=${numberToLatex(result.standardError)}`,
+      `H_0=(\\mu=${statisticsNumberToLatex(mu0)})`,
+      `H_a=(\\mu${meanAlternativeSymbol(alternative)}${statisticsNumberToLatex(mu0)})`,
+      `\\bar{x}=${statisticsNumberToLatex(summary.summary.mean)}`,
+      `s=${statisticsNumberToLatex(summary.summary.sampleStandardDeviation)}`,
+      `SE=${statisticsNumberToLatex(result.standardError)}`,
       `df=${summary.summary.count - 1}`,
       `t=${tStatisticLatex}`,
-      `p=${numberToLatex(result.pValue)}`,
-      `\\alpha=${numberToLatex(result.alpha)}`,
+      `p=${statisticsNumberToLatex(result.pValue)}`,
+      `\\alpha=${statisticsNumberToLatex(result.alpha)}`,
     ].join(',\\ ');
   const answerReadback = meanTestAnswerReadback({
     summary: summary.summary,
@@ -661,67 +615,6 @@ function meanInferenceOutcome(
   });
 }
 
-function regressionSummary(points: NumericPoint[]) {
-  const count = points.length;
-  const sumX = points.reduce((total, point) => total + point.x, 0);
-  const sumY = points.reduce((total, point) => total + point.y, 0);
-  const meanX = sumX / count;
-  const meanY = sumY / count;
-  const sxx = points.reduce((total, point) => total + ((point.x - meanX) ** 2), 0);
-  const syy = points.reduce((total, point) => total + ((point.y - meanY) ** 2), 0);
-  const sxy = points.reduce((total, point) => total + ((point.x - meanX) * (point.y - meanY)), 0);
-
-  if (sxx === 0) {
-    return {
-      ok: false as const,
-      error: 'Regression needs non-zero spread in x.',
-    };
-  }
-
-  if (syy === 0) {
-    return {
-      ok: false as const,
-      error: 'Regression needs non-zero spread in y to compute correlation strength.',
-    };
-  }
-
-  const slope = sxy / sxx;
-  const intercept = meanY - (slope * meanX);
-  const r = sxy / Math.sqrt(sxx * syy);
-  const rSquared = r ** 2;
-
-  return {
-    ok: true as const,
-    count,
-    slope,
-    intercept,
-    r,
-    rSquared,
-  };
-}
-
-function regressionDiagnostics(points: NumericPoint[], summary: RegressionFitSummary): RegressionDiagnostics {
-  const sse = points.reduce((total, point) => {
-    const fitted = (summary.slope * point.x) + summary.intercept;
-    return total + ((point.y - fitted) ** 2);
-  }, 0);
-
-  if (summary.count < 3) {
-    return {
-      sse,
-      mse: null,
-      residualStandardError: null,
-    };
-  }
-
-  const mse = sse / (summary.count - 2);
-  return {
-    sse,
-    mse,
-    residualStandardError: Math.sqrt(mse),
-  };
-}
-
 function fitQualityWarnings(r: number, count: number) {
   const warnings: string[] = [];
   const magnitude = Math.abs(r);
@@ -740,28 +633,20 @@ function fitQualityWarnings(r: number, count: number) {
 }
 
 function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regression' }>): StatisticsEvaluation {
-  const parsed = parsePoints(request.points);
-  if (!parsed.ok) {
-    return statisticsError(parsed.error);
-  }
-
-  const summary = regressionSummary(parsed.points);
-  if (!summary.ok) {
-    return statisticsError(summary.error);
-  }
-
-  const diagnostics = regressionDiagnostics(parsed.points, summary);
+  const calculation = prepareStatisticsRelationshipCalculation(request.points);
+  if (!calculation.ok) return statisticsError(calculation.error);
+  const { diagnostics, summary } = calculation;
   const warnings = fitQualityWarnings(summary.r, summary.count);
   if (summary.count < 3) {
     warnings.push('Residual variance and residual standard error need at least 3 points.');
   }
 
   const exactLatex = [
-      `y_{\\mathrm{fit}}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`,
-      `m=${numberToLatex(summary.slope)}`,
-      `b=${numberToLatex(summary.intercept)}`,
-      `r=${numberToLatex(summary.r)}`,
-      `r^2=${numberToLatex(summary.rSquared)}`,
+      `y_{\\mathrm{fit}}=${statisticsNumberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${statisticsNumberToLatex(summary.intercept)}`,
+      `m=${statisticsNumberToLatex(summary.slope)}`,
+      `b=${statisticsNumberToLatex(summary.intercept)}`,
+      `r=${statisticsNumberToLatex(summary.r)}`,
+      `r^2=${statisticsNumberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
     ].join(',\\ ');
   const answerReadback = regressionAnswerReadback(summary);
@@ -779,22 +664,18 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
 }
 
 function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correlation' }>): StatisticsEvaluation {
-  const parsed = parsePoints(request.points);
-  if (!parsed.ok) {
-    return statisticsError(parsed.error);
-  }
-
-  const summary = regressionSummary(parsed.points);
-  if (!summary.ok) {
-    return statisticsError(summary.error === 'Regression needs non-zero spread in x.'
+  const calculation = prepareStatisticsRelationshipCalculation(request.points);
+  if (!calculation.ok) {
+    return statisticsError(calculation.error === 'Regression needs non-zero spread in x.'
       ? 'Correlation needs non-zero spread in x.'
-      : summary.error);
+      : calculation.error);
   }
+  const { summary } = calculation;
 
   const strength = correlationStrength(summary.r);
   const exactLatex = [
-      `r=${numberToLatex(summary.r)}`,
-      `r^2=${numberToLatex(summary.rSquared)}`,
+      `r=${statisticsNumberToLatex(summary.r)}`,
+      `r^2=${statisticsNumberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
     ].join(',\\ ');
   const answerReadback = correlationAnswerReadback(summary);

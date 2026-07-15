@@ -1,7 +1,10 @@
 import type {
   StatisticsDistributionBarsVisualizationV1,
   StatisticsNormalCurveVisualizationV1,
+  StatisticsPairedPointsVisualizationV1,
   StatisticsRequest,
+  StatisticsResidualVisualizationV1,
+  StatisticsTestDistributionVisualizationV1,
   StatisticsVisualizationPayloadV1,
   StatisticsWeightedDataVisualizationV1,
 } from '../../types/calculator';
@@ -24,6 +27,15 @@ import {
 } from './probability';
 import { parseIntegerDraft, parseNumericDraft } from './shared';
 import { isStatisticsVisualizationPayloadV1 } from './visualization-contract';
+import { prepareStatisticsRelationshipCalculation } from './relationship-calculation';
+import {
+  computeMeanConfidenceInterval,
+  computeMeanHypothesisTest,
+  inverseStudentTCdf,
+  parseInferenceLevel,
+  studentTDensity,
+  type MeanInferenceSummary,
+} from './inference';
 
 const DISCRETE_BAR_LIMIT = 96;
 const NORMAL_CURVE_POINT_COUNT = 181;
@@ -41,6 +53,25 @@ function compactRowsFromRequest(
     return values && values.length > 0 ? compactFrequencyRowsFromValues(values) : null;
   }
 
+  const counts = new Map<number, number>();
+  for (const row of request.rows) {
+    const value = parseNumericDraft(row.value);
+    const frequency = parseIntegerDraft(row.frequency);
+    if (value === null || frequency === null || frequency <= 0) return null;
+    counts.set(value, (counts.get(value) ?? 0) + frequency);
+  }
+  return [...counts.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([value, frequency]) => ({ value, frequency }));
+}
+
+function compactRowsFromInferenceRequest(
+  request: Extract<StatisticsRequest, { kind: 'meanInference' }>,
+) {
+  if (request.source === 'dataset') {
+    const values = numericValues(request.values);
+    return values && values.length > 0 ? compactFrequencyRowsFromValues(values) : null;
+  }
   const counts = new Map<number, number>();
   for (const row of request.rows) {
     const value = parseNumericDraft(row.value);
@@ -318,6 +349,175 @@ function probabilityVisualizationPayload(request: ProbabilityRequest) {
   };
 }
 
+function relationshipTable(points: readonly { x: number; y: number }[]) {
+  return {
+    columns: ['x', 'y'],
+    rows: points.slice(0, 500).map((point) => [point.x, point.y]),
+    totalRows: points.length,
+  };
+}
+
+function relationshipVisualizationPayload(
+  request: Extract<StatisticsRequest, { kind: 'regression' | 'correlation' }>,
+) {
+  const calculation = prepareStatisticsRelationshipCalculation(request.points);
+  if (!calculation.ok || calculation.points.length > 2_000) return undefined;
+  const points = calculation.points.map((point) => ({ x: point.x, y: point.y }));
+  if (request.kind === 'correlation') {
+    const view: StatisticsPairedPointsVisualizationV1 = {
+      kind: 'correlationScatter',
+      title: 'Correlation scatter',
+      xLabel: 'x',
+      yLabel: 'y',
+      ariaDescription: `Scatter plot of ${points.length} paired observations without a fitted line.`,
+      points,
+      table: relationshipTable(points),
+    };
+    return { version: 1 as const, defaultKind: view.kind, views: [view] };
+  }
+
+  const xValues = points.map((point) => point.x);
+  const xStart = Math.min(...xValues);
+  const xEnd = Math.max(...xValues);
+  const fitted = (x: number) => (
+    (calculation.summary.slope * x) + calculation.summary.intercept
+  );
+  const fitView: StatisticsPairedPointsVisualizationV1 = {
+    kind: 'scatterFit',
+    title: 'Scatter and fitted line',
+    xLabel: 'x',
+    yLabel: 'y',
+    ariaDescription: `Scatter plot of ${points.length} observations with the fitted least-squares line.`,
+    points,
+    fittedLine: {
+      start: { x: xStart, y: fitted(xStart) },
+      end: { x: xEnd, y: fitted(xEnd) },
+    },
+    table: relationshipTable(points),
+  };
+  const residualPoints = points.map((point) => ({
+    x: point.x,
+    residual: point.y - fitted(point.x),
+  }));
+  const residualView: StatisticsResidualVisualizationV1 = {
+    kind: 'residuals',
+    title: 'Residuals',
+    xLabel: 'x',
+    yLabel: 'Residual',
+    ariaDescription: `Residual plot for ${points.length} fitted observations.`,
+    points: residualPoints,
+    table: {
+      columns: ['x', 'Residual'],
+      rows: residualPoints.slice(0, 500).map((point) => [point.x, point.residual]),
+      totalRows: residualPoints.length,
+    },
+  };
+  return {
+    version: 1 as const,
+    defaultKind: fitView.kind,
+    views: [fitView, residualView],
+  };
+}
+
+function meanInferenceSummary(
+  request: Extract<StatisticsRequest, { kind: 'meanInference' }>,
+) {
+  const rows = compactRowsFromInferenceRequest(request);
+  if (!rows?.length || rows.length > 10_000) return undefined;
+  const descriptive = descriptiveStatisticsFromFrequencyRows(rows, 'halves');
+  const summary: MeanInferenceSummary = {
+    count: descriptive.count,
+    mean: descriptive.mean,
+    sampleVariance: descriptive.sampleVariance,
+    sampleStandardDeviation: descriptive.sampleStandardDeviation,
+  };
+  return summary;
+}
+
+function testStatisticValue(value: number): StatisticsTestDistributionVisualizationV1['statistic'] {
+  if (value === Number.NEGATIVE_INFINITY) return 'negativeInfinity';
+  if (value === Number.POSITIVE_INFINITY) return 'positiveInfinity';
+  return value;
+}
+
+function inferenceVisualizationPayload(
+  request: Extract<StatisticsRequest, { kind: 'meanInference' }>,
+) {
+  const level = parseInferenceLevel(request.level);
+  const summary = meanInferenceSummary(request);
+  if (level === null || !summary) return undefined;
+  if (request.mode === 'ci') {
+    const result = computeMeanConfidenceInterval(summary, level);
+    if (!result) return undefined;
+    const view = {
+      kind: 'confidenceInterval' as const,
+      title: 'Confidence interval',
+      xLabel: 'Population mean',
+      yLabel: '',
+      ariaDescription: `${level * 100}% confidence interval from ${result.lowerBound} to ${result.upperBound}, centered at ${summary.mean}.`,
+      estimate: summary.mean,
+      lower: result.lowerBound,
+      upper: result.upperBound,
+      confidenceLevel: level,
+      table: {
+        columns: ['Quantity', 'Value'],
+        rows: [
+          ['Lower endpoint', result.lowerBound],
+          ['Sample mean', summary.mean],
+          ['Upper endpoint', result.upperBound],
+        ],
+        totalRows: 3,
+      },
+    };
+    return { version: 1 as const, defaultKind: view.kind, views: [view] };
+  }
+
+  const mu0 = parseNumericDraft(request.mu0 ?? '');
+  if (mu0 === null) return undefined;
+  const result = computeMeanHypothesisTest(
+    summary,
+    level,
+    mu0,
+    request.alternative ?? 'twoSided',
+  );
+  if (!result) return undefined;
+  const degreesOfFreedom = summary.count - 1;
+  const minimum = inverseStudentTCdf(0.0005, degreesOfFreedom);
+  const maximum = inverseStudentTCdf(0.9995, degreesOfFreedom);
+  const pointCount = 181;
+  const step = (maximum - minimum) / (pointCount - 1);
+  const points = Array.from({ length: pointCount }, (_, index) => {
+    const t = minimum + (index * step);
+    const pValueRegion = result.alternative === 'twoSided'
+      ? Math.abs(t) >= Math.abs(result.tStatistic)
+      : result.alternative === 'less'
+        ? t <= result.tStatistic
+        : t >= result.tStatistic;
+    return { t, density: studentTDensity(t, degreesOfFreedom), pValueRegion };
+  });
+  const criticalValues = result.alternative === 'twoSided'
+    ? [-Math.abs(result.criticalValue), Math.abs(result.criticalValue)]
+    : [result.criticalValue];
+  const view: StatisticsTestDistributionVisualizationV1 = {
+    kind: 'testDistribution',
+    title: 'Student-t test distribution',
+    xLabel: 't',
+    yLabel: 'Density',
+    ariaDescription: `Student-t distribution with ${degreesOfFreedom} degrees of freedom and ${result.alternative} p-value region.`,
+    points,
+    statistic: testStatisticValue(result.tStatistic),
+    criticalValues,
+    alternative: result.alternative,
+    pValue: result.pValue,
+    table: {
+      columns: ['t', 'Density', 'In p-value region'],
+      rows: points.map((point) => [point.t, point.density, point.pValueRegion ? 'Yes' : 'No']),
+      totalRows: points.length,
+    },
+  };
+  return { version: 1 as const, defaultKind: view.kind, views: [view] };
+}
+
 export function buildStatisticsVisualizationPayloadV1(
   request: StatisticsRequest,
 ): StatisticsVisualizationPayloadV1 | undefined {
@@ -327,6 +527,10 @@ export function buildStatisticsVisualizationPayloadV1(
     ? dataVisualizationPayload(request)
     : request.kind === 'binomial' || request.kind === 'normal' || request.kind === 'poisson'
       ? probabilityVisualizationPayload(request)
-      : undefined;
+      : request.kind === 'regression' || request.kind === 'correlation'
+        ? relationshipVisualizationPayload(request)
+        : request.kind === 'meanInference'
+          ? inferenceVisualizationPayload(request)
+          : undefined;
   return payload && isStatisticsVisualizationPayloadV1(payload) ? payload : undefined;
 }

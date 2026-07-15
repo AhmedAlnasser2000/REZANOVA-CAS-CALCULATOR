@@ -787,6 +787,7 @@ export default function App() {
 
   const statisticsRuntime = useStatisticsRuntime({
     activeFieldRef,
+    approxDigits: settings.approxDigits,
     commitOutcome,
     currentMode,
     currentModeRef,
@@ -3264,7 +3265,7 @@ export default function App() {
           </div>
         </main>
         <WorkspaceLowerPanel
-          currentMode={currentMode} rows={keypadRows} activeLayer={effectiveKeypadLayer} layerLocked={keypadLayerLocked} onKeypad={handleKeypad} onSelectLayer={selectKeypadLayer} onToggleLayerLock={toggleKeypadLayerLock}
+          currentMode={currentMode} approxDigits={settings.approxDigits} rows={keypadRows} activeLayer={effectiveKeypadLayer} layerLocked={keypadLayerLocked} onKeypad={handleKeypad} onSelectLayer={selectKeypadLayer} onToggleLayerLock={toggleKeypadLayerLock}
           statisticsSection={statisticsSection} statisticsInputMode={statisticsInputMode} statisticsVisualization={activeStatisticsSectionResult?.visualization} statisticsVisualizationKind={activeStatisticsVisualizationKind}
           statisticsHistogramBinCount={statisticsHistogramBinCount} statisticsResultIsStale={activeStatisticsResultIsStale} statisticsOutcomeKind={activeStatisticsSectionResult?.outcome.kind} statisticsResultRevision={activeStatisticsSectionResult?.inputRevisionId} runtimeStatusLabel={editorAnalysisStatusLabel}
           onStatisticsVisualizationKindChange={selectStatisticsVisualization} onStatisticsHistogramBinCountChange={setStatisticsHistogramBinCount}

@@ -22,13 +22,15 @@ test('Inference runs a percent-level one-sided test with full readback', async (
   await expect(page.locator('.statistics-request-preview')).toContainText('alternative=less');
   await page.getByTestId('soft-action-evaluate').click();
 
-  const answer = page.getByTestId('display-outcome-answer-block')
-    .locator('[data-raw-latex]')
-    .first();
-  await expect(answer).toHaveAttribute('data-raw-latex', /H_a=.*\\mu<15/);
-  await expect(answer).toHaveAttribute('data-raw-latex', /SE=/);
-  await expect(answer).toHaveAttribute('data-raw-latex', /df=4/);
-  await expect(answer).toHaveAttribute('data-raw-latex', /p=/);
+  const answerRows = page.getByTestId('display-outcome-answer-block').locator('[data-raw-latex]');
+  await expect(answerRows).toHaveCount(4);
+  const answerLatex = (await answerRows.evaluateAll((rows) => rows.map(
+    (row) => row.getAttribute('data-raw-latex') ?? '',
+  ))).join(' ');
+  expect(answerLatex).toMatch(/H_a=.*\\mu<15/);
+  expect(answerLatex).toMatch(/SE=/);
+  expect(answerLatex).toMatch(/df=4/);
+  expect(answerLatex).toMatch(/p=/);
 
   await page.waitForTimeout(100);
   const details = page.getByTestId('display-outcome-detail-sections');
@@ -57,11 +59,13 @@ test('Inference evaluates the shared compact frequency table', async ({ page }) 
   await expect(page.locator('.statistics-request-preview')).toContainText('freq={1:2,2:3}');
 
   await page.getByTestId('soft-action-evaluate').click();
-  const answer = page.getByTestId('display-outcome-answer-block')
-    .locator('[data-raw-latex]')
-    .first();
-  await expect(answer).toHaveAttribute('data-raw-latex', /\\bar\{x\}=1\.6/);
-  await expect(answer).toHaveAttribute('data-raw-latex', /df=4/);
+  const answerRows = page.getByTestId('display-outcome-answer-block').locator('[data-raw-latex]');
+  await expect(answerRows).toHaveCount(3);
+  const answerLatex = (await answerRows.evaluateAll((rows) => rows.map(
+    (row) => row.getAttribute('data-raw-latex') ?? '',
+  ))).join(' ');
+  expect(answerLatex).toMatch(/\\bar\{x\}=1\.6/);
+  expect(answerLatex).toMatch(/df=4/);
 });
 
 test('Inference surface stays contained at the minimum supported PC width', async ({ page }) => {

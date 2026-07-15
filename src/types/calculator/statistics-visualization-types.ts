@@ -91,7 +91,7 @@ export type StatisticsConfidenceIntervalVisualizationV1 = StatisticsVisualizatio
 export type StatisticsTestDistributionVisualizationV1 = StatisticsVisualizationViewBaseV1 & {
   kind: 'testDistribution';
   points: readonly { t: number; density: number; pValueRegion: boolean }[];
-  statistic: number;
+  statistic: number | 'negativeInfinity' | 'positiveInfinity';
   criticalValues: readonly number[];
   alternative: MeanTestAlternative;
   pValue: number;

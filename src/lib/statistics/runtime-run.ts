@@ -20,6 +20,10 @@ import {
   statisticsV2MathResolverFromOwnedLeaves,
 } from './math-values';
 import { buildStatisticsVisualizationPayloadV1 } from './visualization-payload';
+import {
+  getNumericOutputSettings,
+  setNumericOutputSettings,
+} from '../display/numeric-output';
 
 export type StatisticsModeRunPayload = {
   outcome: VersionedResultProducerDraft;
@@ -36,45 +40,59 @@ export type CanonicalStatisticsModeRunPayload = Omit<StatisticsModeRunPayload, '
 export function buildStatisticsModeRunPayload(
   request: RunStatisticsRuntimeRequest,
 ): StatisticsModeRunPayload {
-  const { outcome, parsed, mathJsonLeaves } = runStatisticsCoreDraft(request.inputLatex, {
-    screenHint: request.screenHint,
-    workingSourceHint: request.workingSourceHint,
-  });
-  const replayScreen = parsed.ok
-    ? statisticsRequestToScreen(parsed.request, request.screenHint)
-    : request.screenHint;
-  const replayWorkingSource = parsed.ok
-    ? statisticsRequestToWorkingSource(parsed.request, request.workingSourceHint)
-      ?? request.workingSourceHint
-    : request.workingSourceHint;
+  const previousNumericOutputSettings = getNumericOutputSettings();
+  if (request.approxDigits !== undefined) {
+    setNumericOutputSettings({
+      ...previousNumericOutputSettings,
+      approxDigits: request.approxDigits,
+    });
+  }
 
-  const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
-    ? outcome
-    : createStatisticsResultOutcome(outcome, parsed.ok
-      ? statisticsV2MathResolverFromOwnedLeaves({
-          routeId: statisticsMathJsonRouteForRequest(parsed.request),
-          leaves: mathJsonLeaves,
-        })
-      : undefined), 'Statistics');
-  const visualization = parsed.ok && ownedOutcome.kind === 'success'
-    ? buildStatisticsVisualizationPayloadV1(parsed.request)
-    : undefined;
+  try {
+    const { outcome, parsed, mathJsonLeaves } = runStatisticsCoreDraft(request.inputLatex, {
+      screenHint: request.screenHint,
+      workingSourceHint: request.workingSourceHint,
+    });
+    const replayScreen = parsed.ok
+      ? statisticsRequestToScreen(parsed.request, request.screenHint)
+      : request.screenHint;
+    const replayWorkingSource = parsed.ok
+      ? statisticsRequestToWorkingSource(parsed.request, request.workingSourceHint)
+        ?? request.workingSourceHint
+      : request.workingSourceHint;
 
-  return {
-    outcome: ownedOutcome,
-    parsed,
-    replayScreen,
-    ...(visualization ? { visualization } : {}),
-    ...(parsed.ok
-      ? {
-          replaySeed: {
-            screen: replayScreen,
-            request: parsed.request,
-            workingSource: replayWorkingSource,
-          },
-        }
-      : {}),
-  };
+    const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
+      ? outcome
+      : createStatisticsResultOutcome(outcome, parsed.ok
+        ? statisticsV2MathResolverFromOwnedLeaves({
+            routeId: statisticsMathJsonRouteForRequest(parsed.request),
+            leaves: mathJsonLeaves,
+          })
+        : undefined), 'Statistics');
+    const visualization = parsed.ok && ownedOutcome.kind === 'success'
+      ? buildStatisticsVisualizationPayloadV1(parsed.request)
+      : undefined;
+
+    return {
+      outcome: ownedOutcome,
+      parsed,
+      replayScreen,
+      ...(visualization ? { visualization } : {}),
+      ...(parsed.ok
+        ? {
+            replaySeed: {
+              screen: replayScreen,
+              request: parsed.request,
+              workingSource: replayWorkingSource,
+            },
+          }
+        : {}),
+    };
+  } finally {
+    if (request.approxDigits !== undefined) {
+      setNumericOutputSettings(previousNumericOutputSettings);
+    }
+  }
 }
 
 export function buildCanonicalStatisticsModeRunPayload(

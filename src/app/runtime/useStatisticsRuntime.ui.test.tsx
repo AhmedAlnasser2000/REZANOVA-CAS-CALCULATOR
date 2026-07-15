@@ -438,6 +438,7 @@ describe('useStatisticsRuntime', () => {
       inputLatex: BINOMIAL_LATEX,
       screenHint: 'binomial',
       workingSourceHint: 'dataset',
+      approxDigits: 6,
     };
     expect(reserveHistoryTicket).toHaveBeenCalledWith({
       mode: 'statistics',

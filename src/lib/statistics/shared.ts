@@ -9,7 +9,8 @@ import type {
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
-import { formatApproxNumber, formatNumber } from '../display/format';
+import { formatApproxNumber, formatNumber, numberToLatex } from '../display/format';
+import { getNumericOutputSettings } from '../display/numeric-output';
 import { parseSignedNumberInput } from '../numeric/signed-number';
 
 export function normalizeStatisticsSource(source: string) {
@@ -206,6 +207,10 @@ export function parseIntegerDraft(value: string) {
 
 export function formatStatisticsNumber(value: number) {
   return formatApproxNumber(value);
+}
+
+export function statisticsNumberToLatex(value: number) {
+  return numberToLatex(value, getNumericOutputSettings().approxDigits);
 }
 
 export const DEFAULT_STATISTICS_SOURCE_SYNC_STATE: StatisticsSourceSyncState = {

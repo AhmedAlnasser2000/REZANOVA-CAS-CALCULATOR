@@ -41,6 +41,10 @@ export function studentTCdf(value: number, degreesOfFreedom: number) {
   return studentT.cdf(value, degreesOfFreedom);
 }
 
+export function studentTDensity(value: number, degreesOfFreedom: number) {
+  return studentT.pdf(value, degreesOfFreedom);
+}
+
 export function inverseStudentTCdf(probability: number, degreesOfFreedom: number): number {
   return studentT.quantile(probability, degreesOfFreedom);
 }

@@ -20,8 +20,7 @@ export type StatisticsOwnedMathJsonLeaf = {
 
 export function statisticsMathNumber(value: number) {
   if (!Number.isFinite(value)) return undefined;
-  const normalized = Math.abs(value) < 1e-10 ? 0 : value;
-  return Number(normalized.toFixed(6));
+  return roundedApproxNumberValue(value);
 }
 
 function finiteMathNumber(value: number, label: string) {

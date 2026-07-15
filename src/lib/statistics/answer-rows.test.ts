@@ -35,4 +35,25 @@ describe('Statistics vertical answer rows', () => {
       expect(row.math.mathJson).toBeDefined();
     }
   });
+
+  it('uses the requested approximate digits without leaking them into later evaluations', () => {
+    const request = {
+      inputLatex: 'regression(points={(1,1),(2,4),(3,6)})',
+      screenHint: 'regression' as const,
+      workingSourceHint: 'dataset' as const,
+    };
+    const rounded = buildStatisticsModeRunPayload({ ...request, approxDigits: 2 }).outcome;
+    const defaultPrecision = buildStatisticsModeRunPayload(request).outcome;
+
+    expect(rounded.kind).toBe('success');
+    expect(defaultPrecision.kind).toBe('success');
+    if (rounded.kind !== 'success' || defaultPrecision.kind !== 'success') {
+      throw new Error('Expected Statistics successes.');
+    }
+    const roundedRows = rounded.answerRows?.rows.map((row) => row.latex).join(' ') ?? '';
+    const defaultRows = defaultPrecision.answerRows?.rows.map((row) => row.latex).join(' ') ?? '';
+    expect(roundedRows).toContain('-1.33');
+    expect(roundedRows).not.toContain('-1.333333');
+    expect(defaultRows).toContain('-1.333333');
+  });
 });

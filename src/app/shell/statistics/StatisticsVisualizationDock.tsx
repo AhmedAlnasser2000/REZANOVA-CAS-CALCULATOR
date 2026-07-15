@@ -29,6 +29,7 @@ type StatisticsVisualizationDockProps = KeypadPanelProps & {
   payload?: StatisticsVisualizationPayloadV1;
   selectedKind?: StatisticsVisualizationKind;
   histogramBinCount: StatisticsHistogramBinCount;
+  approxDigits: number;
   stale: boolean;
   outcomeKind?: 'success' | 'error' | 'prompt';
   runtimeStatusLabel?: string;
@@ -43,6 +44,7 @@ export function StatisticsVisualizationDock({
   payload,
   selectedKind,
   histogramBinCount,
+  approxDigits,
   stale,
   outcomeKind,
   runtimeStatusLabel,
@@ -71,8 +73,8 @@ export function StatisticsVisualizationDock({
         </div>
         <div className="statistics-visualization-controls">
           {payload && payload.views.length > 1 ? (
-            <label>
-              <span className="sr-only">Visualization</span>
+            <label className="statistics-visualization-field">
+              <span>Visualization</span>
               <select
                 aria-label="Visualization"
                 value={activeKind}
@@ -126,7 +128,11 @@ export function StatisticsVisualizationDock({
             <KeypadPanel {...keypadProps} />
           </div>
         ) : activeView ? (
-          <StatisticsEChart view={activeView} histogramBinCount={histogramBinCount} />
+          <StatisticsEChart
+            view={activeView}
+            histogramBinCount={histogramBinCount}
+            approxDigits={approxDigits}
+          />
         ) : (
           <div className="statistics-visualization-empty" data-testid="statistics-visualization-empty">
             <BarChart3 aria-hidden="true" size={30} />

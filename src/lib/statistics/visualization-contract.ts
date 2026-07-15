@@ -14,6 +14,10 @@ function finite(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function validTestStatistic(value: unknown) {
+  return finite(value) || value === 'negativeInfinity' || value === 'positiveInfinity';
+}
+
 function validTable(table: StatisticsVisualizationTableV1) {
   return Array.isArray(table.columns)
     && table.columns.length > 0
@@ -56,6 +60,10 @@ function validBoxSummary(
     && summary.outliers.every(finite);
 }
 
+function validCartesianPoint(point: { x: number; y: number }) {
+  return finite(point.x) && finite(point.y);
+}
+
 function validView(view: StatisticsVisualizationViewV1) {
   if (!validBase(view)) return false;
   switch (view.kind) {
@@ -88,7 +96,12 @@ function validView(view: StatisticsVisualizationViewV1) {
       });
     case 'scatterFit':
     case 'correlationScatter':
-      return validPoints(view.points, (point) => {
+      return (view.kind === 'scatterFit'
+          ? view.fittedLine !== undefined
+            && validCartesianPoint(view.fittedLine.start)
+            && validCartesianPoint(view.fittedLine.end)
+          : view.fittedLine === undefined)
+        && validPoints(view.points, (point) => {
         const value = point as { x?: unknown; y?: unknown };
         return finite(value.x) && finite(value.y);
       });
@@ -101,10 +114,18 @@ function validView(view: StatisticsVisualizationViewV1) {
       return finite(view.estimate)
         && finite(view.lower)
         && finite(view.upper)
-        && finite(view.confidenceLevel);
+        && view.lower <= view.estimate
+        && view.estimate <= view.upper
+        && finite(view.confidenceLevel)
+        && view.confidenceLevel > 0
+        && view.confidenceLevel < 1;
     case 'testDistribution':
-      return finite(view.statistic)
+      return validTestStatistic(view.statistic)
         && finite(view.pValue)
+        && view.pValue >= 0
+        && view.pValue <= 1
+        && ['twoSided', 'less', 'greater'].includes(view.alternative)
+        && view.criticalValues.length <= 2
         && view.criticalValues.every(finite)
         && validPoints(view.points, (point) => {
           const value = point as { t?: unknown; density?: unknown; pValueRegion?: unknown };

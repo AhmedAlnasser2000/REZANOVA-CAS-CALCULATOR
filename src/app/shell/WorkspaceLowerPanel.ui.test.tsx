@@ -56,6 +56,7 @@ const baseProps = {
   statisticsVisualization: payload,
   statisticsVisualizationKind: 'histogram' as const,
   statisticsHistogramBinCount: 'auto' as const,
+  approxDigits: 6,
   statisticsResultIsStale: false,
   statisticsOutcomeKind: 'success' as const,
   runtimeStatusLabel: 'Ready',
@@ -88,6 +89,7 @@ describe('WorkspaceLowerPanel', () => {
     );
 
     expect(screen.getByText('Stale')).toBeVisible();
+    expect(screen.getByText('Visualization', { selector: 'span' })).toBeVisible();
     fireEvent.change(screen.getByRole('combobox', { name: 'Visualization' }), {
       target: { value: 'boxPlot' },
     });

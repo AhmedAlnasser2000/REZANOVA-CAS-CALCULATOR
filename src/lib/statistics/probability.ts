@@ -4,7 +4,6 @@ import type {
   StatisticsProbabilityEvent,
   StatisticsRequest,
 } from '../../types/calculator';
-import { numberToLatex } from '../display/format';
 import { profileStatisticsResult } from '../display/printer';
 import { evaluateStatisticsDistribution } from './distributions';
 import {
@@ -12,7 +11,12 @@ import {
   statisticsMathSequence,
   type StatisticsOwnedMathJsonLeaf,
 } from './math-values';
-import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
+import {
+  formatStatisticsNumber,
+  parseIntegerDraft,
+  parseNumericDraft,
+  statisticsNumberToLatex,
+} from './shared';
 import { probabilityAnswerReadback } from './answer-row-builders';
 
 export type ProbabilityRequest = Extract<StatisticsRequest, {
@@ -109,7 +113,7 @@ function parseProbabilityEvent(request: ProbabilityRequest):
 }
 
 export function probabilityEventLatex(event: ParsedProbabilityEvent) {
-  const x = numberToLatex(event.x ?? 0);
+  const x = statisticsNumberToLatex(event.x ?? 0);
   switch (event.event) {
     case 'exactly':
       return `X=${x}`;
@@ -126,7 +130,7 @@ export function probabilityEventLatex(event: ParsedProbabilityEvent) {
     case 'between': {
       const lowerSymbol = event.lowerBound === 'inclusive' ? '\\le' : '<';
       const upperSymbol = event.upperBound === 'inclusive' ? '\\le' : '<';
-      return `${numberToLatex(event.lower ?? 0)}${lowerSymbol} X${upperSymbol} ${numberToLatex(event.upper ?? 0)}`;
+      return `${statisticsNumberToLatex(event.lower ?? 0)}${lowerSymbol} X${upperSymbol} ${statisticsNumberToLatex(event.upper ?? 0)}`;
     }
   }
 }
@@ -159,7 +163,7 @@ function eventAnswerLatex(event: ParsedProbabilityEvent) {
   if (event.event !== 'between') return probabilityEventLatex(event);
   const lowerSymbol = event.lowerBound === 'inclusive' ? '\\le' : '<';
   const upperSymbol = event.upperBound === 'inclusive' ? '\\le' : '<';
-  return `${numberToLatex(event.lower ?? 0)}${lowerSymbol} X,\\ X${upperSymbol} ${numberToLatex(event.upper ?? 0)}`;
+  return `${statisticsNumberToLatex(event.lower ?? 0)}${lowerSymbol} X,\\ X${upperSymbol} ${statisticsNumberToLatex(event.upper ?? 0)}`;
 }
 
 function eventAnswerMathJson(event: ParsedProbabilityEvent): unknown {
@@ -229,9 +233,9 @@ export function probabilityOutcome(request: ProbabilityRequest): StatisticsProba
   const valueSymbol = result.valueKind === 'density' ? 'd' : 'p';
   const exactLatex = [
     notation,
-    `${valueSymbol}=${numberToLatex(result.value)}`,
-    `\\operatorname{mean}(X)=${numberToLatex(result.expectedValue)}`,
-    `\\sigma=${numberToLatex(result.standardDeviation)}`,
+    `${valueSymbol}=${statisticsNumberToLatex(result.value)}`,
+    `\\operatorname{mean}(X)=${statisticsNumberToLatex(result.expectedValue)}`,
+    `\\sigma=${statisticsNumberToLatex(result.standardDeviation)}`,
   ].join(',\\ ');
   const summary = result.valueKind === 'density'
     ? `Density=${formatStatisticsNumber(result.value)}`

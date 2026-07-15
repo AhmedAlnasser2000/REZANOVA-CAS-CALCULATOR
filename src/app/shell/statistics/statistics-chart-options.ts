@@ -5,6 +5,7 @@ import type {
 } from '../../../types/calculator';
 import type { StatisticsEChartOption } from './statistics-echarts';
 import { buildStatisticsHistogramBins } from './statistics-histogram';
+import { formatApproxNumber } from '../../../lib/display/numeric-output';
 
 const COLORS = {
   ink: '#dce7df',
@@ -16,19 +17,6 @@ const COLORS = {
   outlier: '#d27468',
 };
 
-const baseOption: StatisticsEChartOption = {
-  animation: false,
-  aria: { enabled: true },
-  grid: { left: 62, right: 28, top: 24, bottom: 58, outerBoundsMode: 'same' },
-  tooltip: {
-    trigger: 'item',
-    backgroundColor: '#16231e',
-    borderColor: '#52675d',
-    textStyle: { color: COLORS.ink },
-  },
-  textStyle: { color: COLORS.ink, fontFamily: 'IBM Plex Mono, monospace' },
-};
-
 const axisStyle = {
   axisLine: { lineStyle: { color: COLORS.muted } },
   axisLabel: { color: COLORS.muted },
@@ -36,16 +24,58 @@ const axisStyle = {
   splitLine: { lineStyle: { color: COLORS.grid } },
 };
 
+function formatChartNumber(value: number, approxDigits: number) {
+  return formatApproxNumber(value, { approxDigits, numericNotationMode: 'decimal' });
+}
+
+function formatChartValue(value: unknown, approxDigits: number): string {
+  if (typeof value === 'number') return formatChartNumber(value, approxDigits);
+  if (Array.isArray(value)) {
+    return value.map((entry) => formatChartValue(entry, approxDigits)).join(', ');
+  }
+  return String(value);
+}
+
+function baseOptionFor(approxDigits: number): StatisticsEChartOption {
+  return {
+    animation: false,
+    backgroundColor: '#111e1c',
+    aria: { enabled: true },
+    grid: { left: 62, right: 28, top: 24, bottom: 58, outerBoundsMode: 'same' },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#16231e',
+      borderColor: '#52675d',
+      textStyle: { color: COLORS.ink },
+      valueFormatter: (value: unknown) => formatChartValue(value, approxDigits),
+    },
+    textStyle: { color: COLORS.ink, fontFamily: 'IBM Plex Mono, monospace' },
+  };
+}
+
+function axisStyleFor(approxDigits: number) {
+  return {
+    ...axisStyle,
+    axisLabel: {
+      ...axisStyle.axisLabel,
+      formatter: (value: string | number) => typeof value === 'number'
+        ? formatChartNumber(value, approxDigits)
+        : value,
+    },
+  };
+}
+
 function histogramOption(
   view: StatisticsWeightedDataVisualizationV1,
   binCount: StatisticsHistogramBinCount,
+  approxDigits: number,
 ): StatisticsEChartOption {
-  const bins = buildStatisticsHistogramBins(view.weightedValues, binCount);
+  const bins = buildStatisticsHistogramBins(view.weightedValues, binCount, approxDigits);
   return {
-    ...baseOption,
+    ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
     xAxis: {
-      ...axisStyle,
+      ...axisStyleFor(approxDigits),
       type: 'category',
       name: view.xLabel,
       nameLocation: 'middle',
@@ -53,7 +83,7 @@ function histogramOption(
       data: bins.map((bin) => bin.label),
       axisLabel: { color: COLORS.muted, hideOverlap: true },
     },
-    yAxis: { ...axisStyle, type: 'value', name: view.yLabel, minInterval: 1 },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel, minInterval: 1 },
     series: [{
       type: 'bar',
       name: 'Frequency',
@@ -67,7 +97,10 @@ function histogramOption(
   };
 }
 
-function frequencyBarsOption(view: StatisticsWeightedDataVisualizationV1): StatisticsEChartOption {
+function frequencyBarsOption(
+  view: StatisticsWeightedDataVisualizationV1,
+  approxDigits: number,
+): StatisticsEChartOption {
   const limit = 120;
   const width = Math.max(1, Math.ceil(view.weightedValues.length / limit));
   const groups = Array.from(
@@ -75,13 +108,13 @@ function frequencyBarsOption(view: StatisticsWeightedDataVisualizationV1): Stati
     (_, index) => view.weightedValues.slice(index * width, (index + 1) * width),
   );
   const labels = groups.map((group) => group.length === 1
-    ? String(group[0].value)
-    : `${group[0].value}-${group[group.length - 1].value}`);
+    ? formatChartNumber(group[0].value, approxDigits)
+    : `${formatChartNumber(group[0].value, approxDigits)}-${formatChartNumber(group[group.length - 1].value, approxDigits)}`);
   return {
-    ...baseOption,
+    ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
     xAxis: {
-      ...axisStyle,
+      ...axisStyleFor(approxDigits),
       type: 'category',
       name: view.xLabel,
       nameLocation: 'middle',
@@ -89,7 +122,7 @@ function frequencyBarsOption(view: StatisticsWeightedDataVisualizationV1): Stati
       data: labels,
       axisLabel: { color: COLORS.muted, hideOverlap: true },
     },
-    yAxis: { ...axisStyle, type: 'value', name: view.yLabel, minInterval: 1 },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel, minInterval: 1 },
     series: [{
       type: 'bar',
       name: width === 1 ? 'Frequency' : 'Aggregated frequency',
@@ -103,21 +136,25 @@ function frequencyBarsOption(view: StatisticsWeightedDataVisualizationV1): Stati
   };
 }
 
-function boxPlotOption(view: StatisticsWeightedDataVisualizationV1): StatisticsEChartOption {
+function boxPlotOption(
+  view: StatisticsWeightedDataVisualizationV1,
+  approxDigits: number,
+): StatisticsEChartOption {
   const summary = view.boxSummary;
-  if (!summary) return histogramOption(view, 'auto');
+  if (!summary) return histogramOption(view, 'auto', approxDigits);
   return {
-    ...baseOption,
+    ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
     grid: { left: 42, right: 32, top: 36, bottom: 58, outerBoundsMode: 'same' },
     xAxis: {
-      ...axisStyle,
+      ...axisStyleFor(approxDigits),
       type: 'value',
+      scale: true,
       name: view.xLabel,
       nameLocation: 'middle',
       nameGap: 38,
     },
-    yAxis: { ...axisStyle, type: 'category', data: ['Dataset'] },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'category', data: ['Dataset'] },
     series: [
       {
         type: 'boxplot',
@@ -146,13 +183,14 @@ function boxPlotOption(view: StatisticsWeightedDataVisualizationV1): StatisticsE
 
 function probabilityBarsOption(
   view: Extract<StatisticsVisualizationViewV1, { kind: 'probabilityBars' }>,
+  approxDigits: number,
 ): StatisticsEChartOption {
-  const labels = view.points.map((point) => point.label ?? String(point.x));
+  const labels = view.points.map((point) => point.label ?? formatChartNumber(point.x, approxDigits));
   return {
-    ...baseOption,
+    ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
     xAxis: {
-      ...axisStyle,
+      ...axisStyleFor(approxDigits),
       type: 'category',
       name: view.xLabel,
       nameLocation: 'middle',
@@ -160,7 +198,7 @@ function probabilityBarsOption(
       data: labels,
       axisLabel: { color: COLORS.muted, hideOverlap: true },
     },
-    yAxis: { ...axisStyle, type: 'value', name: view.yLabel },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel },
     series: [{
       type: 'bar',
       name: 'Probability mass',
@@ -180,6 +218,7 @@ function probabilityBarsOption(
 
 function normalCurveOption(
   view: Extract<StatisticsVisualizationViewV1, { kind: 'normalCurve' }>,
+  approxDigits: number,
 ): StatisticsEChartOption {
   const selectedData = view.points.map((point) => (
     point.selected ? [point.x, point.density] : [point.x, null]
@@ -193,16 +232,17 @@ function normalCurveOption(
     itemStyle: { color: COLORS.selected },
   }] : [];
   return {
-    ...baseOption,
+    ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
     xAxis: {
-      ...axisStyle,
+      ...axisStyleFor(approxDigits),
       type: 'value',
+      scale: true,
       name: view.xLabel,
       nameLocation: 'middle',
       nameGap: 38,
     },
-    yAxis: { ...axisStyle, type: 'value', name: view.yLabel, min: 0 },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel, min: 0 },
     series: [
       {
         type: 'line',
@@ -225,22 +265,213 @@ function normalCurveOption(
   };
 }
 
+function pairedPointsOption(
+  view: Extract<StatisticsVisualizationViewV1, { kind: 'scatterFit' | 'correlationScatter' }>,
+  approxDigits: number,
+): StatisticsEChartOption {
+  const fittedSeries = view.kind === 'scatterFit' && view.fittedLine ? [{
+    type: 'line' as const,
+    name: 'Fitted line',
+    data: [
+      [view.fittedLine.start.x, view.fittedLine.start.y],
+      [view.fittedLine.end.x, view.fittedLine.end.y],
+    ],
+    showSymbol: false,
+    lineStyle: { color: COLORS.selected, width: 2 },
+  }] : [];
+  return {
+    ...baseOptionFor(approxDigits),
+    aria: { enabled: true, description: view.ariaDescription },
+    xAxis: {
+      ...axisStyleFor(approxDigits),
+      type: 'value',
+      name: view.xLabel,
+      nameLocation: 'middle',
+      nameGap: 38,
+    },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel },
+    series: [
+      {
+        type: 'scatter',
+        name: 'Observed points',
+        data: view.points.map((point) => [point.x, point.y]),
+        symbolSize: 10,
+        itemStyle: { color: COLORS.base, borderColor: COLORS.ink, borderWidth: 1 },
+      },
+      ...fittedSeries,
+    ],
+  };
+}
+
+function residualOption(
+  view: Extract<StatisticsVisualizationViewV1, { kind: 'residuals' }>,
+  approxDigits: number,
+): StatisticsEChartOption {
+  const xValues = view.points.map((point) => point.x);
+  const start = Math.min(...xValues);
+  const end = Math.max(...xValues);
+  return {
+    ...baseOptionFor(approxDigits),
+    aria: { enabled: true, description: view.ariaDescription },
+    xAxis: {
+      ...axisStyleFor(approxDigits),
+      type: 'value',
+      name: view.xLabel,
+      nameLocation: 'middle',
+      nameGap: 38,
+    },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel },
+    series: [
+      {
+        type: 'line',
+        name: 'Zero residual',
+        data: [[start, 0], [end, 0]],
+        showSymbol: false,
+        lineStyle: { color: COLORS.muted, width: 1, type: 'dashed' },
+      },
+      {
+        type: 'scatter',
+        name: 'Residuals',
+        data: view.points.map((point) => [point.x, point.residual]),
+        symbolSize: 10,
+        itemStyle: { color: COLORS.outlier },
+      },
+    ],
+  };
+}
+
+function confidenceIntervalOption(
+  view: Extract<StatisticsVisualizationViewV1, { kind: 'confidenceInterval' }>,
+  approxDigits: number,
+): StatisticsEChartOption {
+  return {
+    ...baseOptionFor(approxDigits),
+    aria: { enabled: true, description: view.ariaDescription },
+    grid: { left: 42, right: 32, top: 36, bottom: 58, outerBoundsMode: 'same' },
+    xAxis: {
+      ...axisStyleFor(approxDigits),
+      type: 'value',
+      scale: true,
+      name: view.xLabel,
+      nameLocation: 'middle',
+      nameGap: 38,
+    },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'category', data: ['Interval'] },
+    series: [
+      {
+        type: 'line',
+        name: `${view.confidenceLevel * 100}% confidence interval`,
+        data: [[view.lower, 'Interval'], [view.upper, 'Interval']],
+        symbol: 'diamond',
+        symbolSize: 12,
+        lineStyle: { color: COLORS.base, width: 5 },
+        itemStyle: { color: COLORS.base },
+      },
+      {
+        type: 'scatter',
+        name: 'Sample mean',
+        data: [[view.estimate, 'Interval']],
+        symbol: 'circle',
+        symbolSize: 15,
+        itemStyle: { color: COLORS.selected, borderColor: COLORS.ink, borderWidth: 2 },
+      },
+    ],
+  };
+}
+
+function testDistributionOption(
+  view: Extract<StatisticsVisualizationViewV1, { kind: 'testDistribution' }>,
+  approxDigits: number,
+): StatisticsEChartOption {
+  const minimum = view.points[0]?.t ?? -4;
+  const maximum = view.points.at(-1)?.t ?? 4;
+  const maximumDensity = Math.max(...view.points.map((point) => point.density), 0);
+  const statistic = view.statistic === 'negativeInfinity'
+    ? minimum
+    : view.statistic === 'positiveInfinity'
+      ? maximum
+      : view.statistic;
+  const referenceLines = [
+    ...view.criticalValues.map((critical, index) => ({
+      type: 'line' as const,
+      name: `Critical value ${index + 1}`,
+      data: [[critical, 0], [critical, maximumDensity]],
+      showSymbol: false,
+      lineStyle: { color: COLORS.outlier, width: 1, type: 'dashed' as const },
+    })),
+    {
+      type: 'line' as const,
+      name: 'Test statistic',
+      data: [[statistic, 0], [statistic, maximumDensity]],
+      showSymbol: false,
+      lineStyle: { color: COLORS.selected, width: 2 },
+    },
+  ];
+  return {
+    ...baseOptionFor(approxDigits),
+    aria: { enabled: true, description: view.ariaDescription },
+    xAxis: {
+      ...axisStyleFor(approxDigits),
+      type: 'value',
+      name: view.xLabel,
+      nameLocation: 'middle',
+      nameGap: 38,
+      min: minimum,
+      max: maximum,
+      axisLabel: {
+        color: COLORS.muted,
+        formatter: (value: number) => formatChartNumber(value, approxDigits),
+      },
+    },
+    yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel, min: 0 },
+    series: [
+      {
+        type: 'line',
+        name: 'Student-t density',
+        data: view.points.map((point) => [point.t, point.density]),
+        showSymbol: false,
+        lineStyle: { color: COLORS.curve, width: 2 },
+      },
+      {
+        type: 'line',
+        name: 'P-value region',
+        data: view.points.map((point) => (
+          point.pValueRegion ? [point.t, point.density] : [point.t, null]
+        )),
+        showSymbol: false,
+        connectNulls: false,
+        lineStyle: { color: COLORS.selected, width: 2 },
+        areaStyle: { color: 'rgba(210, 170, 78, 0.42)' },
+      },
+      ...referenceLines,
+    ],
+  };
+}
+
 export function statisticsChartOption(
   view: StatisticsVisualizationViewV1,
   histogramBinCount: StatisticsHistogramBinCount,
+  approxDigits = 6,
 ): StatisticsEChartOption {
   switch (view.kind) {
     case 'histogram':
-      return histogramOption(view, histogramBinCount);
+      return histogramOption(view, histogramBinCount, approxDigits);
     case 'boxPlot':
-      return boxPlotOption(view);
+      return boxPlotOption(view, approxDigits);
     case 'frequencyBars':
-      return frequencyBarsOption(view);
+      return frequencyBarsOption(view, approxDigits);
     case 'probabilityBars':
-      return probabilityBarsOption(view);
+      return probabilityBarsOption(view, approxDigits);
     case 'normalCurve':
-      return normalCurveOption(view);
-    default:
-      return { ...baseOption, aria: { enabled: true, description: view.ariaDescription } };
+      return normalCurveOption(view, approxDigits);
+    case 'scatterFit':
+    case 'correlationScatter':
+      return pairedPointsOption(view, approxDigits);
+    case 'residuals':
+      return residualOption(view, approxDigits);
+    case 'confidenceInterval':
+      return confidenceIntervalOption(view, approxDigits);
+    case 'testDistribution':
+      return testDistributionOption(view, approxDigits);
   }
 }

@@ -43,7 +43,6 @@ import {
   statisticsRequestToWorkingSource,
   statisticsSourceSyncFromDatasetEdit,
   statisticsSourceSyncFromFrequencyEdit,
-  type RunStatisticsRuntimeRequest,
 } from '../../lib/statistics/runtime-request';
 import type {
   CoreDraftState,
@@ -78,11 +77,17 @@ import {
   normalStateFromRequest,
   poissonStateFromRequest,
 } from './statistics-probability-state';
+import {
+  addStatisticsRequestPrecision,
+  statisticsInputRevisionWithPrecision,
+  statisticsRuntimeRequestWithPrecision,
+} from './statistics-precision-request';
 
 type StatisticsStateSnapshot = Parameters<typeof buildStatisticsInputLatex>[1];
 
 export function useStatisticsRuntime({
   activeFieldRef,
+  approxDigits = 6,
   commitOutcome,
   currentMode,
   currentModeRef,
@@ -233,11 +238,10 @@ export function useStatisticsRuntime({
         statisticsStateSnapshot,
         statisticsWorkingSource,
       );
-  const activeStatisticsInputRevisionId = buildStatisticsOoeInputRevisionId({
-    inputLatex: activeStatisticsInputLatex,
-    screenHint: statisticsSectionScreens[statisticsSection],
-    workingSourceHint: statisticsWorkingSource,
-  });
+  const activeStatisticsInputRevisionId = statisticsInputRevisionWithPrecision(
+    activeStatisticsInputLatex, statisticsSectionScreens[statisticsSection],
+    statisticsWorkingSource, approxDigits,
+  );
   const activeStatisticsResultIsStale = Boolean(
     activeStatisticsSectionResult
     && activeStatisticsSectionResult.inputRevisionId !== activeStatisticsInputRevisionId,
@@ -431,11 +435,9 @@ export function useStatisticsRuntime({
       return null;
     }
 
-    return {
-      inputLatex,
-      screenHint,
-      workingSourceHint: statisticsWorkingSourceRef.current,
-    } satisfies RunStatisticsRuntimeRequest;
+    return statisticsRuntimeRequestWithPrecision(
+      inputLatex, screenHint, statisticsWorkingSourceRef.current, approxDigits,
+    );
   }
 
   function openStatisticsScreen(screen: StatisticsScreen) {
@@ -885,11 +887,9 @@ export function useStatisticsRuntime({
         updateStatisticsDraft(inputLatex, 'manual', true);
       }
 
-      const request: RunStatisticsRuntimeRequest = {
-        inputLatex,
-        screenHint,
-        workingSourceHint: statisticsWorkingSource,
-      };
+      const request = statisticsRuntimeRequestWithPrecision(
+        inputLatex, screenHint, statisticsWorkingSource, approxDigits,
+      );
       const inputRevisionId = buildStatisticsOoeInputRevisionId(request);
       launchWorkspaceRuntimeJob({
         mode: 'statistics',
@@ -905,12 +905,12 @@ export function useStatisticsRuntime({
         getActiveWorkspaceInstanceRuntimeContext,
         getWorkspaceInstances,
         readRequestFromSurfaceState: (surfaceState, instance) =>
-          statisticsRequestFromSurfaceStateForScreen(
+          addStatisticsRequestPrecision(statisticsRequestFromSurfaceStateForScreen(
             surfaceState,
             instance,
             screenHint,
             useExpressionDraft,
-          ),
+          ), approxDigits),
         isModeVisible: () => {
           const activeWorkspace = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
           return currentModeRef.current === 'statistics'

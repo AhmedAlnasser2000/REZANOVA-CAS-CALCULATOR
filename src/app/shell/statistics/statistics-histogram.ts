@@ -1,4 +1,5 @@
 import type { StatisticsHistogramBinCount } from '../../../types/calculator';
+import { formatApproxNumber } from '../../../lib/display/numeric-output';
 
 export type StatisticsHistogramBin = {
   lower: number;
@@ -11,8 +12,8 @@ function boundedBinCount(value: number) {
   return Math.min(50, Math.max(1, Math.round(value)));
 }
 
-function formatBoundary(value: number) {
-  return Number.isInteger(value) ? String(value) : Number(value.toPrecision(5)).toString();
+function formatBoundary(value: number, approxDigits: number) {
+  return formatApproxNumber(value, { approxDigits, numericNotationMode: 'decimal' });
 }
 
 export function statisticsAutomaticHistogramBinCount(total: number) {
@@ -22,6 +23,7 @@ export function statisticsAutomaticHistogramBinCount(total: number) {
 export function buildStatisticsHistogramBins(
   weightedValues: readonly { value: number; weight: number }[],
   requestedCount: StatisticsHistogramBinCount,
+  approxDigits = 6,
 ): StatisticsHistogramBin[] {
   if (weightedValues.length === 0) return [];
   const sorted = [...weightedValues].sort((left, right) => left.value - right.value);
@@ -29,7 +31,7 @@ export function buildStatisticsHistogramBins(
   const maximum = sorted[sorted.length - 1].value;
   const total = sorted.reduce((sum, point) => sum + point.weight, 0);
   if (minimum === maximum) {
-    return [{ lower: minimum, upper: maximum, frequency: total, label: formatBoundary(minimum) }];
+    return [{ lower: minimum, upper: maximum, frequency: total, label: formatBoundary(minimum, approxDigits) }];
   }
 
   const count = requestedCount === 'auto'
@@ -51,8 +53,7 @@ export function buildStatisticsHistogramBins(
       lower,
       upper,
       frequency,
-      label: `${formatBoundary(lower)}-${formatBoundary(upper)}`,
+      label: `${formatBoundary(lower, approxDigits)}-${formatBoundary(upper, approxDigits)}`,
     };
   });
 }
-

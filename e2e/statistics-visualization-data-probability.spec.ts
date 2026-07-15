@@ -16,6 +16,18 @@ test('Data & Summary renders weighted histogram and Calcwiz box plot locally', a
   const chart = dock.getByTestId('statistics-visualization-chart');
   await expect(chart.locator('svg')).toBeVisible();
   await expect(dock.getByRole('combobox', { name: 'Visualization' })).toHaveValue('histogram');
+  await expect(dock.getByText('Stale', { exact: true })).toHaveCount(0);
+  const visualizationField = dock.locator('.statistics-visualization-field');
+  const binField = dock.locator('.statistics-histogram-bin-control');
+  await expect(visualizationField).toBeVisible();
+  await expect(binField).toBeVisible();
+  const selectBox = await visualizationField.getByRole('combobox').boundingBox();
+  const binLabelBox = await binField.locator('span').boundingBox();
+  const binInputBox = await binField.getByRole('spinbutton').boundingBox();
+  expect(selectBox).not.toBeNull();
+  expect(binLabelBox).not.toBeNull();
+  expect(binInputBox).not.toBeNull();
+  expect((binInputBox?.x ?? 0) - ((binLabelBox?.x ?? 0) + (binLabelBox?.width ?? 0))).toBeGreaterThanOrEqual(10);
   await dock.screenshot({
     path: '.task_tmp/statistics-visualization/gate3-data-histogram.png',
     animations: 'disabled',

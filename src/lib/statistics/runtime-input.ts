@@ -10,6 +10,7 @@ export type RunStatisticsRuntimeRequest = {
   inputLatex: string;
   screenHint: StatisticsScreen;
   workingSourceHint: StatisticsWorkingSource;
+  approxDigits?: number;
 };
 
 export function buildStatisticsOoeSnapshot(request: RunStatisticsRuntimeRequest) {

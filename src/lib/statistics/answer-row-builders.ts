@@ -1,5 +1,5 @@
-import { numberToLatex } from '../display/format';
 import { buildStatisticsAnswerRows } from './answer-rows';
+import { statisticsNumberToLatex } from './shared';
 import type { DescriptiveStatisticsSummary } from './descriptive';
 import type {
   MeanConfidenceIntervalResult,
@@ -23,7 +23,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
   return buildStatisticsAnswerRows([
     {
       label: 'Size and total',
-      latex: `n=${summary.count},\\ \\sum x=${numberToLatex(summary.sum)}`,
+      latex: `n=${summary.count},\\ \\sum x=${statisticsNumberToLatex(summary.sum)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'n', summary.count],
         ['Equal', ['Reduce', 'x', 'Add'], statisticsMathNumber(summary.sum)],
@@ -31,7 +31,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
     },
     {
       label: 'Center',
-      latex: `\\bar{x}=${numberToLatex(summary.mean)},\\ \\operatorname{median}=${numberToLatex(summary.median)}`,
+      latex: `\\bar{x}=${statisticsNumberToLatex(summary.mean)},\\ \\operatorname{median}=${statisticsNumberToLatex(summary.median)}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Mean', 'x'], statisticsMathNumber(summary.mean)],
         ['Equal', 'Median', statisticsMathNumber(summary.median)],
@@ -39,7 +39,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
     },
     {
       label: 'Five-number summary',
-      latex: `\\min=${numberToLatex(summary.min)},\\ Q_1=${numberToLatex(summary.q1)},\\ \\operatorname{median}=${numberToLatex(summary.median)},\\ Q_3=${numberToLatex(summary.q3)},\\ \\max=${numberToLatex(summary.max)}`,
+      latex: `\\min=${statisticsNumberToLatex(summary.min)},\\ Q_1=${statisticsNumberToLatex(summary.q1)},\\ \\operatorname{median}=${statisticsNumberToLatex(summary.median)},\\ Q_3=${statisticsNumberToLatex(summary.q3)},\\ \\max=${statisticsNumberToLatex(summary.max)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'Min', statisticsMathNumber(summary.min)],
         ['Equal', ['Subscript', 'Q', 1], statisticsMathNumber(summary.q1)],
@@ -50,7 +50,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
     },
     {
       label: 'Range and fences',
-      latex: `\\operatorname{range}=${numberToLatex(summary.range)},\\ \\operatorname{IQR}=${numberToLatex(summary.iqr)},\\ F_L=${numberToLatex(summary.lowerFence)},\\ F_U=${numberToLatex(summary.upperFence)}`,
+      latex: `\\operatorname{range}=${statisticsNumberToLatex(summary.range)},\\ \\operatorname{IQR}=${statisticsNumberToLatex(summary.iqr)},\\ F_L=${statisticsNumberToLatex(summary.lowerFence)},\\ F_U=${statisticsNumberToLatex(summary.upperFence)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'range', statisticsMathNumber(summary.range)],
         ['Equal', 'IQR', statisticsMathNumber(summary.iqr)],
@@ -60,7 +60,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
     },
     {
       label: 'Population spread',
-      latex: `\\sigma^2=${numberToLatex(summary.populationVariance)},\\ \\sigma=${numberToLatex(summary.populationStandardDeviation)}`,
+      latex: `\\sigma^2=${statisticsNumberToLatex(summary.populationVariance)},\\ \\sigma=${statisticsNumberToLatex(summary.populationStandardDeviation)}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Power', 'sigma', 2], statisticsMathNumber(summary.populationVariance)],
         ['Equal', 'sigma', statisticsMathNumber(summary.populationStandardDeviation)],
@@ -70,7 +70,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
       ? []
       : [{
           label: 'Sample spread',
-          latex: `s^2=${numberToLatex(summary.sampleVariance)},\\ s=${numberToLatex(summary.sampleStandardDeviation)}`,
+          latex: `s^2=${statisticsNumberToLatex(summary.sampleVariance)},\\ s=${statisticsNumberToLatex(summary.sampleStandardDeviation)}`,
           mathJson: statisticsMathSequence(
             ['Equal', ['Power', 's', 2], statisticsMathNumber(summary.sampleVariance)],
             ['Equal', 's', statisticsMathNumber(summary.sampleStandardDeviation)],
@@ -81,8 +81,8 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
       : [{
           label: summary.modes.length === 1 ? 'Mode' : 'Modes',
           latex: summary.modes.length === 1
-            ? `\\operatorname{mode}=${numberToLatex(summary.modes[0])}`
-            : `\\operatorname{modes}=\\left\\{${summary.modes.map(numberToLatex).join(',\\ ')}\\right\\}`,
+            ? `\\operatorname{mode}=${statisticsNumberToLatex(summary.modes[0])}`
+            : `\\operatorname{modes}=\\left\\{${summary.modes.map(statisticsNumberToLatex).join(',\\ ')}\\right\\}`,
           mathJson: ['Equal', summary.modes.length === 1 ? 'mode' : 'modes', summary.modes.length === 1
             ? statisticsMathNumber(summary.modes[0])
             : ['Set', ...summary.modes.map(statisticsMathNumber)]],
@@ -91,7 +91,7 @@ export function descriptiveAnswerReadback(summary: DescriptiveStatisticsSummary)
       ? []
       : [{
           label: 'Potential outliers',
-          latex: `\\operatorname{outliers}=\\left\\{${summary.potentialOutliers.map(numberToLatex).join(',\\ ')}\\right\\}`,
+          latex: `\\operatorname{outliers}=\\left\\{${summary.potentialOutliers.map(statisticsNumberToLatex).join(',\\ ')}\\right\\}`,
           mathJson: ['Equal', 'outliers', ['Set', ...summary.potentialOutliers.map(statisticsMathNumber)]],
         }]),
   ], 'statistics.descriptive.native-summary');
@@ -102,7 +102,7 @@ export function datasetAnswerReadback(values: readonly number[]) {
     { label: 'Count', latex: `n=${values.length}`, mathJson: ['Equal', 'n', values.length] },
     {
       label: 'Values',
-      latex: `\\left[${values.map(numberToLatex).join(',\\ ')}\\right]`,
+      latex: `\\left[${values.map(statisticsNumberToLatex).join(',\\ ')}\\right]`,
       mathJson: ['List', ...values.map(statisticsMathNumber)],
     },
   ], 'statistics.descriptive.native-dataset');
@@ -117,7 +117,7 @@ export function frequencyAnswerReadback(input: {
     { label: 'Count', latex: `n=${input.totalCount}`, mathJson: ['Equal', 'n', input.totalCount] },
     {
       label: 'Frequency table',
-      latex: `\\left\\{${input.rows.map((row) => `(${numberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}`,
+      latex: `\\left\\{${input.rows.map((row) => `(${statisticsNumberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}`,
       mathJson: ['Set', ...input.rows.map((row) => [
         'Tuple',
         statisticsMathNumber(row.value),
@@ -128,7 +128,7 @@ export function frequencyAnswerReadback(input: {
       ? []
       : [{
           label: 'Mode',
-          latex: `\\operatorname{mode}=${numberToLatex(input.modeValue)}`,
+          latex: `\\operatorname{mode}=${statisticsNumberToLatex(input.modeValue)}`,
           mathJson: ['Equal', 'mode', statisticsMathNumber(input.modeValue)],
         }]),
   ], 'statistics.frequency.native-frequency-rows');
@@ -142,7 +142,7 @@ export function confidenceIntervalAnswerReadback(input: {
   return buildStatisticsAnswerRows([
     {
       label: 'Sample',
-      latex: `\\bar{x}=${numberToLatex(input.summary.mean)},\\ s=${numberToLatex(sampleStandardDeviation)},\\ n=${input.summary.count}`,
+      latex: `\\bar{x}=${statisticsNumberToLatex(input.summary.mean)},\\ s=${statisticsNumberToLatex(sampleStandardDeviation)},\\ n=${input.summary.count}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
         ['Equal', 's', statisticsMathNumber(sampleStandardDeviation)],
@@ -151,7 +151,7 @@ export function confidenceIntervalAnswerReadback(input: {
     },
     {
       label: 'Precision',
-      latex: `SE=${numberToLatex(input.result.standardError)},\\ df=${input.summary.count - 1},\\ t_{\\mathrm{critical}}=${numberToLatex(input.result.criticalValue)},\\ ME=${numberToLatex(input.result.marginOfError)}`,
+      latex: `SE=${statisticsNumberToLatex(input.result.standardError)},\\ df=${input.summary.count - 1},\\ t_{\\mathrm{critical}}=${statisticsNumberToLatex(input.result.criticalValue)},\\ ME=${statisticsNumberToLatex(input.result.marginOfError)}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['InvisibleOperator', 'S', 'E'], statisticsMathNumber(input.result.standardError)],
         ['Equal', 'df', input.summary.count - 1],
@@ -161,7 +161,7 @@ export function confidenceIntervalAnswerReadback(input: {
     },
     {
       label: 'Confidence interval',
-      latex: `${numberToLatex(input.result.lowerBound)}\\le\\mu\\le${numberToLatex(input.result.upperBound)}`,
+      latex: `${statisticsNumberToLatex(input.result.lowerBound)}\\le\\mu\\le${statisticsNumberToLatex(input.result.upperBound)}`,
       mathJson: ['LessEqual', statisticsMathNumber(input.result.lowerBound), 'mu', statisticsMathNumber(input.result.upperBound)],
     },
   ], 'statistics.inference.native-confidence-interval');
@@ -175,7 +175,7 @@ export function meanTestAnswerReadback(input: {
 }) {
   const sampleStandardDeviation = input.summary.sampleStandardDeviation ?? 0;
   const tLatex = Number.isFinite(input.result.tStatistic)
-    ? numberToLatex(input.result.tStatistic)
+    ? statisticsNumberToLatex(input.result.tStatistic)
     : input.result.tStatistic < 0 ? '-\\infty' : '\\infty';
   const tMathJson = Number.isFinite(input.result.tStatistic)
     ? statisticsMathNumber(input.result.tStatistic)
@@ -188,7 +188,7 @@ export function meanTestAnswerReadback(input: {
   return buildStatisticsAnswerRows([
     {
       label: 'Hypotheses',
-      latex: `H_0=(\\mu=${numberToLatex(input.mu0)}),\\ H_a=(\\mu${input.alternativeSymbol}${numberToLatex(input.mu0)})`,
+      latex: `H_0=(\\mu=${statisticsNumberToLatex(input.mu0)}),\\ H_a=(\\mu${input.alternativeSymbol}${statisticsNumberToLatex(input.mu0)})`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Subscript', 'H', 0], ['Equal', 'mu', statisticsMathNumber(input.mu0)]],
         ['Equal', ['Subscript', 'H', 'a'], alternativeRelation],
@@ -196,7 +196,7 @@ export function meanTestAnswerReadback(input: {
     },
     {
       label: 'Sample',
-      latex: `\\bar{x}=${numberToLatex(input.summary.mean)},\\ s=${numberToLatex(sampleStandardDeviation)}`,
+      latex: `\\bar{x}=${statisticsNumberToLatex(input.summary.mean)},\\ s=${statisticsNumberToLatex(sampleStandardDeviation)}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
         ['Equal', 's', statisticsMathNumber(sampleStandardDeviation)],
@@ -204,7 +204,7 @@ export function meanTestAnswerReadback(input: {
     },
     {
       label: 'Test setup',
-      latex: `SE=${numberToLatex(input.result.standardError)},\\ df=${input.summary.count - 1}`,
+      latex: `SE=${statisticsNumberToLatex(input.result.standardError)},\\ df=${input.summary.count - 1}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['InvisibleOperator', 'S', 'E'], statisticsMathNumber(input.result.standardError)],
         ['Equal', 'df', input.summary.count - 1],
@@ -212,7 +212,7 @@ export function meanTestAnswerReadback(input: {
     },
     {
       label: 'Evidence',
-      latex: `t=${tLatex},\\ p=${numberToLatex(input.result.pValue)},\\ \\alpha=${numberToLatex(input.result.alpha)}`,
+      latex: `t=${tLatex},\\ p=${statisticsNumberToLatex(input.result.pValue)},\\ \\alpha=${statisticsNumberToLatex(input.result.alpha)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 't', tMathJson],
         ['Equal', 'p', statisticsMathNumber(input.result.pValue)],
@@ -223,7 +223,7 @@ export function meanTestAnswerReadback(input: {
 }
 
 export function regressionAnswerReadback(summary: RegressionFitSummary) {
-  const fittedLatex = `y_{\\mathrm{fit}}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`;
+  const fittedLatex = `y_{\\mathrm{fit}}=${statisticsNumberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${statisticsNumberToLatex(summary.intercept)}`;
   return buildStatisticsAnswerRows([
     {
       label: 'Fitted line',
@@ -235,7 +235,7 @@ export function regressionAnswerReadback(summary: RegressionFitSummary) {
     },
     {
       label: 'Coefficients',
-      latex: `m=${numberToLatex(summary.slope)},\\ b=${numberToLatex(summary.intercept)}`,
+      latex: `m=${statisticsNumberToLatex(summary.slope)},\\ b=${statisticsNumberToLatex(summary.intercept)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'm', statisticsMathNumber(summary.slope)],
         ['Equal', 'b', statisticsMathNumber(summary.intercept)],
@@ -243,7 +243,7 @@ export function regressionAnswerReadback(summary: RegressionFitSummary) {
     },
     {
       label: 'Fit',
-      latex: `r=${numberToLatex(summary.r)},\\ r^2=${numberToLatex(summary.rSquared)},\\ n=${summary.count}`,
+      latex: `r=${statisticsNumberToLatex(summary.r)},\\ r^2=${statisticsNumberToLatex(summary.rSquared)},\\ n=${summary.count}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'r', statisticsMathNumber(summary.r)],
         ['Equal', ['Power', 'r', 2], statisticsMathNumber(summary.rSquared)],
@@ -257,7 +257,7 @@ export function correlationAnswerReadback(summary: RegressionFitSummary) {
   return buildStatisticsAnswerRows([
     {
       label: 'Association',
-      latex: `r=${numberToLatex(summary.r)},\\ r^2=${numberToLatex(summary.rSquared)}`,
+      latex: `r=${statisticsNumberToLatex(summary.r)},\\ r^2=${statisticsNumberToLatex(summary.rSquared)}`,
       mathJson: statisticsMathSequence(
         ['Equal', 'r', statisticsMathNumber(summary.r)],
         ['Equal', ['Power', 'r', 2], statisticsMathNumber(summary.rSquared)],
@@ -280,12 +280,12 @@ export function probabilityAnswerReadback(input: {
     { label: 'Event', latex: input.notation, mathJson: input.eventMathJson },
     {
       label: input.valueSymbol === 'd' ? 'Density' : 'Probability',
-      latex: `${input.valueSymbol}=${numberToLatex(input.value)}`,
+      latex: `${input.valueSymbol}=${statisticsNumberToLatex(input.value)}`,
       mathJson: ['Equal', input.valueSymbol, statisticsMathNumber(input.value)],
     },
     {
       label: 'Distribution',
-      latex: `\\operatorname{mean}(X)=${numberToLatex(input.expectedValue)},\\ \\sigma=${numberToLatex(input.standardDeviation)}`,
+      latex: `\\operatorname{mean}(X)=${statisticsNumberToLatex(input.expectedValue)},\\ \\sigma=${statisticsNumberToLatex(input.standardDeviation)}`,
       mathJson: statisticsMathSequence(
         ['Equal', ['Mean', 'X'], statisticsMathNumber(input.expectedValue)],
         ['Equal', 'sigma', statisticsMathNumber(input.standardDeviation)],

@@ -30,5 +30,17 @@ describe('Statistics weighted histogram bins', () => {
       { lower: 3, upper: 3, frequency: 7, label: '3' },
     ]);
   });
-});
 
+  it('formats generated bin boundaries with the active approximate digits', () => {
+    const bins = buildStatisticsHistogramBins([
+      { value: 0, weight: 1 },
+      { value: 1, weight: 1 },
+    ], 3, 2);
+
+    expect(bins.map((bin) => bin.label)).toEqual([
+      '0-0.33',
+      '0.33-0.67',
+      '0.67-1',
+    ]);
+  });
+});
