@@ -30,6 +30,10 @@ import type {
   ResultProducerDraft,
   VersionedResultProducerDraft,
   ExactScalarWire,
+  ComplexExactForm,
+  LinearAlgebraMatrixNamedValue,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
   MatrixOperation,
   MatrixSystemForm,
 } from '../../types/calculator';
@@ -53,9 +57,12 @@ export type RunMatrixModeRequest = {
   systemRhsLatex?: string;
   coordinateVectorLatex?: string;
   matrixPowerExponentLatex?: string;
-  matrixValues?: { id: string; name: string; value: number[][] }[];
+  matrixValues?: LinearAlgebraMatrixNamedValue[];
   activeMatrixLeftId?: string;
   activeMatrixRightId?: string;
+  domain?: LinearAlgebraScalarDomain;
+  substitutionMode?: LinearAlgebraSubstitutionMode;
+  complexExactForm?: ComplexExactForm;
 };
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
@@ -342,6 +349,9 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       matrixValues: request.matrixValues,
       activeMatrixLeftId: request.activeMatrixLeftId,
       activeMatrixRightId: request.activeMatrixRightId,
+      domain: request.domain,
+      substitutionMode: request.substitutionMode,
+      complexExactForm: request.complexExactForm,
     },
   };
 }

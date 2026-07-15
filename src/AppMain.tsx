@@ -1005,11 +1005,11 @@ export default function App() {
     closeLeftInspector();
     launchLauncherApp(entry, intent);
   }
-
   const linearAlgebraTableShellRuntime = useLinearAlgebraTableShellRuntime({
     activeFieldRef,
     angleUnit: settings.angleUnit,
     approxDigits: settings.approxDigits,
+    complexExactForm: settings.complexExactForm,
     commitOutcome,
     currentMode,
     currentModeRef,

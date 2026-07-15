@@ -32,17 +32,26 @@ import {
   DEFAULT_VECTOR_RIGHT_ID,
   isValidMatrixValueName,
   isValidVectorValueName,
+  isScalarMatrixNamedValue,
+  isScalarVectorNamedValue,
   matrixValueById,
+  matrixActionLabel,
+  numericMatrixFromNamedValue,
+  numericVectorFromNamedValue,
+  parseLinearAlgebraScalarWire,
+  resizeMatrixNamedValue,
+  resizeVectorNamedValue,
   nextMatrixValueName,
   nextVectorValueName,
   normalizeMatrixValueName,
   normalizeVectorValueName,
   vectorValueById,
+  vectorActionLabel,
+  withMatrixNamedValueScalarCell,
+  withVectorNamedValueScalarCell,
   cloneMatrixNamedValues,
   cloneVectorNamedValues,
   clampLinearAlgebraEditingDimension,
-  type LinearAlgebraMatrixNamedValue,
-  type LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
 import {
   DEFAULT_MATRIX_A,
@@ -56,6 +65,12 @@ import {
   matrixValuesFromCompatibility,
   vectorValuesFromCompatibility,
 } from './linearAlgebraRuntimeDefaults';
+import {
+  matrixValueForCompatibility,
+  resizeNumericMatrixValue,
+  resizeNumericVectorValue,
+  vectorValueForCompatibility,
+} from './linearAlgebraRuntimeValues';
 import type {
   MatrixSurfaceState,
   VectorSurfaceState,
@@ -64,8 +79,13 @@ import type {
   AngleUnit,
   CanonicalRuntimeOutcome,
   CanonicalRuntimeActionV1,
+  ComplexExactForm,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
   MatrixOperation,
   ModeId,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
   VectorOperation,
 } from '../../types/calculator';
 import {
@@ -89,6 +109,7 @@ type CommitLinearAlgebraOutcome = (
 type UseLinearAlgebraRuntimeOptions = {
   angleUnit: AngleUnit;
   approxDigits?: number;
+  complexExactForm: ComplexExactForm;
   commitOutcome: CommitLinearAlgebraOutcome;
   discardHistoryTicket?: (ticketId?: string | null) => void;
   getCurrentMode?: () => ModeId;
@@ -99,61 +120,36 @@ type UseLinearAlgebraRuntimeOptions = {
     inputRevisionId?: string;
   }) => PendingHistoryTicketReservation | null;
   setRuntimeStatusOverride?: (status: string | null) => void;
+  storedVariables: readonly StoredVariableValue[];
   syncEditorLatex?: (mode: 'matrix' | 'vector', latex: string) => void;
 };
-
-function matrixValueForCompatibility(
-  values: readonly LinearAlgebraMatrixNamedValue[],
-  id: string,
-  fallback: number[][],
-) {
-  return cloneMatrix(matrixValueById(values, id)?.value ?? fallback);
-}
-
-function vectorValueForCompatibility(
-  values: readonly LinearAlgebraVectorNamedValue[],
-  id: string,
-  fallback: number[],
-) {
-  return cloneVector(vectorValueById(values, id)?.value ?? fallback);
-}
-
-function resizeMatrixValue(matrix: number[][], rowCount: number, columnCount: number) {
-  const rows = clampLinearAlgebraEditingDimension(rowCount);
-  const columns = clampLinearAlgebraEditingDimension(columnCount);
-  return Array.from({ length: rows }, (_, rowIndex) =>
-    Array.from({ length: columns }, (_, columnIndex) => {
-      const currentValue = matrix[rowIndex]?.[columnIndex];
-      return Number.isFinite(currentValue) ? currentValue : 0;
-    }),
-  );
-}
-
-function resizeVectorValue(vector: number[], length: number) {
-  const nextLength = clampLinearAlgebraEditingDimension(length);
-  return Array.from({ length: nextLength }, (_, index) =>
-    Number.isFinite(vector[index]) ? vector[index] : 0,
-  );
-}
 
 export function useLinearAlgebraRuntime({
   angleUnit,
   approxDigits = 6,
+  complexExactForm,
   commitOutcome,
   discardHistoryTicket,
   getCurrentMode,
   reserveHistoryTicket,
   setRuntimeStatusOverride,
+  storedVariables,
   syncEditorLatex,
 }: UseLinearAlgebraRuntimeOptions) {
   const [matrixValues, setMatrixValues] = useState(defaultMatrixValues);
   const [activeMatrixLeftId, setActiveMatrixLeftId] = useState(DEFAULT_MATRIX_LEFT_ID);
   const [activeMatrixRightId, setActiveMatrixRightId] = useState(DEFAULT_MATRIX_RIGHT_ID);
   const [matrixEditorLatex, setMatrixEditorLatex] = useState('');
+  const [matrixDomain, setMatrixDomain] = useState<LinearAlgebraScalarDomain>('real');
+  const [matrixSubstitutionMode, setMatrixSubstitutionMode] = useState<LinearAlgebraSubstitutionMode>('symbolic');
+  const [matrixSubstitutionSnapshot, setMatrixSubstitutionSnapshot] = useState<VariableSubstitutionSnapshot[] | null>(null);
   const [vectorValues, setVectorValues] = useState(defaultVectorValues);
   const [activeVectorLeftId, setActiveVectorLeftId] = useState(DEFAULT_VECTOR_LEFT_ID);
   const [activeVectorRightId, setActiveVectorRightId] = useState(DEFAULT_VECTOR_RIGHT_ID);
   const [vectorEditorLatex, setVectorEditorLatex] = useState('');
+  const [vectorDomain, setVectorDomain] = useState<LinearAlgebraScalarDomain>('real');
+  const [vectorSubstitutionMode, setVectorSubstitutionMode] = useState<LinearAlgebraSubstitutionMode>('symbolic');
+  const [vectorSubstitutionSnapshot, setVectorSubstitutionSnapshot] = useState<VariableSubstitutionSnapshot[] | null>(null);
   const nextMatrixValueIdRef = useRef(1);
   const nextVectorValueIdRef = useRef(1);
   const matrixA = matrixValueForCompatibility(matrixValues, DEFAULT_MATRIX_LEFT_ID, DEFAULT_MATRIX_A);
@@ -167,6 +163,10 @@ export function useLinearAlgebraRuntime({
     activeMatrixLeftId,
     activeMatrixRightId,
     approxDigits,
+    complexExactForm,
+    domain: matrixDomain,
+    substitutionMode: matrixSubstitutionMode,
+    storedVariables: matrixSubstitutionSnapshot ?? storedVariables,
   });
   const vectorStateRef = useRef({
     vectorA,
@@ -176,6 +176,10 @@ export function useLinearAlgebraRuntime({
     activeVectorRightId,
     angleUnit,
     approxDigits,
+    complexExactForm,
+    domain: vectorDomain,
+    substitutionMode: vectorSubstitutionMode,
+    storedVariables: vectorSubstitutionSnapshot ?? storedVariables,
   });
   const latestMatrixRunRevisionRef = useRef<string | null>(null);
   const latestVectorRunRevisionRef = useRef<string | null>(null);
@@ -188,8 +192,12 @@ export function useLinearAlgebraRuntime({
       activeMatrixLeftId,
       activeMatrixRightId,
       approxDigits,
+      complexExactForm,
+      domain: matrixDomain,
+      substitutionMode: matrixSubstitutionMode,
+      storedVariables: matrixSubstitutionSnapshot ?? storedVariables,
     };
-  }, [activeMatrixLeftId, activeMatrixRightId, approxDigits, matrixA, matrixB, matrixValues]);
+  }, [activeMatrixLeftId, activeMatrixRightId, approxDigits, complexExactForm, matrixA, matrixB, matrixDomain, matrixSubstitutionMode, matrixSubstitutionSnapshot, matrixValues, storedVariables]);
 
   useEffect(() => {
     vectorStateRef.current = {
@@ -200,8 +208,12 @@ export function useLinearAlgebraRuntime({
       activeVectorRightId,
       angleUnit,
       approxDigits,
+      complexExactForm,
+      domain: vectorDomain,
+      substitutionMode: vectorSubstitutionMode,
+      storedVariables: vectorSubstitutionSnapshot ?? storedVariables,
     };
-  }, [activeVectorLeftId, activeVectorRightId, angleUnit, approxDigits, vectorA, vectorB, vectorValues]);
+  }, [activeVectorLeftId, activeVectorRightId, angleUnit, approxDigits, complexExactForm, storedVariables, vectorA, vectorB, vectorDomain, vectorSubstitutionMode, vectorSubstitutionSnapshot, vectorValues]);
 
   function handoffActions(handoff?: LinearAlgebraEquationHandoff): CanonicalRuntimeActionV1[] | undefined {
     return handoff
@@ -219,6 +231,9 @@ export function useLinearAlgebraRuntime({
       activeMatrixLeftId: state.activeMatrixLeftId,
       activeMatrixRightId: state.activeMatrixRightId,
       approxDigits: state.approxDigits,
+      domain: state.domain,
+      substitutionMode: state.substitutionMode,
+      complexExactForm: state.complexExactForm,
     };
   }
 
@@ -232,6 +247,9 @@ export function useLinearAlgebraRuntime({
       activeVectorLeftId: state.activeVectorLeftId,
       activeVectorRightId: state.activeVectorRightId,
       approxDigits: state.approxDigits,
+      domain: state.domain,
+      substitutionMode: state.substitutionMode,
+      complexExactForm: state.complexExactForm,
     };
   }
 
@@ -317,6 +335,14 @@ export function useLinearAlgebraRuntime({
   }
 
   function runMatrixAction(operation: MatrixOperation) {
+    const activeValues = activeMatrixValuePair(matrixValues, activeMatrixLeftId, activeMatrixRightId);
+    if (!numericMatrixFromNamedValue(activeValues.left) || !numericMatrixFromNamedValue(activeValues.right)) {
+      commitMatrixEditorError(
+        matrixActionLabel(operation, activeValues.left.name, activeValues.right.name),
+        'This Matrix action will be enabled by the symbolic Matrix milestone.',
+      );
+      return;
+    }
     const launched = buildActiveMatrixRequest(operation, matrixValues, activeMatrixLeftId, activeMatrixRightId);
     runMatrixRequest(
       launched.request,
@@ -417,6 +443,14 @@ export function useLinearAlgebraRuntime({
   }
 
   function runVectorAction(operation: VectorOperation) {
+    const activeValues = activeVectorValuePair(vectorValues, activeVectorLeftId, activeVectorRightId);
+    if (!numericVectorFromNamedValue(activeValues.left) || !numericVectorFromNamedValue(activeValues.right)) {
+      commitVectorEditorError(
+        vectorActionLabel(operation, activeValues.left.name, activeValues.right.name),
+        'This Vector action will be enabled by the symbolic Vector milestone.',
+      );
+      return;
+    }
     const launched = buildActiveVectorRequest(operation, vectorValues, activeVectorLeftId, activeVectorRightId, angleUnit);
     runVectorRequest(
       launched.request,
@@ -500,7 +534,11 @@ export function useLinearAlgebraRuntime({
       }
       return currentValues.map((currentValue) =>
         currentValue.id === id
-          ? { ...currentValue, value: updater(cloneMatrix(currentValue.value)) }
+          ? {
+              id: currentValue.id,
+              name: currentValue.name,
+              value: updater(numericMatrixFromNamedValue(currentValue) ?? cloneMatrix(fallbackValue)),
+            }
           : currentValue,
       );
     });
@@ -522,7 +560,11 @@ export function useLinearAlgebraRuntime({
       }
       return currentValues.map((currentValue) =>
         currentValue.id === id
-          ? { ...currentValue, value: updater(cloneVector(currentValue.value)) }
+          ? {
+              id: currentValue.id,
+              name: currentValue.name,
+              value: updater(numericVectorFromNamedValue(currentValue) ?? cloneVector(fallbackValue)),
+            }
           : currentValue,
       );
     });
@@ -573,7 +615,7 @@ export function useLinearAlgebraRuntime({
     const fallbackName = which === 'A' ? 'A' : 'B';
     const fallbackValue = which === 'A' ? DEFAULT_MATRIX_A : DEFAULT_MATRIX_B;
     updateMatrixValue(id, fallbackName, fallbackValue, (currentMatrix) =>
-      resizeMatrixValue(currentMatrix, rows, columns),
+      resizeNumericMatrixValue(currentMatrix, rows, columns),
     );
   }
 
@@ -582,7 +624,7 @@ export function useLinearAlgebraRuntime({
     const fallbackName = which === 'A' ? 'u' : 'v';
     const fallbackValue = which === 'A' ? DEFAULT_VECTOR_A : DEFAULT_VECTOR_B;
     updateVectorValue(id, fallbackName, fallbackValue, (currentVector) =>
-      resizeVectorValue(currentVector, length),
+      resizeNumericVectorValue(currentVector, length),
     );
   }
 
@@ -590,7 +632,9 @@ export function useLinearAlgebraRuntime({
     setMatrixValues((currentValues) =>
       currentValues.map((currentValue) =>
         currentValue.id === id
-          ? {
+          ? isScalarMatrixNamedValue(currentValue)
+            ? currentValue
+            : {
               ...currentValue,
               value: currentValue.value.map((currentRow, rowIndex) =>
                 currentRow.map((cell, columnIndex) =>
@@ -609,22 +653,46 @@ export function useLinearAlgebraRuntime({
     setVectorValues((currentValues) =>
       currentValues.map((currentValue) =>
         currentValue.id === id
-          ? {
+          ? isScalarVectorNamedValue(currentValue)
+            ? currentValue
+            : {
               ...currentValue,
               value: currentValue.value.map((cell, cellIndex) =>
                 cellIndex === index ? (Number.isFinite(value) ? value : 0) : cell,
               ),
-            }
+              }
           : currentValue,
       ),
     );
+  }
+
+  function setMatrixValueCellLatex(id: string, row: number, column: number, latex: string) {
+    const parsed = parseLinearAlgebraScalarWire(latex, matrixStateRef.current.domain);
+    if (!parsed.ok) return parsed.error;
+    setMatrixSubstitutionSnapshot(null);
+    setMatrixValues((currentValues) => currentValues.map((currentValue) =>
+      currentValue.id === id
+        ? withMatrixNamedValueScalarCell(currentValue, row, column, parsed.value)
+        : currentValue));
+    return null;
+  }
+
+  function setVectorValueCellLatex(id: string, index: number, latex: string) {
+    const parsed = parseLinearAlgebraScalarWire(latex, vectorStateRef.current.domain);
+    if (!parsed.ok) return parsed.error;
+    setVectorSubstitutionSnapshot(null);
+    setVectorValues((currentValues) => currentValues.map((currentValue) =>
+      currentValue.id === id
+        ? withVectorNamedValueScalarCell(currentValue, index, parsed.value)
+        : currentValue));
+    return null;
   }
 
   function resizeMatrixValueById(id: string, rows: number, columns: number) {
     setMatrixValues((currentValues) =>
       currentValues.map((currentValue) =>
         currentValue.id === id
-          ? { ...currentValue, value: resizeMatrixValue(currentValue.value, rows, columns) }
+          ? resizeMatrixNamedValue(currentValue, clampLinearAlgebraEditingDimension(rows), clampLinearAlgebraEditingDimension(columns))
           : currentValue,
       ),
     );
@@ -634,7 +702,7 @@ export function useLinearAlgebraRuntime({
     setVectorValues((currentValues) =>
       currentValues.map((currentValue) =>
         currentValue.id === id
-          ? { ...currentValue, value: resizeVectorValue(currentValue.value, length) }
+          ? resizeVectorNamedValue(currentValue, clampLinearAlgebraEditingDimension(length))
           : currentValue,
       ),
     );
@@ -706,7 +774,7 @@ export function useLinearAlgebraRuntime({
     nextMatrixValueIdRef.current += 1;
     setMatrixValues((currentValues) => [
       ...currentValues,
-      { id: newId, name, value: cloneMatrix(source.value) },
+      { ...cloneMatrixNamedValues([source])[0], id: newId, name },
     ]);
     setActiveMatrixLeftId(newId);
     return newId;
@@ -722,7 +790,7 @@ export function useLinearAlgebraRuntime({
     nextVectorValueIdRef.current += 1;
     setVectorValues((currentValues) => [
       ...currentValues,
-      { id: newId, name, value: cloneVector(source.value) },
+      { ...cloneVectorNamedValues([source])[0], id: newId, name },
     ]);
     setActiveVectorLeftId(newId);
     return newId;
@@ -774,12 +842,18 @@ export function useLinearAlgebraRuntime({
     setMatrixValues(defaultMatrixValues());
     setActiveMatrixLeftId(DEFAULT_MATRIX_LEFT_ID);
     setActiveMatrixRightId(DEFAULT_MATRIX_RIGHT_ID);
+    setMatrixDomain('real');
+    setMatrixSubstitutionMode('symbolic');
+    setMatrixSubstitutionSnapshot(null);
   }
 
   function resetVectorValues() {
     setVectorValues(defaultVectorValues());
     setActiveVectorLeftId(DEFAULT_VECTOR_LEFT_ID);
     setActiveVectorRightId(DEFAULT_VECTOR_RIGHT_ID);
+    setVectorDomain('real');
+    setVectorSubstitutionMode('symbolic');
+    setVectorSubstitutionSnapshot(null);
   }
 
   function captureMatrixSurfaceState(): MatrixSurfaceState {
@@ -790,6 +864,9 @@ export function useLinearAlgebraRuntime({
       activeMatrixLeftId,
       activeMatrixRightId,
       matrixEditorLatex,
+      matrixDomain,
+      matrixSubstitutionMode,
+      matrixSubstitutionSnapshot: matrixSubstitutionSnapshot?.map((entry) => ({ ...entry })),
     };
   }
 
@@ -804,6 +881,9 @@ export function useLinearAlgebraRuntime({
     setActiveMatrixLeftId(state?.activeMatrixLeftId ?? DEFAULT_MATRIX_LEFT_ID);
     setActiveMatrixRightId(state?.activeMatrixRightId ?? DEFAULT_MATRIX_RIGHT_ID);
     setMatrixEditorLatex(state?.matrixEditorLatex ?? '');
+    setMatrixDomain(state?.matrixDomain ?? 'real');
+    setMatrixSubstitutionMode(state?.matrixSubstitutionMode ?? 'symbolic');
+    setMatrixSubstitutionSnapshot(state?.matrixSubstitutionSnapshot?.map((entry) => ({ ...entry })) ?? null);
   }
 
   function captureVectorSurfaceState(): VectorSurfaceState {
@@ -814,6 +894,9 @@ export function useLinearAlgebraRuntime({
       activeVectorLeftId,
       activeVectorRightId,
       vectorEditorLatex,
+      vectorDomain,
+      vectorSubstitutionMode,
+      vectorSubstitutionSnapshot: vectorSubstitutionSnapshot?.map((entry) => ({ ...entry })),
     };
   }
 
@@ -828,6 +911,19 @@ export function useLinearAlgebraRuntime({
     setActiveVectorLeftId(state?.activeVectorLeftId ?? DEFAULT_VECTOR_LEFT_ID);
     setActiveVectorRightId(state?.activeVectorRightId ?? DEFAULT_VECTOR_RIGHT_ID);
     setVectorEditorLatex(state?.vectorEditorLatex ?? '');
+    setVectorDomain(state?.vectorDomain ?? 'real');
+    setVectorSubstitutionMode(state?.vectorSubstitutionMode ?? 'symbolic');
+    setVectorSubstitutionSnapshot(state?.vectorSubstitutionSnapshot?.map((entry) => ({ ...entry })) ?? null);
+  }
+
+  function changeMatrixSubstitutionMode(mode: LinearAlgebraSubstitutionMode) {
+    setMatrixSubstitutionSnapshot(null);
+    setMatrixSubstitutionMode(mode);
+  }
+
+  function changeVectorSubstitutionMode(mode: LinearAlgebraSubstitutionMode) {
+    setVectorSubstitutionSnapshot(null);
+    setVectorSubstitutionMode(mode);
   }
 
   const activeMatrixValues = activeMatrixValuePair(matrixValues, activeMatrixLeftId, activeMatrixRightId);
@@ -851,6 +947,9 @@ export function useLinearAlgebraRuntime({
     matrixA,
     matrixB,
     matrixEditorLatex,
+    matrixDomain,
+    matrixSubstitutionMode,
+    matrixStoredVariables: matrixSubstitutionSnapshot ?? storedVariables,
     matrixSoftActions: buildMatrixSoftActions(activeMatrixValues.left.name, activeMatrixValues.right.name),
     matrixValues: cloneMatrixNamedValues(matrixValues),
     renameMatrixValue,
@@ -874,14 +973,23 @@ export function useLinearAlgebraRuntime({
     setMatrixCell,
     setMatrixEditorLatex,
     setMatrixValueCell,
+    setMatrixValueCellLatex,
+    setMatrixDomain,
+    setMatrixSubstitutionMode: changeMatrixSubstitutionMode,
     setVectorA,
     setVectorB,
     setVectorCell,
     setVectorEditorLatex,
     setVectorValueCell,
+    setVectorValueCellLatex,
+    setVectorDomain,
+    setVectorSubstitutionMode: changeVectorSubstitutionMode,
     vectorA,
     vectorB,
     vectorEditorLatex,
+    vectorDomain,
+    vectorSubstitutionMode,
+    vectorStoredVariables: vectorSubstitutionSnapshot ?? storedVariables,
     vectorSoftActions: buildVectorSoftActions(activeVectorValues.left.name, activeVectorValues.right.name),
     vectorValues: cloneVectorNamedValues(vectorValues),
   };

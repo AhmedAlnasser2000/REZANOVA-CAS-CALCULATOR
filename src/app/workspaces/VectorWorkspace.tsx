@@ -1,18 +1,28 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { SignedNumberInput } from '../../components/SignedNumberInput';
 import {
   isValidVectorValueName,
   LINEAR_ALGEBRA_MIN_EDITING_DIMENSION,
   LINEAR_ALGEBRA_VECTOR_MAX_LENGTH,
   normalizeVectorValueName,
+  resolveVectorNamedValueOperand,
+  vectorNamedValueCellLatex,
+  type LinearAlgebraScalarDomain,
+  type LinearAlgebraScalarWireV1,
+  type LinearAlgebraSubstitutionMode,
   type LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
+import type { StoredVariableValue, VariableSubstitutionSnapshot } from '../../types/calculator';
 import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
+import { LinearAlgebraScalarCell } from './LinearAlgebraScalarCell';
+import { LinearAlgebraScalarControls } from './LinearAlgebraScalarControls';
 
 type VectorWorkspaceProps = {
   activeVectorLeftId: string;
   activeVectorRightId: string;
   vectorValues: readonly LinearAlgebraVectorNamedValue[];
+  vectorDomain: LinearAlgebraScalarDomain;
+  vectorSubstitutionMode: LinearAlgebraSubstitutionMode;
+  storedVariables: readonly StoredVariableValue[];
   onOpenGuideMode: (mode: 'vector') => void;
   onOpenGuideArticle: (articleId: string) => void;
   onAddVectorValue: () => void;
@@ -22,7 +32,9 @@ type VectorWorkspaceProps = {
   onRenameVectorValue: (id: string, name: string) => void;
   onResizeVectorValue: (id: string, length: number) => void;
   onSetActiveVectorValueIds: (leftId: string, rightId: string) => void;
-  onSetVectorCell: (id: string, index: number, value: number) => void;
+  onSetVectorCellLatex: (id: string, index: number, latex: string) => string | null;
+  onSetVectorDomain: (domain: LinearAlgebraScalarDomain) => void;
+  onSetVectorSubstitutionMode: (mode: LinearAlgebraSubstitutionMode) => void;
 };
 
 function gridColumnStyle(columns: number): CSSProperties {
@@ -39,13 +51,14 @@ type VectorValueCardProps = {
   canDelete: boolean;
   vectorValues: readonly LinearAlgebraVectorNamedValue[];
   value: LinearAlgebraVectorNamedValue;
+  resolvedValue?: readonly LinearAlgebraScalarWireV1[];
   onDeleteVectorValue: VectorWorkspaceProps['onDeleteVectorValue'];
   onDuplicateVectorValue: VectorWorkspaceProps['onDuplicateVectorValue'];
   onInsertVectorName: VectorWorkspaceProps['onInsertVectorName'];
   onRenameVectorValue: VectorWorkspaceProps['onRenameVectorValue'];
   onResizeVectorValue: VectorWorkspaceProps['onResizeVectorValue'];
   onSetActiveVectorValueIds: VectorWorkspaceProps['onSetActiveVectorValueIds'];
-  onSetVectorCell: VectorWorkspaceProps['onSetVectorCell'];
+  onSetVectorCellLatex: VectorWorkspaceProps['onSetVectorCellLatex'];
 };
 
 function VectorValueCard({
@@ -56,13 +69,14 @@ function VectorValueCard({
   canDelete,
   vectorValues,
   value,
+  resolvedValue,
   onDeleteVectorValue,
   onDuplicateVectorValue,
   onInsertVectorName,
   onRenameVectorValue,
   onResizeVectorValue,
   onSetActiveVectorValueIds,
-  onSetVectorCell,
+  onSetVectorCellLatex,
 }: VectorValueCardProps) {
   const { id, name, value: vector } = value;
   const length = vector.length || 1;
@@ -201,11 +215,13 @@ function VectorValueCard({
         data-columns={length}
         style={gridColumnStyle(length)}
       >
-        {vector.map((value, index) => (
-          <SignedNumberInput
+        {vector.map((_cell, index) => (
+          <LinearAlgebraScalarCell
+            ariaLabel={`Vector ${name} component ${index + 1}`}
             key={`v${id}-${index}`}
-            value={value}
-            onValueChange={(nextValue) => onSetVectorCell(id, index, nextValue)}
+            value={vectorNamedValueCellLatex(value, index)}
+            resolvedLatex={resolvedValue?.[index]?.canonicalLatex}
+            onCommit={(latex) => onSetVectorCellLatex(id, index, latex)}
           />
         ))}
       </div>
@@ -217,6 +233,9 @@ function VectorWorkspace({
   activeVectorLeftId,
   activeVectorRightId,
   vectorValues,
+  vectorDomain,
+  vectorSubstitutionMode,
+  storedVariables,
   onOpenGuideMode,
   onOpenGuideArticle,
   onAddVectorValue,
@@ -226,7 +245,9 @@ function VectorWorkspace({
   onRenameVectorValue,
   onResizeVectorValue,
   onSetActiveVectorValueIds,
-  onSetVectorCell,
+  onSetVectorCellLatex,
+  onSetVectorDomain,
+  onSetVectorSubstitutionMode,
 }: VectorWorkspaceProps) {
   const fallbackLeftId = vectorValues[0]?.id ?? '';
   const fallbackRightId = vectorValues[1]?.id ?? fallbackLeftId;
@@ -234,6 +255,19 @@ function VectorWorkspace({
   const activeLeftId = vectorIds.has(activeVectorLeftId) ? activeVectorLeftId : fallbackLeftId;
   const activeRightId = vectorIds.has(activeVectorRightId) ? activeVectorRightId : fallbackRightId;
   const canAddVector = vectorValues.length < 26;
+  const protectedNames = vectorValues.map((value) => value.name);
+  const resolutions = vectorValues.map((value) => resolveVectorNamedValueOperand(value, {
+    domain: vectorDomain,
+    mode: vectorSubstitutionMode,
+    protectedNames,
+    storedVariables,
+  }));
+  const usedByName = new Map<string, VariableSubstitutionSnapshot>();
+  for (const resolution of resolutions) {
+    if (!('error' in resolution)) {
+      for (const substitution of resolution.substitutions) usedByName.set(substitution.name, substitution);
+    }
+  }
 
   function activeRolesFor(id: string) {
     const roles: string[] = [];
@@ -265,6 +299,13 @@ function VectorWorkspace({
         <button className="guide-chip" onClick={() => onOpenGuideMode('vector')}>Guide: Vector mode</button>
         <button className="guide-chip" onClick={() => onOpenGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
       </div>
+      <LinearAlgebraScalarControls
+        domain={vectorDomain}
+        substitutionMode={vectorSubstitutionMode}
+        onDomainChange={onSetVectorDomain}
+        onSubstitutionModeChange={onSetVectorSubstitutionMode}
+        usedValues={[...usedByName.values()]}
+      />
       <div className="linear-algebra-library-toolbar">
         <div className="linear-algebra-active-operands">
           <LinearAlgebraOperandPicker
@@ -292,7 +333,7 @@ function VectorWorkspace({
         </button>
       </div>
       <div className="linear-algebra-library-grid">
-        {vectorValues.map((value) => (
+        {vectorValues.map((value, valueIndex) => (
           <VectorValueCard
             key={value.id}
             activeLeftId={activeLeftId}
@@ -302,13 +343,16 @@ function VectorWorkspace({
             canDelete={vectorValues.length > 1}
             vectorValues={vectorValues}
             value={value}
+            resolvedValue={'error' in resolutions[valueIndex]
+              ? undefined
+              : resolutions[valueIndex].operand.resolved}
             onDeleteVectorValue={onDeleteVectorValue}
             onDuplicateVectorValue={onDuplicateVectorValue}
             onInsertVectorName={onInsertVectorName}
             onRenameVectorValue={onRenameVectorValue}
             onResizeVectorValue={onResizeVectorValue}
             onSetActiveVectorValueIds={onSetActiveVectorValueIds}
-            onSetVectorCell={onSetVectorCell}
+            onSetVectorCellLatex={onSetVectorCellLatex}
           />
         ))}
       </div>

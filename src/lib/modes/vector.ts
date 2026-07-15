@@ -27,6 +27,10 @@ import {
 } from '../result-contract';
 import type {
   AngleUnit,
+  ComplexExactForm,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
+  LinearAlgebraVectorNamedValue,
   VersionedResultProducerDraft,
   ExactScalarWire,
   VectorOperation,
@@ -46,9 +50,12 @@ export type RunVectorModeRequest = {
   vectorOperands?: number[][];
   exactVectorOperands?: ExactScalarWire[][];
   vectorOperandLatexList?: string[];
-  vectorValues?: { id: string; name: string; value: number[] }[];
+  vectorValues?: LinearAlgebraVectorNamedValue[];
   activeVectorLeftId?: string;
   activeVectorRightId?: string;
+  domain?: LinearAlgebraScalarDomain;
+  substitutionMode?: LinearAlgebraSubstitutionMode;
+  complexExactForm?: ComplexExactForm;
 };
 
 export function vectorOperationLabel(operation: VectorOperation) {
@@ -239,6 +246,9 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       vectorValues: request.vectorValues,
       activeVectorLeftId: request.activeVectorLeftId,
       activeVectorRightId: request.activeVectorRightId,
+      domain: request.domain,
+      substitutionMode: request.substitutionMode,
+      complexExactForm: request.complexExactForm,
     },
   };
 }

@@ -32,6 +32,54 @@ function renderLinearAlgebraTableShell(currentMode: ModeId = 'matrix') {
 }
 
 describe('linear algebra named replay snapshots', () => {
+  it('restores symbolic source cells and the recorded substitution snapshot without reading live Variables', () => {
+    const { hook } = renderLinearAlgebraTableShell('matrix');
+    const source = { version: 1 as const, canonicalLatex: 'a', mathJson: 'a' as const };
+    const resolved = {
+      version: 1 as const,
+      canonicalLatex: '2',
+      mathJson: 2 as const,
+      exactRational: { numerator: 2, denominator: 1 },
+      exactComplexRational: {
+        re: { numerator: 2, denominator: 1 },
+        im: { numerator: 0, denominator: 1 },
+      },
+    };
+    const entry = historyEntryFixture({
+      id: 'history.matrix.scalar',
+      mode: 'matrix',
+      inputLatex: '\\det(A)',
+      resultLatex: '2',
+      matrixSeed: {
+        operation: 'detA',
+        operandEncoding: 'scalar-v1',
+        matrixA: { encoding: 'scalar-v1', source: [[source]], resolved: [[resolved]] },
+        matrixValues: [{ id: 'matrix-a', name: 'A', encoding: 'scalar-v1', value: [[source]] }],
+        activeMatrixLeftId: 'matrix-a',
+        activeMatrixRightId: 'matrix-a',
+        domain: 'complex',
+        substitutionMode: 'use-stored-values',
+        substitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+        complexExactForm: 'cis',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    });
+
+    act(() => {
+      hook.result.current.restoreLinearAlgebraTableHistoryEntry(entry);
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues[0]).toMatchObject({
+      encoding: 'scalar-v1',
+      value: [[{ canonicalLatex: 'a' }]],
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixDomain).toBe('complex');
+    expect(hook.result.current.linearAlgebraRuntime.matrixSubstitutionMode).toBe('use-stored-values');
+    expect(hook.result.current.linearAlgebraRuntime.matrixStoredVariables).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+  });
+
   it('restores named Matrix and Vector history snapshots after live names changed', () => {
     const { hook } = renderLinearAlgebraTableShell('matrix');
     const matrixEntry = historyEntryFixture({

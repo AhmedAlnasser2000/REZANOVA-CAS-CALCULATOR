@@ -66,6 +66,8 @@ import type {
 } from '../../types/calculator';
 import type {
   LinearAlgebraMatrixNamedValue,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
   LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
 import type {
@@ -238,6 +240,9 @@ export type MatrixSurfaceState = {
   activeMatrixLeftId?: string;
   activeMatrixRightId?: string;
   matrixEditorLatex: string;
+  matrixDomain?: LinearAlgebraScalarDomain;
+  matrixSubstitutionMode?: LinearAlgebraSubstitutionMode;
+  matrixSubstitutionSnapshot?: VariableSubstitutionSnapshot[];
 };
 
 export type VectorSurfaceState = {
@@ -247,4 +252,7 @@ export type VectorSurfaceState = {
   activeVectorLeftId?: string;
   activeVectorRightId?: string;
   vectorEditorLatex: string;
+  vectorDomain?: LinearAlgebraScalarDomain;
+  vectorSubstitutionMode?: LinearAlgebraSubstitutionMode;
+  vectorSubstitutionSnapshot?: VariableSubstitutionSnapshot[];
 };

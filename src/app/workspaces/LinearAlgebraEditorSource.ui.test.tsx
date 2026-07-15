@@ -7,6 +7,49 @@ import {
 } from '../../test/renderAppMain';
 
 describe('Linear algebra editor source', () => {
+  it('keeps per-tab scalar selectors and validates i against the selected domain', async () => {
+    const { user } = await renderAppMain();
+    await user.click(screen.getByTestId('variables-toggle'));
+    await screen.findByTestId('variables-panel');
+    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'a' } });
+    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '5' } });
+    await user.click(screen.getByTestId('variables-set-button'));
+    await screen.findByTestId('variables-entry');
+    await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
+    await openLauncherApp(user, 'Linear', 'Matrix');
+    await screen.findByText('Matrix Workspace');
+
+    expect(screen.getByLabelText('Scalar domain')).toHaveValue('real');
+    expect(screen.getByLabelText('Parameter substitution')).toHaveValue('symbolic');
+    const cell = screen.getByLabelText('Matrix A row 1 column 1') as HTMLElement & {
+      setValue: (value: string) => void;
+    };
+    cell.setValue('i');
+    fireEvent.input(cell);
+    fireEvent.keyDown(cell, { key: 'Enter' });
+    expect(screen.getByRole('alert')).toHaveTextContent('The imaginary unit i requires Complex mode.');
+
+    fireEvent.change(screen.getByLabelText('Scalar domain'), { target: { value: 'complex' } });
+    cell.setValue('i');
+    fireEvent.input(cell);
+    fireEvent.keyDown(cell, { key: 'Enter' });
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    cell.setValue('a');
+    fireEvent.input(cell);
+    fireEvent.keyDown(cell, { key: 'Enter' });
+    fireEvent.change(screen.getByLabelText('Parameter substitution'), {
+      target: { value: 'use-stored-values' },
+    });
+    await screen.findByText('Used: a=5');
+    expect(cell).toHaveAttribute('data-value', 'a');
+    expect(screen.getByTitle('Resolved stored-value preview')).toHaveTextContent('→ 5');
+
+    await openLauncherApp(user, 'Linear', 'Vector');
+    await screen.findByText('Vector Workspace');
+    expect(screen.getByLabelText('Scalar domain')).toHaveValue('real');
+    expect(screen.getByLabelText('Parameter substitution')).toHaveValue('symbolic');
+  });
+
   it('uses the main editor for Matrix and Vector without secondary notation pads', async () => {
     const { user } = await renderAppMain();
 

@@ -1,16 +1,32 @@
 import { matrixOperationLabel, type RunMatrixModeRequest } from '../modes/matrix';
 import { vectorOperationLabel, type RunVectorModeRequest } from '../modes/vector';
-import type { MatrixOperation, VectorOperation } from '../../types/calculator';
+import type {
+  ComplexExactForm,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
+  MatrixOperation,
+  ScalarMatrixRequestV1,
+  ScalarVectorRequestV1,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
+  VectorOperation,
+} from '../../types/calculator';
 import {
-  cloneLinearAlgebraMatrix,
-  cloneLinearAlgebraVector,
   DEFAULT_MATRIX_LEFT_ID,
   DEFAULT_VECTOR_LEFT_ID,
   matrixValueById,
+  numericMatrixFromNamedValue,
+  numericVectorFromNamedValue,
   vectorValueById,
+  cloneMatrixNamedValues,
+  cloneVectorNamedValues,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
+import {
+  resolveMatrixNamedValueOperand,
+  resolveVectorNamedValueOperand,
+} from './scalar-operands';
 
 export {
   dispatchMatrixEditorLatex,
@@ -27,24 +43,49 @@ export {
   DEFAULT_VECTOR_LEFT_ID,
   DEFAULT_VECTOR_RIGHT_ID,
   isMatrixNamedValueName,
+  isScalarMatrixNamedValue,
+  isScalarVectorNamedValue,
   isValidMatrixValueName,
   isValidVectorValueName,
   isVectorNamedValueName,
   matrixNamedValueNames,
+  matrixNamedValueCellLatex,
   matrixValueById,
   matrixValueByName,
   nextMatrixValueName,
   nextVectorValueName,
+  numericMatrixFromNamedValue,
+  numericVectorFromNamedValue,
+  resizeMatrixNamedValue,
+  resizeVectorNamedValue,
   normalizeMatrixValueName,
   normalizeVectorValueName,
   vectorNamedValueNames,
+  vectorNamedValueCellLatex,
   vectorValueById,
   vectorValueByName,
+  withMatrixNamedValueScalarCell,
+  withVectorNamedValueScalarCell,
 } from './named-values';
 export type {
   LinearAlgebraMatrixNamedValue,
+  LinearAlgebraNumericMatrixNamedValue,
+  LinearAlgebraNumericVectorNamedValue,
   LinearAlgebraVectorNamedValue,
 } from './named-values';
+export {
+  parseLinearAlgebraScalarWire,
+  resolveLinearAlgebraScalarWire,
+} from './scalar-wire';
+export {
+  resolveMatrixNamedValueOperand,
+  resolveVectorNamedValueOperand,
+} from './scalar-operands';
+export type {
+  LinearAlgebraScalarDomain,
+  LinearAlgebraScalarWireV1,
+  LinearAlgebraSubstitutionMode,
+} from './scalar-wire';
 export type { RunMatrixModeRequest } from '../modes/matrix';
 export type { RunVectorModeRequest } from '../modes/vector';
 export {
@@ -175,12 +216,17 @@ export function buildActiveMatrixRuntimeRequest(
 ): { inputLatex: string; request: RunMatrixModeRequest } {
   const activeValues = activeMatrixValuePair(values, leftId, rightId);
   const inputLatex = matrixActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  const matrixA = numericMatrixFromNamedValue(activeValues.left);
+  const matrixB = numericMatrixFromNamedValue(activeValues.right);
+  if (!matrixA || !matrixB) {
+    throw new Error('This Matrix action requires the symbolic Matrix producer.');
+  }
   return {
     inputLatex,
     request: {
       operation,
-      matrixA: cloneLinearAlgebraMatrix(activeValues.left.value),
-      matrixB: cloneLinearAlgebraMatrix(activeValues.right.value),
+      matrixA,
+      matrixB,
       editorExpressionLatex: inputLatex,
       matrixOperandLatexA: activeValues.left.name,
       matrixOperandLatexB: activeValues.right.name,
@@ -197,16 +243,126 @@ export function buildActiveVectorRuntimeRequest(
 ): { inputLatex: string; request: RunVectorModeRequest } {
   const activeValues = activeVectorValuePair(values, leftId, rightId);
   const inputLatex = vectorActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  const vectorA = numericVectorFromNamedValue(activeValues.left);
+  const vectorB = numericVectorFromNamedValue(activeValues.right);
+  if (!vectorA || !vectorB) {
+    throw new Error('This Vector action requires the symbolic Vector producer.');
+  }
   return {
     inputLatex,
     request: {
       operation,
-      vectorA: cloneLinearAlgebraVector(activeValues.left.value),
-      vectorB: cloneLinearAlgebraVector(activeValues.right.value),
+      vectorA,
+      vectorB,
       angleUnit,
       editorExpressionLatex: inputLatex,
       vectorOperandLatexA: activeValues.left.name,
       vectorOperandLatexB: activeValues.right.name,
+    },
+  };
+}
+
+type ScalarRequestContext = {
+  domain: LinearAlgebraScalarDomain;
+  substitutionMode: LinearAlgebraSubstitutionMode;
+  storedVariables: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[];
+  complexExactForm: ComplexExactForm;
+};
+
+function mergeSnapshots(...groups: readonly VariableSubstitutionSnapshot[][]) {
+  const byName = new Map<string, VariableSubstitutionSnapshot>();
+  for (const group of groups) for (const entry of group) byName.set(entry.name, { ...entry });
+  return [...byName.values()];
+}
+
+export function buildActiveScalarMatrixRuntimeRequest(
+  operation: MatrixOperation,
+  values: readonly LinearAlgebraMatrixNamedValue[],
+  leftId: string,
+  rightId: string,
+  context: ScalarRequestContext,
+): { inputLatex: string; request: ScalarMatrixRequestV1 } | { error: string } {
+  const activeValues = activeMatrixValuePair(values, leftId, rightId);
+  const protectedNames = values.map((value) => value.name);
+  const resolutionContext = {
+    domain: context.domain,
+    mode: context.substitutionMode,
+    storedVariables: context.storedVariables,
+    protectedNames,
+  };
+  const left = resolveMatrixNamedValueOperand(activeValues.left, resolutionContext);
+  if ('error' in left) return left;
+  const right = resolveMatrixNamedValueOperand(activeValues.right, resolutionContext);
+  if ('error' in right) return right;
+  const inputLatex = matrixActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  return {
+    inputLatex,
+    request: {
+      operation,
+      operandEncoding: 'scalar-v1',
+      matrixA: left.operand,
+      matrixB: right.operand,
+      editorExpressionLatex: inputLatex,
+      matrixOperandLatexA: activeValues.left.name,
+      matrixOperandLatexB: activeValues.right.name,
+      matrixValues: cloneMatrixNamedValues(values),
+      activeMatrixLeftId: activeValues.left.id,
+      activeMatrixRightId: activeValues.right.id,
+      domain: context.domain,
+      substitutionMode: context.substitutionMode,
+      substitutionSnapshot: mergeSnapshots(left.substitutions, right.substitutions),
+      protectedSubstitutionSnapshot: mergeSnapshots(
+        left.protectedSubstitutions,
+        right.protectedSubstitutions,
+      ),
+      complexExactForm: context.complexExactForm,
+    },
+  };
+}
+
+export function buildActiveScalarVectorRuntimeRequest(
+  operation: VectorOperation,
+  values: readonly LinearAlgebraVectorNamedValue[],
+  leftId: string,
+  rightId: string,
+  angleUnit: RunVectorModeRequest['angleUnit'],
+  context: ScalarRequestContext,
+): { inputLatex: string; request: ScalarVectorRequestV1 } | { error: string } {
+  const activeValues = activeVectorValuePair(values, leftId, rightId);
+  const protectedNames = values.map((value) => value.name);
+  const resolutionContext = {
+    domain: context.domain,
+    mode: context.substitutionMode,
+    storedVariables: context.storedVariables,
+    protectedNames,
+  };
+  const left = resolveVectorNamedValueOperand(activeValues.left, resolutionContext);
+  if ('error' in left) return left;
+  const right = resolveVectorNamedValueOperand(activeValues.right, resolutionContext);
+  if ('error' in right) return right;
+  const inputLatex = vectorActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  return {
+    inputLatex,
+    request: {
+      operation,
+      operandEncoding: 'scalar-v1',
+      vectorA: left.operand,
+      vectorB: right.operand,
+      angleUnit,
+      editorExpressionLatex: inputLatex,
+      vectorOperandLatexA: activeValues.left.name,
+      vectorOperandLatexB: activeValues.right.name,
+      vectorValues: cloneVectorNamedValues(values),
+      activeVectorLeftId: activeValues.left.id,
+      activeVectorRightId: activeValues.right.id,
+      domain: context.domain,
+      substitutionMode: context.substitutionMode,
+      substitutionSnapshot: mergeSnapshots(left.substitutions, right.substitutions),
+      protectedSubstitutionSnapshot: mergeSnapshots(
+        left.protectedSubstitutions,
+        right.protectedSubstitutions,
+      ),
+      complexExactForm: context.complexExactForm,
     },
   };
 }

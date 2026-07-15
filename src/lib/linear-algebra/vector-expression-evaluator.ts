@@ -38,6 +38,7 @@ import {
   type NumericVector,
 } from './vector-core';
 import {
+  numericVectorFromNamedValue,
   vectorValueByName,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
@@ -184,11 +185,15 @@ function evaluateNamedVector(
 ): VectorExpressionEvaluation {
   const namedValue = vectorValueByName(input.vectorValues, expression.name);
   if (namedValue) {
-    const dimensionStop = vectorDimensionStop(namedValue.value);
+    const numericValue = numericVectorFromNamedValue(namedValue);
+    if (!numericValue) {
+      return { ok: false, message: 'This Vector expression requires a symbolic-capable operation.' };
+    }
+    const dimensionStop = vectorDimensionStop(numericValue);
     if (dimensionStop) return dimensionStop;
     return {
       ok: true,
-      operand: operandFromNamedNumeric(namedValue.value, expression.name, expression.displayLatex),
+      operand: operandFromNamedNumeric(numericValue, expression.name, expression.displayLatex),
     };
   }
 

@@ -33,6 +33,7 @@ import {
 import type { LinearAlgebraEditorExpression } from './editor-parser';
 import {
   matrixValueByName,
+  numericMatrixFromNamedValue,
   type LinearAlgebraMatrixNamedValue,
 } from './named-values';
 
@@ -106,11 +107,15 @@ function evaluateNamedMatrix(
 ): MatrixExpressionEvaluation {
   const namedValue = matrixValueByName(input.matrixValues, expression.name);
   if (namedValue) {
-    const dimensionStop = matrixDimensionStop(namedValue.value);
+    const numericValue = numericMatrixFromNamedValue(namedValue);
+    if (!numericValue) {
+      return { ok: false, message: 'This Matrix expression requires a symbolic-capable operation.' };
+    }
+    const dimensionStop = matrixDimensionStop(numericValue);
     if (dimensionStop) return dimensionStop;
     return {
       ok: true,
-      operand: operandFromNamedNumeric(namedValue.value, expression.name, expression.displayLatex),
+      operand: operandFromNamedNumeric(numericValue, expression.name, expression.displayLatex),
     };
   }
 

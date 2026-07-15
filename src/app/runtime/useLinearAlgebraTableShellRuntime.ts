@@ -8,6 +8,7 @@ import { buildVirtualKeyboardLayouts } from '../../lib/virtual-keyboard/layouts'
 import type {
   AngleUnit,
   CanonicalRuntimeOutcome,
+  ComplexExactForm,
   HistoryEntry,
   ModeId,
   SettingsPatch,
@@ -21,6 +22,12 @@ import type { WorkspaceInstance } from './workspace-instances';
 import { useLinearAlgebraRuntime } from './useLinearAlgebraRuntime';
 import { useTableRuntime } from './useTableRuntime';
 import { readHistoryResult } from './historyDisplayEntry';
+import {
+  cloneMatrixNamedValues,
+  cloneVectorNamedValues,
+  numericMatrixFromNamedValue,
+  numericVectorFromNamedValue,
+} from '../../lib/linear-algebra/runtime-request';
 
 type CommitLinearTableOutcome = (
   outcome: CanonicalRuntimeOutcome,
@@ -44,6 +51,7 @@ type UseLinearAlgebraTableShellRuntimeOptions = {
   activeFieldRef: RefObject<MathfieldElement | null>;
   angleUnit: AngleUnit;
   approxDigits?: number;
+  complexExactForm?: ComplexExactForm;
   commitOutcome: CommitLinearTableOutcome;
   currentMode: ModeId;
   currentModeRef: RefObject<ModeId>;
@@ -84,25 +92,18 @@ function cloneVector(vector: readonly number[]) {
 }
 
 function cloneMatrixValues(values: NonNullable<HistoryEntry['matrixSeed']>['matrixValues']) {
-  return values?.map((value) => ({
-    id: value.id,
-    name: value.name,
-    value: cloneMatrix(value.value),
-  }));
+  return values ? cloneMatrixNamedValues(values) : undefined;
 }
 
 function cloneVectorValues(values: NonNullable<HistoryEntry['vectorSeed']>['vectorValues']) {
-  return values?.map((value) => ({
-    id: value.id,
-    name: value.name,
-    value: cloneVector(value.value),
-  }));
+  return values ? cloneVectorNamedValues(values) : undefined;
 }
 
 export function useLinearAlgebraTableShellRuntime({
   activeFieldRef,
   angleUnit,
   approxDigits,
+  complexExactForm = 'rectangular',
   commitOutcome,
   currentMode,
   currentModeRef,
@@ -121,11 +122,13 @@ export function useLinearAlgebraTableShellRuntime({
   const linearAlgebraRuntime = useLinearAlgebraRuntime({
     angleUnit,
     approxDigits,
+    complexExactForm,
     commitOutcome,
     discardHistoryTicket,
     getCurrentMode: () => currentModeRef.current,
     reserveHistoryTicket,
     setRuntimeStatusOverride,
+    storedVariables,
     syncEditorLatex: (mode, latex) => {
       if (currentModeRef.current !== mode) {
         return;
@@ -252,21 +255,30 @@ export function useLinearAlgebraTableShellRuntime({
 
     if (entry.mode === 'matrix' && entry.matrixSeed) {
       if (entry.matrixSeed.matrixValues?.length) {
-        const matrixB =
-          entry.matrixSeed.matrixB
-          ?? entry.matrixSeed.matrixValues.find((value) => value.id === entry.matrixSeed?.activeMatrixRightId)?.value
-          ?? entry.matrixSeed.matrixValues[1]?.value
-          ?? entry.matrixSeed.matrixA;
+        const leftValue = entry.matrixSeed.matrixValues.find((value) => value.id === entry.matrixSeed?.activeMatrixLeftId)
+          ?? entry.matrixSeed.matrixValues[0];
+        const rightValue = entry.matrixSeed.matrixValues.find((value) => value.id === entry.matrixSeed?.activeMatrixRightId)
+          ?? entry.matrixSeed.matrixValues[1]
+          ?? leftValue;
+        const matrixA = leftValue ? numericMatrixFromNamedValue(leftValue) ?? [[0]] : [[0]];
+        const matrixB = rightValue ? numericMatrixFromNamedValue(rightValue) ?? [[0]] : matrixA;
         linearAlgebraRuntime.restoreMatrixSurfaceState({
-          matrixA: cloneMatrix(entry.matrixSeed.matrixA),
+          matrixA: cloneMatrix(matrixA),
           matrixB: cloneMatrix(matrixB),
           matrixValues: cloneMatrixValues(entry.matrixSeed.matrixValues),
           activeMatrixLeftId: entry.matrixSeed.activeMatrixLeftId,
           activeMatrixRightId: entry.matrixSeed.activeMatrixRightId,
           matrixEditorLatex: entry.matrixSeed.editorExpressionLatex ?? entry.inputLatex,
+          matrixDomain: entry.matrixSeed.domain ?? 'real',
+          matrixSubstitutionMode: entry.matrixSeed.substitutionMode ?? 'symbolic',
+          matrixSubstitutionSnapshot: entry.matrixSeed.substitutionSnapshot,
         });
+        if (entry.matrixSeed.complexExactForm && entry.matrixSeed.complexExactForm !== complexExactForm) {
+          patchSettings({ complexExactForm: entry.matrixSeed.complexExactForm });
+        }
         return true;
       }
+      if (entry.matrixSeed.operandEncoding === 'scalar-v1') return false;
       linearAlgebraRuntime.resetMatrixValues();
       linearAlgebraRuntime.setMatrixA(cloneMatrix(entry.matrixSeed.matrixA));
       if (entry.matrixSeed.matrixB) {
@@ -278,24 +290,33 @@ export function useLinearAlgebraTableShellRuntime({
 
     if (entry.mode === 'vector' && entry.vectorSeed) {
       if (entry.vectorSeed.vectorValues?.length) {
-        const vectorB =
-          entry.vectorSeed.vectorB
-          ?? entry.vectorSeed.vectorValues.find((value) => value.id === entry.vectorSeed?.activeVectorRightId)?.value
-          ?? entry.vectorSeed.vectorValues[1]?.value
-          ?? entry.vectorSeed.vectorA;
+        const leftValue = entry.vectorSeed.vectorValues.find((value) => value.id === entry.vectorSeed?.activeVectorLeftId)
+          ?? entry.vectorSeed.vectorValues[0];
+        const rightValue = entry.vectorSeed.vectorValues.find((value) => value.id === entry.vectorSeed?.activeVectorRightId)
+          ?? entry.vectorSeed.vectorValues[1]
+          ?? leftValue;
+        const vectorA = leftValue ? numericVectorFromNamedValue(leftValue) ?? [0] : [0];
+        const vectorB = rightValue ? numericVectorFromNamedValue(rightValue) ?? [0] : vectorA;
         linearAlgebraRuntime.restoreVectorSurfaceState({
-          vectorA: cloneVector(entry.vectorSeed.vectorA),
+          vectorA: cloneVector(vectorA),
           vectorB: cloneVector(vectorB),
           vectorValues: cloneVectorValues(entry.vectorSeed.vectorValues),
           activeVectorLeftId: entry.vectorSeed.activeVectorLeftId,
           activeVectorRightId: entry.vectorSeed.activeVectorRightId,
           vectorEditorLatex: entry.vectorSeed.editorExpressionLatex ?? entry.inputLatex,
+          vectorDomain: entry.vectorSeed.domain ?? 'real',
+          vectorSubstitutionMode: entry.vectorSeed.substitutionMode ?? 'symbolic',
+          vectorSubstitutionSnapshot: entry.vectorSeed.substitutionSnapshot,
         });
         if (entry.vectorSeed.angleUnit !== angleUnit) {
           patchSettings({ angleUnit: entry.vectorSeed.angleUnit });
         }
+        if (entry.vectorSeed.complexExactForm && entry.vectorSeed.complexExactForm !== complexExactForm) {
+          patchSettings({ complexExactForm: entry.vectorSeed.complexExactForm });
+        }
         return true;
       }
+      if (entry.vectorSeed.operandEncoding === 'scalar-v1') return false;
       linearAlgebraRuntime.resetVectorValues();
       linearAlgebraRuntime.setVectorA(cloneVector(entry.vectorSeed.vectorA));
       if (entry.vectorSeed.vectorB) {

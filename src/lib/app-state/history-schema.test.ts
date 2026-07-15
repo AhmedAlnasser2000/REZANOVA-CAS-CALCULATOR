@@ -26,6 +26,10 @@ function parseHistoryEntry(input: Record<string, unknown>) {
   });
 }
 
+function scalarWire(canonicalLatex: string, mathJson: unknown) {
+  return { version: 1 as const, canonicalLatex, mathJson };
+}
+
 describe('history entry schema', () => {
   it('requires a canonical V1 result document', () => {
     expect(() => historyEntrySchema.parse({
@@ -813,6 +817,103 @@ describe('history entry schema', () => {
       },
       timestamp: '2026-07-10T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('profileA');
+  });
+
+  it('accepts discriminated symbolic Matrix and Vector replay seeds without numeric shadows', () => {
+    const source = scalarWire('a', 'a');
+    const resolved = scalarWire('2', 2);
+    const matrix = parseHistoryEntry({
+      id: 'matrix-scalar-seed',
+      mode: 'matrix',
+      inputLatex: '\\det(A)',
+      matrixSeed: {
+        operation: 'detA',
+        operandEncoding: 'scalar-v1',
+        matrixA: { encoding: 'scalar-v1', source: [[source]], resolved: [[resolved]] },
+        matrixValues: [{ id: 'matrix-a', name: 'A', encoding: 'scalar-v1', value: [[source]] }],
+        domain: 'real',
+        substitutionMode: 'use-stored-values',
+        substitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+        complexExactForm: 'rectangular',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).matrixSeed;
+    expect(matrix).toMatchObject({
+      operandEncoding: 'scalar-v1',
+      domain: 'real',
+      matrixA: { source: [[{ canonicalLatex: 'a' }]], resolved: [[{ canonicalLatex: '2' }]] },
+    });
+
+    const vector = parseHistoryEntry({
+      id: 'vector-scalar-seed',
+      mode: 'vector',
+      inputLatex: 'u\\cdot v',
+      vectorSeed: {
+        operation: 'dot',
+        operandEncoding: 'scalar-v1',
+        vectorA: { encoding: 'scalar-v1', source: [source], resolved: [source] },
+        vectorB: { encoding: 'scalar-v1', source: [resolved], resolved: [resolved] },
+        angleUnit: 'rad',
+        domain: 'complex',
+        substitutionMode: 'symbolic',
+        complexExactForm: 'cis',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).vectorSeed;
+    expect(vector).toMatchObject({ operandEncoding: 'scalar-v1', domain: 'complex' });
+  });
+
+  it('rejects malformed scalar wires, custom MathJSON heads, and extra scalar fields', () => {
+    for (const badWire of [
+      { version: 1, canonicalLatex: 'a', mathJson: ['PrivateScalar', 'a'] },
+      { version: 1, canonicalLatex: '', mathJson: 'a' },
+      { version: 1, canonicalLatex: 'a', mathJson: 'a', extra: true },
+    ]) {
+      expect(() => parseHistoryEntry({
+        id: 'bad-scalar-seed',
+        mode: 'vector',
+        inputLatex: 'u',
+        vectorSeed: {
+          operation: 'normA',
+          operandEncoding: 'scalar-v1',
+          vectorA: { encoding: 'scalar-v1', source: [badWire], resolved: [badWire] },
+          angleUnit: 'rad',
+        },
+        timestamp: '2026-07-15T00:00:00.000Z',
+      })).toThrow();
+    }
+
+    const imaginary = scalarWire('i', 'ImaginaryUnit');
+    expect(() => parseHistoryEntry({
+      id: 'bad-real-complex-seed',
+      mode: 'vector',
+      inputLatex: 'u',
+      vectorSeed: {
+        operation: 'normA',
+        operandEncoding: 'scalar-v1',
+        vectorA: { encoding: 'scalar-v1', source: [imaginary], resolved: [imaginary] },
+        angleUnit: 'rad',
+        domain: 'real',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    })).toThrow();
+
+    const mismatchedExact = {
+      ...scalarWire('a', 'a'),
+      exactRational: { numerator: 1, denominator: 1 },
+    };
+    expect(() => parseHistoryEntry({
+      id: 'bad-scalar-exact-sidecar',
+      mode: 'vector',
+      inputLatex: 'u',
+      vectorSeed: {
+        operation: 'normA',
+        operandEncoding: 'scalar-v1',
+        vectorA: { encoding: 'scalar-v1', source: [mismatchedExact], resolved: [mismatchedExact] },
+        angleUnit: 'rad',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    })).toThrow();
   });
 
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {

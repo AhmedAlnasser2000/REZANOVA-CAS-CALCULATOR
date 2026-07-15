@@ -11,6 +11,12 @@ import {
 } from '../language';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
 import { validateCanonicalResultDocumentVersioned } from '../result-contract';
+import {
+  matrixReplaySeedSchema,
+  vectorReplaySeedSchema,
+} from './linear-algebra-history-schema';
+
+export { variableSubstitutionSnapshotSchema } from './linear-algebra-history-schema';
 
 export const modeIdSchema = z.enum([
   'calculate',
@@ -322,151 +328,6 @@ const trigReplaySeedSchema = z.object({
   screen: trigScreenSchema,
   request: trigRequestSchema,
 });
-const matrixOperationSchema = z.enum([
-  'add',
-  'subtract',
-  'multiply',
-  'transposeA',
-  'transposeB',
-  'detA',
-  'detB',
-  'inverseA',
-  'inverseB',
-  'rankA',
-  'rankB',
-  'rrefA',
-  'rrefB',
-  'nullSpaceA',
-  'nullSpaceB',
-  'columnSpaceA',
-  'columnSpaceB',
-  'basisA',
-  'basisB',
-  'coordinatesA',
-  'coordinatesB',
-  'changeBasis',
-  'luA',
-  'luB',
-  'pluA',
-  'pluB',
-  'luSolveA',
-  'luSolveB',
-  'pluSolveA',
-  'pluSolveB',
-  'multiRhsSolve',
-  'qrA',
-  'qrB',
-  'columnProjectionA',
-  'columnProjectionB',
-  'leastSquaresA',
-  'leastSquaresB',
-  'invertibilityA',
-  'invertibilityB',
-  'profileA',
-  'profileB',
-  'definiteA',
-  'definiteB',
-  'svdA',
-  'svdB',
-  'pinvA',
-  'pinvB',
-  'condA',
-  'condB',
-  'nrankA',
-  'nrankB',
-  'eigenA',
-  'eigenB',
-  'diagonalizeA',
-  'diagonalizeB',
-  'spectralPowerA',
-  'spectralPowerB',
-  'linearSystem',
-]);
-const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);
-const vectorOperationSchema = z.enum([
-  'dot',
-  'cross',
-  'normA',
-  'normB',
-  'angle',
-  'add',
-  'subtract',
-  'projectionUofV',
-  'projectionVofU',
-  'orthogonalToU',
-  'orthogonalToV',
-  'unitA',
-  'unitB',
-  'orthogonalCheck',
-  'gramSchmidtUV',
-  'parallel',
-  'distance',
-  'parallelogramArea',
-  'triangleArea',
-  'volume',
-  'linearCombination',
-  'span',
-  'independent',
-]);
-const numericMatrixSchema = z.array(z.array(z.number().finite()));
-const numericVectorSchema = z.array(z.number().finite());
-const matrixNamedValueSnapshotSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  value: numericMatrixSchema,
-});
-const vectorNamedValueSnapshotSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  value: numericVectorSchema,
-});
-const exactScalarWireSchema = z.object({
-  numerator: z.number().int().safe(),
-  denominator: z.number().int().safe().positive(),
-});
-const exactMatrixWireSchema = z.array(z.array(exactScalarWireSchema));
-const exactVectorWireSchema = z.array(exactScalarWireSchema);
-const matrixReplaySeedSchema = z.object({
-  operation: matrixOperationSchema,
-  matrixA: numericMatrixSchema,
-  matrixB: numericMatrixSchema.optional(),
-  approxDigits: z.number().int().min(0).max(20).optional(),
-  systemRhs: numericVectorSchema.optional(),
-  coordinateVector: numericVectorSchema.optional(),
-  matrixPowerExponent: z.number().int().safe().optional(),
-  systemForm: matrixSystemFormSchema.optional(),
-  exactMatrixA: exactMatrixWireSchema.optional(),
-  exactMatrixB: exactMatrixWireSchema.optional(),
-  exactSystemRhs: exactVectorWireSchema.optional(),
-  exactCoordinateVector: exactVectorWireSchema.optional(),
-  editorExpressionLatex: z.string().optional(),
-  matrixOperandLatexA: z.string().optional(),
-  matrixOperandLatexB: z.string().optional(),
-  systemRhsLatex: z.string().optional(),
-  coordinateVectorLatex: z.string().optional(),
-  matrixPowerExponentLatex: z.string().optional(),
-  matrixValues: z.array(matrixNamedValueSnapshotSchema).optional(),
-  activeMatrixLeftId: z.string().optional(),
-  activeMatrixRightId: z.string().optional(),
-});
-const vectorReplaySeedSchema = z.object({
-  operation: vectorOperationSchema,
-  vectorA: numericVectorSchema,
-  vectorB: numericVectorSchema.optional(),
-  angleUnit: angleUnitSchema,
-  approxDigits: z.number().int().min(0).max(20).optional(),
-  exactVectorA: exactVectorWireSchema.optional(),
-  exactVectorB: exactVectorWireSchema.optional(),
-  editorExpressionLatex: z.string().optional(),
-  vectorOperandLatexA: z.string().optional(),
-  vectorOperandLatexB: z.string().optional(),
-  vectorOperands: z.array(numericVectorSchema).optional(),
-  exactVectorOperands: z.array(exactVectorWireSchema).optional(),
-  vectorOperandLatexList: z.array(z.string()).optional(),
-  vectorValues: z.array(vectorNamedValueSnapshotSchema).optional(),
-  activeVectorLeftId: z.string().optional(),
-  activeVectorRightId: z.string().optional(),
-});
 const geometryScreenSchema = z.enum([
   'home',
   'shapes2dHome',
@@ -682,11 +543,6 @@ export const storedVariableValueSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const variableSubstitutionSnapshotSchema = z.object({
-  name: z.string(),
-  valueLatex: z.string(),
-  numericValue: z.number().finite(),
-});
 const calculateSeedSchema = z.object({
   bodyLatex: z.string().optional(),
   point: z.string().optional(),

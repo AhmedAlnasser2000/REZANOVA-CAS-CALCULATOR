@@ -1,19 +1,29 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { SignedNumberInput } from '../../components/SignedNumberInput';
 import {
   isValidMatrixValueName,
   LINEAR_ALGEBRA_MATRIX_MAX_COLUMNS,
   LINEAR_ALGEBRA_MATRIX_MAX_ROWS,
   LINEAR_ALGEBRA_MIN_EDITING_DIMENSION,
+  matrixNamedValueCellLatex,
   normalizeMatrixValueName,
+  resolveMatrixNamedValueOperand,
+  type LinearAlgebraScalarDomain,
+  type LinearAlgebraScalarWireV1,
+  type LinearAlgebraSubstitutionMode,
   type LinearAlgebraMatrixNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
+import type { StoredVariableValue, VariableSubstitutionSnapshot } from '../../types/calculator';
 import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
+import { LinearAlgebraScalarCell } from './LinearAlgebraScalarCell';
+import { LinearAlgebraScalarControls } from './LinearAlgebraScalarControls';
 
 type MatrixWorkspaceProps = {
   activeMatrixLeftId: string;
   activeMatrixRightId: string;
   matrixValues: readonly LinearAlgebraMatrixNamedValue[];
+  matrixDomain: LinearAlgebraScalarDomain;
+  matrixSubstitutionMode: LinearAlgebraSubstitutionMode;
+  storedVariables: readonly StoredVariableValue[];
   onOpenGuideMode: (mode: 'matrix') => void;
   onOpenGuideArticle: (articleId: string) => void;
   onAddMatrixValue: () => void;
@@ -23,10 +33,12 @@ type MatrixWorkspaceProps = {
   onRenameMatrixValue: (id: string, name: string) => void;
   onResizeMatrixValue: (id: string, rows: number, columns: number) => void;
   onSetActiveMatrixValueIds: (leftId: string, rightId: string) => void;
-  onSetMatrixCell: (id: string, row: number, column: number, value: number) => void;
+  onSetMatrixCellLatex: (id: string, row: number, column: number, latex: string) => string | null;
+  onSetMatrixDomain: (domain: LinearAlgebraScalarDomain) => void;
+  onSetMatrixSubstitutionMode: (mode: LinearAlgebraSubstitutionMode) => void;
 };
 
-function matrixColumnCount(matrix: number[][]) {
+function matrixColumnCount(matrix: readonly (readonly unknown[])[]) {
   return matrix[0]?.length ?? 1;
 }
 
@@ -44,13 +56,14 @@ type MatrixValueCardProps = {
   canDelete: boolean;
   matrixValues: readonly LinearAlgebraMatrixNamedValue[];
   value: LinearAlgebraMatrixNamedValue;
+  resolvedValue?: readonly (readonly LinearAlgebraScalarWireV1[])[];
   onDeleteMatrixValue: MatrixWorkspaceProps['onDeleteMatrixValue'];
   onDuplicateMatrixValue: MatrixWorkspaceProps['onDuplicateMatrixValue'];
   onInsertMatrixName: MatrixWorkspaceProps['onInsertMatrixName'];
   onRenameMatrixValue: MatrixWorkspaceProps['onRenameMatrixValue'];
   onResizeMatrixValue: MatrixWorkspaceProps['onResizeMatrixValue'];
   onSetActiveMatrixValueIds: MatrixWorkspaceProps['onSetActiveMatrixValueIds'];
-  onSetMatrixCell: MatrixWorkspaceProps['onSetMatrixCell'];
+  onSetMatrixCellLatex: MatrixWorkspaceProps['onSetMatrixCellLatex'];
 };
 
 function MatrixValueCard({
@@ -61,13 +74,14 @@ function MatrixValueCard({
   canDelete,
   matrixValues,
   value,
+  resolvedValue,
   onDeleteMatrixValue,
   onDuplicateMatrixValue,
   onInsertMatrixName,
   onRenameMatrixValue,
   onResizeMatrixValue,
   onSetActiveMatrixValueIds,
-  onSetMatrixCell,
+  onSetMatrixCellLatex,
 }: MatrixValueCardProps) {
   const { id, name, value: matrix } = value;
   const rows = matrix.length || 1;
@@ -220,11 +234,13 @@ function MatrixValueCard({
         style={gridColumnStyle(columns)}
       >
         {matrix.map((row, rowIndex) =>
-          row.map((value, columnIndex) => (
-            <SignedNumberInput
+          row.map((_cell, columnIndex) => (
+            <LinearAlgebraScalarCell
+              ariaLabel={`Matrix ${name} row ${rowIndex + 1} column ${columnIndex + 1}`}
               key={`m${id}-${rowIndex}-${columnIndex}`}
-              value={value}
-              onValueChange={(nextValue) => onSetMatrixCell(id, rowIndex, columnIndex, nextValue)}
+              value={matrixNamedValueCellLatex(value, rowIndex, columnIndex)}
+              resolvedLatex={resolvedValue?.[rowIndex]?.[columnIndex]?.canonicalLatex}
+              onCommit={(latex) => onSetMatrixCellLatex(id, rowIndex, columnIndex, latex)}
             />
           )),
         )}
@@ -237,6 +253,9 @@ function MatrixWorkspace({
   activeMatrixLeftId,
   activeMatrixRightId,
   matrixValues,
+  matrixDomain,
+  matrixSubstitutionMode,
+  storedVariables,
   onOpenGuideMode,
   onOpenGuideArticle,
   onAddMatrixValue,
@@ -246,7 +265,9 @@ function MatrixWorkspace({
   onRenameMatrixValue,
   onResizeMatrixValue,
   onSetActiveMatrixValueIds,
-  onSetMatrixCell,
+  onSetMatrixCellLatex,
+  onSetMatrixDomain,
+  onSetMatrixSubstitutionMode,
 }: MatrixWorkspaceProps) {
   const fallbackLeftId = matrixValues[0]?.id ?? '';
   const fallbackRightId = matrixValues[1]?.id ?? fallbackLeftId;
@@ -254,6 +275,19 @@ function MatrixWorkspace({
   const activeLeftId = matrixIds.has(activeMatrixLeftId) ? activeMatrixLeftId : fallbackLeftId;
   const activeRightId = matrixIds.has(activeMatrixRightId) ? activeMatrixRightId : fallbackRightId;
   const canAddMatrix = matrixValues.length < 25;
+  const protectedNames = matrixValues.map((value) => value.name);
+  const resolutions = matrixValues.map((value) => resolveMatrixNamedValueOperand(value, {
+    domain: matrixDomain,
+    mode: matrixSubstitutionMode,
+    protectedNames,
+    storedVariables,
+  }));
+  const usedByName = new Map<string, VariableSubstitutionSnapshot>();
+  for (const resolution of resolutions) {
+    if (!('error' in resolution)) {
+      for (const substitution of resolution.substitutions) usedByName.set(substitution.name, substitution);
+    }
+  }
 
   function activeRolesFor(id: string) {
     const roles: string[] = [];
@@ -285,6 +319,13 @@ function MatrixWorkspace({
         <button className="guide-chip" onClick={() => onOpenGuideMode('matrix')}>Guide: Matrix mode</button>
         <button className="guide-chip" onClick={() => onOpenGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
       </div>
+      <LinearAlgebraScalarControls
+        domain={matrixDomain}
+        substitutionMode={matrixSubstitutionMode}
+        onDomainChange={onSetMatrixDomain}
+        onSubstitutionModeChange={onSetMatrixSubstitutionMode}
+        usedValues={[...usedByName.values()]}
+      />
       <div className="linear-algebra-library-toolbar">
         <div className="linear-algebra-active-operands">
           <LinearAlgebraOperandPicker
@@ -312,7 +353,7 @@ function MatrixWorkspace({
         </button>
       </div>
       <div className="linear-algebra-library-grid">
-        {matrixValues.map((value) => (
+        {matrixValues.map((value, valueIndex) => (
           <MatrixValueCard
             key={value.id}
             activeLeftId={activeLeftId}
@@ -322,13 +363,16 @@ function MatrixWorkspace({
             canDelete={matrixValues.length > 1}
             matrixValues={matrixValues}
             value={value}
+            resolvedValue={'error' in resolutions[valueIndex]
+              ? undefined
+              : resolutions[valueIndex].operand.resolved}
             onDeleteMatrixValue={onDeleteMatrixValue}
             onDuplicateMatrixValue={onDuplicateMatrixValue}
             onInsertMatrixName={onInsertMatrixName}
             onRenameMatrixValue={onRenameMatrixValue}
             onResizeMatrixValue={onResizeMatrixValue}
             onSetActiveMatrixValueIds={onSetActiveMatrixValueIds}
-            onSetMatrixCell={onSetMatrixCell}
+            onSetMatrixCellLatex={onSetMatrixCellLatex}
           />
         ))}
       </div>

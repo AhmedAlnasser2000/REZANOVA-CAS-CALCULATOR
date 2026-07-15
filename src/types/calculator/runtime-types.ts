@@ -26,7 +26,6 @@ import type {
   StatisticsScreen,
   TrigScreen,
 } from './mode-types';
-import type { ExactScalarWire } from './exact-scalar-types';
 import type {
   CoreDraftSource,
   CoreDraftStyle,
@@ -36,11 +35,8 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
+import type { MatrixReplaySeed, VectorReplaySeed } from './linear-algebra-types';
 import type { CanonicalResultDocument } from './canonical-result-v3-types';
-import type {
-  DisplayAnswerRowsReadback,
-  DisplayDetailSection,
-} from './display-types';
 import {
   DEFAULT_LANGUAGE_CODE,
   type LanguageCode,
@@ -54,6 +50,7 @@ export * from './exact-supplement-types';
 export * from './abs-types';
 export * from './display-types';
 export * from './math-payload-types';
+export * from './linear-algebra-types';
 export * from './solver-types';
 export type {
   EquationReplaySeed,
@@ -997,62 +994,6 @@ export type ModeState = {
   activeMode: ModeId;
   menu: MenuNode[];
 };
-export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'profileA' | 'profileB' | 'definiteA' | 'definiteB' | 'svdA' | 'svdB' | 'pinvA' | 'pinvB' | 'condA' | 'condB' | 'nrankA' | 'nrankB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
-export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
-export type MatrixRequest = {
-  operation: MatrixOperation;
-  matrixA: number[][];
-  matrixB?: number[][];
-  approxDigits?: number;
-  systemRhs?: number[];
-  coordinateVector?: number[]; matrixPowerExponent?: number;
-  systemForm?: MatrixSystemForm;
-  exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[]; exactCoordinateVector?: ExactScalarWire[];
-  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string; coordinateVectorLatex?: string; matrixPowerExponentLatex?: string;
-  matrixValues?: { id: string; name: string; value: number[][] }[]; activeMatrixLeftId?: string; activeMatrixRightId?: string;
-};
-
-export type MatrixReplaySeed = MatrixRequest;
-
-export type MatrixResponse = {
-  resultLatex?: string;
-  answerRows?: DisplayAnswerRowsReadback;
-  approxText?: string;
-  detailSections?: DisplayDetailSection[];
-  handoffEquationLatex?: string;
-  warnings: string[];
-  error?: string;
-};
-
-export type VectorOperation =
-  | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
-  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV'
-  | 'parallel' | 'distance' | 'parallelogramArea' | 'triangleArea' | 'volume'
-  | 'linearCombination' | 'span' | 'independent';
-
-export type VectorRequest = {
-  operation: VectorOperation;
-  vectorA: number[];
-  vectorB?: number[];
-  angleUnit: AngleUnit;
-  approxDigits?: number;
-  exactVectorA?: ExactScalarWire[]; exactVectorB?: ExactScalarWire[]; editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
-  vectorOperands?: number[][]; exactVectorOperands?: ExactScalarWire[][]; vectorOperandLatexList?: string[];
-  vectorValues?: { id: string; name: string; value: number[] }[]; activeVectorLeftId?: string; activeVectorRightId?: string;
-};
-
-export type VectorReplaySeed = VectorRequest;
-
-export type VectorResponse = {
-  resultLatex?: string;
-  answerRows?: DisplayAnswerRowsReadback;
-  approxText?: string;
-  detailSections?: DisplayDetailSection[];
-  warnings: string[];
-  error?: string;
-};
-
 export type TableRow = {
   x: string;
   primary: string;

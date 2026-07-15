@@ -43,6 +43,9 @@ export function LinearAlgebraTableWorkspaceHost({
         activeMatrixLeftId={linearAlgebraRuntime.activeMatrixLeftId}
         activeMatrixRightId={linearAlgebraRuntime.activeMatrixRightId}
         matrixValues={linearAlgebraRuntime.matrixValues}
+        matrixDomain={linearAlgebraRuntime.matrixDomain}
+        matrixSubstitutionMode={linearAlgebraRuntime.matrixSubstitutionMode}
+        storedVariables={linearAlgebraRuntime.matrixStoredVariables}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
         onAddMatrixValue={linearAlgebraRuntime.addMatrixValue}
@@ -54,7 +57,9 @@ export function LinearAlgebraTableWorkspaceHost({
         onRenameMatrixValue={linearAlgebraRuntime.renameMatrixValue}
         onResizeMatrixValue={linearAlgebraRuntime.resizeMatrixValueById}
         onSetActiveMatrixValueIds={linearAlgebraRuntime.setActiveMatrixValueIds}
-        onSetMatrixCell={linearAlgebraRuntime.setMatrixValueCell}
+        onSetMatrixCellLatex={linearAlgebraRuntime.setMatrixValueCellLatex}
+        onSetMatrixDomain={linearAlgebraRuntime.setMatrixDomain}
+        onSetMatrixSubstitutionMode={linearAlgebraRuntime.setMatrixSubstitutionMode}
       />
     );
   }
@@ -65,6 +70,9 @@ export function LinearAlgebraTableWorkspaceHost({
         activeVectorLeftId={linearAlgebraRuntime.activeVectorLeftId}
         activeVectorRightId={linearAlgebraRuntime.activeVectorRightId}
         vectorValues={linearAlgebraRuntime.vectorValues}
+        vectorDomain={linearAlgebraRuntime.vectorDomain}
+        vectorSubstitutionMode={linearAlgebraRuntime.vectorSubstitutionMode}
+        storedVariables={linearAlgebraRuntime.vectorStoredVariables}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
         onAddVectorValue={linearAlgebraRuntime.addVectorValue}
@@ -76,7 +84,9 @@ export function LinearAlgebraTableWorkspaceHost({
         onRenameVectorValue={linearAlgebraRuntime.renameVectorValue}
         onResizeVectorValue={linearAlgebraRuntime.resizeVectorValueById}
         onSetActiveVectorValueIds={linearAlgebraRuntime.setActiveVectorValueIds}
-        onSetVectorCell={linearAlgebraRuntime.setVectorValueCell}
+        onSetVectorCellLatex={linearAlgebraRuntime.setVectorValueCellLatex}
+        onSetVectorDomain={linearAlgebraRuntime.setVectorDomain}
+        onSetVectorSubstitutionMode={linearAlgebraRuntime.setVectorSubstitutionMode}
       />
     );
   }
