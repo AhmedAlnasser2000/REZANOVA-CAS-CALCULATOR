@@ -6,7 +6,7 @@ pub const STORED_RECORD_VERSION: u8 = 1;
 pub const ASSET_RECORD_VERSION: u8 = 1;
 pub const PACKAGE_MANIFEST_VERSION: u8 = 1;
 pub const VERSION_SNAPSHOT_VERSION: u8 = 1;
-pub const CURRENT_DOCUMENT_SCHEMA: u64 = 11;
+pub const CURRENT_DOCUMENT_SCHEMA: u64 = 12;
 pub const MINIMUM_DURABLE_DOCUMENT_SCHEMA: u64 = 6;
 pub const PACKAGE_KIND: &str = "calcwiz-notebook";
 pub const DOCUMENT_PATH: &str = "document.json";
@@ -327,9 +327,36 @@ fn validate_media_placement(node: &Map<String, Value>, kind: &str) -> Result<(),
     Ok(())
 }
 
+fn validate_media_width(
+    value: Option<&Value>,
+    kind: &str,
+    allow_precise: bool,
+) -> Result<(), String> {
+    let Some(value) = value else {
+        return Ok(());
+    };
+    let Some(width) = value.as_f64() else {
+        return Err(format!("Notebook {kind} width is invalid."));
+    };
+    let normalized = (width * 1_000.0).round() / 1_000.0;
+    let valid = width.is_finite()
+        && (10.0..=100.0).contains(&width)
+        && if allow_precise {
+            (width - normalized).abs() <= 1e-9
+        } else {
+            width.fract() == 0.0
+        };
+    if valid {
+        Ok(())
+    } else {
+        Err(format!("Notebook {kind} width is invalid."))
+    }
+}
+
 fn validate_image_figure(
     node: &Map<String, Value>,
     allow_direct_media: bool,
+    allow_precise_media_width: bool,
 ) -> Result<(), String> {
     const LEGACY_FIELDS: &[&str] = &[
         "type",
@@ -386,14 +413,7 @@ fn validate_image_figure(
     {
         return Err("Notebook decorative image cannot carry alternative text.".into());
     }
-    if let Some(width) = node.get("widthPercent") {
-        if !width
-            .as_u64()
-            .is_some_and(|value| (10..=100).contains(&value))
-        {
-            return Err("Notebook image width is invalid.".into());
-        }
-    }
+    validate_media_width(node.get("widthPercent"), "image", allow_precise_media_width)?;
     validate_media_placement(node, "image")?;
     if let Some(rotation) = node.get("rotation") {
         let valid_rotation = rotation.as_u64().is_some_and(|value| {
@@ -455,6 +475,7 @@ fn is_video_track_language(value: &str) -> bool {
 fn validate_video_figure(
     node: &Map<String, Value>,
     allow_direct_media: bool,
+    allow_precise_media_width: bool,
 ) -> Result<(), String> {
     const ALLOWED_FIELDS: &[&str] = &[
         "type",
@@ -510,14 +531,7 @@ fn validate_video_figure(
             return Err("Notebook video poster identity is invalid.".into());
         }
     }
-    if let Some(width) = node.get("widthPercent") {
-        if !width
-            .as_u64()
-            .is_some_and(|value| (10..=100).contains(&value))
-        {
-            return Err("Notebook video width is invalid.".into());
-        }
-    }
+    validate_media_width(node.get("widthPercent"), "video", allow_precise_media_width)?;
     validate_media_placement(node, "video")?;
     if allow_direct_media {
         validate_display_aspect_ratio(node.get("displayAspectRatio"), "video")?;
@@ -567,6 +581,7 @@ fn validate_block(
     allow_videos: bool,
     allow_page_layout: bool,
     allow_direct_media: bool,
+    allow_precise_media_width: bool,
 ) -> Result<(), String> {
     if depth > 256 {
         return Err("Notebook nesting exceeds the safety limit.".into());
@@ -662,6 +677,7 @@ fn validate_block(
                     allow_videos,
                     false,
                     allow_direct_media,
+                    allow_precise_media_width,
                 )?;
             }
             Ok(())
@@ -706,10 +722,15 @@ fn validate_block(
                 allow_videos,
                 false,
                 allow_direct_media,
+                allow_precise_media_width,
             )
         }
-        "imageFigure" if allow_images => validate_image_figure(node, allow_direct_media),
-        "videoFigure" if allow_videos => validate_video_figure(node, allow_direct_media),
+        "imageFigure" if allow_images => {
+            validate_image_figure(node, allow_direct_media, allow_precise_media_width)
+        }
+        "videoFigure" if allow_videos => {
+            validate_video_figure(node, allow_direct_media, allow_precise_media_width)
+        }
         "pageBreak" if allow_page_layout && node.len() == 2 => Ok(()),
         _ => Err("Notebook block type is unsupported.".into()),
     }
@@ -722,6 +743,7 @@ fn validate_block_content(
     allow_videos: bool,
     allow_page_layout: bool,
     allow_direct_media: bool,
+    allow_precise_media_width: bool,
 ) -> Result<(), String> {
     for child in node
         .get("content")
@@ -735,6 +757,7 @@ fn validate_block_content(
             allow_videos,
             allow_page_layout,
             allow_direct_media,
+            allow_precise_media_width,
         )?;
     }
     Ok(())
@@ -972,6 +995,7 @@ fn validate_notebook_document_version(
     allow_page_layout: bool,
     allow_direct_media: bool,
     current_running_matter: bool,
+    allow_precise_media_width: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
     if document.get("version").and_then(Value::as_u64) != Some(version) {
@@ -1034,6 +1058,7 @@ fn validate_notebook_document_version(
             allow_videos,
             allow_page_layout,
             allow_direct_media,
+            allow_precise_media_width,
         )?;
     }
     if allow_page_layout {
@@ -1058,6 +1083,7 @@ pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
     validate_notebook_document_version(
         document,
         CURRENT_DOCUMENT_SCHEMA,
+        true,
         true,
         true,
         true,
@@ -1166,16 +1192,25 @@ fn migrate_legacy_running_matter(document: &mut Value) -> Result<(), String> {
 
 pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(11) => validate_notebook_document(document),
-        Some(10) => validate_notebook_document_version(document, 10, true, true, true, true, false),
-        Some(9) => validate_notebook_document_version(document, 9, true, true, true, false, false),
-        Some(8) => validate_notebook_document_version(document, 8, true, false, true, false, false),
+        Some(12) => validate_notebook_document(document),
+        Some(11) => {
+            validate_notebook_document_version(document, 11, true, true, true, true, true, false)
+        }
+        Some(10) => {
+            validate_notebook_document_version(document, 10, true, true, true, true, false, false)
+        }
+        Some(9) => {
+            validate_notebook_document_version(document, 9, true, true, true, false, false, false)
+        }
+        Some(8) => {
+            validate_notebook_document_version(document, 8, true, false, true, false, false, false)
+        }
         Some(7) => {
-            validate_notebook_document_version(document, 7, true, false, false, false, false)
+            validate_notebook_document_version(document, 7, true, false, false, false, false, false)
         }
-        Some(6) => {
-            validate_notebook_document_version(document, 6, false, false, false, false, false)
-        }
+        Some(6) => validate_notebook_document_version(
+            document, 6, false, false, false, false, false, false,
+        ),
         Some(version) if version > CURRENT_DOCUMENT_SCHEMA => {
             Err("NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.".into())
         }
@@ -1188,29 +1223,42 @@ pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(11) => validate_notebook_document(&document)?,
+        Some(12) => validate_notebook_document(&document)?,
+        Some(11) => {
+            validate_notebook_document_version(&document, 11, true, true, true, true, true, false)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
+            validate_notebook_document(&document)?;
+        }
         Some(10) => {
-            validate_notebook_document_version(&document, 10, true, true, true, true, false)?;
+            validate_notebook_document_version(
+                &document, 10, true, true, true, true, false, false,
+            )?;
             migrate_legacy_running_matter(&mut document)?;
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(9) => {
-            validate_notebook_document_version(&document, 9, true, true, true, false, false)?;
+            validate_notebook_document_version(
+                &document, 9, true, true, true, false, false, false,
+            )?;
             document["version"] = Value::from(10);
             migrate_legacy_running_matter(&mut document)?;
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(8) => {
-            validate_notebook_document_version(&document, 8, true, false, true, false, false)?;
+            validate_notebook_document_version(
+                &document, 8, true, false, true, false, false, false,
+            )?;
             document["version"] = Value::from(10);
             migrate_legacy_running_matter(&mut document)?;
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(7) => {
-            validate_notebook_document_version(&document, 7, true, false, false, false, false)?;
+            validate_notebook_document_version(
+                &document, 7, true, false, false, false, false, false,
+            )?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
             migrate_legacy_running_matter(&mut document)?;
@@ -1218,7 +1266,9 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
             validate_notebook_document(&document)?;
         }
         Some(6) => {
-            validate_notebook_document_version(&document, 6, false, false, false, false, false)?;
+            validate_notebook_document_version(
+                &document, 6, false, false, false, false, false, false,
+            )?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
             migrate_legacy_running_matter(&mut document)?;

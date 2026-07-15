@@ -2,6 +2,7 @@ import {
   isNotebookDisplayAspectRatio,
   isNotebookFontSize,
   isNotebookImageRotation,
+  isNotebookMediaWidthPercent,
   isNotebookParagraphLeftIndentPt,
   NOTEBOOK_BULLET_STYLES,
   NOTEBOOK_IMAGE_ALIGNMENTS,
@@ -33,6 +34,7 @@ import {
   type NotebookRichDocumentV8,
   type NotebookRichDocumentV9,
   type NotebookRichDocumentV10,
+  type NotebookRichDocumentV11,
   type NotebookRichMark,
 } from './types';
 import {
@@ -302,6 +304,7 @@ function isRichBlockNode(
   allowVideos = true,
   allowPageLayout = true,
   allowV10MediaAndIndent = true,
+  allowPreciseMediaWidth = false,
 ): value is NotebookRichBlockNode {
   if (!isRecord(value) || typeof value.type !== 'string' || typeof value.id !== 'string') {
     return false;
@@ -340,6 +343,7 @@ function isRichBlockNode(
         allowVideos,
         false,
         allowV10MediaAndIndent,
+        allowPreciseMediaWidth,
       ));
   }
   if (value.type === 'semanticBlock') {
@@ -371,6 +375,7 @@ function isRichBlockNode(
         allowVideos,
         false,
         allowV10MediaAndIndent,
+        allowPreciseMediaWidth,
       ));
   }
   if (value.type === 'bulletList' || value.type === 'orderedList') {
@@ -394,6 +399,7 @@ function isRichBlockNode(
           allowVideos,
           false,
           allowV10MediaAndIndent,
+          allowPreciseMediaWidth,
         )));
   }
   if (value.type === 'paragraph') {
@@ -470,11 +476,11 @@ function isRichBlockNode(
       && !(value.decorative === true && Boolean(String(value.altText ?? '').trim()))
       && (value.caption === undefined || typeof value.caption === 'string')
       && (value.numbered === undefined || typeof value.numbered === 'boolean')
-      && (value.widthPercent === undefined || (
-        Number.isInteger(value.widthPercent)
-        && Number(value.widthPercent) >= 10
-        && Number(value.widthPercent) <= 100
-      ))
+      && (value.widthPercent === undefined || (allowPreciseMediaWidth
+        ? isNotebookMediaWidthPercent(value.widthPercent)
+        : Number.isInteger(value.widthPercent)
+          && Number(value.widthPercent) >= 10
+          && Number(value.widthPercent) <= 100))
       && alignment !== null
       && placement !== null
       && placementAlignmentIsValid
@@ -550,11 +556,11 @@ function isRichBlockNode(
       && (value.numbered === undefined || typeof value.numbered === 'boolean')
       && (value.posterAssetId === undefined
         || /^sha256:[0-9a-f]{64}$/.test(String(value.posterAssetId)))
-      && (value.widthPercent === undefined || (
-        Number.isInteger(value.widthPercent)
-        && Number(value.widthPercent) >= 10
-        && Number(value.widthPercent) <= 100
-      ))
+      && (value.widthPercent === undefined || (allowPreciseMediaWidth
+        ? isNotebookMediaWidthPercent(value.widthPercent)
+        : Number.isInteger(value.widthPercent)
+          && Number(value.widthPercent) >= 10
+          && Number(value.widthPercent) <= 100))
       && alignment !== null
       && placement !== null
       && placementAlignmentIsValid
@@ -593,7 +599,9 @@ export function isNotebookRichDocument(value: unknown): value is NotebookRichDoc
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node))
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, true, true,
+    ))
     && isPageSetup(value.pageSetup)
     && isHeaderFooter(value.headerFooter);
 }
@@ -758,9 +766,31 @@ export function isNotebookRichDocumentV10(value: unknown): value is NotebookRich
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node))
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, true, false,
+    ))
     && isPageSetup(value.pageSetup)
     && isLegacyHeaderFooter(value.headerFooter);
+}
+
+export function isNotebookRichDocumentV11(value: unknown): value is NotebookRichDocumentV11 {
+  return isRecord(value)
+    && value.version === 11
+    && Object.keys(value).every((key) => [
+      'version', 'id', 'title', 'createdAt', 'updatedAt', 'selectedNodeId',
+      'content', 'pageSetup', 'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, true, false,
+    ))
+    && isPageSetup(value.pageSetup)
+    && isHeaderFooter(value.headerFooter);
 }
 
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {

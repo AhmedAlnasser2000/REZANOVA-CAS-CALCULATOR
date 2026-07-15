@@ -28,7 +28,7 @@ describe('Notebook rich document V10 migration', () => {
     };
     expect(isNotebookRichDocumentV10(version10)).toBe(true);
     const migrated = migrateNotebookDocumentV10(version10);
-    expect(migrated.version).toBe(11);
+    expect(migrated.version).toBe(12);
     expect(migrated.headerFooter.pageNumberStart).toBe(7);
     expect(migrated.headerFooter.defaultHeader.left[0]?.content).toEqual([
       { type: 'text', text: 'Course notes' },

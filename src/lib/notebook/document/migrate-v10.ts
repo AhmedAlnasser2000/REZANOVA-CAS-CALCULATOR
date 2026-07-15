@@ -3,8 +3,10 @@ import type {
   NotebookHeaderFooterSettings,
   NotebookRichDocument,
   NotebookRichDocumentV10,
+  NotebookRichDocumentV11,
   NotebookRunningMatterContent,
 } from './types';
+import { migrateNotebookDocumentV11 } from './migrate-v11';
 
 function textContent(text: string): NotebookRunningMatterContent {
   return [{
@@ -45,9 +47,10 @@ function legacyRunningMatter(document: NotebookRichDocumentV10): NotebookHeaderF
 export function migrateNotebookDocumentV10(
   document: NotebookRichDocumentV10,
 ): NotebookRichDocument {
-  return {
+  const version11: NotebookRichDocumentV11 = {
     ...document,
     version: 11,
     headerFooter: legacyRunningMatter(document),
   };
+  return migrateNotebookDocumentV11(version11);
 }

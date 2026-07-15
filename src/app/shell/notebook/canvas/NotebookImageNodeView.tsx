@@ -13,6 +13,7 @@ import {
 
 import {
   DEFAULT_NOTEBOOK_PAGE_SETUP,
+  normalizeNotebookMediaWidthPercent,
   notebookEffectiveImagePlacement,
   type NotebookAssetPort,
   type NotebookImagePlacement,
@@ -166,9 +167,9 @@ export function createNotebookImageNodeView(
       return () => editorElement.removeEventListener('notebook-image-crop-mode-change', onCropModeChange);
     }, [editor, nodeId]);
     const cropMode = eventCropMode || configuredCropMode;
-    const rawWidthPercent = Number(node.attrs.widthPercent);
-    const widthPercent = Number.isFinite(rawWidthPercent)
-      ? Math.min(100, Math.max(10, Math.round(rawWidthPercent)))
+    const rawWidthPercent = node.attrs.widthPercent;
+    const widthPercent = typeof rawWidthPercent === 'number' && Number.isFinite(rawWidthPercent)
+      ? normalizeNotebookMediaWidthPercent(rawWidthPercent)
       : 100;
     const rawRotation = Number(node.attrs.rotation);
     const rotation = Number.isFinite(rawRotation)
@@ -181,6 +182,9 @@ export function createNotebookImageNodeView(
       ? rawDisplayAspectRatio
       : undefined;
     const interaction = useNotebookDirectMediaInteraction({
+      alignment: node.attrs.alignment === 'left' || node.attrs.alignment === 'right'
+        ? node.attrs.alignment
+        : 'center',
       crop,
       cropMode,
       displayAspectRatio,
@@ -238,8 +242,8 @@ export function createNotebookImageNodeView(
     );
     const figureStyle = {
       '--notebook-image-width': interaction.activeGesture === 'resize'
-        && interaction.preview?.renderedWidthPx
-        ? `${interaction.preview.renderedWidthPx}px`
+        && interaction.preview?.rectanglePx.width
+        ? `calc(${interaction.preview.rectanglePx.width}px / var(--page-ui-scale, 1))`
         : `${effectiveWidthPercent}%`,
       '--notebook-image-rotation': `${effectiveRotation}deg`,
       ...(effectiveAspectRatio === undefined

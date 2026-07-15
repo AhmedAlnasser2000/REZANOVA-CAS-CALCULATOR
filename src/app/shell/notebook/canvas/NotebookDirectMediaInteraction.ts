@@ -8,6 +8,8 @@ import {
   type RefObject,
 } from 'react';
 
+import { normalizeNotebookMediaWidthPercent } from '../../../../lib/notebook';
+
 export const NOTEBOOK_MEDIA_RESIZE_HANDLES = [
   { value: 'north-west', label: 'top left' },
   { value: 'north', label: 'top' },
@@ -33,11 +35,19 @@ export type NotebookMediaCrop = {
 export type NotebookMediaPreview = {
   widthPercent: number;
   displayAspectRatio: number;
-  /** Gesture-only dimensions. These are never written to the document. */
-  renderedWidthPx?: number;
-  renderedHeightPx?: number;
+  /** Gesture-only viewport rectangle. It is never written to the document. */
+  rectanglePx: NotebookMediaViewportRectangle;
   rotation?: number;
   crop?: NotebookMediaCrop;
+};
+
+export type NotebookMediaViewportRectangle = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
 };
 
 export type NotebookMediaInteractionPhase = 'start' | 'move' | 'commit' | 'cancel';
@@ -84,9 +94,7 @@ export type NotebookImageNodeViewOptions = NotebookDirectMediaNodeViewOptions & 
 };
 
 type Gesture = {
-  frame: DOMRect;
-  layoutHeight: number;
-  layoutWidth: number;
+  frame: NotebookMediaViewportRectangle;
   handle?: NotebookMediaResizeHandle;
   initial: NotebookMediaPreview;
   mode: 'resize' | 'rotate' | 'crop' | 'drag';
@@ -99,6 +107,7 @@ type Gesture = {
 };
 
 type DirectMediaInteractionOptions = {
+  alignment?: 'left' | 'center' | 'right';
   crop?: NotebookMediaCrop;
   cropMode?: boolean;
   displayAspectRatio?: number;
@@ -168,7 +177,7 @@ function isCornerHandle(handle: NotebookMediaResizeHandle) {
   return vector.horizontal !== 0 && vector.vertical !== 0;
 }
 
-function frameSnapshot(frame: DOMRect) {
+function frameSnapshot(frame: NotebookMediaViewportRectangle) {
   return {
     left: frame.left,
     top: frame.top,
@@ -185,9 +194,10 @@ function editorContentWidth(editor: Editor, fallback: number) {
   const element = editor.view.dom as HTMLElement;
   const bounds = element.getBoundingClientRect();
   const style = getComputedStyle(element);
+  const scale = element.offsetWidth > 0 ? bounds.width / element.offsetWidth : 1;
   const width = bounds.width
-    - (Number.parseFloat(style.paddingLeft) || 0)
-    - (Number.parseFloat(style.paddingRight) || 0);
+    - (Number.parseFloat(style.paddingLeft) || 0) * scale
+    - (Number.parseFloat(style.paddingRight) || 0) * scale;
   return width > 0 ? width : fallback;
 }
 
@@ -198,12 +208,29 @@ function aspectRatioFromFrame(frame: Pick<DOMRect, 'width' | 'height'>, fallback
   return clamp(fallback, 0.1, 10);
 }
 
-function layoutFrameSize(frameElement: HTMLElement | null, fallback: DOMRect) {
-  const width = frameElement?.offsetWidth || fallback.width;
-  const height = frameElement?.offsetHeight || fallback.height;
+function viewportRectangle(
+  frameElement: HTMLElement,
+  bounds: DOMRect,
+): NotebookMediaViewportRectangle {
+  const editor = frameElement.closest<HTMLElement>('.notebook-rich-editor');
+  const editorBounds = editor?.getBoundingClientRect();
+  const scaleX = editor && editorBounds && editor.offsetWidth > 0
+    ? editorBounds.width / editor.offsetWidth
+    : 1;
+  const scaleY = editor && editorBounds && editor.offsetHeight > 0
+    ? editorBounds.height / editor.offsetHeight
+    : scaleX;
+  const width = Math.max(1, (frameElement.offsetWidth || bounds.width) * scaleX);
+  const height = Math.max(1, (frameElement.offsetHeight || bounds.height) * scaleY);
+  const left = bounds.left + (bounds.width - width) / 2;
+  const top = bounds.top + (bounds.height - height) / 2;
   return {
-    height: Math.max(1, height),
-    width: Math.max(1, width),
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
   };
 }
 
@@ -220,7 +247,7 @@ function pageObjectMaximumHeight(editor: Editor) {
   return Number.isFinite(value) && value >= 36 ? value : Number.POSITIVE_INFINITY;
 }
 
-function fitRotatedFrame(
+export function fitNotebookRotatedMediaFrame(
   width: number,
   height: number,
   rotation: number,
@@ -242,23 +269,20 @@ function fitRotatedFrame(
 
 function mediaPreview(
   options: DirectMediaInteractionOptions,
-  layout: { width: number; height: number },
+  rectangle: NotebookMediaViewportRectangle,
 ): NotebookMediaPreview {
-  const contentWidth = editorContentWidth(options.editor, layout.width || 1);
-  const derivedWidth = layout.width > 0 ? (layout.width / contentWidth) * 100 : 100;
-  const widthPercent = clamp(
-    Math.round(finiteNumber(options.widthPercent, derivedWidth)),
-    10,
-    100,
+  const contentWidth = editorContentWidth(options.editor, rectangle.width || 1);
+  const derivedWidth = rectangle.width > 0 ? (rectangle.width / contentWidth) * 100 : 100;
+  const widthPercent = normalizeNotebookMediaWidthPercent(
+    finiteNumber(options.widthPercent, derivedWidth),
   );
   const ratio = typeof options.displayAspectRatio === 'number'
     ? clamp(options.displayAspectRatio, 0.1, 10)
-    : aspectRatioFromFrame(layout, 1);
+    : aspectRatioFromFrame(rectangle, 1);
   return {
     widthPercent,
     displayAspectRatio: clamp(ratio, 0.1, 10),
-    renderedWidthPx: layout.width,
-    renderedHeightPx: layout.height,
+    rectanglePx: rectangle,
     ...(options.rotation === undefined ? {} : { rotation: normalizeRotation(options.rotation) }),
     ...(options.crop ? { crop: normalizeNotebookMediaCrop(options.crop) } : {}),
   };
@@ -266,14 +290,13 @@ function mediaPreview(
 
 type ResizeRectangleInput = {
   handle: NotebookMediaResizeHandle;
-  height: number;
   lockedAspectRatio?: number;
   maximumHeight: number;
   maximumWidth: number;
   minimumSize: number;
   movementX: number;
   movementY: number;
-  width: number;
+  rectangle: NotebookMediaViewportRectangle;
 };
 
 /**
@@ -286,30 +309,38 @@ export function resizeNotebookMediaRectangle(input: ResizeRectangleInput) {
   const lockedRatio = typeof input.lockedAspectRatio === 'number'
     ? clamp(input.lockedAspectRatio, 0.1, 10)
     : undefined;
-  const currentRatio = clamp(input.width / Math.max(1, input.height), 0.1, 10);
+  const currentRatio = clamp(
+    input.rectangle.width / Math.max(1, input.rectangle.height),
+    0.1,
+    10,
+  );
   const ratio = lockedRatio ?? currentRatio;
-  let width = input.width;
-  let height = input.height;
+  let width = input.rectangle.width;
+  let height = input.rectangle.height;
 
   if (lockedRatio || isCornerHandle(input.handle)) {
-    const widthScale = input.width > 0 ? input.movementX / input.width : 0;
-    const heightScale = input.height > 0 ? input.movementY / input.height : 0;
-    let scale: number;
+    const widthCandidate = input.rectangle.width + input.movementX * vector.horizontal;
+    const heightCandidate = input.rectangle.height + input.movementY * vector.vertical;
+    let candidateWidth: number;
     if (vector.horizontal === 0) {
-      scale = 1 + heightScale;
+      candidateWidth = heightCandidate * ratio;
     } else if (vector.vertical === 0) {
-      scale = 1 + widthScale;
+      candidateWidth = widthCandidate;
     } else {
-      scale = 1 + (Math.abs(widthScale) >= Math.abs(heightScale) ? widthScale : heightScale);
+      const widthDelta = widthCandidate - input.rectangle.width;
+      const heightAsWidthDelta = heightCandidate * ratio - input.rectangle.width;
+      candidateWidth = input.rectangle.width + (
+        Math.abs(widthDelta) >= Math.abs(heightAsWidthDelta) ? widthDelta : heightAsWidthDelta
+      );
     }
     const minimumWidth = Math.max(input.minimumSize, input.minimumSize * ratio);
     const maximumWidth = Math.min(input.maximumWidth, input.maximumHeight * ratio);
-    width = clamp(input.width * scale, minimumWidth, Math.max(minimumWidth, maximumWidth));
+    width = clamp(candidateWidth, minimumWidth, Math.max(minimumWidth, maximumWidth));
     height = width / ratio;
   } else if (vector.horizontal !== 0) {
-    width = input.width + input.movementX;
+    width = input.rectangle.width + input.movementX * vector.horizontal;
   } else {
-    height = input.height + input.movementY;
+    height = input.rectangle.height + input.movementY * vector.vertical;
   }
 
   if (!lockedRatio && !isCornerHandle(input.handle)) {
@@ -317,9 +348,55 @@ export function resizeNotebookMediaRectangle(input: ResizeRectangleInput) {
     height = clamp(height, input.minimumSize, input.maximumHeight);
   }
 
+  width = Math.max(input.minimumSize, Math.min(input.maximumWidth, width));
+  height = Math.max(input.minimumSize, Math.min(input.maximumHeight, height));
+  return rectangleFromSize(input.rectangle, input.handle, width, height);
+}
+
+function rectangleFromSize(
+  rectangle: NotebookMediaViewportRectangle,
+  handle: NotebookMediaResizeHandle,
+  width: number,
+  height: number,
+): NotebookMediaViewportRectangle {
+  const vector = handleVector(handle);
+  const centerX = rectangle.left + rectangle.width / 2;
+  const centerY = rectangle.top + rectangle.height / 2;
+  const left = vector.horizontal < 0
+    ? rectangle.right - width
+    : vector.horizontal > 0 ? rectangle.left : centerX - width / 2;
+  const top = vector.vertical < 0
+    ? rectangle.bottom - height
+    : vector.vertical > 0 ? rectangle.top : centerY - height / 2;
   return {
-    width: Math.max(input.minimumSize, Math.min(input.maximumWidth, width)),
-    height: Math.max(input.minimumSize, Math.min(input.maximumHeight, height)),
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
+  };
+}
+
+function flowAlignedRectangle(
+  rectangle: NotebookMediaViewportRectangle,
+  width: number,
+  height: number,
+  alignment: DirectMediaInteractionOptions['alignment'],
+): NotebookMediaViewportRectangle {
+  const left = alignment === 'left'
+    ? rectangle.left
+    : alignment === 'right'
+      ? rectangle.right - width
+      : rectangle.left + (rectangle.width - width) / 2;
+  const top = rectangle.top;
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
   };
 }
 
@@ -381,9 +458,8 @@ function resizedPreview(
 ): NotebookMediaPreview {
   const handle = gesture.handle;
   if (!handle) return gesture.initial;
-  const vector = handleVector(handle);
   const minimumSize = Math.max(1, finiteNumber(options.minimumSizePx, 36));
-  const contentWidth = editorContentWidth(options.editor, gesture.layoutWidth || 1);
+  const contentWidth = editorContentWidth(options.editor, gesture.frame.width || 1);
   const maximumWidth = Math.max(minimumSize, contentWidth);
   const maximumHeight = Math.max(
     minimumSize,
@@ -394,13 +470,16 @@ function resizedPreview(
   const sine = Math.sin(radians);
   const screenDeltaX = event.clientX - gesture.startClientX;
   const screenDeltaY = event.clientY - gesture.startClientY;
-  const deltaX = (screenDeltaX * cosine + screenDeltaY * sine) * vector.horizontal;
-  const deltaY = (-screenDeltaX * sine + screenDeltaY * cosine) * vector.vertical;
-  let { width, height } = resizeNotebookMediaRectangle({
+  const deltaX = screenDeltaX * cosine + screenDeltaY * sine;
+  const deltaY = -screenDeltaX * sine + screenDeltaY * cosine;
+  const horizontalMovement = options.alignment === 'center'
+    && handleVector(handle).horizontal !== 0
+    ? deltaX * 2
+    : deltaX;
+  let rectangle = resizeNotebookMediaRectangle({
     handle,
-    width: gesture.layoutWidth,
-    height: gesture.layoutHeight,
-    movementX: deltaX,
+    rectangle: gesture.frame,
+    movementX: horizontalMovement,
     movementY: deltaY,
     minimumSize,
     maximumWidth,
@@ -409,13 +488,20 @@ function resizedPreview(
       ? { lockedAspectRatio: options.lockedAspectRatio }
       : {}),
   });
-  ({ width, height } = fitRotatedFrame(
-    width,
-    height,
+  const fitted = fitNotebookRotatedMediaFrame(
+    rectangle.width,
+    rectangle.height,
     gesture.rotation,
     maximumWidth,
     maximumHeight,
-  ));
+  );
+  rectangle = flowAlignedRectangle(
+    gesture.frame,
+    fitted.width,
+    fitted.height,
+    options.alignment,
+  );
+  let { width, height } = rectangle;
   let displayAspectRatio = clamp(width / height, 0.1, 10);
   if (displayAspectRatio === 0.1) {
     height = width / displayAspectRatio;
@@ -423,13 +509,13 @@ function resizedPreview(
     width = height * displayAspectRatio;
   }
   displayAspectRatio = clamp(width / height, 0.1, 10);
-  const widthPercent = clamp(Math.round((width / contentWidth) * 100), 10, 100);
+  rectangle = flowAlignedRectangle(gesture.frame, width, height, options.alignment);
+  const widthPercent = normalizeNotebookMediaWidthPercent((width / contentWidth) * 100);
   return {
     ...gesture.initial,
     widthPercent,
     displayAspectRatio: round(displayAspectRatio),
-    renderedWidthPx: round(width),
-    renderedHeightPx: round(height),
+    rectanglePx: rectangle,
   };
 }
 
@@ -445,11 +531,11 @@ function rotatedPreview(
   const rawRotation = initialRotation + angle - gesture.startAngle;
   const rotation = event.shiftKey ? Math.round(rawRotation / 15) * 15 : rawRotation;
   const normalizedRotation = normalizeRotation(rotation);
-  const contentWidth = editorContentWidth(options.editor, gesture.layoutWidth || 1);
+  const contentWidth = editorContentWidth(options.editor, gesture.frame.width || 1);
   const maximumHeight = pageObjectMaximumHeight(options.editor);
   const baseWidth = contentWidth * (gesture.initial.widthPercent / 100);
   const baseHeight = baseWidth / gesture.initial.displayAspectRatio;
-  const fitted = fitRotatedFrame(
+  const fitted = fitNotebookRotatedMediaFrame(
     baseWidth,
     baseHeight,
     normalizedRotation,
@@ -459,7 +545,7 @@ function rotatedPreview(
   return {
     ...gesture.initial,
     rotation: normalizedRotation,
-    widthPercent: clamp(Math.round((fitted.width / contentWidth) * 100), 10, 100),
+    widthPercent: normalizeNotebookMediaWidthPercent((fitted.width / contentWidth) * 100),
   };
 }
 
@@ -510,15 +596,10 @@ function attributesForGesture(gesture: Gesture, preview: NotebookMediaPreview) {
 }
 
 function interactionFrame(gesture: Gesture, preview: NotebookMediaPreview | null) {
-  if (!preview?.renderedWidthPx || !preview.renderedHeightPx || gesture.mode !== 'resize') {
+  if (!preview || gesture.mode !== 'resize') {
     return frameSnapshot(gesture.frame);
   }
-  return {
-    left: gesture.frame.left,
-    top: gesture.frame.top,
-    width: preview.renderedWidthPx,
-    height: preview.renderedHeightPx,
-  };
+  return frameSnapshot(preview.rectanglePx);
 }
 
 export function useNotebookDirectMediaInteraction(options: DirectMediaInteractionOptions) {
@@ -586,19 +667,18 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
   ) => {
     if (event.button !== 0 || options.editor.isDestroyed) return;
     const frameElement = options.frameRef.current;
-    const frame = frameElement?.getBoundingClientRect();
-    if (!frame || frame.width <= 0 || frame.height <= 0) return;
+    if (!frameElement) return;
+    const frame = frameElement.getBoundingClientRect();
+    if (frame.width <= 0 || frame.height <= 0) return;
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    const layout = layoutFrameSize(frameElement, frame);
-    const initial = mediaPreview(options, layout);
+    const measuredFrame = viewportRectangle(frameElement, frame);
+    const initial = mediaPreview(options, measuredFrame);
     const centerX = frame.left + frame.width / 2;
     const centerY = frame.top + frame.height / 2;
     const gesture: Gesture = {
-      frame,
-      layoutHeight: layout.height,
-      layoutWidth: layout.width,
+      frame: measuredFrame,
       handle,
       initial,
       mode,

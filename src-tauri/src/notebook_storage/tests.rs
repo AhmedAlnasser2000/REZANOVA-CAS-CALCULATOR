@@ -29,7 +29,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 11,
+        "version": 12,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -256,7 +256,7 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let legacy = legacy_record("library.legacy", 1, "Legacy notebook", 6);
@@ -271,7 +271,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 11);
+    assert_eq!(loaded.document["version"], 12);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -294,7 +294,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 11);
+    assert_eq!(versions[0].record.document["version"], 12);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -320,7 +320,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 11);
+    assert_eq!(inspection.document["version"], 12);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
     let version7 = legacy_record("library.legacy-v7", 1, "Image-era notebook", 7);
@@ -334,7 +334,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 11);
+    assert_eq!(loaded_v7.document["version"], 12);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
 
     let version8 = legacy_record("library.legacy-v8", 1, "Page-era notebook", 8);
@@ -348,7 +348,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
         .load_record(&version8.library_id)
         .expect("V8 record should load")
         .expect("V8 record should exist");
-    assert_eq!(loaded_v8.document["version"], 11);
+    assert_eq!(loaded_v8.document["version"], 12);
     assert_eq!(loaded_v8.document["content"], version8.document["content"]);
 
     let version9 = legacy_record("library.legacy-v9", 1, "Video-era notebook", 9);
@@ -363,7 +363,7 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
         .load_record(&version9.library_id)
         .expect("V9 record should load")
         .expect("V9 record should exist");
-    assert_eq!(loaded_v9.document["version"], 11);
+    assert_eq!(loaded_v9.document["version"], 12);
     assert_eq!(loaded_v9.document["content"], version9_content);
 
     let version10 = legacy_record("library.legacy-v10", 1, "Direct-media notebook", 10);
@@ -377,16 +377,34 @@ fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes
         .load_record(&version10.library_id)
         .expect("V10 record should load")
         .expect("V10 record should exist");
-    assert_eq!(loaded_v10.document["version"], 11);
+    assert_eq!(loaded_v10.document["version"], 12);
     assert_eq!(
         loaded_v10.document["content"],
         version10.document["content"]
+    );
+
+    let mut version11 = record("library.legacy-v11", 1, "Running-matter notebook");
+    version11.document["version"] = 11.into();
+    let version11_paths = storage.record_paths(&version11.library_id);
+    NotebookStorage::write_synced(
+        &version11_paths.target,
+        &serde_json::to_vec_pretty(&version11).expect("V11 record should serialize"),
+    )
+    .expect("V11 record should write");
+    let loaded_v11 = storage
+        .load_record(&version11.library_id)
+        .expect("V11 record should load")
+        .expect("V11 record should exist");
+    assert_eq!(loaded_v11.document["version"], 12);
+    assert_eq!(
+        loaded_v11.document["content"],
+        version11.document["content"]
     );
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn imports_v6_through_v10_packages_as_new_current_records_without_mutating_sources() {
+fn imports_v6_through_v11_packages_as_new_current_records_without_mutating_sources() {
     let root = unique_storage("v6-v10-package-import");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
 
@@ -403,7 +421,7 @@ fn imports_v6_through_v10_packages_as_new_current_records_without_mutating_sourc
         let inspected = storage
             .inspect_package(&package)
             .expect("supported legacy package should inspect");
-        assert_eq!(inspected.document["version"], 11);
+        assert_eq!(inspected.document["version"], 12);
         assert_eq!(inspected.document["content"], source.document["content"]);
 
         let imported = storage
@@ -411,7 +429,7 @@ fn imports_v6_through_v10_packages_as_new_current_records_without_mutating_sourc
             .expect("supported legacy package should import");
         assert_ne!(imported.library_id, source.library_id);
         assert_eq!(imported.revision, 1);
-        assert_eq!(imported.document["version"], 11);
+        assert_eq!(imported.document["version"], 12);
         assert_eq!(imported.document["content"], source.document["content"]);
         assert_eq!(package, original_package);
 
@@ -420,8 +438,16 @@ fn imports_v6_through_v10_packages_as_new_current_records_without_mutating_sourc
                 .expect("imported record should exist"),
         )
         .expect("imported record should remain readable");
-        assert_eq!(raw_imported["document"]["version"], 11);
+        assert_eq!(raw_imported["document"]["version"], 12);
     }
+
+    let mut version11 = record("library.package-v11", 11, "Schema 11 package");
+    version11.document["version"] = 11.into();
+    let imported = storage
+        .import_package(&portable_package_for(&version11))
+        .expect("V11 package should import");
+    assert_eq!(imported.document["version"], 12);
+    assert_eq!(imported.document["content"], version11.document["content"]);
 
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
@@ -465,7 +491,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("V10 record should exist");
     assert_eq!(loaded.source_document_version, 10);
     let mut opened = loaded.record;
-    assert_eq!(opened.document["version"], 11);
+    assert_eq!(opened.document["version"], 12);
     assert_eq!(opened.document["content"], legacy.document["content"]);
     assert_eq!(opened.document["pageSetup"], legacy.document["pageSetup"]);
     assert_eq!(
@@ -491,7 +517,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("first upgraded save should succeed");
     let current_on_disk: serde_json::Value =
         serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
-    assert_eq!(current_on_disk["document"]["version"], 11);
+    assert_eq!(current_on_disk["document"]["version"], 12);
 
     let snapshot_paths: Vec<_> = fs::read_dir(storage.versions_path(&legacy.library_id))
         .unwrap()
@@ -505,7 +531,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
     assert_eq!(raw_snapshot["record"]["document"]["version"], 10);
     let listed = storage.list_versions(&legacy.library_id).unwrap();
     assert_eq!(listed.len(), 1);
-    assert_eq!(listed[0].record.document["version"], 11);
+    assert_eq!(listed[0].record.document["version"], 12);
 
     opened.revision = 6;
     opened.saved_at = "2026-07-15T00:00:06.000Z".into();
@@ -520,8 +546,8 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .load_record_with_source(&legacy.library_id)
         .unwrap()
         .expect("upgraded record should remain available");
-    assert_eq!(reopened.source_document_version, 11);
-    assert_eq!(reopened.record.document["version"], 11);
+    assert_eq!(reopened.source_document_version, 12);
+    assert_eq!(reopened.record.document["version"], 12);
     assert_eq!(
         reopened.record.document["content"],
         legacy.document["content"]
@@ -574,7 +600,7 @@ fn current_records_skip_upgrade_snapshots_and_legacy_failures_are_specific() {
 
     for (library_id, schema, expected) in [
         ("library.early", 5, "NOTEBOOK_SCHEMA_PRE_V6"),
-        ("library.future", 12, "NOTEBOOK_SCHEMA_NEWER"),
+        ("library.future", 13, "NOTEBOOK_SCHEMA_NEWER"),
     ] {
         let legacy = legacy_record(library_id, 1, "Unsupported notebook", schema);
         let paths = storage.record_paths(library_id);
@@ -690,7 +716,7 @@ fn validates_v11_page_layout_and_explicit_top_level_breaks() {
 }
 
 #[test]
-fn validates_v11_image_metadata_and_crop_bounds() {
+fn validates_v12_image_metadata_and_crop_bounds() {
     let root = unique_storage("v7-image-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let asset_id = format!("sha256:{}", "a".repeat(64));
@@ -703,7 +729,7 @@ fn validates_v11_image_metadata_and_crop_bounds() {
         "altText": "A coordinate plane",
         "caption": "Coordinate plane",
         "numbered": true,
-        "widthPercent": 75,
+        "widthPercent": 63.417,
         "alignment": "center",
         "placement": "normal",
         "rotation": 137,
@@ -713,6 +739,14 @@ fn validates_v11_image_metadata_and_crop_bounds() {
     storage
         .save_record(image_record.clone(), None, true)
         .expect("valid image metadata should save");
+
+    let mut excessive_precision = image_record.clone();
+    excessive_precision.library_id = "library.image.precision".into();
+    excessive_precision.document["content"][0]["widthPercent"] = 63.4174.into();
+    assert!(storage
+        .save_record(excessive_precision, None, true)
+        .expect_err("excessive media-width precision should fail")
+        .contains("width"));
 
     let mut missing_asset = image_record.clone();
     missing_asset.library_id = "library.missing-image-asset".into();
@@ -746,7 +780,7 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
     legacy["version"] = 9.into();
     let original = legacy.clone();
     let migrated = migrate_notebook_document(legacy).expect("V9 document should migrate");
-    assert_eq!(migrated["version"], 11);
+    assert_eq!(migrated["version"], 12);
     assert_eq!(migrated["content"], original["content"]);
     assert_eq!(migrated["pageSetup"], original["pageSetup"]);
     assert_eq!(migrated["headerFooter"]["pageNumberStart"], 1);
@@ -772,7 +806,7 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
 }
 
 #[test]
-fn validates_v11_video_metadata_and_referenced_assets() {
+fn validates_v12_video_metadata_and_referenced_assets() {
     let root = unique_storage("v9-video-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let video_id = format!("sha256:{}", "a".repeat(64));
@@ -797,7 +831,7 @@ fn validates_v11_video_metadata_and_referenced_assets() {
             "language": "en-US",
             "default": true
         }],
-        "widthPercent": 75,
+        "widthPercent": 71.125,
         "alignment": "left",
         "placement": "square-left",
         "displayAspectRatio": 1.777,

@@ -1,6 +1,9 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 11 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 12 as const;
+export const NOTEBOOK_MEDIA_WIDTH_PERCENT_MIN = 10;
+export const NOTEBOOK_MEDIA_WIDTH_PERCENT_MAX = 100;
+export const NOTEBOOK_MEDIA_WIDTH_PERCENT_PRECISION = 3;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -47,6 +50,23 @@ export function isNotebookImageRotation(value: unknown): value is NotebookImageR
     && Number.isInteger(value)
     && value >= 0
     && value <= 359;
+}
+
+export function normalizeNotebookMediaWidthPercent(value: number): number {
+  const bounded = Math.min(
+    NOTEBOOK_MEDIA_WIDTH_PERCENT_MAX,
+    Math.max(NOTEBOOK_MEDIA_WIDTH_PERCENT_MIN, value),
+  );
+  const multiplier = 10 ** NOTEBOOK_MEDIA_WIDTH_PERCENT_PRECISION;
+  return Math.round(bounded * multiplier) / multiplier;
+}
+
+export function isNotebookMediaWidthPercent(value: unknown): value is number {
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && value >= NOTEBOOK_MEDIA_WIDTH_PERCENT_MIN
+    && value <= NOTEBOOK_MEDIA_WIDTH_PERCENT_MAX
+    && Math.abs(value - normalizeNotebookMediaWidthPercent(value)) <= 1e-9;
 }
 
 export type NotebookRichDocumentVersion = typeof NOTEBOOK_RICH_DOCUMENT_VERSION;
@@ -360,6 +380,12 @@ export type NotebookRichDocumentV10 = NotebookRichDocumentBase & {
   version: 10;
   pageSetup: NotebookPageSetup;
   headerFooter: NotebookLegacyHeaderFooterSettings;
+};
+
+export type NotebookRichDocumentV11 = NotebookRichDocumentBase & {
+  version: 11;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookHeaderFooterSettings;
 };
 
 export type NotebookDocumentSummary = {

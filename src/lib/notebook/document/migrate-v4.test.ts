@@ -31,7 +31,7 @@ describe('Notebook rich document V4 migration', () => {
 
     expect(isNotebookRichDocumentV4(version4)).toBe(true);
     const migrated = migrateNotebookDocumentV4(version4);
-    expect(migrated).toMatchObject({ ...version4, version: 11 });
+    expect(migrated).toMatchObject({ ...version4, version: 12 });
     expect(migrated.pageSetup).toEqual({
       paperSize: 'a4',
       orientation: 'portrait',

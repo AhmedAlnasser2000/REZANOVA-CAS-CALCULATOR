@@ -1551,7 +1551,6 @@
 .notebook-image-figure[data-image-placement='square-left'],
 .notebook-image-figure[data-image-placement='square-right'] {
   clear: none;
-  max-width: 52%;
   margin-top: 0.35rem;
   margin-bottom: 0.75rem;
 }
@@ -1647,7 +1646,6 @@
 .notebook-video-figure[data-video-placement='square-left'],
 .notebook-video-figure[data-video-placement='square-right'] {
   clear: none;
-  max-width: 52%;
   margin-top: 0.35rem;
   margin-bottom: 0.75rem;
 }
@@ -1930,7 +1928,7 @@
 
 .notebook-media-direct-controls {
   position: absolute;
-  z-index: 6;
+  z-index: 10;
   inset: 0;
   pointer-events: none;
 }

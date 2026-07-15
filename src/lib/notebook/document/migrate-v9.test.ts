@@ -51,7 +51,7 @@ describe('Notebook rich document V9 migration', () => {
     const migrated = migrateNotebookDocumentV9(version9);
     expect(migrated).toMatchObject({
       ...version9,
-      version: 11,
+      version: 12,
       headerFooter: { differentFirstPage: false, pageNumberStart: 1 },
     });
     expect(migrateNotebookRichDocument(version9)).toEqual(migrated);

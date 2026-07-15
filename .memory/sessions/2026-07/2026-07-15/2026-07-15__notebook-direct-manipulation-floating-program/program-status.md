@@ -26,7 +26,7 @@
 | Gate | Kind | Status |
 | --- | --- | --- |
 | `NOTEBOOK-MEDIA-INTERACTION-REAUDIT2` | ui audit | verified; pointer, geometry, and native presentation baseline recorded |
-| `NOTEBOOK-MEDIA-GEOMETRY2` | backend/schema | pending |
+| `NOTEBOOK-MEDIA-GEOMETRY2` | backend/schema | verified; Schema 12 and full-rectangle precision pass quantitative browser evidence |
 | `NOTEBOOK-MEDIA-GESTURE-LOOP2` | ui | pending |
 | `NOTEBOOK-MEDIA-PLACEMENT2` | ui | pending |
 | `NOTEBOOK-BLOCK-DRAG-UNIFICATION2` | ui | pending |
@@ -43,7 +43,7 @@
 
 ## Current Handoff
 
-- Gate 0 proves that current media manipulation misses its handle by up to the complete 73.4-pixel audit drag and can jump by roughly 49 pixels between preview and release.
-- Packaged WebKitGTK proves decode, range seeking, and actual native fullscreen state, while also exposing divergent inline figure/frame/video rectangles.
-- The audit-owned browser, Vite, Tauri, and driver processes are stopped. Foreign processes remain untouched.
-- Gate 1 now owns the Schema 12 full-rectangle and coordinate-space repair. Gesture-loop behavior is intentionally deferred to Gate 2.
+- Gate 1 advances the current write contract to Schema 12, retains strict integer widths for historical schemas, and permits current media widths from 10 through 100 at 0.001-percent precision.
+- One viewport-pixel rectangle now owns media content, selection, and handles. The 12-case image/video Print/Draft probe passes with at most 0.369-pixel pointer separation and 0.109-pixel preview/release drift across 80, 100, and 130 percent scale.
+- Production-preview image/video evidence passes 4 of 4; focused model, pagination, persistence, UI, Rust, TypeScript, lint, build, size, and hygiene gates pass.
+- Gate 2 now owns requestAnimationFrame preview scheduling and the final pointer lifecycle. Schema 13 floating placement remains later in the approved sequence.

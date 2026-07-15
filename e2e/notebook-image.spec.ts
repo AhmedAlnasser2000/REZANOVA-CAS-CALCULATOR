@@ -150,7 +150,7 @@ test('Notebook inserts a durable safe SVG figure and exposes contextual Picture 
     assetIds: [expect.stringMatching(/^sha256:[0-9a-f]{64}$/)],
     caption: 'Limit diagram',
     mimeType: 'image/svg+xml',
-    version: 11,
+    version: 12,
   });
 
   await ribbonTabs.getByRole('tab', { name: 'Home' }).click();

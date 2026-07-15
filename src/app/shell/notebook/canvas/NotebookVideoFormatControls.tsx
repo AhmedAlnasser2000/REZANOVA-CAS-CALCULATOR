@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import {
+  normalizeNotebookMediaWidthPercent,
   notebookEffectiveImagePlacement,
   type NotebookImagePlacement,
   type NotebookPageSetup,
@@ -146,10 +147,11 @@ export function NotebookVideoFormatControls({
               aria-label="Custom video width percentage"
               min="10"
               max="100"
+              step="0.001"
               type="number"
               value={width}
               onChange={(event) => {
-                const value = Math.max(10, Math.min(100, Math.round(Number(event.target.value))));
+                const value = normalizeNotebookMediaWidthPercent(Number(event.target.value));
                 if (Number.isFinite(value)) updateVideo({ widthPercent: value === 100 ? null : value });
               }}
             />

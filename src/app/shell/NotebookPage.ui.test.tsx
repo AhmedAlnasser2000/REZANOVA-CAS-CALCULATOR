@@ -264,7 +264,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(11);
+    expect(storedDocument.version).toBe(12);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -670,7 +670,7 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const stored = await readOnlyStoredDocument(libraryService);
     expect(stored).toMatchObject({
-      version: 11,
+      version: 12,
       pageSetup: {
         paperSize: 'letter',
         orientation: 'landscape',
@@ -961,7 +961,7 @@ describe('NotebookPage', () => {
       .some((entry) => entry.dataset.outlineKind === 'imageFigure')).toBe(false);
   });
 
-  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V10 state', async () => {
+  it('formats picture size, alignment, wrapping, crop, and rotation as undoable current state', async () => {
     const user = userEvent.setup();
     const libraryService = createNotebookLibraryService();
     render(<NotebookHarness libraryService={libraryService} />);
@@ -1032,7 +1032,7 @@ describe('NotebookPage', () => {
     fireEvent.pointerMove(figure, { clientX: 600, clientY: 250, pointerId: 41 });
     fireEvent.pointerUp(figure, { clientX: 600, clientY: 250, pointerId: 41 });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
-      .getPropertyValue('--notebook-image-width')).toBe('63%'));
+      .getPropertyValue('--notebook-image-width')).toBe('62.5%'));
     figure = screen.getByTestId('notebook-image-figure');
 
     await user.click(screen.getByRole('tab', { name: 'Picture Format' }));
@@ -1075,10 +1075,10 @@ describe('NotebookPage', () => {
     fireEvent.pointerDown(rotatedEastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 46 });
     fireEvent.pointerMove(figure, { clientX: 500, clientY: 350, pointerId: 46 });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
-      .getPropertyValue('--notebook-image-width')).toBe('600px'));
+      .getPropertyValue('--notebook-image-width')).toBe('calc(600px / var(--page-ui-scale, 1))'));
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
-      .getPropertyValue('--notebook-image-width')).toBe('63%'));
+      .getPropertyValue('--notebook-image-width')).toBe('62.5%'));
     figure = screen.getByTestId('notebook-image-figure');
     await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
     await user.keyboard('{Escape}');
@@ -1090,7 +1090,7 @@ describe('NotebookPage', () => {
     expect(stored.content).toEqual(expect.arrayContaining([
       expect.objectContaining({
         type: 'imageFigure',
-        widthPercent: 63,
+        widthPercent: 62.5,
         alignment: 'left',
         placement: 'square-left',
         rotation: 90,
@@ -1261,7 +1261,7 @@ describe('NotebookPage', () => {
     fireEvent.pointerMove(figure, { clientX: 600, clientY: 250, pointerId: 44 });
     fireEvent.pointerUp(figure, { clientX: 600, clientY: 250, pointerId: 44 });
     await waitFor(() => expect(screen.getByTestId('notebook-video-figure').style
-      .getPropertyValue('--notebook-video-width')).toBe('63%'));
+      .getPropertyValue('--notebook-video-width')).toBe('62.5%'));
     figure = screen.getByTestId('notebook-video-figure');
 
     const elementFromPoint = vi.spyOn(document, 'elementFromPoint').mockReturnValue(document.body);
@@ -1399,7 +1399,7 @@ describe('NotebookPage', () => {
         description: 'A narrated limit demonstration.',
         caption: 'Approaching a finite limit',
         numbered: true,
-        widthPercent: 63,
+        widthPercent: 62.5,
         alignment: 'left',
         placement: 'square-left',
         displayAspectRatio: 1.778,

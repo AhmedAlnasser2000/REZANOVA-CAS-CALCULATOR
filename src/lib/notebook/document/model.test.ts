@@ -10,6 +10,7 @@ import {
   isNotebookRichDocumentV7,
   isNotebookRichDocumentV8,
   isNotebookRichDocumentV9,
+  isNotebookRichDocumentV11,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -21,7 +22,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 11 document with default print geometry', () => {
+  it('creates an app-owned version 12 document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -177,6 +178,12 @@ describe('Notebook rich document model', () => {
     }];
 
     expect(isNotebookRichDocument(document)).toBe(true);
+    const image = document.content[0] as { widthPercent: number };
+    image.widthPercent = 63.417;
+    expect(isNotebookRichDocument(document)).toBe(true);
+    expect(isNotebookRichDocumentV11({ ...document, version: 11 })).toBe(false);
+    image.widthPercent = 63.4174;
+    expect(isNotebookRichDocument(document)).toBe(false);
     expect(isNotebookRichDocumentV6({ ...document, version: 6 })).toBe(false);
     expect(isNotebookRichDocumentV9({ ...document, version: 9 })).toBe(false);
     expect(summarizeNotebookDocument(document).wordCount).toBe(2);

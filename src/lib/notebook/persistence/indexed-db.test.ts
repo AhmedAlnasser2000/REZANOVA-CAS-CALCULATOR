@@ -175,10 +175,10 @@ describe('IndexedDB Notebook persistence ports', () => {
 
     for (const legacy of legacyRecords) {
       const loaded = await ports.library.load(legacy.libraryId);
-      expect(loaded?.document.version).toBe(11);
+      expect(loaded?.document.version).toBe(12);
       expect(loaded?.document.content).toEqual(legacy.document.content);
       const versions = await ports.library.listVersions(legacy.libraryId);
-      expect(versions[0]?.record.document.version).toBe(11);
+      expect(versions[0]?.record.document.version).toBe(12);
       expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
     }
   });
@@ -207,7 +207,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     database.close();
 
     const loaded = await ports.library.load(current.libraryId);
-    expect(loaded?.document.version).toBe(11);
+    expect(loaded?.document.version).toBe(12);
     expect(loaded?.document.headerFooter.pageNumberStart).toBe(7);
     let inspection = await openDatabase(indexedDb, databaseName);
     let transaction = inspection.transaction('records', 'readonly');
@@ -234,7 +234,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     const rawSnapshots = await requestValue<Record<string, unknown>[]>(
       transaction.objectStore('versions').getAll(),
     );
-    expect((stored.document as Record<string, unknown>).version).toBe(11);
+    expect((stored.document as Record<string, unknown>).version).toBe(12);
     expect(((rawSnapshots[0].record as Record<string, unknown>).document as Record<string, unknown>).version)
       .toBe(10);
     await complete(transaction);
@@ -256,7 +256,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     const current = createRecord();
     const database = await openDatabase(indexedDb, databaseName);
     const transaction = database.transaction('records', 'readwrite');
-    for (const [libraryId, version] of [['browser.record.v5', 5], ['browser.record.v12', 12]] as const) {
+    for (const [libraryId, version] of [['browser.record.v5', 5], ['browser.record.v13', 13]] as const) {
       const candidate = structuredClone(current) as unknown as Record<string, unknown>;
       candidate.libraryId = libraryId;
       (candidate.document as Record<string, unknown>).version = version;
@@ -266,7 +266,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     database.close();
 
     await expect(ports.library.load('browser.record.v5')).rejects.toThrow(/SCHEMA_PRE_V6/);
-    await expect(ports.library.load('browser.record.v12')).rejects.toThrow(/SCHEMA_NEWER/);
+    await expect(ports.library.load('browser.record.v13')).rejects.toThrow(/SCHEMA_NEWER/);
     expect(await ports.library.loadRawRecovery('browser.record.v5')).toBeInstanceOf(Uint8Array);
   });
 });

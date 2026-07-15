@@ -14,6 +14,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import {
+  normalizeNotebookMediaWidthPercent,
   notebookEffectiveImagePlacement,
   type NotebookImageAlignment,
   type NotebookImagePlacement,
@@ -55,7 +56,7 @@ function imagePlacement(value: unknown): NotebookImagePlacement {
 
 function boundedWidth(value: string) {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(10, Math.min(100, Math.round(parsed))) : 10;
+  return Number.isFinite(parsed) ? normalizeNotebookMediaWidthPercent(parsed) : 10;
 }
 
 function editorContentWidth(editor: Editor) {
@@ -218,7 +219,7 @@ export function NotebookPictureFormatControls({
                     type="range"
                     min="10"
                     max="100"
-                    step="1"
+                    step="0.001"
                     value={customWidth}
                     aria-label="Image width percentage"
                     onChange={(event) => setCustomWidth(Number(event.target.value))}
@@ -230,7 +231,7 @@ export function NotebookPictureFormatControls({
                       type="number"
                       min="10"
                       max="100"
-                      step="1"
+                      step="0.001"
                       value={customWidth}
                       aria-label="Custom image width percentage"
                       onChange={(event) => setCustomWidth(boundedWidth(event.target.value))}
