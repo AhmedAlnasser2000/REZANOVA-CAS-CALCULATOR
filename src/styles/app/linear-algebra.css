@@ -118,11 +118,17 @@
   border-radius: 0.45rem;
   background: var(--editor-surface);
   color: #f7fbef;
+  -webkit-text-fill-color: #f7fbef;
   --caret-color: var(--editor-border-focus);
   --selection-color: #17201d;
   --selection-background-color: rgba(215, 223, 171, 0.86);
   --contains-highlight-color: #f7fbef;
   --contains-highlight-background-color: rgba(125, 207, 255, 0.22);
+}
+
+.linear-algebra-cell-mathfield::part(content) {
+  color: #f7fbef;
+  -webkit-text-fill-color: #f7fbef;
 }
 
 .linear-algebra-cell-mathfield:focus-within {
@@ -312,9 +318,14 @@
 
 .linear-algebra-library-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+.linear-algebra-library-grid > .linear-algebra-value-card:last-child:nth-child(odd),
+.linear-algebra-library-grid:has(> .linear-algebra-value-card--wide) > .linear-algebra-value-card {
+  grid-column: 1 / -1;
 }
 
 .linear-algebra-size-controls {
@@ -367,7 +378,10 @@
   display: grid;
   grid-template-columns: repeat(var(--linear-algebra-columns), minmax(112px, 1fr));
   gap: 10px;
-  min-width: 100%;
+  min-width: calc(
+    (var(--linear-algebra-columns) * 112px)
+    + ((var(--linear-algebra-columns) - 1) * 10px)
+  );
   width: 100%;
 }
 
@@ -375,7 +389,10 @@
   display: grid;
   grid-template-columns: repeat(var(--linear-algebra-columns), minmax(112px, 1fr));
   gap: 10px;
-  min-width: 0;
+  min-width: calc(
+    (var(--linear-algebra-columns) * 112px)
+    + ((var(--linear-algebra-columns) - 1) * 10px)
+  );
   width: 100%;
 }
 
@@ -384,6 +401,10 @@
   display: grid;
   gap: 14px;
   min-width: 0;
+}
+
+.linear-algebra-value-card--wide {
+  grid-column: 1 / -1;
 }
 
 .workspace:has(.linear-algebra-library-grid) {
@@ -403,5 +424,9 @@
   .linear-algebra-size-controls,
   .linear-algebra-library-toolbar {
     justify-content: start;
+  }
+
+  .linear-algebra-library-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

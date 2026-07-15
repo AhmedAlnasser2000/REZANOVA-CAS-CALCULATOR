@@ -121,7 +121,7 @@ function VectorValueCard({
   }
 
   return (
-    <div className="editor-card linear-algebra-value-card">
+    <div className={`editor-card linear-algebra-value-card${length > 4 ? ' linear-algebra-value-card--wide' : ''}`}>
       <div className="linear-algebra-value-card-header">
         <div className="linear-algebra-value-title">
           <strong>Vector</strong>

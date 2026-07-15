@@ -81,6 +81,10 @@ describe('Linear algebra editor source', () => {
     await waitFor(() => expect(screen.getByLabelText('Matrix A columns')).toHaveValue(3));
     expect(screen.getByLabelText('Matrix A rows')).toHaveValue(3);
     expect(within(matrixAGrid).getAllByRole('textbox')).toHaveLength(9);
+    fireEvent.change(screen.getByLabelText('Matrix A columns'), { target: { value: '5' } });
+    await waitFor(() => expect(screen.getByLabelText('Matrix A columns')).toHaveValue(5));
+    expect(matrixACard).toHaveClass('linear-algebra-value-card--wide');
+    expect(within(matrixAGrid).getAllByRole('textbox')).toHaveLength(15);
     setMathFieldLatex('main-editor', 'A+B');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'A+B'));
     await user.click(screen.getByTestId('keypad-layer-ctrl'));
@@ -124,6 +128,7 @@ describe('Linear algebra editor source', () => {
     expect(within(vectorUGrid).getAllByRole('textbox')).toHaveLength(3);
     fireEvent.change(screen.getByLabelText('Vector u length'), { target: { value: '5' } });
     await waitFor(() => expect(screen.getByLabelText('Vector u length')).toHaveValue(5));
+    expect(vectorUCard).toHaveClass('linear-algebra-value-card--wide');
     expect(within(vectorUGrid).getAllByRole('textbox')).toHaveLength(5);
     setMathFieldLatex('main-editor', 'u\\cdot v');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'u\\cdot v'));

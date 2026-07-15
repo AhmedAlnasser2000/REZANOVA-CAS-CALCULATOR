@@ -102,3 +102,13 @@
 
 - Concurrent Statistics/Notebook source and dossiers plus untracked `test-results/` remain excluded.
 - No push is authorized.
+
+## Input Readability Correction Gate
+
+- gate: ui
+- status: verified pass
+- Focused workspace UI passed 5/5 after asserting the wide-card transition for Matrix and Vector.
+- The production TypeScript/Vite build passed with 4,351 transformed modules.
+- Chromium passed 3/3 for a 7-column Matrix, an 8-component Vector, symbolic replay, and the existing Complex principal-line-angle route. Browser assertions inspect MathLive's actual shadow content color, full-row card width, 112px minimum cells, and absence of avoidable grid overflow.
+- The refreshed Matrix and Vector screenshots were inspected at the real desktop viewport; both show white cell values and full-width wide pads without a compact third column.
+- Concurrent Statistics/Notebook source and dossiers plus untracked `test-results/` remain excluded.

@@ -19,9 +19,20 @@ async function setScalarCell(cell: Locator, latex: string) {
 }
 
 async function setVector(page: Page, name: string, values: readonly string[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
+  const lengthInput = page.getByLabel(`Vector ${name} length`);
+  await lengthInput.fill(String(values.length));
+  await expect(lengthInput).toHaveValue(String(values.length));
+  await expect(page.getByLabel(`Vector ${name} component ${values.length}`)).toBeVisible();
   for (let index = 0; index < values.length; index += 1) {
-    await setScalarCell(page.getByLabel(`Vector ${name} component ${index + 1}`), values[index]);
+    const cell = page.getByLabel(`Vector ${name} component ${index + 1}`);
+    await setScalarCell(cell, values[index]);
+    await expect.poll(async () => {
+      const currentLatex = await cell.evaluate((element) =>
+        (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex'));
+      return values[index] === 'i'
+        ? currentLatex === 'i' || currentLatex.includes('\\imaginaryI')
+        : currentLatex === values[index];
+    }).toBe(true);
   }
 }
 
@@ -71,12 +82,25 @@ test('renders the real symbolic dot product and replays it from History', async 
   await page.getByLabel('Vector u length').fill('8');
   const wideVectorCell = page.getByLabel('Vector u component 8');
   await expect(wideVectorCell).toBeVisible();
+  const wideVectorCard = page.getByLabel('Vector u length')
+    .locator('xpath=ancestor::div[contains(@class,"editor-card")]');
+  await expect(wideVectorCard).toHaveClass(/linear-algebra-value-card--wide/);
+  expect(await wideVectorCard.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThan(vectorCardWidth * 1.7);
   expect(await wideVectorCell.evaluate((element) => element.getBoundingClientRect().width))
     .toBeGreaterThanOrEqual(112);
   await expect(wideVectorCell).toHaveCSS('color', 'rgb(247, 251, 239)');
+  expect(await wideVectorCell.evaluate((element) => {
+    const content = element.shadowRoot?.querySelector('[part="content"]');
+    return content ? getComputedStyle(content).color : null;
+  })).toBe('rgb(247, 251, 239)');
   expect(await wideVectorCell.locator('xpath=ancestor::div[contains(@class,"linear-algebra-vector-grid")]').evaluate(
-    (element) => element.scrollWidth > element.clientWidth,
+    (element) => element.scrollWidth <= element.clientWidth + 1,
   )).toBe(true);
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/vector-wide-readable-inputs.png`,
+  });
 
   await setVector(page, 'u', ['a', 'b']);
   await setVector(page, 'v', ['c', 'd']);

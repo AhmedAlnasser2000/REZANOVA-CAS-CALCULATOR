@@ -27,10 +27,10 @@
 
 ## Active Gate
 
-- milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
+- milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
 - gate: backend
-- status: verified pass
-- prerequisite representation: bounded standard MathJSON scalar wires, symbolic Matrix arithmetic, and one Matrix-owned zero/nonzero elimination classifier.
+- status: in progress
+- prerequisite representation: bounded standard MathJSON scalar wires, symbolic Matrix arithmetic/elimination, and a pure typed Equation polynomial boundary.
 - protected lanes: concurrent Notebook and Statistics source/dossiers plus untracked `test-results/` remain excluded from this gate.
 
 ## Milestone 8 Result
@@ -53,7 +53,7 @@
 
 - milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
 - gate: backend
-- status: not started
+- status: in progress
 - existing numeric Matrix spectral execution, Equation ownership, and all OOE/History boundaries remain the compatibility baseline.
 
 ## Milestone 10 Result
@@ -72,3 +72,10 @@
 - Stored substitution protects declared system unknowns and named Matrix/Vector operands. Conditional results use standard set-valued `Which`; proved profile and independence results keep their typed V2 primaries.
 - Classification stops at six coefficient parameters, four undecidable predicates, sixteen cases, or opaque function coefficients. Real-numeric QR/projection/least-squares/SVD/pseudoinverse/condition/rank/definiteness remain in their existing numeric routes.
 - Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-11/conditional-system-and-readable-matrix-pad.png`.
+
+## Input Readability Correction
+
+- Matrix values with more than four columns and Vectors with more than four components take a full library row; if any value is wide, sibling cards also use full rows instead of leaving an empty compact column.
+- Normal libraries use at most two equal columns, odd final cards fill their row, and every scalar grid retains a 112px minimum cell track with card-local overflow on narrower viewports.
+- MathLive's exposed content part now receives the light foreground directly, so visible numerals and symbols stay white on dark fields rather than only reporting a white host color.
+- Visual evidence: refreshed Milestone 8 Matrix screenshot and `.task_tmp/linear-algebra-symbolic-complex-program/milestone-9/vector-wide-readable-inputs.png`.

@@ -127,7 +127,7 @@ function MatrixValueCard({
   }
 
   return (
-    <div className="editor-card linear-algebra-value-card">
+    <div className={`editor-card linear-algebra-value-card${columns > 4 ? ' linear-algebra-value-card--wide' : ''}`}>
       <div className="linear-algebra-value-card-header">
         <div className="linear-algebra-value-title">
           <strong>Matrix</strong>

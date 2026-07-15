@@ -62,11 +62,20 @@ test('shows source-preserving scalar cells, domain guidance, and stored-value pr
   await page.getByLabel('Matrix B columns').fill('7');
   const wideMatrixCell = page.getByLabel('Matrix B row 1 column 7');
   await expect(wideMatrixCell).toBeVisible();
+  const wideMatrixCard = page.getByLabel('Matrix B rows')
+    .locator('xpath=ancestor::div[contains(@class,"editor-card")]');
+  await expect(wideMatrixCard).toHaveClass(/linear-algebra-value-card--wide/);
+  expect(await wideMatrixCard.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThan(matrixCardWidth * 1.7);
   expect(await wideMatrixCell.evaluate((element) => element.getBoundingClientRect().width))
     .toBeGreaterThanOrEqual(112);
   await expect(wideMatrixCell).toHaveCSS('color', 'rgb(247, 251, 239)');
+  expect(await wideMatrixCell.evaluate((element) => {
+    const content = element.shadowRoot?.querySelector('[part="content"]');
+    return content ? getComputedStyle(content).color : null;
+  })).toBe('rgb(247, 251, 239)');
   expect(await wideMatrixCell.locator('xpath=ancestor::div[contains(@class,"linear-algebra-matrix-grid")]').evaluate(
-    (element) => element.scrollWidth > element.clientWidth,
+    (element) => element.scrollWidth <= element.clientWidth + 1,
   )).toBe(true);
 
   const cell = page.getByLabel('Matrix A row 1 column 1');
