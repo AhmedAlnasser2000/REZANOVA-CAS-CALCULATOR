@@ -608,6 +608,10 @@ export type RegressionState = {
 export type CorrelationState = {
   points: RegressionPoint[];
 };
+export type StatisticsRelationshipsState = {
+  analysis: 'regression' | 'correlation';
+  points: RegressionPoint[];
+};
 export type MeanInferenceState = {
   mode: 'ci' | 'test';
   level: string;

@@ -313,6 +313,30 @@
   align-items: start;
 }
 
+.statistics-relationships-layout {
+  display: grid;
+  grid-template-columns: minmax(22rem, 1.15fr) minmax(18rem, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.statistics-relationships-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.statistics-relationships-summary {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+}
+
+.statistics-relationships-summary p {
+  margin: 0;
+  color: rgba(219, 230, 221, 0.78);
+  overflow-wrap: anywhere;
+}
+
 .statistics-probability-form {
   display: grid;
   gap: 1rem;
@@ -339,6 +363,7 @@
 
 @media (max-width: 760px) {
   .statistics-probability-layout,
+  .statistics-relationships-layout,
   .statistics-select-grid,
   .statistics-bound-grid {
     grid-template-columns: minmax(0, 1fr);

@@ -37,6 +37,7 @@ import type {
   PoissonState,
   RectangleState,
   RegressionState,
+  StatisticsRelationshipsState,
   RightTriangleState,
   SecondOrderOdeState,
   SeriesState,
@@ -185,8 +186,9 @@ export type StatisticsSurfaceState = {
   normalState: NormalState;
   poissonState: PoissonState;
   meanInferenceState: MeanInferenceState;
-  regressionState: RegressionState;
-  correlationState: CorrelationState;
+  relationshipsState: StatisticsRelationshipsState;
+  regressionState?: RegressionState;
+  correlationState?: CorrelationState;
   statisticsDraftState: CoreDraftState;
 };
 

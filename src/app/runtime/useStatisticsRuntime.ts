@@ -9,12 +9,11 @@ import {
   buildStatisticsInputLatex,
   defaultStatisticsDraftForScreen,
   DEFAULT_BINOMIAL_STATE,
-  DEFAULT_CORRELATION_STATE,
   DEFAULT_FREQUENCY_TABLE,
   DEFAULT_MEAN_INFERENCE_STATE,
   DEFAULT_NORMAL_STATE,
   DEFAULT_POISSON_STATE,
-  DEFAULT_REGRESSION_STATE,
+  DEFAULT_STATISTICS_RELATIONSHIPS_STATE,
   DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
   DEFAULT_STATS_DATASET,
 } from '../../lib/statistics/examples';
@@ -129,8 +128,9 @@ export function useStatisticsRuntime({
   const [poissonState, setPoissonState] = useState(DEFAULT_POISSON_STATE);
   const [meanInferenceState, setMeanInferenceState] =
     useState(DEFAULT_MEAN_INFERENCE_STATE);
-  const [regressionState, setRegressionState] = useState(DEFAULT_REGRESSION_STATE);
-  const [correlationState, setCorrelationState] = useState(DEFAULT_CORRELATION_STATE);
+  const [relationshipsState, setRelationshipsState] = useState(
+    DEFAULT_STATISTICS_RELATIONSHIPS_STATE,
+  );
   const [statisticsDraftState, setStatisticsDraftState] = useState<CoreDraftState>(() =>
     createCoreDraftState(
       defaultStatisticsDraftForScreen('descriptive', 'dataset'),
@@ -171,6 +171,8 @@ export function useStatisticsRuntime({
   const statisticsMenuFooterText = currentMode === 'statistics'
     ? getStatisticsMenuFooterText(statisticsScreen)
     : '';
+  const regressionState = { points: relationshipsState.points };
+  const correlationState = { points: relationshipsState.points };
   const statisticsStateSnapshot = {
     dataset: statsDataset,
     frequencyTable,
@@ -203,8 +205,7 @@ export function useStatisticsRuntime({
     && statisticsRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(statisticsDraftState);
   const statisticsDatasetText = statisticsDatasetDraftText;
-  const statisticsRegressionText = pointsTextFromState(regressionState);
-  const statisticsCorrelationText = pointsTextFromState(correlationState);
+  const statisticsRelationshipsText = pointsTextFromState(relationshipsState);
   const statisticsFilledFrequencyRowCount = frequencyTable.rows.filter(
     (row) => row.value.trim() && row.frequency.trim(),
   ).length;
@@ -389,6 +390,12 @@ export function useStatisticsRuntime({
         analysis: workspaceScreen,
       }));
     }
+    if (workspaceScreen === 'regression' || workspaceScreen === 'correlation') {
+      setRelationshipsState((currentState) => ({
+        ...currentState,
+        analysis: workspaceScreen,
+      }));
+    }
     setStatisticsScreen(workspaceScreen);
     setStatisticsSection(nextSection);
     setStatisticsSectionScreens((currentScreens) => ({
@@ -499,8 +506,9 @@ export function useStatisticsRuntime({
     key: 'x' | 'y',
     value: string,
   ) {
-    const setter = kind === 'regression' ? setRegressionState : setCorrelationState;
-    setter((currentState) => ({
+    setRelationshipsState((currentState) => ({
+      ...currentState,
+      analysis: kind,
       points: currentState.points.map((point, pointIndex) =>
         pointIndex === index
           ? {
@@ -513,15 +521,17 @@ export function useStatisticsRuntime({
   }
 
   function addRegressionPoint(kind: 'regression' | 'correlation') {
-    const setter = kind === 'regression' ? setRegressionState : setCorrelationState;
-    setter((currentState) => ({
+    setRelationshipsState((currentState) => ({
+      ...currentState,
+      analysis: kind,
       points: [...currentState.points, { x: '', y: '' }],
     }));
   }
 
   function removeRegressionPoint(kind: 'regression' | 'correlation', index: number) {
-    const setter = kind === 'regression' ? setRegressionState : setCorrelationState;
-    setter((currentState) => ({
+    setRelationshipsState((currentState) => ({
+      ...currentState,
+      analysis: kind,
       points: currentState.points.length <= 1
         ? [{ x: '', y: '' }]
         : currentState.points.filter((_, pointIndex) => pointIndex !== index),
@@ -673,11 +683,11 @@ export function useStatisticsRuntime({
     }
 
     if (request.kind === 'regression') {
-      setRegressionState({ points: request.points });
+      setRelationshipsState({ analysis: 'regression', points: request.points });
       return;
     }
 
-    setCorrelationState({ points: request.points });
+    setRelationshipsState({ analysis: 'correlation', points: request.points });
   }
 
   function restoreStatisticsHistoryEntry(entry: HistoryEntry) {
@@ -766,8 +776,7 @@ export function useStatisticsRuntime({
         resetStatisticsDraftForScreen('meanInference', statisticsWorkingSource);
         break;
       case 'relationships':
-        setRegressionState(DEFAULT_REGRESSION_STATE);
-        setCorrelationState(DEFAULT_CORRELATION_STATE);
+        setRelationshipsState(DEFAULT_STATISTICS_RELATIONSHIPS_STATE);
         resetStatisticsDraftForScreen(statisticsScreen);
         break;
     }
@@ -792,7 +801,7 @@ export function useStatisticsRuntime({
     setDataSummaryState(DEFAULT_STATISTICS_DATA_SUMMARY_STATE);
     setBinomialState(DEFAULT_BINOMIAL_STATE); setNormalState(DEFAULT_NORMAL_STATE);
     setPoissonState(DEFAULT_POISSON_STATE); setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
-    setRegressionState(DEFAULT_REGRESSION_STATE); setCorrelationState(DEFAULT_CORRELATION_STATE);
+    setRelationshipsState(DEFAULT_STATISTICS_RELATIONSHIPS_STATE);
     setStatisticsDraftState(createCoreDraftState(
       defaultStatisticsDraftForScreen('descriptive', 'dataset'),
       'structured',
@@ -808,8 +817,8 @@ export function useStatisticsRuntime({
       statisticsMenuSelection, statisticsWorkingSource,
       statisticsSourceSyncState, statsDataset, statisticsDatasetDraftText, frequencyTable,
       dataSummaryState, binomialState,
-      normalState, poissonState, meanInferenceState, regressionState,
-      correlationState, statisticsDraftState,
+      normalState, poissonState, meanInferenceState, relationshipsState,
+      statisticsDraftState,
     });
   }
 
@@ -830,7 +839,7 @@ export function useStatisticsRuntime({
     setFrequencyTable(copy.frequencyTable); setDataSummaryState(copy.dataSummaryState);
     setBinomialState(copy.binomialState); setNormalState(copy.normalState);
     setPoissonState(copy.poissonState); setMeanInferenceState(copy.meanInferenceState);
-    setRegressionState(copy.regressionState); setCorrelationState(copy.correlationState);
+    setRelationshipsState(copy.relationshipsState);
     setStatisticsDraftState(copy.statisticsDraftState);
   }
 
@@ -949,18 +958,18 @@ export function useStatisticsRuntime({
     resetCurrentStatisticsScreen, resetStatisticsRuntime,
     restoreStatisticsHistoryEntry, restoreStatisticsSurfaceState, runStatisticsAction,
     selectedStatisticsMenuEntry, setBinomialState, setCurrentStatisticsMenuIndex, setMeanInferenceState, setNormalState,
-    setPoissonState, statisticsBinomialNRef, statisticsCorrelationText, statisticsCorrelationXRef,
+    setPoissonState, statisticsBinomialNRef, statisticsCorrelationXRef,
     statisticsDatasetRef, statisticsDatasetText, statisticsDraftFieldRef, statisticsDraftLatex,
     statisticsDraftState, statisticsEditorIsEditable, statisticsFilledFrequencyRowCount, statisticsFrequencyValueRef,
     statisticsMeanInferenceLevelRef, statisticsMenuEntries, statisticsMenuFooterText, statisticsMenuPanelRef,
-    statisticsMenuSelection, statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRegressionText,
+    statisticsMenuSelection, statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRelationshipsText,
     statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSection,
     statisticsInputMode, setStatisticsInputMode, statisticsSectionScreens,
     activeStatisticsSectionResult, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary, statisticsWorkbenchExpression,
     statisticsWorkingSource, statsDataset, switchStatisticsSource,
-    updateRegressionPointDraft, updateStatisticsDataset, updateStatisticsDraft,
+    relationshipsState, updateRegressionPointDraft, updateStatisticsDataset, updateStatisticsDraft,
     updateStatisticsFrequencyRow,
   };
 }

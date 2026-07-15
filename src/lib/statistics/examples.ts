@@ -8,6 +8,7 @@ import type {
   RegressionState,
   StatisticsScreen,
   StatisticsDataSummaryState,
+  StatisticsRelationshipsState,
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
@@ -85,6 +86,11 @@ export const DEFAULT_CORRELATION_STATE: CorrelationState = {
     { x: '2', y: '5' },
     { x: '3', y: '7' },
   ],
+};
+
+export const DEFAULT_STATISTICS_RELATIONSHIPS_STATE: StatisticsRelationshipsState = {
+  analysis: 'regression',
+  points: DEFAULT_REGRESSION_STATE.points.map((point) => ({ ...point })),
 };
 
 export function buildStatisticsInputLatex(

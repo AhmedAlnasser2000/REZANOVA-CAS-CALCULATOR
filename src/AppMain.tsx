@@ -806,7 +806,6 @@ export default function App() {
     addStatisticsFrequencyRow,
     binomialState,
     buildStatisticsDraftForScreen,
-    correlationState,
     currentStatisticsMenuIndex, dataSummaryState,
     expandStatisticsTableToDataset,
     focusStatisticsEditor,
@@ -824,7 +823,7 @@ export default function App() {
     openSelectedStatisticsMenuEntry,
     openStatisticsScreen,
     poissonState,
-    regressionState,
+    relationshipsState,
     removeRegressionPoint,
     removeStatisticsFrequencyRow,
     resetCurrentStatisticsScreen,
@@ -838,7 +837,6 @@ export default function App() {
     setNormalState,
     setPoissonState,
     statisticsBinomialNRef,
-    statisticsCorrelationText,
     statisticsCorrelationXRef,
     statisticsDatasetRef,
     statisticsDatasetText,
@@ -855,7 +853,7 @@ export default function App() {
     statisticsMenuSelection,
     statisticsNormalMeanRef,
     statisticsPoissonLambdaRef,
-    statisticsRegressionText,
+    statisticsRelationshipsText,
     statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
@@ -1316,7 +1314,7 @@ export default function App() {
     calculusScreen,
     circleState,
     coneState,
-    correlationState,
+    relationshipsState,
     cosineRuleState,
     cubeState,
     cubicCoefficients,
@@ -1357,7 +1355,6 @@ export default function App() {
     quadraticCoefficients,
     quarticCoefficients,
     rectangleState,
-    regressionState,
     rightTriangleState,
     secondOrderOdeState,
     settings,
@@ -1402,7 +1399,7 @@ export default function App() {
     calculusScreen,
     circleState,
     coneState,
-    correlationState,
+    relationshipsState,
     cosineRuleState,
     cubeState,
     cubicCoefficients,
@@ -1443,7 +1440,6 @@ export default function App() {
     quadraticCoefficients,
     quarticCoefficients,
     rectangleState,
-    regressionState,
     rightTriangleState,
     secondOrderOdeState,
     settings,
@@ -3141,15 +3137,13 @@ export default function App() {
                 statisticsNormalMeanRef={statisticsNormalMeanRef}
                 statisticsPoissonLambdaRef={statisticsPoissonLambdaRef}
                 statisticsMeanInferenceLevelRef={statisticsMeanInferenceLevelRef}
-                regressionState={regressionState}
-                correlationState={correlationState}
+                relationshipsState={relationshipsState}
                 statisticsRegressionXRef={statisticsRegressionXRef}
                 statisticsCorrelationXRef={statisticsCorrelationXRef}
                 onUpdateRegressionPointDraft={updateRegressionPointDraft}
                 onRemoveRegressionPoint={removeRegressionPoint}
                 onAddRegressionPoint={addRegressionPoint}
-                statisticsRegressionText={statisticsRegressionText}
-                statisticsCorrelationText={statisticsCorrelationText}
+                statisticsRelationshipsText={statisticsRelationshipsText}
               />
             ) : null}
 

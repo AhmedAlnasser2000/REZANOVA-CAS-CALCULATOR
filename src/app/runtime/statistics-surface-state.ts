@@ -8,6 +8,7 @@ import {
   DEFAULT_BINOMIAL_STATE,
   DEFAULT_NORMAL_STATE,
   DEFAULT_POISSON_STATE,
+  DEFAULT_STATISTICS_RELATIONSHIPS_STATE,
   DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
 } from '../../lib/statistics/examples';
 import {
@@ -39,6 +40,16 @@ export function defaultStatisticsSectionScreens(): Record<StatisticsSection, Sta
 export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): StatisticsSurfaceState {
   const statisticsScreen = statisticsWorkspaceScreenForLegacyScreen(state.statisticsScreen);
   const statisticsSection = state.statisticsSection ?? statisticsSectionForScreen(statisticsScreen);
+  const legacyRelationshipsState = statisticsScreen === 'correlation'
+    ? state.correlationState
+    : state.regressionState;
+  const relationshipsState = state.relationshipsState
+    ?? (legacyRelationshipsState
+      ? {
+          analysis: statisticsScreen === 'correlation' ? 'correlation' : 'regression',
+          points: legacyRelationshipsState.points,
+        }
+      : DEFAULT_STATISTICS_RELATIONSHIPS_STATE);
   return {
     ...state,
     statisticsScreen,
@@ -61,8 +72,10 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     normalState: { ...DEFAULT_NORMAL_STATE, ...state.normalState },
     poissonState: { ...DEFAULT_POISSON_STATE, ...state.poissonState },
     meanInferenceState: { ...state.meanInferenceState },
-    regressionState: { points: state.regressionState.points.map((point) => ({ ...point })) },
-    correlationState: { points: state.correlationState.points.map((point) => ({ ...point })) },
+    relationshipsState: {
+      analysis: relationshipsState.analysis,
+      points: relationshipsState.points.map((point) => ({ ...point })),
+    },
     statisticsDraftState: copyCoreDraftState(state.statisticsDraftState),
   };
 }

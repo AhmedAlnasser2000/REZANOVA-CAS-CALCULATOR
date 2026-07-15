@@ -1,14 +1,12 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import { MathStatic } from '../../components/MathStatic';
 import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import type {
   BinomialState,
-  CorrelationState,
   FrequencyTable,
   MeanInferenceState,
   NormalState,
   PoissonState,
-  RegressionState,
+  StatisticsRelationshipsState,
   StatisticsScreen,
   StatisticsDataSummaryState,
   StatisticsSection,
@@ -17,6 +15,7 @@ import type {
 } from '../../types/calculator';
 import { StatisticsDataSummaryPanel } from './statistics/StatisticsDataSummaryPanel';
 import { StatisticsProbabilityPanel } from './statistics/StatisticsProbabilityPanel';
+import { StatisticsRelationshipsPanel } from './statistics/StatisticsRelationshipsPanel';
 
 type StatisticsRouteMetaLike = {
   breadcrumb: string[];
@@ -100,8 +99,7 @@ type StatisticsWorkspaceProps = {
   statisticsNormalMeanRef: RefObject<HTMLInputElement | null>;
   statisticsPoissonLambdaRef: RefObject<HTMLInputElement | null>;
   statisticsMeanInferenceLevelRef: RefObject<HTMLInputElement | null>;
-  regressionState: RegressionState;
-  correlationState: CorrelationState;
+  relationshipsState: StatisticsRelationshipsState;
   statisticsRegressionXRef: RefObject<HTMLInputElement | null>;
   statisticsCorrelationXRef: RefObject<HTMLInputElement | null>;
   onUpdateRegressionPointDraft: (
@@ -112,8 +110,7 @@ type StatisticsWorkspaceProps = {
   ) => void;
   onRemoveRegressionPoint: (screen: 'regression' | 'correlation', index: number) => void;
   onAddRegressionPoint: (screen: 'regression' | 'correlation') => void;
-  statisticsRegressionText: string;
-  statisticsCorrelationText: string;
+  statisticsRelationshipsText: string;
 };
 
 function StatisticsWorkspace({
@@ -163,15 +160,13 @@ function StatisticsWorkspace({
   statisticsNormalMeanRef,
   statisticsPoissonLambdaRef,
   statisticsMeanInferenceLevelRef,
-  regressionState,
-  correlationState,
+  relationshipsState,
   statisticsRegressionXRef,
   statisticsCorrelationXRef,
   onUpdateRegressionPointDraft,
   onRemoveRegressionPoint,
   onAddRegressionPoint,
-  statisticsRegressionText,
-  statisticsCorrelationText,
+  statisticsRelationshipsText,
 }: StatisticsWorkspaceProps) {
   if (!routeMeta) {
     return null;
@@ -190,7 +185,14 @@ function StatisticsWorkspace({
           label: 'Probability',
           description: 'Evaluate common events for Binomial, Normal, and Poisson distributions.',
         }
-    : routeMeta;
+      : activeSection === 'relationships'
+        ? {
+            ...routeMeta,
+            breadcrumb: ['Statistics', 'Relationships'],
+            label: 'Relationships',
+            description: 'Use one paired dataset for a least-squares line or Pearson correlation.',
+          }
+        : routeMeta;
 
   return (
     <section className={`mode-panel ${isMenuOpen ? 'statistics-menu-panel' : 'statistics-panel'}`}>
@@ -213,9 +215,12 @@ function StatisticsWorkspace({
           </button>
         ))}
       </div>
-      {SECTION_TOOLS[activeSection].length > 1 && activeSection !== 'dataSummary' && activeSection !== 'probability' ? (
+      {SECTION_TOOLS[activeSection].length > 1
+        && activeSection !== 'dataSummary'
+        && activeSection !== 'probability'
+        && activeSection !== 'relationships' ? (
         <label className="statistics-tool-select">
-          <span>{activeSection === 'relationships' ? 'Analysis' : 'Tool'}</span>
+          <span>Tool</span>
           <select
             aria-label="Statistics tool"
             value={screen}
@@ -465,53 +470,18 @@ function StatisticsWorkspace({
           </div>
         </div>
       ) : screen === 'regression' || screen === 'correlation' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>{routeMeta.label}</strong>
-              <span className="equation-badge">Point set</span>
-            </div>
-            <div className="statistics-table-labels" aria-hidden="true">
-              <span>x</span>
-              <span>y</span>
-              <span>Action</span>
-            </div>
-            <div className="statistics-edit-table">
-              {(screen === 'regression' ? regressionState.points : correlationState.points).map((point, index) => (
-                <div key={`${screen}-point-${index}`} className="statistics-edit-row">
-                  <SignedNumberDraftInput
-                    ref={index === 0 ? (screen === 'regression' ? statisticsRegressionXRef : statisticsCorrelationXRef) : undefined}
-                    className="statistics-cell-input"
-                    value={point.x}
-                    onValueChange={(value) => onUpdateRegressionPointDraft(screen, index, 'x', value)}
-                  />
-                  <SignedNumberDraftInput
-                    className="statistics-cell-input"
-                    value={point.y}
-                    onValueChange={(value) => onUpdateRegressionPointDraft(screen, index, 'y', value)}
-                  />
-                  <button onClick={() => onRemoveRegressionPoint(screen, index)}>Remove</button>
-                </div>
-              ))}
-            </div>
-            <div className="display-card-actions">
-              <button onClick={() => onAddRegressionPoint(screen)}>Add Point</button>
-              <button onClick={onUseInStatistics}>Use in Statistics</button>
-              <button onClick={onCopyWorkbenchExpression}>Copy Expr</button>
-            </div>
-          </div>
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Guided Request</strong>
-              <span className="equation-subtitle">Structured draft</span>
-            </div>
-            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} deferRender />
-            <div className="statistics-summary-card">
-              <strong>{screen === 'regression' ? 'Regression points' : 'Correlation points'}</strong>
-              <p>{screen === 'regression' ? statisticsRegressionText : statisticsCorrelationText}</p>
-            </div>
-          </div>
-        </div>
+        <StatisticsRelationshipsPanel
+          state={relationshipsState}
+          firstXRef={screen === 'regression' ? statisticsRegressionXRef : statisticsCorrelationXRef}
+          expression={workbenchExpression}
+          pointsText={statisticsRelationshipsText}
+          onOpenScreen={onOpenScreen}
+          onUpdatePoint={onUpdateRegressionPointDraft}
+          onRemovePoint={onRemoveRegressionPoint}
+          onAddPoint={onAddRegressionPoint}
+          onEditExpression={onUseInStatistics}
+          onCopyExpression={onCopyWorkbenchExpression}
+        />
       ) : (
         <div className="editor-card">
           <div className="card-title-row">

@@ -54,6 +54,15 @@ function statisticsLeafScreenForSurfaceState(state: StatisticsSurfaceState): Sta
   return state.statisticsScreen;
 }
 
+function relationshipsStateFromSurface(state: StatisticsSurfaceState) {
+  if (state.relationshipsState) return state.relationshipsState;
+  const analysis = state.statisticsScreen === 'correlation' ? 'correlation' : 'regression';
+  return {
+    analysis,
+    points: (analysis === 'correlation' ? state.correlationState : state.regressionState)?.points ?? [],
+  };
+}
+
 export function statisticsRequestFromSurfaceState(
   surfaceState: WorkspaceInstanceStateSlot,
   instance: WorkspaceInstance,
@@ -67,6 +76,7 @@ export function statisticsRequestFromSurfaceState(
 
   const screenHint = statisticsLeafScreenForSurfaceState(surfaceState);
   const workingSourceHint = surfaceState.statisticsWorkingSource;
+  const relationshipsState = relationshipsStateFromSurface(surfaceState);
   const surfaceSnapshot = {
     dataset: surfaceState.statsDataset,
     frequencyTable: surfaceState.frequencyTable,
@@ -75,8 +85,8 @@ export function statisticsRequestFromSurfaceState(
     normal: surfaceState.normalState,
     poisson: surfaceState.poissonState,
     meanInference: surfaceState.meanInferenceState,
-    regression: surfaceState.regressionState,
-    correlation: surfaceState.correlationState,
+    regression: { points: relationshipsState.points },
+    correlation: { points: relationshipsState.points },
   };
   const inputLatex =
     surfaceState.statisticsDraftState.rawLatex.trim()
@@ -100,6 +110,7 @@ export function statisticsRequestFromSurfaceStateForScreen(
   }
 
   const workingSourceHint = surfaceState.statisticsWorkingSource;
+  const relationshipsState = relationshipsStateFromSurface(surfaceState);
   const inputLatex = useExpressionDraft
     ? surfaceState.statisticsDraftState.rawLatex.trim()
     : buildStatisticsInputLatex(
@@ -112,8 +123,8 @@ export function statisticsRequestFromSurfaceStateForScreen(
           normal: surfaceState.normalState,
           poisson: surfaceState.poissonState,
           meanInference: surfaceState.meanInferenceState,
-          regression: surfaceState.regressionState,
-          correlation: surfaceState.correlationState,
+          regression: { points: relationshipsState.points },
+          correlation: { points: relationshipsState.points },
         },
         workingSourceHint,
       );

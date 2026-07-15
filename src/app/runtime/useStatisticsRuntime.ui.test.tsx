@@ -247,6 +247,47 @@ describe('useStatisticsRuntime', () => {
     });
   });
 
+  it('keeps one paired dataset while switching relationship analyses', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.openStatisticsScreen('regression');
+      hook.result.current.updateRegressionPointDraft('regression', 0, 'x', '12');
+      hook.result.current.updateRegressionPointDraft('regression', 1, 'y', '');
+    });
+
+    expect(hook.result.current.relationshipsState).toMatchObject({
+      analysis: 'regression',
+      points: [
+        { x: '12', y: '2' },
+        { x: '2', y: '' },
+        { x: '3', y: '6' },
+      ],
+    });
+
+    act(() => {
+      hook.result.current.openStatisticsScreen('correlation');
+    });
+
+    expect(hook.result.current.relationshipsState.analysis).toBe('correlation');
+    expect(hook.result.current.relationshipsState.points[1]).toEqual({ x: '2', y: '' });
+    expect(hook.result.current.statisticsWorkbenchExpression).toContain('correlation(points=');
+
+    act(() => {
+      hook.result.current.applyStatisticsRequest({
+        kind: 'regression',
+        points: [{ x: '5', y: '8' }, { x: '7', y: '13' }],
+      });
+    });
+
+    expect(hook.result.current.relationshipsState).toEqual({
+      analysis: 'regression',
+      points: [{ x: '5', y: '8' }, { x: '7', y: '13' }],
+    });
+    expect(hook.result.current.captureStatisticsSurfaceState().relationshipsState)
+      .toEqual(hook.result.current.relationshipsState);
+  });
+
   it('reports an empty Statistics draft before launching the runtime', () => {
     const { activeFieldRef, hook, setDisplayOutcome } = renderStatisticsRuntime();
 
