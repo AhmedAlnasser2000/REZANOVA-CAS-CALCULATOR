@@ -1047,18 +1047,18 @@ describe('NotebookPage', () => {
     });
     fireEvent.pointerDown(cropWestHandle, { button: 0, clientX: 100, clientY: 250, pointerId: 42 });
     expect(figure).toHaveClass('is-media-manipulating');
+    fireEvent.pointerMove(cropWestHandle, { clientX: 120, clientY: 250, pointerId: 42 });
     fireEvent.pointerMove(cropWestHandle, { clientX: 140, clientY: 250, pointerId: 42 });
-    expect(figure.querySelector('img')).toHaveStyle({
+    await waitFor(() => expect(figure.querySelector('img')).toHaveStyle({
       left: '-11.111111111111112%',
       width: '111.11111111111111%',
-    });
+    }));
     fireEvent.pointerUp(cropWestHandle, { clientX: 140, clientY: 250, pointerId: 42 });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').querySelector('img')).toHaveStyle({
       left: '-11.111111111111112%',
       width: '111.11111111111111%',
     }));
     figure = screen.getByTestId('notebook-image-figure');
-
     await user.click(within(toolbar).getByRole('button', { name: 'Finish cropping image' }));
     const rotationHandle = within(figure).getByRole('button', { name: 'Rotate image' });
     fireEvent.pointerDown(rotationHandle, { button: 0, clientX: 300, clientY: 100, pointerId: 43 });

@@ -137,6 +137,10 @@ type GesturePointerEvent = {
   stopPropagation(): void;
 };
 
+type GesturePointerSnapshot = Pick<GesturePointerEvent, 'clientX' | 'clientY' | 'pointerId'> & {
+  shiftKey: boolean;
+};
+
 const MIN_CROP_AREA = 0.1;
 const MIN_CROP_EDGE = 0.01;
 
@@ -188,6 +192,15 @@ function frameSnapshot(frame: NotebookMediaViewportRectangle) {
 
 function pointerSnapshot(event: { clientX: number; clientY: number }) {
   return { clientX: event.clientX, clientY: event.clientY };
+}
+
+function gesturePointerSnapshot(event: GesturePointerEvent): GesturePointerSnapshot {
+  return {
+    clientX: event.clientX,
+    clientY: event.clientY,
+    pointerId: event.pointerId,
+    shiftKey: event.shiftKey === true,
+  };
 }
 
 function editorContentWidth(editor: Editor, fallback: number) {
@@ -605,6 +618,11 @@ function interactionFrame(gesture: Gesture, preview: NotebookMediaPreview | null
 export function useNotebookDirectMediaInteraction(options: DirectMediaInteractionOptions) {
   const gestureRef = useRef<Gesture | null>(null);
   const previewRef = useRef<NotebookMediaPreview | null>(null);
+  const previewFrameRef = useRef<number | null>(null);
+  const queuedPreviewRef = useRef<{
+    event: GesturePointerSnapshot;
+    gesture: Gesture;
+  } | null>(null);
   const [preview, setPreview] = useState<NotebookMediaPreview | null>(null);
   const [activeGesture, setActiveGesture] = useState<ActiveGesture>(null);
 
@@ -639,7 +657,16 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     });
   }, [options]);
 
+  const cancelPreviewFrame = useCallback(() => {
+    if (previewFrameRef.current !== null) {
+      cancelAnimationFrame(previewFrameRef.current);
+      previewFrameRef.current = null;
+    }
+    queuedPreviewRef.current = null;
+  }, []);
+
   const clearGesture = useCallback(() => {
+    cancelPreviewFrame();
     const gesture = gestureRef.current;
     if (gesture?.pointerTarget.hasPointerCapture?.(gesture.pointerId)) {
       gesture.pointerTarget.releasePointerCapture(gesture.pointerId);
@@ -648,7 +675,7 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     previewRef.current = null;
     setPreview(null);
     setActiveGesture(null);
-  }, []);
+  }, [cancelPreviewFrame]);
 
   const previewAtPointer = useCallback((
     gesture: Gesture,
@@ -718,10 +745,18 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
       emitDrag(gesture, 'move', event);
       return;
     }
-    const nextPreview = previewAtPointer(gesture, event);
-    previewRef.current = nextPreview;
-    setPreview(nextPreview);
-    emitInteraction(gesture, 'move', event, nextPreview);
+    queuedPreviewRef.current = { event: gesturePointerSnapshot(event), gesture };
+    if (previewFrameRef.current !== null) return;
+    previewFrameRef.current = requestAnimationFrame(() => {
+      previewFrameRef.current = null;
+      const queued = queuedPreviewRef.current;
+      queuedPreviewRef.current = null;
+      if (!queued || gestureRef.current !== queued.gesture) return;
+      const nextPreview = previewAtPointer(queued.gesture, queued.event);
+      previewRef.current = nextPreview;
+      setPreview(nextPreview);
+      emitInteraction(queued.gesture, 'move', queued.event, nextPreview);
+    });
   }, [emitDrag, emitInteraction, previewAtPointer]);
 
   const finishPointerEvent = useCallback((
@@ -732,6 +767,7 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
+    cancelPreviewFrame();
     if (gesture.mode === 'drag') {
       const phase = cancelled ? 'cancel' : 'end';
       emitInteraction(gesture, cancelled ? 'cancel' : 'commit', event, null);
@@ -750,7 +786,7 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
       emitInteraction(gesture, 'cancel', event, gesture.initial);
     }
     clearGesture();
-  }, [clearGesture, emitDrag, emitInteraction, options, previewAtPointer]);
+  }, [cancelPreviewFrame, clearGesture, emitDrag, emitInteraction, options, previewAtPointer]);
 
   const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLElement>) => {
     handlePointerMoveEvent(event);
