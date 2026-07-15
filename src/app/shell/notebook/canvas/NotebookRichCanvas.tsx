@@ -52,7 +52,7 @@ import {
   type NotebookEditorSelection,
 } from './selection';
 import {
-  useNotebookDirectMediaCanvasCoordinator,
+  useNotebookPointerCoordinator,
   type NotebookMediaStatus,
 } from './NotebookDirectMediaCanvasCoordinator';
 import {
@@ -222,7 +222,7 @@ export function NotebookRichCanvas({
     publishImageCropMode,
     refreshSelectedMediaStatus,
     setPaginationMetrics,
-  } = useNotebookDirectMediaCanvasCoordinator({
+  } = useNotebookPointerCoordinator({
     documentRef,
     editorRef,
     onMediaStatusChange,

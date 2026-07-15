@@ -615,6 +615,28 @@ export function moveNotebookNodeInParent(
     : false;
 }
 
+export function notebookNodeArrangementState(editor: Editor, id: string) {
+  const source = locateNotebookNode(editor, id);
+  if (!source) {
+    return {
+      canMoveDown: false,
+      canMoveIntoSection: false,
+      canMoveOutOfSection: false,
+      canMoveUp: false,
+    };
+  }
+  const siblings = siblingNotebookNodes(editor, source);
+  const sourceIndex = siblings.findIndex((node) => node.id === id);
+  const previous = siblings[sourceIndex - 1];
+  const parent = source.parentId ? locateNotebookNode(editor, source.parentId) : null;
+  return {
+    canMoveDown: sourceIndex >= 0 && sourceIndex < siblings.length - 1,
+    canMoveIntoSection: previous?.node.type.name === 'notebookSection',
+    canMoveOutOfSection: parent?.node.type.name === 'notebookSection',
+    canMoveUp: sourceIndex > 0,
+  };
+}
+
 export function notebookTopLevelMoveState(editor: Editor, id: string) {
   const nodes = notebookTopLevelNodes(editor);
   const index = nodes.findIndex((node) => node.id === id);

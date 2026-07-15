@@ -359,25 +359,7 @@
   box-shadow: inset 3px 0 0 var(--notebook-accent);
 }
 
-.notebook-outline-entry.is-drop-before::after,
-.notebook-outline-entry.is-drop-after::after {
-  content: '';
-  position: absolute;
-  right: 4px;
-  left: 4px;
-  height: 2px;
-  background: var(--notebook-accent);
-}
-
-.notebook-outline-entry.is-drop-before::after { top: -3px; }
-.notebook-outline-entry.is-drop-after::after { bottom: -3px; }
-
-.notebook-outline-entry.is-drop-inside {
-  outline: 2px solid var(--notebook-accent);
-  outline-offset: 1px;
-}
-
-.notebook-outline-collapse,
+.notebook-outline-drag,
 .notebook-outline-entry-actions > button {
   display: inline-grid !important;
   place-items: center;
@@ -387,6 +369,15 @@
   padding: 0 !important;
   background: transparent !important;
   color: var(--page-muted);
+}
+
+.notebook-outline-drag {
+  cursor: grab;
+  touch-action: none;
+}
+
+.notebook-outline-drag:active {
+  cursor: grabbing;
 }
 
 .notebook-outline-entry-main {
@@ -516,10 +507,6 @@
 
 .notebook-outline-list button[draggable='true'] {
   cursor: grab;
-}
-
-.notebook-outline-list button[draggable='true']:active {
-  cursor: grabbing;
 }
 
 .notebook-outline-empty {

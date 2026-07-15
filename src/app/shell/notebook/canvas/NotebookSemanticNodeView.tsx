@@ -45,7 +45,8 @@ export function NotebookSemanticNodeView({
   updateAttributes,
 }: ReactNodeViewProps) {
   const variant = String(node.attrs.variant ?? 'note') as NotebookSemanticKind;
-  recordNotebookNodeViewRender(String(node.attrs.id ?? `notebook.semantic.${variant}`));
+  const id = String(node.attrs.id ?? `notebook.semantic.${variant}`);
+  recordNotebookNodeViewRender(id);
   const definition = notebookSemanticDefinition(variant);
   const collapsible = notebookSemanticIsCollapsible(
     variant,
@@ -76,6 +77,8 @@ export function NotebookSemanticNodeView({
       as="section"
       className={`notebook-semantic-block is-${variant}${selected ? ' is-selected' : ''}`}
       data-notebook-semantic={variant}
+      data-notebook-node-id={id}
+      data-notebook-block-type="semanticBlock"
       data-semantic-tone={definition.tone}
       data-notebook-accent={accentColor ?? 'automatic'}
       data-testid={`notebook-semantic-${variant}`}
@@ -87,7 +90,9 @@ export function NotebookSemanticNodeView({
           className="notebook-semantic-drag"
           aria-label={`Move ${title}`}
           title="Drag to reorder"
-          data-drag-handle
+          data-notebook-block-drag-id={id}
+          data-notebook-block-drag-label={title}
+          data-notebook-block-drag-source="canvas"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <GripVertical aria-hidden="true" size={16} />

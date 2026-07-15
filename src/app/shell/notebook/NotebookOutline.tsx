@@ -1,14 +1,11 @@
 import type { Editor } from '@tiptap/core';
 import {
-  BookMarked,
   BookOpen,
-  ChevronDown,
   ChevronRight,
   FileCheck2,
   Folder,
   FolderPlus,
-  Heading2,
-  Image as ImageIcon,
+  GripVertical,
   IndentIncrease,
   ListTree,
   MoreHorizontal,
@@ -18,7 +15,6 @@ import {
   Sigma,
   Trash2,
   Type,
-  Video,
   X,
 } from 'lucide-react';
 import { useMemo, useState, type CSSProperties } from 'react';
@@ -34,13 +30,11 @@ import {
   indentNotebookNode,
   insertNotebookDisplayMath,
   insertNotebookSection,
-  moveNotebookNode,
   moveNotebookNodeInParent,
   outdentNotebookNode,
   removeNotebookSection,
   selectNotebookEditorNode,
   updateNotebookSection,
-  type NotebookMovePlacement,
 } from './canvas';
 import { NotebookFloatingLayer, useNotebookTransientLayer } from './transient-ui';
 
@@ -51,8 +45,6 @@ type NotebookOutlineProps = {
   onClose: () => void;
   selectedNodeId: string | null;
 };
-
-type DropTarget = { id: string; placement: NotebookMovePlacement } | null;
 
 function entryKindLabel(entry: NotebookOutlineEntry) {
   if (entry.nodeType === 'section') {
@@ -120,8 +112,6 @@ export function NotebookOutline({
   onClose,
   selectedNodeId,
 }: NotebookOutlineProps) {
-  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<DropTarget>(null);
   const [query, setQuery] = useState('');
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [menuSectionId, setMenuSectionId] = useState<string | null>(null);
@@ -247,7 +237,7 @@ export function NotebookOutline({
           </span>
         ))}
       </nav>
-      <div className="notebook-outline-list" onDragLeave={() => setDropTarget(null)}>
+      <div className="notebook-outline-list">
         {visibleEntries.length > 0 ? visibleEntries.map((entry) => {
           const kindLabel = entryKindLabel(entry);
           const detailLabel = entry.nodeType === 'semanticBlock'
@@ -255,11 +245,9 @@ export function NotebookOutline({
             : entry.label;
           const depth = Math.min(entry.depth, 4);
           const rowStyle = { '--notebook-outline-depth': depth } as CSSProperties;
-          const isDropTarget = dropTarget?.id === entry.id;
           return (
             <div
               key={entry.id}
-              draggable
               data-testid="notebook-outline-entry"
               data-node-id={entry.id}
               data-outline-kind={entry.nodeType}
@@ -268,7 +256,6 @@ export function NotebookOutline({
                 'notebook-outline-entry',
                 `is-${entry.nodeType}`,
                 entry.id === selectedNodeId ? 'is-active' : '',
-                isDropTarget ? `is-drop-${dropTarget.placement}` : '',
               ].filter(Boolean).join(' ')}
               style={rowStyle}
               title={entry.path.join(' / ')}
@@ -277,51 +264,19 @@ export function NotebookOutline({
                   selectNotebookEditorNode(editor, entry.id);
                 }
               }}
-              onDragStart={(event) => {
-                setDraggedNodeId(entry.id);
-                event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData('text/plain', entry.id);
-              }}
-              onDragEnd={() => {
-                setDraggedNodeId(null);
-                setDropTarget(null);
-              }}
-              onDragOver={(event) => {
-                if (!draggedNodeId || draggedNodeId === entry.id) {
-                  return;
-                }
-                event.preventDefault();
-                const bounds = event.currentTarget.getBoundingClientRect();
-                const placement: NotebookMovePlacement = entry.nodeType === 'section'
-                  && event.clientX > bounds.left + 68
-                  ? 'inside'
-                  : event.clientY > bounds.top + bounds.height / 2 ? 'after' : 'before';
-                setDropTarget({ id: entry.id, placement });
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const sourceId = draggedNodeId || event.dataTransfer.getData('text/plain');
-                if (editor && sourceId && dropTarget?.id === entry.id) {
-                  moveNotebookNode(editor, sourceId, entry.id, dropTarget.placement);
-                }
-                setDraggedNodeId(null);
-                setDropTarget(null);
-              }}
             >
-              {entry.nodeType === 'section' ? (
-                <span
-                  className="notebook-outline-collapse"
-                  aria-hidden="true"
-                >
-                  {entry.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                </span>
-              ) : entry.nodeType === 'heading'
-                ? <Heading2 aria-hidden="true" size={15} />
-                : entry.nodeType === 'imageFigure'
-                  ? <ImageIcon aria-hidden="true" size={15} />
-                : entry.nodeType === 'videoFigure'
-                  ? <Video aria-hidden="true" size={15} />
-                : <BookMarked aria-hidden="true" size={15} />}
+              <button
+                type="button"
+                className="notebook-outline-drag"
+                aria-label={`Move ${entry.label}`}
+                data-notebook-block-drag-id={entry.id}
+                data-notebook-block-drag-label={entry.label}
+                data-notebook-block-drag-source="outline"
+                title="Drag to reorder"
+                onClick={() => {
+                  if (editor) selectNotebookEditorNode(editor, entry.id);
+                }}
+              ><GripVertical aria-hidden="true" size={15} /></button>
               <div className="notebook-outline-entry-main">
                 <span className="notebook-outline-entry-copy">
                   <small>{kindLabel}{entry.depth > 4 ? ` · ${entry.depth + 1}` : ''}</small>

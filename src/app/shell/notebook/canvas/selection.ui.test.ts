@@ -3,7 +3,13 @@ import StarterKit from '@tiptap/starter-kit';
 import { NodeSelection } from '@tiptap/pm/state';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { notebookInspectorSelection } from './selection';
+import {
+  indentNotebookNode,
+  moveNotebookNodeInParent,
+  notebookInspectorSelection,
+  notebookNodeArrangementState,
+  outdentNotebookNode,
+} from './selection';
 
 const NotebookTestIds = Extension.create({
   name: 'notebookTestIds',
@@ -106,5 +112,44 @@ describe('notebookInspectorSelection', () => {
       id: 'math.1',
       type: 'inlineMath',
     });
+  });
+});
+
+describe('Notebook block arrangement', () => {
+  it('reports truthful sibling and Section alternatives and keeps moves transactional', () => {
+    editor = new Editor({
+      extensions: [StarterKit, NotebookTestIds, NotebookSection, SemanticBlock, InlineMath],
+      content: {
+        type: 'doc',
+        content: [{
+          type: 'notebookSection',
+          attrs: { id: 'section.1' },
+          content: [{ type: 'paragraph', attrs: { id: 'paragraph.inside' } }],
+        }, {
+          type: 'paragraph',
+          attrs: { id: 'paragraph.moving' },
+          content: [{ type: 'text', text: 'Move me' }],
+        }, {
+          type: 'semanticBlock',
+          attrs: { id: 'semantic.1' },
+          content: [{ type: 'paragraph', attrs: { id: 'paragraph.semantic' } }],
+        }],
+      },
+    });
+
+    expect(notebookNodeArrangementState(editor, 'paragraph.moving')).toEqual({
+      canMoveDown: true,
+      canMoveIntoSection: true,
+      canMoveOutOfSection: false,
+      canMoveUp: true,
+    });
+    expect(indentNotebookNode(editor, 'paragraph.moving')).toBe(true);
+    expect(editor.state.doc.child(0).lastChild?.attrs.id).toBe('paragraph.moving');
+    expect(notebookNodeArrangementState(editor, 'paragraph.moving').canMoveOutOfSection).toBe(true);
+
+    expect(outdentNotebookNode(editor, 'paragraph.moving')).toBe(true);
+    expect(editor.state.doc.child(1).attrs.id).toBe('paragraph.moving');
+    expect(moveNotebookNodeInParent(editor, 'paragraph.moving', 'down')).toBe(true);
+    expect(editor.state.doc.lastChild?.attrs.id).toBe('paragraph.moving');
   });
 });

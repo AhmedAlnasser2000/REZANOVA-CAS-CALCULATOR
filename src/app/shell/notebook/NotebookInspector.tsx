@@ -17,8 +17,10 @@ import {
 } from '../../../lib/notebook';
 import {
   convertSelectedNotebookMath,
-  moveSelectedNotebookTopLevelNode,
-  notebookTopLevelMoveState,
+  indentNotebookNode,
+  moveNotebookNodeInParent,
+  notebookNodeArrangementState,
+  outdentNotebookNode,
   updateSelectedNotebookMathTarget,
   type NotebookEditorSelection,
 } from './canvas';
@@ -68,11 +70,17 @@ export function NotebookInspector({
   const isMath = selection?.type === 'inlineMath' || selection?.type === 'displayMath';
   const isSemantic = selection?.type === 'semanticBlock';
   const isSection = selection?.type === 'notebookSection';
+  const selectedNodeId = selection?.id ?? null;
   const target = String(selection?.attrs.workspaceTarget ?? 'calculate') as NotebookWorkspaceTarget;
   const latex = String(selection?.attrs.latex ?? '');
-  const moveState = editor && selection?.id
-    ? notebookTopLevelMoveState(editor, selection.id)
-    : { canMoveUp: false, canMoveDown: false };
+  const moveState = editor && selectedNodeId
+    ? notebookNodeArrangementState(editor, selectedNodeId)
+    : {
+        canMoveDown: false,
+        canMoveIntoSection: false,
+        canMoveOutOfSection: false,
+        canMoveUp: false,
+      };
   const canOpen = Boolean(
     isMath
       && latex.trim()
@@ -171,20 +179,36 @@ export function NotebookInspector({
         </>
       ) : null}
 
-      {editor && selection?.id ? (
+      {editor && selectedNodeId ? (
         <div className="notebook-inspector-section">
           <span>{isSemantic || isSection ? 'Arrangement' : 'Block order'}</span>
           <div className="notebook-inspector-actions">
             <button
               type="button"
               disabled={!moveState.canMoveUp}
-              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'up', selection.id)}
+              onClick={() => moveNotebookNodeInParent(editor, selectedNodeId, 'up')}
             ><ArrowUp size={15} /> Move Up</button>
             <button
               type="button"
               disabled={!moveState.canMoveDown}
-              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'down', selection.id)}
+              onClick={() => moveNotebookNodeInParent(editor, selectedNodeId, 'down')}
             ><ArrowDown size={15} /> Move Down</button>
+            <button
+              type="button"
+              disabled={!moveState.canMoveIntoSection}
+              title={moveState.canMoveIntoSection
+                ? 'Move into the preceding Section'
+                : 'A preceding Section is required'}
+              onClick={() => indentNotebookNode(editor, selectedNodeId)}
+            >Move Into Section</button>
+            <button
+              type="button"
+              disabled={!moveState.canMoveOutOfSection}
+              title={moveState.canMoveOutOfSection
+                ? 'Move out of the parent Section'
+                : 'This block is not inside a Section'}
+              onClick={() => outdentNotebookNode(editor, selectedNodeId)}
+            >Move Out of Section</button>
           </div>
         </div>
       ) : null}

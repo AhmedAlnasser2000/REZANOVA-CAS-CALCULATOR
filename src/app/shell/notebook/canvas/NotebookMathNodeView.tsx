@@ -1,7 +1,7 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { NodeSelection } from '@tiptap/pm/state';
-import { Send, Sigma } from 'lucide-react';
+import { GripVertical, Send, Sigma } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 import {
@@ -80,12 +80,25 @@ export function createNotebookMathNodeView(
     return (
       <NodeViewWrapper
         className={`notebook-rich-display-math${selected ? ' is-selected' : ''}`}
+        data-notebook-node-id={id}
+        data-notebook-block-type="displayMath"
         data-testid="notebook-display-math-node"
         contentEditable={false}
         onPointerDown={selectDisplayCard}
       >
         <header>
-          <span><Sigma aria-hidden="true" size={15} /> Separate equation</span>
+          <span>
+            <button
+              type="button"
+              className="notebook-block-drag-handle"
+              aria-label="Move separate equation"
+              data-notebook-block-drag-id={id}
+              data-notebook-block-drag-label="Separate equation"
+              data-notebook-block-drag-source="canvas"
+              title="Drag to reorder"
+            ><GripVertical aria-hidden="true" size={14} /></button>
+            <Sigma aria-hidden="true" size={15} /> Separate equation
+          </span>
           <small>{notebookToolTargetLabel(workspaceTarget)}</small>
         </header>
         <div className="notebook-rich-display-math-row">

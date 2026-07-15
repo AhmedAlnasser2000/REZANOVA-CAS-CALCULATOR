@@ -1951,6 +1951,25 @@
   pointer-events: none;
 }
 
+.notebook-block-drag-ghost {
+  position: fixed;
+  z-index: 1002;
+  max-width: min(320px, calc(100vw - 28px));
+  overflow: hidden;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: #102021;
+  color: var(--page-ink);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
+  font-size: 0.78rem;
+  font-weight: 800;
+  opacity: 0.92;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .notebook-media-drop-guide {
   z-index: 1001;
   height: 2px;
@@ -1958,6 +1977,42 @@
   border-radius: 2px;
   background: var(--notebook-accent);
   box-shadow: 0 0 0 1px rgba(16, 32, 33, 0.88);
+}
+
+.notebook-media-drop-guide.is-inside {
+  border: 2px solid var(--notebook-accent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--notebook-accent) 8%, transparent);
+  box-shadow: 0 0 0 1px rgba(16, 32, 33, 0.72);
+}
+
+.notebook-block-drag-handle {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  background: transparent;
+  color: var(--page-subtle);
+  cursor: grab;
+  touch-action: none;
+}
+
+.notebook-block-drag-handle:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--page-ink);
+}
+
+.notebook-block-drag-handle:active {
+  cursor: grabbing;
+}
+
+.notebook-rich-editor-host hr[data-notebook-node-id] {
+  cursor: grab;
+  touch-action: none;
 }
 
 .notebook-media-flow-targets {
@@ -2580,7 +2635,9 @@
   .notebook-media-drag-grip,
   .notebook-image-rotation-handle,
   .notebook-image-crop-reset,
-  .notebook-media-drag-ghost {
+  .notebook-media-drag-ghost,
+  .notebook-block-drag-ghost,
+  .notebook-block-drag-handle {
     border-color: Highlight;
     background: Canvas;
     color: CanvasText;
@@ -2596,7 +2653,8 @@
     forced-color-adjust: auto;
   }
 
-  .notebook-media-drop-guide {
+  .notebook-media-drop-guide,
+  .notebook-media-drop-guide.is-inside {
     background: Highlight;
     box-shadow: none;
     forced-color-adjust: auto;

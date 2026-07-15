@@ -45,14 +45,25 @@ export function NotebookSectionNodeView({
       as="section"
       className={`notebook-section${collapsed ? ' is-collapsed' : ''}${selected ? ' is-selected' : ''}`}
       data-notebook-section=""
+      data-notebook-node-id={id}
+      data-notebook-block-type="notebookSection"
       data-notebook-accent={accentColor ?? 'automatic'}
       data-testid="notebook-section"
       style={accentColor ? { '--notebook-accent': accentColor } as CSSProperties : undefined}
     >
       <header onPointerDown={selectSection}>
-        <span className="notebook-section-drag" data-drag-handle="" title="Drag section">
+        <button
+          type="button"
+          className="notebook-section-drag"
+          aria-label={`Move ${title}`}
+          data-notebook-block-drag-id={id}
+          data-notebook-block-drag-label={title}
+          data-notebook-block-drag-source="canvas"
+          title="Drag section"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
           <GripVertical aria-hidden="true" size={15} />
-        </span>
+        </button>
         {collapsible ? (
           <button
             type="button"

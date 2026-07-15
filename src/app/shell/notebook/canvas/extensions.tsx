@@ -163,7 +163,7 @@ const DisplayMath = Node.create({
   name: 'displayMath',
   group: 'block',
   atom: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
@@ -190,7 +190,7 @@ const EvidenceSnapshot = Node.create({
   name: 'evidenceSnapshot',
   group: 'block',
   atom: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
@@ -223,7 +223,7 @@ const ImageFigure = Node.create({
   name: 'imageFigure',
   group: 'block',
   atom: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
@@ -259,7 +259,7 @@ const VideoFigure = Node.create({
   name: 'videoFigure',
   group: 'block',
   atom: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
@@ -316,7 +316,7 @@ const SemanticBlock = Node.create({
   content: 'block+',
   defining: true,
   isolating: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
@@ -363,7 +363,7 @@ const NotebookSection = Node.create({
   content: 'block+',
   defining: true,
   isolating: true,
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {

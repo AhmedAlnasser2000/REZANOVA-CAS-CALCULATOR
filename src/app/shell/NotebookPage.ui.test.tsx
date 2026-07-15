@@ -13,6 +13,7 @@ import {
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
+import { dragNotebookBlockForTest } from '../../test-support/notebook-pointer-drag';
 import { NotebookPage } from './NotebookPage';
 import {
   getNotebookNodeViewRenderStats,
@@ -359,16 +360,8 @@ describe('NotebookPage', () => {
     expect(entries[1]).toHaveTextContent('Solution');
     expect(entries[2]).toHaveTextContent('Example');
 
-    const transfer = new Map<string, string>();
-    const dataTransfer = {
-      dropEffect: 'none',
-      effectAllowed: 'all',
-      getData: (type: string) => transfer.get(type) ?? '',
-      setData: (type: string, value: string) => transfer.set(type, value),
-    };
-    fireEvent.dragStart(entries[3]!, { dataTransfer });
-    fireEvent.dragOver(entries[0]!, { dataTransfer, clientY: -1 });
-    fireEvent.drop(entries[0]!, { dataTransfer, clientY: -1 });
+    const noteHandle = within(entries[3]!).getByRole('button', { name: /Move Note/ });
+    expect(dragNotebookBlockForTest(noteHandle, entries[0]!, 'before')).toBe('before');
     expect(screen.getAllByTestId('notebook-outline-entry')[0]).toHaveTextContent('Note');
   });
 
@@ -867,6 +860,8 @@ describe('NotebookPage', () => {
     fireEvent.input(field);
 
     const display = screen.getByTestId('notebook-display-math-node');
+    expect(within(display).getByRole('button', { name: 'Move separate equation' }))
+      .toBeInTheDocument();
     expect(within(display).getByRole('button', { name: 'Open in Tool' })).toBeDisabled();
   });
 
@@ -1438,6 +1433,8 @@ describe('NotebookPage', () => {
     expect(sectionEntries).toHaveLength(1);
     expect(screen.getAllByTestId('notebook-section')).toHaveLength(1);
     const firstSection = screen.getAllByTestId('notebook-section')[0]!;
+    expect(within(firstSection).getByRole('button', { name: 'Move Untitled section' }))
+      .toBeInTheDocument();
     const sectionInspector = screen.getByTestId('notebook-inspector');
     expect(within(sectionInspector).getByLabelText('Inspector section title'))
       .toHaveValue('Untitled section');
@@ -1466,18 +1463,21 @@ describe('NotebookPage', () => {
     expect(sectionEntries).toHaveLength(2);
     expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
 
-    const transfer = new Map<string, string>(); const dataTransfer = {
-      dropEffect: 'none',
-      effectAllowed: 'all',
-      getData: (type: string) => transfer.get(type) ?? '',
-      setData: (type: string, value: string) => transfer.set(type, value),
-    };
-    fireEvent.dragStart(sectionEntries[0]!, { dataTransfer });
-    fireEvent.dragOver(sectionEntries[1]!, { dataTransfer, clientX: 100 });
-    fireEvent.drop(sectionEntries[1]!, { dataTransfer, clientX: 100 });
+    await user.click(within(sectionEntries[1]!).getByRole('button', { name: 'Untitled section' }));
+    expect(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Move Out of Section' })).toBeEnabled();
+    await user.click(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Move Out of Section' }));
     sectionEntries = screen.getAllByTestId('notebook-outline-entry')
       .filter((entry) => entry.dataset.outlineKind === 'section');
     expect(sectionEntries[0]).toHaveAttribute('data-outline-depth', '0');
+    expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '0');
+    expect(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Move Into Section' })).toBeEnabled();
+    await user.click(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Move Into Section' }));
+    sectionEntries = screen.getAllByTestId('notebook-outline-entry')
+      .filter((entry) => entry.dataset.outlineKind === 'section');
     expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
 
     await user.click(within(sectionEntries[1]!).getByRole('button', { name: /actions/ }));
