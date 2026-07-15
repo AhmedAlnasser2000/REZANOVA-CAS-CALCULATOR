@@ -82,3 +82,23 @@
 
 - Concurrent Statistics source, its visualization tests, and untracked `test-results/` remain excluded.
 - No push is authorized.
+
+## Milestone 11 Result
+
+- milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
+- gate: backend
+- status: verified pass
+- next milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
+
+## Milestone 11 Evidence
+
+- Focused elimination, exact-route closure, arbitrary-unknown parser/dispatch, Vector span/independence, History schema, and Matrix/Vector worker coverage passed 97/97 tests. The post-extraction parser/system delta passed 27/27 tests.
+- Incremental TypeScript, OOE boundaries (8), compartment boundaries (36), and diff hygiene passed. All Linear Algebra production/test files are within their committed caps; the aggregate file-size gate is blocked only by concurrent `src/AppMain.tsx` and `src/app/runtime/useStatisticsRuntime.ts` growth.
+- Result-contract coverage passes all 60 Matrix and 23 Vector selectors. Canonical V2 enforcement accepts all 20 frozen files; its aggregate MathJSON report is blocked only by concurrent Statistics raising the proven corpus from the committed 466 leaves to 491.
+- Display-inversion tests passed 24/24 with zero compatibility projections and zero legacy reads; the aggregate comparison rejects only three concurrent Statistics owner-assembly hash changes.
+- Chromium passed 2/2 for the conditional `[a]u=[1]` system, History replay, bounded overflow, and conditional Vector independence. The inspected screenshot shows an unclipped set-valued answer, legible facts, high-contrast controls/cells, and the full-width Matrix pad.
+
+## Milestone 11 Protected Worktree
+
+- Concurrent Statistics/Notebook source and dossiers plus untracked `test-results/` remain excluded.
+- No push is authorized.

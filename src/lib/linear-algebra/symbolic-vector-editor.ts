@@ -253,7 +253,9 @@ function operationRequest(
     operandEncoding: 'scalar-v1' as const,
     vectorA: first.operand,
     vectorB: second,
-    ...(operands.length > 2 ? { vectorOperands: operands.map((entry) => entry.operand) } : {}),
+    ...(operands.length > 2 || operation === 'span' || operation === 'independent'
+      ? { vectorOperands: operands.map((entry) => entry.operand) }
+      : {}),
     angleUnit: input.angleUnit,
     editorExpressionLatex: inputLatex,
     vectorOperandLatexA: inputLatex,

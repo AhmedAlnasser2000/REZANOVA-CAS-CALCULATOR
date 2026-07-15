@@ -81,4 +81,25 @@ describe('symbolic Vector editor dispatch', () => {
       complexExactForm: 'cis',
     });
   });
+
+  it('preserves a one-vector family for conditional independence', () => {
+    const result = dispatchVectorEditorLatex({
+      latex: '\\operatorname{independent}(u)',
+      vectorA: [0],
+      vectorB: [0],
+      vectorValues: [
+        { id: 'u', name: 'u', encoding: 'scalar-v1', value: [scalar('a')] },
+        { id: 'v', name: 'v', value: [0] },
+      ],
+      angleUnit: 'rad',
+      domain: 'real',
+      substitutionMode: 'symbolic',
+      storedVariables: [],
+      complexExactForm: 'rectangular',
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      request: { operation: 'independent', vectorOperands: [{ resolved: [{ canonicalLatex: 'a' }] }] },
+    });
+  });
 });

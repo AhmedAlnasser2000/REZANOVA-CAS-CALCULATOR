@@ -27,10 +27,10 @@
 
 ## Active Gate
 
-- milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
+- milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
 - gate: backend
 - status: verified pass
-- prerequisite representation: bounded standard MathJSON scalar wires and a Vector-owned symbolic scalar core.
+- prerequisite representation: bounded standard MathJSON scalar wires, symbolic Matrix arithmetic, and one Matrix-owned zero/nonzero elimination classifier.
 - protected lanes: concurrent Notebook and Statistics source/dossiers plus untracked `test-results/` remain excluded from this gate.
 
 ## Milestone 8 Result
@@ -51,10 +51,10 @@
 
 ## Next Gate
 
-- milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
+- milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
 - gate: backend
 - status: not started
-- existing numeric Matrix execution and all OOE/History ownership remain the compatibility baseline.
+- existing numeric Matrix spectral execution, Equation ownership, and all OOE/History boundaries remain the compatibility baseline.
 
 ## Milestone 10 Result
 
@@ -64,3 +64,11 @@
 - Exact complex constants use proof-round-trippable rectangular canonical notation, and formal scalar conjugation uses the equivalent standard scalar conjugate-transpose head required by Compute Engine's star parser.
 - Matrix/Vector cell text is explicitly light on dark pads; cells keep at least 112px width and scroll inside the value card when dimensions grow.
 - Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-10/complex-adjoint-and-readable-cells.png` plus the refreshed wide Matrix/Vector screenshots from Milestones 8 and 9.
+
+## Milestone 11 Result
+
+- Symbolic/complex elimination through 3 by 3 closes rank, RREF, null/column spaces, basis, coordinates, change of basis, invertibility/profile, LU/PLU and solve routes, multi-RHS systems, plus Vector span/independence.
+- Systems accept named-vector shorthand and explicit ordered unknowns. Any accepted non-reserved identifier may be an unknown; free directions use collision-free `t_1`, `t_2`, and later names.
+- Stored substitution protects declared system unknowns and named Matrix/Vector operands. Conditional results use standard set-valued `Which`; proved profile and independence results keep their typed V2 primaries.
+- Classification stops at six coefficient parameters, four undecidable predicates, sixteen cases, or opaque function coefficients. Real-numeric QR/projection/least-squares/SVD/pseudoinverse/condition/rank/definiteness remain in their existing numeric routes.
+- Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-11/conditional-system-and-readable-matrix-pad.png`.

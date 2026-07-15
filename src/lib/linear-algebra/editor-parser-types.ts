@@ -1,4 +1,8 @@
-import type { ExactScalarWire, LinearAlgebraScalarDomain } from '../../types/calculator';
+import type {
+  ExactScalarWire,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraScalarWireV1,
+} from '../../types/calculator';
 import type {
   LinearAlgebraScalarExpression,
   LinearAlgebraSymbolicScalarExpression,
@@ -19,7 +23,8 @@ export type LinearAlgebraNamedValue = string;
 export type LinearAlgebraValueExpression =
   | { kind: 'named'; name: LinearAlgebraNamedValue; displayLatex: string }
   | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][]; displayLatex: string }
-  | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[]; displayLatex: string };
+  | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[]; displayLatex: string }
+  | { kind: 'symbolicVectorLiteral'; value: LinearAlgebraScalarWireV1[]; displayLatex: string };
 
 export type LinearAlgebraSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -95,6 +100,8 @@ export type LinearAlgebraEditorExpression =
       form: LinearAlgebraSystemForm;
       coefficients: LinearAlgebraValueExpression;
       constants: LinearAlgebraValueExpression;
+      unknowns?: string[];
+      unknownVectorName?: string;
     };
 
 export type LinearAlgebraEditorParseResult =

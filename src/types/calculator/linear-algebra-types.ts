@@ -92,6 +92,8 @@ type MatrixRequestCommon = LinearAlgebraRequestContext & {
   matrixOperandLatexA?: string;
   matrixOperandLatexB?: string;
   systemRhsLatex?: string;
+  systemUnknowns?: string[];
+  systemUnknownVectorName?: string;
   coordinateVectorLatex?: string;
   matrixPowerExponentLatex?: string;
   matrixValues?: LinearAlgebraMatrixNamedValue[];

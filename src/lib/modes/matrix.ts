@@ -171,6 +171,8 @@ function matrixResultTitle(request: RunMatrixModeRequest) {
     (request.matrixOperandLatexA !== undefined && request.matrixOperandLatexA !== 'A')
     || (request.matrixOperandLatexB !== undefined && request.matrixOperandLatexB !== 'B')
     || request.systemRhsLatex !== undefined
+    || request.systemUnknowns !== undefined
+    || (request.systemUnknownVectorName !== undefined && request.systemUnknownVectorName !== 'x')
     || request.coordinateVectorLatex !== undefined
     || request.matrixPowerExponentLatex !== undefined;
   return usesInlineOperand && request.editorExpressionLatex
@@ -297,6 +299,8 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       matrixOperandLatexA: request.matrixOperandLatexA,
       matrixOperandLatexB: request.matrixOperandLatexB,
       systemRhsLatex: request.systemRhsLatex,
+      systemUnknowns: request.systemUnknowns,
+      systemUnknownVectorName: request.systemUnknownVectorName,
       coordinateVectorLatex: request.coordinateVectorLatex,
       matrixPowerExponentLatex: request.matrixPowerExponentLatex,
       matrixValues: request.matrixValues,

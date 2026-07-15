@@ -18,6 +18,7 @@ function suffixOperand(expression: LinearAlgebraEditorExpression) {
   return expression.kind === 'named'
     || expression.kind === 'matrixLiteral'
     || expression.kind === 'vectorLiteral'
+    || expression.kind === 'symbolicVectorLiteral'
     || expression.kind === 'scalar'
     || expression.kind === 'symbolicScalar'
     ? formatted
@@ -115,6 +116,7 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
       return expression.displayLatex;
     case 'matrixLiteral':
     case 'vectorLiteral':
+    case 'symbolicVectorLiteral':
     case 'scalar':
     case 'symbolicScalar':
       return expression.displayLatex;
@@ -207,9 +209,14 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
     case 'multiRhsSystem':
       return `${formatLinearAlgebraEditorExpression(expression.coefficients)} X = ${formatLinearAlgebraEditorExpression(expression.constants)}`;
     case 'linearSystem':
+      {
+        const unknown = expression.unknowns?.length
+          ? `\\begin{bmatrix}${expression.unknowns.join('\\\\')}\\end{bmatrix}`
+          : expression.unknownVectorName ?? 'x';
       if (expression.form === 'Ax+b=0') {
-        return `${formatLinearAlgebraEditorExpression(expression.coefficients)} x + ${negatedVectorDisplayLatex(expression.constants)} = 0`;
+        return `${formatLinearAlgebraEditorExpression(expression.coefficients)} ${unknown} + ${negatedVectorDisplayLatex(expression.constants)} = 0`;
       }
-      return `${formatLinearAlgebraEditorExpression(expression.coefficients)} x = ${formatLinearAlgebraEditorExpression(expression.constants)}`;
+      return `${formatLinearAlgebraEditorExpression(expression.coefficients)} ${unknown} = ${formatLinearAlgebraEditorExpression(expression.constants)}`;
+      }
   }
 }

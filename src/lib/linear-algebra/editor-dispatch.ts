@@ -751,6 +751,20 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
     matrixNamedValues: matrixNamedValueNames(input.matrixValues),
   });
   if (!parsed.ok) {
+    if (matrixValues.length > 0) {
+      const symbolic = dispatchSymbolicMatrixEditorLatex({
+        latex: input.latex,
+        matrixValues,
+        activeMatrixLeftId: input.activeMatrixLeftId,
+        activeMatrixRightId: input.activeMatrixRightId,
+        domain: input.domain ?? 'real',
+        substitutionMode: input.substitutionMode ?? 'symbolic',
+        storedVariables: input.storedVariables ?? [],
+        complexExactForm: input.complexExactForm ?? 'rectangular',
+      });
+      if (symbolic.ok) return symbolic;
+      if (symbolic.message.includes('imaginary unit i')) return symbolic;
+    }
     return {
       ok: false,
       message: parsed.message,

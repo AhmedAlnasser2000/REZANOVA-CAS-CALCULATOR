@@ -844,6 +844,27 @@ describe('history entry schema', () => {
       matrixA: { source: [[{ canonicalLatex: 'a' }]], resolved: [[{ canonicalLatex: '2' }]] },
     });
 
+    const symbolicSystem = parseHistoryEntry({
+      id: 'matrix-symbolic-system-seed',
+      mode: 'matrix',
+      inputLatex: 'A[u;v]=[g,h]',
+      matrixSeed: {
+        operation: 'linearSystem',
+        operandEncoding: 'scalar-v1',
+        matrixA: { encoding: 'scalar-v1', source: [[source]], resolved: [[source]] },
+        matrixB: { encoding: 'scalar-v1', source: [[source]], resolved: [[source]] },
+        systemRhs: { encoding: 'scalar-v1', source: [source], resolved: [resolved] },
+        systemUnknowns: ['u', 'v'],
+        systemUnknownVectorName: 'z',
+        domain: 'real',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).matrixSeed;
+    expect(symbolicSystem).toMatchObject({
+      systemUnknowns: ['u', 'v'],
+      systemUnknownVectorName: 'z',
+    });
+
     const vector = parseHistoryEntry({
       id: 'vector-scalar-seed',
       mode: 'vector',

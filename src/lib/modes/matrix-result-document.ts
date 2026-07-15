@@ -125,7 +125,12 @@ export function createMatrixResultOutcomeV2(
         nullity: semantic.nullity,
       }
     : undefined;
-  if (options.routeId === 'matrix.profile' && input.kind === 'success' && !primary) {
+  if (
+    options.routeId === 'matrix.profile'
+    && input.kind === 'success'
+    && !primary
+    && !options.evidence.primary
+  ) {
     throw new Error('Matrix profile is missing aligned semantic-primary evidence.');
   }
   const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({

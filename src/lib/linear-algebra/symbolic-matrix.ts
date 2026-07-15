@@ -22,6 +22,7 @@ import {
   symbolicScalarSubtract,
   symbolicScalarZeroStatus,
 } from './symbolic-scalar-core';
+import { runSymbolicMatrixSystemsOperation } from './symbolic-matrix-systems';
 
 export type SymbolicMatrix = LinearAlgebraScalarWireV1[][];
 
@@ -408,6 +409,16 @@ export function runSymbolicMatrixOperation(request: ScalarMatrixRequestV1): Matr
       return matrix
         ? powerResponse(matrix, request, `matrix.${request.operation}.native-symbolic-integer-power`)
         : errorResponse('Matrix B is required for this operation.');
+    }
+    const systemsResponse = runSymbolicMatrixSystemsOperation(request);
+    if (systemsResponse) return systemsResponse;
+    if ([
+      'qrA', 'qrB', 'columnProjectionA', 'columnProjectionB',
+      'leastSquaresA', 'leastSquaresB', 'svdA', 'svdB',
+      'pinvA', 'pinvB', 'condA', 'condB', 'nrankA', 'nrankB',
+      'definiteA', 'definiteB',
+    ].includes(request.operation)) {
+      return errorResponse('This engineering route remains Real numeric; use finite real entries with no formal parameters.');
     }
   } catch (error) {
     return errorResponse(error instanceof Error

@@ -13,12 +13,14 @@ import {
   isVectorNamedValueName,
 } from './named-values';
 import { splitTopLevelArguments } from './editor-parser-arguments';
+import { normalizeLinearAlgebraEditorLatex } from './editor-normalize';
 import {
   parseScalarExpression,
   parseSymbolicScalarExpression,
   splitLatexFraction,
   splitLeadingScalarProduct,
 } from './editor-vector-scalars';
+import { symbolicScalarNegate } from './symbolic-scalar-core';
 import type {
   LinearAlgebraEditorExpression,
   LinearAlgebraEditorParseOptions,
@@ -28,6 +30,7 @@ import type {
   LinearAlgebraValueExpression,
   LinearAlgebraVectorScalarExpression,
 } from './editor-parser-types';
+import type { LinearAlgebraScalarDomain } from '../../types/calculator';
 
 export type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
 export type {
@@ -53,100 +56,6 @@ function parseVectorScalarExpression(
     ?? (options.scalarDomain
       ? parseSymbolicScalarExpression(input, options.scalarDomain)
       : null);
-}
-
-function normalizeLatex(latex: string): string {
-  return latex
-    .trim()
-    .replace(/\s+/g, '')
-    .replace(/\\left/g, '')
-    .replace(/\\right/g, '')
-    .replace(/\\,/g, '')
-    .replace(/\\;/g, '')
-    .replace(/\\operatorname\{rank\}/g, 'rank')
-    .replace(/\\operatorname\{Rank\}/g, 'rank')
-    .replace(/\\operatorname\{rref\}/g, 'rref')
-    .replace(/\\operatorname\{RREF\}/g, 'rref')
-    .replace(/\\operatorname\{null\}/g, 'null')
-    .replace(/\\operatorname\{Null\}/g, 'null')
-    .replace(/\\operatorname\{col\}/g, 'col')
-    .replace(/\\operatorname\{Col\}/g, 'col')
-    .replace(/\\operatorname\{basis\}/g, 'basis')
-    .replace(/\\operatorname\{Basis\}/g, 'basis')
-    .replace(/\\operatorname\{coords\}/g, 'coords')
-    .replace(/\\operatorname\{Coords\}/g, 'coords')
-    .replace(/\\operatorname\{coord\}/g, 'coords')
-    .replace(/\\operatorname\{Coord\}/g, 'coords')
-    .replace(/\\operatorname\{change\}/g, 'change')
-    .replace(/\\operatorname\{Change\}/g, 'change')
-    .replace(/\\operatorname\{changebasis\}/g, 'changebasis')
-    .replace(/\\operatorname\{ChangeBasis\}/g, 'changebasis')
-    .replace(/\\operatorname\{lu\}/g, 'lu')
-    .replace(/\\operatorname\{LU\}/g, 'lu')
-    .replace(/\\operatorname\{plu\}/g, 'plu')
-    .replace(/\\operatorname\{PLU\}/g, 'plu')
-    .replace(/\\operatorname\{qr\}/g, 'qr')
-    .replace(/\\operatorname\{QR\}/g, 'qr')
-    .replace(/\\operatorname\{projcol\}/g, 'projcol')
-    .replace(/\\operatorname\{ProjCol\}/g, 'projcol')
-    .replace(/\\operatorname\{colproj\}/g, 'projcol')
-    .replace(/\\operatorname\{ColProj\}/g, 'projcol')
-    .replace(/\\operatorname\{ls\}/g, 'ls')
-    .replace(/\\operatorname\{mpow\}/g, 'mpow')
-    .replace(/\\operatorname\{MPow\}/g, 'mpow')
-    .replace(/\\operatorname\{least\}/g, 'ls')
-    .replace(/\\operatorname\{Least\}/g, 'ls')
-    .replace(/\\operatorname\{lstsq\}/g, 'ls')
-    .replace(/\\operatorname\{LSTSQ\}/g, 'ls')
-    .replace(/\\operatorname\{lusolve\}/g, 'lusolve')
-    .replace(/\\operatorname\{LUSolve\}/g, 'lusolve')
-    .replace(/\\operatorname\{plusolve\}/g, 'plusolve')
-    .replace(/\\operatorname\{PLUSolve\}/g, 'plusolve')
-    .replace(/\\operatorname\{invertible\}/g, 'invertible')
-    .replace(/\\operatorname\{Invertible\}/g, 'invertible')
-    .replace(/\\operatorname\{eigen\}/g, 'eigen')
-    .replace(/\\operatorname\{Eigen\}/g, 'eigen')
-    .replace(/\\operatorname\{diag\}/g, 'diag')
-    .replace(/\\operatorname\{Diag\}/g, 'diag')
-    .replace(/\\operatorname\{diagonalize\}/g, 'diag')
-    .replace(/\\operatorname\{Diagonalize\}/g, 'diag')
-    .replace(/\\operatorname\{proj\}_\{u\}/g, 'proj_u')
-    .replace(/\\operatorname\{proj\}_u/g, 'proj_u')
-    .replace(/\\operatorname\{proj\}_\{v\}/g, 'proj_v')
-    .replace(/\\operatorname\{proj\}_v/g, 'proj_v')
-    .replace(/\\operatorname\{proj\}/g, 'proj')
-    .replace(/\\operatorname\{cross\}/g, 'cross')
-    .replace(/\\operatorname\{Cross\}/g, 'cross')
-    .replace(/\\operatorname\{triple\}/g, 'triple')
-    .replace(/\\operatorname\{Triple\}/g, 'triple')
-    .replace(/\\operatorname\{scalartriple\}/g, 'triple')
-    .replace(/\\operatorname\{ScalarTriple\}/g, 'triple')
-    .replace(/\\operatorname\{stp\}/g, 'triple')
-    .replace(/\\operatorname\{STP\}/g, 'triple')
-    .replace(/\\operatorname\{orth\}_\{u\}/g, 'orth_u')
-    .replace(/\\operatorname\{orth\}_u/g, 'orth_u')
-    .replace(/\\operatorname\{orth\}_\{v\}/g, 'orth_v')
-    .replace(/\\operatorname\{orth\}_v/g, 'orth_v')
-    .replace(/\\operatorname\{unit\}/g, 'unit')
-    .replace(/\\operatorname\{orthogonal\}/g, 'orthogonal')
-    .replace(/\\operatorname\{gram\}/g, 'gram')
-    .replace(/\\operatorname\{span\}/g, 'span')
-    .replace(/\\operatorname\{independent\}/g, 'independent')
-    .replace(/\\operatorname\{profile\}/g, 'profile')
-    .replace(/\\operatorname\{definite\}/g, 'definite')
-    .replace(/\\operatorname\{Definite\}/g, 'definite')
-    .replace(/\\operatorname\{svd\}/gi, 'svd')
-    .replace(/\\operatorname\{pinv\}/gi, 'pinv')
-    .replace(/\\operatorname\{cond\}/gi, 'cond')
-    .replace(/\\operatorname\{nrank\}/gi, 'nrank')
-    .replace(/\\operatorname\{angle\}/g, 'angle')
-    .replace(/\\operatorname\{(parallel|distance|parallelogramArea|triangleArea|volume)\}/g, '$1')
-    .replace(/\\det/g, 'det')
-    .replace(/\\angle/g, 'angle')
-    .replace(/\\dfrac/g, '\\frac')
-    .replace(/\\tfrac/g, '\\frac')
-    .replace(/\\lbrack/g, '[')
-    .replace(/\\rbrack/g, ']');
 }
 
 function splitTopLevel(input: string, tokens: readonly string[]): { token: string; left: string; right: string } | null {
@@ -265,7 +174,10 @@ function isMatrixCoefficientExpression(
 function isInlineVectorExpression(
   expression: LinearAlgebraEditorExpression | null,
 ): expression is LinearAlgebraValueExpression {
-  return expression !== null && expression.kind === 'vectorLiteral';
+  return expression !== null && (
+    expression.kind === 'vectorLiteral'
+    || expression.kind === 'symbolicVectorLiteral'
+  );
 }
 
 function isMatrixRhsExpression(
@@ -278,7 +190,18 @@ function isMatrixRhsExpression(
   );
 }
 
-function negateVectorExpression(expression: LinearAlgebraValueExpression): LinearAlgebraValueExpression {
+function negateVectorExpression(
+  expression: LinearAlgebraValueExpression,
+  domain: LinearAlgebraScalarDomain = 'real',
+): LinearAlgebraValueExpression {
+  if (expression.kind === 'symbolicVectorLiteral') {
+    const value = expression.value.map((entry) => symbolicScalarNegate(entry, domain));
+    return {
+      kind: 'symbolicVectorLiteral',
+      value,
+      displayLatex: `\\begin{bmatrix}${value.map((entry) => entry.canonicalLatex).join('\\\\')}\\end{bmatrix}`,
+    };
+  }
   if (expression.kind !== 'vectorLiteral') {
     return expression;
   }
@@ -373,6 +296,110 @@ function parseCoefficientTimesUnknownMatrix(
   return isMatrixCoefficientExpression(coefficient, options) ? coefficient : null;
 }
 
+function symbolicUnknownIdentifier(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+) {
+  if (!options.scalarDomain) return null;
+  const parsed = parseSymbolicScalarExpression(input, options.scalarDomain);
+  if (!parsed) return null;
+  const node = parsed.scalarWire.mathJson;
+  const identifier = typeof node === 'string'
+    && !node.startsWith("'")
+    && !['ImaginaryUnit', 'Pi', 'ExponentialE', 'Infinity'].includes(node);
+  const indexed = Array.isArray(node)
+    && node[0] === 'Subscript'
+    && (typeof node[1] === 'string' || Array.isArray(node[1]));
+  return identifier || indexed ? parsed.displayLatex : null;
+}
+
+function orderedUnknownSuffix(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+) {
+  const bracket = /^(.*)\[([^\]]+)\](?:\^\{?T\}?)?$/u.exec(input);
+  if (bracket) {
+    const rawUnknowns = bracket[2].split(/[;,]/u);
+    const unknowns = rawUnknowns.map((entry) => symbolicUnknownIdentifier(entry, options));
+    if (unknowns.length > 0 && unknowns.every((entry): entry is string => Boolean(entry))) {
+      return { coefficientLatex: bracket[1], unknowns };
+    }
+  }
+  const column = /^(.*)\\begin\{bmatrix\}(.+)\\end\{bmatrix\}$/u.exec(input);
+  if (column && !column[2].includes('&')) {
+    const rawUnknowns = column[2].split('\\\\');
+    const unknowns = rawUnknowns.map((entry) => symbolicUnknownIdentifier(entry, options));
+    if (unknowns.length > 0 && unknowns.every((entry): entry is string => Boolean(entry))) {
+      return { coefficientLatex: column[1], unknowns };
+    }
+  }
+  return null;
+}
+
+function parseCoefficientTimesDeclaredUnknowns(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): {
+  coefficients: LinearAlgebraValueExpression;
+  unknowns?: string[];
+  unknownVectorName?: string;
+} | null {
+  const normalized = stripWrappedParens(input);
+  const ordered = orderedUnknownSuffix(normalized, options);
+  if (ordered) {
+    const coefficient = tryParseExpression(ordered.coefficientLatex, options);
+    return isMatrixCoefficientExpression(coefficient, options)
+      ? { coefficients: coefficient, unknowns: ordered.unknowns }
+      : null;
+  }
+  for (let index = normalized.length - 1; index > 0; index -= 1) {
+    const unknownVectorName = symbolicUnknownIdentifier(normalized.slice(index), options);
+    if (!unknownVectorName) continue;
+    const coefficient = tryParseExpression(normalized.slice(0, index), options);
+    if (isMatrixCoefficientExpression(coefficient, options)) {
+      return { coefficients: coefficient, unknownVectorName };
+    }
+  }
+  if (normalized.endsWith('i')) {
+    const coefficient = tryParseExpression(normalized.slice(0, -1), options);
+    if (isMatrixCoefficientExpression(coefficient, options)) {
+      fail(
+        'unsupported-expression',
+        options.scalarDomain === 'real'
+          ? 'The imaginary unit i requires Complex mode and cannot be used as a system unknown.'
+          : 'The imaginary unit i is reserved in Complex mode; choose another system unknown.',
+      );
+    }
+  }
+  return null;
+}
+
+function parseSymbolicInlineVector(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraValueExpression | null {
+  if (!options.scalarDomain) return null;
+  let cells: string[] | null = null;
+  if (input.startsWith('[') && input.endsWith(']')) {
+    const body = input.slice(1, -1);
+    if (body && !body.includes('[') && !body.includes(']')) {
+      cells = splitTopLevelArguments(body);
+    }
+  } else {
+    const column = /^\\begin\{bmatrix\}(.+)\\end\{bmatrix\}$/u.exec(input);
+    if (column && !column[1].includes('&')) cells = column[1].split('\\\\');
+  }
+  if (!cells?.length) return null;
+  const values = cells.map((cell) => parseSymbolicScalarExpression(cell, options.scalarDomain!));
+  if (values.some((entry) => !entry)) return null;
+  const scalarValues = values.map((entry) => entry!.scalarWire);
+  return {
+    kind: 'symbolicVectorLiteral',
+    value: scalarValues,
+    displayLatex: `\\begin{bmatrix}${scalarValues.map((entry) => entry.canonicalLatex).join('\\\\')}\\end{bmatrix}`,
+  };
+}
+
 function parseLinearSystemExpression(
   input: string,
   options: LinearAlgebraEditorParseOptions,
@@ -391,6 +418,7 @@ function parseLinearSystemExpression(
           form: 'Ax=b',
           coefficients: directCoefficients,
           constants,
+          ...(options.scalarDomain ? { unknownVectorName: 'x' } : {}),
         }
       : null;
   }
@@ -403,6 +431,24 @@ function parseLinearSystemExpression(
           kind: 'multiRhsSystem',
           coefficients: multiRhsCoefficients,
           constants,
+        }
+      : null;
+  }
+
+  const declared = parseCoefficientTimesDeclaredUnknowns(equation.left, options);
+  if (declared) {
+    const constants = parseSymbolicInlineVector(equation.right, options)
+      ?? tryParseExpression(equation.right, options);
+    return constants?.kind === 'vectorLiteral' || constants?.kind === 'symbolicVectorLiteral'
+      ? {
+          kind: 'linearSystem',
+          form: 'Ax=b',
+          coefficients: declared.coefficients,
+          constants,
+          ...(declared.unknowns ? { unknowns: declared.unknowns } : {}),
+          ...(declared.unknownVectorName
+            ? { unknownVectorName: declared.unknownVectorName }
+            : {}),
         }
       : null;
   }
@@ -430,7 +476,10 @@ function parseLinearSystemExpression(
     kind: 'linearSystem',
     form: 'Ax+b=0',
     coefficients,
-    constants: leftOffset.token === '+' ? negateVectorExpression(offset) : offset,
+    constants: leftOffset.token === '+'
+      ? negateVectorExpression(offset, options.scalarDomain)
+      : offset,
+    ...(options.scalarDomain ? { unknownVectorName: 'x' } : {}),
   };
 }
 
@@ -829,6 +878,9 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     };
   }
 
+  const symbolicVector = parseSymbolicInlineVector(input, options);
+  if (symbolicVector) return symbolicVector;
+
   const literal = parseMatrixLiteral(input);
   if (literal) {
     return literal;
@@ -866,7 +918,7 @@ export function parseLinearAlgebraEditorLatex(
   options: LinearAlgebraEditorParseOptions = {},
 ): LinearAlgebraEditorParseResult {
   try {
-    const normalized = normalizeLatex(latex);
+    const normalized = normalizeLinearAlgebraEditorLatex(latex);
     if (!normalized) {
       fail('empty-expression', 'Enter a Matrix or Vector expression.');
     }

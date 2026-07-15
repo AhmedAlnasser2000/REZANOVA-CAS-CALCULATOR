@@ -164,4 +164,30 @@ describe('symbolic and complex Vector producer', () => {
     expect(result.canonicalResult?.version).toBe(2);
     expect(result.exactSupplementLatex?.join(' ')).toContain('a');
   });
+
+  it('classifies symbolic span and independence through the shared elimination ceiling', () => {
+    const independentBase = request('independent', ['1', '0'], ['0', '1']);
+    const independent = nonPrompt(runVectorMode({
+      ...independentBase,
+      vectorOperands: [independentBase.vectorA, independentBase.vectorB],
+    }));
+    expect(independent.kind).toBe('success');
+    expect(independent.canonicalResult?.version).toBe(2);
+    if (independent.canonicalResult?.version !== 2) throw new Error('Expected V2.');
+    expect(independent.canonicalResult.primary?.kind).toBe('linear-independence');
+    expect(independent.exactLatex).toBe('\\text{Independent}');
+
+    const conditionalBase = request('independent', ['a'], ['1']);
+    const conditional = nonPrompt(runVectorMode({
+      ...conditionalBase,
+      vectorOperands: [conditionalBase.vectorA],
+    }));
+    expect(conditional.canonicalResult?.version).toBe(2);
+    if (conditional.canonicalResult?.version !== 2) return;
+    const primary = conditional.canonicalResult.primary;
+    expect(primary?.kind).toBe('math');
+    if (primary?.kind === 'math') {
+      expect(Array.isArray(primary.value.mathJson) && primary.value.mathJson[0]).toBe('Which');
+    }
+  });
 });

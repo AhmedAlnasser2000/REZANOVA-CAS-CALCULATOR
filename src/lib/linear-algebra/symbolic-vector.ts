@@ -27,6 +27,11 @@ import {
   symbolicScalarSubtract,
   symbolicScalarZeroStatus,
 } from './symbolic-scalar-core';
+import {
+  classifySymbolicRref,
+  symbolicCasesMathJson,
+  symbolicMathJsonLatex,
+} from './symbolic-elimination';
 
 type SymbolicVector = LinearAlgebraScalarWireV1[];
 
@@ -554,6 +559,58 @@ function symbolicVectorOperands(request: ScalarVectorRequestV1) {
     ?? [request.vectorA.resolved, ...(request.vectorB ? [request.vectorB.resolved] : [])];
 }
 
+function symbolicFamilyResponse(
+  request: ScalarVectorRequestV1,
+  domain: LinearAlgebraScalarDomain,
+) {
+  const vectors = symbolicVectorOperands(request);
+  if (vectors.length === 0 || vectors.some((vector) => vector.length !== vectors[0].length)) {
+    return errorResponse('All vectors in span and independence must have the same length.');
+  }
+  if (vectors.length > 3 || vectors[0].length > 3) {
+    return errorResponse('Parameter-dependent span and independence support families through 3 by 3.');
+  }
+  const matrix = Array.from({ length: vectors[0].length }, (_, row) =>
+    vectors.map((vector) => vector[row]));
+  const classified = classifySymbolicRref(matrix, domain);
+  if (!classified.ok) return errorResponse(classified.error);
+  const source = `vector.${request.operation}.native-symbolic-elimination`;
+  if (request.operation === 'independent') {
+    const decisions = classified.cases.map((entry) =>
+      entry.pivotColumns.length === vectors.length);
+    if (decisions.every((decision) => decision === decisions[0])) {
+      const independent = decisions[0];
+      const resultLatex = `\\text{${independent ? 'Independent' : 'Dependent'}}`;
+      return responseWithEvidence({ resultLatex, warnings: [] }, {
+        semanticPrimary: {
+          kind: 'linear-independence',
+          operandVectors: vectors.map((vector, index) => canonicalLeafEvidence(
+            vectorLatex(vector),
+            vectorMathJson(vector),
+            `${source}.operand-${index + 1}`,
+          )),
+          independent,
+        },
+      });
+    }
+    const mathJson = symbolicCasesMathJson(classified.cases, (entry) =>
+      entry.pivotColumns.length === vectors.length ? 'True' : 'False');
+    const resultLatex = symbolicMathJsonLatex(mathJson);
+    return responseWithEvidence({ resultLatex, warnings: [] }, {
+      primary: canonicalLeafEvidence(resultLatex, mathJson, source),
+    });
+  }
+  const mathJson = symbolicCasesMathJson(classified.cases, (entry) => {
+    const selected = entry.pivotColumns.map((column) => vectorMathJson(vectors[column]));
+    const basis = selected.length ? ['Set', ...selected] : 'EmptySet';
+    return ['InvisibleOperator', 'span', basis];
+  });
+  const resultLatex = symbolicMathJsonLatex(mathJson);
+  return responseWithEvidence({ resultLatex, warnings: [] }, {
+    primary: canonicalLeafEvidence(resultLatex, mathJson, source),
+  });
+}
+
 export function runSymbolicVectorOperation(request: ScalarVectorRequestV1): VectorResponse {
   const domain = request.domain ?? 'real';
   const left = request.vectorA.resolved;
@@ -702,9 +759,7 @@ export function runSymbolicVectorOperation(request: ScalarVectorRequestV1): Vect
       }
       case 'span':
       case 'independent':
-        return errorResponse(
-          'Symbolic span and independence require the bounded elimination classifier in Milestone 11.',
-        );
+        return symbolicFamilyResponse(request, domain);
       default:
         return errorResponse('Unsupported symbolic Vector operation.');
     }
