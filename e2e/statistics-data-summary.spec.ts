@@ -33,39 +33,16 @@ test('Data & Summary preserves both drafts and renders the expanded summary', as
   await expect(tableValue).toHaveValue('9');
 });
 
-test('Data & Summary uses a stable two-column surface at desktop width', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
+test('Data & Summary stays contained at the minimum supported PC width', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
   const surface = page.locator('.statistics-data-summary');
   await expect(surface).toBeVisible();
   await expect(surface.locator('.statistics-data-grid > .editor-card')).toHaveCount(2);
   await expect(surface.locator('.statistics-request-preview')).toContainText('descriptive');
+  await expect.poll(() => surface.evaluate((element) => element.scrollWidth - element.clientWidth))
+    .toBeLessThanOrEqual(1);
   await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate2-data-summary-desktop.png',
-    animations: 'disabled',
-  });
-});
-
-test('Data & Summary stacks without local horizontal overflow on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  const surface = page.locator('.statistics-data-summary');
-  const cards = surface.locator('.statistics-data-grid > .editor-card');
-  await expect(cards).toHaveCount(2);
-  await expect.poll(() => surface.evaluate((element) => ({
-    client: element.clientWidth,
-    scroll: element.scrollWidth,
-  }))).toEqual(expect.objectContaining({ client: expect.any(Number) }));
-  const sizes = await surface.evaluate((element) => ({
-    client: element.clientWidth,
-    scroll: element.scrollWidth,
-  }));
-  expect(sizes.scroll).toBeLessThanOrEqual(sizes.client + 1);
-  const first = await cards.nth(0).boundingBox();
-  const second = await cards.nth(1).boundingBox();
-  expect(first).not.toBeNull();
-  expect(second).not.toBeNull();
-  expect(second!.y).toBeGreaterThan(first!.y + first!.height - 1);
-  await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate2-data-summary-mobile.png',
+    path: '.task_tmp/statistics-consolidation7/gate7-data-summary-pc.png',
     animations: 'disabled',
   });
 });

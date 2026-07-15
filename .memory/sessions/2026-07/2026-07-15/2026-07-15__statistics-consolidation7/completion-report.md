@@ -22,11 +22,12 @@
 - `STATISTICS-RELATIONSHIPS1` is implemented and verified.
 - `STATISTICS-INFERENCE1` is implemented and verified.
 - `STATISTICS-GUIDED-EXPRESSION1` is implemented and verified.
-- Gate 7 remains in the approved Statistics consolidation program but is explicitly not started.
-- Plotting, diagrams, histograms, distribution charts, and scatter plots remain excluded until Gate 7 closes.
+- `STATISTICS-CONSOLIDATION-POLISH1` is implemented and verified.
+- The seven-gate Statistics consolidation program is complete.
+- Plotting, diagrams, histograms, distribution charts, and scatter plots remain excluded for the separate post-consolidation review.
 
 ## Next Checkpoint
 
-- Stop before `STATISTICS-CONSOLIDATION-POLISH1` as requested by the user.
-- Standing user approval covers all seven named gate commits.
+- Discuss the bounded plotting and diagram expansion before opening another implementation gate.
+- Statistics is PC-only; mobile optimization and acceptance are not part of the supported product surface.
 - Do not push.

@@ -2922,7 +2922,7 @@ export default function App() {
           variableMemory={variableMemory} vectorEditorLatex={linearAlgebraRuntime.vectorEditorLatex} vectorKeyboardLayouts={vectorKeyboardLayouts} vectorNamedValueNames={linearAlgebraRuntime.vectorValues.map((value) => value.name)} setVectorEditorLatex={linearAlgebraRuntime.setVectorEditorLatex}
         />
         <SoftMenu actions={activeSoftMenu} onAction={handleSoftAction} />
-        <main className="workspace">
+        <main className={`workspace${currentMode === 'statistics' ? ' workspace--statistics' : ''}`}>
           <div className="mode-workspace">
             <CompartmentErrorBoundary
               key={activeWorkspaceBoundaryKey}

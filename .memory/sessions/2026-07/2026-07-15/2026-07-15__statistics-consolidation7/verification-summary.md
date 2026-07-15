@@ -14,22 +14,22 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
-## Gate 6 Result
+## Gate 7 Result
 
-- milestone: `STATISTICS-GUIDED-EXPRESSION1`
+- milestone: `STATISTICS-CONSOLIDATION-POLISH1`
 - gates: backend and ui
 - status: verified pass
-- next milestone: `STATISTICS-CONSOLIDATION-POLISH1` remains pending and not started
+- program status: all seven approved Statistics consolidation gates are verified
 
 ## Evidence
 
 - Focused runtime/workspace/DisplayPanel UI passed 29/29; navigation/request tests passed 5/5; the existing AppMain Statistics result-card case passed.
-- Display-contract inversion, History replay, incremental TypeScript, focused lint, diff hygiene, and the 1,926-file size ratchet passed.
-- An isolated production TypeScript/Vite build from `HEAD` plus only Gate 6 files passed with 3,729 modules transformed.
-- Chromium passed two Guided/Expression cases and all five existing Inference/Relationships cases, including one embedded authority, valid import, invalid-draft preservation, desktop composition, 390px mobile stacking, and no page-level horizontal overflow.
-- Gate 6 changes no Statistics producer or canonical result contract; the accepted strict V2 corpus remains 146 evidence cases and 466/466 proven leaves with zero exemptions or missing leaves.
+- Chromium passed all 15 focused Statistics cases at the supported PC widths, including trailing delimiters, per-field focus, all four sections, real results, Guided/Expression ownership, light-control contrast, and no page-level horizontal overflow.
+- Display-contract inversion passed 24/24 plus its baseline; History replay passed 7 checks; incremental TypeScript, focused lint, diff hygiene, and the 1,926-file size ratchet passed.
+- The production TypeScript/Vite build passed with 3,732 modules transformed.
+- Gate 7 changes no Statistics producer, request, worker, OOE, replay, or canonical result contract.
 
 ## Protected Worktree
 
-- Concurrent Notebook V11 work and untracked `test-results/` remain untouched.
+- Untracked `test-results/` remains untouched and excluded.
 - No push is authorized.

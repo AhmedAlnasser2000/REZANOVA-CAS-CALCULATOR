@@ -179,6 +179,10 @@
   background: var(--control-surface-hover);
 }
 
+.workspace.workspace--statistics {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .statistics-input-mode-bar {
   display: flex;
   align-items: end;
@@ -200,7 +204,7 @@
 
 .statistics-workspace-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21.5rem), 1fr));
+  grid-template-columns: 26rem minmax(34rem, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -449,6 +453,29 @@
 
 .statistics-event-value {
   max-width: 20rem;
+}
+
+.statistics-panel select,
+.statistics-menu-panel select {
+  color-scheme: light;
+  border-color: rgba(21, 37, 27, 0.28);
+  background: #f4f7ef;
+  color: #15251b;
+}
+
+.statistics-panel select:hover,
+.statistics-panel select:focus-visible,
+.statistics-menu-panel select:hover,
+.statistics-menu-panel select:focus-visible {
+  border-color: rgba(21, 37, 27, 0.48);
+  background: #ffffff;
+  color: #0b1710;
+}
+
+.statistics-panel select option,
+.statistics-menu-panel select option {
+  background: #ffffff;
+  color: #15251b;
 }
 
 @media (max-width: 760px) {

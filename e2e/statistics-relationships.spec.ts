@@ -43,26 +43,14 @@ test('Relationships keeps one paired dataset across both analyses', async ({ pag
   });
 });
 
-test('Relationships surface stays readable on desktop and mobile', async ({ page }) => {
+test('Relationships surface stays contained at the minimum supported PC width', async ({ page }) => {
   const surface = page.locator('.statistics-relationships-layout');
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.setViewportSize({ width: 1280, height: 800 });
   await expect(surface).toBeVisible();
-  await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate4-relationships-desktop.png',
-    animations: 'disabled',
-  });
-
-  await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => surface.evaluate((element) => element.scrollWidth - element.clientWidth))
     .toBeLessThanOrEqual(1);
-  const cards = surface.locator(':scope > .editor-card');
-  const first = await cards.nth(0).boundingBox();
-  const second = await cards.nth(1).boundingBox();
-  expect(first).not.toBeNull();
-  expect(second).not.toBeNull();
-  expect(second!.y).toBeGreaterThan(first!.y + first!.height - 1);
   await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate4-relationships-mobile.png',
+    path: '.task_tmp/statistics-consolidation7/gate7-relationships-pc.png',
     animations: 'disabled',
   });
 });

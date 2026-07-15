@@ -53,26 +53,14 @@ test('Probability distinguishes Normal exact probability from density', async ({
   await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('not the probability');
 });
 
-test('Probability surface is readable at desktop and mobile widths', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
+test('Probability surface stays contained at the minimum supported PC width', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
   const surface = page.locator('.statistics-probability-layout');
   await expect(surface).toBeVisible();
-  await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate3-probability-desktop.png',
-    animations: 'disabled',
-  });
-
-  await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => surface.evaluate((element) => element.scrollWidth - element.clientWidth))
     .toBeLessThanOrEqual(1);
-  const cards = surface.locator(':scope > .editor-card');
-  const first = await cards.nth(0).boundingBox();
-  const second = await cards.nth(1).boundingBox();
-  expect(first).not.toBeNull();
-  expect(second).not.toBeNull();
-  expect(second!.y).toBeGreaterThan(first!.y + first!.height - 1);
   await surface.screenshot({
-    path: '.task_tmp/statistics-consolidation7/gate3-probability-mobile.png',
+    path: '.task_tmp/statistics-consolidation7/gate7-probability-pc.png',
     animations: 'disabled',
   });
 });

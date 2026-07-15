@@ -67,7 +67,7 @@ test('Statistics probability and inference fields retain focus after one keystro
 
   await page.reload();
   await openStatisticsTool(page, 'Inference', 'Mean');
-  await page.getByRole('button', { name: 'Two-Sided Test' }).click();
+  await page.getByRole('radio', { name: 'Hypothesis test' }).click();
   await replaceWithOneKeystroke(
     page,
     page.locator('.statistics-panel .statistics-input-grid input').nth(1),
