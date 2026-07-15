@@ -23,6 +23,7 @@ export function normalizeLinearAlgebraEditorLatex(latex: string): string {
     .replace(/\\operatorname\{lusolve\}/gi, 'lusolve')
     .replace(/\\operatorname\{plusolve\}/gi, 'plusolve')
     .replace(/\\operatorname\{invertible\}/gi, 'invertible')
+    .replace(/\\operatorname\{charpoly\}/gi, 'charpoly')
     .replace(/\\operatorname\{eigen\}/gi, 'eigen')
     .replace(/\\operatorname\{(?:diag|diagonalize)\}/gi, 'diag')
     .replace(/\\operatorname\{proj\}_\{u\}/g, 'proj_u')

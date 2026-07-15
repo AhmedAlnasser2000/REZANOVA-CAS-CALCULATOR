@@ -112,3 +112,25 @@
 - Chromium passed 3/3 for a 7-column Matrix, an 8-component Vector, symbolic replay, and the existing Complex principal-line-angle route. Browser assertions inspect MathLive's actual shadow content color, full-row card width, 112px minimum cells, and absence of avoidable grid overflow.
 - The refreshed Matrix and Vector screenshots were inspected at the real desktop viewport; both show white cell values and full-width wide pads without a compact third column.
 - Concurrent Statistics/Notebook source and dossiers plus untracked `test-results/` remain excluded.
+
+## Milestone 12 Result
+
+- milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
+- gate: backend
+- status: verified pass
+- program status: complete through Milestone 12
+
+## Milestone 12 Evidence
+
+- The final focused polynomial-boundary, symbolic spectral, worker, and all-selector authority delta passed 27/27 tests. The preceding broader focused run passed its remaining 164 cases after the one corrected ambiguous formal-function fixture was replaced with an unambiguously opaque coefficient.
+- OOE boundaries passed 8/8 and compartment boundaries passed 36/36. All 62 Matrix selectors default to V2; all 23 Vector selectors remain V2 except the approved gradian-angle V3 selector.
+- The production Vite build passed across 4,354 transformed modules. The latest aggregate TypeScript/build wrapper is blocked only by concurrent incomplete Notebook media-schema fields outside Linear Algebra.
+- File-size validation passed across 1,977 files and five committed caps. Diff hygiene passed before memory finalization.
+- Result-contract and canonical-enforcement semantics pass for every Linear Algebra leaf; the aggregate wrappers stop only because concurrent Statistics raised the live proven corpus from the committed 466 baseline to 491 with zero missing or exempt leaves.
+- Display-inversion internal tests passed 24/24 with zero compatibility projections and zero legacy reads. The two changed Matrix assembly hashes are accepted; the aggregate comparison rejects only the concurrent Statistics owner hash.
+- Chromium passed 3/3 for factorized `charpoly(diag(a,b,c,d))` with copy/History replay, Real-versus-Complex rotation spectra and eigenspaces, and a preserved unresolved symbolic cubic. Both saved screenshots were inspected without clipping, illegible controls, or overflow.
+
+## Milestone 12 Protected Worktree
+
+- Concurrent Notebook and Statistics source/dossiers plus untracked `test-results/` remain excluded.
+- No push is authorized.

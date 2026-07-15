@@ -45,6 +45,7 @@ export type LinearAlgebraUnaryOperator =
   | 'pseudoinverse'
   | 'conditionNumber'
   | 'numericalRank'
+  | 'characteristicPolynomial'
   | 'eigen'
   | 'diagonalization'
   | 'transpose'

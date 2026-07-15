@@ -385,10 +385,13 @@ export function dispatchSymbolicMatrixEditorLatex(
       plu: ['pluA', 'pluB'],
       invertibility: ['invertibilityA', 'invertibilityB'],
       profile: ['profileA', 'profileB'],
+      characteristicPolynomial: ['charpolyA', 'charpolyB'],
+      eigen: ['eigenA', 'eigenB'],
+      diagonalization: ['diagonalizeA', 'diagonalizeB'],
     } as const;
     const selected = operations[expression.operator as keyof typeof operations];
     if (!selected) {
-      return { ok: false, message: 'This symbolic Matrix route belongs to the bounded systems or spectral milestone.' };
+      return { ok: false, message: 'This symbolic Matrix route is not available for formal or Complex entries.' };
     }
     const value = evaluateMatrix(expression.value, input);
     if ('error' in value) return { ok: false, message: value.error };
@@ -409,6 +412,6 @@ export function dispatchSymbolicMatrixEditorLatex(
 
   return {
     ok: false,
-    message: 'Enter a supported symbolic Matrix arithmetic, system, space, basis, profile, LU/PLU, or solve expression.',
+    message: 'Enter a supported symbolic Matrix arithmetic, system, space, factorization, or spectral expression.',
   };
 }

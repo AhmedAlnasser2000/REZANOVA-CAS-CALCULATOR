@@ -113,6 +113,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
       kind: 'changeOfBasis',
     });
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
+    expect(parsed('\\operatorname{charpoly}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'characteristicPolynomial' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
     expect(parsed('\\operatorname{diag}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'diagonalization' });
     expect(parsed('\\operatorname{mpow}\\left(A,3\\right)', 'matrix')).toMatchObject({

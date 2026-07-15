@@ -62,6 +62,7 @@ import {
   type LinearAlgebraCanonicalLeafEvidence,
 } from './canonical-evidence';
 import { runSymbolicMatrixOperation } from './symbolic-matrix';
+import { linearAlgebraScalarWireFromMathJson } from './scalar-wire';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -660,6 +661,41 @@ function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function numericScalarMatrixOperand(
+  matrix: number[][],
+  exactMatrix: MatrixRequest['exactMatrixA'],
+) {
+  const values = matrix.map((row, rowIndex) => row.map((value, columnIndex) => {
+    const exact = exactMatrix?.[rowIndex]?.[columnIndex];
+    const node = exact
+      ? exact.denominator === 1
+        ? exact.numerator
+        : ['Rational', exact.numerator, exact.denominator]
+      : value;
+    const parsed = linearAlgebraScalarWireFromMathJson(node, 'real');
+    if (!parsed.ok) throw new Error(parsed.error);
+    return parsed.value;
+  }));
+  return { encoding: 'scalar-v1' as const, source: values, resolved: values };
+}
+
+function exactCharacteristicPolynomialResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation !== 'charpolyA' && req.operation !== 'charpolyB') return null;
+  const matrixB = req.matrixB
+    ? numericScalarMatrixOperand(req.matrixB, req.exactMatrixB)
+    : undefined;
+  return runSymbolicMatrixOperation({
+    operation: req.operation,
+    operandEncoding: 'scalar-v1',
+    matrixA: numericScalarMatrixOperand(req.matrixA, req.exactMatrixA),
+    ...(matrixB ? { matrixB } : {}),
+    domain: 'real',
+    matrixOperandLatexA: req.matrixOperandLatexA,
+    matrixOperandLatexB: req.matrixOperandLatexB,
+    editorExpressionLatex: req.editorExpressionLatex,
+  });
+}
+
 function exactDiagonalizationResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'diagonalizeA') {
     return runMatrixDiagonalization({
@@ -846,6 +882,11 @@ function runMatrixOperationInternal(req: MatrixRequest): MatrixResponse {
   const leastSquaresResponse = exactLeastSquaresResponse(req);
   if (leastSquaresResponse) {
     return leastSquaresResponse;
+  }
+
+  const characteristicPolynomialResponse = exactCharacteristicPolynomialResponse(req);
+  if (characteristicPolynomialResponse) {
+    return characteristicPolynomialResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

@@ -29,7 +29,7 @@
 
 - milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
 - gate: backend
-- status: in progress
+- status: verified complete
 - prerequisite representation: bounded standard MathJSON scalar wires, symbolic Matrix arithmetic/elimination, and a pure typed Equation polynomial boundary.
 - protected lanes: concurrent Notebook and Statistics source/dossiers plus untracked `test-results/` remain excluded from this gate.
 
@@ -49,12 +49,11 @@
 - Matrix and Vector Domain/Parameters and size controls now use explicit high-contrast text, both workspaces consume the formerly empty workspace column, and their cell pads expand across each value card.
 - Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-9/complex-principal-line-angle.png` plus the refreshed Milestone 8 Matrix screenshot.
 
-## Next Gate
+## Program Closeout
 
-- milestone: `MATRIX-SYMBOLIC-SPECTRAL1`
-- gate: backend
-- status: in progress
-- existing numeric Matrix spectral execution, Equation ownership, and all OOE/History boundaries remain the compatibility baseline.
+- status: complete through Milestone 12
+- no later symbolic milestone is activated by this program.
+- existing numeric Matrix execution, Equation ownership, and all OOE/History boundaries remain the compatibility baseline.
 
 ## Milestone 10 Result
 
@@ -79,3 +78,12 @@
 - Normal libraries use at most two equal columns, odd final cards fill their row, and every scalar grid retains a 112px minimum cell track with card-local overflow on narrower viewports.
 - MathLive's exposed content part now receives the light foreground directly, so visible numerals and symbols stay white on dark fields rather than only reporting a white host color.
 - Visual evidence: refreshed Milestone 8 Matrix screenshot and `.task_tmp/linear-algebra-symbolic-complex-program/milestone-9/vector-wide-readable-inputs.png`.
+
+## Milestone 12 Result
+
+- `charpolyA` and `charpolyB` are explicit Matrix selectors, and symbolic/complex characteristic-polynomial, eigenvalue, eigenspace, diagonalization, and spectral-power requests execute through the existing Matrix worker/OOE/History shell.
+- Matrix owns characteristic-polynomial construction; Equation exposes only a pure target-agnostic degree-1-through-4 polynomial boundary accepting up to six other algebraic coefficient parameters.
+- The spectral target is collision-free, beginning with `lambda`; any accepted non-reserved identifier can be the public polynomial target, and `x` has no special role.
+- Proven roots retain multiplicities and conditions. Partial or unsupported root solving always preserves the proven characteristic polynomial, while eigenspaces and diagonalization appear only when the required roots, multiplicities, conditions, and complete eigenbasis are proved.
+- Real mode keeps real-domain spectral classification; Complex mode permits complex roots without switching the workspace automatically. V2 remains the result default.
+- Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-12/factorized-charpoly-history-copy.png` and `.task_tmp/linear-algebra-symbolic-complex-program/milestone-12/real-complex-rotation-spectrum.png`.

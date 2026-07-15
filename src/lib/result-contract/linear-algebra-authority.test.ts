@@ -12,7 +12,7 @@ const MATRIX_OPERATIONS = [
   'qrB', 'columnProjectionA', 'columnProjectionB', 'leastSquaresA',
   'leastSquaresB', 'invertibilityA', 'invertibilityB', 'profileA', 'profileB',
   'definiteA', 'definiteB', 'svdA', 'svdB', 'pinvA', 'pinvB', 'condA', 'condB',
-  'nrankA', 'nrankB', 'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
+  'nrankA', 'nrankB', 'charpolyA', 'charpolyB', 'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
   'spectralPowerB', 'linearSystem',
 ] as const satisfies readonly MatrixOperation[];
 
@@ -56,8 +56,8 @@ function vectorRequest(operation: VectorOperation): VectorRequest & { vectorB: n
 }
 
 describe('Linear Algebra canonical authority', () => {
-  it('keeps all 60 Matrix selectors on canonical result V2', () => {
-    expect(MATRIX_OPERATIONS).toHaveLength(60);
+  it('keeps all 62 Matrix selectors on canonical result V2', () => {
+    expect(MATRIX_OPERATIONS).toHaveLength(62);
     for (const operation of MATRIX_OPERATIONS) {
       const outcome = runMatrixMode(matrixRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');

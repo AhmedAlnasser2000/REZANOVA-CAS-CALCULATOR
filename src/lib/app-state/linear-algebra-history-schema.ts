@@ -12,7 +12,7 @@ const matrixOperationSchema = z.enum([
   'columnProjectionA', 'columnProjectionB', 'leastSquaresA', 'leastSquaresB',
   'invertibilityA', 'invertibilityB', 'profileA', 'profileB', 'definiteA',
   'definiteB', 'svdA', 'svdB', 'pinvA', 'pinvB', 'condA', 'condB', 'nrankA',
-  'nrankB', 'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
+  'nrankB', 'charpolyA', 'charpolyB', 'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
   'spectralPowerB', 'linearSystem',
 ]);
 const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);

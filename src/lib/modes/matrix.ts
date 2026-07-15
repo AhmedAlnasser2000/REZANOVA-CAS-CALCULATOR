@@ -147,6 +147,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'nrank(A)';
     case 'nrankB':
       return 'nrank(B)';
+    case 'charpolyA':
+      return 'charpoly(A)';
+    case 'charpolyB':
+      return 'charpoly(B)';
     case 'eigenA':
       return 'eigen(A)';
     case 'eigenB':

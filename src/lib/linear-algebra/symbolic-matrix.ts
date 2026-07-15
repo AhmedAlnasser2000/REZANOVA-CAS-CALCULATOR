@@ -23,6 +23,7 @@ import {
   symbolicScalarZeroStatus,
 } from './symbolic-scalar-core';
 import { runSymbolicMatrixSystemsOperation } from './symbolic-matrix-systems';
+import { runSymbolicMatrixSpectralOperation } from './symbolic-matrix-spectral';
 
 export type SymbolicMatrix = LinearAlgebraScalarWireV1[][];
 
@@ -410,6 +411,8 @@ export function runSymbolicMatrixOperation(request: ScalarMatrixRequestV1): Matr
         ? powerResponse(matrix, request, `matrix.${request.operation}.native-symbolic-integer-power`)
         : errorResponse('Matrix B is required for this operation.');
     }
+    const spectralResponse = runSymbolicMatrixSpectralOperation(request);
+    if (spectralResponse) return spectralResponse;
     const systemsResponse = runSymbolicMatrixSystemsOperation(request);
     if (systemsResponse) return systemsResponse;
     if ([

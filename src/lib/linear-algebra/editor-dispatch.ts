@@ -221,6 +221,7 @@ const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readon
   pseudoinverse: ['pinvA', 'pinvB'],
   conditionNumber: ['condA', 'condB'],
   numericalRank: ['nrankA', 'nrankB'],
+  characteristicPolynomial: ['charpolyA', 'charpolyB'],
   eigen: ['eigenA', 'eigenB'],
   diagonalization: ['diagonalizeA', 'diagonalizeB'],
   transpose: ['transposeA', 'transposeB'],

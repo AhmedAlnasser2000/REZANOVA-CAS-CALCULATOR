@@ -596,6 +596,19 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('leastSquaresA');
 
     expect(parseHistoryEntry({
+      id: 'matrix-seed-charpoly',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{charpoly}\\left(A\\right)',
+      resultLatex: '(\\lambda-3)(\\lambda-1)',
+      matrixSeed: {
+        operation: 'charpolyA',
+        matrixA: [[2, 1], [1, 2]],
+        matrixB: [[5, 6], [7, 8]],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('charpolyA');
+
+    expect(parseHistoryEntry({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

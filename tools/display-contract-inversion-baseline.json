@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "MATRIX-SYMMETRIC-POSITIVE-DEFINITE1 adds the strict V2 Matrix definiteness owner path and canonical evidence forwarders.",
+  "acceptedReason": "MATRIX-SYMBOLIC-SPECTRAL1 extends the existing Matrix V2 owner path with bounded symbolic characteristic-polynomial and spectral selectors.",
   "registryDigest": "eba50f74665771ea4d5f",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -468,8 +468,8 @@
         "1eaec7752190abda387f:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "ba8026883500d8b93a49:1",
-        "ee93f6539b869bebc79a:1"
+        "2861330db208f7cd24eb:1",
+        "9d6cf872d18ae1bfd859:1"
       ],
       "src/lib/statistics/core.ts": [
         "4d2f023d12da623801ae:1",

@@ -24,4 +24,5 @@
 - `MATRIX-SYMBOLIC-ARITHMETIC1`: recorded by this verified checkpoint commit under the same standing approval; includes the user-requested light cell text and minimum-width overflow correction.
 - `MATRIX-SYMBOLIC-SYSTEMS1`: recorded by this verified checkpoint commit under the same standing approval; closes bounded exact systems plus Vector span/independence without changing worker, OOE, History, or replay ownership.
 - Input readability correction: records the user-requested full-row growth and direct MathLive foreground repair under the same standing approval for the Milestones 8-12 program.
+- `MATRIX-SYMBOLIC-SPECTRAL1`: recorded by this verified checkpoint commit under the same standing approval; closes the five-milestone bounded symbolic/complex program with a pure Equation polynomial boundary and proof-gated spectral adoption.
 - No push is authorized.

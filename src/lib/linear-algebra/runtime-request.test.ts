@@ -140,6 +140,24 @@ describe('linear algebra runtime request facade', () => {
     });
     if ('request' in matrix) expect('exactMatrixA' in matrix.request).toBe(false);
 
+    expect(dispatchMatrixEditorLatex({
+      latex: 'charpoly(A)',
+      matrixA: [[0]],
+      matrixB: matrixValues[1].value,
+      matrixValues: matrices,
+      domain: 'real',
+      substitutionMode: 'symbolic',
+      storedVariables: [],
+      complexExactForm: 'rectangular',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'charpolyA',
+        operandEncoding: 'scalar-v1',
+        matrixA: { resolved: [[{ canonicalLatex: 'a' }]] },
+      },
+    });
+
     const vectors = [
       { id: 'vector-u', name: 'u', encoding: 'scalar-v1' as const, value: [parameter.value] },
       vectorValues[1],

@@ -373,6 +373,20 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{charpoly}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'charpolyB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{charpoly}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{eigen}\\left(B\\right)',
       matrixA,
       matrixB,

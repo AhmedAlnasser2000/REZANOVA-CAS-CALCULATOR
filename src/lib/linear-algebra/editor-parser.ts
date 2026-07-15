@@ -657,6 +657,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['pinv', 'pseudoinverse'],
     ['cond', 'conditionNumber'],
     ['nrank', 'numericalRank'],
+    ['charpoly', 'characteristicPolynomial'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
     ['adjoint', 'adjoint'],

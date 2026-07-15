@@ -190,6 +190,22 @@ const scalarMatrixRequest: RunMatrixModeRequest = {
   complexExactForm: 'rectangular',
 };
 
+const scalarSpectralMatrixRequest: RunMatrixModeRequest = {
+  ...scalarMatrixRequest,
+  operation: 'eigenA',
+  matrixA: {
+    encoding: 'scalar-v1' as const,
+    source: [
+      [complexScalar('0'), complexScalar('-1')],
+      [complexScalar('1'), complexScalar('0')],
+    ],
+    resolved: [
+      [complexScalar('0'), complexScalar('-1')],
+      [complexScalar('1'), complexScalar('0')],
+    ],
+  },
+};
+
 const runtimeContext = (shouldCancel: () => boolean) => ({
   registryId: 'test.linear-algebra.cancel',
   checkpoint: () => undefined,
@@ -293,6 +309,24 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.payload).toEqual(runCanonicalMatrixMode(scalarMatrixRequest));
     if (result.payload.kind === 'prompt') throw new Error('Expected completed Matrix payload.');
     expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'matrix-worker-runtime',
+      terminalStatus: 'completed',
+    });
+  });
+
+  it('carries bounded Complex spectral work through the Matrix worker shell', async () => {
+    const result = await runMatrixModeWithOoePilot(scalarSpectralMatrixRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalMatrixMode),
+    });
+    expect(result.payload).toEqual(runCanonicalMatrixMode(scalarSpectralMatrixRequest));
+    expect(result.payload.kind).toBe('success');
+    if (result.payload.kind !== 'success') throw new Error('Expected completed spectral payload.');
+    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.payload.canonicalResult?.answerRows?.rows.filter((row) => row.label === 'Eigenvalue'))
+      .toHaveLength(2);
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'matrix-worker-runtime',

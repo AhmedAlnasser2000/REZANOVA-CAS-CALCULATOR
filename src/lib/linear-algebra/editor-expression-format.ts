@@ -60,6 +60,8 @@ function formatUnary(operator: LinearAlgebraUnaryOperator, value: LinearAlgebraE
       return callLatex('cond', formattedValue);
     case 'numericalRank':
       return callLatex('nrank', formattedValue);
+    case 'characteristicPolynomial':
+      return callLatex('charpoly', formattedValue);
     case 'eigen':
       return callLatex('eigen', formattedValue);
     case 'diagonalization':
