@@ -5,7 +5,12 @@ import {
   type EChartsCoreOption,
 } from 'echarts/core';
 import { BarChart, BoxplotChart, LineChart, ScatterChart } from 'echarts/charts';
-import { AriaComponent, GridComponent, TooltipComponent } from 'echarts/components';
+import {
+  AriaComponent,
+  DataZoomComponent,
+  GridComponent,
+  TooltipComponent,
+} from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
 
 registerEChartsModules([
@@ -15,6 +20,7 @@ registerEChartsModules([
   ScatterChart,
   GridComponent,
   TooltipComponent,
+  DataZoomComponent,
   AriaComponent,
   SVGRenderer,
 ]);

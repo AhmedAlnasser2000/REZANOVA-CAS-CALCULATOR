@@ -22,6 +22,6 @@
 - `STATISTICS-VERTICAL-RESULTS1`: `204dc1c6`.
 - `STATISTICS-VISUALIZATION-CONTRACT1`: `b8391756`.
 - `STATISTICS-DATA-PROBABILITY-VISUALS1`: `51f13da7`.
-- `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: verified and ready under standing user approval.
-- `STATISTICS-VISUALIZATION-POLISH1`: pending.
+- `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: `e5ae24f7`.
+- `STATISTICS-VISUALIZATION-POLISH1`: verified and included in this checkpoint under standing user approval.
 - No push is authorized.

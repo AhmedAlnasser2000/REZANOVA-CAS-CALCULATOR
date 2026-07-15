@@ -100,6 +100,39 @@ describe('WorkspaceLowerPanel', () => {
     expect(onBinsChange).toHaveBeenCalledWith(8);
   });
 
+  it('opens a precision-formatted chart data table without replacing the plot', () => {
+    render(
+      <WorkspaceLowerPanel
+        {...baseProps}
+        currentMode="statistics"
+        approxDigits={2}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'View data' }));
+    expect(screen.getByTestId('statistics-visualization-chart')).toBeVisible();
+    expect(screen.getByRole('table', { name: 'Distribution of values data' })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: 'Interval' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Previous data page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next data page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Hide data' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('gives stopped empty docks a stable explicit state', () => {
+    render(
+      <WorkspaceLowerPanel
+        {...baseProps}
+        currentMode="statistics"
+        statisticsVisualization={undefined}
+        statisticsVisualizationKind={undefined}
+        runtimeStatusLabel="Stopped"
+      />,
+    );
+
+    expect(screen.getByText('Stopped')).toBeVisible();
+    expect(screen.getByTestId('statistics-visualization-empty')).toBeVisible();
+  });
+
   it('offers the existing keypad as a temporary Expression-only swap', () => {
     const view = render(
       <WorkspaceLowerPanel

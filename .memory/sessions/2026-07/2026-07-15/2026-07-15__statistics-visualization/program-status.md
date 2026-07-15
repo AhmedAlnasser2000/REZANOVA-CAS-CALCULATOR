@@ -19,8 +19,8 @@
 - `STATISTICS-VERTICAL-RESULTS1`: committed as `204dc1c6`.
 - `STATISTICS-VISUALIZATION-CONTRACT1`: committed as `b8391756`.
 - `STATISTICS-DATA-PROBABILITY-VISUALS1`: committed as `51f13da7`.
-- `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: verified and ready to commit.
-- `STATISTICS-VISUALIZATION-POLISH1`: pending.
+- `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: committed as `e5ae24f7`.
+- `STATISTICS-VISUALIZATION-POLISH1`: verified; included in the final program checkpoint.
 
 ## Locked Scope
 

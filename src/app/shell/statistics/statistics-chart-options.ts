@@ -6,6 +6,9 @@ import type {
 import type { StatisticsEChartOption } from './statistics-echarts';
 import { buildStatisticsHistogramBins } from './statistics-histogram';
 import { formatApproxNumber } from '../../../lib/display/numeric-output';
+import { buildStatisticsFrequencyBarGroups } from './statistics-chart-table';
+
+export const STATISTICS_DATA_ZOOM_ID = 'statistics-x-zoom';
 
 const COLORS = {
   ink: '#dce7df',
@@ -41,6 +44,19 @@ function baseOptionFor(approxDigits: number): StatisticsEChartOption {
     animation: false,
     backgroundColor: '#111e1c',
     aria: { enabled: true },
+    dataZoom: [{
+      id: STATISTICS_DATA_ZOOM_ID,
+      type: 'inside',
+      xAxisIndex: [0],
+      start: 0,
+      end: 100,
+      filterMode: 'none',
+      minSpan: 5,
+      zoomOnMouseWheel: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: true,
+      preventDefaultMouseMove: true,
+    }],
     grid: { left: 62, right: 28, top: 24, bottom: 58, outerBoundsMode: 'same' },
     tooltip: {
       trigger: 'item',
@@ -101,15 +117,8 @@ function frequencyBarsOption(
   view: StatisticsWeightedDataVisualizationV1,
   approxDigits: number,
 ): StatisticsEChartOption {
-  const limit = 120;
-  const width = Math.max(1, Math.ceil(view.weightedValues.length / limit));
-  const groups = Array.from(
-    { length: Math.ceil(view.weightedValues.length / width) },
-    (_, index) => view.weightedValues.slice(index * width, (index + 1) * width),
-  );
-  const labels = groups.map((group) => group.length === 1
-    ? formatChartNumber(group[0].value, approxDigits)
-    : `${formatChartNumber(group[0].value, approxDigits)}-${formatChartNumber(group[group.length - 1].value, approxDigits)}`);
+  const groups = buildStatisticsFrequencyBarGroups(view.weightedValues, approxDigits);
+  const labels = groups.map((group) => group.label);
   return {
     ...baseOptionFor(approxDigits),
     aria: { enabled: true, description: view.ariaDescription },
@@ -125,9 +134,9 @@ function frequencyBarsOption(
     yAxis: { ...axisStyleFor(approxDigits), type: 'value', name: view.yLabel, minInterval: 1 },
     series: [{
       type: 'bar',
-      name: width === 1 ? 'Frequency' : 'Aggregated frequency',
+      name: groups.length === view.weightedValues.length ? 'Frequency' : 'Aggregated frequency',
       data: groups.map((group, index) => ({
-        value: group.reduce((sum, point) => sum + point.weight, 0),
+        value: group.frequency,
         name: labels[index],
         itemStyle: { color: COLORS.base },
       })),
@@ -208,7 +217,15 @@ function probabilityBarsOption(
         itemStyle: {
           color: point.selected ? COLORS.selected : COLORS.base,
           borderColor: point.selected ? COLORS.ink : COLORS.base,
-          borderWidth: point.selected ? 1 : 0,
+          borderWidth: point.selected ? 2 : 0,
+          ...(point.selected ? {
+            decal: {
+              symbol: 'rect',
+              dashArrayX: [2, 2],
+              dashArrayY: [3, 3],
+              color: 'rgba(17, 30, 28, 0.38)',
+            },
+          } : {}),
         },
       })),
       barMaxWidth: 48,

@@ -1,5 +1,5 @@
-import { BarChart3, Keyboard } from 'lucide-react';
-import { useState } from 'react';
+import { BarChart3, Keyboard, TableProperties } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type {
   StatisticsHistogramBinCount,
   StatisticsInputMode,
@@ -9,6 +9,8 @@ import type {
 } from '../../../types/calculator';
 import { KeypadPanel, type KeypadPanelProps } from '../KeypadPanel';
 import { StatisticsEChart } from './StatisticsEChart';
+import { StatisticsVisualizationDataTable } from './StatisticsVisualizationDataTable';
+import { statisticsChartTable } from './statistics-chart-table';
 
 const VISUALIZATION_LABELS: Record<StatisticsVisualizationKind, string> = {
   histogram: 'Histogram',
@@ -60,8 +62,18 @@ export function StatisticsVisualizationDock({
     ? selectedKind
     : payload?.defaultKind;
   const activeView = payload?.views.find((view) => view.kind === activeKind);
+  const dataContextKey = `${contextKey}:${activeKind ?? 'none'}:${histogramBinCount}:${approxDigits}`;
+  const [dataView, setDataView] = useState({ contextKey: dataContextKey, open: false });
+  const showData = dataView.contextKey === dataContextKey && dataView.open;
+  const chartTable = useMemo(
+    () => activeView
+      ? statisticsChartTable(activeView, histogramBinCount, approxDigits)
+      : null,
+    [activeView, approxDigits, histogramBinCount],
+  );
   const pending = runtimeStatusLabel?.startsWith('Running')
     || runtimeStatusLabel?.startsWith('Queued');
+  const stopped = runtimeStatusLabel?.startsWith('Stopped');
 
   return (
     <section className="statistics-visualization-dock" data-testid="statistics-visualization-dock">
@@ -120,6 +132,17 @@ export function StatisticsVisualizationDock({
               <Keyboard aria-hidden="true" size={18} />
             </button>
           ) : null}
+          {activeView && !showExpressionKeypad ? (
+            <button
+              type="button"
+              className={`statistics-visualization-data-button ${showData ? 'is-active' : ''}`}
+              aria-expanded={showData}
+              onClick={() => setDataView({ contextKey: dataContextKey, open: !showData })}
+            >
+              <TableProperties aria-hidden="true" size={17} />
+              {showData ? 'Hide data' : 'View data'}
+            </button>
+          ) : null}
         </div>
       </header>
       <div className="statistics-visualization-body">
@@ -129,6 +152,7 @@ export function StatisticsVisualizationDock({
           </div>
         ) : activeView ? (
           <StatisticsEChart
+            key={dataContextKey}
             view={activeView}
             histogramBinCount={histogramBinCount}
             approxDigits={approxDigits}
@@ -136,9 +160,16 @@ export function StatisticsVisualizationDock({
         ) : (
           <div className="statistics-visualization-empty" data-testid="statistics-visualization-empty">
             <BarChart3 aria-hidden="true" size={30} />
-            <strong>{pending ? 'Evaluating' : outcomeKind === 'error' ? 'No visualization' : 'Awaiting result'}</strong>
+            <strong>{pending ? 'Evaluating' : stopped ? 'Stopped' : outcomeKind === 'error' ? 'No visualization' : 'Awaiting result'}</strong>
           </div>
         )}
+        {!showExpressionKeypad && showData && activeView && chartTable ? (
+          <StatisticsVisualizationDataTable
+            key={`table:${dataContextKey}`}
+            title={activeView.title}
+            table={chartTable}
+          />
+        ) : null}
       </div>
     </section>
   );

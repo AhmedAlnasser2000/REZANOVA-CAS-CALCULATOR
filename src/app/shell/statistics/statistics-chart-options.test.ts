@@ -18,10 +18,18 @@ describe('Statistics chart number formatting', () => {
       },
     };
     const option = statisticsChartOption(view, 'auto', 2) as {
+      dataZoom: Array<{ id: string; type: string; moveOnMouseMove: boolean }>;
       tooltip: { valueFormatter: (value: unknown) => string };
       xAxis: { axisLabel: { formatter: (value: number) => string } };
     };
 
+    expect(option.dataZoom).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'statistics-x-zoom',
+        type: 'inside',
+        moveOnMouseMove: true,
+      }),
+    ]));
     expect(option.xAxis.axisLabel.formatter(1 / 3)).toBe('0.33');
     expect(option.tooltip.valueFormatter([1 / 3, 2 / 3])).toBe('0.33, 0.67');
   });
