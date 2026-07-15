@@ -16,6 +16,7 @@ import type {
   StatsDataset,
 } from '../../types/calculator';
 import { StatisticsDataSummaryPanel } from './statistics/StatisticsDataSummaryPanel';
+import { StatisticsProbabilityPanel } from './statistics/StatisticsProbabilityPanel';
 
 type StatisticsRouteMetaLike = {
   breadcrumb: string[];
@@ -182,6 +183,13 @@ function StatisticsWorkspace({
         label: 'Data & Summary',
         description: 'Edit one reusable dataset, choose its representation, and evaluate summaries or compact counts.',
       }
+    : activeSection === 'probability'
+      ? {
+          ...routeMeta,
+          breadcrumb: ['Statistics', 'Probability'],
+          label: 'Probability',
+          description: 'Evaluate common events for Binomial, Normal, and Poisson distributions.',
+        }
     : routeMeta;
 
   return (
@@ -205,7 +213,7 @@ function StatisticsWorkspace({
           </button>
         ))}
       </div>
-      {SECTION_TOOLS[activeSection].length > 1 && activeSection !== 'dataSummary' ? (
+      {SECTION_TOOLS[activeSection].length > 1 && activeSection !== 'dataSummary' && activeSection !== 'probability' ? (
         <label className="statistics-tool-select">
           <span>{activeSection === 'relationships' ? 'Analysis' : 'Tool'}</span>
           <select
@@ -296,6 +304,23 @@ function StatisticsWorkspace({
           onUseInStatistics={onUseInStatistics}
           workbenchExpression={workbenchExpression}
           onCopyWorkbenchExpression={onCopyWorkbenchExpression}
+        />
+      ) : activeSection === 'probability' && (screen === 'binomial' || screen === 'normal' || screen === 'poisson') ? (
+        <StatisticsProbabilityPanel
+          screen={screen}
+          onOpenScreen={onOpenScreen}
+          binomialState={binomialState}
+          setBinomialState={setBinomialState}
+          normalState={normalState}
+          setNormalState={setNormalState}
+          poissonState={poissonState}
+          setPoissonState={setPoissonState}
+          binomialNRef={statisticsBinomialNRef}
+          normalMeanRef={statisticsNormalMeanRef}
+          poissonLambdaRef={statisticsPoissonLambdaRef}
+          onEditExpression={onUseInStatistics}
+          onCopyExpression={onCopyWorkbenchExpression}
+          expression={workbenchExpression}
         />
       ) : screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency' || screen === 'meanInference' ? (
         <div className="grid-two">
@@ -437,70 +462,6 @@ function StatisticsWorkspace({
                 <p>{datasetText || 'No dataset values entered yet.'}</p>
               </div>
             ) : null}
-          </div>
-        </div>
-      ) : screen === 'binomial' || screen === 'normal' || screen === 'poisson' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>{routeMeta.label}</strong>
-              <span className="equation-badge">Probability</span>
-            </div>
-            {screen === 'binomial' ? (
-              <div className="statistics-input-grid">
-                <label><span>n</span><SignedNumberDraftInput ref={statisticsBinomialNRef} value={binomialState.n} onValueChange={(value) => setBinomialState((currentState) => ({ ...currentState, n: value }))} className="statistics-cell-input" /></label>
-                <label><span>p</span><SignedNumberDraftInput value={binomialState.p} onValueChange={(value) => setBinomialState((currentState) => ({ ...currentState, p: value }))} className="statistics-cell-input" /></label>
-                <label><span>x</span><SignedNumberDraftInput value={binomialState.x} onValueChange={(value) => setBinomialState((currentState) => ({ ...currentState, x: value }))} className="statistics-cell-input" /></label>
-              </div>
-            ) : screen === 'normal' ? (
-              <div className="statistics-input-grid">
-                <label><span>Mean</span><SignedNumberDraftInput ref={statisticsNormalMeanRef} value={normalState.mean} onValueChange={(value) => setNormalState((currentState) => ({ ...currentState, mean: value }))} className="statistics-cell-input" /></label>
-                <label><span>SD</span><SignedNumberDraftInput value={normalState.standardDeviation} onValueChange={(value) => setNormalState((currentState) => ({ ...currentState, standardDeviation: value }))} className="statistics-cell-input" /></label>
-                <label><span>x</span><SignedNumberDraftInput value={normalState.x} onValueChange={(value) => setNormalState((currentState) => ({ ...currentState, x: value }))} className="statistics-cell-input" /></label>
-              </div>
-            ) : (
-              <div className="statistics-input-grid">
-                <label><span>Lambda</span><SignedNumberDraftInput ref={statisticsPoissonLambdaRef} value={poissonState.lambda} onValueChange={(value) => setPoissonState((currentState) => ({ ...currentState, lambda: value }))} className="statistics-cell-input" /></label>
-                <label><span>x</span><SignedNumberDraftInput value={poissonState.x} onValueChange={(value) => setPoissonState((currentState) => ({ ...currentState, x: value }))} className="statistics-cell-input" /></label>
-              </div>
-            )}
-            <div className="guide-chip-row">
-              {(screen === 'normal' ? ['pdf', 'cdf'] : ['pmf', 'cdf']).map((mode) => (
-                <button
-                  key={`${screen}-${mode}`}
-                  className={`guide-chip ${(screen === 'binomial'
-                    ? binomialState.mode === mode
-                    : screen === 'normal'
-                      ? normalState.mode === mode
-                      : poissonState.mode === mode) ? 'is-active' : ''}`}
-                  onClick={() => {
-                    if (screen === 'binomial') {
-                      setBinomialState((currentState) => ({ ...currentState, mode: mode as 'pmf' | 'cdf' }));
-                    } else if (screen === 'normal') {
-                      setNormalState((currentState) => ({ ...currentState, mode: mode as 'pdf' | 'cdf' }));
-                    } else {
-                      setPoissonState((currentState) => ({ ...currentState, mode: mode as 'pmf' | 'cdf' }));
-                    }
-                  }}
-                >
-                  {mode.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <div className="display-card-actions">
-              <button onClick={onUseInStatistics}>Use in Statistics</button>
-              <button onClick={onCopyWorkbenchExpression}>Copy Expr</button>
-            </div>
-          </div>
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Guided Request</strong>
-              <span className="equation-subtitle">Structured draft</span>
-            </div>
-            <MathStatic className="polynomial-preview-math" latex={workbenchExpression} deferRender />
-            <p className="equation-hint">
-              Use the top Statistics editor for direct edits, or keep working in the guided probability form.
-            </p>
           </div>
         </div>
       ) : screen === 'regression' || screen === 'correlation' ? (

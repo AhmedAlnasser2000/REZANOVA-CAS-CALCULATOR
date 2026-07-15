@@ -58,6 +58,39 @@ describe('statistics parser', () => {
     expect(regression.request.kind).toBe('regression');
   });
 
+  it('parses event-based probability requests and independent interval bounds', () => {
+    const oneSided = parseStatisticsDraft(
+      'binomial(n=10,p=0.5,event=atLeast,x=3)',
+      { screenHint: 'binomial' },
+    );
+    const between = parseStatisticsDraft(
+      'normal(mean=0,sd=1,event=between,lower=-1,upper=1,lowerBound=exclusive,upperBound=inclusive)',
+      { screenHint: 'normal' },
+    );
+
+    expect(oneSided.ok).toBe(true);
+    expect(between.ok).toBe(true);
+    if (!oneSided.ok || !between.ok) throw new Error('Expected probability event parsing.');
+    expect(oneSided.request).toMatchObject({ event: 'atLeast', x: '3' });
+    expect(between.request).toMatchObject({
+      event: 'between',
+      lower: '-1',
+      upper: '1',
+      lowerBound: 'exclusive',
+      upperBound: 'inclusive',
+    });
+  });
+
+  it('keeps legacy PMF, PDF, and CDF probability expressions loadable', () => {
+    const binomial = parseStatisticsDraft('binomial(n=10,p=0.5,x=3,mode=pmf)');
+    const normal = parseStatisticsDraft('normal(mean=0,sd=1,x=0,mode=pdf)');
+    const poisson = parseStatisticsDraft('poisson(lambda=4,x=2,mode=cdf)');
+
+    expect(binomial.ok && binomial.request).toMatchObject({ mode: 'pmf', x: '3' });
+    expect(normal.ok && normal.request).toMatchObject({ mode: 'pdf', x: '0' });
+    expect(poisson.ok && poisson.request).toMatchObject({ mode: 'cdf', x: '2' });
+  });
+
   it('maps requests back to statistics screens', () => {
     const parsed = parseStatisticsDraft('meanInference(freq={1:2,2:3,4:1}, mode=test, level=0.95, mu0=2)');
     expect(parsed.ok).toBe(true);

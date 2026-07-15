@@ -2,6 +2,7 @@ import type {
   CoreDraftStyle,
   StatisticsParseOptions,
   StatisticsParseResult,
+  StatisticsProbabilityEvent,
   StatisticsRequest,
   StatisticsScreen,
 } from '../../types/calculator';
@@ -58,6 +59,137 @@ function parseDistributionMode<TMode extends string>(value: string | undefined, 
 
   const normalized = value.trim().toLowerCase() as TMode;
   return allowed.includes(normalized) ? normalized : null;
+}
+
+type ParsedProbabilityEventFields = {
+  event: StatisticsProbabilityEvent;
+  x?: string;
+  lower?: string;
+  upper?: string;
+  lowerBound?: 'inclusive' | 'exclusive';
+  upperBound?: 'inclusive' | 'exclusive';
+};
+
+function parseProbabilityEventName(value: string): StatisticsProbabilityEvent | null {
+  switch (value.trim().toLowerCase().replaceAll(/[_\s-]/g, '')) {
+    case 'exactly':
+      return 'exactly';
+    case 'density':
+      return 'density';
+    case 'lessthan':
+      return 'lessThan';
+    case 'atmost':
+      return 'atMost';
+    case 'morethan':
+    case 'greaterthan':
+      return 'moreThan';
+    case 'atleast':
+      return 'atLeast';
+    case 'between':
+      return 'between';
+    default:
+      return null;
+  }
+}
+
+function parseProbabilityBound(value: string | undefined) {
+  if (!value) return 'inclusive' as const;
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'inclusive' || normalized === 'exclusive'
+    ? normalized
+    : null;
+}
+
+function probabilityEventFields(
+  assignments: Map<string, string>,
+  kind: 'binomial' | 'normal' | 'poisson',
+): { ok: true; fields: ParsedProbabilityEventFields } | { ok: false; error: string } | null {
+  const eventDraft = valueFor(assignments, 'event');
+  if (!eventDraft) return null;
+  if (valueFor(assignments, 'mode')) {
+    return { ok: false, error: 'Use event=... or legacy mode=..., not both in one probability request.' };
+  }
+  const event = parseProbabilityEventName(eventDraft);
+  if (!event) {
+    return {
+      ok: false,
+      error: 'Probability event must be exactly, density, lessThan, atMost, moreThan, atLeast, or between.',
+    };
+  }
+  if (event === 'density' && kind !== 'normal') {
+    return { ok: false, error: 'event=density is available only for normal(...).' };
+  }
+  if (event === 'between') {
+    const lower = valueFor(assignments, 'lower');
+    const upper = valueFor(assignments, 'upper');
+    const lowerBound = parseProbabilityBound(valueFor(assignments, 'lowerbound'));
+    const upperBound = parseProbabilityBound(valueFor(assignments, 'upperbound'));
+    if (!lower || !upper) {
+      return { ok: false, error: 'event=between needs lower=... and upper=....' };
+    }
+    if (!lowerBound || !upperBound) {
+      return { ok: false, error: 'Between bounds must be inclusive or exclusive.' };
+    }
+    return {
+      ok: true,
+      fields: { event, lower, upper, lowerBound, upperBound },
+    };
+  }
+  const x = valueFor(assignments, 'x');
+  return x
+    ? { ok: true, fields: { event, x } }
+    : { ok: false, error: `event=${event} needs x=....` };
+}
+
+function parseDistributionAssignments(
+  kind: 'binomial' | 'normal' | 'poisson',
+  assignments: Map<string, string>,
+  style: CoreDraftStyle,
+): StatisticsParseResult {
+  const eventFields = probabilityEventFields(assignments, kind);
+  if (eventFields && !eventFields.ok) return eventFields;
+
+  if (kind === 'binomial') {
+    const n = valueFor(assignments, 'n');
+    const p = valueFor(assignments, 'p');
+    if (eventFields) {
+      return n && p
+        ? { ok: true, request: { kind, n, p, ...eventFields.fields }, style }
+        : { ok: false, error: 'binomial(...) needs n=..., p=..., and an event.' };
+    }
+    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
+    const x = valueFor(assignments, 'x');
+    return n && p && x && mode
+      ? { ok: true, request: { kind, n, p, x, mode }, style }
+      : { ok: false, error: 'binomial(...) needs n, p, and event=...; legacy x with mode=pmf|cdf remains accepted.' };
+  }
+
+  if (kind === 'normal') {
+    const mean = valueFor(assignments, 'mean', 'mu');
+    const standardDeviation = valueFor(assignments, 'sd', 'sigma', 'standarddeviation');
+    if (eventFields) {
+      return mean && standardDeviation
+        ? { ok: true, request: { kind, mean, standardDeviation, ...eventFields.fields }, style }
+        : { ok: false, error: 'normal(...) needs mean=..., sd=..., and an event.' };
+    }
+    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pdf', 'cdf'] as const);
+    const x = valueFor(assignments, 'x');
+    return mean && standardDeviation && x && mode
+      ? { ok: true, request: { kind, mean, standardDeviation, x, mode }, style }
+      : { ok: false, error: 'normal(...) needs mean, sd, and event=...; legacy x with mode=pdf|cdf remains accepted.' };
+  }
+
+  const lambda = valueFor(assignments, 'lambda');
+  if (eventFields) {
+    return lambda
+      ? { ok: true, request: { kind, lambda, ...eventFields.fields }, style }
+      : { ok: false, error: 'poisson(...) needs lambda=... and an event.' };
+  }
+  const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
+  const x = valueFor(assignments, 'x');
+  return lambda && x && mode
+    ? { ok: true, request: { kind, lambda, x, mode }, style }
+    : { ok: false, error: 'poisson(...) needs lambda and event=...; legacy x with mode=pmf|cdf remains accepted.' };
 }
 
 function parseStructured(source: string): StatisticsParseResult | null {
@@ -224,32 +356,15 @@ function parseStructured(source: string): StatisticsParseResult | null {
   }
 
   if (kind === 'binomial') {
-    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
-    const n = valueFor(assignments, 'n');
-    const p = valueFor(assignments, 'p');
-    const x = valueFor(assignments, 'x');
-    return n && p && x && mode
-      ? { ok: true, request: { kind, n, p, x, mode }, style: 'structured' }
-      : { ok: false, error: 'binomial(...) needs n=..., p=..., x=..., and mode=pmf|cdf.' };
+    return parseDistributionAssignments(kind, assignments, 'structured');
   }
 
   if (kind === 'normal') {
-    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pdf', 'cdf'] as const);
-    const mean = valueFor(assignments, 'mean', 'mu');
-    const standardDeviation = valueFor(assignments, 'sd', 'sigma', 'standarddeviation');
-    const x = valueFor(assignments, 'x');
-    return mean && standardDeviation && x && mode
-      ? { ok: true, request: { kind, mean, standardDeviation, x, mode }, style: 'structured' }
-      : { ok: false, error: 'normal(...) needs mean=..., sd=..., x=..., and mode=pdf|cdf.' };
+    return parseDistributionAssignments(kind, assignments, 'structured');
   }
 
   if (kind === 'poisson') {
-    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
-    const lambda = valueFor(assignments, 'lambda');
-    const x = valueFor(assignments, 'x');
-    return lambda && x && mode
-      ? { ok: true, request: { kind, lambda, x, mode }, style: 'structured' }
-      : { ok: false, error: 'poisson(...) needs lambda=..., x=..., and mode=pmf|cdf.' };
+    return parseDistributionAssignments(kind, assignments, 'structured');
   }
 
   if (kind === 'regression' || kind === 'correlation') {
@@ -331,32 +446,7 @@ function parseDistributionShorthand(
     };
   }
 
-  if (kind === 'binomial') {
-    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
-    const n = valueFor(assignments, 'n');
-    const p = valueFor(assignments, 'p');
-    const x = valueFor(assignments, 'x');
-    return n && p && x && mode
-      ? { ok: true, request: { kind, n, p, x, mode }, style: 'shorthand' }
-      : { ok: false, error: 'Use n=..., p=..., x=..., mode=pmf|cdf for Binomial.' };
-  }
-
-  if (kind === 'normal') {
-    const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pdf', 'cdf'] as const);
-    const mean = valueFor(assignments, 'mean', 'mu');
-    const standardDeviation = valueFor(assignments, 'sd', 'sigma', 'standarddeviation');
-    const x = valueFor(assignments, 'x');
-    return mean && standardDeviation && x && mode
-      ? { ok: true, request: { kind, mean, standardDeviation, x, mode }, style: 'shorthand' }
-      : { ok: false, error: 'Use mean=..., sd=..., x=..., mode=pdf|cdf for Normal.' };
-  }
-
-  const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['pmf', 'cdf'] as const);
-  const lambda = valueFor(assignments, 'lambda');
-  const x = valueFor(assignments, 'x');
-  return lambda && x && mode
-    ? { ok: true, request: { kind, lambda, x, mode }, style: 'shorthand' }
-    : { ok: false, error: 'Use lambda=..., x=..., mode=pmf|cdf for Poisson.' };
+  return parseDistributionAssignments(kind, assignments, 'shorthand');
 }
 
 function parsePointsShorthand(

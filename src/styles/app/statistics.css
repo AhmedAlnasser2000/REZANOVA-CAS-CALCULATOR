@@ -306,6 +306,49 @@
   white-space: normal;
 }
 
+.statistics-probability-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.statistics-probability-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.statistics-select-grid,
+.statistics-bound-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.statistics-select-grid label,
+.statistics-bound-grid label,
+.statistics-event-value label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.statistics-event-value {
+  max-width: 20rem;
+}
+
+@media (max-width: 760px) {
+  .statistics-probability-layout,
+  .statistics-select-grid,
+  .statistics-bound-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statistics-event-value {
+    max-width: none;
+  }
+}
+
 @media (max-width: 720px) {
   .statistics-section-tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));

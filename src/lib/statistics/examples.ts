@@ -34,6 +34,11 @@ export const DEFAULT_BINOMIAL_STATE: BinomialState = {
   n: '10',
   p: '0.5',
   x: '3',
+  event: 'exactly',
+  lower: '2',
+  upper: '5',
+  lowerBound: 'inclusive',
+  upperBound: 'inclusive',
   mode: 'pmf',
 };
 
@@ -41,12 +46,22 @@ export const DEFAULT_NORMAL_STATE: NormalState = {
   mean: '0',
   standardDeviation: '1',
   x: '1.96',
+  event: 'atMost',
+  lower: '-1',
+  upper: '1',
+  lowerBound: 'inclusive',
+  upperBound: 'inclusive',
   mode: 'cdf',
 };
 
 export const DEFAULT_POISSON_STATE: PoissonState = {
   lambda: '4',
   x: '2',
+  event: 'exactly',
+  lower: '2',
+  upper: '5',
+  lowerBound: 'inclusive',
+  upperBound: 'inclusive',
   mode: 'pmf',
 };
 

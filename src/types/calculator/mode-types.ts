@@ -153,6 +153,14 @@ export type StatisticsProbabilityEvent =
   | 'moreThan'
   | 'atLeast'
   | 'between';
+export type StatisticsProbabilityEventState = {
+  event: StatisticsProbabilityEvent;
+  x: string;
+  lower: string;
+  upper: string;
+  lowerBound: 'inclusive' | 'exclusive';
+  upperBound: 'inclusive' | 'exclusive';
+};
 export type MeanTestAlternative = 'twoSided' | 'less' | 'greater';
 
 export type EquationScreen =

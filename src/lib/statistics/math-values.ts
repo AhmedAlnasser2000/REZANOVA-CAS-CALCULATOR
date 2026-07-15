@@ -182,16 +182,20 @@ export function meanTestMathJsonLeaves(input: {
 
 export function probabilityValueMathJsonLeaves(input: {
   canonicalLatex: string;
-  x: number;
+  eventMathJson: unknown;
   value: number;
   valueSymbol: 'p' | 'd';
+  expectedValue: number;
+  standardDeviation: number;
   source: string;
 }) {
   return primaryMathJsonLeaf(
     input.canonicalLatex,
     mathSequence(
-      ['Equal', 'x', statisticsMathNumber(input.x)],
+      input.eventMathJson,
       ['Equal', input.valueSymbol, statisticsMathNumber(input.value)],
+      ['Equal', ['Mean', 'X'], statisticsMathNumber(input.expectedValue)],
+      ['Equal', 'sigma', statisticsMathNumber(input.standardDeviation)],
     ),
     input.source,
   );

@@ -14,24 +14,23 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
-## Gate 2 Result
+## Gate 3 Result
 
-- milestone: `STATISTICS-DATA-SUMMARY1`
+- milestone: `STATISTICS-PROBABILITY1`
 - gates: backend and ui
 - status: verified pass
-- next milestone: `STATISTICS-PROBABILITY1`
+- next milestone: `STATISTICS-RELATIONSHIPS1`
 
 ## Evidence
 
-- Focused Statistics unit coverage passed 39 tests across 10 files; runtime/AppMain UI coverage passed 12 tests.
-- Canonical Result V2 enforcement, result-contract, hard History replay comparison, print hygiene, and the golden runner passed for the migrated Statistics routes.
-- Direct runtime probes proved V2 MathJSON for dataset, descriptive, frequency, binomial, normal, Poisson, regression, correlation, confidence interval, and mean test outcomes.
-- Chromium passed the real expanded Data & Summary output, independent draft persistence, desktop two-column layout, mobile stacking, trailing commas, and one-keystroke focus retention across the four sections.
-- Statistics-era TypeScript and production build evidence passed before later concurrent Linear Algebra edits appeared.
-- The latest build is externally blocked by concurrent `vector-geometric.ts` type/MathJSON work. The latest file-size gate is externally blocked by concurrent `guide/content/selectors.ts` at 2,533 lines against 2,528. Statistics-owned files remain within their caps.
-- Diff hygiene is rerun immediately before the checkpoint commit.
+- Focused distribution/parser/probability tests passed 28/28; runtime UI passed 11/11.
+- Result-contract passed 112/112 after the accepted Statistics MathJSON payload update. Display-contract inversion passed 24/24.
+- History replay hard-compared all 100 fixtures after updating only the intentional Statistics probability output; print hygiene passed 7/7.
+- TypeScript, production build, focused lint, and the 1,911-file size ratchet passed.
+- Chromium passed a real endpoint-aware Binomial interval, Normal exact-versus-density behavior, focus retention, desktop composition, and mobile stacking.
+- A later full enforcement rerun was externally blocked only by concurrent unfinished `matrix.definiteness` registry/baseline parity. Frozen Statistics producer enforcement still passed.
 
 ## Protected Worktree
 
-- Concurrent staged Linear Algebra work and untracked `test-results/` remain untouched.
+- Concurrent Matrix definiteness work and untracked `test-results/` remain untouched.
 - No push is authorized.

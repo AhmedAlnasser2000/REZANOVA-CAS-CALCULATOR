@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "VECTOR-GEOMETRIC-MEASURES1 adds one producer-proven V2 geometric-measures route and raises coverage to 455/455 leaves.",
+  "reason": "STATISTICS-PROBABILITY1 records event notation, probability or density, expected value, and standard deviation as producer-owned MathJSON.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -66,7 +66,7 @@
     "evidence": 144,
     "replayFixtures": 100,
     "goldenCases": 44,
-    "bytes": 114291,
+    "bytes": 114813,
     "maxBytes": 2753,
     "leaves": 455,
     "proven": 455,
@@ -496,8 +496,8 @@
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 270,
-      "maxBytes": 270,
+      "bytes": 792,
+      "maxBytes": 792,
       "leaves": 1,
       "proven": 1,
       "exempt": 0,

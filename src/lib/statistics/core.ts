@@ -30,6 +30,7 @@ import {
   descriptiveStatisticsFromValues,
   type DescriptiveStatisticsSummary,
 } from './descriptive';
+import { probabilityOutcome } from './probability';
 import {
   correlationMathJsonLeaves,
   confidenceIntervalMathJsonLeaves,
@@ -37,7 +38,6 @@ import {
   descriptiveSummaryMathJsonLeaves,
   frequencySummaryMathJsonLeaves,
   meanTestMathJsonLeaves,
-  probabilityValueMathJsonLeaves,
   regressionMathJsonLeaves,
   type StatisticsOwnedMathJsonLeaf,
 } from './math-values';
@@ -581,159 +581,6 @@ function meanInferenceOutcome(
   });
 }
 
-function factorial(value: number) {
-  let result = 1;
-  for (let current = 2; current <= value; current += 1) {
-    result *= current;
-  }
-  return result;
-}
-
-function combination(n: number, r: number) {
-  const normalizedR = Math.min(r, n - r);
-  let result = 1;
-  for (let step = 1; step <= normalizedR; step += 1) {
-    result = (result * (n - normalizedR + step)) / step;
-  }
-  return result;
-}
-
-function binomialPmf(n: number, p: number, x: number) {
-  return combination(n, x) * (p ** x) * ((1 - p) ** (n - x));
-}
-
-function errorFunction(value: number) {
-  const sign = value < 0 ? -1 : 1;
-  const x = Math.abs(value);
-  const a1 = 0.254829592;
-  const a2 = -0.284496736;
-  const a3 = 1.421413741;
-  const a4 = -1.453152027;
-  const a5 = 1.061405429;
-  const t = 1 / (1 + (0.3275911 * x));
-  const polynomial = (((((a5 * t) + a4) * t + a3) * t + a2) * t + a1) * t;
-  return sign * (1 - (polynomial * Math.exp(-(x ** 2))));
-}
-
-function normalPdf(mean: number, standardDeviation: number, x: number) {
-  const z = (x - mean) / standardDeviation;
-  return Math.exp(-0.5 * (z ** 2)) / (standardDeviation * Math.sqrt(2 * Math.PI));
-}
-
-function normalCdf(mean: number, standardDeviation: number, x: number) {
-  return 0.5 * (1 + errorFunction((x - mean) / (standardDeviation * Math.sqrt(2))));
-}
-
-function poissonPmf(lambda: number, x: number) {
-  return (Math.exp(-lambda) * (lambda ** x)) / factorial(x);
-}
-
-function binomialOutcome(request: Extract<StatisticsRequest, { kind: 'binomial' }>): StatisticsEvaluation {
-  const n = parseIntegerDraft(request.n);
-  const x = parseIntegerDraft(request.x);
-  const p = parseNumericDraft(request.p);
-
-  if (n === null || n < 0) {
-    return statisticsError('Binomial n must be a non-negative integer.');
-  }
-  if (x === null || x < 0) {
-    return statisticsError('Binomial x must be a non-negative integer.');
-  }
-  if (p === null || p < 0 || p > 1) {
-    return statisticsError('Binomial p must be between 0 and 1.');
-  }
-  if (x > n) {
-    return statisticsError('Binomial x must be less than or equal to n.');
-  }
-
-  const value =
-    request.mode === 'pmf'
-      ? binomialPmf(n, p, x)
-      : Array.from({ length: x + 1 }, (_, index) => binomialPmf(n, p, index))
-        .reduce((total, probability) => total + probability, 0);
-
-  const exactLatex = `x=${x},\\ p=${numberToLatex(value)}`;
-  return profileStatisticsResult({
-    exactLatex,
-    approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
-    warnings: [],
-    mathJsonLeaves: probabilityValueMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      x,
-      value,
-      valueSymbol: 'p',
-      source: 'statistics.probability.native-binomial-value',
-    }),
-  });
-}
-
-function normalOutcome(request: Extract<StatisticsRequest, { kind: 'normal' }>): StatisticsEvaluation {
-  const mean = parseNumericDraft(request.mean);
-  const standardDeviation = parseNumericDraft(request.standardDeviation);
-  const x = parseNumericDraft(request.x);
-
-  if (mean === null) {
-    return statisticsError('Normal mean must be a finite numeric value.');
-  }
-  if (standardDeviation === null || standardDeviation <= 0) {
-    return statisticsError('Normal standard deviation must be greater than zero.');
-  }
-  if (x === null) {
-    return statisticsError('Normal x must be a finite numeric value.');
-  }
-
-  const value =
-    request.mode === 'pdf'
-      ? normalPdf(mean, standardDeviation, x)
-      : normalCdf(mean, standardDeviation, x);
-
-  const exactLatex = `x=${numberToLatex(x)},\\ ${request.mode === 'pdf' ? 'd' : 'p'}=${numberToLatex(value)}`;
-  return profileStatisticsResult({
-    exactLatex,
-    approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
-    warnings: [],
-    mathJsonLeaves: probabilityValueMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      x,
-      value,
-      valueSymbol: request.mode === 'pdf' ? 'd' : 'p',
-      source: 'statistics.probability.native-normal-value',
-    }),
-  });
-}
-
-function poissonOutcome(request: Extract<StatisticsRequest, { kind: 'poisson' }>): StatisticsEvaluation {
-  const lambda = parseNumericDraft(request.lambda);
-  const x = parseIntegerDraft(request.x);
-
-  if (lambda === null || lambda <= 0) {
-    return statisticsError('Poisson lambda must be greater than zero.');
-  }
-  if (x === null || x < 0) {
-    return statisticsError('Poisson x must be a non-negative integer.');
-  }
-
-  const value =
-    request.mode === 'pmf'
-      ? poissonPmf(lambda, x)
-      : Array.from({ length: x + 1 }, (_, index) => poissonPmf(lambda, index))
-        .reduce((total, probability) => total + probability, 0);
-
-  const exactLatex = `x=${x},\\ p=${numberToLatex(value)}`;
-  return profileStatisticsResult({
-    exactLatex,
-    approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
-    warnings: [],
-    mathJsonLeaves: probabilityValueMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      x,
-      value,
-      valueSymbol: 'p',
-      source: 'statistics.probability.native-poisson-value',
-    }),
-  });
-}
-
 function regressionSummary(points: NumericPoint[]) {
   const count = points.length;
   const sumX = points.reduce((total, point) => total + point.x, 0);
@@ -927,11 +774,11 @@ export function runStatisticsRequest(request: StatisticsRequest): ResultProducer
     case 'meanInference':
       return toOutcome(title, meanInferenceOutcome(request));
     case 'binomial':
-      return toOutcome(title, binomialOutcome(request));
+      return toOutcome(title, probabilityOutcome(request));
     case 'normal':
-      return toOutcome(title, normalOutcome(request));
+      return toOutcome(title, probabilityOutcome(request));
     case 'poisson':
-      return toOutcome(title, poissonOutcome(request));
+      return toOutcome(title, probabilityOutcome(request));
     case 'regression':
       return toOutcome(title, regressionOutcome(request));
     case 'correlation':

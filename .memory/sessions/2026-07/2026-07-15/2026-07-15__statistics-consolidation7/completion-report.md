@@ -18,11 +18,12 @@
 
 - `STATISTICS-SECTION-NAVIGATION1` is implemented and verified.
 - `STATISTICS-DATA-SUMMARY1` is implemented and verified.
-- Gates 3-7 remain in the approved Statistics consolidation program.
+- `STATISTICS-PROBABILITY1` is implemented and verified.
+- Gates 4-7 remain in the approved Statistics consolidation program.
 - Plotting, diagrams, histograms, distribution charts, and scatter plots remain excluded until Gate 7 closes.
 
 ## Next Checkpoint
 
-- Continue with `STATISTICS-PROBABILITY1`.
+- Continue with `STATISTICS-RELATIONSHIPS1`.
 - Standing user approval covers all seven named gate commits.
 - Do not push.

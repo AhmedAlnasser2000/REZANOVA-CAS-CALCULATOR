@@ -9,6 +9,7 @@ import type {
   RegressionState,
   StatisticsRequest,
   StatisticsDataSummaryState,
+  StatisticsProbabilityEventState,
   StatisticsScreen,
   StatisticsSerializerOptions,
   StatisticsWorkingSource,
@@ -29,6 +30,36 @@ function serializeFrequencyRows(rows: FrequencyRow[]) {
 
 function serializePoints(points: Array<{ x: string; y: string }>) {
   return `{${points.map((point) => `(${filledValue(point.x)},${filledValue(point.y)})`).join(',')}}`;
+}
+
+function serializeProbabilityEvent(request: Extract<StatisticsRequest, {
+  kind: 'binomial' | 'normal' | 'poisson';
+}>) {
+  if (!request.event) {
+    return `x=${filledValue(request.x)}, mode=${request.mode ?? '?'}`;
+  }
+  if (request.event === 'between') {
+    return [
+      'event=between',
+      `lower=${filledValue(request.lower)}`,
+      `upper=${filledValue(request.upper)}`,
+      `lowerBound=${request.lowerBound ?? 'inclusive'}`,
+      `upperBound=${request.upperBound ?? 'inclusive'}`,
+    ].join(', ');
+  }
+  return `event=${request.event}, x=${filledValue(request.x)}`;
+}
+
+function probabilityEventRequestFields(state: StatisticsProbabilityEventState) {
+  return state.event === 'between'
+    ? {
+        event: state.event,
+        lower: state.lower,
+        upper: state.upper,
+        lowerBound: state.lowerBound,
+        upperBound: state.upperBound,
+      }
+    : { event: state.event, x: state.x };
 }
 
 export function serializeStatisticsRequest(
@@ -55,11 +86,11 @@ export function serializeStatisticsRequest(
         ? `meanInference(values=${serializeValues(request.values)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}` : ''})`
         : `meanInference(freq=${serializeFrequencyRows(request.rows)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}` : ''})`;
     case 'binomial':
-      return `binomial(n=${filledValue(request.n)}, p=${filledValue(request.p)}, x=${filledValue(request.x)}, mode=${request.mode})`;
+      return `binomial(n=${filledValue(request.n)}, p=${filledValue(request.p)}, ${serializeProbabilityEvent(request)})`;
     case 'normal':
-      return `normal(mean=${filledValue(request.mean)}, sd=${filledValue(request.standardDeviation)}, x=${filledValue(request.x)}, mode=${request.mode})`;
+      return `normal(mean=${filledValue(request.mean)}, sd=${filledValue(request.standardDeviation)}, ${serializeProbabilityEvent(request)})`;
     case 'poisson':
-      return `poisson(lambda=${filledValue(request.lambda)}, x=${filledValue(request.x)}, mode=${request.mode})`;
+      return `poisson(lambda=${filledValue(request.lambda)}, ${serializeProbabilityEvent(request)})`;
     case 'regression':
       return `regression(points=${serializePoints(request.points)})`;
     case 'correlation':
@@ -150,23 +181,20 @@ export function buildStatisticsStructuredDraft(
         kind: 'binomial',
         n: state.binomial.n,
         p: state.binomial.p,
-        x: state.binomial.x,
-        mode: state.binomial.mode,
+        ...probabilityEventRequestFields(state.binomial),
       });
     case 'normal':
       return serializeStatisticsRequest({
         kind: 'normal',
         mean: state.normal.mean,
         standardDeviation: state.normal.standardDeviation,
-        x: state.normal.x,
-        mode: state.normal.mode,
+        ...probabilityEventRequestFields(state.normal),
       });
     case 'poisson':
       return serializeStatisticsRequest({
         kind: 'poisson',
         lambda: state.poisson.lambda,
-        x: state.poisson.x,
-        mode: state.poisson.mode,
+        ...probabilityEventRequestFields(state.poisson),
       });
     case 'regression':
       return serializeStatisticsRequest({

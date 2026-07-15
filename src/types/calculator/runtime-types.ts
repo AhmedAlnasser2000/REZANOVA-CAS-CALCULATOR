@@ -19,6 +19,8 @@ import type {
   OutputStyle,
   ScientificNotationStyle,
   StatisticsDataContext,
+  StatisticsProbabilityEvent,
+  StatisticsProbabilityEventState,
   StatisticsQuartileMethod,
   StatisticsScreen,
   TrigScreen,
@@ -582,21 +584,18 @@ export type StatisticsDataSummaryState = {
   quartiles: StatisticsQuartileMethod;
   context: StatisticsDataContext;
 };
-export type BinomialState = {
+export type BinomialState = StatisticsProbabilityEventState & {
   n: string;
   p: string;
-  x: string;
   mode: 'pmf' | 'cdf';
 };
-export type NormalState = {
+export type NormalState = StatisticsProbabilityEventState & {
   mean: string;
   standardDeviation: string;
-  x: string;
   mode: 'pdf' | 'cdf';
 };
-export type PoissonState = {
+export type PoissonState = StatisticsProbabilityEventState & {
   lambda: string;
-  x: string;
   mode: 'pmf' | 'cdf';
 };
 export type RegressionPoint = {
@@ -760,9 +759,9 @@ export type StatisticsRequest =
   | { kind: 'descriptive'; source: 'frequencyTable'; rows: FrequencyRow[]; quartiles?: StatisticsQuartileMethod; context?: StatisticsDataContext }
   | { kind: 'frequency'; source: 'dataset'; values: string[] }
   | { kind: 'frequency'; source: 'frequencyTable'; rows: FrequencyRow[] }
-  | { kind: 'binomial'; n: string; p: string; x: string; mode: BinomialState['mode'] }
-  | { kind: 'normal'; mean: string; standardDeviation: string; x: string; mode: NormalState['mode'] }
-  | { kind: 'poisson'; lambda: string; x: string; mode: PoissonState['mode'] }
+  | { kind: 'binomial'; n: string; p: string; x?: string; mode?: BinomialState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
+  | { kind: 'normal'; mean: string; standardDeviation: string; x?: string; mode?: NormalState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
+  | { kind: 'poisson'; lambda: string; x?: string; mode?: PoissonState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
   | { kind: 'meanInference'; source: 'dataset'; values: string[]; mode: MeanInferenceState['mode']; level: string; mu0?: string }
   | { kind: 'meanInference'; source: 'frequencyTable'; rows: FrequencyRow[]; mode: MeanInferenceState['mode']; level: string; mu0?: string }
   | { kind: 'regression'; points: RegressionPoint[] }
@@ -994,7 +993,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'profileA' | 'profileB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'profileA' | 'profileB' | 'definiteA' | 'definiteB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 export type MatrixRequest = {

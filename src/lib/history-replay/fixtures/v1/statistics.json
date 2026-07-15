@@ -133,11 +133,11 @@
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
-          "detailSections": 0,
+          "detailSections": 2,
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=3,\\ p=0.117188"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=X=3,\\ p=0.117188,\\ \\operatorname{mean}(X)=5,\\ \\sigma=1.581139"
       }
     },
     {

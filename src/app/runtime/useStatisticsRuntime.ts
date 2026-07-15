@@ -72,6 +72,11 @@ import {
   prepareStatisticsDataset,
   prepareStatisticsFrequencyTable,
 } from './statistics-data-conversion';
+import {
+  binomialStateFromRequest,
+  normalStateFromRequest,
+  poissonStateFromRequest,
+} from './statistics-probability-state';
 
 type StatisticsStateSnapshot = Parameters<typeof buildStatisticsInputLatex>[1];
 
@@ -653,31 +658,17 @@ export function useStatisticsRuntime({
     }
 
     if (request.kind === 'binomial') {
-      setBinomialState({
-        n: request.n,
-        p: request.p,
-        x: request.x,
-        mode: request.mode,
-      });
+      setBinomialState(binomialStateFromRequest(request));
       return;
     }
 
     if (request.kind === 'normal') {
-      setNormalState({
-        mean: request.mean,
-        standardDeviation: request.standardDeviation,
-        x: request.x,
-        mode: request.mode,
-      });
+      setNormalState(normalStateFromRequest(request));
       return;
     }
 
     if (request.kind === 'poisson') {
-      setPoissonState({
-        lambda: request.lambda,
-        x: request.x,
-        mode: request.mode,
-      });
+      setPoissonState(poissonStateFromRequest(request));
       return;
     }
 
