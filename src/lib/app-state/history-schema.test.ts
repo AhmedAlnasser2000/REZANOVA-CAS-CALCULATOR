@@ -394,6 +394,20 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('definiteA');
 
     expect(parseHistoryEntry({
+      id: 'matrix-seed-pinv',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{pinv}\\left(A\\right)',
+      resultLatex: '\\operatorname{pinv}\\left(A\\right)\\approx \\begin{bmatrix}0.12&0.16\\\\0&0\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'pinvA',
+        matrixA: [[3, 0], [4, 0]],
+        matrixB: [[1, 0], [0, 1]],
+        approxDigits: 6,
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('pinvA');
+
+    expect(parseHistoryEntry({
       id: 'matrix-seed-rref',
       mode: 'matrix',
       inputLatex: '\\operatorname{rref}\\left(A\\right)',

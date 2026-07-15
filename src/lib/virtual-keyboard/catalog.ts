@@ -4,14 +4,13 @@ import type {
   KeyboardPageSpec,
   ModeId,
 } from '../../types/calculator';
-
+import { LINEAR_NUMERIC_DECOMPOSITION_KEYS } from './catalog-linear-numeric-decomposition';
 type KeyOptions = {
   modeVisibility?: ModeId[];
   duplicateGroup?: string;
   lessonRef?: string;
   variants?: KeyboardKeySpec[];
 };
-
 function insertLatexKey(
   id: string,
   label: string,
@@ -888,6 +887,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
           },
         ),
         insertTemplateKey('lin-definite', 'definite', '\\operatorname{definite}\\left(#0\\right)', LINEAR, 'matrixVec', 'insert', { duplicateGroup: 'linear-definite', lessonRef: 'milestone-04-linear-algebra-core', modeVisibility: ['matrix'] }),
+        ...LINEAR_NUMERIC_DECOMPOSITION_KEYS,
         insertTemplateKey(
           'lin-dot',
           'dot',

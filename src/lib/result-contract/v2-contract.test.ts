@@ -339,6 +339,7 @@ describe('Canonical Result V2 contract', () => {
         'matrix.linear-system',
         'matrix.profile',
         'matrix.definiteness',
+        'matrix.numeric-decomposition',
         'vector.dot-product',
         'vector.cross-product',
         'vector.norm',

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "MATRIX-SYMMETRIC-POSITIVE-DEFINITE1 adds one strict V2 route with exact principal-minor and tolerance-labelled spectral evidence.",
+  "reason": "MATRIX-SVD-PINVERSE-CONDITIONING1 adds one strict V2 numerical-decomposition route with producer-owned SVD diagnostics and pseudoinverse evidence.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -36,6 +36,7 @@
     "matrix.inverse",
     "matrix.linear-system",
     "matrix.matrix-arithmetic",
+    "matrix.numeric-decomposition",
     "matrix.profile",
     "matrix.rank",
     "statistics.descriptive",
@@ -64,13 +65,13 @@
   ],
   "exemptionIds": [],
   "totals": {
-    "evidence": 145,
+    "evidence": 146,
     "replayFixtures": 100,
-    "goldenCases": 45,
-    "bytes": 116263,
+    "goldenCases": 46,
+    "bytes": 118417,
     "maxBytes": 2753,
-    "leaves": 459,
-    "proven": 459,
+    "leaves": 466,
+    "proven": 466,
     "exempt": 0,
     "missing": 0
   },
@@ -446,6 +447,17 @@
       "maxBytes": 264,
       "leaves": 1,
       "proven": 1,
+      "exempt": 0,
+      "missing": 0
+    },
+    "matrix.numeric-decomposition": {
+      "evidence": 1,
+      "replayFixtures": 0,
+      "goldenCases": 1,
+      "bytes": 2154,
+      "maxBytes": 2154,
+      "leaves": 7,
+      "proven": 7,
       "exempt": 0,
       "missing": 0
     },

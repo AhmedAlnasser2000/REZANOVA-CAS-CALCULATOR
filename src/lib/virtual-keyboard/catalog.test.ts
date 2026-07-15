@@ -58,6 +58,9 @@ describe('KEYBOARD_PAGE_SPECS', () => {
 
     expect(matrixVecPage?.rows.flat().some((key) => key.id === 'lin-matrix-template')).toBe(true);
     expect(matrixVecPage?.rows.flat().some((key) => key.id === 'lin-definite')).toBe(true);
+    expect(matrixVecPage?.rows.flat().filter((key) => (
+      ['lin-svd', 'lin-pinv', 'lin-cond', 'lin-nrank'].includes(key.id)
+    ))).toHaveLength(4);
     expect(calculusPage?.rows.flat().some((key) => key.id === 'lin-matrix-template')).toBe(false);
   });
 });

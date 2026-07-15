@@ -496,18 +496,18 @@ const MATRIX_OPERATOR_ROW: KeypadButton[] = [
   { id: 'linear-matrix-a', label: 'A', variant: 'function', latex: 'A' },
   { id: 'linear-matrix-b', label: 'B', variant: 'function', latex: 'B' },
   { id: 'linear-det', label: 'det', variant: 'function', latex: '\\det\\left(#0\\right)' },
-  { id: 'linear-rank', label: 'rank', variant: 'function', latex: '\\operatorname{rank}\\left(#0\\right)' },
+  { id: 'linear-rank', label: 'rank', ctrl: 'nrank', variant: 'function', latex: '\\operatorname{rank}\\left(#0\\right)', layers: { ctrl: { label: 'nrank', latex: '\\operatorname{nrank}\\left(#0\\right)' } } },
   { id: 'linear-rref', label: 'rref', variant: 'function', latex: '\\operatorname{rref}\\left(#0\\right)' },
-  { id: 'linear-eigen', label: 'eigen', secondary: 'diag', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)', layers: { shift: { label: 'diag', latex: '\\operatorname{diag}\\left(#0\\right)' } } },
+  { id: 'linear-eigen', label: 'eigen', secondary: 'diag', ctrl: 'cond', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)', layers: { shift: { label: 'diag', latex: '\\operatorname{diag}\\left(#0\\right)' }, ctrl: { label: 'cond', latex: '\\operatorname{cond}\\left(#0\\right)' } } },
 ];
 
 const MATRIX_MODIFIER_ROW: KeypadButton[] = [
   { id: 'linear-transpose', label: 'Aᵀ', variant: 'function', latex: '^{\\mathsf{T}}' },
-  { id: 'linear-inverse', label: 'A⁻¹', secondary: 'pow', variant: 'function', latex: '^{-1}', layers: { shift: { label: 'pow', latex: '\\operatorname{mpow}\\left(#0,#?\\right)' } } },
+  { id: 'linear-inverse', label: 'A⁻¹', secondary: 'pow', ctrl: 'pinv', variant: 'function', latex: '^{-1}', layers: { shift: { label: 'pow', latex: '\\operatorname{mpow}\\left(#0,#?\\right)' }, ctrl: { label: 'pinv', latex: '\\operatorname{pinv}\\left(#0\\right)' } } },
   { id: 'linear-null', label: 'null', variant: 'function', latex: '\\operatorname{null}\\left(#0\\right)' },
   { id: 'linear-col', label: 'col', secondary: 'proj', variant: 'function', latex: '\\operatorname{col}\\left(#0\\right)', layers: { shift: { label: 'proj', latex: '\\operatorname{projcol}\\left(#0,#?\\right)' } } },
   { id: 'linear-invertible', label: 'inv?', secondary: 'profile', ctrl: 'definite', variant: 'function', latex: '\\operatorname{invertible}\\left(#0\\right)', layers: { shift: { label: 'profile', latex: '\\operatorname{profile}\\left(#0\\right)' }, ctrl: { label: 'definite', latex: '\\operatorname{definite}\\left(#0\\right)' } } },
-  { id: 'linear-qr', label: 'qr', secondary: 'ls', variant: 'function', latex: '\\operatorname{qr}\\left(#0\\right)', layers: { shift: { label: 'ls', latex: '\\operatorname{ls}\\left(#0,#?\\right)' } } },
+  { id: 'linear-qr', label: 'qr', secondary: 'ls', ctrl: 'svd', variant: 'function', latex: '\\operatorname{qr}\\left(#0\\right)', layers: { shift: { label: 'ls', latex: '\\operatorname{ls}\\left(#0,#?\\right)' }, ctrl: { label: 'svd', latex: '\\operatorname{svd}\\left(#0\\right)' } } },
 ];
 
 const VECTOR_OPERATOR_ROW: KeypadButton[] = [

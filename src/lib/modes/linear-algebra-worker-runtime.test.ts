@@ -102,6 +102,15 @@ const definitenessMatrixRequest: RunMatrixModeRequest = {
   matrixOperandLatexA: 'A',
 };
 
+const pseudoinverseMatrixRequest: RunMatrixModeRequest = {
+  operation: 'pinvA',
+  matrixA: [[3, 0], [4, 0]],
+  matrixB: [[1, 0], [0, 1]],
+  editorExpressionLatex: '\\operatorname{pinv}\\left(A\\right)',
+  matrixOperandLatexA: 'A',
+  approxDigits: 6,
+};
+
 const vectorRequest: RunVectorModeRequest = {
   operation: 'angle',
   vectorA: [1, 0],
@@ -274,6 +283,34 @@ describe('Matrix and Vector worker runtime shells', () => {
         primary: {
           kind: 'math',
           value: { canonicalLatex: '\\operatorname{definite}(A)=\\text{Positive definite}' },
+        },
+      },
+    });
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'matrix-worker-runtime',
+      terminalStatus: 'completed',
+    });
+  });
+
+  it('carries pseudoinverse through the unchanged Matrix worker and OOE shell', async () => {
+    expect(buildMatrixOoeSnapshot(pseudoinverseMatrixRequest).request).toMatchObject({
+      operation: 'pinvA',
+      matrixA: pseudoinverseMatrixRequest.matrixA,
+      approxDigits: 6,
+    });
+    const result = await runMatrixModeWithOoePilot(pseudoinverseMatrixRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalMatrixMode),
+    });
+    expect(result.payload).toEqual(runCanonicalMatrixMode(pseudoinverseMatrixRequest));
+    expect(result.payload).toMatchObject({
+      kind: 'success',
+      canonicalResult: {
+        version: 2,
+        primary: {
+          kind: 'math',
+          value: { canonicalLatex: '\\operatorname{pinv}\\left(A\\right)\\approx \\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}' },
         },
       },
     });

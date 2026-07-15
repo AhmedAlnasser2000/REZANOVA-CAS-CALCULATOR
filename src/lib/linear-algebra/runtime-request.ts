@@ -117,6 +117,22 @@ export function matrixActionLabel(operation: MatrixOperation, leftName: string, 
       return `definite(${leftName})`;
     case 'definiteB':
       return `definite(${rightName})`;
+    case 'svdA':
+      return `svd(${leftName})`;
+    case 'svdB':
+      return `svd(${rightName})`;
+    case 'pinvA':
+      return `pinv(${leftName})`;
+    case 'pinvB':
+      return `pinv(${rightName})`;
+    case 'condA':
+      return `cond(${leftName})`;
+    case 'condB':
+      return `cond(${rightName})`;
+    case 'nrankA':
+      return `nrank(${leftName})`;
+    case 'nrankB':
+      return `nrank(${rightName})`;
     default:
       return matrixOperationLabel(operation);
   }

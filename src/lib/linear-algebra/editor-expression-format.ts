@@ -47,6 +47,14 @@ function formatUnary(operator: LinearAlgebraUnaryOperator, value: LinearAlgebraE
       return callLatex('profile', formattedValue);
     case 'definiteness':
       return callLatex('definite', formattedValue);
+    case 'svd':
+      return callLatex('svd', formattedValue);
+    case 'pseudoinverse':
+      return callLatex('pinv', formattedValue);
+    case 'conditionNumber':
+      return callLatex('cond', formattedValue);
+    case 'numericalRank':
+      return callLatex('nrank', formattedValue);
     case 'eigen':
       return callLatex('eigen', formattedValue);
     case 'diagonalization':

@@ -146,6 +146,22 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'definite(A)';
     case 'definiteB':
       return 'definite(B)';
+    case 'svdA':
+      return 'svd(A)';
+    case 'svdB':
+      return 'svd(B)';
+    case 'pinvA':
+      return 'pinv(A)';
+    case 'pinvB':
+      return 'pinv(B)';
+    case 'condA':
+      return 'cond(A)';
+    case 'condB':
+      return 'cond(B)';
+    case 'nrankA':
+      return 'nrank(A)';
+    case 'nrankB':
+      return 'nrank(B)';
     case 'eigenA':
       return 'eigen(A)';
     case 'eigenB':

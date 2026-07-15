@@ -42,6 +42,10 @@ describe('Linear algebra editor source', () => {
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'A+B'));
     await user.click(screen.getByTestId('keypad-layer-ctrl'));
     expect(screen.getByTestId('keypad-linear-invertible')).toHaveTextContent('definite');
+    expect(screen.getByTestId('keypad-linear-rank')).toHaveTextContent('nrank');
+    expect(screen.getByTestId('keypad-linear-eigen')).toHaveTextContent('cond');
+    expect(screen.getByTestId('keypad-linear-inverse')).toHaveTextContent('pinv');
+    expect(screen.getByTestId('keypad-linear-qr')).toHaveTextContent('svd');
     await user.click(screen.getByTestId('keypad-layer-base'));
 
     await openLauncherApp(user, 'Linear', 'Vector');

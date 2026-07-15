@@ -785,6 +785,23 @@ describe('runMatrixOperation', () => {
     expect(decimal.detailSections?.[0]?.title).toBe('Tolerance-Labeled Spectral Evidence');
   });
 
+  it('routes numerical decomposition selectors through the Matrix producer', () => {
+    const pseudoinverse = runMatrixOperation({
+      operation: 'pinvA',
+      matrixA: [[3, 0], [4, 0]],
+      matrixB,
+    });
+    const condition = runMatrixOperation({
+      operation: 'condB',
+      matrixA,
+      matrixB: [[3, 0], [0, 1]],
+    });
+
+    expect(pseudoinverse.resultLatex).toContain('\\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}');
+    expect(condition.resultLatex).toBe('\\operatorname{cond}\\left(B\\right)\\approx 3');
+    expect(condition.detailSections?.[0]?.title).toBe('SVD Diagnostics');
+  });
+
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {
     expect(runMatrixOperation({ operation: 'add', matrixA: [], matrixB }).error).toBe(
       'Matrix A is incomplete.',

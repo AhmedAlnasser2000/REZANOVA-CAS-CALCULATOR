@@ -92,6 +92,7 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
     'matrix.linear-system',
     'matrix.profile',
     'matrix.definiteness',
+    'matrix.numeric-decomposition',
     'vector.dot-product',
     'vector.cross-product',
     'vector.norm',

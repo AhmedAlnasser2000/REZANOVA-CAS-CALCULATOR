@@ -121,6 +121,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{profile\}/g, 'profile')
     .replace(/\\operatorname\{definite\}/g, 'definite')
     .replace(/\\operatorname\{Definite\}/g, 'definite')
+    .replace(/\\operatorname\{svd\}/gi, 'svd')
+    .replace(/\\operatorname\{pinv\}/gi, 'pinv')
+    .replace(/\\operatorname\{cond\}/gi, 'cond')
+    .replace(/\\operatorname\{nrank\}/gi, 'nrank')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\operatorname\{(parallel|distance|parallelogramArea|triangleArea|volume)\}/g, '$1')
     .replace(/\\det/g, 'det')
@@ -565,6 +569,10 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['invertible', 'invertibility'],
     ['profile', 'profile'],
     ['definite', 'definiteness'],
+    ['svd', 'svd'],
+    ['pinv', 'pseudoinverse'],
+    ['cond', 'conditionNumber'],
+    ['nrank', 'numericalRank'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
     ['norm', 'norm'],

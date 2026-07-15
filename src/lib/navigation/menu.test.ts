@@ -120,12 +120,20 @@ describe('workspace keypad overlays', () => {
       .toMatchObject({ label: 'profile', latex: '\\operatorname{profile}\\left(#0\\right)' });
     expect(matrixRows.flat().find((button) => button.id === 'linear-invertible')?.layers?.ctrl)
       .toMatchObject({ label: 'definite', latex: '\\operatorname{definite}\\left(#0\\right)' });
+    expect(matrixRows.flat().find((button) => button.id === 'linear-rank')?.layers?.ctrl)
+      .toMatchObject({ label: 'nrank', latex: '\\operatorname{nrank}\\left(#0\\right)' });
+    expect(matrixRows.flat().find((button) => button.id === 'linear-eigen')?.layers?.ctrl)
+      .toMatchObject({ label: 'cond', latex: '\\operatorname{cond}\\left(#0\\right)' });
     expect(matrixRows.flat().find((button) => button.id === 'linear-inverse')?.layers?.shift?.latex)
       .toBe('\\operatorname{mpow}\\left(#0,#?\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-inverse')?.layers?.ctrl)
+      .toMatchObject({ label: 'pinv', latex: '\\operatorname{pinv}\\left(#0\\right)' });
     expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.latex)
       .toBe('\\operatorname{qr}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.layers?.shift?.latex)
       .toBe('\\operatorname{ls}\\left(#0,#?\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.layers?.ctrl)
+      .toMatchObject({ label: 'svd', latex: '\\operatorname{svd}\\left(#0\\right)' });
     expect(matrixRows.flat().find((button) => button.id === 'left')?.command).toBe('cursor-left');
     expect(matrixRows.flat().find((button) => button.id === 'execute')?.command).toBe('evaluate');
 

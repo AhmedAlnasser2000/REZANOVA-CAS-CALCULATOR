@@ -71,6 +71,10 @@ export function matrixMathJsonRouteForOperation(
   if (operation === 'linearSystem') return 'matrix.linear-system';
   if (operation === 'profileA' || operation === 'profileB') return 'matrix.profile';
   if (operation === 'definiteA' || operation === 'definiteB') return 'matrix.definiteness';
+  if (operation === 'svdA' || operation === 'svdB'
+    || operation === 'pinvA' || operation === 'pinvB'
+    || operation === 'condA' || operation === 'condB'
+    || operation === 'nrankA' || operation === 'nrankB') return 'matrix.numeric-decomposition';
   return 'matrix.matrix-arithmetic';
 }
 

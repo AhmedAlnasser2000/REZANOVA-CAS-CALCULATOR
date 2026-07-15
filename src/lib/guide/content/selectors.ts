@@ -873,7 +873,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'u dot v is the dot product, u cross v is the cross product, and norm(u) is the length of a vector.',
       'gram(p,q,r,...) applies Gram-Schmidt to one through six equal-length vectors and discards any zero residual as a dependent direction.',
       'parallel(p,q), distance(p,q), parallelogramArea(p,q), triangleArea(p,q), and volume(p,q,r) provide bounded geometric measures. Volume requires 3D vectors.',
-      'definite(A) classifies real square matrices as positive or negative definite, semidefinite, indefinite, or nonsymmetric; exact matrices through 6 by 6 use principal minors, while decimal matrices through 8 by 8 show a numerical tolerance.',
+      'definite(A) classifies real square matrices from exact principal minors or tolerance-labelled eigenvalues; svd(A), pinv(A), cond(A), and nrank(A) provide approximate numerical decomposition evidence through 8 by 8.',
     ],
     howToUse: [
       'Open Matrix for matrix operations and Vector for vector operations.',

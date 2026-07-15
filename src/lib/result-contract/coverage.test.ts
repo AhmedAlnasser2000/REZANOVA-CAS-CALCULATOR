@@ -59,8 +59,8 @@ function assertCanonicalExecution(
 }
 
 describe('canonical runtime corpus coverage', () => {
-  it('carries all 45 golden executions without compatibility result fields', async () => {
-    expect(goldenCases).toHaveLength(45);
+  it('carries all 46 golden executions without compatibility result fields', async () => {
+    expect(goldenCases).toHaveLength(46);
     for (const goldenCase of goldenCases) {
       assertCanonicalExecution(await runGoldenCase(goldenCase), goldenCase.id);
     }

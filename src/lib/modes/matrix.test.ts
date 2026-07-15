@@ -353,6 +353,23 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('labels and proves pseudoinverse runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'pinvA',
+      matrixA: [[3, 0], [4, 0]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('pinv(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.canonicalResult?.version).toBe(2);
+      expect(result.exactLatex).toContain('\\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}');
+      expect(result.detailSections?.[0]?.title).toBe('SVD Diagnostics');
+      expect(detailMathValues(result)).toHaveLength(6);
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

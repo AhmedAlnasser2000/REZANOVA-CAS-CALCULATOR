@@ -50,6 +50,10 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{basis}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'basis' });
     expect(parsed('\\operatorname{profile}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'profile' });
     expect(parsed('\\operatorname{definite}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'definiteness' });
+    expect(parsed('\\operatorname{svd}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'svd' });
+    expect(parsed('\\operatorname{pinv}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'pseudoinverse' });
+    expect(parsed('\\operatorname{cond}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'conditionNumber' });
+    expect(parsed('\\operatorname{nrank}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'numericalRank' });
     expect(parsed('\\operatorname{lu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{LU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{plu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });

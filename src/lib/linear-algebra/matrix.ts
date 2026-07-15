@@ -35,6 +35,10 @@ import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLinearMapProfile } from './matrix-linear-map-profile';
 import { runMatrixDefiniteness } from './matrix-definiteness';
+import {
+  runMatrixNumericDecomposition,
+  type MatrixNumericDecompositionOperation,
+} from './matrix-svd';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
@@ -316,6 +320,21 @@ function definitenessResponse(req: MatrixRequest): MatrixResponse | null {
       : { warnings: [], error: 'Matrix B is incomplete.' };
   }
   return null;
+}
+
+function numericDecompositionResponse(req: MatrixRequest): MatrixResponse | null {
+  const selector = /^(svd|pinv|cond|nrank)(A|B)$/u.exec(req.operation);
+  if (!selector) return null;
+  const operation = selector[1] as MatrixNumericDecompositionOperation;
+  const useMatrixA = selector[2] === 'A';
+  const matrix = useMatrixA ? req.matrixA : req.matrixB;
+  if (!matrix) return { warnings: [], error: 'Matrix B is incomplete.' };
+  return runMatrixNumericDecomposition({
+    operation,
+    label: useMatrixA ? matrixLabelA(req) : matrixLabelB(req),
+    matrix,
+    approxDigits: req.approxDigits,
+  });
 }
 
 function exactBasisResponse(req: MatrixRequest): MatrixResponse | null {
@@ -765,6 +784,11 @@ function runMatrixOperationInternal(req: MatrixRequest): MatrixResponse {
   const definiteResponse = definitenessResponse(req);
   if (definiteResponse) {
     return definiteResponse;
+  }
+
+  const decompositionResponse = numericDecompositionResponse(req);
+  if (decompositionResponse) {
+    return decompositionResponse;
   }
 
   const basisResponse = exactBasisResponse(req);

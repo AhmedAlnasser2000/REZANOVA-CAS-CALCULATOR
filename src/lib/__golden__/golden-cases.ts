@@ -695,6 +695,24 @@ export const goldenCases: GoldenCase[] = [
     },
   },
   {
+    id: 'matrix-pseudoinverse-rank-one',
+    lane: 'matrix-numeric-decomposition',
+    mode: 'matrix',
+    request: {
+      operation: 'pinvA',
+      matrixA: [[3, 0], [4, 0]],
+      matrixB: [[1, 0], [0, 1]],
+      approxDigits: 6,
+    },
+    expected: {
+      kind: 'success',
+      exactEquals: '\\operatorname{pinv}\\left(A\\right)\\approx \\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}',
+      detailTitlesInclude: ['SVD Diagnostics', 'Pseudoinverse Check'],
+      detailLinesInclude: ['Moore-Penrose reconstruction relation: A\\cdot\\operatorname{pinv}\\left(A\\right)\\cdot A\\approx A'],
+      warningIncludes: ['SVD, pseudoinverse, condition number, and numerical rank are approximate; inspect the displayed threshold.'],
+    },
+  },
+  {
     id: 'vector-dependent-independence-relation',
     lane: 'vector-foundations',
     mode: 'vector',
