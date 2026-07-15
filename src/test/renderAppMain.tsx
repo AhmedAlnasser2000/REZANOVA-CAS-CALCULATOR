@@ -72,10 +72,8 @@ export async function openGeometrySlope(user: AppUser) {
 export async function openStatisticsRegression(user: AppUser) {
   await openLauncherApp(user, 'Data', 'Statistics');
   await user.click(await screen.findByRole('tab', { name: 'Relationships' }));
-  await user.selectOptions(
-    await screen.findByRole('combobox', { name: 'Statistics tool' }),
-    'regression',
-  );
+  await user.click(await screen.findByRole('radio', { name: 'Regression' }));
+  await user.click(await screen.findByRole('radio', { name: 'Expression' }));
   await screen.findByTestId('main-editor');
 }
 

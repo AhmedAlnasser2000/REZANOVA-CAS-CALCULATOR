@@ -179,6 +179,69 @@
   background: var(--control-surface-hover);
 }
 
+.statistics-input-mode-bar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statistics-input-mode-control {
+  width: min(100%, 22rem);
+}
+
+.statistics-expression-error {
+  max-width: 60ch;
+  margin: 0;
+  color: #ffd0c7;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.statistics-workspace-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21.5rem), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.statistics-workspace-layout.is-expression {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.statistics-guided-column,
+.statistics-authority-column,
+.statistics-display-panel-host {
+  min-width: 0;
+}
+
+.statistics-display-panel-host {
+  display: grid;
+}
+
+.statistics-display-panel-host > .statistics-embedded-display-panel {
+  width: 100%;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.statistics-display-panel-host .display-panel strong {
+  color: var(--lcd-ink);
+}
+
+.statistics-display-panel-host .display-editor,
+.statistics-display-panel-host .display-preview,
+.statistics-display-panel-host .display-result {
+  border-radius: 8px;
+}
+
+.statistics-guided-column .statistics-probability-layout,
+.statistics-guided-column .statistics-relationships-layout,
+.statistics-guided-column .statistics-inference-layout,
+.statistics-guided-column .statistics-data-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .statistics-tool-select {
   display: grid;
   grid-template-columns: auto minmax(180px, 280px);
@@ -255,6 +318,7 @@
 }
 
 .statistics-segmented-control button:focus-visible,
+.statistics-input-mode-bar button:focus-visible,
 .statistics-data-summary button:focus-visible,
 .statistics-data-summary select:focus-visible,
 .statistics-data-summary textarea:focus-visible {
@@ -408,5 +472,10 @@
 
   .statistics-control-bar {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statistics-input-mode-bar {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

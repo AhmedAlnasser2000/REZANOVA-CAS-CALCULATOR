@@ -292,6 +292,7 @@ export default function App() {
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
   const [keypadLayerLocked, setKeypadLayerLocked] = useState(false);
+  const [statisticsDisplayHost, setStatisticsDisplayHost] = useState<HTMLDivElement | null>(null);
   const effectiveKeypadLayer = keypadMomentaryLayer ?? keypadLayer;
   const [replayVariableSubstitutions, setReplayVariableSubstitutions] =
     useState<{
@@ -805,7 +806,7 @@ export default function App() {
     addRegressionPoint,
     addStatisticsFrequencyRow,
     binomialState,
-    buildStatisticsDraftForScreen,
+    changeStatisticsInputMode,
     currentStatisticsMenuIndex, dataSummaryState,
     expandStatisticsTableToDataset,
     focusStatisticsEditor,
@@ -814,12 +815,12 @@ export default function App() {
     importDatasetIntoFrequencyTable,
     isStatisticsDraftFocused,
     isStatisticsMenuOpen,
-    loadStatisticsDraft,
     loadStatisticsDraftForLatex,
     loadStatisticsExample,
     meanInferenceState,
     moveCurrentStatisticsMenuSelection,
     normalState,
+    openStatisticsExpressionMode,
     openSelectedStatisticsMenuEntry,
     openStatisticsScreen,
     poissonState,
@@ -843,7 +844,7 @@ export default function App() {
     statisticsDraftFieldRef,
     statisticsDraftLatex,
     statisticsDraftState,
-    statisticsEditorIsEditable,
+    statisticsEditorIsEditable, statisticsExpressionError,
     statisticsFilledFrequencyRowCount,
     statisticsFrequencyValueRef,
     statisticsMeanInferenceLevelRef,
@@ -857,7 +858,7 @@ export default function App() {
     statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
-    statisticsSection, activeStatisticsResultIsStale,
+    statisticsSection, statisticsInputMode, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary,
     statisticsWorkbenchExpression,
@@ -1210,7 +1211,7 @@ export default function App() {
       : currentMode === 'trigonometry'
         ? trigDraftLatex
       : currentMode === 'statistics'
-        ? statisticsDraftLatex
+        ? (statisticsInputMode === 'guided' ? statisticsWorkbenchExpression : statisticsDraftLatex)
       : currentMode === 'geometry'
         ? geometryDraftLatex
       : currentMode === 'matrix' ? linearAlgebraRuntime.matrixEditorLatex
@@ -1668,7 +1669,7 @@ export default function App() {
     }
 
     if (currentMode === 'statistics') {
-      return statisticsDraftLatex;
+      return statisticsInputMode === 'guided' ? statisticsWorkbenchExpression : statisticsDraftLatex;
     }
 
     if (currentMode === 'geometry') {
@@ -1800,8 +1801,10 @@ export default function App() {
     }
 
     if (currentMode === 'statistics') {
-      focusStatisticsEditor();
-      setClipboardNotice('Statistics editor focused');
+      const openingGeneratedRequest = statisticsInputMode === 'guided';
+      if (openingGeneratedRequest) openStatisticsExpressionMode(true);
+      else focusStatisticsEditor();
+      setClipboardNotice(openingGeneratedRequest ? 'Generated request opened in Expression' : 'Statistics editor focused');
       return;
     }
 
@@ -2902,6 +2905,7 @@ export default function App() {
           statisticsKeyboardLayouts={statisticsKeyboardLayouts}
           statisticsMenuFooterText={statisticsMenuFooterText}
           partialDerivativeState={partialDerivativeState}
+          portalTarget={currentMode === 'statistics' ? statisticsDisplayHost : null} suppressWhenPortalUnavailable={currentMode === 'statistics'} statisticsInputMode={statisticsInputMode}
           statisticsRouteMeta={statisticsRouteMeta}
           statisticsScreen={statisticsScreen} setPartialDerivativeState={setPartialDerivativeState}
           symbolicDisplayPrefs={symbolicDisplayPrefs}
@@ -3096,7 +3100,9 @@ export default function App() {
                 routeMeta={statisticsRouteMeta}
                 screen={statisticsScreen}
                 activeSection={statisticsSection}
+                inputMode={statisticsInputMode} expressionError={statisticsExpressionError}
                 resultIsStale={activeStatisticsResultIsStale}
+                displayHostRef={setStatisticsDisplayHost} onInputModeChange={changeStatisticsInputMode}
                 onOpenSection={statisticsRuntime.openStatisticsSection}
                 isMenuOpen={isStatisticsMenuOpen}
                 menuPanelRef={statisticsMenuPanelRef}
@@ -3117,7 +3123,7 @@ export default function App() {
                 onSwitchSource={switchStatisticsSource}
                 onImportDatasetIntoFrequencyTable={importDatasetIntoFrequencyTable}
                 onExpandTableToDataset={expandStatisticsTableToDataset}
-                onUseInStatistics={() => loadStatisticsDraft(buildStatisticsDraftForScreen(statisticsScreen), 'guided', true)}
+                onUseInStatistics={() => openStatisticsExpressionMode(true)}
                 workbenchExpression={statisticsWorkbenchExpression}
                 onCopyWorkbenchExpression={copyStatisticsWorkbenchExpression}
                 frequencyTable={frequencyTable} dataSummaryState={dataSummaryState} setDataSummaryState={setDataSummaryState}

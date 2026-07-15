@@ -101,6 +101,9 @@ export function useStatisticsRuntime({
     useState<StatisticsSection>('dataSummary');
   const [statisticsInputMode, setStatisticsInputMode] =
     useState<StatisticsInputMode>('guided');
+  const [statisticsExpressionDraftInitialized, setStatisticsExpressionDraftInitialized] =
+    useState(false);
+  const [statisticsExpressionError, setStatisticsExpressionError] = useState<string | null>(null);
   const [statisticsSectionScreens, setStatisticsSectionScreens] = useState(
     defaultStatisticsSectionScreens,
   );
@@ -133,7 +136,7 @@ export function useStatisticsRuntime({
   );
   const [statisticsDraftState, setStatisticsDraftState] = useState<CoreDraftState>(() =>
     createCoreDraftState(
-      defaultStatisticsDraftForScreen('descriptive', 'dataset'),
+      '',
       'structured',
       'guided',
       true,
@@ -202,6 +205,7 @@ export function useStatisticsRuntime({
       : '';
   const statisticsEditorIsEditable =
     currentMode === 'statistics'
+    && statisticsInputMode === 'expression'
     && statisticsRouteMeta?.editorMode === 'editable'
     && isCoreDraftEditable(statisticsDraftState);
   const statisticsDatasetText = statisticsDatasetDraftText;
@@ -216,11 +220,13 @@ export function useStatisticsRuntime({
         ? 'List has newer edits; the frequency-table draft is preserved.'
         : 'List and frequency table currently represent the same data.';
   const activeStatisticsSectionResult = statisticsSectionResults[statisticsSection] ?? null;
-  const activeStatisticsInputLatex = buildStatisticsInputLatex(
-    statisticsSectionScreens[statisticsSection],
-    statisticsStateSnapshot,
-    statisticsWorkingSource,
-  );
+  const activeStatisticsInputLatex = statisticsInputMode === 'expression'
+    ? statisticsDraftState.rawLatex
+    : buildStatisticsInputLatex(
+        statisticsSectionScreens[statisticsSection],
+        statisticsStateSnapshot,
+        statisticsWorkingSource,
+      );
   const activeStatisticsInputRevisionId = buildStatisticsOoeInputRevisionId({
     inputLatex: activeStatisticsInputLatex,
     screenHint: statisticsSectionScreens[statisticsSection],
@@ -230,19 +236,6 @@ export function useStatisticsRuntime({
     activeStatisticsSectionResult
     && activeStatisticsSectionResult.inputRevisionId !== activeStatisticsInputRevisionId,
   );
-
-  function statisticsDraftStateForScreen(
-    _screen: StatisticsScreen,
-    rawLatex: string,
-    source: CoreDraftState['source'],
-  ) {
-    return createCoreDraftState(
-      rawLatex,
-      statisticsDraftStyle(rawLatex),
-      source,
-      true,
-    );
-  }
 
   function statisticsWorkingSourceForScreen(screen: StatisticsScreen): StatisticsWorkingSource {
     if (screen === 'home' || screen === 'probabilityHome' || screen === 'inferenceHome') {
@@ -282,6 +275,8 @@ export function useStatisticsRuntime({
       source,
       executable,
     });
+    setStatisticsExpressionDraftInitialized(true);
+    setStatisticsExpressionError(null);
   }
 
   function focusStatisticsEditor() {
@@ -295,6 +290,7 @@ export function useStatisticsRuntime({
     focusEditor = true,
   ) {
     updateStatisticsDraft(rawLatex, source, true);
+    setStatisticsInputMode('expression');
     if (focusEditor) {
       setTimeout(() => {
         focusStatisticsEditor();
@@ -311,13 +307,65 @@ export function useStatisticsRuntime({
         source: 'manual',
         executable: !isStatisticsMenuScreen(screen),
       });
+      setStatisticsExpressionDraftInitialized(true);
+      setStatisticsExpressionError(null);
+      setStatisticsInputMode('expression');
     }
   }
 
   function loadStatisticsDraftForLatex(rawLatex: string) {
     const parsed = parseStatisticsDraft(rawLatex);
     openStatisticsScreen(parsed.ok ? statisticsRequestToScreen(parsed.request) : 'dataEntry');
-    loadStatisticsDraft(rawLatex, 'guided', true);
+    loadStatisticsDraft(rawLatex, 'manual', true);
+    setStatisticsInputMode('expression');
+  }
+
+  function readStatisticsExpressionDraft() {
+    const liveLatex = statisticsDraftFieldRef.current?.getValue?.('latex');
+    return typeof liveLatex === 'string'
+      ? trimHarmlessTrailingMathSpacing(liveLatex)
+      : statisticsDraftStateRef.current.rawLatex;
+  }
+
+  function openStatisticsExpressionMode(replaceWithGenerated = false) {
+    if (replaceWithGenerated || !statisticsExpressionDraftInitialized) {
+      const generated = buildStatisticsDraftForScreen(statisticsScreen)
+        || defaultStatisticsDraftForScreen(statisticsScreen, statisticsWorkingSource);
+      updateStatisticsDraft(generated, 'guided', true);
+    } else {
+      setStatisticsExpressionError(null);
+    }
+    setStatisticsInputMode('expression');
+    setTimeout(() => focusStatisticsEditor(), 0);
+  }
+
+  function importStatisticsExpressionIntoGuided() {
+    const rawLatex = readStatisticsExpressionDraft();
+    const parsed = parseStatisticsDraft(rawLatex, {
+      screenHint: statisticsScreen,
+      workingSourceHint: statisticsWorkingSource,
+    });
+    if (!parsed.ok) {
+      setStatisticsExpressionError(parsed.error);
+      return false;
+    }
+
+    const importedScreen = statisticsRequestToScreen(parsed.request, statisticsScreen);
+    updateStatisticsDraft(rawLatex, 'manual', true);
+    openStatisticsScreen(importedScreen);
+    applyStatisticsRequest(parsed.request);
+    setStatisticsInputMode('guided');
+    setStatisticsExpressionError(null);
+    return true;
+  }
+
+  function changeStatisticsInputMode(mode: StatisticsInputMode) {
+    if (mode === statisticsInputMode) return;
+    if (mode === 'expression') {
+      openStatisticsExpressionMode(false);
+      return;
+    }
+    importStatisticsExpressionIntoGuided();
   }
 
   function isStatisticsDraftFocused(target?: EventTarget | null) {
@@ -332,15 +380,13 @@ export function useStatisticsRuntime({
     return activeFieldRef.current === statisticsDraftFieldRef.current;
   }
 
-  function readLiveStatisticsInputLatex(screenHint: StatisticsScreen, editorFocused: boolean) {
-    const shouldUseGuidedForm =
-      !editorFocused && statisticsRouteMeta?.focusTarget === 'guidedForm';
-    if (shouldUseGuidedForm) {
+  function readLiveStatisticsInputLatex(screenHint: StatisticsScreen, useExpressionDraft: boolean) {
+    if (!useExpressionDraft) {
       return buildStatisticsDraftForScreen(screenHint);
     }
 
     let inputLatex = statisticsDraftStateRef.current.rawLatex.trim();
-    if (currentModeRef.current === 'statistics' && statisticsEditorIsEditable) {
+    if (currentModeRef.current === 'statistics') {
       const liveField = statisticsDraftFieldRef.current
         ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
       const fieldLatex = liveField?.getValue?.('latex');
@@ -404,16 +450,6 @@ export function useStatisticsRuntime({
     }));
     const nextWorkingSource = statisticsWorkingSourceForScreen(workspaceScreen);
     setStatisticsWorkingSource(nextWorkingSource);
-    if (!isStatisticsMenuScreen(workspaceScreen)) {
-      setStatisticsDraftState(
-        statisticsDraftStateForScreen(
-          workspaceScreen,
-          buildStatisticsDraftForScreen(workspaceScreen, nextWorkingSource)
-            || defaultStatisticsDraftForScreen(workspaceScreen, nextWorkingSource),
-          'guided',
-        ),
-      );
-    }
     setDisplayOutcome(statisticsSectionResults[nextSection]?.outcome ?? null);
   }
 
@@ -540,18 +576,6 @@ export function useStatisticsRuntime({
 
   function switchStatisticsSource(source: StatisticsWorkingSource) {
     setStatisticsWorkingSource(source);
-    if (
-      !isStatisticsMenuScreen(statisticsScreen)
-      && (statisticsScreen === 'descriptive'
-        || statisticsScreen === 'frequency'
-        || statisticsScreen === 'meanInference')
-    ) {
-      updateStatisticsDraft(
-        buildStatisticsInputLatex(statisticsScreen, statisticsStateSnapshot, source),
-        'guided',
-        true,
-      );
-    }
   }
 
   function importDatasetIntoFrequencyTable() {
@@ -564,24 +588,6 @@ export function useStatisticsRuntime({
     setFrequencyTable(nextTable);
     setStatisticsWorkingSource('frequencyTable');
     setStatisticsSourceSyncState(clearStatisticsSourceSyncState());
-    if (
-      statisticsScreen === 'frequency'
-      || statisticsScreen === 'descriptive'
-      || statisticsScreen === 'meanInference'
-    ) {
-      updateStatisticsDraft(
-        buildStatisticsInputLatex(
-          statisticsScreen,
-          {
-            ...statisticsStateSnapshot,
-            frequencyTable: nextTable,
-          },
-          'frequencyTable',
-        ),
-        'guided',
-        true,
-      );
-    }
     setClipboardNotice('Frequency table built from dataset');
   }
 
@@ -600,25 +606,6 @@ export function useStatisticsRuntime({
     setStatisticsDatasetDraftText(datasetTextFromValues(nextDataset.values));
     setStatisticsWorkingSource('dataset');
     setStatisticsSourceSyncState(clearStatisticsSourceSyncState());
-    if (
-      statisticsScreen === 'dataEntry'
-      || statisticsScreen === 'descriptive'
-      || statisticsScreen === 'frequency'
-      || statisticsScreen === 'meanInference'
-    ) {
-      updateStatisticsDraft(
-        buildStatisticsInputLatex(
-          statisticsScreen,
-          {
-            ...statisticsStateSnapshot,
-            dataset: nextDataset,
-          },
-          'dataset',
-        ),
-        'guided',
-        true,
-      );
-    }
     setClipboardNotice('Dataset expanded from frequency table');
   }
 
@@ -702,6 +689,8 @@ export function useStatisticsRuntime({
         source: 'manual',
         executable: true,
       });
+      setStatisticsExpressionDraftInitialized(true);
+      setStatisticsExpressionError(null);
       return;
     }
 
@@ -725,6 +714,8 @@ export function useStatisticsRuntime({
         source: 'manual',
         executable: true,
       });
+      setStatisticsExpressionDraftInitialized(true);
+      setStatisticsExpressionError(null);
     } else if (entry.statisticsScreen) {
       openStatisticsScreen(entry.statisticsScreen);
       setStatisticsDraftState({
@@ -733,6 +724,8 @@ export function useStatisticsRuntime({
         source: 'manual',
         executable: true,
       });
+      setStatisticsExpressionDraftInitialized(true);
+      setStatisticsExpressionError(null);
     } else {
       openStatisticsScreen('home');
     }
@@ -750,12 +743,10 @@ export function useStatisticsRuntime({
     screen: StatisticsScreen,
     workingSource?: StatisticsWorkingSource,
   ) {
-    setStatisticsDraftState(
-      statisticsDraftStateForScreen(
-        screen,
-        defaultStatisticsDraftForScreen(screen, workingSource),
-        'guided',
-      ),
+    updateStatisticsDraft(
+      defaultStatisticsDraftForScreen(screen, workingSource),
+      'guided',
+      true,
     );
   }
 
@@ -793,6 +784,8 @@ export function useStatisticsRuntime({
     setStatisticsScreen('descriptive');
     setStatisticsSection('dataSummary');
     setStatisticsInputMode('guided');
+    setStatisticsExpressionDraftInitialized(false);
+    setStatisticsExpressionError(null);
     setStatisticsSectionScreens(defaultStatisticsSectionScreens());
     setStatisticsSectionResults({});
     setStatisticsMenuSelection({ home: 0, probabilityHome: 0, inferenceHome: 0 });
@@ -804,7 +797,7 @@ export function useStatisticsRuntime({
     setPoissonState(DEFAULT_POISSON_STATE); setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
     setRelationshipsState(DEFAULT_STATISTICS_RELATIONSHIPS_STATE);
     setStatisticsDraftState(createCoreDraftState(
-      defaultStatisticsDraftForScreen('descriptive', 'dataset'),
+      '',
       'structured',
       'guided',
       true,
@@ -814,6 +807,7 @@ export function useStatisticsRuntime({
   function captureStatisticsSurfaceState(): StatisticsSurfaceState {
     return copyStatisticsSurfaceState({
       statisticsScreen, statisticsSection, statisticsInputMode,
+      statisticsExpressionDraftInitialized,
       statisticsSectionScreens, statisticsSectionResults,
       statisticsMenuSelection, statisticsWorkingSource,
       statisticsSourceSyncState, statsDataset, statisticsDatasetDraftText, frequencyTable,
@@ -833,6 +827,8 @@ export function useStatisticsRuntime({
     setStatisticsScreen(copy.statisticsScreen);
     setStatisticsSection(copy.statisticsSection);
     setStatisticsInputMode(copy.statisticsInputMode);
+    setStatisticsExpressionDraftInitialized(copy.statisticsExpressionDraftInitialized ?? false);
+    setStatisticsExpressionError(null);
     setStatisticsSectionScreens(copy.statisticsSectionScreens);
     setStatisticsSectionResults(copy.statisticsSectionResults);
     setStatisticsMenuSelection(copy.statisticsMenuSelection); setStatisticsWorkingSource(copy.statisticsWorkingSource);
@@ -845,8 +841,8 @@ export function useStatisticsRuntime({
   }
 
   function runStatisticsAction() {
-    const editorFocused = isStatisticsDraftFocused();
-    if (isStatisticsMenuOpen && !editorFocused) {
+    const useExpressionDraft = statisticsInputMode === 'expression';
+    if (isStatisticsMenuOpen && !useExpressionDraft) {
       return;
     }
 
@@ -857,8 +853,7 @@ export function useStatisticsRuntime({
       );
       const originSection = statisticsSectionForScreen(screenHint);
       const originWorkspace = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
-      const useExpressionDraft = editorFocused;
-      const inputLatex = readLiveStatisticsInputLatex(screenHint, editorFocused);
+      const inputLatex = readLiveStatisticsInputLatex(screenHint, useExpressionDraft);
 
       if (!inputLatex) {
         setDisplayOutcome(createCanonicalRuntimeError(
@@ -868,8 +863,8 @@ export function useStatisticsRuntime({
         return;
       }
 
-      if (!editorFocused || statisticsDraftState.rawLatex.trim() !== inputLatex) {
-        setStatisticsDraftState(statisticsDraftStateForScreen(screenHint, inputLatex, 'guided'));
+      if (useExpressionDraft && statisticsDraftState.rawLatex.trim() !== inputLatex) {
+        updateStatisticsDraft(inputLatex, 'manual', true);
       }
 
       const request: RunStatisticsRuntimeRequest = {
@@ -953,6 +948,7 @@ export function useStatisticsRuntime({
     dataSummaryState, setDataSummaryState,
     currentStatisticsMenuIndex, expandStatisticsTableToDataset, focusStatisticsEditor, frequencyTable,
     goBackInStatistics, importDatasetIntoFrequencyTable, isStatisticsDraftFocused,
+    changeStatisticsInputMode, importStatisticsExpressionIntoGuided,
     isStatisticsMenuOpen, loadStatisticsDraft, loadStatisticsDraftForLatex, loadStatisticsExample,
     meanInferenceState, moveCurrentStatisticsMenuSelection, normalState, openSelectedStatisticsMenuEntry,
     openStatisticsScreen, openStatisticsSection, poissonState, regressionState, removeRegressionPoint, removeStatisticsFrequencyRow,
@@ -965,7 +961,8 @@ export function useStatisticsRuntime({
     statisticsMeanInferenceLevelRef, statisticsMenuEntries, statisticsMenuFooterText, statisticsMenuPanelRef,
     statisticsMenuSelection, statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRelationshipsText,
     statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSection,
-    statisticsInputMode, setStatisticsInputMode, statisticsSectionScreens,
+    statisticsExpressionError, statisticsExpressionDraftInitialized,
+    statisticsInputMode, openStatisticsExpressionMode, setStatisticsInputMode, statisticsSectionScreens,
     activeStatisticsSectionResult, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary, statisticsWorkbenchExpression,

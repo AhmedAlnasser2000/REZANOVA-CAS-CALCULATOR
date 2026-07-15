@@ -4,6 +4,7 @@ import { DisplayOutcomeShell } from './display-panel/DisplayOutcomeShell';
 import { DisplayPreviewSurface } from './display-panel/DisplayPreviewSurface';
 import { useDisplayRenderQueue } from './display-panel/useDisplayRenderQueue';
 import { useLanguage } from '../../lib/language/language-context';
+import { createPortal } from 'react-dom';
 
 type DisplayPanelProps = Record<string, any>;
 
@@ -118,6 +119,9 @@ function DisplayPanel({
   statisticsKeyboardLayouts,
   statisticsMenuFooterText,
   partialDerivativeState,
+  portalTarget,
+  suppressWhenPortalUnavailable = false,
+  statisticsInputMode = 'expression',
   statisticsRouteMeta,
   statisticsScreen,
   setPartialDerivativeState,
@@ -169,8 +173,8 @@ function DisplayPanel({
   const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
   const suppressCalculusExpressionPreview = calculusMainEditorActive;
 
-  return (
-  <section className="display-panel">
+  const panel = (
+  <section className={`display-panel ${currentMode === 'statistics' ? 'statistics-embedded-display-panel' : ''}`}>
     <div className="display-header">
       <span className="display-header-label">{displayHeaderLabel}</span>
       {showEditorRuntimeControls ? (
@@ -204,6 +208,7 @@ function DisplayPanel({
       ) : null}
       <span className="display-header-status" data-testid="display-status">{displayStatus}</span>
     </div>
+    {currentMode !== 'statistics' || statisticsInputMode === 'expression' ? (
     <DisplayEditorSurface
       activeFieldRef={activeFieldRef}
       activeLauncherCategory={activeLauncherCategory}
@@ -287,6 +292,8 @@ function DisplayPanel({
       vectorNamedValueNames={vectorNamedValueNames}
       setVectorEditorLatex={setVectorEditorLatex}
     />
+    ) : null}
+    {currentMode !== 'statistics' || statisticsInputMode === 'expression' ? (
     <DisplayPreviewSurface
       activeExpressionLatex={activeExpressionLatex}
       calculusRouteMeta={calculusRouteMeta}
@@ -324,6 +331,7 @@ function DisplayPanel({
       suppressExpressionPreview={suppressCalculusExpressionPreview}
       trigRouteMeta={trigRouteMeta}
     />
+    ) : null}
     <DisplayOutcomeShell
       activeAlgebraTransforms={activeAlgebraTransforms}
       activeExpressionLatex={activeExpressionLatex}
@@ -381,6 +389,10 @@ function DisplayPanel({
     />
   </section>
   );
+  if (suppressWhenPortalUnavailable && !portalTarget) {
+    return null;
+  }
+  return portalTarget ? createPortal(panel, portalTarget) : panel;
 }
 
 export { DisplayPanel };

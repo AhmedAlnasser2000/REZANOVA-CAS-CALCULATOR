@@ -245,6 +245,73 @@ describe('useStatisticsRuntime', () => {
       source: 'manual',
       executable: true,
     });
+    expect(hook.result.current.statisticsInputMode).toBe('expression');
+  });
+
+  it('seeds Expression once and preserves its draft across section changes', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    expect(hook.result.current.statisticsInputMode).toBe('guided');
+    expect(hook.result.current.statisticsExpressionDraftInitialized).toBe(false);
+    expect(hook.result.current.statisticsDraftLatex).toBe('');
+
+    act(() => {
+      hook.result.current.changeStatisticsInputMode('expression');
+    });
+
+    expect(hook.result.current.statisticsInputMode).toBe('expression');
+    expect(hook.result.current.statisticsDraftLatex).toContain('descriptive(values=');
+
+    act(() => {
+      hook.result.current.updateStatisticsDraft('normal(mean=3,sd=2,event=atLeast,x=5)', 'manual', true);
+      hook.result.current.openStatisticsSection('probability');
+    });
+
+    expect(hook.result.current.statisticsDraftLatex)
+      .toBe('normal(mean=3,sd=2,event=atLeast,x=5)');
+  });
+
+  it('imports a valid Expression into Guided and activates its section', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.loadStatisticsDraft(
+        'meanInference(values={12,15,18},mode=test,level=95%,mu0=14,alternative=greater)',
+        'manual',
+        false,
+      );
+    });
+    act(() => {
+      hook.result.current.changeStatisticsInputMode('guided');
+    });
+
+    expect(hook.result.current.statisticsInputMode).toBe('guided');
+    expect(hook.result.current.statisticsSection).toBe('inference');
+    expect(hook.result.current.meanInferenceState).toMatchObject({
+      mode: 'test',
+      level: '95%',
+      mu0: '14',
+      alternative: 'greater',
+    });
+    expect(hook.result.current.statsDataset.values).toEqual(['12', '15', '18']);
+    expect(hook.result.current.statisticsExpressionError).toBeNull();
+  });
+
+  it('keeps an invalid Expression intact and refuses the Guided switch', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.loadStatisticsDraft('normal(mean=0,sd=1,event=between)', 'manual', false);
+    });
+    act(() => {
+      hook.result.current.changeStatisticsInputMode('guided');
+    });
+
+    expect(hook.result.current.statisticsInputMode).toBe('expression');
+    expect(hook.result.current.statisticsDraftLatex)
+      .toBe('normal(mean=0,sd=1,event=between)');
+    expect(hook.result.current.statisticsExpressionError)
+      .toBe('event=between needs lower=... and upper=....');
   });
 
   it('keeps one paired dataset while switching relationship analyses', () => {
@@ -295,7 +362,7 @@ describe('useStatisticsRuntime', () => {
       hook.result.current.openStatisticsScreen('binomial');
     });
     act(() => {
-      hook.result.current.updateStatisticsDraft('', 'manual', true);
+      hook.result.current.loadStatisticsDraft('', 'manual', false);
     });
     const field = {
       getValue: () => '',
@@ -321,7 +388,6 @@ describe('useStatisticsRuntime', () => {
       statisticsEnvelope('commitAllowed', payload),
     );
     const {
-      activeFieldRef,
       commitOutcome,
       hook,
       reserveHistoryTicket,
@@ -341,7 +407,6 @@ describe('useStatisticsRuntime', () => {
       getValue: () => BINOMIAL_LATEX,
     } as MathfieldElement;
     hook.result.current.statisticsDraftFieldRef.current = field;
-    activeFieldRef.current = field;
 
     act(() => {
       hook.result.current.runStatisticsAction();
@@ -595,8 +660,8 @@ describe('useStatisticsRuntime', () => {
 
     expect(hook.result.current.statisticsScreen).toBe('descriptive');
     expect(hook.result.current.normalState.mean).toBe('0');
-    expect(hook.result.current.statisticsDraftState.rawLatex).toBe(
-      'descriptive(values={12,15,15,18,20}, quartiles=halves, context=compare)',
-    );
+    expect(hook.result.current.statisticsInputMode).toBe('guided');
+    expect(hook.result.current.statisticsExpressionDraftInitialized).toBe(false);
+    expect(hook.result.current.statisticsDraftState.rawLatex).toBe('');
   });
 });

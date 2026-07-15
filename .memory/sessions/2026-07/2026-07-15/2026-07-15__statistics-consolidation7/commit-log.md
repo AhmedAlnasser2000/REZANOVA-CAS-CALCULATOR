@@ -24,4 +24,5 @@
 - `STATISTICS-PROBABILITY1`: recorded by the verified Gate 3 checkpoint under standing user approval.
 - `STATISTICS-RELATIONSHIPS1`: recorded by the verified Gate 4 checkpoint under standing user approval.
 - `STATISTICS-INFERENCE1`: recorded by the verified Gate 5 checkpoint under standing user approval.
+- `STATISTICS-GUIDED-EXPRESSION1`: recorded by the verified Gate 6 checkpoint under standing user approval.
 - No push is authorized.

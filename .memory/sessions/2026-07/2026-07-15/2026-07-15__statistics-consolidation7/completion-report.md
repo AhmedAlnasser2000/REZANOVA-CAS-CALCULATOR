@@ -21,11 +21,12 @@
 - `STATISTICS-PROBABILITY1` is implemented and verified.
 - `STATISTICS-RELATIONSHIPS1` is implemented and verified.
 - `STATISTICS-INFERENCE1` is implemented and verified.
-- Gates 6-7 remain in the approved Statistics consolidation program.
+- `STATISTICS-GUIDED-EXPRESSION1` is implemented and verified.
+- Gate 7 remains in the approved Statistics consolidation program but is explicitly not started.
 - Plotting, diagrams, histograms, distribution charts, and scatter plots remain excluded until Gate 7 closes.
 
 ## Next Checkpoint
 
-- Continue with `STATISTICS-GUIDED-EXPRESSION1`.
+- Stop before `STATISTICS-CONSOLIDATION-POLISH1` as requested by the user.
 - Standing user approval covers all seven named gate commits.
 - Do not push.

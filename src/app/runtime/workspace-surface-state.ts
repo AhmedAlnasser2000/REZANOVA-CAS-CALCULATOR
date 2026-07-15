@@ -165,6 +165,7 @@ export type StatisticsSurfaceState = {
   statisticsScreen: StatisticsScreen;
   statisticsSection: StatisticsSection;
   statisticsInputMode: StatisticsInputMode;
+  statisticsExpressionDraftInitialized?: boolean;
   statisticsSectionScreens: Record<StatisticsSection, StatisticsScreen>;
   statisticsSectionResults: Partial<Record<StatisticsSection, {
     outcome: CanonicalRuntimeOutcome;

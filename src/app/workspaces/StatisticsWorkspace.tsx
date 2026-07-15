@@ -56,7 +56,11 @@ type StatisticsWorkspaceProps = {
   routeMeta: StatisticsRouteMetaLike | null;
   screen: StatisticsScreen;
   activeSection: StatisticsSection;
+  inputMode: 'guided' | 'expression';
+  expressionError: string | null;
   resultIsStale: boolean;
+  displayHostRef: (node: HTMLDivElement | null) => void;
+  onInputModeChange: (mode: 'guided' | 'expression') => void;
   onOpenSection: (section: StatisticsSection) => void;
   isMenuOpen: boolean;
   menuPanelRef: RefObject<HTMLDivElement | null>;
@@ -117,7 +121,11 @@ function StatisticsWorkspace({
   routeMeta,
   screen,
   activeSection,
+  inputMode,
+  expressionError,
   resultIsStale,
+  displayHostRef,
+  onInputModeChange,
   onOpenSection,
   isMenuOpen,
   menuPanelRef,
@@ -222,6 +230,38 @@ function StatisticsWorkspace({
           </button>
         ))}
       </div>
+      <div className="statistics-input-mode-bar">
+        <div className="statistics-control-group">
+          <span id="statistics-input-mode-label">Input mode</span>
+          <div
+            className="statistics-segmented-control statistics-input-mode-control"
+            role="radiogroup"
+            aria-labelledby="statistics-input-mode-label"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={inputMode === 'guided'}
+              className={inputMode === 'guided' ? 'is-active' : ''}
+              onClick={() => onInputModeChange('guided')}
+            >
+              Guided
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={inputMode === 'expression'}
+              className={inputMode === 'expression' ? 'is-active' : ''}
+              onClick={() => onInputModeChange('expression')}
+            >
+              Expression
+            </button>
+          </div>
+        </div>
+        {expressionError ? (
+          <p className="statistics-expression-error" role="alert">{expressionError}</p>
+        ) : null}
+      </div>
       {SECTION_TOOLS[activeSection].length > 1
         && activeSection !== 'dataSummary'
         && activeSection !== 'probability'
@@ -266,6 +306,9 @@ function StatisticsWorkspace({
         </div>
       </div>
 
+      <div className={`statistics-workspace-layout is-${inputMode}`}>
+        {inputMode === 'guided' ? (
+          <div className="statistics-guided-column">
       {isMenuOpen ? (
         <>
           <div
@@ -378,10 +421,20 @@ function StatisticsWorkspace({
             <span className="equation-badge">Statistics</span>
           </div>
           <p className="equation-hint">
-            Use the top Statistics editor for the active request, or return to a guided tool from the menu.
+            Choose a guided tool or switch to Expression to edit a Statistics request directly.
           </p>
         </div>
       )}
+          </div>
+        ) : null}
+        <div className="statistics-authority-column" aria-label="Statistics expression and result">
+          <div
+            ref={displayHostRef}
+            className="statistics-display-panel-host"
+            data-testid="statistics-display-panel-host"
+          />
+        </div>
+      </div>
     </section>
   );
 }

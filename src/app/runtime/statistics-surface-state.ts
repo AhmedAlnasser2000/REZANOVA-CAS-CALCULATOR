@@ -55,6 +55,9 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     statisticsScreen,
     statisticsSection,
     statisticsInputMode: state.statisticsInputMode ?? 'guided',
+    statisticsExpressionDraftInitialized:
+      state.statisticsExpressionDraftInitialized
+      ?? state.statisticsDraftState.source === 'manual',
     statisticsSectionScreens: {
       ...defaultStatisticsSectionScreens(),
       ...state.statisticsSectionScreens,
