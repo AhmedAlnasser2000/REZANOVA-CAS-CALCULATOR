@@ -239,6 +239,58 @@
   border-radius: 8px;
 }
 
+.statistics-result-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  border: 1px solid rgba(21, 37, 27, 0.22);
+  border-radius: 8px;
+  background: rgba(21, 37, 27, 0.08);
+  color: var(--lcd-ink);
+  cursor: pointer;
+  font: inherit;
+}
+
+.statistics-result-view-toggle:hover,
+.statistics-result-view-toggle:focus-visible {
+  border-color: rgba(21, 37, 27, 0.46);
+  background: rgba(21, 37, 27, 0.14);
+}
+
+.statistics-result-view--contained .display-result {
+  max-height: min(44rem, calc(100vh - 10rem));
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.statistics-result-view--full .display-result {
+  max-height: none;
+  overflow: visible;
+}
+
+.statistics-embedded-display-panel .result-answer-block,
+.statistics-embedded-display-panel .result-validity-block,
+.statistics-embedded-display-panel .result-collapsible-body {
+  max-height: none;
+  overflow-y: visible;
+}
+
+.statistics-embedded-display-panel .result-answer-rows {
+  gap: 16px;
+}
+
+.statistics-embedded-display-panel .result-math-list-row {
+  overflow-x: visible;
+}
+
+.statistics-embedded-display-panel .result-answer-row-math {
+  width: auto;
+  max-width: 100%;
+}
+
 .statistics-guided-column .statistics-probability-layout,
 .statistics-guided-column .statistics-relationships-layout,
 .statistics-guided-column .statistics-inference-layout,

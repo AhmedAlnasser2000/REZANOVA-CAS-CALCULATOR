@@ -52,6 +52,7 @@ import type {
   StatisticsScreen,
   StatisticsSection,
   StatisticsInputMode,
+  StatisticsResultViewMode,
   StatisticsWorkingSource,
 } from '../../types/calculator';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
@@ -101,6 +102,8 @@ export function useStatisticsRuntime({
     useState<StatisticsSection>('dataSummary');
   const [statisticsInputMode, setStatisticsInputMode] =
     useState<StatisticsInputMode>('guided');
+  const [statisticsResultViewMode, setStatisticsResultViewMode] =
+    useState<StatisticsResultViewMode>('contained');
   const [statisticsExpressionDraftInitialized, setStatisticsExpressionDraftInitialized] =
     useState(false);
   const [statisticsExpressionError, setStatisticsExpressionError] = useState<string | null>(null);
@@ -784,6 +787,7 @@ export function useStatisticsRuntime({
     setStatisticsScreen('descriptive');
     setStatisticsSection('dataSummary');
     setStatisticsInputMode('guided');
+    setStatisticsResultViewMode('contained');
     setStatisticsExpressionDraftInitialized(false);
     setStatisticsExpressionError(null);
     setStatisticsSectionScreens(defaultStatisticsSectionScreens());
@@ -806,7 +810,7 @@ export function useStatisticsRuntime({
 
   function captureStatisticsSurfaceState(): StatisticsSurfaceState {
     return copyStatisticsSurfaceState({
-      statisticsScreen, statisticsSection, statisticsInputMode,
+      statisticsScreen, statisticsSection, statisticsInputMode, statisticsResultViewMode,
       statisticsExpressionDraftInitialized,
       statisticsSectionScreens, statisticsSectionResults,
       statisticsMenuSelection, statisticsWorkingSource,
@@ -827,6 +831,7 @@ export function useStatisticsRuntime({
     setStatisticsScreen(copy.statisticsScreen);
     setStatisticsSection(copy.statisticsSection);
     setStatisticsInputMode(copy.statisticsInputMode);
+    setStatisticsResultViewMode(copy.statisticsResultViewMode);
     setStatisticsExpressionDraftInitialized(copy.statisticsExpressionDraftInitialized ?? false);
     setStatisticsExpressionError(null);
     setStatisticsSectionScreens(copy.statisticsSectionScreens);
@@ -963,6 +968,7 @@ export function useStatisticsRuntime({
     statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSection,
     statisticsExpressionError, statisticsExpressionDraftInitialized,
     statisticsInputMode, openStatisticsExpressionMode, setStatisticsInputMode, statisticsSectionScreens,
+    statisticsResultViewMode, setStatisticsResultViewMode,
     activeStatisticsSectionResult, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary, statisticsWorkbenchExpression,

@@ -1,4 +1,5 @@
 import type {
+  DisplayAnswerRowsReadback,
   DisplayDetailSection,
   ResultProducerDraft,
   FrequencyRow,
@@ -48,6 +49,15 @@ import {
   regressionMathJsonLeaves,
   type StatisticsOwnedMathJsonLeaf,
 } from './math-values';
+import {
+  confidenceIntervalAnswerReadback,
+  correlationAnswerReadback,
+  datasetAnswerReadback,
+  descriptiveAnswerReadback,
+  frequencyAnswerReadback,
+  meanTestAnswerReadback,
+  regressionAnswerReadback,
+} from './answer-row-builders';
 
 const ownedMathJsonByOutcome = new WeakMap<object, readonly StatisticsOwnedMathJsonLeaf[]>();
 
@@ -63,6 +73,7 @@ type NumericPoint = {
 
 type StatisticsEvaluation = {
   exactLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   detailSections?: DisplayDetailSection[];
   warnings: string[];
@@ -94,6 +105,7 @@ function toOutcome(title: string, evaluation: StatisticsEvaluation): ResultProdu
       kind: 'success',
       title,
       exactLatex: evaluation.exactLatex,
+      answerRows: evaluation.answerRows,
       approxText: evaluation.approxText,
       detailSections: evaluation.detailSections,
       warnings: evaluation.warnings,
@@ -402,8 +414,10 @@ function descriptiveOutcomeFromSummary(
     : context === 'population'
       ? [populationSpread, sampleSpread]
       : [populationSpread, sampleSpread];
+  const answerReadback = descriptiveAnswerReadback(summary);
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `n=${summary.count}, mean=${formatStatisticsNumber(summary.mean)}, median=${formatStatisticsNumber(summary.median)}, IQR=${formatStatisticsNumber(summary.iqr)}, population SD=${formatStatisticsNumber(summary.populationStandardDeviation)}${summary.sampleStandardDeviation === null ? '' : `, sample SD=${formatStatisticsNumber(summary.sampleStandardDeviation)}`}`,
     detailSections: [
       {
@@ -434,17 +448,25 @@ function descriptiveOutcomeFromSummary(
       },
     ],
     warnings,
-    mathJsonLeaves: descriptiveSummaryMathJsonLeaves(exactLatex, summary),
+    mathJsonLeaves: [
+      ...descriptiveSummaryMathJsonLeaves(exactLatex, summary),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 
 function datasetOutcome(values: number[]): StatisticsEvaluation {
   const exactLatex = `n=${values.length},\\ \\left[${values.map(numberToLatex).join(',\\ ')}\\right]`;
+  const answerReadback = datasetAnswerReadback(values);
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `${values.length} values loaded`,
     warnings: [],
-    mathJsonLeaves: datasetMathJsonLeaves(exactLatex, values),
+    mathJsonLeaves: [
+      ...datasetMathJsonLeaves(exactLatex, values),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 
@@ -462,16 +484,25 @@ function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvalua
       : '';
 
   const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `(${numberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}${modeLatex}`;
+  const answerReadback = frequencyAnswerReadback({
+    rows,
+    totalCount,
+    modeValue: modeRows.length === 1 ? modeRows[0].value : undefined,
+  });
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `n=${totalCount}, ${rows.map((row) => `${formatStatisticsNumber(row.value)}:${row.frequency}`).join(', ')}`,
     warnings,
-    mathJsonLeaves: frequencySummaryMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      rows,
-      totalCount,
-      modeValue: modeRows.length === 1 ? modeRows[0].value : undefined,
-    }),
+    mathJsonLeaves: [
+      ...frequencySummaryMathJsonLeaves({
+        canonicalLatex: exactLatex,
+        rows,
+        totalCount,
+        modeValue: modeRows.length === 1 ? modeRows[0].value : undefined,
+      }),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 
@@ -541,19 +572,27 @@ function meanInferenceOutcome(
         `ME=${numberToLatex(result.marginOfError)}`,
         `CI=${numberToLatex(result.lowerBound)}\\le\\mu\\le${numberToLatex(result.upperBound)}`,
       ].join(',\\ ');
+    const answerReadback = confidenceIntervalAnswerReadback({
+      summary: summary.summary,
+      result,
+    });
     return profileStatisticsResult({
       exactLatex,
+      answerRows: answerReadback.answerRows,
       approxText: `${formatStatisticsNumber(level * 100)}% CI: (${formatStatisticsNumber(result.lowerBound)}, ${formatStatisticsNumber(result.upperBound)})`,
       detailSections: [
         meanConfidenceInterpretationSection({ level, result }),
         meanInferenceAssumptionsSection(summary.summary),
       ],
       warnings: [],
-      mathJsonLeaves: confidenceIntervalMathJsonLeaves({
-        canonicalLatex: exactLatex,
-        summary: summary.summary,
-        result,
-      }),
+      mathJsonLeaves: [
+        ...confidenceIntervalMathJsonLeaves({
+          canonicalLatex: exactLatex,
+          summary: summary.summary,
+          result,
+        }),
+        ...answerReadback.mathJsonLeaves,
+      ],
     });
   }
 
@@ -591,24 +630,34 @@ function meanInferenceOutcome(
       `p=${numberToLatex(result.pValue)}`,
       `\\alpha=${numberToLatex(result.alpha)}`,
     ].join(',\\ ');
+  const answerReadback = meanTestAnswerReadback({
+    summary: summary.summary,
+    mu0,
+    result,
+    alternativeSymbol: meanAlternativeSymbol(alternative),
+  });
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `${alternativeLabel} t-test: t=${tStatisticApprox}, p=${formatStatisticsNumber(result.pValue)}, ${result.rejectNull ? 'reject H0' : 'fail to reject H0'}; mean is tested as ${meanAlternativeLabel(alternative)} ${formatStatisticsNumber(mu0)}`,
     detailSections: [
       meanTestInterpretationSection({ alternative, mu0, result }),
       meanInferenceAssumptionsSection(summary.summary),
     ],
     warnings: [],
-    mathJsonLeaves: meanTestMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      summary: summary.summary,
-      mu0,
-      tStatistic: result.tStatistic,
-      pValue: result.pValue,
-      alpha: result.alpha,
-      standardError: result.standardError,
-      alternative,
-    }),
+    mathJsonLeaves: [
+      ...meanTestMathJsonLeaves({
+        canonicalLatex: exactLatex,
+        summary: summary.summary,
+        mu0,
+        tStatistic: result.tStatistic,
+        pValue: result.pValue,
+        alpha: result.alpha,
+        standardError: result.standardError,
+        alternative,
+      }),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 
@@ -715,12 +764,17 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
       `r^2=${numberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
     ].join(',\\ ');
+  const answerReadback = regressionAnswerReadback(summary);
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `ŷ=${formatStatisticsNumber(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${formatStatisticsNumber(summary.intercept)}, r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, n=${summary.count}`,
     detailSections: [regressionQualitySection(summary, diagnostics)],
     warnings,
-    mathJsonLeaves: regressionMathJsonLeaves(exactLatex, summary, diagnostics),
+    mathJsonLeaves: [
+      ...regressionMathJsonLeaves(exactLatex, summary, diagnostics),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 
@@ -743,12 +797,17 @@ function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correla
       `r^2=${numberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
     ].join(',\\ ');
+  const answerReadback = correlationAnswerReadback(summary);
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: `r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, ${strength}, n=${summary.count}`,
     detailSections: [correlationQualitySection(summary)],
     warnings: fitQualityWarnings(summary.r, summary.count),
-    mathJsonLeaves: correlationMathJsonLeaves(exactLatex, summary),
+    mathJsonLeaves: [
+      ...correlationMathJsonLeaves(exactLatex, summary),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
 

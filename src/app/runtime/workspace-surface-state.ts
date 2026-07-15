@@ -49,6 +49,7 @@ import type {
   StatisticsDataSummaryState,
   StatisticsSection,
   StatisticsInputMode,
+  StatisticsResultViewMode,
   StatisticsSourceSyncState,
   StatisticsWorkingSource,
   StatsDataset,
@@ -167,6 +168,7 @@ export type StatisticsSurfaceState = {
   statisticsScreen: StatisticsScreen;
   statisticsSection: StatisticsSection;
   statisticsInputMode: StatisticsInputMode;
+  statisticsResultViewMode: StatisticsResultViewMode;
   statisticsExpressionDraftInitialized?: boolean;
   statisticsSectionScreens: Record<StatisticsSection, StatisticsScreen>;
   statisticsSectionResults: Partial<Record<StatisticsSection, {

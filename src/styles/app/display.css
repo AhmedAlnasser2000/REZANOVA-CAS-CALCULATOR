@@ -881,6 +881,14 @@
   scrollbar-width: thin;
 }
 
+.result-answer-row-label {
+  margin-bottom: 6px;
+  color: rgba(21, 37, 27, 0.7);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
 .result-answer-row-math {
   display: block;
   width: max-content;

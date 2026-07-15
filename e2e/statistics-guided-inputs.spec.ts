@@ -88,3 +88,24 @@ test('Statistics relationship cells retain focus after one keystroke', async ({ 
     );
   }
 });
+
+test('Statistics results use labeled vertical rows and support Full result', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openStatisticsTool(page, 'Descriptive');
+  await page.getByTestId('editor-runtime-run').click();
+
+  const result = page.locator('.statistics-embedded-display-panel');
+  await expect(result).toBeVisible();
+  await expect(result.locator('.result-answer-row-label').filter({ hasText: 'Size and total' }))
+    .toBeVisible();
+  await expect(result.locator('.result-answer-row-label').filter({ hasText: 'Center' }))
+    .toBeVisible();
+  await expect(result).toHaveClass(/statistics-result-view--contained/);
+
+  await result.getByRole('button', { name: 'Show full result' }).click();
+  await expect(result).toHaveClass(/statistics-result-view--full/);
+  await expect(result.getByRole('button', { name: 'Use contained result' })).toBeVisible();
+
+  const overflow = await result.evaluate((element) => element.scrollWidth - element.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});

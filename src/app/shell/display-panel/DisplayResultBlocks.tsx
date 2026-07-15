@@ -104,12 +104,14 @@ function ResultLatexBlock({
 function ResultLatexListBlock({
   className,
   displayPrefs,
+  labels,
   lines,
   normalizeDisplay = false,
   testIdPrefix,
 }: {
   className: string;
   displayPrefs?: SymbolicDisplayPrefs;
+  labels?: readonly (string | undefined)[];
   lines: readonly string[];
   normalizeDisplay?: boolean;
   testIdPrefix: string;
@@ -132,6 +134,9 @@ function ResultLatexListBlock({
     <>
       {lines.map((line: string, index: number) => (
         <div key={`${line}-${index}`} className="result-math-list-row" data-testid={`${testIdPrefix}-${index}`}>
+          {labels?.[index] ? (
+            <div className="result-answer-row-label">{labels[index]}</div>
+          ) : null}
           <ResultLatexBlock
             className={className}
             displayPrefs={displayPrefs}
@@ -579,6 +584,7 @@ function renderDisplayBlockContent(
           className={block.kind === 'answer' ? 'result-math result-answer-row-math' : 'result-math result-math-supplement'}
           displayPrefs={symbolicDisplayPrefs}
           lines={latexLinesFromBlock(block)}
+          labels={block.kind === 'answer' ? block.lines?.map((line) => line.label) : undefined}
           normalizeDisplay={false}
           testIdPrefix={block.kind === 'validWhen' ? 'display-outcome-supplement' : `${block.testId ?? block.id}-line`}
         />

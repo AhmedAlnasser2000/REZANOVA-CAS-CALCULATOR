@@ -5,6 +5,8 @@ import { DisplayPreviewSurface } from './display-panel/DisplayPreviewSurface';
 import { useDisplayRenderQueue } from './display-panel/useDisplayRenderQueue';
 import { useLanguage } from '../../lib/language/language-context';
 import { createPortal } from 'react-dom';
+import { useEffect, useRef } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 type DisplayPanelProps = Record<string, any>;
 
@@ -122,6 +124,8 @@ function DisplayPanel({
   portalTarget,
   suppressWhenPortalUnavailable = false,
   statisticsInputMode = 'expression',
+  statisticsResultViewMode = 'contained',
+  onStatisticsResultViewModeChange,
   statisticsRouteMeta,
   statisticsScreen,
   setPartialDerivativeState,
@@ -142,6 +146,7 @@ function DisplayPanel({
   vectorNamedValueNames,
   setVectorEditorLatex,
 }: DisplayPanelProps) {
+  const panelRef = useRef<HTMLElement | null>(null);
   const { strings } = useLanguage();
   const runtimeText = strings.shell.runtimeControls;
   const commonStatusText = strings.common.status;
@@ -173,8 +178,19 @@ function DisplayPanel({
   const stopDisabled = editorRuntimeStopDisabled ?? editorAnalysisStopped;
   const suppressCalculusExpressionPreview = calculusMainEditorActive;
 
+  useEffect(() => {
+    if (currentMode !== 'statistics' || statisticsResultViewMode !== 'full') return;
+    panelRef.current?.querySelectorAll<HTMLDetailsElement>('details.result-collapsible-block')
+      .forEach((details) => {
+        details.open = true;
+      });
+  }, [currentMode, displayOutcome, statisticsResultViewMode]);
+
   const panel = (
-  <section className={`display-panel ${currentMode === 'statistics' ? 'statistics-embedded-display-panel' : ''}`}>
+  <section
+    ref={panelRef}
+    className={`display-panel ${currentMode === 'statistics' ? `statistics-embedded-display-panel statistics-result-view--${statisticsResultViewMode}` : ''}`}
+  >
     <div className="display-header">
       <span className="display-header-label">{displayHeaderLabel}</span>
       {showEditorRuntimeControls ? (
@@ -205,6 +221,24 @@ function DisplayPanel({
             {runtimeText.restartEditor}
           </button>
         </div>
+      ) : null}
+      {currentMode === 'statistics'
+      && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
+        <button
+          type="button"
+          className="statistics-result-view-toggle"
+          aria-label={statisticsResultViewMode === 'full' ? 'Use contained result' : 'Show full result'}
+          aria-pressed={statisticsResultViewMode === 'full'}
+          title={statisticsResultViewMode === 'full' ? 'Use contained result' : 'Show full result'}
+          onClick={() => onStatisticsResultViewModeChange?.(
+            statisticsResultViewMode === 'full' ? 'contained' : 'full',
+          )}
+        >
+          {statisticsResultViewMode === 'full'
+            ? <Minimize2 aria-hidden="true" size={15} />
+            : <Maximize2 aria-hidden="true" size={15} />}
+          <span>{statisticsResultViewMode === 'full' ? 'Contained' : 'Full result'}</span>
+        </button>
       ) : null}
       <span className="display-header-status" data-testid="display-status">{displayStatus}</span>
     </div>

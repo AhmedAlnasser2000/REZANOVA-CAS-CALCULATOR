@@ -844,4 +844,66 @@ describe('DisplayPanel result shell', () => {
       window.cancelAnimationFrame = originalCancelAnimationFrame;
     }
   });
+
+  it('renders labeled Statistics answer rows and expands result groups in Full mode', async () => {
+    const onStatisticsResultViewModeChange = vi.fn();
+    const outcome = canonicalResultFixture({
+      outcomeKind: 'success',
+      title: 'Descriptive',
+      warnings: [],
+      primaryMath: canonicalMathValue('n=5'),
+      answerRows: {
+        label: 'Answer',
+        rows: [
+          { label: 'Size', latex: 'n=5' },
+          { label: 'Center', latex: String.raw`\bar{x}=16` },
+        ],
+      },
+      detailSections: [{
+        title: 'Spread',
+        lines: ['Population SD: 2.75681.'],
+        lineKind: 'text',
+      }],
+    });
+    const props = {
+      activeResultCopyText: () => 'n=5',
+      activeResultEditorLatex: () => 'n=5',
+      calculateLatex: '',
+      copyText: () => undefined,
+      currentMode: 'statistics' as const,
+      displayHeaderLabel: 'Statistics',
+      displayOutcome: outcome,
+      displayResultBadges: [],
+      getPeriodicStopReasonText: (reason: string) => reason,
+      hydrated: true,
+      onStatisticsResultViewModeChange,
+      settings: DEFAULT_SETTINGS,
+      statisticsInputMode: 'guided' as const,
+      symbolicDisplayPrefs: DEFAULT_SETTINGS,
+    };
+
+    const view = render(
+      <DisplayPanel {...props} statisticsResultViewMode="contained" />,
+    );
+
+    expect(view.container.querySelector('.display-panel'))
+      .toHaveClass('statistics-result-view--contained');
+    expect(screen.getByText('Size')).toBeInTheDocument();
+    expect(screen.getByText('Center')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show full result' }));
+    expect(onStatisticsResultViewModeChange).toHaveBeenCalledWith('full');
+
+    const spread = view.container.querySelector('details.result-collapsible-block') as HTMLDetailsElement;
+    expect(spread).toBeTruthy();
+    spread.open = false;
+    view.rerender(<DisplayPanel {...props} statisticsResultViewMode="full" />);
+
+    await waitFor(() => expect(spread.open).toBe(true));
+    expect(view.container.querySelector('.display-panel'))
+      .toHaveClass('statistics-result-view--full');
+    expect(screen.getByRole('button', { name: 'Use contained result' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
 });

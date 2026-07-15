@@ -18,7 +18,7 @@ export type StatisticsOwnedMathJsonLeaf = {
   source: string;
 };
 
-function statisticsMathNumber(value: number) {
+export function statisticsMathNumber(value: number) {
   if (!Number.isFinite(value)) return undefined;
   const normalized = Math.abs(value) < 1e-10 ? 0 : value;
   return Number(normalized.toFixed(6));
@@ -36,14 +36,14 @@ function primaryMathJsonLeaf(canonicalLatex: string, mathJson: unknown, source: 
   return [{ canonicalLatex, mathJson, source } satisfies StatisticsOwnedMathJsonLeaf];
 }
 
-function mathSequence(...values: unknown[]) {
+export function statisticsMathSequence(...values: unknown[]) {
   return ['Delimiter', ['Sequence', ...values], "','"];
 }
 
 export function datasetMathJsonLeaves(canonicalLatex: string, values: readonly number[]) {
   return primaryMathJsonLeaf(
     canonicalLatex,
-    mathSequence(
+    statisticsMathSequence(
       ['Equal', 'n', values.length],
       ['List', ...values.map((value, index) => finiteMathNumber(value, `dataset[${index}]`))],
     ),
@@ -95,7 +95,7 @@ export function descriptiveSummaryMathJsonLeaves(
   }
   return primaryMathJsonLeaf(
     canonicalLatex,
-    mathSequence(...relations),
+    statisticsMathSequence(...relations),
     'statistics.descriptive.native-summary',
   );
 }
@@ -119,7 +119,7 @@ export function frequencySummaryMathJsonLeaves(input: {
   }
   return primaryMathJsonLeaf(
     input.canonicalLatex,
-    mathSequence(...relations),
+    statisticsMathSequence(...relations),
     'statistics.frequency.native-frequency-rows',
   );
 }
@@ -138,7 +138,7 @@ export function confidenceIntervalMathJsonLeaves(input: {
   if (input.summary.sampleStandardDeviation === null) return [];
   return primaryMathJsonLeaf(
     input.canonicalLatex,
-    mathSequence(
+    statisticsMathSequence(
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
       ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
       ['Equal', 'n', input.summary.count],
@@ -177,7 +177,7 @@ export function meanTestMathJsonLeaves(input: {
       : ['Greater', 'mu', statisticsMathNumber(input.mu0)];
   return primaryMathJsonLeaf(
     input.canonicalLatex,
-    mathSequence(
+    statisticsMathSequence(
       ['Equal', ['Subscript', 'H', 0], ['Equal', 'mu', statisticsMathNumber(input.mu0)]],
       ['Equal', ['Subscript', 'H', 'a'], alternativeRelation],
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
@@ -203,7 +203,7 @@ export function probabilityValueMathJsonLeaves(input: {
 }) {
   return primaryMathJsonLeaf(
     input.canonicalLatex,
-    mathSequence(
+    statisticsMathSequence(
       input.eventMathJson,
       ['Equal', input.valueSymbol, statisticsMathNumber(input.value)],
       ['Equal', ['Mean', 'X'], statisticsMathNumber(input.expectedValue)],
@@ -234,7 +234,7 @@ export function regressionMathJsonLeaves(
   return [
     ...primaryMathJsonLeaf(
       canonicalLatex,
-      mathSequence(
+      statisticsMathSequence(
         ['Equal', ['Subscript', 'y', 'fit'], ['Add', ['InvisibleOperator', statisticsMathNumber(summary.slope), 'x'], statisticsMathNumber(summary.intercept)]],
         ['Equal', 'm', statisticsMathNumber(summary.slope)],
         ['Equal', 'b', statisticsMathNumber(summary.intercept)],
@@ -254,7 +254,7 @@ export function correlationMathJsonLeaves(
 ) {
   return primaryMathJsonLeaf(
     canonicalLatex,
-    mathSequence(
+    statisticsMathSequence(
       ['Equal', 'r', statisticsMathNumber(summary.r)],
       ['Equal', ['Power', 'r', 2], statisticsMathNumber(summary.rSquared)],
       ['Equal', 'n', summary.count],

@@ -858,7 +858,7 @@ export default function App() {
     statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
-    statisticsSection, statisticsInputMode, activeStatisticsResultIsStale,
+    statisticsSection, statisticsInputMode, statisticsResultViewMode, setStatisticsResultViewMode, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary,
     statisticsWorkbenchExpression,
@@ -2905,7 +2905,7 @@ export default function App() {
           statisticsKeyboardLayouts={statisticsKeyboardLayouts}
           statisticsMenuFooterText={statisticsMenuFooterText}
           partialDerivativeState={partialDerivativeState}
-          portalTarget={currentMode === 'statistics' ? statisticsDisplayHost : null} suppressWhenPortalUnavailable={currentMode === 'statistics'} statisticsInputMode={statisticsInputMode}
+          portalTarget={currentMode === 'statistics' ? statisticsDisplayHost : null} suppressWhenPortalUnavailable={currentMode === 'statistics'} statisticsInputMode={statisticsInputMode} statisticsResultViewMode={statisticsResultViewMode} onStatisticsResultViewModeChange={setStatisticsResultViewMode}
           statisticsRouteMeta={statisticsRouteMeta}
           statisticsScreen={statisticsScreen} setPartialDerivativeState={setPartialDerivativeState}
           symbolicDisplayPrefs={symbolicDisplayPrefs}

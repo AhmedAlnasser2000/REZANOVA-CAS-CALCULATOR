@@ -143,6 +143,7 @@ export type StatisticsSection =
   | 'inference'
   | 'relationships';
 export type StatisticsInputMode = 'guided' | 'expression';
+export type StatisticsResultViewMode = 'contained' | 'full';
 export type StatisticsQuartileMethod = 'halves' | 'linear';
 export type StatisticsDataContext = 'compare' | 'sample' | 'population';
 export type StatisticsProbabilityEvent =

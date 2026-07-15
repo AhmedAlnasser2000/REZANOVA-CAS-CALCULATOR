@@ -1,4 +1,5 @@
 import type {
+  DisplayAnswerRowsReadback,
   DisplayDetailSection,
   StatisticsProbabilityEvent,
   StatisticsRequest,
@@ -8,9 +9,11 @@ import { profileStatisticsResult } from '../display/printer';
 import { evaluateStatisticsDistribution } from './distributions';
 import {
   probabilityValueMathJsonLeaves,
+  statisticsMathSequence,
   type StatisticsOwnedMathJsonLeaf,
 } from './math-values';
 import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
+import { probabilityAnswerReadback } from './answer-row-builders';
 
 type ProbabilityRequest = Extract<StatisticsRequest, {
   kind: 'binomial' | 'normal' | 'poisson';
@@ -18,6 +21,7 @@ type ProbabilityRequest = Extract<StatisticsRequest, {
 
 export type StatisticsProbabilityEvaluation = {
   exactLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   detailSections?: DisplayDetailSection[];
   warnings: string[];
@@ -122,7 +126,7 @@ function eventLatex(event: ParsedEvent) {
     case 'between': {
       const lowerSymbol = event.lowerBound === 'inclusive' ? '\\le' : '<';
       const upperSymbol = event.upperBound === 'inclusive' ? '\\le' : '<';
-      return `${numberToLatex(event.lower ?? 0)}${lowerSymbol}X${upperSymbol}${numberToLatex(event.upper ?? 0)}`;
+      return `${numberToLatex(event.lower ?? 0)}${lowerSymbol} X${upperSymbol} ${numberToLatex(event.upper ?? 0)}`;
     }
   }
 }
@@ -149,6 +153,21 @@ function eventMathJson(event: ParsedEvent): unknown {
         event.upper ?? 0,
       ];
   }
+}
+
+function eventAnswerLatex(event: ParsedEvent) {
+  if (event.event !== 'between') return eventLatex(event);
+  const lowerSymbol = event.lowerBound === 'inclusive' ? '\\le' : '<';
+  const upperSymbol = event.upperBound === 'inclusive' ? '\\le' : '<';
+  return `${numberToLatex(event.lower ?? 0)}${lowerSymbol} X,\\ X${upperSymbol} ${numberToLatex(event.upper ?? 0)}`;
+}
+
+function eventAnswerMathJson(event: ParsedEvent): unknown {
+  if (event.event !== 'between') return eventMathJson(event);
+  return statisticsMathSequence(
+    [event.lowerBound === 'inclusive' ? 'LessEqual' : 'Less', event.lower ?? 0, 'X'],
+    [event.upperBound === 'inclusive' ? 'LessEqual' : 'Less', 'X', event.upper ?? 0],
+  );
 }
 
 function distributionParameters(request: ProbabilityRequest) {
@@ -207,9 +226,19 @@ export function probabilityOutcome(request: ProbabilityRequest): StatisticsProba
   const summary = result.valueKind === 'density'
     ? `Density=${formatStatisticsNumber(result.value)}`
     : `Probability=${formatStatisticsNumber(result.value)} (${formatStatisticsNumber(result.value * 100)}%)`;
+  const answerReadback = probabilityAnswerReadback({
+    notation: eventAnswerLatex(parsedEvent.value),
+    eventMathJson: eventAnswerMathJson(parsedEvent.value),
+    value: result.value,
+    valueSymbol,
+    expectedValue: result.expectedValue,
+    standardDeviation: result.standardDeviation,
+    source: `statistics.probability.native-${request.kind}-event`,
+  });
 
   return profileStatisticsResult({
     exactLatex,
+    answerRows: answerReadback.answerRows,
     approxText: summary,
     detailSections: [
       {
@@ -236,14 +265,17 @@ export function probabilityOutcome(request: ProbabilityRequest): StatisticsProba
       },
     ],
     warnings: [],
-    mathJsonLeaves: probabilityValueMathJsonLeaves({
-      canonicalLatex: exactLatex,
-      eventMathJson: eventMathJson(parsedEvent.value),
-      value: result.value,
-      valueSymbol,
-      expectedValue: result.expectedValue,
-      standardDeviation: result.standardDeviation,
-      source: `statistics.probability.native-${request.kind}-event`,
-    }),
+    mathJsonLeaves: [
+      ...probabilityValueMathJsonLeaves({
+        canonicalLatex: exactLatex,
+        eventMathJson: eventMathJson(parsedEvent.value),
+        value: result.value,
+        valueSymbol,
+        expectedValue: result.expectedValue,
+        standardDeviation: result.standardDeviation,
+        source: `statistics.probability.native-${request.kind}-event`,
+      }),
+      ...answerReadback.mathJsonLeaves,
+    ],
   });
 }
