@@ -24,7 +24,7 @@ describe('Notebook rich document V11 migration', () => {
     expect(isNotebookRichDocumentV11(version11)).toBe(true);
     expect(migrateNotebookDocumentV11(version11)).toEqual({
       ...version11,
-      version: 12,
+      version: 13,
     });
   });
 });

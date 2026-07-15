@@ -265,7 +265,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(12);
+    expect(storedDocument.version).toBe(13);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -663,7 +663,7 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const stored = await readOnlyStoredDocument(libraryService);
     expect(stored).toMatchObject({
-      version: 12,
+      version: 13,
       pageSetup: {
         paperSize: 'letter',
         orientation: 'landscape',

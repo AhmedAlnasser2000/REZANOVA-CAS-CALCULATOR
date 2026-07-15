@@ -29,7 +29,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 12,
+        "version": 13,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -256,7 +256,7 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let legacy = legacy_record("library.legacy", 1, "Legacy notebook", 6);
@@ -271,7 +271,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 12);
+    assert_eq!(loaded.document["version"], 13);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -294,7 +294,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 12);
+    assert_eq!(versions[0].record.document["version"], 13);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -320,7 +320,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 12);
+    assert_eq!(inspection.document["version"], 13);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
     let version7 = legacy_record("library.legacy-v7", 1, "Image-era notebook", 7);
@@ -334,7 +334,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 12);
+    assert_eq!(loaded_v7.document["version"], 13);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
 
     let version8 = legacy_record("library.legacy-v8", 1, "Page-era notebook", 8);
@@ -348,7 +348,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&version8.library_id)
         .expect("V8 record should load")
         .expect("V8 record should exist");
-    assert_eq!(loaded_v8.document["version"], 12);
+    assert_eq!(loaded_v8.document["version"], 13);
     assert_eq!(loaded_v8.document["content"], version8.document["content"]);
 
     let version9 = legacy_record("library.legacy-v9", 1, "Video-era notebook", 9);
@@ -363,7 +363,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&version9.library_id)
         .expect("V9 record should load")
         .expect("V9 record should exist");
-    assert_eq!(loaded_v9.document["version"], 12);
+    assert_eq!(loaded_v9.document["version"], 13);
     assert_eq!(loaded_v9.document["content"], version9_content);
 
     let version10 = legacy_record("library.legacy-v10", 1, "Direct-media notebook", 10);
@@ -377,7 +377,7 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&version10.library_id)
         .expect("V10 record should load")
         .expect("V10 record should exist");
-    assert_eq!(loaded_v10.document["version"], 12);
+    assert_eq!(loaded_v10.document["version"], 13);
     assert_eq!(
         loaded_v10.document["content"],
         version10.document["content"]
@@ -395,16 +395,34 @@ fn migrates_v6_through_v11_records_versions_and_packages_without_content_changes
         .load_record(&version11.library_id)
         .expect("V11 record should load")
         .expect("V11 record should exist");
-    assert_eq!(loaded_v11.document["version"], 12);
+    assert_eq!(loaded_v11.document["version"], 13);
     assert_eq!(
         loaded_v11.document["content"],
         version11.document["content"]
+    );
+
+    let mut version12 = record("library.legacy-v12", 1, "Precise-media notebook");
+    version12.document["version"] = 12.into();
+    let version12_paths = storage.record_paths(&version12.library_id);
+    NotebookStorage::write_synced(
+        &version12_paths.target,
+        &serde_json::to_vec_pretty(&version12).expect("V12 record should serialize"),
+    )
+    .expect("V12 record should write");
+    let loaded_v12 = storage
+        .load_record(&version12.library_id)
+        .expect("V12 record should load")
+        .expect("V12 record should exist");
+    assert_eq!(loaded_v12.document["version"], 13);
+    assert_eq!(
+        loaded_v12.document["content"],
+        version12.document["content"]
     );
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn imports_v6_through_v11_packages_as_new_current_records_without_mutating_sources() {
+fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sources() {
     let root = unique_storage("v6-v10-package-import");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
 
@@ -421,7 +439,7 @@ fn imports_v6_through_v11_packages_as_new_current_records_without_mutating_sourc
         let inspected = storage
             .inspect_package(&package)
             .expect("supported legacy package should inspect");
-        assert_eq!(inspected.document["version"], 12);
+        assert_eq!(inspected.document["version"], 13);
         assert_eq!(inspected.document["content"], source.document["content"]);
 
         let imported = storage
@@ -429,7 +447,7 @@ fn imports_v6_through_v11_packages_as_new_current_records_without_mutating_sourc
             .expect("supported legacy package should import");
         assert_ne!(imported.library_id, source.library_id);
         assert_eq!(imported.revision, 1);
-        assert_eq!(imported.document["version"], 12);
+        assert_eq!(imported.document["version"], 13);
         assert_eq!(imported.document["content"], source.document["content"]);
         assert_eq!(package, original_package);
 
@@ -438,16 +456,22 @@ fn imports_v6_through_v11_packages_as_new_current_records_without_mutating_sourc
                 .expect("imported record should exist"),
         )
         .expect("imported record should remain readable");
-        assert_eq!(raw_imported["document"]["version"], 12);
+        assert_eq!(raw_imported["document"]["version"], 13);
     }
 
-    let mut version11 = record("library.package-v11", 11, "Schema 11 package");
-    version11.document["version"] = 11.into();
-    let imported = storage
-        .import_package(&portable_package_for(&version11))
-        .expect("V11 package should import");
-    assert_eq!(imported.document["version"], 12);
-    assert_eq!(imported.document["content"], version11.document["content"]);
+    for schema in 11..=12 {
+        let mut source = record(
+            &format!("library.package-v{schema}"),
+            schema,
+            &format!("Schema {schema} package"),
+        );
+        source.document["version"] = schema.into();
+        let imported = storage
+            .import_package(&portable_package_for(&source))
+            .expect("running-matter package should import");
+        assert_eq!(imported.document["version"], 13);
+        assert_eq!(imported.document["content"], source.document["content"]);
+    }
 
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
@@ -491,7 +515,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("V10 record should exist");
     assert_eq!(loaded.source_document_version, 10);
     let mut opened = loaded.record;
-    assert_eq!(opened.document["version"], 12);
+    assert_eq!(opened.document["version"], 13);
     assert_eq!(opened.document["content"], legacy.document["content"]);
     assert_eq!(opened.document["pageSetup"], legacy.document["pageSetup"]);
     assert_eq!(
@@ -517,7 +541,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("first upgraded save should succeed");
     let current_on_disk: serde_json::Value =
         serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
-    assert_eq!(current_on_disk["document"]["version"], 12);
+    assert_eq!(current_on_disk["document"]["version"], 13);
 
     let snapshot_paths: Vec<_> = fs::read_dir(storage.versions_path(&legacy.library_id))
         .unwrap()
@@ -531,7 +555,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
     assert_eq!(raw_snapshot["record"]["document"]["version"], 10);
     let listed = storage.list_versions(&legacy.library_id).unwrap();
     assert_eq!(listed.len(), 1);
-    assert_eq!(listed[0].record.document["version"], 12);
+    assert_eq!(listed[0].record.document["version"], 13);
 
     opened.revision = 6;
     opened.saved_at = "2026-07-15T00:00:06.000Z".into();
@@ -546,8 +570,8 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .load_record_with_source(&legacy.library_id)
         .unwrap()
         .expect("upgraded record should remain available");
-    assert_eq!(reopened.source_document_version, 12);
-    assert_eq!(reopened.record.document["version"], 12);
+    assert_eq!(reopened.source_document_version, 13);
+    assert_eq!(reopened.record.document["version"], 13);
     assert_eq!(
         reopened.record.document["content"],
         legacy.document["content"]
@@ -600,7 +624,7 @@ fn current_records_skip_upgrade_snapshots_and_legacy_failures_are_specific() {
 
     for (library_id, schema, expected) in [
         ("library.early", 5, "NOTEBOOK_SCHEMA_PRE_V6"),
-        ("library.future", 13, "NOTEBOOK_SCHEMA_NEWER"),
+        ("library.future", 14, "NOTEBOOK_SCHEMA_NEWER"),
     ] {
         let legacy = legacy_record(library_id, 1, "Unsupported notebook", schema);
         let paths = storage.record_paths(library_id);
@@ -780,7 +804,7 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
     legacy["version"] = 9.into();
     let original = legacy.clone();
     let migrated = migrate_notebook_document(legacy).expect("V9 document should migrate");
-    assert_eq!(migrated["version"], 12);
+    assert_eq!(migrated["version"], 13);
     assert_eq!(migrated["content"], original["content"]);
     assert_eq!(migrated["pageSetup"], original["pageSetup"]);
     assert_eq!(migrated["headerFooter"]["pageNumberStart"], 1);
@@ -1173,6 +1197,105 @@ fn retains_bounded_version_history_and_round_trips_trash() {
         .list_versions(&stored.library_id)
         .unwrap()
         .is_empty());
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn round_trips_schema13_floating_placements_through_storage_history_trash_and_packages() {
+    let root = unique_storage("schema13-floating");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let mut stored = record("library.floating", 1, "Floating objects");
+    stored.document["content"] = serde_json::json!([{
+        "type": "paragraph",
+        "id": "paragraph.anchor"
+    }, {
+        "type": "displayMath",
+        "id": "math.floating",
+        "sourceText": "x^2",
+        "latex": "x^2",
+        "workspaceTarget": "equation",
+        "objectPlacement": {
+            "mode": "floating",
+            "anchor": { "kind": "paragraph", "nodeId": "paragraph.anchor" },
+            "horizontalReference": "margins",
+            "verticalReference": "page",
+            "xPt": -12.5,
+            "yPt": 84.25,
+            "widthPt": 216.75,
+            "wrap": "square",
+            "textDistancePt": { "top": 6, "right": 12, "bottom": 6, "left": 12 },
+            "zOrder": 0
+        }
+    }, {
+        "type": "section",
+        "id": "section.floating",
+        "title": "Page anchored",
+        "objectPlacement": {
+            "mode": "floating",
+            "anchor": { "kind": "page", "pageNumber": 3 },
+            "horizontalReference": "page",
+            "verticalReference": "margins",
+            "xPt": 72,
+            "yPt": 144,
+            "widthPt": 288,
+            "wrap": "top-and-bottom",
+            "textDistancePt": { "top": 0, "right": 0, "bottom": 12, "left": 0 },
+            "zOrder": 1
+        },
+        "content": [{ "type": "paragraph", "id": "paragraph.section" }]
+    }]);
+    storage
+        .save_record(stored.clone(), None, true)
+        .expect("floating record should save");
+    storage
+        .save_version(NotebookVersionSnapshotV1 {
+            version: 1,
+            snapshot_id: "snapshot.floating.1".into(),
+            library_id: stored.library_id.clone(),
+            revision: stored.revision,
+            created_at: "2026-07-16T01:00:00.000Z".into(),
+            reason: "periodic".into(),
+            record: stored.clone(),
+        })
+        .expect("floating snapshot should save");
+    let package = storage
+        .export_package(stored.clone())
+        .expect("floating package should export");
+    assert_eq!(
+        storage
+            .inspect_package(&package)
+            .expect("floating package should inspect")
+            .document["content"],
+        stored.document["content"]
+    );
+    storage
+        .move_record_to_trash(&stored.library_id)
+        .expect("floating record should move to trash");
+    storage
+        .restore_record_from_trash(&stored.library_id)
+        .expect("floating record should restore");
+    assert_eq!(
+        storage
+            .load_record(&stored.library_id)
+            .unwrap()
+            .unwrap()
+            .document["content"],
+        stored.document["content"]
+    );
+    assert_eq!(
+        storage.list_versions(&stored.library_id).unwrap()[0]
+            .record
+            .document["content"],
+        stored.document["content"]
+    );
+
+    let mut invalid = stored;
+    invalid.library_id = "library.floating-invalid".into();
+    invalid.document["content"][1]["objectPlacement"]["zOrder"] = 4.into();
+    assert!(storage
+        .save_record(invalid, None, true)
+        .expect_err("unnormalized layers should fail")
+        .contains("layer order"));
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 

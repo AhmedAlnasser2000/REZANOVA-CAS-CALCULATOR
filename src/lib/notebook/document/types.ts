@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 12 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 13 as const;
 export const NOTEBOOK_MEDIA_WIDTH_PERCENT_MIN = 10;
 export const NOTEBOOK_MEDIA_WIDTH_PERCENT_MAX = 100;
 export const NOTEBOOK_MEDIA_WIDTH_PERCENT_PRECISION = 3;
@@ -25,6 +25,15 @@ export const NOTEBOOK_VIDEO_TRACK_KINDS = ['captions', 'subtitles'] as const;
 export const NOTEBOOK_PAPER_SIZES = ['a4', 'letter', 'legal'] as const;
 export const NOTEBOOK_PAGE_ORIENTATIONS = ['portrait', 'landscape'] as const;
 export const NOTEBOOK_PAGE_NUMBER_POSITIONS = ['left', 'center', 'right'] as const;
+export const NOTEBOOK_OBJECT_REFERENCES = ['page', 'margins'] as const;
+export const NOTEBOOK_OBJECT_WRAPS = [
+  'square',
+  'top-and-bottom',
+  'in-front',
+  'behind',
+] as const;
+export const NOTEBOOK_FLOATING_OBJECT_MIN_WIDTH_PT = 36;
+export const NOTEBOOK_FLOATING_PAGE_NUMBER_MAX = 9999;
 
 export function isNotebookFontSize(value: unknown): value is number {
   return typeof value === 'number'
@@ -85,6 +94,8 @@ export type NotebookVideoTrackKind = typeof NOTEBOOK_VIDEO_TRACK_KINDS[number];
 export type NotebookPaperSize = typeof NOTEBOOK_PAPER_SIZES[number];
 export type NotebookPageOrientation = typeof NOTEBOOK_PAGE_ORIENTATIONS[number];
 export type NotebookPageNumberPosition = typeof NOTEBOOK_PAGE_NUMBER_POSITIONS[number];
+export type NotebookObjectReference = typeof NOTEBOOK_OBJECT_REFERENCES[number];
+export type NotebookObjectWrap = typeof NOTEBOOK_OBJECT_WRAPS[number];
 export type NotebookPageMarginsPt = {
   top: number;
   right: number;
@@ -136,6 +147,28 @@ export type NotebookParagraphFormat = {
   spaceAfterPt?: NotebookParagraphSpacePt;
   leftIndentPt?: NotebookParagraphLeftIndentPt;
 };
+export type NotebookObjectTextDistancePt = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};
+export type NotebookObjectPlacement =
+  | { mode: 'flow' }
+  | {
+      mode: 'floating';
+      anchor:
+        | { kind: 'paragraph'; nodeId: string }
+        | { kind: 'page'; pageNumber: number };
+      horizontalReference: NotebookObjectReference;
+      verticalReference: NotebookObjectReference;
+      xPt: number;
+      yPt: number;
+      widthPt: number;
+      wrap: NotebookObjectWrap;
+      textDistancePt: NotebookObjectTextDistancePt;
+      zOrder: number;
+    };
 export type NotebookSemanticKind =
   | 'theorem'
   | 'definition'
@@ -196,6 +229,7 @@ export type NotebookDisplayMathNode = {
   sourceText: string;
   latex: string;
   workspaceTarget: NotebookWorkspaceTarget;
+  objectPlacement?: NotebookObjectPlacement;
 };
 
 export type NotebookEvidenceNode = {
@@ -207,11 +241,13 @@ export type NotebookEvidenceNode = {
   resultLatex?: string;
   facts: string[];
   warnings: string[];
+  objectPlacement?: NotebookObjectPlacement;
 };
 
 export type NotebookDividerNode = {
   type: 'horizontalRule';
   id: string;
+  objectPlacement?: NotebookObjectPlacement;
 };
 
 export type NotebookPageBreakNode = {
@@ -240,6 +276,7 @@ export type NotebookImageNode = {
   displayAspectRatio?: number;
   rotation?: NotebookImageRotation;
   crop?: NotebookImageCrop;
+  objectPlacement?: NotebookObjectPlacement;
 };
 
 export type NotebookVideoTrack = {
@@ -266,6 +303,7 @@ export type NotebookVideoNode = {
   placement?: NotebookVideoPlacement;
   displayAspectRatio?: number;
   loop?: boolean;
+  objectPlacement?: NotebookObjectPlacement;
 };
 
 export type NotebookListItemNode = {
@@ -299,6 +337,7 @@ export type NotebookSemanticNode = {
   accentColor?: string;
   collapsible?: boolean;
   collapsed?: boolean;
+  objectPlacement?: NotebookObjectPlacement;
   content: NotebookRichBlockNode[];
 };
 
@@ -309,6 +348,7 @@ export type NotebookSectionNode = {
   accentColor?: string;
   collapsible?: boolean;
   collapsed?: boolean;
+  objectPlacement?: NotebookObjectPlacement;
   content: NotebookRichBlockNode[];
 };
 
@@ -384,6 +424,12 @@ export type NotebookRichDocumentV10 = NotebookRichDocumentBase & {
 
 export type NotebookRichDocumentV11 = NotebookRichDocumentBase & {
   version: 11;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookHeaderFooterSettings;
+};
+
+export type NotebookRichDocumentV12 = NotebookRichDocumentBase & {
+  version: 12;
   pageSetup: NotebookPageSetup;
   headerFooter: NotebookHeaderFooterSettings;
 };

@@ -201,7 +201,7 @@ test('Notebook V11 directly authors running matter and renders two physical shee
       orientation: 'landscape',
       paperSize: 'letter',
     },
-    version: 12,
+    version: 13,
   });
 
   for (const width of [2400, 1440, 1100]) {

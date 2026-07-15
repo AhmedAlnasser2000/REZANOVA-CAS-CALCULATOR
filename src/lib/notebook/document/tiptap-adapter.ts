@@ -14,6 +14,7 @@ import type {
   NotebookListItemNode,
   NotebookLineSpacing,
   NotebookOrderedStyle,
+  NotebookObjectPlacement,
   NotebookParagraphFormat,
   NotebookParagraphLeftIndentPt,
   NotebookParagraphSpacePt,
@@ -28,6 +29,7 @@ import type {
   NotebookVideoTrack,
   NotebookVideoTrackKind,
 } from './types';
+import { isNotebookObjectPlacement } from './object-placement';
 import {
   isNotebookDisplayAspectRatio,
   isNotebookFontSize,
@@ -80,6 +82,17 @@ function optionalBooleanAttr(node: JSONContent, name: string) {
 function optionalNumberAttr(node: JSONContent, name: string) {
   const value = node.attrs?.[name];
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function objectPlacementAttr(node: JSONContent): NotebookObjectPlacement | undefined {
+  const value = node.attrs?.notebookObjectPlacement;
+  return isNotebookObjectPlacement(value)
+    ? structuredClone(value)
+    : undefined;
+}
+
+function objectPlacementAttrs(value: NotebookObjectPlacement | undefined) {
+  return { notebookObjectPlacement: value ? structuredClone(value) : null };
 }
 
 function imageCropFromTiptap(node: JSONContent): NotebookImageCrop | undefined {
@@ -263,6 +276,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         sourceText: node.sourceText,
         latex: node.latex,
         workspaceTarget: node.workspaceTarget,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
     };
   }
@@ -277,11 +291,15 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         resultLatex: node.resultLatex ?? '',
         facts: node.facts,
         warnings: node.warnings,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
     };
   }
   if (node.type === 'horizontalRule') {
-    return { type: 'horizontalRule', attrs: { id: node.id } };
+    return {
+      type: 'horizontalRule',
+      attrs: { id: node.id, ...objectPlacementAttrs(node.objectPlacement) },
+    };
   }
   if (node.type === 'pageBreak') {
     return { type: 'pageBreak', attrs: { id: node.id } };
@@ -305,6 +323,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         cropY: node.crop?.y ?? null,
         cropWidth: node.crop?.width ?? null,
         cropHeight: node.crop?.height ?? null,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
     };
   }
@@ -325,6 +344,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         placement: node.placement ?? null,
         displayAspectRatio: node.displayAspectRatio ?? null,
         loop: node.loop ?? null,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
     };
   }
@@ -337,6 +357,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         collapsed: node.collapsed ?? false,
         accentColor: node.accentColor ?? null,
         collapsible: node.collapsible ?? null,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
       content: node.content.map(blockToTiptap),
     };
@@ -352,6 +373,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         collapsed: node.collapsed ?? false,
         accentColor: node.accentColor ?? null,
         collapsible: node.collapsible ?? null,
+        ...objectPlacementAttrs(node.objectPlacement),
       },
       content: node.content.map(blockToTiptap),
     };
@@ -443,6 +465,7 @@ function blockFromTiptap(
   }
   if (node.type === 'displayMath') {
     const label = stringAttr(node, 'label');
+    const objectPlacement = objectPlacementAttr(node);
     return {
       type: 'displayMath',
       id,
@@ -450,6 +473,7 @@ function blockFromTiptap(
       sourceText: stringAttr(node, 'sourceText'),
       latex: stringAttr(node, 'latex'),
       workspaceTarget: workspaceTargetAttr(node),
+      ...(objectPlacement ? { objectPlacement } : {}),
     };
   }
   if (node.type === 'evidenceSnapshot') {
@@ -466,14 +490,21 @@ function blockFromTiptap(
     };
     const inputLatex = stringAttr(node, 'inputLatex');
     const resultLatex = stringAttr(node, 'resultLatex');
+    const objectPlacement = objectPlacementAttr(node);
     return {
       ...evidence,
       ...(inputLatex ? { inputLatex } : {}),
       ...(resultLatex ? { resultLatex } : {}),
+      ...(objectPlacement ? { objectPlacement } : {}),
     };
   }
   if (node.type === 'horizontalRule') {
-    return { type: 'horizontalRule', id };
+    const objectPlacement = objectPlacementAttr(node);
+    return {
+      type: 'horizontalRule',
+      id,
+      ...(objectPlacement ? { objectPlacement } : {}),
+    };
   }
   if (node.type === 'pageBreak') {
     return { type: 'pageBreak', id };
@@ -499,6 +530,7 @@ function blockFromTiptap(
       ? node.attrs?.displayAspectRatio
       : undefined;
     const crop = imageCropFromTiptap(node);
+    const objectPlacement = objectPlacementAttr(node);
     return {
       type: 'imageFigure',
       id,
@@ -513,6 +545,7 @@ function blockFromTiptap(
       ...(displayAspectRatio !== undefined ? { displayAspectRatio } : {}),
       ...(rotation !== undefined ? { rotation } : {}),
       ...(crop ? { crop } : {}),
+      ...(objectPlacement ? { objectPlacement } : {}),
     };
   }
   if (node.type === 'videoFigure') {
@@ -533,6 +566,7 @@ function blockFromTiptap(
       ? node.attrs?.displayAspectRatio
       : undefined;
     const loop = optionalBooleanAttr(node, 'loop');
+    const objectPlacement = objectPlacementAttr(node);
     return {
       type: 'videoFigure',
       id,
@@ -548,6 +582,7 @@ function blockFromTiptap(
       ...(placement ? { placement } : {}),
       ...(displayAspectRatio !== undefined ? { displayAspectRatio } : {}),
       ...(loop !== undefined ? { loop } : {}),
+      ...(objectPlacement ? { objectPlacement } : {}),
     };
   }
   if (node.type === 'notebookSection') {
@@ -557,6 +592,7 @@ function blockFromTiptap(
     const accentColor = normalizeNotebookAccentColor(stringAttr(node, 'accentColor'));
     const collapsible = optionalBooleanAttr(node, 'collapsible');
     const collapsed = notebookSectionIsCollapsible(collapsible) && booleanAttr(node, 'collapsed');
+    const objectPlacement = objectPlacementAttr(node);
     return {
       type: 'section',
       id,
@@ -564,6 +600,7 @@ function blockFromTiptap(
       ...(accentColor ? { accentColor } : {}),
       ...(collapsible !== undefined ? { collapsible } : {}),
       ...(collapsed ? { collapsed: true } : {}),
+      ...(objectPlacement ? { objectPlacement } : {}),
       content: content?.length
         ? content
         : [{ type: 'paragraph', id: nextId('paragraph') }],
@@ -617,6 +654,7 @@ function blockFromTiptap(
     const collapsible = optionalBooleanAttr(node, 'collapsible');
     const collapsed = notebookSemanticIsCollapsible(variant, collapsible)
       && booleanAttr(node, 'collapsed');
+    const objectPlacement = objectPlacementAttr(node);
     return {
       type: 'semanticBlock',
       id,
@@ -626,6 +664,7 @@ function blockFromTiptap(
       ...(accentColor ? { accentColor } : {}),
       ...(collapsible !== undefined ? { collapsible } : {}),
       ...(collapsed ? { collapsed: true } : {}),
+      ...(objectPlacement ? { objectPlacement } : {}),
       content: content?.length
         ? content
         : [{ type: 'paragraph', id: nextId('paragraph') }],

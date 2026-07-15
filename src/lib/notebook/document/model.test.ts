@@ -22,7 +22,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 12 document with default print geometry', () => {
+  it('creates an app-owned version 13 document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,

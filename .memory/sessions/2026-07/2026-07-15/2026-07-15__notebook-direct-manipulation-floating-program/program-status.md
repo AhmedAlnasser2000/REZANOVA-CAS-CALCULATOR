@@ -30,7 +30,7 @@
 | `NOTEBOOK-MEDIA-GESTURE-LOOP2` | ui | verified; pointer previews coalesce through one animation-frame loop and release commits once |
 | `NOTEBOOK-MEDIA-PLACEMENT2` | ui | verified; flow reordering, wrap targets, cancellation, autoscroll, and onboarding containment pass |
 | `NOTEBOOK-BLOCK-DRAG-UNIFICATION2` | ui | verified; canvas and Outline moves share one pointer coordinator and existing mutation authority |
-| `NOTEBOOK-FLOATING-OBJECT-MODEL1` | backend/schema | pending |
+| `NOTEBOOK-FLOATING-OBJECT-MODEL1` | backend/schema | verified; Schema 13 placement and TypeScript/Rust durable round trips pass |
 | `NOTEBOOK-FLOATING-PAGINATION1` | backend/ui | pending |
 | `NOTEBOOK-FLOATING-OBJECT-INTERACTION1` | ui | pending |
 | `NOTEBOOK-VIDEO-PRESENTATION-HOST2` | ui/native | pending |
@@ -51,4 +51,7 @@
 - Image and video wrap requests now share one physical/rendered minimum-text-column rule. The drop normalizes persisted width to the strictest current maximum, while later viewport pressure can still render a non-destructive normal-flow fallback.
 - The pristine writing prompt and template suggestion now belong to the page stage and remain inside the visible canvas at 2400, 1440, and 1100 pixels.
 - Gate 4 unifies canvas media, Sections, containers, equations, evidence, dividers, and semantic Outline moves under one Notebook pointer coordinator. Body-owned ghosts and guides remain presentation-only; release delegates to existing move commands, and Inspector arrangement retains keyboard-operable structural alternatives.
-- Schema 13 floating placement is the next approved gate.
+- Schema 13 adds an optional `objectPlacement` union to media, display equations, evidence, dividers, academic containers, and complete Sections while leaving all migrated objects in flow.
+- TypeScript and Rust strictly validate exact placement fields, eligible nodes, durable paragraph/page anchors, finite point geometry, nonnegative text distances, and contiguous global layer order. Tiptap, IndexedDB, version history, Trash, recovery, and `.cwiznb` preserve the contract.
+- Historical durable Schemas 6 through 12 migrate in memory to current Schema 13; no placement attributes are synthesized.
+- `NOTEBOOK-FLOATING-PAGINATION1` is the next approved gate.

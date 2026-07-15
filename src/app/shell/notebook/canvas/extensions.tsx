@@ -133,6 +133,27 @@ const NotebookDocumentLayout = Extension.create({
   },
 });
 
+const NotebookObjectPlacementAttributes = Extension.create({
+  name: 'notebookObjectPlacementAttributes',
+
+  addGlobalAttributes() {
+    return [{
+      types: [
+        'displayMath',
+        'evidenceSnapshot',
+        'horizontalRule',
+        'imageFigure',
+        'videoFigure',
+        'semanticBlock',
+        'notebookSection',
+      ],
+      attributes: {
+        notebookObjectPlacement: { default: null, rendered: false },
+      },
+    }];
+  },
+});
+
 const InlineMath = Node.create({
   name: 'inlineMath',
   group: 'inline',
@@ -409,6 +430,7 @@ export function createNotebookExtensions(
     Color,
     NotebookDocumentLayout,
     NotebookNodeIds,
+    NotebookObjectPlacementAttributes,
     InlineMath.extend({
       addNodeView() {
         return ReactNodeViewRenderer(

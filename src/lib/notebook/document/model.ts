@@ -35,8 +35,13 @@ import {
   type NotebookRichDocumentV9,
   type NotebookRichDocumentV10,
   type NotebookRichDocumentV11,
+  type NotebookRichDocumentV12,
   type NotebookRichMark,
 } from './types';
+import {
+  isNotebookObjectPlacement,
+  isNotebookObjectPlacementGraphValid,
+} from './object-placement';
 import {
   DEFAULT_NOTEBOOK_HEADER_FOOTER,
   DEFAULT_NOTEBOOK_PAGE_SETUP,
@@ -305,6 +310,7 @@ function isRichBlockNode(
   allowPageLayout = true,
   allowV10MediaAndIndent = true,
   allowPreciseMediaWidth = false,
+  allowObjectPlacement = false,
 ): value is NotebookRichBlockNode {
   if (!isRecord(value) || typeof value.type !== 'string' || typeof value.id !== 'string') {
     return false;
@@ -317,6 +323,22 @@ function isRichBlockNode(
   }
   if (value.type !== 'semanticBlock' && value.type !== 'section'
     && (value.accentColor !== undefined || value.collapsible !== undefined)) {
+    return false;
+  }
+  const supportsObjectPlacement = [
+    'displayMath',
+    'evidenceSnapshot',
+    'horizontalRule',
+    'imageFigure',
+    'videoFigure',
+    'semanticBlock',
+    'section',
+  ].includes(value.type);
+  if (value.objectPlacement !== undefined && (
+    !allowObjectPlacement
+    || !supportsObjectPlacement
+    || !isNotebookObjectPlacement(value.objectPlacement)
+  )) {
     return false;
   }
   if (value.type === 'section') {
@@ -344,6 +366,7 @@ function isRichBlockNode(
         false,
         allowV10MediaAndIndent,
         allowPreciseMediaWidth,
+        allowObjectPlacement,
       ));
   }
   if (value.type === 'semanticBlock') {
@@ -376,6 +399,7 @@ function isRichBlockNode(
         false,
         allowV10MediaAndIndent,
         allowPreciseMediaWidth,
+        allowObjectPlacement,
       ));
   }
   if (value.type === 'bulletList' || value.type === 'orderedList') {
@@ -400,6 +424,7 @@ function isRichBlockNode(
           false,
           allowV10MediaAndIndent,
           allowPreciseMediaWidth,
+          allowObjectPlacement,
         )));
   }
   if (value.type === 'paragraph') {
@@ -444,6 +469,7 @@ function isRichBlockNode(
         'rotation',
         'crop',
         ...(allowV10MediaAndIndent ? ['displayAspectRatio'] : []),
+        ...(allowObjectPlacement ? ['objectPlacement'] : []),
       ].includes(key))) {
       return false;
     }
@@ -510,6 +536,7 @@ function isRichBlockNode(
         'alignment',
         ...(allowV10MediaAndIndent ? ['placement', 'displayAspectRatio'] : []),
         'loop',
+        ...(allowObjectPlacement ? ['objectPlacement'] : []),
       ].includes(key))) {
       return false;
     }
@@ -600,10 +627,11 @@ export function isNotebookRichDocument(value: unknown): value is NotebookRichDoc
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, true, true, true, true, true, true,
+      node, true, true, true, true, true, true, true, true, true, true,
     ))
     && isPageSetup(value.pageSetup)
-    && isHeaderFooter(value.headerFooter);
+    && isHeaderFooter(value.headerFooter)
+    && isNotebookObjectPlacementGraphValid(value.content);
 }
 
 export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichDocumentV2 {
@@ -788,6 +816,26 @@ export function isNotebookRichDocumentV11(value: unknown): value is NotebookRich
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
       node, true, true, true, true, true, true, true, true, false,
+    ))
+    && isPageSetup(value.pageSetup)
+    && isHeaderFooter(value.headerFooter);
+}
+
+export function isNotebookRichDocumentV12(value: unknown): value is NotebookRichDocumentV12 {
+  return isRecord(value)
+    && value.version === 12
+    && Object.keys(value).every((key) => [
+      'version', 'id', 'title', 'createdAt', 'updatedAt', 'selectedNodeId',
+      'content', 'pageSetup', 'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, true, true, false,
     ))
     && isPageSetup(value.pageSetup)
     && isHeaderFooter(value.headerFooter);

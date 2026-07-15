@@ -132,7 +132,47 @@ describe('IndexedDB Notebook persistence ports', () => {
     expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
   });
 
-  it('hydrates V6 through V10 records and snapshots through the V11 browser contract', async () => {
+  it('round-trips floating placement through records, history, and Trash', async () => {
+    const ports = createPorts('floating-history-trash');
+    const record = createRecord();
+    record.document.content = [{
+      type: 'paragraph',
+      id: 'paragraph.floating-anchor',
+    }, {
+      type: 'displayMath',
+      id: 'math.floating',
+      sourceText: 'x^2',
+      latex: 'x^2',
+      workspaceTarget: 'equation',
+      objectPlacement: {
+        mode: 'floating',
+        anchor: { kind: 'paragraph', nodeId: 'paragraph.floating-anchor' },
+        horizontalReference: 'margins',
+        verticalReference: 'page',
+        xPt: 24.5,
+        yPt: 72.25,
+        widthPt: 180.5,
+        wrap: 'top-and-bottom',
+        textDistancePt: { top: 6, right: 6, bottom: 6, left: 6 },
+        zOrder: 0,
+      },
+    }];
+    await ports.library.save(record, { expectedRevision: null });
+    const snapshot = createNotebookVersionSnapshotV1(record, {
+      reason: 'periodic',
+      snapshotId: 'snapshot.browser.floating',
+    });
+    await ports.library.saveVersion(snapshot);
+    await ports.library.moveToTrash(record.libraryId);
+    await ports.library.restoreFromTrash(record.libraryId);
+
+    expect((await ports.library.load(record.libraryId))?.document.content)
+      .toEqual(record.document.content);
+    expect((await ports.library.listVersions(record.libraryId))[0]?.record.document.content)
+      .toEqual(record.document.content);
+  });
+
+  it('hydrates V6 through V10 records and snapshots through the current browser contract', async () => {
     const name = 'legacy-v6-v10';
     const databaseName = `notebook-persistence-${name}`;
     const indexedDb = new IDBFactory();
@@ -175,10 +215,10 @@ describe('IndexedDB Notebook persistence ports', () => {
 
     for (const legacy of legacyRecords) {
       const loaded = await ports.library.load(legacy.libraryId);
-      expect(loaded?.document.version).toBe(12);
+      expect(loaded?.document.version).toBe(13);
       expect(loaded?.document.content).toEqual(legacy.document.content);
       const versions = await ports.library.listVersions(legacy.libraryId);
-      expect(versions[0]?.record.document.version).toBe(12);
+      expect(versions[0]?.record.document.version).toBe(13);
       expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
     }
   });
@@ -207,7 +247,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     database.close();
 
     const loaded = await ports.library.load(current.libraryId);
-    expect(loaded?.document.version).toBe(12);
+    expect(loaded?.document.version).toBe(13);
     expect(loaded?.document.headerFooter.pageNumberStart).toBe(7);
     let inspection = await openDatabase(indexedDb, databaseName);
     let transaction = inspection.transaction('records', 'readonly');
@@ -234,7 +274,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     const rawSnapshots = await requestValue<Record<string, unknown>[]>(
       transaction.objectStore('versions').getAll(),
     );
-    expect((stored.document as Record<string, unknown>).version).toBe(12);
+    expect((stored.document as Record<string, unknown>).version).toBe(13);
     expect(((rawSnapshots[0].record as Record<string, unknown>).document as Record<string, unknown>).version)
       .toBe(10);
     await complete(transaction);
@@ -256,7 +296,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     const current = createRecord();
     const database = await openDatabase(indexedDb, databaseName);
     const transaction = database.transaction('records', 'readwrite');
-    for (const [libraryId, version] of [['browser.record.v5', 5], ['browser.record.v13', 13]] as const) {
+    for (const [libraryId, version] of [['browser.record.v5', 5], ['browser.record.v14', 14]] as const) {
       const candidate = structuredClone(current) as unknown as Record<string, unknown>;
       candidate.libraryId = libraryId;
       (candidate.document as Record<string, unknown>).version = version;
@@ -266,7 +306,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     database.close();
 
     await expect(ports.library.load('browser.record.v5')).rejects.toThrow(/SCHEMA_PRE_V6/);
-    await expect(ports.library.load('browser.record.v13')).rejects.toThrow(/SCHEMA_NEWER/);
+    await expect(ports.library.load('browser.record.v14')).rejects.toThrow(/SCHEMA_NEWER/);
     expect(await ports.library.loadRawRecovery('browser.record.v5')).toBeInstanceOf(Uint8Array);
   });
 });

@@ -14,6 +14,7 @@ export * from './document/migrate-v8';
 export * from './document/migrate-v9';
 export * from './document/migrate-v10';
 export * from './document/migrate-v11';
+export * from './document/migrate-v12';
 export * from './document/model';
 export * from './document/page-layout';
 export * from './document/pagination';

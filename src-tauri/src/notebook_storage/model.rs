@@ -6,7 +6,7 @@ pub const STORED_RECORD_VERSION: u8 = 1;
 pub const ASSET_RECORD_VERSION: u8 = 1;
 pub const PACKAGE_MANIFEST_VERSION: u8 = 1;
 pub const VERSION_SNAPSHOT_VERSION: u8 = 1;
-pub const CURRENT_DOCUMENT_SCHEMA: u64 = 12;
+pub const CURRENT_DOCUMENT_SCHEMA: u64 = 13;
 pub const MINIMUM_DURABLE_DOCUMENT_SCHEMA: u64 = 6;
 pub const PACKAGE_KIND: &str = "calcwiz-notebook";
 pub const DOCUMENT_PATH: &str = "document.json";
@@ -327,6 +327,104 @@ fn validate_media_placement(node: &Map<String, Value>, kind: &str) -> Result<(),
     Ok(())
 }
 
+fn validate_object_placement(value: &Value) -> Result<(), String> {
+    let placement = object(value)?;
+    match placement.get("mode").and_then(Value::as_str) {
+        Some("flow") if placement.len() == 1 => Ok(()),
+        Some("floating") => {
+            const FIELDS: &[&str] = &[
+                "mode",
+                "anchor",
+                "horizontalReference",
+                "verticalReference",
+                "xPt",
+                "yPt",
+                "widthPt",
+                "wrap",
+                "textDistancePt",
+                "zOrder",
+            ];
+            if placement.len() != FIELDS.len()
+                || placement
+                    .keys()
+                    .any(|field| !FIELDS.contains(&field.as_str()))
+            {
+                return Err("Notebook floating placement contains an unknown field.".into());
+            }
+            let anchor = placement
+                .get("anchor")
+                .ok_or_else(|| "Notebook floating anchor is missing.".to_string())
+                .and_then(object)?;
+            let anchor_is_valid = match anchor.get("kind").and_then(Value::as_str) {
+                Some("paragraph") => {
+                    anchor.len() == 2
+                        && anchor
+                            .keys()
+                            .all(|key| matches!(key.as_str(), "kind" | "nodeId"))
+                        && anchor
+                            .get("nodeId")
+                            .and_then(Value::as_str)
+                            .is_some_and(|node_id| !node_id.trim().is_empty())
+                }
+                Some("page") => {
+                    anchor.len() == 2
+                        && anchor
+                            .keys()
+                            .all(|key| matches!(key.as_str(), "kind" | "pageNumber"))
+                        && anchor
+                            .get("pageNumber")
+                            .and_then(Value::as_u64)
+                            .is_some_and(|page| (1..=9999).contains(&page))
+                }
+                _ => false,
+            };
+            if !anchor_is_valid
+                || !matches!(
+                    placement.get("horizontalReference").and_then(Value::as_str),
+                    Some("page" | "margins")
+                )
+                || !matches!(
+                    placement.get("verticalReference").and_then(Value::as_str),
+                    Some("page" | "margins")
+                )
+                || !matches!(
+                    placement.get("wrap").and_then(Value::as_str),
+                    Some("square" | "top-and-bottom" | "in-front" | "behind")
+                )
+                || !["xPt", "yPt"].iter().all(|field| {
+                    placement
+                        .get(*field)
+                        .and_then(Value::as_f64)
+                        .is_some_and(f64::is_finite)
+                })
+                || !placement
+                    .get("widthPt")
+                    .and_then(Value::as_f64)
+                    .is_some_and(|width| width.is_finite() && width >= 36.0)
+                || !placement.get("zOrder").is_some_and(Value::is_u64)
+            {
+                return Err("Notebook floating placement is invalid.".into());
+            }
+            let distance = placement
+                .get("textDistancePt")
+                .ok_or_else(|| "Notebook floating text distance is missing.".to_string())
+                .and_then(object)?;
+            if distance.len() != 4
+                || !["top", "right", "bottom", "left"].iter().all(|field| {
+                    distance
+                        .get(*field)
+                        .and_then(Value::as_f64)
+                        .is_some_and(|value| value.is_finite() && value >= 0.0)
+                })
+            {
+                return Err("Notebook floating text distance is invalid.".into());
+            }
+            Ok(())
+        }
+        _ => Err("Notebook object placement is invalid.".into()),
+    }
+}
+
 fn validate_media_width(
     value: Option<&Value>,
     kind: &str,
@@ -357,6 +455,7 @@ fn validate_image_figure(
     node: &Map<String, Value>,
     allow_direct_media: bool,
     allow_precise_media_width: bool,
+    allow_object_placement: bool,
 ) -> Result<(), String> {
     const LEGACY_FIELDS: &[&str] = &[
         "type",
@@ -387,7 +486,25 @@ fn validate_image_figure(
         "crop",
         "displayAspectRatio",
     ];
-    let allowed_fields = if allow_direct_media {
+    const V13_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "altText",
+        "decorative",
+        "caption",
+        "numbered",
+        "widthPercent",
+        "alignment",
+        "placement",
+        "rotation",
+        "crop",
+        "displayAspectRatio",
+        "objectPlacement",
+    ];
+    let allowed_fields = if allow_object_placement {
+        V13_FIELDS
+    } else if allow_direct_media {
         V10_FIELDS
     } else {
         LEGACY_FIELDS
@@ -476,6 +593,7 @@ fn validate_video_figure(
     node: &Map<String, Value>,
     allow_direct_media: bool,
     allow_precise_media_width: bool,
+    allow_object_placement: bool,
 ) -> Result<(), String> {
     const ALLOWED_FIELDS: &[&str] = &[
         "type",
@@ -507,7 +625,26 @@ fn validate_video_figure(
         "displayAspectRatio",
         "loop",
     ];
-    let allowed_fields = if allow_direct_media {
+    const V13_ALLOWED_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "title",
+        "description",
+        "caption",
+        "numbered",
+        "posterAssetId",
+        "tracks",
+        "widthPercent",
+        "alignment",
+        "placement",
+        "displayAspectRatio",
+        "loop",
+        "objectPlacement",
+    ];
+    let allowed_fields = if allow_object_placement {
+        V13_ALLOWED_FIELDS
+    } else if allow_direct_media {
         V10_ALLOWED_FIELDS
     } else {
         ALLOWED_FIELDS
@@ -582,6 +719,7 @@ fn validate_block(
     allow_page_layout: bool,
     allow_direct_media: bool,
     allow_precise_media_width: bool,
+    allow_object_placement: bool,
 ) -> Result<(), String> {
     if depth > 256 {
         return Err("Notebook nesting exceeds the safety limit.".into());
@@ -594,6 +732,22 @@ fn validate_block(
     }
     if !matches!(node_type, "bulletList" | "orderedList") && node.contains_key("style") {
         return Err("Notebook list style is attached to an ineligible node.".into());
+    }
+    let supports_object_placement = matches!(
+        node_type,
+        "displayMath"
+            | "evidenceSnapshot"
+            | "horizontalRule"
+            | "imageFigure"
+            | "videoFigure"
+            | "semanticBlock"
+            | "section"
+    );
+    if let Some(placement) = node.get("objectPlacement") {
+        if !allow_object_placement || !supports_object_placement {
+            return Err("Notebook object placement is attached to an ineligible node.".into());
+        }
+        validate_object_placement(placement)?;
     }
     match node_type {
         "paragraph" | "heading" => {
@@ -678,6 +832,7 @@ fn validate_block(
                     false,
                     allow_direct_media,
                     allow_precise_media_width,
+                    allow_object_placement,
                 )?;
             }
             Ok(())
@@ -723,14 +878,21 @@ fn validate_block(
                 false,
                 allow_direct_media,
                 allow_precise_media_width,
+                allow_object_placement,
             )
         }
-        "imageFigure" if allow_images => {
-            validate_image_figure(node, allow_direct_media, allow_precise_media_width)
-        }
-        "videoFigure" if allow_videos => {
-            validate_video_figure(node, allow_direct_media, allow_precise_media_width)
-        }
+        "imageFigure" if allow_images => validate_image_figure(
+            node,
+            allow_direct_media,
+            allow_precise_media_width,
+            allow_object_placement,
+        ),
+        "videoFigure" if allow_videos => validate_video_figure(
+            node,
+            allow_direct_media,
+            allow_precise_media_width,
+            allow_object_placement,
+        ),
         "pageBreak" if allow_page_layout && node.len() == 2 => Ok(()),
         _ => Err("Notebook block type is unsupported.".into()),
     }
@@ -744,6 +906,7 @@ fn validate_block_content(
     allow_page_layout: bool,
     allow_direct_media: bool,
     allow_precise_media_width: bool,
+    allow_object_placement: bool,
 ) -> Result<(), String> {
     for child in node
         .get("content")
@@ -758,7 +921,88 @@ fn validate_block_content(
             allow_page_layout,
             allow_direct_media,
             allow_precise_media_width,
+            allow_object_placement,
         )?;
+    }
+    Ok(())
+}
+
+fn collect_paragraph_ids(value: &Value, ids: &mut HashSet<String>) {
+    let Some(node) = value.as_object() else {
+        return;
+    };
+    if node.get("type").and_then(Value::as_str) == Some("paragraph") {
+        if let Some(id) = node.get("id").and_then(Value::as_str) {
+            ids.insert(id.to_string());
+        }
+    }
+    if let Some(content) = node.get("content").and_then(Value::as_array) {
+        for child in content {
+            collect_paragraph_ids(child, ids);
+        }
+    }
+}
+
+fn collect_object_placement_graph(
+    value: &Value,
+    paragraph_anchors: &mut Vec<(String, HashSet<String>)>,
+    z_orders: &mut Vec<u64>,
+) {
+    let Some(node) = value.as_object() else {
+        return;
+    };
+    if let Some(placement) = node.get("objectPlacement").and_then(Value::as_object) {
+        if placement.get("mode").and_then(Value::as_str) == Some("floating") {
+            if let Some(z_order) = placement.get("zOrder").and_then(Value::as_u64) {
+                z_orders.push(z_order);
+            }
+            if let Some(anchor) = placement.get("anchor").and_then(Value::as_object) {
+                if anchor.get("kind").and_then(Value::as_str) == Some("paragraph") {
+                    if let Some(anchor_id) = anchor.get("nodeId").and_then(Value::as_str) {
+                        let mut own_paragraphs = HashSet::new();
+                        if matches!(
+                            node.get("type").and_then(Value::as_str),
+                            Some("semanticBlock" | "section")
+                        ) {
+                            if let Some(content) = node.get("content").and_then(Value::as_array) {
+                                for child in content {
+                                    collect_paragraph_ids(child, &mut own_paragraphs);
+                                }
+                            }
+                        }
+                        paragraph_anchors.push((anchor_id.to_string(), own_paragraphs));
+                    }
+                }
+            }
+        }
+    }
+    if let Some(content) = node.get("content").and_then(Value::as_array) {
+        for child in content {
+            collect_object_placement_graph(child, paragraph_anchors, z_orders);
+        }
+    }
+}
+
+fn validate_object_placement_graph(content: &[Value]) -> Result<(), String> {
+    let mut paragraph_ids = HashSet::new();
+    let mut paragraph_anchors = Vec::new();
+    let mut z_orders = Vec::new();
+    for node in content {
+        collect_paragraph_ids(node, &mut paragraph_ids);
+        collect_object_placement_graph(node, &mut paragraph_anchors, &mut z_orders);
+    }
+    if paragraph_anchors.iter().any(|(anchor_id, own_paragraphs)| {
+        !paragraph_ids.contains(anchor_id) || own_paragraphs.contains(anchor_id)
+    }) {
+        return Err("Notebook floating paragraph anchor is invalid.".into());
+    }
+    z_orders.sort_unstable();
+    if z_orders
+        .iter()
+        .enumerate()
+        .any(|(index, z_order)| *z_order != index as u64)
+    {
+        return Err("Notebook floating layer order is not normalized.".into());
     }
     Ok(())
 }
@@ -996,6 +1240,7 @@ fn validate_notebook_document_version(
     allow_direct_media: bool,
     current_running_matter: bool,
     allow_precise_media_width: bool,
+    allow_object_placement: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
     if document.get("version").and_then(Value::as_u64) != Some(version) {
@@ -1059,6 +1304,15 @@ fn validate_notebook_document_version(
             allow_page_layout,
             allow_direct_media,
             allow_precise_media_width,
+            allow_object_placement,
+        )?;
+    }
+    if allow_object_placement {
+        validate_object_placement_graph(
+            document
+                .get("content")
+                .and_then(Value::as_array)
+                .ok_or_else(|| "Notebook document content must be an array.".to_string())?,
         )?;
     }
     if allow_page_layout {
@@ -1083,6 +1337,7 @@ pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
     validate_notebook_document_version(
         document,
         CURRENT_DOCUMENT_SCHEMA,
+        true,
         true,
         true,
         true,
@@ -1192,24 +1447,27 @@ fn migrate_legacy_running_matter(document: &mut Value) -> Result<(), String> {
 
 pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(12) => validate_notebook_document(document),
-        Some(11) => {
-            validate_notebook_document_version(document, 11, true, true, true, true, true, false)
-        }
-        Some(10) => {
-            validate_notebook_document_version(document, 10, true, true, true, true, false, false)
-        }
-        Some(9) => {
-            validate_notebook_document_version(document, 9, true, true, true, false, false, false)
-        }
-        Some(8) => {
-            validate_notebook_document_version(document, 8, true, false, true, false, false, false)
-        }
-        Some(7) => {
-            validate_notebook_document_version(document, 7, true, false, false, false, false, false)
-        }
+        Some(13) => validate_notebook_document(document),
+        Some(12) => validate_notebook_document_version(
+            document, 12, true, true, true, true, true, true, false,
+        ),
+        Some(11) => validate_notebook_document_version(
+            document, 11, true, true, true, true, true, false, false,
+        ),
+        Some(10) => validate_notebook_document_version(
+            document, 10, true, true, true, true, false, false, false,
+        ),
+        Some(9) => validate_notebook_document_version(
+            document, 9, true, true, true, false, false, false, false,
+        ),
+        Some(8) => validate_notebook_document_version(
+            document, 8, true, false, true, false, false, false, false,
+        ),
+        Some(7) => validate_notebook_document_version(
+            document, 7, true, false, false, false, false, false, false,
+        ),
         Some(6) => validate_notebook_document_version(
-            document, 6, false, false, false, false, false, false,
+            document, 6, false, false, false, false, false, false, false,
         ),
         Some(version) if version > CURRENT_DOCUMENT_SCHEMA => {
             Err("NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.".into())
@@ -1223,15 +1481,24 @@ pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(12) => validate_notebook_document(&document)?,
+        Some(13) => validate_notebook_document(&document)?,
+        Some(12) => {
+            validate_notebook_document_version(
+                &document, 12, true, true, true, true, true, true, false,
+            )?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
+            validate_notebook_document(&document)?;
+        }
         Some(11) => {
-            validate_notebook_document_version(&document, 11, true, true, true, true, true, false)?;
+            validate_notebook_document_version(
+                &document, 11, true, true, true, true, true, false, false,
+            )?;
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(10) => {
             validate_notebook_document_version(
-                &document, 10, true, true, true, true, false, false,
+                &document, 10, true, true, true, true, false, false, false,
             )?;
             migrate_legacy_running_matter(&mut document)?;
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
@@ -1239,7 +1506,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
         }
         Some(9) => {
             validate_notebook_document_version(
-                &document, 9, true, true, true, false, false, false,
+                &document, 9, true, true, true, false, false, false, false,
             )?;
             document["version"] = Value::from(10);
             migrate_legacy_running_matter(&mut document)?;
@@ -1248,7 +1515,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
         }
         Some(8) => {
             validate_notebook_document_version(
-                &document, 8, true, false, true, false, false, false,
+                &document, 8, true, false, true, false, false, false, false,
             )?;
             document["version"] = Value::from(10);
             migrate_legacy_running_matter(&mut document)?;
@@ -1257,7 +1524,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
         }
         Some(7) => {
             validate_notebook_document_version(
-                &document, 7, true, false, false, false, false, false,
+                &document, 7, true, false, false, false, false, false, false,
             )?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
@@ -1267,7 +1534,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
         }
         Some(6) => {
             validate_notebook_document_version(
-                &document, 6, false, false, false, false, false, false,
+                &document, 6, false, false, false, false, false, false, false,
             )?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
