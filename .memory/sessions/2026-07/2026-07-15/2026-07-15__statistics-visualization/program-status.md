@@ -16,8 +16,8 @@
 
 ## Status
 
-- `STATISTICS-VERTICAL-RESULTS1`: verified and ready to commit.
-- `STATISTICS-VISUALIZATION-CONTRACT1`: pending.
+- `STATISTICS-VERTICAL-RESULTS1`: committed as `204dc1c6`.
+- `STATISTICS-VISUALIZATION-CONTRACT1`: verified and ready to commit.
 - `STATISTICS-DATA-PROBABILITY-VISUALS1`: pending.
 - `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: pending.
 - `STATISTICS-VISUALIZATION-POLISH1`: pending.
@@ -30,4 +30,3 @@
 - Statistics replaces its keypad area with an always-present visualization dock. Other workspaces retain the existing keypad.
 - No live plotting, point editing, chart export, 3D, or general graphing-scene protocol is included.
 - The user approved commits for all five verified gates. No push is authorized.
-

@@ -4,6 +4,7 @@ import type {
   StatisticsSection,
 } from '../../types/calculator';
 import { datasetTextFromValues } from '../../lib/statistics/runtime-request';
+import { cloneStatisticsVisualizationPayloadV1 } from '../../lib/statistics/visualization-contract';
 import {
   DEFAULT_BINOMIAL_STATE,
   DEFAULT_NORMAL_STATE,
@@ -26,6 +27,22 @@ function copyStatisticsMenuSelection(selection: Record<StatisticsMenuScreen, num
 
 function copyCoreDraftState(state: CoreDraftState): CoreDraftState {
   return { ...state };
+}
+
+function copyStatisticsSectionResults(
+  results: StatisticsSurfaceState['statisticsSectionResults'],
+): StatisticsSurfaceState['statisticsSectionResults'] {
+  return Object.fromEntries(Object.entries(results).map(([section, entry]) => [
+    section,
+    entry
+      ? {
+          ...entry,
+          ...(entry.visualization
+            ? { visualization: cloneStatisticsVisualizationPayloadV1(entry.visualization) }
+            : {}),
+        }
+      : entry,
+  ]));
 }
 
 export function defaultStatisticsSectionScreens(): Record<StatisticsSection, StatisticsScreen> {
@@ -56,6 +73,8 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     statisticsSection,
     statisticsInputMode: state.statisticsInputMode ?? 'guided',
     statisticsResultViewMode: state.statisticsResultViewMode ?? 'contained',
+    statisticsSelectedVisualizations: { ...state.statisticsSelectedVisualizations },
+    statisticsHistogramBinCount: state.statisticsHistogramBinCount ?? 'auto',
     statisticsExpressionDraftInitialized:
       state.statisticsExpressionDraftInitialized
       ?? state.statisticsDraftState.source === 'manual',
@@ -64,7 +83,7 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
       ...state.statisticsSectionScreens,
       [statisticsSection]: statisticsScreen,
     },
-    statisticsSectionResults: { ...state.statisticsSectionResults },
+    statisticsSectionResults: copyStatisticsSectionResults(state.statisticsSectionResults),
     statisticsMenuSelection: copyStatisticsMenuSelection(state.statisticsMenuSelection),
     statisticsSourceSyncState: { ...state.statisticsSourceSyncState },
     statsDataset: { values: [...state.statsDataset.values] },

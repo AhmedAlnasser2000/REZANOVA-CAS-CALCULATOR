@@ -4,5 +4,6 @@ export * from './calculator/canonical-result-types';
 export * from './calculator/canonical-result-v2-types';
 export * from './calculator/canonical-result-v3-types';
 export * from './calculator/canonical-runtime-outcome-types';
+export * from './calculator/statistics-visualization-types';
 export * from './calculator/runtime-types';
 export * from './calculator/workspace-instance-types';

@@ -53,6 +53,7 @@ import type {
   StatisticsSection,
   StatisticsInputMode,
   StatisticsResultViewMode,
+  StatisticsVisualizationKind,
   StatisticsWorkingSource,
 } from '../../types/calculator';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
@@ -104,6 +105,8 @@ export function useStatisticsRuntime({
     useState<StatisticsInputMode>('guided');
   const [statisticsResultViewMode, setStatisticsResultViewMode] =
     useState<StatisticsResultViewMode>('contained');
+  const [statisticsSelectedVisualizations, setStatisticsSelectedVisualizations] = useState<StatisticsSurfaceState['statisticsSelectedVisualizations']>({});
+  const [statisticsHistogramBinCount, setStatisticsHistogramBinCount] = useState<StatisticsSurfaceState['statisticsHistogramBinCount']>('auto');
   const [statisticsExpressionDraftInitialized, setStatisticsExpressionDraftInitialized] =
     useState(false);
   const [statisticsExpressionError, setStatisticsExpressionError] = useState<string | null>(null);
@@ -239,6 +242,11 @@ export function useStatisticsRuntime({
     activeStatisticsSectionResult
     && activeStatisticsSectionResult.inputRevisionId !== activeStatisticsInputRevisionId,
   );
+  const activeStatisticsVisualizationKind = statisticsSelectedVisualizations[statisticsSection];
+
+  function selectStatisticsVisualization(kind: StatisticsVisualizationKind) {
+    setStatisticsSelectedVisualizations((current) => ({ ...current, [statisticsSection]: kind }));
+  }
 
   function statisticsWorkingSourceForScreen(screen: StatisticsScreen): StatisticsWorkingSource {
     if (screen === 'home' || screen === 'probabilityHome' || screen === 'inferenceHome') {
@@ -788,6 +796,8 @@ export function useStatisticsRuntime({
     setStatisticsSection('dataSummary');
     setStatisticsInputMode('guided');
     setStatisticsResultViewMode('contained');
+    setStatisticsSelectedVisualizations({});
+    setStatisticsHistogramBinCount('auto');
     setStatisticsExpressionDraftInitialized(false);
     setStatisticsExpressionError(null);
     setStatisticsSectionScreens(defaultStatisticsSectionScreens());
@@ -811,6 +821,7 @@ export function useStatisticsRuntime({
   function captureStatisticsSurfaceState(): StatisticsSurfaceState {
     return copyStatisticsSurfaceState({
       statisticsScreen, statisticsSection, statisticsInputMode, statisticsResultViewMode,
+      statisticsSelectedVisualizations, statisticsHistogramBinCount,
       statisticsExpressionDraftInitialized,
       statisticsSectionScreens, statisticsSectionResults,
       statisticsMenuSelection, statisticsWorkingSource,
@@ -832,6 +843,8 @@ export function useStatisticsRuntime({
     setStatisticsSection(copy.statisticsSection);
     setStatisticsInputMode(copy.statisticsInputMode);
     setStatisticsResultViewMode(copy.statisticsResultViewMode);
+    setStatisticsSelectedVisualizations(copy.statisticsSelectedVisualizations);
+    setStatisticsHistogramBinCount(copy.statisticsHistogramBinCount);
     setStatisticsExpressionDraftInitialized(copy.statisticsExpressionDraftInitialized ?? false);
     setStatisticsExpressionError(null);
     setStatisticsSectionScreens(copy.statisticsSectionScreens);
@@ -924,7 +937,12 @@ export function useStatisticsRuntime({
           cacheStatisticsSectionOutcome({
             originWorkspace,
             originSection,
-            entry: { outcome: payload.outcome, inputLatex, inputRevisionId },
+            entry: {
+              outcome: payload.outcome,
+              inputLatex,
+              inputRevisionId,
+              ...(payload.visualization ? { visualization: payload.visualization } : {}),
+            },
             getActiveWorkspace: getActiveWorkspaceInstanceRuntimeContext,
             getWorkspaceInstances,
             setActiveResults: setStatisticsSectionResults,
@@ -969,6 +987,9 @@ export function useStatisticsRuntime({
     statisticsExpressionError, statisticsExpressionDraftInitialized,
     statisticsInputMode, openStatisticsExpressionMode, setStatisticsInputMode, statisticsSectionScreens,
     statisticsResultViewMode, setStatisticsResultViewMode,
+    statisticsSelectedVisualizations, setStatisticsSelectedVisualizations,
+    activeStatisticsVisualizationKind, selectStatisticsVisualization,
+    statisticsHistogramBinCount, setStatisticsHistogramBinCount,
     activeStatisticsSectionResult, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary, statisticsWorkbenchExpression,

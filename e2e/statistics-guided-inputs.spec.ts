@@ -109,3 +109,23 @@ test('Statistics results use labeled vertical rows and support Full result', asy
   const overflow = await result.evaluate((element) => element.scrollWidth - element.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test('Statistics replaces the lower keypad with a stable visualization dock', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page.locator('.keypad-panel')).toBeVisible();
+  await openStatisticsTool(page, 'Descriptive');
+
+  const dock = page.getByTestId('statistics-visualization-dock');
+  await expect(dock).toBeVisible();
+  await expect(page.locator('.keypad-panel')).toHaveCount(0);
+  await expect(dock.getByTestId('statistics-visualization-empty')).toBeVisible();
+
+  await page.getByRole('radio', { name: 'Expression', exact: true }).click();
+  await dock.getByRole('button', { name: 'Show keypad' }).click();
+  await expect(dock.getByTestId('statistics-expression-keypad')).toBeVisible();
+  await expect(dock.locator('.keypad-panel')).toBeVisible();
+
+  await dock.getByRole('button', { name: 'Show visualization' }).click();
+  await expect(dock.getByTestId('statistics-expression-keypad')).toHaveCount(0);
+  await expect(dock).toBeVisible();
+});

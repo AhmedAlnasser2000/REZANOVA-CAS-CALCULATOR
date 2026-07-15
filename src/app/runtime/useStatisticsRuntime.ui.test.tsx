@@ -57,6 +57,26 @@ function statisticsPayload(): StatisticsModeRunPayload {
       },
       workingSource: 'dataset',
     },
+    visualization: {
+      version: 1,
+      defaultKind: 'probabilityBars',
+      views: [{
+        kind: 'probabilityBars',
+        title: 'Binomial probability',
+        xLabel: 'Successes',
+        yLabel: 'Probability',
+        ariaDescription: 'Binomial probability bars.',
+        distribution: 'binomial',
+        eventNotation: 'X=3',
+        points: [{ x: 3, probability: 0.1171875, selected: true }],
+        omittedMass: 0,
+        table: {
+          columns: ['Successes', 'Probability'],
+          rows: [[3, 0.1171875]],
+          totalRows: 1,
+        },
+      }],
+    },
   };
 }
 
@@ -492,6 +512,9 @@ describe('useStatisticsRuntime', () => {
     expect(hook.result.current.activeStatisticsSectionResult?.outcome).toEqual(
       statisticsPayload().outcome,
     );
+    expect(hook.result.current.activeStatisticsSectionResult?.visualization).toEqual(
+      statisticsPayload().visualization,
+    );
   });
 
   it('clears only the active section and resets shared data only from Data & Summary', () => {
@@ -584,6 +607,8 @@ describe('useStatisticsRuntime', () => {
     });
     act(() => {
       hook.result.current.importDatasetIntoFrequencyTable();
+      hook.result.current.selectStatisticsVisualization('probabilityBars');
+      hook.result.current.setStatisticsHistogramBinCount(8);
     });
 
     const snapshot = hook.result.current.captureStatisticsSurfaceState();
@@ -618,6 +643,8 @@ describe('useStatisticsRuntime', () => {
       { value: '5', frequency: '1' },
       { value: '8', frequency: '1' },
     ]);
+    expect(hook.result.current.activeStatisticsVisualizationKind).toBe('probabilityBars');
+    expect(hook.result.current.statisticsHistogramBinCount).toBe(8);
   });
 
   it('resets current-screen and full Statistics state from the hook', () => {

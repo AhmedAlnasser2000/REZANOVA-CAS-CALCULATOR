@@ -50,6 +50,9 @@ import type {
   StatisticsSection,
   StatisticsInputMode,
   StatisticsResultViewMode,
+  StatisticsHistogramBinCount,
+  StatisticsVisualizationKind,
+  StatisticsVisualizationPayloadV1,
   StatisticsSourceSyncState,
   StatisticsWorkingSource,
   StatsDataset,
@@ -169,12 +172,15 @@ export type StatisticsSurfaceState = {
   statisticsSection: StatisticsSection;
   statisticsInputMode: StatisticsInputMode;
   statisticsResultViewMode: StatisticsResultViewMode;
+  statisticsSelectedVisualizations: Partial<Record<StatisticsSection, StatisticsVisualizationKind>>;
+  statisticsHistogramBinCount: StatisticsHistogramBinCount;
   statisticsExpressionDraftInitialized?: boolean;
   statisticsSectionScreens: Record<StatisticsSection, StatisticsScreen>;
   statisticsSectionResults: Partial<Record<StatisticsSection, {
     outcome: CanonicalRuntimeOutcome;
     inputLatex: string;
     inputRevisionId: string;
+    visualization?: StatisticsVisualizationPayloadV1;
   }>>;
   statisticsMenuSelection: {
     home: number;

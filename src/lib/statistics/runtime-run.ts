@@ -3,6 +3,7 @@ import type {
   StatisticsParseResult,
   StatisticsReplaySeed,
   StatisticsScreen,
+  StatisticsVisualizationPayloadV1,
   VersionedResultProducerDraft,
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
@@ -24,6 +25,7 @@ export type StatisticsModeRunPayload = {
   parsed: StatisticsParseResult;
   replayScreen: StatisticsScreen;
   replaySeed?: StatisticsReplaySeed;
+  visualization?: StatisticsVisualizationPayloadV1;
 };
 
 export type CanonicalStatisticsModeRunPayload = Omit<StatisticsModeRunPayload, 'outcome'> & {

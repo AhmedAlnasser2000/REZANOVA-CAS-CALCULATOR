@@ -530,6 +530,105 @@
   color: #15251b;
 }
 
+.statistics-visualization-dock {
+  min-height: 30rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 24px;
+  background: var(--panel-bg);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.statistics-visualization-header {
+  min-height: 3.25rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--panel-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.statistics-visualization-title,
+.statistics-visualization-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.statistics-visualization-title h2 {
+  margin: 0;
+  color: var(--surface-ink);
+  font-size: 1rem;
+}
+
+.statistics-visualization-badge {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(207, 189, 104, 0.58);
+  color: #f0d98b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.statistics-visualization-controls select,
+.statistics-histogram-bin-control input {
+  min-height: 2rem;
+  border: 1px solid rgba(21, 37, 27, 0.3);
+  border-radius: 6px;
+  background: #f4f5f1;
+  color: #17201c;
+}
+
+.statistics-histogram-bin-control {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--surface-muted);
+  font-size: 0.8rem;
+}
+
+.statistics-histogram-bin-control input {
+  width: 5rem;
+  padding: 0.25rem 0.45rem;
+}
+
+.statistics-visualization-icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: var(--control-surface);
+  color: var(--surface-ink);
+  display: grid;
+  place-items: center;
+}
+
+.statistics-visualization-icon-button.is-active {
+  border-color: rgba(201, 214, 164, 0.58);
+  background: rgba(201, 214, 164, 0.18);
+}
+
+.statistics-visualization-body {
+  min-height: 26rem;
+  overflow: hidden;
+}
+
+.statistics-visualization-empty,
+.statistics-visualization-chart-placeholder {
+  min-height: 26rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.75rem;
+  color: var(--surface-subtle);
+}
+
+.statistics-visualization-keypad .keypad-panel {
+  margin: 0;
+  border: 0;
+  border-radius: 0 0 24px 24px;
+}
+
 @media (max-width: 760px) {
   .statistics-probability-layout,
   .statistics-relationships-layout,

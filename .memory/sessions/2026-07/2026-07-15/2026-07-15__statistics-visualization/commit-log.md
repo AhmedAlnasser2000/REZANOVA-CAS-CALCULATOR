@@ -19,10 +19,9 @@
 
 ## Commits
 
-- `STATISTICS-VERTICAL-RESULTS1`: ready under standing user approval.
-- `STATISTICS-VISUALIZATION-CONTRACT1`: pending.
+- `STATISTICS-VERTICAL-RESULTS1`: `204dc1c6`.
+- `STATISTICS-VISUALIZATION-CONTRACT1`: ready under standing user approval.
 - `STATISTICS-DATA-PROBABILITY-VISUALS1`: pending.
 - `STATISTICS-RELATIONSHIPS-INFERENCE-VISUALS1`: pending.
 - `STATISTICS-VISUALIZATION-POLISH1`: pending.
 - No push is authorized.
-

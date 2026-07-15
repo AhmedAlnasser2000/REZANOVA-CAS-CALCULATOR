@@ -17,7 +17,7 @@ import { ActiveSurfaceHost } from './app/shell/ActiveSurfaceHost';
 import { CompartmentErrorBoundary } from './app/shell/CompartmentErrorBoundary';
 import { DisplayPanel } from './app/shell/DisplayPanel';
 import { formulaViewerSourceContextForWorkspaceInstance } from './app/runtime/formula-viewer-source-context';
-import { KeypadPanel } from './app/shell/KeypadPanel';
+import { WorkspaceLowerPanel } from './app/shell/WorkspaceLowerPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
 import { MenuInspectorPanel } from './app/shell/MenuInspectorPanel';
 import { ModeStrip } from './app/shell/ModeStrip';
@@ -858,7 +858,8 @@ export default function App() {
     statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
-    statisticsSection, statisticsInputMode, statisticsResultViewMode, setStatisticsResultViewMode, activeStatisticsResultIsStale,
+    statisticsSection, statisticsInputMode, statisticsResultViewMode, setStatisticsResultViewMode, activeStatisticsSectionResult, activeStatisticsResultIsStale,
+    activeStatisticsVisualizationKind, selectStatisticsVisualization, statisticsHistogramBinCount, setStatisticsHistogramBinCount,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary,
     statisticsWorkbenchExpression,
@@ -3262,13 +3263,11 @@ export default function App() {
             </CompartmentErrorBoundary>
           </div>
         </main>
-        <KeypadPanel
-          rows={keypadRows}
-          activeLayer={effectiveKeypadLayer}
-          layerLocked={keypadLayerLocked}
-          onKeypad={handleKeypad}
-          onSelectLayer={selectKeypadLayer}
-          onToggleLayerLock={toggleKeypadLayerLock}
+        <WorkspaceLowerPanel
+          currentMode={currentMode} rows={keypadRows} activeLayer={effectiveKeypadLayer} layerLocked={keypadLayerLocked} onKeypad={handleKeypad} onSelectLayer={selectKeypadLayer} onToggleLayerLock={toggleKeypadLayerLock}
+          statisticsSection={statisticsSection} statisticsInputMode={statisticsInputMode} statisticsVisualization={activeStatisticsSectionResult?.visualization} statisticsVisualizationKind={activeStatisticsVisualizationKind}
+          statisticsHistogramBinCount={statisticsHistogramBinCount} statisticsResultIsStale={activeStatisticsResultIsStale} statisticsOutcomeKind={activeStatisticsSectionResult?.outcome.kind} statisticsResultRevision={activeStatisticsSectionResult?.inputRevisionId} runtimeStatusLabel={editorAnalysisStatusLabel}
+          onStatisticsVisualizationKindChange={selectStatisticsVisualization} onStatisticsHistogramBinCountChange={setStatisticsHistogramBinCount}
         />
       </div>
           )}

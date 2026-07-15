@@ -5,7 +5,7 @@ import {
 } from '../../lib/navigation/menu';
 import type { MouseEvent } from 'react';
 
-type KeypadPanelProps = {
+export type KeypadPanelProps = {
   rows: KeypadButton[][];
   activeLayer?: KeypadLayer;
   layerLocked?: boolean;
