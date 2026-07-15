@@ -27,11 +27,11 @@
 
 ## Active Gate
 
-- milestone: `LINEAR-ALGEBRA-SYMBOLIC-SCALAR-SUBSTRATE1`
+- milestone: `VECTOR-SYMBOLIC-EXPRESSIONS1`
 - gate: backend
 - status: verified pass
-- prerequisite representation: bounded standard MathJSON scalar wires owned by Linear Algebra.
-- protected lanes: concurrent Notebook source, Rust Notebook storage, Notebook durable-memory dossier, and untracked `test-results/` remain untouched and unstaged.
+- prerequisite representation: bounded standard MathJSON scalar wires and a Vector-owned symbolic scalar core.
+- protected lanes: concurrent Notebook and Statistics source/dossiers plus untracked `test-results/` remain excluded from this gate.
 
 ## Milestone 8 Result
 
@@ -41,9 +41,17 @@
 - Symbolic Matrix/Vector producers remain fail-closed until their owning milestones.
 - Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-8/matrix-stored-value-preview.png`.
 
+## Milestone 9 Result
+
+- Symbolic/complex Vector arithmetic, Hermitian products, norms, projections, orthogonality, principal line angles, algebraic cross products, Gram area/volume, distance, parallelism, linear combinations, and bounded Gram-Schmidt execute through the existing Vector worker/OOE/History shell.
+- Conditions remain producer-proven V2 supplements and bounded undecidable classifications use standard `Which`; only gradian angles use the approved V3 angle quantity.
+- Span and independence remain controlled stops for the shared elimination classifier in Milestone 11.
+- Matrix and Vector Domain/Parameters and size controls now use explicit high-contrast text, both workspaces consume the formerly empty workspace column, and their cell pads expand across each value card.
+- Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-9/complex-principal-line-angle.png` plus the refreshed Milestone 8 Matrix screenshot.
+
 ## Next Gate
 
-- milestone: `VECTOR-SYMBOLIC-EXPRESSIONS1`
+- milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
 - gate: backend
 - status: not started
-- existing numeric Vector execution and all OOE/History ownership remain the compatibility baseline.
+- existing numeric Matrix execution and all OOE/History ownership remain the compatibility baseline.

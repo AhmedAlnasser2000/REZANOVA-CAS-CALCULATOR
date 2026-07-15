@@ -1,8 +1,16 @@
-import type { ExactScalarWire } from '../../types/calculator';
-import type { LinearAlgebraScalarExpression } from './editor-vector-scalars';
+import type { ExactScalarWire, LinearAlgebraScalarDomain } from '../../types/calculator';
+import type {
+  LinearAlgebraScalarExpression,
+  LinearAlgebraSymbolicScalarExpression,
+  LinearAlgebraVectorScalarExpression,
+} from './editor-vector-scalars';
 import type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
 
-export type { LinearAlgebraScalarExpression } from './editor-vector-scalars';
+export type {
+  LinearAlgebraScalarExpression,
+  LinearAlgebraSymbolicScalarExpression,
+  LinearAlgebraVectorScalarExpression,
+} from './editor-vector-scalars';
 
 export type LinearAlgebraEditorMode = 'matrix' | 'vector';
 
@@ -53,11 +61,12 @@ export type LinearAlgebraBinaryOperator =
 export type LinearAlgebraEditorExpression =
   | LinearAlgebraValueExpression
   | LinearAlgebraScalarExpression
+  | LinearAlgebraSymbolicScalarExpression
   | { kind: 'unary'; operator: LinearAlgebraUnaryOperator; value: LinearAlgebraEditorExpression }
   | { kind: 'binary'; operator: LinearAlgebraBinaryOperator; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'negate'; value: LinearAlgebraEditorExpression }
-  | { kind: 'scale'; scalar: LinearAlgebraScalarExpression; vector: LinearAlgebraEditorExpression }
-  | { kind: 'vectorDivide'; vector: LinearAlgebraEditorExpression; scalar: LinearAlgebraScalarExpression }
+  | { kind: 'scale'; scalar: LinearAlgebraVectorScalarExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'vectorDivide'; vector: LinearAlgebraEditorExpression; scalar: LinearAlgebraVectorScalarExpression }
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; operands: LinearAlgebraEditorExpression[] }
@@ -95,4 +104,5 @@ export type LinearAlgebraEditorParseOptions = {
   mode?: LinearAlgebraEditorMode;
   matrixNamedValues?: readonly string[];
   vectorNamedValues?: readonly string[];
+  scalarDomain?: LinearAlgebraScalarDomain;
 };

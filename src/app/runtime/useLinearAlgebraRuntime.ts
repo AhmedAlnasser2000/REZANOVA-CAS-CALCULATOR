@@ -11,7 +11,6 @@ import {
 } from '../../lib/modes/vector';
 import {
   buildActiveMatrixRequest,
-  buildActiveVectorRequest,
   buildMatrixSoftActions,
   buildVectorSoftActions,
 } from './linearAlgebraActiveOperands';
@@ -46,7 +45,6 @@ import {
   normalizeMatrixValueName,
   normalizeVectorValueName,
   vectorValueById,
-  vectorActionLabel,
   withMatrixNamedValueScalarCell,
   withVectorNamedValueScalarCell,
   cloneMatrixNamedValues,
@@ -92,6 +90,7 @@ import {
   canonicalMathValue,
   createCanonicalRuntimeError,
 } from '../../lib/result-contract';
+import { buildVectorActionRuntimeRequest } from './linearAlgebraVectorActionRequest';
 
 type CommitLinearAlgebraOutcome = (
   outcome: CanonicalRuntimeOutcome,
@@ -443,27 +442,17 @@ export function useLinearAlgebraRuntime({
   }
 
   function runVectorAction(operation: VectorOperation) {
-    const activeValues = activeVectorValuePair(vectorValues, activeVectorLeftId, activeVectorRightId);
-    if (!numericVectorFromNamedValue(activeValues.left) || !numericVectorFromNamedValue(activeValues.right)) {
-      commitVectorEditorError(
-        vectorActionLabel(operation, activeValues.left.name, activeValues.right.name),
-        'This Vector action will be enabled by the symbolic Vector milestone.',
-      );
+    const launched = buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
+    if ('error' in launched) {
+      commitVectorEditorError(launched.inputLatex, launched.error);
       return;
     }
-    const launched = buildActiveVectorRequest(operation, vectorValues, activeVectorLeftId, activeVectorRightId, angleUnit);
     runVectorRequest(
       launched.request,
       launched.inputLatex,
       () => {
-        const active = vectorStateRef.current;
-        return buildActiveVectorRequest(
-          operation,
-          active.vectorValues,
-          active.activeVectorLeftId,
-          active.activeVectorRightId,
-          active.angleUnit,
-        ).request;
+        const rebuilt = buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
+        return 'error' in rebuilt ? launched.request : rebuilt.request;
       },
     );
   }
@@ -477,6 +466,10 @@ export function useLinearAlgebraRuntime({
       vectorB: active.vectorB,
       vectorValues: active.vectorValues,
       angleUnit: active.angleUnit,
+      domain: active.domain,
+      substitutionMode: active.substitutionMode,
+      storedVariables: active.storedVariables,
+      complexExactForm: active.complexExactForm,
     });
     if (!dispatched.ok) {
       commitVectorEditorError(inputLatex, dispatched.message, dispatched.handoff);
@@ -512,6 +505,10 @@ export function useLinearAlgebraRuntime({
       vectorB: active.vectorB,
       vectorValues: active.vectorValues,
       angleUnit: active.angleUnit,
+      domain: active.domain,
+      substitutionMode: active.substitutionMode,
+      storedVariables: active.storedVariables,
+      complexExactForm: active.complexExactForm,
     });
     return dispatched.ok
       ? dispatched.request.editorExpressionLatex ?? null

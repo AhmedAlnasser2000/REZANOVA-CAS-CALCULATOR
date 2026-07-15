@@ -327,7 +327,12 @@ export function buildActiveScalarVectorRuntimeRequest(
   rightId: string,
   angleUnit: RunVectorModeRequest['angleUnit'],
   context: ScalarRequestContext,
-): { inputLatex: string; request: ScalarVectorRequestV1 } | { error: string } {
+): {
+  inputLatex: string;
+  request: ScalarVectorRequestV1 & {
+    vectorB: NonNullable<ScalarVectorRequestV1['vectorB']>;
+  };
+} | { error: string } {
   const activeValues = activeVectorValuePair(values, leftId, rightId);
   const protectedNames = values.map((value) => value.name);
   const resolutionContext = {

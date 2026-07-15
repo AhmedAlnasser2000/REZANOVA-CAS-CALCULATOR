@@ -80,6 +80,59 @@ describe('linear algebra named replay snapshots', () => {
     ]);
   });
 
+  it('restores the original Complex Vector domain and recorded substitution snapshot', () => {
+    const { hook } = renderLinearAlgebraTableShell('vector');
+    const source = { version: 1 as const, canonicalLatex: 'a', mathJson: 'a' as const };
+    const resolved = {
+      version: 1 as const,
+      canonicalLatex: '2',
+      mathJson: 2 as const,
+      exactRational: { numerator: 2, denominator: 1 },
+      exactComplexRational: {
+        re: { numerator: 2, denominator: 1 },
+        im: { numerator: 0, denominator: 1 },
+      },
+    };
+    const entry = historyEntryFixture({
+      id: 'history.vector.scalar',
+      mode: 'vector',
+      inputLatex: 'u·v',
+      resultLatex: '4',
+      vectorSeed: {
+        operation: 'dot',
+        operandEncoding: 'scalar-v1',
+        vectorA: { encoding: 'scalar-v1', source: [source], resolved: [resolved] },
+        vectorB: { encoding: 'scalar-v1', source: [source], resolved: [resolved] },
+        vectorValues: [
+          { id: 'vector-u', name: 'u', encoding: 'scalar-v1', value: [source] },
+          { id: 'vector-v', name: 'v', encoding: 'scalar-v1', value: [source] },
+        ],
+        activeVectorLeftId: 'vector-u',
+        activeVectorRightId: 'vector-v',
+        angleUnit: 'rad',
+        domain: 'complex',
+        substitutionMode: 'use-stored-values',
+        substitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+        complexExactForm: 'cis',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    });
+
+    act(() => {
+      hook.result.current.restoreLinearAlgebraTableHistoryEntry(entry);
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues[0]).toMatchObject({
+      encoding: 'scalar-v1',
+      value: [{ canonicalLatex: 'a' }],
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorDomain).toBe('complex');
+    expect(hook.result.current.linearAlgebraRuntime.vectorSubstitutionMode).toBe('use-stored-values');
+    expect(hook.result.current.linearAlgebraRuntime.vectorStoredVariables).toEqual([
+      { name: 'a', valueLatex: '2', numericValue: 2 },
+    ]);
+  });
+
   it('restores named Matrix and Vector history snapshots after live names changed', () => {
     const { hook } = renderLinearAlgebraTableShell('matrix');
     const matrixEntry = historyEntryFixture({

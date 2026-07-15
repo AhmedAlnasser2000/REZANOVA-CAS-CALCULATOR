@@ -37,3 +37,27 @@
 
 - Concurrent Notebook/Rust Notebook files, its session dossier, and untracked `test-results/` remain unstaged.
 - No push is authorized.
+
+## Milestone 9 Result
+
+- milestone: `VECTOR-SYMBOLIC-EXPRESSIONS1`
+- gate: backend
+- status: verified pass
+- next milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
+
+## Milestone 9 Evidence
+
+- Focused scalar, symbolic Vector, editor, request, worker, and all-selector authority coverage passed 37/37 tests.
+- Focused Matrix/Vector History replay and workspace runtime UI coverage passed 22/22 tests.
+- A production Vite build passed across 3,745 modules.
+- Chromium passed 3/3 for Matrix substrate behavior, real symbolic dot/replay, Hermitian orthogonality, principal line angle, high-contrast selectors/size controls, full-width Matrix/Vector panels, expanding cell pads, and overflow containment.
+- Both full-page screenshots were inspected: the control text is readable, cards use the available width, the Vector result card remains readable, and no clipping is visible.
+- Result-contract and canonical-enforcement semantics passed for every Linear Algebra leaf; their aggregate wrapper is blocked only by concurrent Statistics increasing the live corpus from the committed 466-count baseline to 491 proven leaves.
+- Display-inversion tests passed 24/24; its aggregate report rejects only the concurrent unaccepted `src/lib/statistics/core.ts` owner-assembly hash.
+- The latest repository TypeScript run is blocked only by concurrent `src/lib/statistics/answer-rows.test.ts` optional-result narrowing errors. The production Vite build and all Linear Algebra focused compilation/tests pass.
+- The latest repository file-size run is blocked only by concurrent `src/app/runtime/useStatisticsRuntime.ts` at 1,007 lines against the 1,000-line cap; all Milestone 9 production and test files remain within their applicable caps.
+
+## Milestone 9 Protected Worktree
+
+- Concurrent Notebook and Statistics source, staged files, dossiers, shared baseline proposals, and untracked `test-results/` remain excluded.
+- No push is authorized.

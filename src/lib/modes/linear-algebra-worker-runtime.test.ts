@@ -21,6 +21,7 @@ import {
   type RunVectorModeRequest,
 } from './vector';
 import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
+import { parseLinearAlgebraScalarWire } from '../linear-algebra/scalar-wire';
 
 type Listener = (event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;
@@ -144,6 +145,32 @@ const geometricVectorRequest: RunVectorModeRequest = {
   angleUnit: 'rad',
 };
 
+const complexScalar = (latex: string) => {
+  const parsed = parseLinearAlgebraScalarWire(latex, 'complex');
+  if (!parsed.ok) throw new Error(parsed.error);
+  return parsed.value;
+};
+
+const scalarVectorRequest: RunVectorModeRequest = {
+  operation: 'orthogonalCheck',
+  operandEncoding: 'scalar-v1',
+  vectorA: {
+    encoding: 'scalar-v1',
+    source: [complexScalar('1'), complexScalar('i')],
+    resolved: [complexScalar('1'), complexScalar('i')],
+  },
+  vectorB: {
+    encoding: 'scalar-v1',
+    source: [complexScalar('i'), complexScalar('1')],
+    resolved: [complexScalar('i'), complexScalar('1')],
+  },
+  angleUnit: 'rad',
+  domain: 'complex',
+  substitutionMode: 'symbolic',
+  substitutionSnapshot: [],
+  complexExactForm: 'rectangular',
+};
+
 const runtimeContext = (shouldCancel: () => boolean) => ({
   registryId: 'test.linear-algebra.cancel',
   checkpoint: () => undefined,
@@ -207,6 +234,28 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(vector.ooe.runtimeShell).toMatchObject({
       shellId: 'vector-worker-shell',
       selectedHostId: 'vector-worker-runtime',
+    });
+  });
+
+  it('carries scalar-v1 Complex Vector requests through the unchanged worker shell', async () => {
+    expect(buildVectorOoeSnapshot(scalarVectorRequest).request).toMatchObject({
+      operandEncoding: 'scalar-v1',
+      domain: 'complex',
+      lengthA: 2,
+      lengthB: 2,
+      substitutionSnapshot: [],
+    });
+    const result = await runVectorModeWithOoePilot(scalarVectorRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalVectorMode),
+    });
+    expect(result.payload).toEqual(runCanonicalVectorMode(scalarVectorRequest));
+    if (result.payload.kind === 'prompt') throw new Error('Expected completed Vector payload.');
+    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'vector-worker-runtime',
+      terminalStatus: 'completed',
     });
   });
 

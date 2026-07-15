@@ -15,7 +15,11 @@ function detLatex(value: string) {
 
 function suffixOperand(expression: LinearAlgebraEditorExpression) {
   const formatted = formatLinearAlgebraEditorExpression(expression);
-  return expression.kind === 'named' || expression.kind === 'matrixLiteral' || expression.kind === 'vectorLiteral' || expression.kind === 'scalar'
+  return expression.kind === 'named'
+    || expression.kind === 'matrixLiteral'
+    || expression.kind === 'vectorLiteral'
+    || expression.kind === 'scalar'
+    || expression.kind === 'symbolicScalar'
     ? formatted
     : `\\left(${formatted}\\right)`;
 }
@@ -110,6 +114,7 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
     case 'matrixLiteral':
     case 'vectorLiteral':
     case 'scalar':
+    case 'symbolicScalar':
       return expression.displayLatex;
     case 'negate':
       return `-${suffixOperand(expression.value)}`;

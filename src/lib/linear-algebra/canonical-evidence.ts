@@ -44,6 +44,7 @@ export type LinearAlgebraCanonicalSemanticPrimaryEvidence =
 export type LinearAlgebraCanonicalEvidence = {
   primary?: LinearAlgebraCanonicalLeafEvidence;
   answerRows?: LinearAlgebraCanonicalLeafEvidence[];
+  supplements?: LinearAlgebraCanonicalLeafEvidence[];
   details?: LinearAlgebraCanonicalDetailEvidence[];
   semanticPrimary?: LinearAlgebraCanonicalSemanticPrimaryEvidence;
   runtimeActions?: LinearAlgebraCanonicalLeafEvidence[];

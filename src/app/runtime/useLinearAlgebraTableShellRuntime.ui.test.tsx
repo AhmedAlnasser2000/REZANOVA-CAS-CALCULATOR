@@ -547,6 +547,47 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     ));
   });
 
+  it('runs Complex scalar-v1 Vector actions through the Hermitian producer', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'vector' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setVectorDomain('complex');
+    });
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.resizeVectorValueById('vector-u', 2);
+      hook.result.current.linearAlgebraRuntime.resizeVectorValueById('vector-v', 2);
+      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 0, '1');
+      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 1, 'i');
+      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 0, 'i');
+      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 1, '1');
+    });
+    act(() => {
+      hook.result.current.runVectorAction('orthogonalCheck');
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        canonicalResult: expect.objectContaining({
+          version: 2,
+          title: 'orthogonal(u,v)',
+          primary: expect.objectContaining({
+            kind: 'math',
+            value: expect.objectContaining({ canonicalLatex: '\\text{Orthogonal}' }),
+          }),
+        }),
+      }),
+      'orthogonal(u,v)',
+      'vector',
+      expect.objectContaining({
+        vectorSeed: expect.objectContaining({
+          operandEncoding: 'scalar-v1',
+          domain: 'complex',
+        }),
+      }),
+    ));
+  });
+
   it('runs structured Matrix systems from the main editor', async () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 

@@ -26,37 +26,15 @@ import {
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import type {
-  AngleUnit,
-  ComplexExactForm,
-  LinearAlgebraScalarDomain,
-  LinearAlgebraSubstitutionMode,
-  LinearAlgebraVectorNamedValue,
+  ScalarVectorRequestV1,
   VersionedResultProducerDraft,
-  ExactScalarWire,
   VectorOperation,
+  VectorRequest,
 } from '../../types/calculator';
 
-export type RunVectorModeRequest = {
-  operation: VectorOperation;
-  vectorA: number[];
-  vectorB: number[];
-  angleUnit: AngleUnit;
-  approxDigits?: number;
-  exactVectorA?: ExactScalarWire[];
-  exactVectorB?: ExactScalarWire[];
-  editorExpressionLatex?: string;
-  vectorOperandLatexA?: string;
-  vectorOperandLatexB?: string;
-  vectorOperands?: number[][];
-  exactVectorOperands?: ExactScalarWire[][];
-  vectorOperandLatexList?: string[];
-  vectorValues?: LinearAlgebraVectorNamedValue[];
-  activeVectorLeftId?: string;
-  activeVectorRightId?: string;
-  domain?: LinearAlgebraScalarDomain;
-  substitutionMode?: LinearAlgebraSubstitutionMode;
-  complexExactForm?: ComplexExactForm;
-};
+export type RunVectorModeRequest =
+  | (VectorRequest & { vectorB: number[] })
+  | (ScalarVectorRequestV1 & { vectorB: NonNullable<ScalarVectorRequestV1['vectorB']> });
 
 export function vectorOperationLabel(operation: VectorOperation) {
   switch (operation) {
@@ -112,6 +90,14 @@ export function vectorOperationLabel(operation: VectorOperation) {
 }
 
 function vectorResultTitle(request: RunVectorModeRequest) {
+  if (request.domain === 'complex') {
+    if (request.operation === 'angle') return 'Principal line angle';
+    if (request.operation === 'cross') return 'Algebraic cross product';
+    if (request.operation === 'parallelogramArea' || request.operation === 'triangleArea') {
+      return 'Hermitian Gram area';
+    }
+    if (request.operation === 'volume') return 'Hermitian Gram volume';
+  }
   if (
     (request.operation === 'span'
       || request.operation === 'independent'
@@ -142,39 +128,12 @@ function vectorUserFacingApproxText(approxText?: string) {
 }
 
 function runVectorModeOutcome(request: RunVectorModeRequest) {
-  const {
-    operation,
-    vectorA,
-    vectorB,
-    angleUnit,
-    exactVectorA,
-    exactVectorB,
-    editorExpressionLatex,
-    vectorOperandLatexA,
-    vectorOperandLatexB,
-    vectorOperands,
-    exactVectorOperands,
-    vectorOperandLatexList,
-    approxDigits,
-  } = request;
-  const execution = runVectorOperationWithEvidence({
-    operation,
-    vectorA,
-    vectorB,
-    angleUnit,
-    exactVectorA,
-    exactVectorB,
-    editorExpressionLatex,
-    vectorOperandLatexA,
-    vectorOperandLatexB,
-    vectorOperands,
-    exactVectorOperands,
-    vectorOperandLatexList,
-    approxDigits,
-  });
+  const execution = runVectorOperationWithEvidence(request);
   const { response, evidence } = execution;
-  const decimalReadback = linearAlgebraDecimalReadback(evidence.primary, approxDigits);
-  const nativeNumericReadback = vectorUserFacingApproxText(response.approxText);
+  const decimalReadback = linearAlgebraDecimalReadback(evidence.primary, request.approxDigits);
+  const nativeNumericReadback = request.operandEncoding === 'scalar-v1'
+    ? response.approxText
+    : vectorUserFacingApproxText(response.approxText);
   if (response.error) {
     return {
       outcome: {
@@ -184,6 +143,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
         warnings: response.warnings,
         exactLatex: response.resultLatex,
         approxText: nativeNumericReadback ?? decimalReadback,
+        exactSupplementLatex: response.exactSupplementLatex,
         detailSections: response.detailSections,
         sourceMode: 'vector' as const,
       },
@@ -198,6 +158,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
       exactLatex: response.resultLatex,
       answerRows: response.answerRows,
       approxText: nativeNumericReadback ?? decimalReadback,
+      exactSupplementLatex: response.exactSupplementLatex,
       detailSections: response.detailSections,
       warnings: response.warnings,
       sourceMode: 'vector' as const,
@@ -225,29 +186,38 @@ export function runVectorMode(request: RunVectorModeRequest): VersionedResultPro
 }
 
 export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
+  const vectorA = request.operandEncoding === 'scalar-v1'
+    ? request.vectorA.resolved
+    : request.vectorA;
+  const vectorB = request.operandEncoding === 'scalar-v1'
+    ? request.vectorB.resolved
+    : request.vectorB;
   return {
     kind: 'vector' as const,
     request: {
       operation: request.operation,
-      lengthA: request.vectorA.length,
-      lengthB: request.vectorB.length,
+      lengthA: vectorA.length,
+      lengthB: vectorB.length,
       angleUnit: request.angleUnit,
       approxDigits: request.approxDigits,
+      operandEncoding: request.operandEncoding,
       vectorA: request.vectorA,
       vectorB: request.vectorB,
-      exactVectorA: request.exactVectorA,
-      exactVectorB: request.exactVectorB,
+      exactVectorA: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorA,
+      exactVectorB: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorB,
       editorExpressionLatex: request.editorExpressionLatex,
       vectorOperandLatexA: request.vectorOperandLatexA,
       vectorOperandLatexB: request.vectorOperandLatexB,
       vectorOperands: request.vectorOperands,
-      exactVectorOperands: request.exactVectorOperands,
+      exactVectorOperands: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorOperands,
       vectorOperandLatexList: request.vectorOperandLatexList,
       vectorValues: request.vectorValues,
       activeVectorLeftId: request.activeVectorLeftId,
       activeVectorRightId: request.activeVectorRightId,
       domain: request.domain,
       substitutionMode: request.substitutionMode,
+      substitutionSnapshot: request.substitutionSnapshot,
+      protectedSubstitutionSnapshot: request.protectedSubstitutionSnapshot,
       complexExactForm: request.complexExactForm,
     },
   };

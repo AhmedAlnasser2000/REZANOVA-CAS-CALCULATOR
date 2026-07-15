@@ -15,6 +15,7 @@ import {
 import { splitTopLevelArguments } from './editor-parser-arguments';
 import {
   parseScalarExpression,
+  parseSymbolicScalarExpression,
   splitLatexFraction,
   splitLeadingScalarProduct,
 } from './editor-vector-scalars';
@@ -25,6 +26,7 @@ import type {
   LinearAlgebraNamedValue,
   LinearAlgebraUnaryOperator,
   LinearAlgebraValueExpression,
+  LinearAlgebraVectorScalarExpression,
 } from './editor-parser-types';
 
 export type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
@@ -36,10 +38,22 @@ export type {
   LinearAlgebraEditorParseResult,
   LinearAlgebraNamedValue,
   LinearAlgebraScalarExpression,
+  LinearAlgebraSymbolicScalarExpression,
+  LinearAlgebraVectorScalarExpression,
   LinearAlgebraSystemForm,
   LinearAlgebraUnaryOperator,
   LinearAlgebraValueExpression,
 } from './editor-parser-types';
+
+function parseVectorScalarExpression(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraVectorScalarExpression | null {
+  return parseScalarExpression(input)
+    ?? (options.scalarDomain
+      ? parseSymbolicScalarExpression(input, options.scalarDomain)
+      : null);
+}
 
 function normalizeLatex(latex: string): string {
   return latex
@@ -488,14 +502,31 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       };
     }
 
+    const namedScale = [...(options.vectorNamedValues ?? [])]
+      .sort((left, right) => right.length - left.length)
+      .find((name) => input.endsWith(name) && input.length > name.length);
+    if (namedScale) {
+      const scalar = parseVectorScalarExpression(
+        input.slice(0, -namedScale.length),
+        options,
+      );
+      if (scalar) {
+        return {
+          kind: 'scale',
+          scalar,
+          vector: namedValueExpression(namedScale),
+        };
+      }
+    }
+
     const latexFraction = splitLatexFraction(input);
     if (latexFraction) {
-      const denominator = parseScalarExpression(latexFraction[1]);
+      const denominator = parseVectorScalarExpression(latexFraction[1], options);
       if (!denominator) {
-        fail('unsupported-expression', 'Vector division needs an exact numeric scalar denominator.');
+        fail('unsupported-expression', 'Vector division needs a scalar denominator.');
       }
       const numerator = parseExpression(latexFraction[0], options);
-      if (numerator.kind === 'scalar') {
+      if (numerator.kind === 'scalar' || numerator.kind === 'symbolicScalar') {
         fail('unsupported-expression', 'Scalar-only expressions are not Vector results.');
       }
       return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
@@ -503,12 +534,12 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
 
     const divide = splitTopLevel(input, ['/']);
     if (divide) {
-      const denominator = parseScalarExpression(divide.right);
+      const denominator = parseVectorScalarExpression(divide.right, options);
       const numerator = tryParseExpression(divide.left, options);
       if (!denominator) {
-        fail('unsupported-expression', 'Vector division needs an exact numeric scalar denominator.');
+        fail('unsupported-expression', 'Vector division needs a scalar denominator.');
       }
-      if (!numerator || numerator.kind === 'scalar') {
+      if (!numerator || numerator.kind === 'scalar' || numerator.kind === 'symbolicScalar') {
         fail('unsupported-expression', 'A scalar cannot be divided by a vector.');
       }
       return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
@@ -803,11 +834,6 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return plainListLiteral;
   }
 
-  const scalar = parseScalarExpression(input);
-  if (scalar) {
-    return scalar;
-  }
-
   if (isMatrixName(input, options)) {
     return namedValueExpression(input);
   }
@@ -815,6 +841,9 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
   if (isVectorName(input, options)) {
     return namedValueExpression(input);
   }
+
+  const scalar = parseVectorScalarExpression(input, options);
+  if (scalar) return scalar;
 
   if (
     options.mode === 'vector'

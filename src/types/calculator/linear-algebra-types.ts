@@ -173,6 +173,7 @@ export type VectorResponse = {
   resultLatex?: string;
   answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
+  exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
   warnings: string[];
   error?: string;

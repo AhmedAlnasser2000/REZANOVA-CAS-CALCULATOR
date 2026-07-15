@@ -42,6 +42,21 @@ test('shows source-preserving scalar cells, domain guidance, and stored-value pr
   await expect(page.getByText('Matrix Workspace')).toBeVisible();
   await expect(page.getByLabel('Scalar domain')).toHaveValue('real');
   await expect(page.getByLabel('Parameter substitution')).toHaveValue('symbolic');
+  await expect(page.getByLabel('Scalar domain')).toHaveCSS('color', 'rgb(23, 32, 29)');
+  await expect(page.getByLabel('Scalar domain')).toHaveCSS('background-color', 'rgb(242, 244, 239)');
+  await expect(page.getByLabel('Matrix A rows')).toHaveCSS('color', 'rgb(23, 32, 29)');
+  await expect(page.getByLabel('Matrix A rows')).toHaveCSS('background-color', 'rgb(242, 244, 239)');
+
+  const workspaceWidth = await page.locator('main.workspace').evaluate((element) => element.clientWidth);
+  const matrixPanelWidth = await page.locator('section.mode-panel').filter({ hasText: 'Matrix Workspace' })
+    .evaluate((element) => element.getBoundingClientRect().width);
+  expect(matrixPanelWidth).toBeGreaterThan(workspaceWidth * 0.94);
+
+  const matrixCardWidth = await page.getByLabel('Matrix A rows').locator('xpath=ancestor::div[contains(@class,"editor-card")]')
+    .evaluate((element) => element.getBoundingClientRect().width);
+  const firstCellWidth = await page.getByLabel('Matrix A row 1 column 1')
+    .evaluate((element) => element.getBoundingClientRect().width);
+  expect(firstCellWidth).toBeGreaterThan(matrixCardWidth * 0.35);
 
   const cell = page.getByLabel('Matrix A row 1 column 1');
   await setScalarCell(cell, 'i');

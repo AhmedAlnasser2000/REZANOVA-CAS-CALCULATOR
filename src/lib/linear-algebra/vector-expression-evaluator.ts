@@ -28,7 +28,10 @@ import {
   exactUnitVector,
 } from './exact-vector-core';
 import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
-import type { LinearAlgebraEditorExpression } from './editor-parser';
+import type {
+  LinearAlgebraEditorExpression,
+  LinearAlgebraVectorScalarExpression,
+} from './editor-parser';
 import {
   addVectors,
   crossVectors,
@@ -162,11 +165,14 @@ function scaleEvaluatedVector(
 
 function evaluateScaledVector(
   vectorExpression: LinearAlgebraEditorExpression,
-  scalarExpression: Extract<LinearAlgebraEditorExpression, { kind: 'scalar' }>,
+  scalarExpression: LinearAlgebraVectorScalarExpression,
   input: VectorExpressionEvaluationInput,
   reciprocal: boolean,
   displayLatex: string,
 ): VectorExpressionEvaluation {
+  if (scalarExpression.kind === 'symbolicScalar') {
+    return { ok: false, message: 'This Vector expression requires the symbolic Vector producer.' };
+  }
   const factor = exactScalarForExpression(scalarExpression);
   if (!factor) {
     return { ok: false, message: 'Vector scaling needs an exact numeric scalar.' };
@@ -223,8 +229,12 @@ function evaluateBinaryVector(
   input: VectorExpressionEvaluationInput,
 ): VectorExpressionEvaluation {
   if (expression.operator === 'dot' || expression.operator === 'cross') {
-    const leftScalar = expression.left.kind === 'scalar' ? expression.left : null;
-    const rightScalar = expression.right.kind === 'scalar' ? expression.right : null;
+    const leftScalar = expression.left.kind === 'scalar' || expression.left.kind === 'symbolicScalar'
+      ? expression.left
+      : null;
+    const rightScalar = expression.right.kind === 'scalar' || expression.right.kind === 'symbolicScalar'
+      ? expression.right
+      : null;
     if (leftScalar && rightScalar) {
       return { ok: false, message: 'Scalar-only expressions are not Vector results.' };
     }

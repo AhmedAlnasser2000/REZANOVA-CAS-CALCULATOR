@@ -174,6 +174,26 @@ function multiplyComplex(
   return re && im ? { re, im } : null;
 }
 
+function divideComplex(
+  left: LinearAlgebraExactComplexRational,
+  right: LinearAlgebraExactComplexRational,
+): LinearAlgebraExactComplexRational | null {
+  const c2 = multiplyExact(right.re, right.re);
+  const d2 = multiplyExact(right.im, right.im);
+  const denominator = c2 && d2 ? addExact(c2, d2) : null;
+  if (!denominator || denominator.numerator === 0) return null;
+  const ac = multiplyExact(left.re, right.re);
+  const bd = multiplyExact(left.im, right.im);
+  const bc = multiplyExact(left.im, right.re);
+  const ad = multiplyExact(left.re, right.im);
+  if (!ac || !bd || !bc || !ad) return null;
+  const numeratorRe = addExact(ac, bd);
+  const numeratorIm = addExact(bc, negateExact(ad));
+  const re = numeratorRe ? divideExact(numeratorRe, denominator) : null;
+  const im = numeratorIm ? divideExact(numeratorIm, denominator) : null;
+  return re && im ? { re, im } : null;
+}
+
 function exactComplexFromMathJson(node: unknown): LinearAlgebraExactComplexRational | null {
   const rational = exactRationalFromMathJson(node);
   if (rational) return { re: rational, im: { ...ZERO } };
@@ -211,6 +231,15 @@ function exactComplexFromMathJson(node: unknown): LinearAlgebraExactComplexRatio
       total = next;
     }
     return total;
+  }
+  if (node[0] === 'Divide' && node.length === 3) {
+    const left = exactComplexFromMathJson(node[1]);
+    const right = exactComplexFromMathJson(node[2]);
+    return left && right ? divideComplex(left, right) : null;
+  }
+  if (node[0] === 'Conjugate' && node.length === 2) {
+    const value = exactComplexFromMathJson(node[1]);
+    return value ? { re: value.re, im: negateExact(value.im) } : null;
   }
   return null;
 }
@@ -260,7 +289,7 @@ function errorOperator(node: unknown): string | undefined {
   return undefined;
 }
 
-function scalarWireFromMathJson(
+export function linearAlgebraScalarWireFromMathJson(
   mathJson: unknown,
   domain: LinearAlgebraScalarDomain,
 ): LinearAlgebraScalarParseResult {
@@ -315,7 +344,7 @@ export function parseLinearAlgebraScalarWire(
   try {
     const normalizedNamed = normalizeExplicitNamedVariablesInLatex(trimmed);
     const parsed = ce.parse(normalizedNamed.latex, { canonical: false } as never);
-    return scalarWireFromMathJson(parsed.json, domain);
+    return linearAlgebraScalarWireFromMathJson(parsed.json, domain);
   } catch {
     return { ok: false, error: 'This scalar expression could not be parsed.' };
   }
@@ -328,7 +357,7 @@ function sameExactValue(left: unknown, right: unknown) {
 export function linearAlgebraScalarWireIntegrityError(
   wire: LinearAlgebraScalarWireV1,
 ): string | null {
-  const rebuilt = scalarWireFromMathJson(wire.mathJson, 'complex');
+  const rebuilt = linearAlgebraScalarWireFromMathJson(wire.mathJson, 'complex');
   if (!rebuilt.ok) return rebuilt.error;
   if (rebuilt.value.canonicalLatex !== wire.canonicalLatex) {
     return 'Scalar canonical LaTeX must match its MathJSON value.';
@@ -455,7 +484,7 @@ export function resolveLinearAlgebraScalarWire(input: {
     usedNames,
     protectedHits,
   );
-  const parsed = scalarWireFromMathJson(substitutedMathJson, input.domain);
+  const parsed = linearAlgebraScalarWireFromMathJson(substitutedMathJson, input.domain);
   if (!parsed.ok) return { error: parsed.error };
   const snapshot = (names: ReadonlySet<string>) => usableEntries
     .filter((entry) => names.has(entry.name))

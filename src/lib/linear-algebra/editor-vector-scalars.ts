@@ -1,14 +1,29 @@
-import type { ExactScalarWire } from '../../types/calculator';
+import type {
+  ExactScalarWire,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraScalarWireV1,
+} from '../../types/calculator';
 import {
   exactWireToLatex,
   tryParseExactScalarLiteral,
 } from './editor-matrix-literals';
+import { parseLinearAlgebraScalarWire } from './scalar-wire';
 
 export type LinearAlgebraScalarExpression = {
   kind: 'scalar';
   exactValue: ExactScalarWire;
   displayLatex: string;
 };
+
+export type LinearAlgebraSymbolicScalarExpression = {
+  kind: 'symbolicScalar';
+  scalarWire: LinearAlgebraScalarWireV1;
+  displayLatex: string;
+};
+
+export type LinearAlgebraVectorScalarExpression =
+  | LinearAlgebraScalarExpression
+  | LinearAlgebraSymbolicScalarExpression;
 
 type ScalarArithmeticNode = {
   kind: string;
@@ -20,6 +35,16 @@ export function parseScalarExpression(input: string): LinearAlgebraScalarExpress
   const exactValue = tryParseExactScalarLiteral(input);
   return exactValue
     ? { kind: 'scalar', exactValue, displayLatex: exactWireToLatex(exactValue) }
+    : null;
+}
+
+export function parseSymbolicScalarExpression(
+  input: string,
+  domain: LinearAlgebraScalarDomain,
+): LinearAlgebraSymbolicScalarExpression | null {
+  const parsed = parseLinearAlgebraScalarWire(input, domain);
+  return parsed.ok
+    ? { kind: 'symbolicScalar', scalarWire: parsed.value, displayLatex: parsed.value.canonicalLatex }
     : null;
 }
 
@@ -80,7 +105,9 @@ export function containsVectorScalarArithmetic(expression: ScalarArithmeticNode)
           containsVectorScalarArithmetic(expression.left)
           || containsVectorScalarArithmetic(expression.right)
           || expression.left.kind === 'scalar'
+          || expression.left.kind === 'symbolicScalar'
           || expression.right.kind === 'scalar'
+          || expression.right.kind === 'symbolicScalar'
         )
       );
     default:

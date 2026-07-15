@@ -70,12 +70,30 @@
 .linear-algebra-scalar-controls label {
   display: grid;
   gap: 0.25rem;
-  color: var(--surface-muted);
+  color: rgba(240, 246, 238, 0.92);
   font-size: 0.78rem;
 }
 
 .linear-algebra-scalar-controls select {
   min-height: 2.2rem;
+  border: 1px solid rgba(33, 45, 41, 0.28);
+  border-radius: 4px;
+  background: #f2f4ef;
+  color: #17201d;
+  color-scheme: light;
+  font-weight: 650;
+  padding-inline: 0.55rem 1.8rem;
+  -webkit-text-fill-color: #17201d;
+}
+
+.linear-algebra-scalar-controls select option {
+  background: #f2f4ef;
+  color: #17201d;
+}
+
+.linear-algebra-scalar-controls select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 68%, white);
+  outline-offset: 2px;
 }
 
 .linear-algebra-used-values {
@@ -312,36 +330,39 @@
   font-size: 0.72rem;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: rgba(219, 230, 221, 0.82);
+  color: rgba(240, 246, 238, 0.92);
 }
 
-.linear-algebra-size-controls input {
+.workspace .linear-algebra-size-controls input[type='number'] {
   width: 74px;
   border-radius: 12px;
-  border: 1px solid var(--editor-border);
-  background: var(--editor-surface);
-  color: var(--editor-ink);
+  border: 1px solid rgba(33, 45, 41, 0.28);
+  background: #f2f4ef;
+  color: #17201d;
+  color-scheme: light;
+  font-weight: 700;
   padding: 9px 10px;
+  -webkit-text-fill-color: #17201d;
 }
 
-.linear-algebra-size-controls input:hover {
-  background: var(--editor-surface-hover);
-  border-color: var(--editor-border-hover);
+.workspace .linear-algebra-size-controls input[type='number']:hover {
+  background: #ffffff;
+  border-color: rgba(23, 32, 29, 0.56);
 }
 
-.linear-algebra-size-controls input:focus-visible {
-  outline: none;
-  background: var(--editor-surface-focus);
-  border-color: var(--editor-border-focus);
-  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.16);
+.workspace .linear-algebra-size-controls input[type='number']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 68%, white);
+  outline-offset: 2px;
+  background: #ffffff;
+  border-color: rgba(23, 32, 29, 0.72);
 }
 
 .linear-algebra-matrix-grid {
   display: grid;
-  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(64px, 118px));
+  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(64px, 1fr));
   gap: 10px;
   min-width: 100%;
-  width: max-content;
+  width: 100%;
 }
 
 .linear-algebra-vector-grid {
@@ -357,6 +378,10 @@
   display: grid;
   gap: 14px;
   min-width: 0;
+}
+
+.workspace:has(.linear-algebra-library-grid) {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 840px) {

@@ -1,7 +1,13 @@
 import type {
   AngleUnit,
+  ComplexExactForm,
+  LinearAlgebraScalarDomain,
+  LinearAlgebraSubstitutionMode,
   MatrixOperation,
   MatrixRequest,
+  ScalarVectorRequestV1,
+  StoredVariableValue,
+  VariableSubstitutionSnapshot,
   VectorRequest,
 } from '../../types/calculator';
 import {
@@ -16,6 +22,7 @@ import {
 import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
 import {
   matrixNamedValueNames,
+  isScalarVectorNamedValue,
   vectorNamedValueNames,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
@@ -40,6 +47,7 @@ import {
   dispatchVectorGeometricExpression,
   dispatchVectorFamilyExpression,
 } from './vector-family-dispatch';
+import { dispatchSymbolicVectorEditorLatex } from './symbolic-vector-editor';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -57,16 +65,27 @@ export type VectorEditorDispatchInput = {
   vectorB: number[];
   vectorValues?: readonly LinearAlgebraVectorNamedValue[];
   angleUnit: AngleUnit;
+  domain?: LinearAlgebraScalarDomain;
+  substitutionMode?: LinearAlgebraSubstitutionMode;
+  storedVariables?: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[];
+  complexExactForm?: ComplexExactForm;
 };
 
 type ExecutableMatrixRequest = MatrixRequest & { matrixB: number[][] };
 type ExecutableVectorRequest = VectorRequest & { vectorB: number[] };
+type ExecutableScalarVectorRequest = ScalarVectorRequestV1 & {
+  vectorB: NonNullable<ScalarVectorRequestV1['vectorB']>;
+};
 
 export type MatrixEditorDispatchResult =
   | { ok: true; request: ExecutableMatrixRequest }
   | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
 export type VectorEditorDispatchResult =
+  | { ok: true; request: ExecutableVectorRequest | ExecutableScalarVectorRequest }
+  | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
+
+export type NumericVectorEditorDispatchResult =
   | { ok: true; request: ExecutableVectorRequest }
   | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
@@ -78,7 +97,7 @@ function matrixEvaluationError(
 
 function vectorEvaluationError(
   result: Extract<VectorExpressionEvaluation, { ok: false }>,
-): VectorEditorDispatchResult {
+): NumericVectorEditorDispatchResult {
   return { ok: false, message: result.message };
 }
 
@@ -158,7 +177,7 @@ function namedVectorOperand(name: string, input: VectorEditorDispatchInput): Vec
 function vectorLinearCombinationRequest(
   input: VectorEditorDispatchInput,
   expression: LinearAlgebraEditorExpression,
-): VectorEditorDispatchResult {
+): NumericVectorEditorDispatchResult {
   const result = vectorOperand(expression, input);
   if (!result.ok) return vectorEvaluationError(result);
   return {
@@ -538,7 +557,7 @@ function matrixUnaryRequest(
 function vectorPairRequest(
   input: VectorEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'binary' }>,
-): VectorEditorDispatchResult {
+): NumericVectorEditorDispatchResult {
   if (
     expression.operator !== 'add'
     && expression.operator !== 'subtract'
@@ -573,7 +592,7 @@ function vectorPairRequest(
 function vectorUnaryRequest(
   input: VectorEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
-): VectorEditorDispatchResult {
+): NumericVectorEditorDispatchResult {
   if (
     expression.operator !== 'norm'
     && expression.operator !== 'unit'
@@ -759,7 +778,7 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   };
 }
 
-export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): VectorEditorDispatchResult {
+function dispatchNumericVectorEditorLatex(input: VectorEditorDispatchInput): NumericVectorEditorDispatchResult {
   const parsed = parseLinearAlgebraEditorLatex(input.latex, {
     mode: 'vector',
     vectorNamedValues: vectorNamedValueNames(input.vectorValues),
@@ -885,4 +904,52 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     ok: false,
     message: 'Enter a Vector operation such as u+v, u·v, distance(u,v), volume(u,v,w), gram(u,v,...), or angle(u,v).',
   };
+}
+
+export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput & {
+  domain: LinearAlgebraScalarDomain;
+  substitutionMode: LinearAlgebraSubstitutionMode;
+  storedVariables: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[];
+  complexExactForm: ComplexExactForm;
+}): VectorEditorDispatchResult;
+export function dispatchVectorEditorLatex(
+  input: Omit<VectorEditorDispatchInput, 'domain' | 'substitutionMode' | 'storedVariables' | 'complexExactForm'>,
+): NumericVectorEditorDispatchResult;
+export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): VectorEditorDispatchResult {
+  const canDispatchSymbolic = Boolean(
+    input.domain
+    && input.substitutionMode
+    && input.storedVariables
+    && input.complexExactForm,
+  );
+  const preferSymbolic = input.domain === 'complex'
+    || input.vectorValues?.some(isScalarVectorNamedValue) === true;
+  if (canDispatchSymbolic && preferSymbolic) {
+    const symbolic = dispatchSymbolicVectorEditorLatex({
+      latex: input.latex,
+      vectorValues: input.vectorValues ?? [],
+      angleUnit: input.angleUnit,
+      domain: input.domain!,
+      substitutionMode: input.substitutionMode!,
+      storedVariables: input.storedVariables!,
+      complexExactForm: input.complexExactForm!,
+    });
+    if (symbolic.ok) return { ok: true, request: symbolic.request };
+    return { ok: false, message: symbolic.message };
+  }
+
+  const numeric = dispatchNumericVectorEditorLatex(input);
+  if (numeric.ok || !canDispatchSymbolic) return numeric;
+  const symbolic = dispatchSymbolicVectorEditorLatex({
+    latex: input.latex,
+    vectorValues: input.vectorValues ?? [],
+    angleUnit: input.angleUnit,
+    domain: input.domain!,
+    substitutionMode: input.substitutionMode!,
+    storedVariables: input.storedVariables!,
+    complexExactForm: input.complexExactForm!,
+  });
+  return symbolic.ok
+    ? { ok: true, request: symbolic.request }
+    : numeric;
 }

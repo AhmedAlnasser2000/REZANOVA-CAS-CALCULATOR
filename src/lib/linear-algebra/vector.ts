@@ -1,6 +1,8 @@
 import type {
   DisplayDetailSection,
+  ScalarVectorRequestV1,
   VectorRequest,
+  VectorReplaySeed,
   VectorResponse,
 } from '../../types/calculator';
 import {
@@ -67,6 +69,7 @@ import {
   type LinearAlgebraEditorExpression,
 } from './editor-parser';
 import { buildExactScalarNode } from '../algebra/polynomial-core';
+import { runSymbolicVectorOperation } from './symbolic-vector';
 
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {
@@ -797,6 +800,8 @@ function vectorExpressionNode(expression: LinearAlgebraEditorExpression): unknow
       return exactVectorMathJson(expression.exactValue);
     case 'scalar':
       return buildExactScalarNode(expression.exactValue);
+    case 'symbolicScalar':
+      return expression.scalarWire.mathJson;
     case 'negate': {
       const value = vectorExpressionNode(expression.value);
       return value === undefined ? undefined : ['Negate', value];
@@ -807,13 +812,18 @@ function vectorExpressionNode(expression: LinearAlgebraEditorExpression): unknow
       const operand = expression.vector.kind === 'binary'
         ? ['Delimiter', value]
         : value;
-      return ['InvisibleOperator', buildExactScalarNode(expression.scalar.exactValue), operand];
+      const scalar = expression.scalar.kind === 'scalar'
+        ? buildExactScalarNode(expression.scalar.exactValue)
+        : expression.scalar.scalarWire.mathJson;
+      return ['InvisibleOperator', scalar, operand];
     }
     case 'vectorDivide': {
       const value = vectorExpressionNode(expression.vector);
       return value === undefined
         ? undefined
-        : ['Divide', value, buildExactScalarNode(expression.scalar.exactValue)];
+        : ['Divide', value, expression.scalar.kind === 'scalar'
+            ? buildExactScalarNode(expression.scalar.exactValue)
+            : expression.scalar.scalarWire.mathJson];
     }
     case 'binary': {
       const left = vectorExpressionNode(expression.left);
@@ -838,11 +848,13 @@ function vectorExpressionMathJson(latex: string) {
   return parsed.ok ? vectorExpressionNode(parsed.expression) : undefined;
 }
 
-export function runVectorOperationWithEvidence(req: VectorRequest): {
+export function runVectorOperationWithEvidence(req: VectorReplaySeed): {
   response: VectorResponse;
   evidence: LinearAlgebraCanonicalEvidence;
 } {
-  const response = runVectorOperationInternal(req);
+  const response = req.operandEncoding === 'scalar-v1'
+    ? runSymbolicVectorOperation(req as ScalarVectorRequestV1)
+    : runVectorOperationInternal(req);
   return {
     response,
     evidence: linearAlgebraCanonicalEvidenceForResponse(response),

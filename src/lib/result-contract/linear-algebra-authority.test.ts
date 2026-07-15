@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { MatrixOperation, VectorOperation } from '../../types/calculator';
+import type { MatrixOperation, VectorOperation, VectorRequest } from '../../types/calculator';
 import { runMatrixMode, type RunMatrixModeRequest } from '../modes/matrix';
-import { runVectorMode, type RunVectorModeRequest } from '../modes/vector';
+import { runVectorMode } from '../modes/vector';
 
 const MATRIX_OPERATIONS = [
   'add', 'subtract', 'multiply', 'transposeA', 'transposeB', 'detA', 'detB',
@@ -44,7 +44,7 @@ function matrixRequest(operation: MatrixOperation): RunMatrixModeRequest {
   };
 }
 
-function vectorRequest(operation: VectorOperation): RunVectorModeRequest {
+function vectorRequest(operation: VectorOperation): VectorRequest & { vectorB: number[] } {
   return {
     operation,
     vectorA: [1, 0, 0],
