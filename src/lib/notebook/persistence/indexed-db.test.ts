@@ -31,6 +31,13 @@ function complete(transaction: IDBTransaction): Promise<void> {
   });
 }
 
+function requestValue<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.addEventListener('success', () => resolve(request.result), { once: true });
+    request.addEventListener('error', () => reject(request.error), { once: true });
+  });
+}
+
 function createRecord() {
   const document = createNotebookRichDocument({
     idPrefix: 'indexed-db',
@@ -125,15 +132,15 @@ describe('IndexedDB Notebook persistence ports', () => {
     expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
   });
 
-  it('hydrates V6 through V9 records and snapshots through the V11 browser contract', async () => {
-    const name = 'legacy-v6-v9';
+  it('hydrates V6 through V10 records and snapshots through the V11 browser contract', async () => {
+    const name = 'legacy-v6-v10';
     const databaseName = `notebook-persistence-${name}`;
     const indexedDb = new IDBFactory();
     const ports = createPorts(name, indexedDb);
     const current = createRecord();
     await ports.library.save(current, { expectedRevision: null });
 
-    const legacyRecords = [6, 7, 9].map((version) => {
+    const legacyRecords = [6, 7, 8, 9, 10].map((version) => {
       const legacy = JSON.parse(JSON.stringify(current));
       legacy.libraryId = `browser.record.v${version}`;
       legacy.document.id = `notebook.browser.v${version}`;
@@ -174,5 +181,92 @@ describe('IndexedDB Notebook persistence ports', () => {
       expect(versions[0]?.record.document.version).toBe(11);
       expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
     }
+  });
+
+  it('keeps V10 raw until save, then stores one raw upgrade snapshot atomically', async () => {
+    const name = 'legacy-upgrade-save';
+    const databaseName = `notebook-persistence-${name}`;
+    const indexedDb = new IDBFactory();
+    const ports = createPorts(name, indexedDb);
+    const current = createRecord();
+    const legacy = structuredClone(current) as unknown as Record<string, unknown>;
+    legacy.revision = 4;
+    legacy.savedAt = '2026-01-01T00:00:04.000Z';
+    const legacyDocument = legacy.document as Record<string, unknown>;
+    legacyDocument.version = 10;
+    legacyDocument.headerFooter = {
+      headerText: 'Course notes',
+      footerText: 'Calculus',
+      differentFirstPage: true,
+      pageNumbering: { enabled: true, position: 'right', startAt: 7 },
+    };
+    const database = await openDatabase(indexedDb, databaseName);
+    const seed = database.transaction('records', 'readwrite');
+    seed.objectStore('records').put(legacy);
+    await complete(seed);
+    database.close();
+
+    const loaded = await ports.library.load(current.libraryId);
+    expect(loaded?.document.version).toBe(11);
+    expect(loaded?.document.headerFooter.pageNumberStart).toBe(7);
+    let inspection = await openDatabase(indexedDb, databaseName);
+    let transaction = inspection.transaction('records', 'readonly');
+    expect((await requestValue<Record<string, unknown>>(
+      transaction.objectStore('records').get(current.libraryId),
+    ).then((value) => (value.document as Record<string, unknown>).version))).toBe(10);
+    await complete(transaction);
+    inspection.close();
+
+    await ports.library.save({
+      ...loaded!,
+      revision: 5,
+      savedAt: '2026-07-15T00:00:05.000Z',
+    }, { expectedRevision: 4 });
+    const versions = await ports.library.listVersions(current.libraryId);
+    expect(versions).toEqual([
+      expect.objectContaining({ reason: 'before-schema-upgrade', revision: 4 }),
+    ]);
+    inspection = await openDatabase(indexedDb, databaseName);
+    transaction = inspection.transaction(['records', 'versions'], 'readonly');
+    const stored = await requestValue<Record<string, unknown>>(
+      transaction.objectStore('records').get(current.libraryId),
+    );
+    const rawSnapshots = await requestValue<Record<string, unknown>[]>(
+      transaction.objectStore('versions').getAll(),
+    );
+    expect((stored.document as Record<string, unknown>).version).toBe(11);
+    expect(((rawSnapshots[0].record as Record<string, unknown>).document as Record<string, unknown>).version)
+      .toBe(10);
+    await complete(transaction);
+    inspection.close();
+
+    await ports.library.save({
+      ...loaded!,
+      revision: 6,
+      savedAt: '2026-07-15T00:00:06.000Z',
+    }, { expectedRevision: 5 });
+    expect(await ports.library.listVersions(current.libraryId)).toHaveLength(1);
+  });
+
+  it('rejects pre-V6 and future durable records with specific recovery states', async () => {
+    const name = 'unsupported-schemas';
+    const databaseName = `notebook-persistence-${name}`;
+    const indexedDb = new IDBFactory();
+    const ports = createPorts(name, indexedDb);
+    const current = createRecord();
+    const database = await openDatabase(indexedDb, databaseName);
+    const transaction = database.transaction('records', 'readwrite');
+    for (const [libraryId, version] of [['browser.record.v5', 5], ['browser.record.v12', 12]] as const) {
+      const candidate = structuredClone(current) as unknown as Record<string, unknown>;
+      candidate.libraryId = libraryId;
+      (candidate.document as Record<string, unknown>).version = version;
+      transaction.objectStore('records').put(candidate);
+    }
+    await complete(transaction);
+    database.close();
+
+    await expect(ports.library.load('browser.record.v5')).rejects.toThrow(/SCHEMA_PRE_V6/);
+    await expect(ports.library.load('browser.record.v12')).rejects.toThrow(/SCHEMA_NEWER/);
+    expect(await ports.library.loadRawRecovery('browser.record.v5')).toBeInstanceOf(Uint8Array);
   });
 });

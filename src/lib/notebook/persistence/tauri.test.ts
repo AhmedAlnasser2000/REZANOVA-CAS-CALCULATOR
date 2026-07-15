@@ -31,6 +31,19 @@ function createRecord() {
   });
 }
 
+function legacyRecord(version = 10) {
+  const record = structuredClone(createRecord()) as unknown as Record<string, unknown>;
+  const document = record.document as Record<string, unknown>;
+  document.version = version;
+  document.headerFooter = {
+    headerText: 'Course notes',
+    footerText: 'Calculus',
+    differentFirstPage: true,
+    pageNumbering: { enabled: true, position: 'right', startAt: 7 },
+  };
+  return record;
+}
+
 afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
@@ -132,5 +145,50 @@ describe('Tauri Notebook persistence ports', () => {
     expect(mockedInvoke).toHaveBeenCalledWith('notebook_delete_record_permanently', {
       libraryId: record.libraryId,
     });
+  });
+
+  it('defensively migrates every native record-returning path and exposes raw recovery bytes', async () => {
+    enableDesktopRuntime();
+    const legacy = legacyRecord();
+    const snapshot = {
+      version: 1,
+      snapshotId: 'snapshot.desktop.legacy',
+      libraryId: 'desktop.record.1',
+      revision: 1,
+      createdAt: '2026-07-14T00:05:00.000Z',
+      reason: 'before-schema-upgrade',
+      record: legacy,
+    };
+    mockedInvoke.mockImplementation(async (command) => {
+      if (command === 'notebook_load_record') {
+        return { record: legacy, sourceDocumentVersion: 10 };
+      }
+      if (command === 'notebook_move_record_to_trash'
+        || command === 'notebook_restore_record_from_trash'
+        || command === 'notebook_import_package') return legacy;
+      if (command === 'notebook_list_versions') return [snapshot];
+      if (command === 'notebook_load_raw_recovery') return [123, 125];
+      throw new Error(`Unexpected command: ${command}`);
+    });
+    const ports = createTauriNotebookPorts();
+
+    expect((await ports.library.load('desktop.record.1'))?.document.version).toBe(11);
+    expect(ports.library.loadedDocumentVersion('desktop.record.1')).toBe(10);
+    expect((await ports.library.moveToTrash('desktop.record.1')).document.version).toBe(11);
+    expect((await ports.library.restoreFromTrash('desktop.record.1')).document.version).toBe(11);
+    expect((await ports.library.listVersions('desktop.record.1'))[0].record.document.version)
+      .toBe(11);
+    expect((await ports.package.importPortable(new Uint8Array([1]))).document.version).toBe(11);
+    expect(await ports.library.loadRawRecovery('desktop.record.1'))
+      .toEqual(new Uint8Array([123, 125]));
+  });
+
+  it('preserves specific unsupported-schema errors returned by the defensive migrator', async () => {
+    enableDesktopRuntime();
+    const ports = createTauriNotebookPorts();
+    mockedInvoke.mockResolvedValueOnce({ record: legacyRecord(5), sourceDocumentVersion: 5 });
+    await expect(ports.library.load('desktop.record.1')).rejects.toThrow(/SCHEMA_PRE_V6/);
+    mockedInvoke.mockResolvedValueOnce({ record: legacyRecord(12), sourceDocumentVersion: 12 });
+    await expect(ports.library.load('desktop.record.1')).rejects.toThrow(/SCHEMA_NEWER/);
   });
 });

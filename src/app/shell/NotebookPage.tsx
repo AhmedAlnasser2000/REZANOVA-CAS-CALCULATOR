@@ -110,6 +110,8 @@ function NotebookPageContent({
   const [docxRecord, setDocxRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [webRecord, setWebRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [recoveryExportMessage, setRecoveryExportMessage] = useState<string | null>(null);
+  const [recoveryLibraryVisible, setRecoveryLibraryVisible] = useState(false);
+  const [recoveryLibraryError, setRecoveryLibraryError] = useState<string | null>(null);
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -295,15 +297,102 @@ function NotebookPageContent({
         : 'Save failed';
 
   if (!librarySession.document && !developmentFixture) {
+    const failureTitle = librarySession.openFailure?.kind === 'newer-schema'
+      ? 'Update Calcwiz to open this Notebook'
+      : librarySession.openFailure?.kind === 'unsupported-legacy'
+        ? 'Unsupported early Notebook format'
+        : librarySession.openFailure?.kind === 'damaged'
+          ? 'Notebook record needs recovery'
+          : 'Local Notebook storage is unavailable';
     return (
       <section className="app-page app-page--notebook" data-testid="notebook-page">
         <header className="app-page-shell-header app-page-shell-header--notebook" title="Opening Notebook…">
           Opening Notebook…
         </header>
-        <div className="notebook-library-loading" role={librarySession.saveStatus === 'failed' ? 'alert' : 'status'}>
-          {librarySession.saveStatus === 'failed'
-            ? `Notebook could not open: ${librarySession.saveError ?? 'Local storage failed.'}`
-            : 'Opening local notebook…'}
+        <div
+          className={`notebook-library-loading${librarySession.saveStatus === 'failed' ? ' is-failed' : ''}`}
+          role={librarySession.saveStatus === 'failed' ? 'alert' : 'status'}
+        >
+          {librarySession.saveStatus === 'failed' ? (
+            <div className="notebook-open-recovery">
+              <div>
+                <strong>{failureTitle}</strong>
+                <p>{librarySession.openFailure?.message ?? librarySession.saveError}</p>
+                <p>The original local record has not been rewritten.</p>
+              </div>
+              <div className="notebook-open-recovery-actions">
+                <button type="button" onClick={librarySession.retryOpen}>Retry</button>
+                <button
+                  type="button"
+                  onClick={() => void (async () => {
+                    setRecoveryLibraryVisible(true);
+                    setRecoveryLibraryError(null);
+                    try {
+                      await librarySession.refreshCatalog();
+                    } catch (error) {
+                      setRecoveryLibraryError(error instanceof Error
+                        ? error.message
+                        : typeof error === 'string' ? error : 'Notebook library could not open.');
+                    }
+                  })()}
+                >
+                  Open Notebook Library
+                </button>
+                {librarySession.rawRecoveryAvailable ? (
+                  <button
+                    type="button"
+                    onClick={() => void (async () => {
+                      try {
+                        const output = await librarySession.exportRawRecovery();
+                        const result = await exportSavePort.save({
+                          bytes: output.bytes,
+                          mimeType: 'application/json',
+                          suggestedFileName: output.fileName,
+                        });
+                        setRecoveryExportMessage(result === 'cancelled'
+                          ? 'Raw recovery export cancelled.'
+                          : 'Diagnostic raw recovery saved. It is not an importable .cwiznb file.');
+                      } catch (error) {
+                        setRecoveryExportMessage(error instanceof Error
+                          ? `Raw recovery export failed: ${error.message}`
+                          : 'Raw recovery export failed.');
+                      }
+                    })()}
+                  >
+                    Export raw recovery
+                  </button>
+                ) : null}
+              </div>
+              {recoveryExportMessage ? <p role="status">{recoveryExportMessage}</p> : null}
+              {recoveryLibraryVisible ? (
+                <div className="notebook-open-recovery-library">
+                  <strong>Notebook Library</strong>
+                  {recoveryLibraryError ? <p role="alert">{recoveryLibraryError}</p> : null}
+                  {!recoveryLibraryError && librarySession.library.length === 0
+                    ? <p>No other local Notebooks are available.</p>
+                    : librarySession.library.map((entry) => (
+                        <button
+                          key={entry.libraryId}
+                          type="button"
+                          onClick={() => void (async () => {
+                            try {
+                              const opened = await librarySession.openRecord(entry.libraryId);
+                              if (!opened) setRecoveryLibraryError('Notebook could not be opened.');
+                            } catch (error) {
+                              setRecoveryLibraryError(error instanceof Error
+                                ? error.message
+                                : typeof error === 'string' ? error : 'Notebook could not be opened.');
+                            }
+                          })()}
+                        >
+                          <span>{entry.title || 'Untitled Notebook'}</span>
+                          <small>{entry.wordCount.toLocaleString()} words</small>
+                        </button>
+                      ))}
+                </div>
+              ) : null}
+            </div>
+          ) : 'Opening local notebook…'}
         </div>
         <footer className="app-page-shell-footer">
           <span>Opening</span>

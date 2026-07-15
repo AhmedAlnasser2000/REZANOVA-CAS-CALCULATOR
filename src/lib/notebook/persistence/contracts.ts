@@ -4,7 +4,10 @@ import {
   summarizeNotebookDocument,
 } from '../document/model';
 import { migrateNotebookRichDocument } from '../document/migrate';
-import type { NotebookRichDocument } from '../document/types';
+import {
+  NOTEBOOK_RICH_DOCUMENT_VERSION,
+  type NotebookRichDocument,
+} from '../document/types';
 
 export const NOTEBOOK_STORED_RECORD_VERSION = 1 as const;
 export const NOTEBOOK_ASSET_RECORD_VERSION = 1 as const;
@@ -85,7 +88,10 @@ export const NOTEBOOK_VERSION_REASONS = [
   'periodic',
   'before-restore',
   'before-trash',
+  'before-schema-upgrade',
 ] as const;
+
+export const NOTEBOOK_MINIMUM_DURABLE_DOCUMENT_VERSION = 6;
 
 export type NotebookVersionReason = typeof NOTEBOOK_VERSION_REASONS[number];
 
@@ -289,6 +295,44 @@ export function migrateNotebookStoredRecordV1(
   return isNotebookStoredRecordV1(candidate) ? candidate : null;
 }
 
+export function notebookStoredRecordDocumentVersion(value: unknown): number | null {
+  if (!isRecord(value) || !isRecord(value.document)) return null;
+  return Number.isSafeInteger(value.document.version)
+    ? Number(value.document.version)
+    : null;
+}
+
+export function migrateDurableNotebookStoredRecordV1(
+  value: unknown,
+): NotebookStoredRecordV1 | null {
+  const sourceVersion = notebookStoredRecordDocumentVersion(value);
+  if (sourceVersion === null
+    || sourceVersion < NOTEBOOK_MINIMUM_DURABLE_DOCUMENT_VERSION
+    || sourceVersion > NOTEBOOK_RICH_DOCUMENT_VERSION) {
+    return null;
+  }
+  return migrateNotebookStoredRecordV1(value);
+}
+
+export function requireDurableNotebookStoredRecordV1(value: unknown): NotebookStoredRecordV1 {
+  const sourceVersion = notebookStoredRecordDocumentVersion(value);
+  if (sourceVersion !== null && sourceVersion > NOTEBOOK_RICH_DOCUMENT_VERSION) {
+    throw new TypeError(
+      'NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.',
+    );
+  }
+  if (sourceVersion !== null && sourceVersion < NOTEBOOK_MINIMUM_DURABLE_DOCUMENT_VERSION) {
+    throw new TypeError(
+      'NOTEBOOK_SCHEMA_PRE_V6: Durable Notebook compatibility begins at Schema 6.',
+    );
+  }
+  const record = migrateDurableNotebookStoredRecordV1(value);
+  if (!record) {
+    throw new TypeError('NOTEBOOK_RECORD_INVALID: Notebook record is damaged or incomplete.');
+  }
+  return record;
+}
+
 export function migrateNotebookVersionSnapshotV1(
   value: unknown,
 ): NotebookVersionSnapshotV1 | null {
@@ -299,6 +343,32 @@ export function migrateNotebookVersionSnapshotV1(
   return isNotebookVersionSnapshotV1(candidate)
     ? candidate as NotebookVersionSnapshotV1
     : null;
+}
+
+export function migrateDurableNotebookVersionSnapshotV1(
+  value: unknown,
+): NotebookVersionSnapshotV1 | null {
+  if (!isRecord(value)) return null;
+  const record = migrateDurableNotebookStoredRecordV1(value.record);
+  if (!record) return null;
+  const candidate = { ...value, record };
+  return isNotebookVersionSnapshotV1(candidate)
+    ? candidate as NotebookVersionSnapshotV1
+    : null;
+}
+
+export function requireDurableNotebookVersionSnapshotV1(
+  value: unknown,
+): NotebookVersionSnapshotV1 {
+  if (!isRecord(value)) {
+    throw new TypeError('NOTEBOOK_RECORD_INVALID: Notebook version snapshot is damaged.');
+  }
+  const record = requireDurableNotebookStoredRecordV1(value.record);
+  const candidate = { ...value, record };
+  if (!isNotebookVersionSnapshotV1(candidate)) {
+    throw new TypeError('NOTEBOOK_RECORD_INVALID: Notebook version snapshot is damaged.');
+  }
+  return candidate as NotebookVersionSnapshotV1;
 }
 
 export function createNotebookStoredRecordV1(

@@ -9,6 +9,7 @@ import {
   isNotebookVersionSnapshotV1,
   migrateNotebookStoredRecordV1,
   migrateNotebookVersionSnapshotV1,
+  requireDurableNotebookStoredRecordV1,
   summarizeNotebookStoredRecordV1,
 } from './contracts';
 
@@ -135,7 +136,7 @@ describe('Notebook durable persistence contracts', () => {
     expect(isNotebookVersionSnapshotV1({ ...snapshot, libraryId: '../escape' })).toBe(false);
   });
 
-  it('migrates V6 through V9 records and snapshots losslessly into the V11 envelope', () => {
+  it('migrates V6 through V10 records and snapshots losslessly into the V11 envelope', () => {
     const current = createNotebookStoredRecordV1(createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
       title: 'Legacy document',
@@ -189,5 +190,29 @@ describe('Notebook durable persistence contracts', () => {
     expect(migratedV9?.document.content).toEqual(
       (version9.document as { content: unknown }).content,
     );
+
+    const version10 = structuredClone(version9);
+    (version10.document as Record<string, unknown>).version = 10;
+    const migratedV10 = requireDurableNotebookStoredRecordV1(version10);
+    expect(migratedV10.document.version).toBe(11);
+    expect(migratedV10.document.headerFooter.pageNumberStart).toBe(1);
+
+    const beforeUpgrade = createNotebookVersionSnapshotV1(migratedV10, {
+      reason: 'before-schema-upgrade',
+      snapshotId: 'snapshot.schema-upgrade.contract',
+    });
+    expect(isNotebookVersionSnapshotV1(beforeUpgrade)).toBe(true);
+  });
+
+  it('rejects durable pre-V6 and future schemas with specific errors', () => {
+    const record = createNotebookStoredRecordV1(createNotebookRichDocument(), {
+      libraryId: 'library.schema-errors',
+    });
+    const early = structuredClone(record) as unknown as Record<string, unknown>;
+    (early.document as Record<string, unknown>).version = 5;
+    expect(() => requireDurableNotebookStoredRecordV1(early)).toThrow(/SCHEMA_PRE_V6/);
+    const future = structuredClone(record) as unknown as Record<string, unknown>;
+    (future.document as Record<string, unknown>).version = 12;
+    expect(() => requireDurableNotebookStoredRecordV1(future)).toThrow(/SCHEMA_NEWER/);
   });
 });

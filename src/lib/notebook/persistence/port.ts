@@ -41,6 +41,8 @@ export type NotebookLibrarySaveOptions = {
 export type NotebookLibraryPort = {
   list(): Promise<NotebookStoredRecordSummaryV1[]>;
   load(libraryId: string): Promise<NotebookStoredRecordV1 | null>;
+  loadedDocumentVersion(libraryId: string): number | null;
+  loadRawRecovery(libraryId: string): Promise<Uint8Array | null>;
   save(
     record: NotebookStoredRecordV1,
     options?: NotebookLibrarySaveOptions,
@@ -135,6 +137,15 @@ export function createInMemoryNotebookLibraryPort(
     async load(libraryId) {
       const record = records.get(libraryId);
       return record ? cloneNotebookStoredRecordV1(record) : null;
+    },
+    loadedDocumentVersion(libraryId) {
+      return records.has(libraryId) ? 11 : null;
+    },
+    async loadRawRecovery(libraryId) {
+      const record = records.get(libraryId);
+      return record
+        ? new TextEncoder().encode(JSON.stringify(record, null, 2))
+        : null;
     },
     async save(record, options = {}) {
       if (!isNotebookStoredRecordV1(record)) {

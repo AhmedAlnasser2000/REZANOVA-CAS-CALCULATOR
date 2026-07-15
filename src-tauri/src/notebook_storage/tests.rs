@@ -29,7 +29,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 10,
+        "version": 11,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -46,12 +46,66 @@ fn document(title: &str) -> serde_json::Value {
             "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
         },
         "headerFooter": {
-            "headerText": "",
-            "footerText": "",
+            "defaultHeader": {
+                "left": [{ "type": "paragraph" }],
+                "center": [{ "type": "paragraph" }],
+                "right": [{ "type": "paragraph" }]
+            },
+            "defaultFooter": {
+                "left": [{ "type": "paragraph" }],
+                "center": [{ "type": "paragraph" }],
+                "right": [{ "type": "paragraph" }]
+            },
+            "firstPageHeader": {
+                "left": [{ "type": "paragraph" }],
+                "center": [{ "type": "paragraph" }],
+                "right": [{ "type": "paragraph" }]
+            },
+            "firstPageFooter": {
+                "left": [{ "type": "paragraph" }],
+                "center": [{ "type": "paragraph" }],
+                "right": [{ "type": "paragraph" }]
+            },
             "differentFirstPage": false,
-            "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+            "pageNumberStart": 1
         }
     })
+}
+
+fn legacy_document(title: &str) -> serde_json::Value {
+    let mut legacy = document(title);
+    legacy["version"] = 10.into();
+    legacy["headerFooter"] = serde_json::json!({
+        "headerText": "",
+        "footerText": "",
+        "differentFirstPage": false,
+        "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+    });
+    legacy
+}
+
+fn legacy_record(
+    library_id: &str,
+    revision: u64,
+    title: &str,
+    schema: u64,
+) -> NotebookStoredRecordV1 {
+    let mut record = record(library_id, revision, title);
+    record.document = legacy_document(title);
+    record.document["version"] = schema.into();
+    if schema < 8 {
+        record
+            .document
+            .as_object_mut()
+            .expect("document should be an object")
+            .remove("pageSetup");
+        record
+            .document
+            .as_object_mut()
+            .expect("document should be an object")
+            .remove("headerFooter");
+    }
+    record
 }
 
 fn record(library_id: &str, revision: u64, title: &str) -> NotebookStoredRecordV1 {
@@ -95,6 +149,26 @@ fn stored_zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
         writer.write_all(bytes).expect("entry should write");
     }
     writer.finish().expect("archive should finish").into_inner()
+}
+
+fn portable_package_for(record: &NotebookStoredRecordV1) -> Vec<u8> {
+    let document_bytes =
+        serde_json::to_vec_pretty(&record.document).expect("document should serialize");
+    let manifest = NotebookPackageManifestV1 {
+        version: PACKAGE_MANIFEST_VERSION,
+        kind: PACKAGE_KIND.into(),
+        created_at: record.saved_at.clone(),
+        source_library_id: record.library_id.clone(),
+        source_revision: record.revision,
+        document_path: DOCUMENT_PATH.into(),
+        document_sha256: sha256_hex(&document_bytes),
+        assets: Vec::new(),
+    };
+    let manifest_bytes = serde_json::to_vec_pretty(&manifest).expect("manifest should serialize");
+    stored_zip(&[
+        ("manifest.json", &manifest_bytes),
+        ("document.json", &document_bytes),
+    ])
 }
 
 #[test]
@@ -182,21 +256,10 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_through_v10_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
-    let mut legacy = record("library.legacy", 1, "Legacy notebook");
-    legacy.document["version"] = 6.into();
-    legacy
-        .document
-        .as_object_mut()
-        .expect("document should be an object")
-        .remove("pageSetup");
-    legacy
-        .document
-        .as_object_mut()
-        .expect("document should be an object")
-        .remove("headerFooter");
+    let legacy = legacy_record("library.legacy", 1, "Legacy notebook", 6);
     let paths = storage.record_paths(&legacy.library_id);
     NotebookStorage::write_synced(
         &paths.target,
@@ -208,7 +271,7 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 10);
+    assert_eq!(loaded.document["version"], 11);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -231,7 +294,7 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 10);
+    assert_eq!(versions[0].record.document["version"], 11);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -257,21 +320,10 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 10);
+    assert_eq!(inspection.document["version"], 11);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
-    let mut version7 = record("library.legacy-v7", 1, "Image-era notebook");
-    version7.document["version"] = 7.into();
-    version7
-        .document
-        .as_object_mut()
-        .expect("document should be an object")
-        .remove("pageSetup");
-    version7
-        .document
-        .as_object_mut()
-        .expect("document should be an object")
-        .remove("headerFooter");
+    let version7 = legacy_record("library.legacy-v7", 1, "Image-era notebook", 7);
     let version7_paths = storage.record_paths(&version7.library_id);
     NotebookStorage::write_synced(
         &version7_paths.target,
@@ -282,11 +334,10 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 10);
+    assert_eq!(loaded_v7.document["version"], 11);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
 
-    let mut version8 = record("library.legacy-v8", 1, "Page-era notebook");
-    version8.document["version"] = 8.into();
+    let version8 = legacy_record("library.legacy-v8", 1, "Page-era notebook", 8);
     let version8_paths = storage.record_paths(&version8.library_id);
     NotebookStorage::write_synced(
         &version8_paths.target,
@@ -297,11 +348,10 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
         .load_record(&version8.library_id)
         .expect("V8 record should load")
         .expect("V8 record should exist");
-    assert_eq!(loaded_v8.document["version"], 10);
+    assert_eq!(loaded_v8.document["version"], 11);
     assert_eq!(loaded_v8.document["content"], version8.document["content"]);
 
-    let mut version9 = record("library.legacy-v9", 1, "Video-era notebook");
-    version9.document["version"] = 9.into();
+    let version9 = legacy_record("library.legacy-v9", 1, "Video-era notebook", 9);
     let version9_content = version9.document["content"].clone();
     let version9_paths = storage.record_paths(&version9.library_id);
     NotebookStorage::write_synced(
@@ -313,13 +363,260 @@ fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes(
         .load_record(&version9.library_id)
         .expect("V9 record should load")
         .expect("V9 record should exist");
-    assert_eq!(loaded_v9.document["version"], 10);
+    assert_eq!(loaded_v9.document["version"], 11);
     assert_eq!(loaded_v9.document["content"], version9_content);
+
+    let version10 = legacy_record("library.legacy-v10", 1, "Direct-media notebook", 10);
+    let version10_paths = storage.record_paths(&version10.library_id);
+    NotebookStorage::write_synced(
+        &version10_paths.target,
+        &serde_json::to_vec_pretty(&version10).expect("V10 record should serialize"),
+    )
+    .expect("V10 record should write");
+    let loaded_v10 = storage
+        .load_record(&version10.library_id)
+        .expect("V10 record should load")
+        .expect("V10 record should exist");
+    assert_eq!(loaded_v10.document["version"], 11);
+    assert_eq!(
+        loaded_v10.document["content"],
+        version10.document["content"]
+    );
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn validates_v10_page_layout_and_explicit_top_level_breaks() {
+fn imports_v6_through_v10_packages_as_new_current_records_without_mutating_sources() {
+    let root = unique_storage("v6-v10-package-import");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+
+    for schema in 6..=10 {
+        let source = legacy_record(
+            &format!("library.package-v{schema}"),
+            schema,
+            &format!("Schema {schema} package"),
+            schema,
+        );
+        let package = portable_package_for(&source);
+        let original_package = package.clone();
+
+        let inspected = storage
+            .inspect_package(&package)
+            .expect("supported legacy package should inspect");
+        assert_eq!(inspected.document["version"], 11);
+        assert_eq!(inspected.document["content"], source.document["content"]);
+
+        let imported = storage
+            .import_package(&package)
+            .expect("supported legacy package should import");
+        assert_ne!(imported.library_id, source.library_id);
+        assert_eq!(imported.revision, 1);
+        assert_eq!(imported.document["version"], 11);
+        assert_eq!(imported.document["content"], source.document["content"]);
+        assert_eq!(package, original_package);
+
+        let raw_imported: serde_json::Value = serde_json::from_slice(
+            &fs::read(storage.record_paths(&imported.library_id).target)
+                .expect("imported record should exist"),
+        )
+        .expect("imported record should remain readable");
+        assert_eq!(raw_imported["document"]["version"], 11);
+    }
+
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
+    let root = unique_storage("v10-upgrade-save");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let asset_id = format!("sha256:{}", "a".repeat(64));
+    let mut legacy = legacy_record("library.upgrade", 4, "Upgrade notebook", 10);
+    legacy.asset_ids.push(asset_id.clone());
+    legacy.document["pageSetup"]["paperSize"] = "letter".into();
+    legacy.document["headerFooter"] = serde_json::json!({
+        "headerText": "Course notes",
+        "footerText": "Calculus",
+        "differentFirstPage": true,
+        "pageNumbering": { "enabled": true, "position": "right", "startAt": 7 }
+    });
+    legacy.document["content"] = serde_json::json!([
+        {
+            "type": "paragraph",
+            "id": "paragraph.upgrade",
+            "content": [{ "type": "text", "text": "Preserved content" }]
+        },
+        {
+            "type": "imageFigure",
+            "id": "image.upgrade",
+            "assetId": asset_id,
+            "altText": "Preserved media",
+            "widthPercent": 75,
+            "displayAspectRatio": 1.5
+        }
+    ]);
+    let paths = storage.record_paths(&legacy.library_id);
+    let raw_legacy = serde_json::to_vec_pretty(&legacy).expect("legacy record should serialize");
+    NotebookStorage::write_synced(&paths.target, &raw_legacy).expect("legacy record should write");
+
+    let loaded = storage
+        .load_record_with_source(&legacy.library_id)
+        .expect("V10 record should open")
+        .expect("V10 record should exist");
+    assert_eq!(loaded.source_document_version, 10);
+    let mut opened = loaded.record;
+    assert_eq!(opened.document["version"], 11);
+    assert_eq!(opened.document["content"], legacy.document["content"]);
+    assert_eq!(opened.document["pageSetup"], legacy.document["pageSetup"]);
+    assert_eq!(
+        opened.document["headerFooter"]["defaultHeader"]["left"][0]["content"][0]["text"],
+        "Course notes"
+    );
+    assert_eq!(
+        opened.document["headerFooter"]["defaultFooter"]["right"][0]["content"][0]["type"],
+        "pageNumber"
+    );
+    let still_legacy: serde_json::Value =
+        serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
+    assert_eq!(still_legacy["document"]["version"], 10);
+    assert_eq!(
+        storage.load_raw_recovery(&legacy.library_id).unwrap(),
+        Some(raw_legacy)
+    );
+
+    opened.revision = 5;
+    opened.saved_at = "2026-07-15T00:00:05.000Z".into();
+    storage
+        .save_record(opened.clone(), Some(4), false)
+        .expect("first upgraded save should succeed");
+    let current_on_disk: serde_json::Value =
+        serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
+    assert_eq!(current_on_disk["document"]["version"], 11);
+
+    let snapshot_paths: Vec<_> = fs::read_dir(storage.versions_path(&legacy.library_id))
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    assert_eq!(snapshot_paths.len(), 1);
+    let raw_snapshot: serde_json::Value =
+        serde_json::from_slice(&fs::read(&snapshot_paths[0]).unwrap()).unwrap();
+    assert_eq!(raw_snapshot["reason"], "before-schema-upgrade");
+    assert_eq!(raw_snapshot["record"]["revision"], 4);
+    assert_eq!(raw_snapshot["record"]["document"]["version"], 10);
+    let listed = storage.list_versions(&legacy.library_id).unwrap();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].record.document["version"], 11);
+
+    opened.revision = 6;
+    opened.saved_at = "2026-07-15T00:00:06.000Z".into();
+    storage
+        .save_record(opened, Some(5), false)
+        .expect("current save should succeed");
+    assert_eq!(storage.list_versions(&legacy.library_id).unwrap().len(), 1);
+
+    drop(storage);
+    let restarted = NotebookStorage::load(root.clone()).expect("storage should restart");
+    let reopened = restarted
+        .load_record_with_source(&legacy.library_id)
+        .unwrap()
+        .expect("upgraded record should remain available");
+    assert_eq!(reopened.source_document_version, 11);
+    assert_eq!(reopened.record.document["version"], 11);
+    assert_eq!(
+        reopened.record.document["content"],
+        legacy.document["content"]
+    );
+    assert_eq!(reopened.record.document["pageSetup"]["paperSize"], "letter");
+    assert_eq!(reopened.record.asset_ids, legacy.asset_ids);
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn keeps_legacy_record_when_upgrade_snapshot_cannot_be_written() {
+    let root = unique_storage("v10-upgrade-snapshot-failure");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let legacy = legacy_record("library.snapshot-failure", 1, "Snapshot failure", 10);
+    let paths = storage.record_paths(&legacy.library_id);
+    NotebookStorage::write_synced(
+        &paths.target,
+        &serde_json::to_vec_pretty(&legacy).expect("legacy record should serialize"),
+    )
+    .expect("legacy record should write");
+    fs::write(
+        storage.versions_path(&legacy.library_id),
+        b"not a directory",
+    )
+    .expect("version path blocker should write");
+    let mut current = storage
+        .load_record(&legacy.library_id)
+        .unwrap()
+        .expect("legacy record should open");
+    current.revision = 2;
+    current.saved_at = "2026-07-15T00:00:02.000Z".into();
+    storage
+        .save_record(current, Some(1), false)
+        .expect_err("snapshot failure should abort the save");
+    let retained: serde_json::Value =
+        serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
+    assert_eq!(retained["document"]["version"], 10);
+    assert!(!paths.next.exists());
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn current_records_skip_upgrade_snapshots_and_legacy_failures_are_specific() {
+    let root = unique_storage("schema-errors");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    storage
+        .save_record(record("library.current", 1, "Current notebook"), None, true)
+        .expect("current record should save");
+    assert!(storage.list_versions("library.current").unwrap().is_empty());
+
+    for (library_id, schema, expected) in [
+        ("library.early", 5, "NOTEBOOK_SCHEMA_PRE_V6"),
+        ("library.future", 12, "NOTEBOOK_SCHEMA_NEWER"),
+    ] {
+        let legacy = legacy_record(library_id, 1, "Unsupported notebook", schema);
+        let paths = storage.record_paths(library_id);
+        NotebookStorage::write_synced(&paths.target, &serde_json::to_vec(&legacy).unwrap())
+            .expect("unsupported record should write");
+        let fallback = record(library_id, 1, "Older recovery copy");
+        NotebookStorage::write_synced(&paths.previous, &serde_json::to_vec(&fallback).unwrap())
+            .expect("recovery copy should write");
+        assert!(storage
+            .load_record(library_id)
+            .expect_err("unsupported record should fail")
+            .contains(expected));
+        let retained: serde_json::Value =
+            serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
+        assert_eq!(retained["document"]["version"], schema);
+        assert!(storage.load_raw_recovery(library_id).unwrap().is_some());
+    }
+
+    let mut damaged = record("library.damaged", 1, "Damaged notebook");
+    damaged.document["headerFooter"]
+        .as_object_mut()
+        .unwrap()
+        .remove("defaultFooter");
+    let damaged_paths = storage.record_paths(&damaged.library_id);
+    NotebookStorage::write_synced(
+        &damaged_paths.target,
+        &serde_json::to_vec(&damaged).unwrap(),
+    )
+    .expect("damaged record should write");
+    assert!(storage
+        .load_record(&damaged.library_id)
+        .expect_err("damaged record should fail")
+        .contains("NOTEBOOK_RECORD_INVALID"));
+    assert!(storage
+        .load_raw_recovery(&damaged.library_id)
+        .unwrap()
+        .is_some());
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn validates_v11_page_layout_and_explicit_top_level_breaks() {
     let root = unique_storage("v8-page-layout");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut valid = record("library.pages", 1, "Paginated notebook");
@@ -329,10 +626,28 @@ fn validates_v10_page_layout_and_explicit_top_level_breaks() {
         "marginsPt": { "top": 36, "right": 54, "bottom": 36, "left": 54 }
     });
     valid.document["headerFooter"] = serde_json::json!({
-        "headerText": "Limits",
-        "footerText": "Chapter 2",
+        "defaultHeader": {
+            "left": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Limits" }] }],
+            "center": [{ "type": "paragraph" }],
+            "right": [{ "type": "paragraph" }]
+        },
+        "defaultFooter": {
+            "left": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Chapter 2" }] }],
+            "center": [{ "type": "paragraph" }],
+            "right": [{ "type": "paragraph", "content": [{ "type": "pageNumber" }] }]
+        },
+        "firstPageHeader": {
+            "left": [{ "type": "paragraph" }],
+            "center": [{ "type": "paragraph" }],
+            "right": [{ "type": "paragraph" }]
+        },
+        "firstPageFooter": {
+            "left": [{ "type": "paragraph" }],
+            "center": [{ "type": "paragraph" }],
+            "right": [{ "type": "paragraph" }]
+        },
         "differentFirstPage": true,
-        "pageNumbering": { "enabled": true, "position": "right", "startAt": 5 }
+        "pageNumberStart": 5
     });
     valid.document["content"] = serde_json::json!([
         { "type": "paragraph", "id": "paragraph.before" },
@@ -341,15 +656,15 @@ fn validates_v10_page_layout_and_explicit_top_level_breaks() {
     ]);
     storage
         .save_record(valid.clone(), None, true)
-        .expect("valid V10 page layout should save");
+        .expect("valid V11 page layout should save");
 
     let mut invalid_number = valid.clone();
     invalid_number.library_id = "library.pages.invalid-number".into();
-    invalid_number.document["headerFooter"]["pageNumbering"]["startAt"] = 0.into();
+    invalid_number.document["headerFooter"]["pageNumberStart"] = 0.into();
     assert!(storage
         .save_record(invalid_number, None, true)
         .expect_err("invalid starting number should fail")
-        .contains("page numbering"));
+        .contains("header and footer"));
 
     let mut invalid_margins = valid.clone();
     invalid_margins.library_id = "library.pages.invalid-margins".into();
@@ -375,7 +690,7 @@ fn validates_v10_page_layout_and_explicit_top_level_breaks() {
 }
 
 #[test]
-fn validates_v10_image_metadata_and_crop_bounds() {
+fn validates_v11_image_metadata_and_crop_bounds() {
     let root = unique_storage("v7-image-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let asset_id = format!("sha256:{}", "a".repeat(64));
@@ -427,23 +742,23 @@ fn validates_v10_image_metadata_and_crop_bounds() {
 
 #[test]
 fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
-    let mut legacy = document("V9 document");
+    let mut legacy = legacy_document("V9 document");
     legacy["version"] = 9.into();
     let original = legacy.clone();
     let migrated = migrate_notebook_document(legacy).expect("V9 document should migrate");
-    assert_eq!(migrated["version"], 10);
+    assert_eq!(migrated["version"], 11);
     assert_eq!(migrated["content"], original["content"]);
     assert_eq!(migrated["pageSetup"], original["pageSetup"]);
-    assert_eq!(migrated["headerFooter"], original["headerFooter"]);
+    assert_eq!(migrated["headerFooter"]["pageNumberStart"], 1);
 
-    let mut v9_indent = document("V9 strict indent");
+    let mut v9_indent = legacy_document("V9 strict indent");
     v9_indent["version"] = 9.into();
     v9_indent["content"][0]["format"] = serde_json::json!({ "leftIndentPt": 36 });
     assert!(migrate_notebook_document(v9_indent)
         .expect_err("V9 must reject V10 paragraph formatting")
         .contains("left indent"));
 
-    let mut v9_image = document("V9 strict image");
+    let mut v9_image = legacy_document("V9 strict image");
     v9_image["version"] = 9.into();
     v9_image["content"] = serde_json::json!([{
         "type": "imageFigure",
@@ -457,7 +772,7 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
 }
 
 #[test]
-fn validates_v10_video_metadata_and_referenced_assets() {
+fn validates_v11_video_metadata_and_referenced_assets() {
     let root = unique_storage("v9-video-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let video_id = format!("sha256:{}", "a".repeat(64));
@@ -502,6 +817,9 @@ fn validates_v10_video_metadata_and_referenced_assets() {
 
     let mut duplicate_default = video_record.clone();
     duplicate_default.library_id = "library.video.defaults".into();
+    duplicate_default
+        .asset_ids
+        .push(format!("sha256:{}", "d".repeat(64)));
     duplicate_default.document["content"][0]["tracks"]
         .as_array_mut()
         .expect("tracks should be an array")

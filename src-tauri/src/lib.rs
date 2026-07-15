@@ -1735,6 +1735,7 @@ pub fn run() {
             sample_ode_solution,
             notebook_storage::notebook_list_records,
             notebook_storage::notebook_load_record,
+            notebook_storage::notebook_load_raw_recovery,
             notebook_storage::notebook_save_record,
             notebook_storage::notebook_delete_record,
             notebook_storage::notebook_put_asset,

@@ -7,9 +7,11 @@ import {
   isNotebookStoredRecordV1,
   isNotebookSupportedAssetMimeType,
   isNotebookVersionSnapshotV1,
-  migrateNotebookStoredRecordV1,
-  migrateNotebookVersionSnapshotV1,
+  migrateDurableNotebookVersionSnapshotV1,
+  notebookStoredRecordDocumentVersion,
   notebookSha256Hex,
+  requireDurableNotebookStoredRecordV1,
+  requireDurableNotebookVersionSnapshotV1,
   summarizeNotebookStoredRecordV1,
   NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS,
   NOTEBOOK_VERSION_HISTORY_MAX_COUNT,
@@ -55,6 +57,27 @@ function transactionComplete(transaction: IDBTransaction): Promise<void> {
   });
 }
 
+async function pruneVersionStore(
+  store: IDBObjectStore,
+  libraryId: string,
+  createdAt: string,
+) {
+  const values = (await requestResult(store.getAll()) as unknown[])
+    .map(migrateDurableNotebookVersionSnapshotV1)
+    .filter((candidate): candidate is NotebookVersionSnapshotV1 => candidate !== null);
+  const cutoff = Date.parse(createdAt) - NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS;
+  const expired = values
+    .filter((candidate) => candidate.libraryId === libraryId)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .filter((candidate, index) => (
+      index >= NOTEBOOK_VERSION_HISTORY_MAX_COUNT
+      || Date.parse(candidate.createdAt) < cutoff
+    ));
+  await Promise.all(expired.map((candidate) => requestResult(store.delete(
+    candidate.snapshotId,
+  ))));
+}
+
 function openNotebookDatabase(indexedDb: IDBFactory, databaseName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDb.open(databaseName, NOTEBOOK_INDEXED_DB_VERSION);
@@ -98,6 +121,7 @@ export function createIndexedDbNotebookPorts(options: {
   }
   const databaseName = options.databaseName ?? 'calcwiz-notebook-library-v1';
   const database = openNotebookDatabase(indexedDb, databaseName);
+  const loadedDocumentVersions = new Map<string, number>();
 
   const library: NotebookLibraryPort = {
     async list() {
@@ -106,8 +130,7 @@ export function createIndexedDbNotebookPorts(options: {
       const records = await requestResult(transaction.objectStore(RECORD_STORE).getAll());
       await transactionComplete(transaction);
       return records
-        .map(migrateNotebookStoredRecordV1)
-        .filter((record): record is NonNullable<typeof record> => record !== null)
+        .map(requireDurableNotebookStoredRecordV1)
         .map(summarizeNotebookStoredRecordV1)
         .sort((left, right) => right.savedAt.localeCompare(left.savedAt));
     },
@@ -116,18 +139,57 @@ export function createIndexedDbNotebookPorts(options: {
       const transaction = db.transaction(RECORD_STORE, 'readonly');
       const value = await requestResult(transaction.objectStore(RECORD_STORE).get(libraryId));
       await transactionComplete(transaction);
-      const migrated = migrateNotebookStoredRecordV1(value);
-      return migrated ? cloneNotebookStoredRecordV1(migrated) : null;
+      if (value === undefined) {
+        loadedDocumentVersions.delete(libraryId);
+        return null;
+      }
+      const sourceDocumentVersion = notebookStoredRecordDocumentVersion(value);
+      if (sourceDocumentVersion === null) {
+        throw new TypeError('Notebook stored record is missing its document schema.');
+      }
+      loadedDocumentVersions.set(libraryId, sourceDocumentVersion);
+      return cloneNotebookStoredRecordV1(requireDurableNotebookStoredRecordV1(value));
+    },
+    loadedDocumentVersion(libraryId) {
+      return loadedDocumentVersions.get(libraryId) ?? null;
+    },
+    async loadRawRecovery(libraryId) {
+      const db = await database;
+      const transaction = db.transaction(RECORD_STORE, 'readonly');
+      const value = await requestResult(transaction.objectStore(RECORD_STORE).get(libraryId));
+      await transactionComplete(transaction);
+      return value === undefined
+        ? null
+        : new TextEncoder().encode(JSON.stringify(value, null, 2));
     },
     async save(record, saveOptions = {}) {
       if (!isNotebookStoredRecordV1(record)) {
         throw new TypeError('Notebook IndexedDB accepts stored-record version 1 only.');
       }
       const db = await database;
-      const transaction = db.transaction(RECORD_STORE, 'readwrite');
+      const preflightTransaction = db.transaction(RECORD_STORE, 'readonly');
+      const preflightCurrent = await requestResult(
+        preflightTransaction.objectStore(RECORD_STORE).get(record.libraryId),
+      );
+      await transactionComplete(preflightTransaction);
+      const preflightRecord = preflightCurrent === undefined
+        ? null
+        : requireDurableNotebookStoredRecordV1(preflightCurrent);
+      const preflightSourceVersion = notebookStoredRecordDocumentVersion(preflightCurrent);
+      const upgradeSnapshotId = preflightRecord
+        && preflightSourceVersion !== null
+        && preflightSourceVersion < record.document.version
+        ? `snapshot.schema-upgrade.${await notebookSha256Hex(new TextEncoder().encode(
+            `${preflightRecord.libraryId}:${preflightRecord.revision}`,
+          ))}`
+        : null;
+      const transaction = db.transaction([RECORD_STORE, VERSION_STORE], 'readwrite');
       const store = transaction.objectStore(RECORD_STORE);
+      const versionStore = transaction.objectStore(VERSION_STORE);
       const current = await requestResult(store.get(record.libraryId));
-      const currentRecord = migrateNotebookStoredRecordV1(current);
+      const currentRecord = current === undefined
+        ? null
+        : requireDurableNotebookStoredRecordV1(current);
       if (
         saveOptions.expectedRevision !== undefined
         && (currentRecord?.revision ?? null) !== saveOptions.expectedRevision
@@ -138,6 +200,36 @@ export function createIndexedDbNotebookPorts(options: {
       if (currentRecord && record.revision <= currentRecord.revision) {
         transaction.abort();
         throw new Error('Notebook revision must advance.');
+      }
+      const sourceVersion = notebookStoredRecordDocumentVersion(current);
+      if (currentRecord && sourceVersion !== null && sourceVersion < record.document.version) {
+        if (!upgradeSnapshotId || currentRecord.revision !== preflightRecord?.revision) {
+          transaction.abort();
+          throw new Error('Notebook revision conflict.');
+        }
+        const snapshotId = upgradeSnapshotId;
+        const existing = await requestResult(versionStore.get(snapshotId));
+        if (existing === undefined) {
+          await requestResult(versionStore.put({
+            version: 1,
+            snapshotId,
+            libraryId: currentRecord.libraryId,
+            revision: currentRecord.revision,
+            createdAt: record.savedAt,
+            reason: 'before-schema-upgrade',
+            record: current,
+          }));
+        } else {
+          const existingSnapshot = migrateDurableNotebookVersionSnapshotV1(existing);
+          if (!existingSnapshot
+            || existingSnapshot.libraryId !== currentRecord.libraryId
+            || existingSnapshot.revision !== currentRecord.revision
+            || existingSnapshot.reason !== 'before-schema-upgrade') {
+            transaction.abort();
+            throw new Error('Notebook schema-upgrade snapshot conflicts with stored history.');
+          }
+        }
+        await pruneVersionStore(versionStore, currentRecord.libraryId, record.savedAt);
       }
       const stored = cloneNotebookStoredRecordV1(record);
       await requestResult(store.put(stored));
@@ -156,7 +248,7 @@ export function createIndexedDbNotebookPorts(options: {
       const values = await requestResult(transaction.objectStore(VERSION_STORE).getAll());
       await transactionComplete(transaction);
       return values
-        .map(migrateNotebookVersionSnapshotV1)
+        .map(migrateDurableNotebookVersionSnapshotV1)
         .filter((snapshot): snapshot is NonNullable<typeof snapshot> => snapshot !== null)
         .filter((snapshot) => snapshot.libraryId === libraryId)
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
@@ -170,20 +262,7 @@ export function createIndexedDbNotebookPorts(options: {
       const transaction = db.transaction(VERSION_STORE, 'readwrite');
       const store = transaction.objectStore(VERSION_STORE);
       await requestResult(store.put(cloneNotebookVersionSnapshotV1(snapshot)));
-      const values = (await requestResult(store.getAll()) as unknown[])
-        .map(migrateNotebookVersionSnapshotV1)
-        .filter((candidate): candidate is NotebookVersionSnapshotV1 => candidate !== null);
-      const cutoff = Date.parse(snapshot.createdAt) - NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS;
-      const expired = values
-        .filter((candidate) => candidate.libraryId === snapshot.libraryId)
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-        .filter((candidate, index) => (
-          index >= NOTEBOOK_VERSION_HISTORY_MAX_COUNT
-          || Date.parse(candidate.createdAt) < cutoff
-        ));
-      await Promise.all(expired.map((candidate) => requestResult(store.delete(
-        candidate.snapshotId,
-      ))));
+      await pruneVersionStore(store, snapshot.libraryId, snapshot.createdAt);
       await transactionComplete(transaction);
     },
     async moveToTrash(libraryId) {
@@ -191,14 +270,12 @@ export function createIndexedDbNotebookPorts(options: {
       const transaction = db.transaction([RECORD_STORE, TRASH_STORE], 'readwrite');
       const recordStore = transaction.objectStore(RECORD_STORE);
       const value = await requestResult(recordStore.get(libraryId));
-      const migrated = migrateNotebookStoredRecordV1(value);
-      if (!migrated) {
+      if (value === undefined) {
         transaction.abort();
         throw new Error('Notebook record does not exist.');
       }
-      await requestResult(transaction.objectStore(TRASH_STORE).put(
-        cloneNotebookStoredRecordV1(migrated),
-      ));
+      const migrated = requireDurableNotebookStoredRecordV1(value);
+      await requestResult(transaction.objectStore(TRASH_STORE).put(value));
       await requestResult(recordStore.delete(libraryId));
       await transactionComplete(transaction);
       return cloneNotebookStoredRecordV1(migrated);
@@ -209,8 +286,7 @@ export function createIndexedDbNotebookPorts(options: {
       const values = await requestResult(transaction.objectStore(TRASH_STORE).getAll());
       await transactionComplete(transaction);
       return values
-        .map(migrateNotebookStoredRecordV1)
-        .filter((record): record is NonNullable<typeof record> => record !== null)
+        .map(requireDurableNotebookStoredRecordV1)
         .map(summarizeNotebookStoredRecordV1)
         .sort((left, right) => right.savedAt.localeCompare(left.savedAt));
     },
@@ -218,18 +294,18 @@ export function createIndexedDbNotebookPorts(options: {
       const db = await database;
       const transaction = db.transaction([RECORD_STORE, TRASH_STORE], 'readwrite');
       const recordStore = transaction.objectStore(RECORD_STORE);
-      if (migrateNotebookStoredRecordV1(await requestResult(recordStore.get(libraryId)))) {
+      if ((await requestResult(recordStore.get(libraryId))) !== undefined) {
         transaction.abort();
         throw new Error('Notebook library identity is already active.');
       }
       const trashStore = transaction.objectStore(TRASH_STORE);
       const value = await requestResult(trashStore.get(libraryId));
-      const migrated = migrateNotebookStoredRecordV1(value);
-      if (!migrated) {
+      if (value === undefined) {
         transaction.abort();
         throw new Error('Notebook trash record does not exist.');
       }
-      await requestResult(recordStore.put(cloneNotebookStoredRecordV1(migrated)));
+      const migrated = requireDurableNotebookStoredRecordV1(value);
+      await requestResult(recordStore.put(value));
       await requestResult(trashStore.delete(libraryId));
       await transactionComplete(transaction);
       return cloneNotebookStoredRecordV1(migrated);
@@ -241,8 +317,7 @@ export function createIndexedDbNotebookPorts(options: {
       const versionStore = transaction.objectStore(VERSION_STORE);
       const values = await requestResult(versionStore.getAll());
       await Promise.all(values
-        .map(migrateNotebookVersionSnapshotV1)
-        .filter((snapshot): snapshot is NonNullable<typeof snapshot> => snapshot !== null)
+        .map(requireDurableNotebookVersionSnapshotV1)
         .filter((snapshot) => snapshot.libraryId === libraryId)
         .map((snapshot) => requestResult(versionStore.delete(snapshot.snapshotId))));
       await transactionComplete(transaction);

@@ -9,6 +9,8 @@ import {
   isNotebookStoredRecordSummaryV1,
   isNotebookSupportedAssetMimeType,
   isNotebookVersionSnapshotV1,
+  requireDurableNotebookStoredRecordV1,
+  requireDurableNotebookVersionSnapshotV1,
   type NotebookAssetPayloadV1,
 } from './contracts';
 import type {
@@ -35,10 +37,21 @@ function requireTauriRuntime() {
 }
 
 function asStoredRecord(value: unknown) {
-  if (!isNotebookStoredRecordV1(value)) {
-    throw new TypeError('Notebook desktop storage returned an invalid record.');
+  return cloneNotebookStoredRecordV1(requireDurableNotebookStoredRecordV1(value));
+}
+
+function asStoredRecordLoadResult(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    throw new TypeError('Notebook desktop storage returned an invalid record load result.');
   }
-  return cloneNotebookStoredRecordV1(value);
+  const candidate = value as { record?: unknown; sourceDocumentVersion?: unknown };
+  if (!Number.isInteger(candidate.sourceDocumentVersion)) {
+    throw new TypeError('Notebook desktop storage returned an invalid source schema.');
+  }
+  return {
+    record: asStoredRecord(candidate.record),
+    sourceDocumentVersion: candidate.sourceDocumentVersion as number,
+  };
 }
 
 function asByteArray(value: unknown, message: string) {
@@ -57,6 +70,7 @@ export type TauriNotebookPorts = {
 };
 
 export function createTauriNotebookPorts(): TauriNotebookPorts {
+  const loadedDocumentVersions = new Map<string, number>();
   const library: NotebookLibraryPort = {
     async list() {
       requireTauriRuntime();
@@ -69,7 +83,23 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
     async load(libraryId) {
       requireTauriRuntime();
       const value = await invoke<unknown>('notebook_load_record', { libraryId });
-      return value === null ? null : asStoredRecord(value);
+      if (value === null) {
+        loadedDocumentVersions.delete(libraryId);
+        return null;
+      }
+      const loaded = asStoredRecordLoadResult(value);
+      loadedDocumentVersions.set(libraryId, loaded.sourceDocumentVersion);
+      return loaded.record;
+    },
+    loadedDocumentVersion(libraryId) {
+      return loadedDocumentVersions.get(libraryId) ?? null;
+    },
+    async loadRawRecovery(libraryId) {
+      requireTauriRuntime();
+      const value = await invoke<unknown>('notebook_load_raw_recovery', { libraryId });
+      return value === null
+        ? null
+        : asByteArray(value, 'Notebook desktop storage returned invalid recovery bytes.');
     },
     async save(record, options = {}) {
       requireTauriRuntime();
@@ -90,10 +120,12 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
     async listVersions(libraryId) {
       requireTauriRuntime();
       const versions = await invoke<unknown[]>('notebook_list_versions', { libraryId });
-      if (!Array.isArray(versions) || !versions.every(isNotebookVersionSnapshotV1)) {
+      if (!Array.isArray(versions)) {
         throw new TypeError('Notebook desktop storage returned invalid version history.');
       }
-      return versions.map(cloneNotebookVersionSnapshotV1);
+      return versions.map((snapshot) => {
+        return cloneNotebookVersionSnapshotV1(requireDurableNotebookVersionSnapshotV1(snapshot));
+      });
     },
     async saveVersion(snapshot) {
       requireTauriRuntime();

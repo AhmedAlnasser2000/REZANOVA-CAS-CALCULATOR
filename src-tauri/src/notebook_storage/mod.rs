@@ -5,16 +5,19 @@ mod server;
 
 pub use model::{
     NotebookAssetMetadataV1, NotebookAssetPayloadV1, NotebookPackageInspectionV1,
-    NotebookStoredRecordSummaryV1, NotebookStoredRecordV1, NotebookVersionSnapshotV1,
+    NotebookStoredRecordLoadResult, NotebookStoredRecordSummaryV1, NotebookStoredRecordV1,
+    NotebookVersionSnapshotV1,
 };
 
 use assets::{sha256_hex, validate_asset_bytes, validate_streamed_video_header};
 use model::{
     is_asset_id, migrate_stored_record, migrate_version_snapshot, summarize_record,
-    validate_asset_metadata, validate_stored_record, validate_version_snapshot,
-    NotebookRecoveryMetadataV1,
+    validate_asset_metadata, validate_durable_stored_record, validate_durable_version_snapshot,
+    validate_stored_record, validate_version_snapshot, NotebookRecoveryMetadataV1,
+    CURRENT_DOCUMENT_SCHEMA,
 };
 use package::{export_package, inspect_package, inspection};
+use serde_json::Value;
 use server::NotebookMediaServer;
 use sha2::{Digest, Sha256};
 use std::{
@@ -180,26 +183,50 @@ impl NotebookStorage {
         Ok(())
     }
 
-    fn read_record_file(path: &Path) -> Result<NotebookStoredRecordV1, String> {
-        let bytes = fs::read(path).map_err(|error| error.to_string())?;
+    fn tag_record_error(error: String) -> String {
+        if error.starts_with("NOTEBOOK_SCHEMA_") || error.starts_with("NOTEBOOK_RECORD_INVALID:") {
+            error
+        } else {
+            format!("NOTEBOOK_RECORD_INVALID: {error}")
+        }
+    }
+
+    fn read_raw_record_file(path: &Path) -> Result<NotebookStoredRecordV1, String> {
+        let bytes = fs::read(path).map_err(|error| {
+            format!("NOTEBOOK_STORAGE_UNAVAILABLE: Notebook local storage is unavailable: {error}")
+        })?;
         let record = serde_json::from_slice::<NotebookStoredRecordV1>(&bytes)
-            .map_err(|error| error.to_string())?;
-        migrate_stored_record(record)
+            .map_err(|error| format!("NOTEBOOK_RECORD_INVALID: {error}"))?;
+        validate_durable_stored_record(&record).map_err(Self::tag_record_error)?;
+        Ok(record)
+    }
+
+    fn read_record_file(path: &Path) -> Result<NotebookStoredRecordV1, String> {
+        let record = Self::read_raw_record_file(path)?;
+        migrate_stored_record(record).map_err(Self::tag_record_error)
     }
 
     fn recover_paths(&self, paths: &RecordPaths) -> Result<Option<NotebookStoredRecordV1>, String> {
-        let target = Self::read_record_file(&paths.target).ok();
-        if let Some(record) = target {
+        let target = Self::read_record_file(&paths.target);
+        if let Ok(record) = &target {
             let _ = fs::remove_file(&paths.next);
             let _ = fs::remove_file(&paths.previous);
-            return Ok(Some(record));
+            return Ok(Some(record.clone()));
+        }
+        if target.as_ref().is_err_and(|error| {
+            error.starts_with("NOTEBOOK_SCHEMA_NEWER:")
+                || error.starts_with("NOTEBOOK_SCHEMA_PRE_V6:")
+        }) {
+            return target.map(Some);
         }
         let replacement = Self::read_record_file(&paths.next)
             .ok()
             .or_else(|| Self::read_record_file(&paths.previous).ok());
         let Some(record) = replacement else {
             if paths.target.exists() || paths.next.exists() || paths.previous.exists() {
-                return Err("Notebook recovery found no valid record copy.".into());
+                return Err(target.err().unwrap_or_else(|| {
+                    "NOTEBOOK_RECORD_INVALID: Notebook recovery found no valid record copy.".into()
+                }));
             }
             return Ok(None);
         };
@@ -256,6 +283,18 @@ impl NotebookStorage {
         {
             return Err("Notebook revision must advance.".into());
         }
+        if let Some(raw_current) = paths
+            .target
+            .exists()
+            .then(|| Self::read_raw_record_file(&paths.target))
+            .transpose()?
+            .filter(|current| {
+                current.document.get("version").and_then(Value::as_u64)
+                    != Some(CURRENT_DOCUMENT_SCHEMA)
+            })
+        {
+            self.save_schema_upgrade_snapshot_locked(&raw_current)?;
+        }
         let bytes = serde_json::to_vec_pretty(record).map_err(|error| error.to_string())?;
         Self::write_synced(&paths.next, &bytes)?;
         let recovery = NotebookRecoveryMetadataV1 {
@@ -304,6 +343,53 @@ impl NotebookStorage {
         Ok(record.clone())
     }
 
+    fn save_schema_upgrade_snapshot_locked(
+        &self,
+        record: &NotebookStoredRecordV1,
+    ) -> Result<(), String> {
+        validate_durable_stored_record(record)?;
+        let source_version = record
+            .document
+            .get("version")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| {
+                "NOTEBOOK_RECORD_INVALID: Notebook document schema is missing.".to_string()
+            })?;
+        if source_version >= CURRENT_DOCUMENT_SCHEMA {
+            return Ok(());
+        }
+        let snapshot_id = format!(
+            "snapshot.schema-upgrade.{}",
+            sha256_hex(format!("{}:{}", record.library_id, record.revision).as_bytes())
+        );
+        let snapshot = NotebookVersionSnapshotV1 {
+            version: 1,
+            snapshot_id: snapshot_id.clone(),
+            library_id: record.library_id.clone(),
+            revision: record.revision,
+            created_at: record.saved_at.clone(),
+            reason: "before-schema-upgrade".into(),
+            record: record.clone(),
+        };
+        validate_durable_version_snapshot(&snapshot)?;
+        let directory = self.versions_path(&snapshot.library_id);
+        fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+        let path = directory.join(format!("{}.json", sha256_hex(snapshot_id.as_bytes())));
+        if path.exists() {
+            let existing = serde_json::from_slice::<NotebookVersionSnapshotV1>(
+                &fs::read(&path).map_err(|error| error.to_string())?,
+            )
+            .map_err(|error| error.to_string())?;
+            validate_durable_version_snapshot(&existing)?;
+            if existing == snapshot {
+                return Ok(());
+            }
+            return Err("Notebook schema-upgrade snapshot conflicts with stored history.".into());
+        }
+        Self::atomic_write_json(&path, &snapshot)?;
+        self.prune_versions_locked(&snapshot.library_id)
+    }
+
     pub fn save_record(
         &self,
         record: NotebookStoredRecordV1,
@@ -333,6 +419,59 @@ impl NotebookStorage {
             return Err("Notebook record identity does not match its storage key.".into());
         }
         Ok(record)
+    }
+
+    pub fn load_record_with_source(
+        &self,
+        library_id: &str,
+    ) -> Result<Option<NotebookStoredRecordLoadResult>, String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let paths = self.record_paths(library_id);
+        let record = self.recover_paths(&paths)?;
+        let Some(record) = record else {
+            return Ok(None);
+        };
+        if record.library_id != library_id {
+            return Err("Notebook record identity does not match its storage key.".into());
+        }
+        let source = Self::read_raw_record_file(&paths.target)?;
+        let source_document_version = source
+            .document
+            .get("version")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| "NOTEBOOK_RECORD_INVALID: Notebook schema is missing.".to_string())?;
+        Ok(Some(NotebookStoredRecordLoadResult {
+            record,
+            source_document_version,
+        }))
+    }
+
+    pub fn load_raw_recovery(&self, library_id: &str) -> Result<Option<Vec<u8>>, String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let paths = self.record_paths(library_id);
+        let path = [&paths.target, &paths.next, &paths.previous]
+            .into_iter()
+            .find(|path| path.exists());
+        path.map(|path| {
+            fs::read(path).map_err(|error| {
+                format!(
+                    "NOTEBOOK_STORAGE_UNAVAILABLE: Notebook recovery data is unavailable: {error}"
+                )
+            })
+        })
+        .transpose()
     }
 
     pub fn list_records(&self) -> Result<Vec<NotebookStoredRecordSummaryV1>, String> {
@@ -479,8 +618,9 @@ impl NotebookStorage {
         let record = self
             .recover_paths(&paths)?
             .ok_or_else(|| "Notebook record does not exist.".to_string())?;
+        let raw_record = Self::read_raw_record_file(&paths.target)?;
         let trash_path = self.trash_path(library_id);
-        Self::atomic_write_json(&trash_path, &record)?;
+        Self::atomic_write_json(&trash_path, &raw_record)?;
         for path in [paths.target, paths.next, paths.previous, paths.recovery] {
             let _ = fs::remove_file(path);
         }
@@ -520,11 +660,14 @@ impl NotebookStorage {
             return Err("Notebook library identity is already active.".into());
         }
         let trash_path = self.trash_path(library_id);
-        let record = Self::read_record_file(&trash_path)
-            .map_err(|_| "Notebook trash record does not exist.".to_string())?;
+        if !trash_path.exists() {
+            return Err("Notebook trash record does not exist.".into());
+        }
+        let raw_record = Self::read_raw_record_file(&trash_path)?;
+        let record = migrate_stored_record(raw_record.clone()).map_err(Self::tag_record_error)?;
         Self::write_synced(
             &paths.next,
-            &serde_json::to_vec_pretty(&record).map_err(|error| error.to_string())?,
+            &serde_json::to_vec_pretty(&raw_record).map_err(|error| error.to_string())?,
         )?;
         fs::rename(&paths.next, &paths.target).map_err(|error| error.to_string())?;
         fs::remove_file(trash_path).map_err(|error| error.to_string())?;
@@ -1002,8 +1145,16 @@ pub fn notebook_list_records(
 pub fn notebook_load_record(
     library_id: String,
     state: State<'_, NotebookStorage>,
-) -> Result<Option<NotebookStoredRecordV1>, String> {
-    state.load_record(&library_id)
+) -> Result<Option<NotebookStoredRecordLoadResult>, String> {
+    state.load_record_with_source(&library_id)
+}
+
+#[tauri::command]
+pub fn notebook_load_raw_recovery(
+    library_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<Option<Vec<u8>>, String> {
+    state.load_raw_recovery(&library_id)
 }
 
 #[tauri::command]

@@ -30,6 +30,12 @@ const AUTOSAVE_DELAY_MS = 750;
 const PERIODIC_SNAPSHOT_INTERVAL_MS = 5 * 60 * 1_000;
 
 export type NotebookSaveStatus = 'saving' | 'saved' | 'unsaved' | 'failed';
+export type NotebookOpenFailureKind = 'newer-schema' | 'unsupported-legacy' | 'damaged' | 'storage';
+
+export type NotebookOpenFailure = {
+  kind: NotebookOpenFailureKind;
+  message: string;
+};
 
 export type NotebookLibraryBatchFailure = {
   libraryId: string;
@@ -70,7 +76,34 @@ function uniqueLibraryIds(libraryIds: readonly string[]) {
 }
 
 function operationErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Notebook library operation failed.';
+  if (error instanceof Error) return error.message;
+  return typeof error === 'string' ? error : 'Notebook library operation failed.';
+}
+
+function classifyOpenFailure(error: unknown): NotebookOpenFailure {
+  const message = operationErrorMessage(error);
+  if (message.includes('NOTEBOOK_SCHEMA_NEWER')) {
+    return {
+      kind: 'newer-schema',
+      message: 'This Notebook was created by a newer Calcwiz version. Update Calcwiz to open it.',
+    };
+  }
+  if (message.includes('NOTEBOOK_SCHEMA_PRE_V6')) {
+    return {
+      kind: 'unsupported-legacy',
+      message: 'This pre-Schema 6 Notebook is outside the supported durable compatibility range.',
+    };
+  }
+  if (message.includes('NOTEBOOK_RECORD_INVALID') || message.includes('missing')) {
+    return {
+      kind: 'damaged',
+      message: 'This Notebook record is damaged or incomplete.',
+    };
+  }
+  return {
+    kind: 'storage',
+    message: 'Calcwiz could not access local Notebook storage.',
+  };
 }
 
 async function settleLibraryOperations(
@@ -110,9 +143,13 @@ export function useNotebookLibrarySession({
   const [library, setLibrary] = useState<NotebookStoredRecordSummaryV1[]>([]);
   const [trash, setTrash] = useState<NotebookStoredRecordSummaryV1[]>([]);
   const [versions, setVersions] = useState<NotebookVersionSnapshotV1[]>([]);
+  const [openFailure, setOpenFailure] = useState<NotebookOpenFailure | null>(null);
+  const [rawRecoveryAvailable, setRawRecoveryAvailable] = useState(false);
+  const [openRetrySequence, setOpenRetrySequence] = useState(0);
   const documentRef = useRef<NotebookRichDocument | null>(null);
   const recordRef = useRef<NotebookStoredRecordV1 | null>(null);
   const dirtyRef = useRef(false);
+  const schemaUpgradePendingRef = useRef(false);
   const editSequenceRef = useRef(0);
   const savingRef = useRef<Promise<boolean> | null>(null);
   const mountedRef = useRef(true);
@@ -138,6 +175,7 @@ export function useNotebookLibrarySession({
   const activateRecord = useCallback((
     nextRecord: NotebookStoredRecordV1,
     dirty = false,
+    schemaUpgradePending = service.isSchemaUpgradePending(nextRecord.libraryId),
   ) => {
     if (!dirty) {
       service.forgetWarmRecord(nextRecord.libraryId);
@@ -145,11 +183,14 @@ export function useNotebookLibrarySession({
     recordRef.current = nextRecord;
     documentRef.current = nextRecord.document;
     dirtyRef.current = dirty;
+    schemaUpgradePendingRef.current = schemaUpgradePending;
     editSequenceRef.current += 1;
     setRecord(nextRecord);
     setDocument(nextRecord.document);
     setSaveError(null);
     setSaveStatus(dirty ? 'unsaved' : 'saved');
+    setOpenFailure(null);
+    setRawRecoveryAvailable(false);
     updateSurfaceReference(nextRecord);
   }, [service, updateSurfaceReference]);
 
@@ -214,7 +255,11 @@ export function useNotebookLibrarySession({
     }
     const currentRecord = recordRef.current;
     const currentDocument = documentRef.current;
-    if (!currentRecord || !currentDocument || !dirtyRef.current) {
+    if (
+      !currentRecord
+      || !currentDocument
+      || (!dirtyRef.current && !schemaUpgradePendingRef.current)
+    ) {
       return true;
     }
     const startedAtSequence = editSequenceRef.current;
@@ -237,6 +282,7 @@ export function useNotebookLibrarySession({
       updateSurfaceReference(stored);
       const unchanged = editSequenceRef.current === startedAtSequence;
       dirtyRef.current = !unchanged;
+      schemaUpgradePendingRef.current = false;
       if (mountedRef.current) {
         setSaveStatus(unchanged ? 'saved' : 'unsaved');
       }
@@ -252,7 +298,7 @@ export function useNotebookLibrarySession({
       }
       return true;
     }).catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Notebook could not be saved.';
+      const message = operationErrorMessage(error);
       dirtyRef.current = true;
       if (mountedRef.current) {
         setSaveStatus('failed');
@@ -308,7 +354,7 @@ export function useNotebookLibrarySession({
       return true;
     } catch (error) {
       setSaveStatus('failed');
-      setSaveError(error instanceof Error ? error.message : 'Notebook could not be created.');
+      setSaveError(operationErrorMessage(error));
       return false;
     }
   }, [activateRecord, createRecord, refreshCatalog, saveNow]);
@@ -329,6 +375,21 @@ export function useNotebookLibrarySession({
       fileName: `${currentRecord.document.title.trim() || 'Untitled Notebook'}.cwiznb`,
     };
   }, [service.package]);
+
+  const exportRawRecovery = useCallback(async () => {
+    const reference = notebookLibrarySurfaceStateFromSlot(initialSurfaceStateRef.current);
+    if (!reference) {
+      throw new Error('No original Notebook record is available for raw recovery.');
+    }
+    const bytes = await service.library.loadRawRecovery(reference.libraryId);
+    if (!bytes) {
+      throw new Error('The original Notebook record is not readable.');
+    }
+    return {
+      bytes,
+      fileName: `Raw recovery - ${reference.title.trim() || reference.libraryId}.json`,
+    };
+  }, [service.library]);
 
   const snapshotCurrentRecord = useCallback(() => {
     if (!recordRef.current || !documentRef.current) return null;
@@ -528,10 +589,13 @@ export function useNotebookLibrarySession({
     documentRef.current = null;
     recordRef.current = null;
     dirtyRef.current = false;
+    schemaUpgradePendingRef.current = false;
     setDocument(null);
     setRecord(null);
     setSaveError(null);
     setSaveStatus('saving');
+    setOpenFailure(null);
+    setRawRecoveryAvailable(false);
     const initialSurfaceState = initialSurfaceStateRef.current;
     let cancelled = false;
     void (async () => {
@@ -560,8 +624,15 @@ export function useNotebookLibrarySession({
         }
       } catch (error) {
         if (!cancelled) {
+          const failure = classifyOpenFailure(error);
           setSaveStatus('failed');
-          setSaveError(error instanceof Error ? error.message : 'Notebook could not be opened.');
+          setSaveError(failure.message);
+          setOpenFailure(failure);
+          const reference = notebookLibrarySurfaceStateFromSlot(initialSurfaceState);
+          if (reference) {
+            const raw = await service.library.loadRawRecovery(reference.libraryId).catch(() => null);
+            if (!cancelled) setRawRecoveryAvailable(raw !== null);
+          }
         }
       }
     })();
@@ -578,7 +649,15 @@ export function useNotebookLibrarySession({
         void saveNow();
       }
     };
-  }, [activateRecord, instanceId, refreshCatalog, saveNow, saveSnapshot, service]);
+  }, [
+    activateRecord,
+    instanceId,
+    openRetrySequence,
+    refreshCatalog,
+    saveNow,
+    saveSnapshot,
+    service,
+  ]);
 
   useEffect(() => {
     if (!document || !dirtyRef.current || saveStatus === 'failed') {
@@ -607,6 +686,7 @@ export function useNotebookLibrarySession({
     duplicateRecord,
     exportPortable,
     exportPortableRecord,
+    exportRawRecovery,
     instanceId,
     importPortable,
     library,
@@ -614,8 +694,10 @@ export function useNotebookLibrarySession({
     moveLibraryRecords,
     newRecord,
     openRecord,
+    openFailure,
     packageAvailable: service.package !== null,
     record,
+    rawRecoveryAvailable,
     refreshCatalog,
     renameRecord,
     restoreTrashRecords,
@@ -624,6 +706,7 @@ export function useNotebookLibrarySession({
     saveError,
     saveNow,
     saveStatus,
+    retryOpen: () => setOpenRetrySequence((current) => current + 1),
     snapshotCurrentRecord,
     trash,
     versions,

@@ -6,6 +6,8 @@ pub const STORED_RECORD_VERSION: u8 = 1;
 pub const ASSET_RECORD_VERSION: u8 = 1;
 pub const PACKAGE_MANIFEST_VERSION: u8 = 1;
 pub const VERSION_SNAPSHOT_VERSION: u8 = 1;
+pub const CURRENT_DOCUMENT_SCHEMA: u64 = 11;
+pub const MINIMUM_DURABLE_DOCUMENT_SCHEMA: u64 = 6;
 pub const PACKAGE_KIND: &str = "calcwiz-notebook";
 pub const DOCUMENT_PATH: &str = "document.json";
 
@@ -18,6 +20,13 @@ pub struct NotebookStoredRecordV1 {
     pub saved_at: String,
     pub document: Value,
     pub asset_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct NotebookStoredRecordLoadResult {
+    pub record: NotebookStoredRecordV1,
+    pub source_document_version: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -777,7 +786,7 @@ fn validate_page_setup(value: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_header_footer(value: &Value) -> Result<(), String> {
+fn validate_legacy_header_footer(value: &Value) -> Result<(), String> {
     let settings = object(value)?;
     if settings.len() != 4
         || !settings.get("headerText").is_some_and(Value::is_string)
@@ -808,6 +817,153 @@ fn validate_header_footer(value: &Value) -> Result<(), String> {
     Ok(())
 }
 
+fn validate_running_matter_mark(value: &Value) -> Result<(), String> {
+    let mark = object(value)?;
+    match required_string(mark, "type")? {
+        "bold" | "italic" | "strike" | "underline" if mark.len() == 1 => Ok(()),
+        "highlight"
+            if mark
+                .keys()
+                .all(|key| matches!(key.as_str(), "type" | "color")) =>
+        {
+            optional_string(mark, "color")
+        }
+        "textStyle"
+            if mark
+                .keys()
+                .all(|key| matches!(key.as_str(), "type" | "color" | "fontSize")) =>
+        {
+            optional_string(mark, "color")?;
+            if let Some(font_size) = mark.get("fontSize") {
+                if !font_size
+                    .as_u64()
+                    .is_some_and(|value| (50..=249).contains(&value))
+                {
+                    return Err("Notebook running-matter font size is invalid.".into());
+                }
+            }
+            Ok(())
+        }
+        _ => Err("Notebook running-matter mark is invalid.".into()),
+    }
+}
+
+fn validate_running_matter_content(value: &Value) -> Result<(), String> {
+    let paragraphs = value
+        .as_array()
+        .filter(|paragraphs| (1..=16).contains(&paragraphs.len()))
+        .ok_or_else(|| "Notebook running-matter content is invalid.".to_string())?;
+    let mut characters = 0usize;
+    let mut inline_count = 0usize;
+    for paragraph in paragraphs {
+        let paragraph = object(paragraph)?;
+        if paragraph.get("type").and_then(Value::as_str) != Some("paragraph")
+            || paragraph
+                .keys()
+                .any(|key| !matches!(key.as_str(), "type" | "content"))
+        {
+            return Err("Notebook running-matter paragraph is invalid.".into());
+        }
+        let Some(content) = paragraph.get("content") else {
+            continue;
+        };
+        for inline in content
+            .as_array()
+            .ok_or_else(|| "Notebook running-matter inline content is invalid.".to_string())?
+        {
+            inline_count += 1;
+            let inline = object(inline)?;
+            if inline
+                .keys()
+                .any(|key| !matches!(key.as_str(), "type" | "text" | "marks"))
+            {
+                return Err("Notebook running-matter inline node is invalid.".into());
+            }
+            if let Some(marks) = inline.get("marks") {
+                for mark in marks
+                    .as_array()
+                    .ok_or_else(|| "Notebook running-matter marks are invalid.".to_string())?
+                {
+                    validate_running_matter_mark(mark)?;
+                }
+            }
+            match required_string(inline, "type")? {
+                "pageNumber" if !inline.contains_key("text") => {}
+                "text" => {
+                    let text = inline
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .ok_or_else(|| "Notebook running-matter text is invalid.".to_string())?;
+                    characters += text.encode_utf16().count();
+                }
+                _ => return Err("Notebook running-matter inline node is invalid.".into()),
+            }
+        }
+    }
+    if characters > 4096 || inline_count > 256 {
+        return Err("Notebook running matter exceeds its safety limit.".into());
+    }
+    Ok(())
+}
+
+fn validate_running_matter_regions(value: &Value) -> Result<(), String> {
+    let regions = object(value)?;
+    if regions.len() != 3
+        || regions
+            .keys()
+            .any(|key| !matches!(key.as_str(), "left" | "center" | "right"))
+    {
+        return Err("Notebook running-matter regions are invalid.".into());
+    }
+    for region in ["left", "center", "right"] {
+        validate_running_matter_content(
+            regions
+                .get(region)
+                .ok_or_else(|| "Notebook running-matter region is missing.".to_string())?,
+        )?;
+    }
+    Ok(())
+}
+
+fn validate_header_footer(value: &Value) -> Result<(), String> {
+    let settings = object(value)?;
+    if settings.len() != 6
+        || settings.keys().any(|key| {
+            !matches!(
+                key.as_str(),
+                "defaultHeader"
+                    | "defaultFooter"
+                    | "firstPageHeader"
+                    | "firstPageFooter"
+                    | "differentFirstPage"
+                    | "pageNumberStart"
+            )
+        })
+        || !settings
+            .get("differentFirstPage")
+            .is_some_and(Value::is_boolean)
+        || !settings
+            .get("pageNumberStart")
+            .and_then(Value::as_u64)
+            .is_some_and(|value| (1..=9999).contains(&value))
+    {
+        return Err("Notebook header and footer settings are invalid.".into());
+    }
+    for field in [
+        "defaultHeader",
+        "defaultFooter",
+        "firstPageHeader",
+        "firstPageFooter",
+    ] {
+        validate_running_matter_regions(
+            settings
+                .get(field)
+                .ok_or_else(|| "Notebook running matter is missing.".to_string())?,
+        )?;
+    }
+    Ok(())
+}
+
 fn validate_notebook_document_version(
     document: &Value,
     version: u64,
@@ -815,6 +971,7 @@ fn validate_notebook_document_version(
     allow_videos: bool,
     allow_page_layout: bool,
     allow_direct_media: bool,
+    current_running_matter: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
     if document.get("version").and_then(Value::as_u64) != Some(version) {
@@ -885,17 +1042,28 @@ fn validate_notebook_document_version(
                 .get("pageSetup")
                 .ok_or_else(|| "Notebook page setup is missing.".to_string())?,
         )?;
-        validate_header_footer(
-            document
-                .get("headerFooter")
-                .ok_or_else(|| "Notebook header and footer settings are missing.".to_string())?,
-        )?;
+        let header_footer = document
+            .get("headerFooter")
+            .ok_or_else(|| "Notebook header and footer settings are missing.".to_string())?;
+        if current_running_matter {
+            validate_header_footer(header_footer)?;
+        } else {
+            validate_legacy_header_footer(header_footer)?;
+        }
     }
     Ok(())
 }
 
 pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
-    validate_notebook_document_version(document, 10, true, true, true, true)
+    validate_notebook_document_version(
+        document,
+        CURRENT_DOCUMENT_SCHEMA,
+        true,
+        true,
+        true,
+        true,
+        true,
+    )
 }
 
 fn add_default_page_layout(document: &mut Value) {
@@ -912,32 +1080,166 @@ fn add_default_page_layout(document: &mut Value) {
     });
 }
 
+fn empty_running_matter_regions() -> Value {
+    json!({
+        "left": [{ "type": "paragraph" }],
+        "center": [{ "type": "paragraph" }],
+        "right": [{ "type": "paragraph" }]
+    })
+}
+
+fn running_matter_text(text: &str) -> Value {
+    if text.is_empty() {
+        json!([{ "type": "paragraph" }])
+    } else {
+        json!([{ "type": "paragraph", "content": [{ "type": "text", "text": text }] }])
+    }
+}
+
+fn migrate_legacy_running_matter(document: &mut Value) -> Result<(), String> {
+    let legacy = object(
+        document
+            .get("headerFooter")
+            .ok_or_else(|| "Notebook header and footer settings are missing.".to_string())?,
+    )?;
+    let header_text = legacy
+        .get("headerText")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Notebook legacy header is invalid.".to_string())?;
+    let footer_text = legacy
+        .get("footerText")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Notebook legacy footer is invalid.".to_string())?;
+    let different_first_page = legacy
+        .get("differentFirstPage")
+        .and_then(Value::as_bool)
+        .ok_or_else(|| "Notebook legacy first-page setting is invalid.".to_string())?;
+    let numbering = object(
+        legacy
+            .get("pageNumbering")
+            .ok_or_else(|| "Notebook legacy page numbering is missing.".to_string())?,
+    )?;
+    let numbering_enabled = numbering
+        .get("enabled")
+        .and_then(Value::as_bool)
+        .ok_or_else(|| "Notebook legacy page numbering is invalid.".to_string())?;
+    let numbering_position = numbering
+        .get("position")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Notebook legacy page numbering position is invalid.".to_string())?;
+    let page_number_start = numbering
+        .get("startAt")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| "Notebook legacy page-number start is invalid.".to_string())?;
+
+    let mut default_header = empty_running_matter_regions();
+    let mut default_footer = empty_running_matter_regions();
+    default_header["left"] = running_matter_text(header_text);
+    default_footer["left"] = running_matter_text(footer_text);
+    if numbering_enabled {
+        let region = default_footer
+            .get_mut(numbering_position)
+            .and_then(Value::as_array_mut)
+            .and_then(|paragraphs| paragraphs.first_mut())
+            .and_then(Value::as_object_mut)
+            .ok_or_else(|| "Notebook legacy page-number region is invalid.".to_string())?;
+        let content = region
+            .entry("content")
+            .or_insert_with(|| Value::Array(Vec::new()))
+            .as_array_mut()
+            .ok_or_else(|| "Notebook legacy page-number content is invalid.".to_string())?;
+        if !content.is_empty() {
+            content.push(json!({ "type": "text", "text": " " }));
+        }
+        content.push(json!({ "type": "pageNumber" }));
+    }
+    document["headerFooter"] = json!({
+        "defaultHeader": default_header,
+        "defaultFooter": default_footer,
+        "firstPageHeader": empty_running_matter_regions(),
+        "firstPageFooter": empty_running_matter_regions(),
+        "differentFirstPage": different_first_page,
+        "pageNumberStart": page_number_start
+    });
+    Ok(())
+}
+
+pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String> {
+    match document.get("version").and_then(Value::as_u64) {
+        Some(11) => validate_notebook_document(document),
+        Some(10) => validate_notebook_document_version(document, 10, true, true, true, true, false),
+        Some(9) => validate_notebook_document_version(document, 9, true, true, true, false, false),
+        Some(8) => validate_notebook_document_version(document, 8, true, false, true, false, false),
+        Some(7) => {
+            validate_notebook_document_version(document, 7, true, false, false, false, false)
+        }
+        Some(6) => {
+            validate_notebook_document_version(document, 6, false, false, false, false, false)
+        }
+        Some(version) if version > CURRENT_DOCUMENT_SCHEMA => {
+            Err("NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.".into())
+        }
+        Some(version) if version < MINIMUM_DURABLE_DOCUMENT_SCHEMA => {
+            Err("NOTEBOOK_SCHEMA_PRE_V6: Durable Notebook compatibility begins at Schema 6.".into())
+        }
+        _ => Err("NOTEBOOK_RECORD_INVALID: Notebook document schema is missing or invalid.".into()),
+    }
+}
+
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(10) => validate_notebook_document(&document)?,
+        Some(11) => validate_notebook_document(&document)?,
+        Some(10) => {
+            validate_notebook_document_version(&document, 10, true, true, true, true, false)?;
+            migrate_legacy_running_matter(&mut document)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
+            validate_notebook_document(&document)?;
+        }
         Some(9) => {
-            validate_notebook_document_version(&document, 9, true, true, true, false)?;
+            validate_notebook_document_version(&document, 9, true, true, true, false, false)?;
             document["version"] = Value::from(10);
+            migrate_legacy_running_matter(&mut document)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(8) => {
-            validate_notebook_document_version(&document, 8, true, false, true, false)?;
+            validate_notebook_document_version(&document, 8, true, false, true, false, false)?;
             document["version"] = Value::from(10);
+            migrate_legacy_running_matter(&mut document)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(7) => {
-            validate_notebook_document_version(&document, 7, true, false, false, false)?;
+            validate_notebook_document_version(&document, 7, true, false, false, false, false)?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
+            migrate_legacy_running_matter(&mut document)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
         Some(6) => {
-            validate_notebook_document_version(&document, 6, false, false, false, false)?;
+            validate_notebook_document_version(&document, 6, false, false, false, false, false)?;
             document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
+            migrate_legacy_running_matter(&mut document)?;
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
-        _ => return Err("Notebook document version is unsupported.".into()),
+        Some(version) if version > CURRENT_DOCUMENT_SCHEMA => {
+            return Err(
+                "NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.".into(),
+            )
+        }
+        Some(version) if version < MINIMUM_DURABLE_DOCUMENT_SCHEMA => {
+            return Err(
+                "NOTEBOOK_SCHEMA_PRE_V6: Durable Notebook compatibility begins at Schema 6.".into(),
+            )
+        }
+        _ => {
+            return Err(
+                "NOTEBOOK_RECORD_INVALID: Notebook document schema is missing or invalid.".into(),
+            )
+        }
     }
     Ok(document)
 }
@@ -1024,8 +1326,7 @@ pub fn collect_notebook_asset_ids(document: &Value) -> HashSet<String> {
     asset_ids
 }
 
-pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result<(), String> {
-    validate_stored_record(&snapshot.record)?;
+fn validate_version_snapshot_envelope(snapshot: &NotebookVersionSnapshotV1) -> Result<(), String> {
     if snapshot.version != VERSION_SNAPSHOT_VERSION
         || !snapshot.snapshot_id.starts_with("snapshot.")
         || snapshot.snapshot_id.len() > 189
@@ -1039,7 +1340,7 @@ pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result
         || snapshot.created_at.is_empty()
         || !matches!(
             snapshot.reason.as_str(),
-            "initial" | "periodic" | "before-restore" | "before-trash"
+            "initial" | "periodic" | "before-restore" | "before-trash" | "before-schema-upgrade"
         )
         || snapshot.record.library_id != snapshot.library_id
         || snapshot.record.revision != snapshot.revision
@@ -1047,6 +1348,18 @@ pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result
         return Err("Notebook version snapshot is invalid.".into());
     }
     Ok(())
+}
+
+pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result<(), String> {
+    validate_stored_record(&snapshot.record)?;
+    validate_version_snapshot_envelope(snapshot)
+}
+
+pub fn validate_durable_version_snapshot(
+    snapshot: &NotebookVersionSnapshotV1,
+) -> Result<(), String> {
+    validate_durable_stored_record(&snapshot.record)?;
+    validate_version_snapshot_envelope(snapshot)
 }
 
 pub fn validate_asset_metadata(metadata: &NotebookAssetMetadataV1) -> Result<(), String> {
@@ -1070,7 +1383,9 @@ pub fn validate_asset_metadata(metadata: &NotebookAssetMetadataV1) -> Result<(),
     Ok(())
 }
 
-pub fn validate_stored_record(record: &NotebookStoredRecordV1) -> Result<(), String> {
+fn validate_stored_record_envelope_and_assets(
+    record: &NotebookStoredRecordV1,
+) -> Result<(), String> {
     if record.version != STORED_RECORD_VERSION
         || !is_library_id(&record.library_id)
         || record.revision == 0
@@ -1078,7 +1393,6 @@ pub fn validate_stored_record(record: &NotebookStoredRecordV1) -> Result<(), Str
     {
         return Err("Notebook stored-record envelope is invalid.".into());
     }
-    validate_notebook_document(&record.document)?;
     let mut assets = HashSet::new();
     for asset_id in &record.asset_ids {
         if !is_asset_id(asset_id) || !assets.insert(asset_id) {
@@ -1092,6 +1406,16 @@ pub fn validate_stored_record(record: &NotebookStoredRecordV1) -> Result<(), Str
         return Err("Notebook stored record is missing a referenced asset.".into());
     }
     Ok(())
+}
+
+pub fn validate_stored_record(record: &NotebookStoredRecordV1) -> Result<(), String> {
+    validate_stored_record_envelope_and_assets(record)?;
+    validate_notebook_document(&record.document)
+}
+
+pub fn validate_durable_stored_record(record: &NotebookStoredRecordV1) -> Result<(), String> {
+    validate_stored_record_envelope_and_assets(record)?;
+    validate_durable_notebook_document(&record.document)
 }
 
 fn count_words(value: &str) -> u64 {

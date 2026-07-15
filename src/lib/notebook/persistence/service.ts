@@ -2,6 +2,7 @@ import {
   cloneNotebookStoredRecordV1,
   type NotebookStoredRecordV1,
 } from './contracts';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from '../document/types';
 import { createIndexedDbNotebookPorts } from './indexed-db';
 import {
   createInMemoryNotebookAssetPort,
@@ -59,6 +60,7 @@ export type NotebookLibraryService = {
   ): Promise<NotebookStoredRecordV1>;
   rememberWarmRecord(record: NotebookStoredRecordV1, dirty?: boolean): void;
   isWarmRecordDirty(libraryId: string): boolean;
+  isSchemaUpgradePending(libraryId: string): boolean;
   forgetWarmRecord(libraryId?: string): void;
 };
 
@@ -70,7 +72,12 @@ export function createNotebookLibraryService(options: {
   const asset = options.asset ?? createInMemoryNotebookAssetPort();
   const library = options.library ?? createInMemoryNotebookLibraryPort();
   const packagePort = options.package ?? null;
-  let warmRecord: { dirty: boolean; record: NotebookStoredRecordV1 } | null = null;
+  let warmRecord: {
+    dirty: boolean;
+    record: NotebookStoredRecordV1;
+    schemaUpgradePending: boolean;
+  } | null = null;
+  const schemaUpgradePending = new Map<string, boolean>();
   const pendingSaves = new Map<string, Promise<NotebookStoredRecordV1>>();
 
   return {
@@ -81,20 +88,30 @@ export function createNotebookLibraryService(options: {
       const pending = pendingSaves.get(libraryId);
       if (pending) {
         try {
+          schemaUpgradePending.set(libraryId, false);
           return cloneNotebookStoredRecordV1(await pending);
         } catch {
           // The warm in-memory revision remains the recovery source below.
         }
       }
       if (warmRecord?.record.libraryId === libraryId) {
+        schemaUpgradePending.set(libraryId, warmRecord.schemaUpgradePending);
         return cloneWarmRecord(warmRecord.record);
       }
-      return library.load(libraryId);
+      const loaded = await library.load(libraryId);
+      if (!loaded) return null;
+      schemaUpgradePending.set(
+        libraryId,
+        (library.loadedDocumentVersion(libraryId) ?? NOTEBOOK_RICH_DOCUMENT_VERSION)
+          < NOTEBOOK_RICH_DOCUMENT_VERSION,
+      );
+      return loaded;
     },
     saveRecord(record, saveOptions) {
       const operation = library.save(record, saveOptions);
       pendingSaves.set(record.libraryId, operation);
       void operation.then(() => {
+        schemaUpgradePending.set(record.libraryId, false);
         if (warmRecord?.record.libraryId === record.libraryId) {
           warmRecord = null;
         }
@@ -111,11 +128,18 @@ export function createNotebookLibraryService(options: {
         return;
       }
       warmRecord = fitsConservativeWarmBudget(record, NOTEBOOK_WARM_RECORD_MAX_BYTES)
-        ? { dirty, record: cloneWarmRecord(record) }
+        ? {
+            dirty,
+            record: cloneWarmRecord(record),
+            schemaUpgradePending: schemaUpgradePending.get(record.libraryId) ?? false,
+          }
         : null;
     },
     isWarmRecordDirty(libraryId) {
       return warmRecord?.record.libraryId === libraryId && warmRecord.dirty;
+    },
+    isSchemaUpgradePending(libraryId) {
+      return schemaUpgradePending.get(libraryId) ?? false;
     },
     forgetWarmRecord(libraryId) {
       if (!libraryId || warmRecord?.record.libraryId === libraryId) {

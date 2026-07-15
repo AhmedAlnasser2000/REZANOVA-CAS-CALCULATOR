@@ -31,6 +31,23 @@ function createRecord(libraryId: string, text = '') {
 }
 
 describe('Notebook library hydration service', () => {
+  it('tracks the source schema until a current-schema save succeeds', async () => {
+    const source = createRecord('library.schema-upgrade', 'Legacy');
+    const base = createInMemoryNotebookLibraryPort([source]);
+    const library: NotebookLibraryPort = {
+      ...base,
+      loadedDocumentVersion(libraryId) {
+        return libraryId === source.libraryId ? 10 : base.loadedDocumentVersion(libraryId);
+      },
+    };
+    const service = createNotebookLibraryService({ library });
+
+    expect((await service.loadRecord(source.libraryId))?.revision).toBe(1);
+    expect(service.isSchemaUpgradePending(source.libraryId)).toBe(true);
+    await service.saveRecord({ ...source, revision: 2 }, { expectedRevision: 1 });
+    expect(service.isSchemaUpgradePending(source.libraryId)).toBe(false);
+  });
+
   it('keeps at most one small asset-free record warm', async () => {
     const first = createRecord('library.warm.1', 'First');
     const second = createRecord('library.warm.2', 'Second');

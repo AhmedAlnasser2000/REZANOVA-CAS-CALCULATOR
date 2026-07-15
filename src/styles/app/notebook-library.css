@@ -340,6 +340,60 @@
   color: var(--page-muted);
 }
 
+.notebook-library-loading.is-failed {
+  padding: 24px;
+}
+
+.notebook-open-recovery {
+  display: grid;
+  width: min(620px, 100%);
+  gap: 16px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 8px;
+  padding: 20px;
+  background: rgba(8, 18, 19, 0.78);
+  color: var(--page-ink);
+}
+
+.notebook-open-recovery p {
+  margin: 5px 0 0;
+  color: var(--page-muted);
+}
+
+.notebook-open-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notebook-open-recovery button {
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 7px 10px;
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
+.notebook-open-recovery-library {
+  display: grid;
+  max-height: 260px;
+  gap: 7px;
+  overflow: auto;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 12px;
+}
+
+.notebook-open-recovery-library > button {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+}
+
+.notebook-open-recovery-library small {
+  color: var(--page-muted);
+}
+
 @media (max-width: 760px) {
   .notebook-file-backstage {
     grid-template-columns: 112px minmax(0, 1fr);
@@ -380,6 +434,12 @@
   .notebook-file-notice,
   .notebook-file-inline-form,
   .notebook-library-context-menu {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+
+  .notebook-open-recovery {
     background: Canvas;
     color: CanvasText;
     border-color: CanvasText;

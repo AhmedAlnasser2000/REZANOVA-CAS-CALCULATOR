@@ -73,6 +73,60 @@ function renderLibrarySession(
 }
 
 describe('Notebook library session operations', () => {
+  it('saves an unchanged migrated record on explicit Save without rewriting it on open', async () => {
+    const source = record('library.schema-upgrade', 'Schema Upgrade');
+    const base = createInMemoryNotebookLibraryPort([source]);
+    let saves = 0;
+    const library: NotebookLibraryPort = {
+      ...base,
+      loadedDocumentVersion(libraryId) {
+        return libraryId === source.libraryId ? 10 : base.loadedDocumentVersion(libraryId);
+      },
+      async save(nextRecord, options) {
+        saves += 1;
+        return base.save(nextRecord, options);
+      },
+    };
+    const hook = renderLibrarySession(library, source);
+
+    await waitFor(() => expect(hook.result.current.record?.libraryId).toBe(source.libraryId));
+    expect(saves).toBe(0);
+    expect(hook.result.current.saveStatus).toBe('saved');
+
+    await act(async () => {
+      expect(await hook.result.current.saveNow()).toBe(true);
+    });
+    expect(saves).toBe(1);
+    expect((await library.load(source.libraryId))?.revision).toBe(2);
+    expect(hook.result.current.saveStatus).toBe('saved');
+  });
+
+  it('classifies string-based open failures, exposes raw recovery, and retries in place', async () => {
+    const source = record('library.retry', 'Retry Notebook');
+    const base = createInMemoryNotebookLibraryPort([source]);
+    let attempts = 0;
+    const library: NotebookLibraryPort = {
+      ...base,
+      async load(libraryId) {
+        attempts += 1;
+        if (attempts === 1) {
+          throw 'NOTEBOOK_SCHEMA_NEWER: This Notebook requires a newer Calcwiz version.';
+        }
+        return base.load(libraryId);
+      },
+    };
+    const hook = renderLibrarySession(library, source);
+
+    await waitFor(() => expect(hook.result.current.openFailure?.kind).toBe('newer-schema'));
+    await waitFor(() => expect(hook.result.current.rawRecoveryAvailable).toBe(true));
+    const recovery = await hook.result.current.exportRawRecovery();
+    expect(recovery.bytes.byteLength).toBeGreaterThan(0);
+    expect(recovery.fileName).toBe('Raw recovery - Retry Notebook.json');
+    act(() => hook.result.current.retryOpen());
+    await waitFor(() => expect(hook.result.current.record?.libraryId).toBe(source.libraryId));
+    expect(hook.result.current.openFailure).toBeNull();
+  });
+
   it('renames the active record and duplicates it with fresh document and library identities', async () => {
     const assetId = `sha256:${'a'.repeat(64)}`;
     const source = record('library.source', 'Source Notebook', [assetId]);
