@@ -38,17 +38,25 @@ function answerRowIndex(path: string) {
   return match ? Number(match[1]) : null;
 }
 
+function supplementIndex(path: string) {
+  const match = /^supplements\[([0-9]+)\]\.math$/u.exec(path);
+  return match ? Number(match[1]) : null;
+}
+
 export function matrixV2MathResolverFromEvidence(input: {
   routeId: MatrixMathJsonRouteId;
   evidence: LinearAlgebraCanonicalEvidence;
 }): CanonicalResultV2MathResolver {
   return (canonicalLatex, path) => {
     const rowIndex = answerRowIndex(path);
+    const exactSupplementIndex = supplementIndex(path);
     const candidate = path === 'primary.value'
       ? input.evidence.primary
-      : rowIndex === null
-        ? undefined
-        : input.evidence.answerRows?.[rowIndex];
+      : rowIndex !== null
+        ? input.evidence.answerRows?.[rowIndex]
+        : exactSupplementIndex !== null
+          ? input.evidence.supplements?.[exactSupplementIndex]
+          : undefined;
     if (!candidate) {
       throw new Error(`Matrix producer is missing aligned canonical evidence at ${path}.`);
     }

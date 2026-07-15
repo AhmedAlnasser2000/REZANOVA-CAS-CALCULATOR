@@ -186,7 +186,11 @@ function evaluateUnaryMatrix(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
   input: MatrixExpressionEvaluationInput,
 ): MatrixExpressionEvaluation {
-  if (expression.operator !== 'transpose' && expression.operator !== 'inverse') {
+  if (
+    expression.operator !== 'transpose'
+    && expression.operator !== 'adjoint'
+    && expression.operator !== 'inverse'
+  ) {
     return { ok: false, message: 'This Matrix editor expression does not produce a matrix.' };
   }
 
@@ -195,7 +199,7 @@ function evaluateUnaryMatrix(
   const displayLatex = formatLinearAlgebraEditorExpression(expression);
   const exactValue = exactForOperand(value.operand);
 
-  if (expression.operator === 'transpose') {
+  if (expression.operator === 'transpose' || expression.operator === 'adjoint') {
     const exactResult = exactValue ? exactTransposeMatrix(exactValue) : null;
     if (exactResult) {
       return { ok: true, operand: operandFromExact(exactResult, displayLatex) };

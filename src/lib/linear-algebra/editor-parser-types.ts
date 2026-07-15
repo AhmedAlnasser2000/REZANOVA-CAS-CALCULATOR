@@ -43,6 +43,7 @@ export type LinearAlgebraUnaryOperator =
   | 'eigen'
   | 'diagonalization'
   | 'transpose'
+  | 'adjoint'
   | 'inverse'
   | 'norm'
   | 'projectionOntoU'

@@ -171,6 +171,25 @@ const scalarVectorRequest: RunVectorModeRequest = {
   complexExactForm: 'rectangular',
 };
 
+const scalarMatrixRequest: RunMatrixModeRequest = {
+  operation: 'adjointA',
+  operandEncoding: 'scalar-v1',
+  matrixA: {
+    encoding: 'scalar-v1',
+    source: [[complexScalar('1'), complexScalar('i')]],
+    resolved: [[complexScalar('1'), complexScalar('i')]],
+  },
+  matrixB: {
+    encoding: 'scalar-v1',
+    source: [[complexScalar('1')]],
+    resolved: [[complexScalar('1')]],
+  },
+  domain: 'complex',
+  substitutionMode: 'symbolic',
+  substitutionSnapshot: [],
+  complexExactForm: 'rectangular',
+};
+
 const runtimeContext = (shouldCancel: () => boolean) => ({
   registryId: 'test.linear-algebra.cancel',
   checkpoint: () => undefined,
@@ -255,6 +274,28 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'vector-worker-runtime',
+      terminalStatus: 'completed',
+    });
+  });
+
+  it('carries scalar-v1 Complex Matrix requests through the unchanged worker shell', async () => {
+    expect(buildMatrixOoeSnapshot(scalarMatrixRequest).request).toMatchObject({
+      operandEncoding: 'scalar-v1',
+      domain: 'complex',
+      rowsA: 1,
+      rowsB: 1,
+      substitutionSnapshot: [],
+    });
+    const result = await runMatrixModeWithOoePilot(scalarMatrixRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalMatrixMode),
+    });
+    expect(result.payload).toEqual(runCanonicalMatrixMode(scalarMatrixRequest));
+    if (result.payload.kind === 'prompt') throw new Error('Expected completed Matrix payload.');
+    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'matrix-worker-runtime',
       terminalStatus: 'completed',
     });
   });

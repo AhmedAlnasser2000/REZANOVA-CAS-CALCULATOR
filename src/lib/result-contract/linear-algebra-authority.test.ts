@@ -4,7 +4,7 @@ import { runMatrixMode, type RunMatrixModeRequest } from '../modes/matrix';
 import { runVectorMode } from '../modes/vector';
 
 const MATRIX_OPERATIONS = [
-  'add', 'subtract', 'multiply', 'transposeA', 'transposeB', 'detA', 'detB',
+  'add', 'subtract', 'multiply', 'transposeA', 'transposeB', 'adjointA', 'adjointB', 'detA', 'detB',
   'inverseA', 'inverseB', 'rankA', 'rankB', 'rrefA', 'rrefB', 'nullSpaceA',
   'nullSpaceB', 'columnSpaceA', 'columnSpaceB', 'basisA', 'basisB',
   'coordinatesA', 'coordinatesB', 'changeBasis', 'luA', 'luB', 'pluA', 'pluB',
@@ -56,8 +56,8 @@ function vectorRequest(operation: VectorOperation): VectorRequest & { vectorB: n
 }
 
 describe('Linear Algebra canonical authority', () => {
-  it('keeps all 58 Matrix selectors on canonical result V2', () => {
-    expect(MATRIX_OPERATIONS).toHaveLength(58);
+  it('keeps all 60 Matrix selectors on canonical result V2', () => {
+    expect(MATRIX_OPERATIONS).toHaveLength(60);
     for (const operation of MATRIX_OPERATIONS) {
       const outcome = runMatrixMode(matrixRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');

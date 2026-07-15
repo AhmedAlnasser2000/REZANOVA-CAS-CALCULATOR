@@ -66,6 +66,17 @@ test('renders the real symbolic dot product and replays it from History', async 
   const firstCellWidth = await page.getByLabel('Vector u component 1')
     .evaluate((element) => element.getBoundingClientRect().width);
   expect(firstCellWidth).toBeGreaterThan(vectorCardWidth * 0.22);
+  await expect(page.getByLabel('Vector u component 1')).toHaveCSS('color', 'rgb(247, 251, 239)');
+
+  await page.getByLabel('Vector u length').fill('8');
+  const wideVectorCell = page.getByLabel('Vector u component 8');
+  await expect(wideVectorCell).toBeVisible();
+  expect(await wideVectorCell.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThanOrEqual(112);
+  await expect(wideVectorCell).toHaveCSS('color', 'rgb(247, 251, 239)');
+  expect(await wideVectorCell.locator('xpath=ancestor::div[contains(@class,"linear-algebra-vector-grid")]').evaluate(
+    (element) => element.scrollWidth > element.clientWidth,
+  )).toBe(true);
 
   await setVector(page, 'u', ['a', 'b']);
   await setVector(page, 'v', ['c', 'd']);

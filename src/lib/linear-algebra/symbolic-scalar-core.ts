@@ -18,6 +18,31 @@ const ce = new ComputeEngine();
 const MAX_SYMBOLIC_SCALAR_NODES = 1_500;
 const MAX_EAGER_SIMPLIFY_NODES = 120;
 
+function exactRationalLatex(value: { numerator: number; denominator: number }) {
+  return value.denominator === 1
+    ? `${value.numerator}`
+    : `\\frac{${value.numerator}}{${value.denominator}}`;
+}
+
+function exactComplexRectangularLatex(
+  value: NonNullable<LinearAlgebraScalarWireV1['exactComplexRational']>,
+) {
+  const realIsZero = value.re.numerator === 0;
+  const imaginaryIsZero = value.im.numerator === 0;
+  if (imaginaryIsZero) return exactRationalLatex(value.re);
+  const sign = value.im.numerator < 0 ? '-' : '+';
+  const magnitude = {
+    numerator: Math.abs(value.im.numerator),
+    denominator: value.im.denominator,
+  };
+  const imaginaryLatex = magnitude.numerator === magnitude.denominator
+    ? '\\imaginaryI'
+    : `${exactRationalLatex(magnitude)}\\imaginaryI`;
+  return realIsZero
+    ? `${sign === '-' ? '-' : ''}${imaginaryLatex}`
+    : `${exactRationalLatex(value.re)}${sign}${imaginaryLatex}`;
+}
+
 function nodeCount(value: unknown): number {
   if (Array.isArray(value)) {
     return 1 + value.slice(1).reduce((total, child) => total + nodeCount(child), 0);
@@ -56,7 +81,16 @@ export function symbolicScalarFromMathJson(
       error: 'This symbolic scalar exceeded the bounded Linear Algebra expression limit.',
     };
   }
-  return linearAlgebraScalarWireFromMathJson(normalized, domain);
+  const result = linearAlgebraScalarWireFromMathJson(normalized, domain);
+  return result.ok && result.value.exactComplexRational
+    ? {
+        ok: true,
+        value: {
+          ...result.value,
+          canonicalLatex: exactComplexRectangularLatex(result.value.exactComplexRational),
+        },
+      }
+    : result;
 }
 
 function requireScalar(
@@ -111,9 +145,25 @@ export function symbolicScalarConjugate(
   value: LinearAlgebraScalarWireV1,
   domain: LinearAlgebraScalarDomain,
 ) {
-  return domain === 'real'
-    ? value
-    : requireScalar(['Conjugate', value.mathJson], domain);
+  if (domain === 'real' || value.exactRational) return value;
+  if (value.exactComplexRational) {
+    const exactNode = (part: { numerator: number; denominator: number }) =>
+      part.denominator === 1
+        ? part.numerator
+        : ['Rational', part.numerator, part.denominator];
+    return requireScalar([
+      'Complex',
+      exactNode(value.exactComplexRational.re),
+      exactNode({
+        numerator: -value.exactComplexRational.im.numerator,
+        denominator: value.exactComplexRational.im.denominator,
+      }),
+    ], domain);
+  }
+  // Compute Engine serializes a formal scalar conjugate with the same star notation
+  // that its LaTeX parser reads as ConjugateTranspose. For a scalar those operations
+  // coincide, and using that standard head keeps the producer proof round-trippable.
+  return requireScalar(['ConjugateTranspose', value.mathJson], domain);
 }
 
 export function symbolicScalarSqrt(

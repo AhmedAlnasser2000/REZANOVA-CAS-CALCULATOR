@@ -65,6 +65,8 @@ function formatUnary(operator: LinearAlgebraUnaryOperator, value: LinearAlgebraE
       return callLatex('diag', formattedValue);
     case 'transpose':
       return `${suffixOperand(value)}^{\\mathsf{T}}`;
+    case 'adjoint':
+      return `${suffixOperand(value)}^{\\dagger}`;
     case 'inverse':
       return `${suffixOperand(value)}^{-1}`;
     case 'norm':

@@ -21,4 +21,5 @@
 
 - `LINEAR-ALGEBRA-SYMBOLIC-SCALAR-SUBSTRATE1`: recorded by this verified checkpoint commit under the user's standing approval for milestones 8 through 12.
 - `VECTOR-SYMBOLIC-EXPRESSIONS1`: recorded by this verified checkpoint commit under the same standing approval; includes the user-requested Matrix/Vector contrast and full-width pad correction.
+- `MATRIX-SYMBOLIC-ARITHMETIC1`: recorded by this verified checkpoint commit under the same standing approval; includes the user-requested light cell text and minimum-width overflow correction.
 - No push is authorized.

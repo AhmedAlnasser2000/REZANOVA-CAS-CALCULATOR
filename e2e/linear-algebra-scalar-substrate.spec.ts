@@ -57,6 +57,17 @@ test('shows source-preserving scalar cells, domain guidance, and stored-value pr
   const firstCellWidth = await page.getByLabel('Matrix A row 1 column 1')
     .evaluate((element) => element.getBoundingClientRect().width);
   expect(firstCellWidth).toBeGreaterThan(matrixCardWidth * 0.35);
+  await expect(page.getByLabel('Matrix A row 1 column 1')).toHaveCSS('color', 'rgb(247, 251, 239)');
+
+  await page.getByLabel('Matrix B columns').fill('7');
+  const wideMatrixCell = page.getByLabel('Matrix B row 1 column 7');
+  await expect(wideMatrixCell).toBeVisible();
+  expect(await wideMatrixCell.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeGreaterThanOrEqual(112);
+  await expect(wideMatrixCell).toHaveCSS('color', 'rgb(247, 251, 239)');
+  expect(await wideMatrixCell.locator('xpath=ancestor::div[contains(@class,"linear-algebra-matrix-grid")]').evaluate(
+    (element) => element.scrollWidth > element.clientWidth,
+  )).toBe(true);
 
   const cell = page.getByLabel('Matrix A row 1 column 1');
   await setScalarCell(cell, 'i');

@@ -436,6 +436,10 @@ function parseLinearSystemExpression(
 
 function parseSuffixUnary(input: string, options: LinearAlgebraEditorParseOptions): LinearAlgebraEditorExpression | null {
   const suffixes: Array<[string, LinearAlgebraUnaryOperator]> = [
+    ['^{\\dagger}', 'adjoint'],
+    ['^\\dagger', 'adjoint'],
+    ['^{*}', 'adjoint'],
+    ['^*', 'adjoint'],
     ['^{\\mathsf{T}}', 'transpose'],
     ['^{T}', 'transpose'],
     ['^T', 'transpose'],
@@ -556,6 +560,11 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     };
   }
 
+  const suffix = parseSuffixUnary(input, options);
+  if (suffix) {
+    return suffix;
+  }
+
   const times = splitTopLevel(input, ['\\times', '*']);
   if (times) {
     return {
@@ -582,11 +591,6 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     );
   }
 
-  const suffix = parseSuffixUnary(input, options);
-  if (suffix) {
-    return suffix;
-  }
-
   for (const [name, operator] of [
     ['det', 'determinant'],
     ['rank', 'rank'],
@@ -606,6 +610,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['nrank', 'numericalRank'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
+    ['adjoint', 'adjoint'],
     ['norm', 'norm'],
     ['proj_u', 'projectionOntoU'],
     ['proj_v', 'projectionOntoV'],

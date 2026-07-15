@@ -27,7 +27,7 @@
 
 ## Active Gate
 
-- milestone: `VECTOR-SYMBOLIC-EXPRESSIONS1`
+- milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
 - gate: backend
 - status: verified pass
 - prerequisite representation: bounded standard MathJSON scalar wires and a Vector-owned symbolic scalar core.
@@ -51,7 +51,16 @@
 
 ## Next Gate
 
-- milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
+- milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
 - gate: backend
 - status: not started
 - existing numeric Matrix execution and all OOE/History ownership remain the compatibility baseline.
+
+## Milestone 10 Result
+
+- Symbolic/complex Matrix add, subtract, multiply, ordinary transpose, adjoint, determinant, inverse, and literal integer powers execute through the existing Matrix worker/OOE/History shell at the approved 8x8, 4x4, and 3x3 ceilings.
+- Unknown nonzero determinants remain producer-proven V2 conditions; singular, dimension, exponent, and expression limits stop explicitly.
+- `adjoint(A)`, `A^\dagger`, and `A^*` map to the distinct adjoint operation while ordinary transpose remains unchanged.
+- Exact complex constants use proof-round-trippable rectangular canonical notation, and formal scalar conjugation uses the equivalent standard scalar conjugate-transpose head required by Compute Engine's star parser.
+- Matrix/Vector cell text is explicitly light on dark pads; cells keep at least 112px width and scroll inside the value card when dimensions grow.
+- Visual evidence: `.task_tmp/linear-algebra-symbolic-complex-program/milestone-10/complex-adjoint-and-readable-cells.png` plus the refreshed wide Matrix/Vector screenshots from Milestones 8 and 9.

@@ -1,4 +1,5 @@
 import type {
+  MatrixReplaySeed,
   MatrixRequest,
   MatrixResponse,
 } from '../../types/calculator';
@@ -60,6 +61,7 @@ import {
   type LinearAlgebraCanonicalEvidence,
   type LinearAlgebraCanonicalLeafEvidence,
 } from './canonical-evidence';
+import { runSymbolicMatrixOperation } from './symbolic-matrix';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -106,8 +108,13 @@ function exactMatrixReadback(req: MatrixRequest): LinearAlgebraCanonicalLeafEvid
     ) : null;
   }
 
-  if (req.operation === 'transposeA' || req.operation === 'transposeB') {
-    const exactMatrix = req.operation === 'transposeA' ? exactA : exactB;
+  if (
+    req.operation === 'transposeA'
+    || req.operation === 'transposeB'
+    || req.operation === 'adjointA'
+    || req.operation === 'adjointB'
+  ) {
+    const exactMatrix = req.operation.endsWith('A') ? exactA : exactB;
     if (!exactMatrix) {
       return null;
     }
@@ -115,7 +122,7 @@ function exactMatrixReadback(req: MatrixRequest): LinearAlgebraCanonicalLeafEvid
     return result ? canonicalLeafEvidence(
       exactMatrixToLatex(result),
       exactMatrixMathJson(result),
-      `matrix.${req.operation}.native-exact-transpose`,
+      `matrix.${req.operation}.native-exact-${req.operation.startsWith('adjoint') ? 'adjoint' : 'transpose'}`,
     ) : null;
   }
 
@@ -856,19 +863,26 @@ function runMatrixOperationInternal(req: MatrixRequest): MatrixResponse {
     return spectralPowerResponse;
   }
 
+  const numericOperation = req.operation === 'adjointA'
+    ? 'transposeA'
+    : req.operation === 'adjointB'
+      ? 'transposeB'
+      : req.operation;
   const numericRequest: NumericMatrixRequest = {
-    operation: req.operation as NumericMatrixRequest['operation'],
+    operation: numericOperation as NumericMatrixRequest['operation'],
     matrixA: req.matrixA,
     matrixB: req.matrixB,
   };
   return matrixCoreResultToResponse(req, runNumericMatrixOperation(numericRequest));
 }
 
-export function runMatrixOperationWithEvidence(req: MatrixRequest): {
+export function runMatrixOperationWithEvidence(req: MatrixReplaySeed): {
   response: MatrixResponse;
   evidence: LinearAlgebraCanonicalEvidence;
 } {
-  const response = runMatrixOperationInternal(req);
+  const response = req.operandEncoding === 'scalar-v1'
+    ? runSymbolicMatrixOperation(req)
+    : runMatrixOperationInternal(req);
   return {
     response,
     evidence: linearAlgebraCanonicalEvidenceForResponse(response),

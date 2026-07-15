@@ -146,6 +146,10 @@ export function matrixActionLabel(operation: MatrixOperation, leftName: string, 
       return `${leftName}ᵀ`;
     case 'transposeB':
       return `${rightName}ᵀ`;
+    case 'adjointA':
+      return `${leftName}†`;
+    case 'adjointB':
+      return `${rightName}†`;
     case 'detA':
       return `det(${leftName})`;
     case 'detB':
@@ -281,7 +285,12 @@ export function buildActiveScalarMatrixRuntimeRequest(
   leftId: string,
   rightId: string,
   context: ScalarRequestContext,
-): { inputLatex: string; request: ScalarMatrixRequestV1 } | { error: string } {
+): {
+  inputLatex: string;
+  request: ScalarMatrixRequestV1 & {
+    matrixB: NonNullable<ScalarMatrixRequestV1['matrixB']>;
+  };
+} | { error: string } {
   const activeValues = activeMatrixValuePair(values, leftId, rightId);
   const protectedNames = values.map((value) => value.name);
   const resolutionContext = {

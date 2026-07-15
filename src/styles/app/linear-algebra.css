@@ -117,6 +117,12 @@
   border: 1px solid var(--editor-border);
   border-radius: 0.45rem;
   background: var(--editor-surface);
+  color: #f7fbef;
+  --caret-color: var(--editor-border-focus);
+  --selection-color: #17201d;
+  --selection-background-color: rgba(215, 223, 171, 0.86);
+  --contains-highlight-color: #f7fbef;
+  --contains-highlight-background-color: rgba(125, 207, 255, 0.22);
 }
 
 .linear-algebra-cell-mathfield:focus-within {
@@ -359,7 +365,7 @@
 
 .linear-algebra-matrix-grid {
   display: grid;
-  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(64px, 1fr));
+  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(112px, 1fr));
   gap: 10px;
   min-width: 100%;
   width: 100%;
@@ -367,7 +373,7 @@
 
 .linear-algebra-vector-grid {
   display: grid;
-  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(54px, 1fr));
+  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(112px, 1fr));
   gap: 10px;
   min-width: 0;
   width: 100%;

@@ -10,7 +10,6 @@ import {
   type RunVectorModeRequest,
 } from '../../lib/modes/vector';
 import {
-  buildActiveMatrixRequest,
   buildMatrixSoftActions,
   buildVectorSoftActions,
 } from './linearAlgebraActiveOperands';
@@ -34,7 +33,6 @@ import {
   isScalarMatrixNamedValue,
   isScalarVectorNamedValue,
   matrixValueById,
-  matrixActionLabel,
   numericMatrixFromNamedValue,
   numericVectorFromNamedValue,
   parseLinearAlgebraScalarWire,
@@ -91,6 +89,7 @@ import {
   createCanonicalRuntimeError,
 } from '../../lib/result-contract';
 import { buildVectorActionRuntimeRequest } from './linearAlgebraVectorActionRequest';
+import { buildMatrixActionRuntimeRequest } from './linearAlgebraMatrixActionRequest';
 
 type CommitLinearAlgebraOutcome = (
   outcome: CanonicalRuntimeOutcome,
@@ -334,26 +333,17 @@ export function useLinearAlgebraRuntime({
   }
 
   function runMatrixAction(operation: MatrixOperation) {
-    const activeValues = activeMatrixValuePair(matrixValues, activeMatrixLeftId, activeMatrixRightId);
-    if (!numericMatrixFromNamedValue(activeValues.left) || !numericMatrixFromNamedValue(activeValues.right)) {
-      commitMatrixEditorError(
-        matrixActionLabel(operation, activeValues.left.name, activeValues.right.name),
-        'This Matrix action will be enabled by the symbolic Matrix milestone.',
-      );
+    const launched = buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
+    if ('error' in launched) {
+      commitMatrixEditorError(launched.inputLatex, launched.error);
       return;
     }
-    const launched = buildActiveMatrixRequest(operation, matrixValues, activeMatrixLeftId, activeMatrixRightId);
     runMatrixRequest(
       launched.request,
       launched.inputLatex,
       () => {
-        const active = matrixStateRef.current;
-        return buildActiveMatrixRequest(
-          operation,
-          active.matrixValues,
-          active.activeMatrixLeftId,
-          active.activeMatrixRightId,
-        ).request;
+        const rebuilt = buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
+        return 'error' in rebuilt ? launched.request : rebuilt.request;
       },
     );
   }
@@ -366,6 +356,12 @@ export function useLinearAlgebraRuntime({
       matrixA: active.matrixA,
       matrixB: active.matrixB,
       matrixValues: active.matrixValues,
+      activeMatrixLeftId: active.activeMatrixLeftId,
+      activeMatrixRightId: active.activeMatrixRightId,
+      domain: active.domain,
+      substitutionMode: active.substitutionMode,
+      storedVariables: active.storedVariables,
+      complexExactForm: active.complexExactForm,
     });
     if (!dispatched.ok) {
       commitMatrixEditorError(inputLatex, dispatched.message, dispatched.handoff);
@@ -491,6 +487,12 @@ export function useLinearAlgebraRuntime({
       matrixA: active.matrixA,
       matrixB: active.matrixB,
       matrixValues: active.matrixValues,
+      activeMatrixLeftId: active.activeMatrixLeftId,
+      activeMatrixRightId: active.activeMatrixRightId,
+      domain: active.domain,
+      substitutionMode: active.substitutionMode,
+      storedVariables: active.storedVariables,
+      complexExactForm: active.complexExactForm,
     });
     return dispatched.ok
       ? dispatched.request.editorExpressionLatex ?? null

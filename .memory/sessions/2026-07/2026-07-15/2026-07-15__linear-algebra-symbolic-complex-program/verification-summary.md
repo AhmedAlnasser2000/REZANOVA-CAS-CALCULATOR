@@ -61,3 +61,24 @@
 
 - Concurrent Notebook and Statistics source, staged files, dossiers, shared baseline proposals, and untracked `test-results/` remain excluded.
 - No push is authorized.
+
+## Milestone 10 Result
+
+- milestone: `MATRIX-SYMBOLIC-ARITHMETIC1`
+- gate: backend
+- status: verified pass
+- next milestone: `MATRIX-SYMBOLIC-SYSTEMS1`
+
+## Milestone 10 Evidence
+
+- Focused symbolic Matrix, scalar/Vector regression, editor, request, worker, History, and all-selector authority coverage passed 139/139 tests; the final exact-complex proof correction passed 19/19 symbolic Matrix/Vector tests.
+- Focused Matrix/Vector runtime and replay UI coverage passed 24/24 tests.
+- Result-contract coverage passed, including all 60 Matrix selectors on V2 and all 23 Vector selectors with only gradian angle V3; canonical V2 enforcement accepted all 20 frozen producer files.
+- Incremental TypeScript, OOE boundaries (8), compartment boundaries (36), file-size validation across 1,961 files, production Vite build, and diff hygiene passed.
+- Chromium passed the Matrix determinant and conditional inverse/History cases; the final adjoint delta passed separately after exact complex canonical notation was normalized. The existing Matrix/Vector contrast, wide-cell scrolling, and full-width tests also passed in the same browser gate.
+- The inspected full-page adjoint screenshot shows readable light cell text, legible Domain/Parameters and Rows/Cols controls, a full-width workspace, an expanded lower keypad, and an unclipped V2 answer card.
+
+## Milestone 10 Protected Worktree
+
+- Concurrent Statistics source, its visualization tests, and untracked `test-results/` remain excluded.
+- No push is authorized.

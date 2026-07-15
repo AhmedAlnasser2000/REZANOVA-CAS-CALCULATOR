@@ -4,7 +4,7 @@ import { findCustomMathJsonOperator } from '../result-contract/proven-answer-mat
 import { linearAlgebraScalarWireIntegrityError } from '../linear-algebra/scalar-wire';
 
 const matrixOperationSchema = z.enum([
-  'add', 'subtract', 'multiply', 'transposeA', 'transposeB', 'detA', 'detB',
+  'add', 'subtract', 'multiply', 'transposeA', 'transposeB', 'adjointA', 'adjointB', 'detA', 'detB',
   'inverseA', 'inverseB', 'rankA', 'rankB', 'rrefA', 'rrefB', 'nullSpaceA',
   'nullSpaceB', 'columnSpaceA', 'columnSpaceB', 'basisA', 'basisB',
   'coordinatesA', 'coordinatesB', 'changeBasis', 'luA', 'luB', 'pluA', 'pluB',

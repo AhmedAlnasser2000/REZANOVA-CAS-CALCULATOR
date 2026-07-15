@@ -29,41 +29,15 @@ import {
 import type {
   ResultProducerDraft,
   VersionedResultProducerDraft,
-  ExactScalarWire,
-  ComplexExactForm,
-  LinearAlgebraMatrixNamedValue,
-  LinearAlgebraScalarDomain,
-  LinearAlgebraSubstitutionMode,
+  MatrixRequest,
   MatrixOperation,
   MatrixSystemForm,
+  ScalarMatrixRequestV1,
 } from '../../types/calculator';
 
-export type RunMatrixModeRequest = {
-  operation: MatrixOperation;
-  matrixA: number[][];
-  matrixB: number[][];
-  approxDigits?: number;
-  systemRhs?: number[];
-  coordinateVector?: number[];
-  matrixPowerExponent?: number;
-  systemForm?: MatrixSystemForm;
-  exactMatrixA?: ExactScalarWire[][];
-  exactMatrixB?: ExactScalarWire[][];
-  exactSystemRhs?: ExactScalarWire[];
-  exactCoordinateVector?: ExactScalarWire[];
-  editorExpressionLatex?: string;
-  matrixOperandLatexA?: string;
-  matrixOperandLatexB?: string;
-  systemRhsLatex?: string;
-  coordinateVectorLatex?: string;
-  matrixPowerExponentLatex?: string;
-  matrixValues?: LinearAlgebraMatrixNamedValue[];
-  activeMatrixLeftId?: string;
-  activeMatrixRightId?: string;
-  domain?: LinearAlgebraScalarDomain;
-  substitutionMode?: LinearAlgebraSubstitutionMode;
-  complexExactForm?: ComplexExactForm;
-};
+export type RunMatrixModeRequest =
+  | (MatrixRequest & { matrixB: number[][] })
+  | (ScalarMatrixRequestV1 & { matrixB: NonNullable<ScalarMatrixRequestV1['matrixB']> });
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
   switch (operation) {
@@ -77,6 +51,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'Transpose A';
     case 'transposeB':
       return 'Transpose B';
+    case 'adjointA':
+      return 'Adjoint A';
+    case 'adjointB':
+      return 'Adjoint B';
     case 'detA':
       return 'det(A)';
     case 'detB':
@@ -211,58 +189,20 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
   outcome: ResultProducerDraft;
   evidence: LinearAlgebraCanonicalEvidence;
 } {
-  const {
-    operation,
-    matrixA,
-    matrixB,
-    systemRhs,
-    coordinateVector,
-    matrixPowerExponent,
-    systemForm,
-    exactMatrixA,
-    exactMatrixB,
-    exactSystemRhs,
-    exactCoordinateVector,
-    editorExpressionLatex,
-    matrixOperandLatexA,
-    matrixOperandLatexB,
-    systemRhsLatex,
-    coordinateVectorLatex,
-    matrixPowerExponentLatex,
-    approxDigits,
-  } = request;
-  if (operation === 'linearSystem') {
+  if (request.operation === 'linearSystem' && request.operandEncoding !== 'scalar-v1') {
     return runMatrixLinearSystemWithEvidence({
-      coefficients: matrixA,
-      constants: systemRhs ?? [],
-      form: systemForm ?? 'Ax=b',
-      exactCoefficients: exactMatrixA,
-      exactConstants: exactSystemRhs,
-      editorExpressionLatex,
-      coefficientMatrixLatex: matrixOperandLatexA,
-      rhsVectorLatex: systemRhsLatex,
+      coefficients: request.matrixA,
+      constants: request.systemRhs ?? [],
+      form: request.systemForm ?? 'Ax=b',
+      exactCoefficients: request.exactMatrixA,
+      exactConstants: request.exactSystemRhs,
+      editorExpressionLatex: request.editorExpressionLatex,
+      coefficientMatrixLatex: request.matrixOperandLatexA,
+      rhsVectorLatex: request.systemRhsLatex,
     });
   }
 
-  const execution = runMatrixOperationWithEvidence({
-    operation,
-    matrixA,
-    matrixB,
-    systemRhs,
-    coordinateVector,
-    matrixPowerExponent,
-    exactSystemRhs,
-    exactMatrixA,
-    exactMatrixB,
-    exactCoordinateVector,
-    editorExpressionLatex,
-    matrixOperandLatexA,
-    matrixOperandLatexB,
-    systemRhsLatex,
-    coordinateVectorLatex,
-    matrixPowerExponentLatex,
-    approxDigits,
-  });
+  const execution = runMatrixOperationWithEvidence(request);
   const { response, evidence } = execution;
   const actionEvidence = evidence.runtimeActions ?? [];
   if (response.handoffEquationLatex) {
@@ -280,7 +220,10 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
         error: response.error,
         warnings: response.warnings,
         exactLatex: response.resultLatex,
-        approxText: matrixUserFacingApproxText(evidence, approxDigits),
+        approxText: request.operandEncoding === 'scalar-v1'
+          ? response.approxText ?? matrixUserFacingApproxText(evidence, request.approxDigits)
+          : matrixUserFacingApproxText(evidence, request.approxDigits),
+        exactSupplementLatex: response.exactSupplementLatex,
         detailSections: response.detailSections,
         sourceMode: 'matrix',
       } };
@@ -291,7 +234,10 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
       title: matrixResultTitle(request),
       exactLatex: response.resultLatex,
       answerRows: response.answerRows,
-      approxText: matrixUserFacingApproxText(evidence, approxDigits),
+      approxText: request.operandEncoding === 'scalar-v1'
+        ? response.approxText ?? matrixUserFacingApproxText(evidence, request.approxDigits)
+        : matrixUserFacingApproxText(evidence, request.approxDigits),
+      exactSupplementLatex: response.exactSupplementLatex,
       detailSections: response.detailSections,
       warnings: response.warnings,
       sourceMode: 'matrix',
@@ -323,12 +269,19 @@ export function runMatrixMode(request: RunMatrixModeRequest): VersionedResultPro
 }
 
 export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
+  const matrixA = request.operandEncoding === 'scalar-v1'
+    ? request.matrixA.resolved
+    : request.matrixA;
+  const matrixB = request.operandEncoding === 'scalar-v1'
+    ? request.matrixB.resolved
+    : request.matrixB;
   return {
     kind: 'matrix' as const,
     request: {
       operation: request.operation,
-      rowsA: request.matrixA.length,
-      rowsB: request.matrixB.length,
+      rowsA: matrixA.length,
+      rowsB: matrixB.length,
+      operandEncoding: request.operandEncoding,
       matrixA: request.matrixA,
       matrixB: request.matrixB,
       approxDigits: request.approxDigits,
@@ -336,10 +289,10 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       coordinateVector: request.coordinateVector,
       matrixPowerExponent: request.matrixPowerExponent,
       systemForm: request.systemForm,
-      exactMatrixA: request.exactMatrixA,
-      exactMatrixB: request.exactMatrixB,
-      exactSystemRhs: request.exactSystemRhs,
-      exactCoordinateVector: request.exactCoordinateVector,
+      exactMatrixA: request.operandEncoding === 'scalar-v1' ? undefined : request.exactMatrixA,
+      exactMatrixB: request.operandEncoding === 'scalar-v1' ? undefined : request.exactMatrixB,
+      exactSystemRhs: request.operandEncoding === 'scalar-v1' ? undefined : request.exactSystemRhs,
+      exactCoordinateVector: request.operandEncoding === 'scalar-v1' ? undefined : request.exactCoordinateVector,
       editorExpressionLatex: request.editorExpressionLatex,
       matrixOperandLatexA: request.matrixOperandLatexA,
       matrixOperandLatexB: request.matrixOperandLatexB,
@@ -351,6 +304,8 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       activeMatrixRightId: request.activeMatrixRightId,
       domain: request.domain,
       substitutionMode: request.substitutionMode,
+      substitutionSnapshot: request.substitutionSnapshot,
+      protectedSubstitutionSnapshot: request.protectedSubstitutionSnapshot,
       complexExactForm: request.complexExactForm,
     },
   };

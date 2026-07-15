@@ -5,6 +5,7 @@ import type {
   LinearAlgebraSubstitutionMode,
   MatrixOperation,
   MatrixRequest,
+  ScalarMatrixRequestV1,
   ScalarVectorRequestV1,
   StoredVariableValue,
   VariableSubstitutionSnapshot,
@@ -22,6 +23,7 @@ import {
 import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
 import {
   matrixNamedValueNames,
+  isScalarMatrixNamedValue,
   isScalarVectorNamedValue,
   vectorNamedValueNames,
   type LinearAlgebraMatrixNamedValue,
@@ -48,6 +50,7 @@ import {
   dispatchVectorFamilyExpression,
 } from './vector-family-dispatch';
 import { dispatchSymbolicVectorEditorLatex } from './symbolic-vector-editor';
+import { dispatchSymbolicMatrixEditorLatex } from './symbolic-matrix-editor';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -57,6 +60,12 @@ export type MatrixEditorDispatchInput = {
   matrixA: number[][];
   matrixB: number[][];
   matrixValues?: readonly LinearAlgebraMatrixNamedValue[];
+  activeMatrixLeftId?: string;
+  activeMatrixRightId?: string;
+  domain?: LinearAlgebraScalarDomain;
+  substitutionMode?: LinearAlgebraSubstitutionMode;
+  storedVariables?: readonly StoredVariableValue[] | readonly VariableSubstitutionSnapshot[];
+  complexExactForm?: ComplexExactForm;
 };
 
 export type VectorEditorDispatchInput = {
@@ -72,13 +81,16 @@ export type VectorEditorDispatchInput = {
 };
 
 type ExecutableMatrixRequest = MatrixRequest & { matrixB: number[][] };
+type ExecutableScalarMatrixRequest = ScalarMatrixRequestV1 & {
+  matrixB: NonNullable<ScalarMatrixRequestV1['matrixB']>;
+};
 type ExecutableVectorRequest = VectorRequest & { vectorB: number[] };
 type ExecutableScalarVectorRequest = ScalarVectorRequestV1 & {
   vectorB: NonNullable<ScalarVectorRequestV1['vectorB']>;
 };
 
 export type MatrixEditorDispatchResult =
-  | { ok: true; request: ExecutableMatrixRequest }
+  | { ok: true; request: ExecutableMatrixRequest | ExecutableScalarMatrixRequest }
   | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
 export type VectorEditorDispatchResult =
@@ -212,6 +224,7 @@ const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readon
   eigen: ['eigenA', 'eigenB'],
   diagonalization: ['diagonalizeA', 'diagonalizeB'],
   transpose: ['transposeA', 'transposeB'],
+  adjoint: ['adjointA', 'adjointB'],
   inverse: ['inverseA', 'inverseB'],
 };
 
@@ -717,6 +730,22 @@ function vectorUnaryRequest(
 }
 
 export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): MatrixEditorDispatchResult {
+  const matrixValues = input.matrixValues ?? [];
+  const usesScalarProducer = input.domain === 'complex'
+    || input.substitutionMode === 'use-stored-values'
+    || matrixValues.some(isScalarMatrixNamedValue);
+  if (usesScalarProducer) {
+    return dispatchSymbolicMatrixEditorLatex({
+      latex: input.latex,
+      matrixValues,
+      activeMatrixLeftId: input.activeMatrixLeftId,
+      activeMatrixRightId: input.activeMatrixRightId,
+      domain: input.domain ?? 'real',
+      substitutionMode: input.substitutionMode ?? 'symbolic',
+      storedVariables: input.storedVariables ?? [],
+      complexExactForm: input.complexExactForm ?? 'rectangular',
+    });
+  }
   const parsed = parseLinearAlgebraEditorLatex(input.latex, {
     mode: 'matrix',
     matrixNamedValues: matrixNamedValueNames(input.matrixValues),
