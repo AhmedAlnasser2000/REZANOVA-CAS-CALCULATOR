@@ -119,6 +119,66 @@ describe('NotebookPage', () => {
     expect(screen.queryByLabelText('Notebook text')).not.toBeInTheDocument();
   });
 
+  it('exposes floating objects beside the semantic outline without merging the two lists', async () => {
+    const initialState = createNotebookRichSurfaceState({
+      idPrefix: 'floating-rail',
+      now: () => new Date('2026-07-12T12:00:00.000Z'),
+      title: 'Floating Rail',
+    });
+    initialState.document.content = [{
+      type: 'paragraph',
+      id: 'paragraph.anchor',
+      content: [{ type: 'text', text: 'Anchor paragraph' }],
+    }, {
+      type: 'evidenceSnapshot',
+      id: 'evidence.float',
+      source: 'manual-placeholder',
+      title: 'Floating evidence',
+      facts: ['Verified'],
+      warnings: [],
+      objectPlacement: {
+        mode: 'floating',
+        anchor: { kind: 'paragraph', nodeId: 'paragraph.anchor' },
+        horizontalReference: 'margins',
+        verticalReference: 'margins',
+        xPt: 12,
+        yPt: 24,
+        widthPt: 180,
+        wrap: 'square',
+        textDistancePt: { top: 0, right: 12, bottom: 0, left: 12 },
+        zOrder: 0,
+      },
+    }, {
+      type: 'horizontalRule',
+      id: 'divider.float',
+      objectPlacement: {
+        mode: 'floating',
+        anchor: { kind: 'page', pageNumber: 2 },
+        horizontalReference: 'margins',
+        verticalReference: 'margins',
+        xPt: 0,
+        yPt: 0,
+        widthPt: 220,
+        wrap: 'in-front',
+        textDistancePt: { top: 0, right: 0, bottom: 0, left: 0 },
+        zOrder: 1,
+      },
+    }];
+    const user = userEvent.setup();
+    render(<NotebookHarness initialState={initialState} />);
+
+    expect(await screen.findByLabelText('Notebook outline')).toBeInTheDocument();
+    expect(screen.getByText('No headings, captioned figures, or academic containers yet.'))
+      .toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Objects' }));
+    const layers = screen.getByLabelText('Notebook objects and layers');
+    expect(within(layers).getByText('2 floating')).toBeInTheDocument();
+    expect(within(layers).getByText('Floating evidence')).toBeInTheDocument();
+    expect(within(layers).getByText('Divider')).toBeInTheDocument();
+    expect(screen.queryByText('No headings, captioned figures, or academic containers yet.'))
+      .not.toBeInTheDocument();
+  });
+
   it('offers four starter templates without creating a second tab system', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);

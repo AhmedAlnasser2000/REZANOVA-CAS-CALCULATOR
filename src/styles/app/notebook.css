@@ -87,7 +87,7 @@
 .notebook-outline {
   grid-area: outline;
   display: grid;
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
 }
 
 .notebook-inspector {
@@ -244,6 +244,53 @@
   color: var(--page-muted);
 }
 
+.notebook-rail-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 8px;
+  padding: 4px;
+  background: rgba(2, 11, 12, 0.38);
+}
+
+.notebook-rail-switch button {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: transparent;
+  color: var(--page-muted);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.notebook-rail-switch button.is-active {
+  border-color: var(--notebook-border-strong);
+  background: rgba(184, 212, 156, 0.16);
+  color: var(--page-ink);
+}
+
+.notebook-rail-main,
+.notebook-object-layers {
+  min-height: 0;
+  display: grid;
+}
+
+.notebook-rail-main {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 14px;
+}
+
+.notebook-object-layers {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px;
+}
+
 .notebook-outline-heading span {
   display: inline-flex;
   align-items: center;
@@ -322,6 +369,94 @@
   padding-right: 4px;
   overflow: auto;
   scrollbar-gutter: stable;
+}
+
+.notebook-object-layer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.notebook-object-layer-actions button {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.notebook-object-layer-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.notebook-object-layer-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding-right: 4px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.notebook-object-layer-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.notebook-object-layer-list button:hover,
+.notebook-object-layer-actions button:not(:disabled):hover {
+  border-color: var(--notebook-border-strong);
+  background: rgba(184, 212, 156, 0.12);
+}
+
+.notebook-object-layer-list button.is-active {
+  border-color: var(--notebook-border-strong);
+  background: rgba(184, 212, 156, 0.18);
+  box-shadow: inset 3px 0 0 var(--notebook-accent);
+}
+
+.notebook-object-layer-list span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-object-layer-list small {
+  color: var(--page-accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.notebook-object-layer-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-object-layer-list em {
+  color: var(--page-subtle);
+  font: normal 0.68rem 'IBM Plex Mono', monospace;
 }
 
 .notebook-outline-entry {

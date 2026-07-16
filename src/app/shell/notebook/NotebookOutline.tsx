@@ -7,6 +7,7 @@ import {
   FolderPlus,
   GripVertical,
   IndentIncrease,
+  Layers,
   ListTree,
   MoreHorizontal,
   Outdent,
@@ -36,6 +37,7 @@ import {
   selectNotebookEditorNode,
   updateNotebookSection,
 } from './canvas';
+import { NotebookObjectLayers } from './NotebookObjectLayers';
 import { NotebookFloatingLayer, useNotebookTransientLayer } from './transient-ui';
 
 type NotebookOutlineProps = {
@@ -112,6 +114,7 @@ export function NotebookOutline({
   const [query, setQuery] = useState('');
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [menuSectionId, setMenuSectionId] = useState<string | null>(null);
+  const [railMode, setRailMode] = useState<'outline' | 'objects'>('outline');
   const sectionMenu = useNotebookTransientLayer({
     id: 'notebook-section-actions',
     parentId: 'notebook-outline-drawer',
@@ -212,147 +215,179 @@ export function NotebookOutline({
         <h1>{document.title}</h1>
         <p>Author explanations around live, verifiable math.</p>
       </div>
-      <div className="notebook-outline-heading">
-        <span><ListTree aria-hidden="true" size={15} /> Outline</span>
-        <button type="button" aria-label="Add top-level section" title="Add section" onClick={() => {
-          if (editor) insertNotebookSection(editor);
-        }}>
-          <FolderPlus aria-hidden="true" size={15} />
+      <div className="notebook-rail-switch" role="tablist" aria-label="Notebook rail view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={railMode === 'outline'}
+          className={railMode === 'outline' ? 'is-active' : undefined}
+          onClick={() => setRailMode('outline')}
+        >
+          <ListTree aria-hidden="true" size={14} /> Outline
         </button>
-        <small title={`${countNotebookBlocks(document.content)} total blocks`}>{outline.length} anchors</small>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={railMode === 'objects'}
+          className={railMode === 'objects' ? 'is-active' : undefined}
+          onClick={() => setRailMode('objects')}
+        >
+          <Layers aria-hidden="true" size={14} /> Objects
+        </button>
       </div>
-      <label className="notebook-outline-search">
-        <Search aria-hidden="true" size={14} />
-        <span className="sr-only">Find in document</span>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find in document" />
-      </label>
-      <nav className="notebook-outline-breadcrumbs" aria-label="Selected block path" title={selectedEntry?.path.join(' / ') ?? document.title}>
-        {(selectedEntry?.path ?? [document.title]).map((part, index, path) => (
-          <span key={`${part}-${index}`}>
-            <span>{part}</span>
-            {index < path.length - 1 ? <ChevronRight aria-hidden="true" size={12} /> : null}
-          </span>
-        ))}
-      </nav>
-      <div className="notebook-outline-list">
-        {visibleEntries.length > 0 ? visibleEntries.map((entry) => {
-          const kindLabel = entryKindLabel(entry);
-          const detailLabel = entry.nodeType === 'semanticBlock'
-            ? entry.label.replace(new RegExp(`^${kindLabel}\\s*`, 'i'), '') || kindLabel
-            : entry.label;
-          const depth = Math.min(entry.depth, 4);
-          const rowStyle = { '--notebook-outline-depth': depth } as CSSProperties;
-          return (
-            <div
-              key={entry.id}
-              data-testid="notebook-outline-entry"
-              data-node-id={entry.id}
-              data-outline-kind={entry.nodeType}
-              data-outline-depth={entry.depth}
-              className={[
-                'notebook-outline-entry',
-                `is-${entry.nodeType}`,
-                entry.id === selectedNodeId ? 'is-active' : '',
-              ].filter(Boolean).join(' ')}
-              style={rowStyle}
-              title={entry.path.join(' / ')}
-              onClick={(event) => {
-                if (event.target === event.currentTarget && editor) {
-                  selectNotebookEditorNode(editor, entry.id);
-                }
-              }}
-            >
-              <button
-                type="button"
-                className="notebook-outline-drag"
-                aria-label={`Move ${entry.label}`}
-                data-notebook-block-drag-id={entry.id}
-                data-notebook-block-drag-label={entry.label}
-                data-notebook-block-drag-source="outline"
-                title="Drag to reorder"
-                onClick={() => {
-                  if (editor) selectNotebookEditorNode(editor, entry.id);
-                }}
-              ><GripVertical aria-hidden="true" size={15} /></button>
-              <div className="notebook-outline-entry-main">
-                <span className="notebook-outline-entry-copy">
-                  <small>{kindLabel}{entry.depth > 4 ? ` · ${entry.depth + 1}` : ''}</small>
-                  {editingSectionId === entry.id ? (
-                    <input
-                      aria-label="Rename section"
-                      autoFocus
-                      defaultValue={entry.label}
-                      onBlur={(event) => {
-                        if (editor) {
-                          updateNotebookSection(editor, entry.id, {
-                            title: event.currentTarget.value.trim() || 'Untitled section',
-                          });
-                        }
-                        setEditingSectionId(null);
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          if (editor) {
-                            updateNotebookSection(editor, entry.id, {
-                              title: event.currentTarget.value.trim() || 'Untitled section',
-                            });
-                          }
-                          setEditingSectionId(null);
-                        } else if (event.key === 'Escape') {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setEditingSectionId(null);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <button type="button" onClick={() => {
-                      if (editor) selectNotebookEditorNode(editor, entry.id);
-                    }}>
-                      <strong>{detailLabel}</strong>
-                    </button>
-                  )}
+      <div className="notebook-rail-main">
+        {railMode === 'outline' ? (
+          <>
+            <div className="notebook-outline-heading">
+              <span><ListTree aria-hidden="true" size={15} /> Outline</span>
+              <button type="button" aria-label="Add top-level section" title="Add section" onClick={() => {
+                if (editor) insertNotebookSection(editor);
+              }}>
+                <FolderPlus aria-hidden="true" size={15} />
+              </button>
+              <small title={`${countNotebookBlocks(document.content)} total blocks`}>{outline.length} anchors</small>
+            </div>
+            <label className="notebook-outline-search">
+              <Search aria-hidden="true" size={14} />
+              <span className="sr-only">Find in document</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find in document" />
+            </label>
+            <nav className="notebook-outline-breadcrumbs" aria-label="Selected block path" title={selectedEntry?.path.join(' / ') ?? document.title}>
+              {(selectedEntry?.path ?? [document.title]).map((part, index, path) => (
+                <span key={`${part}-${index}`}>
+                  <span>{part}</span>
+                  {index < path.length - 1 ? <ChevronRight aria-hidden="true" size={12} /> : null}
                 </span>
-                {entry.nodeType === 'section' ? <small className="notebook-outline-count">{entry.childCount}</small> : null}
-              </div>
-              {entry.nodeType === 'section' ? (
-                <div className="notebook-outline-entry-actions">
-                  <button type="button" aria-label={`Move ${entry.label} up`} title="Move up" onClick={() => {
-                    if (editor) moveNotebookNodeInParent(editor, entry.id, 'up');
-                  }}>↑</button>
-                  <button type="button" aria-label={`Move ${entry.label} down`} title="Move down" onClick={() => {
-                    if (editor) moveNotebookNodeInParent(editor, entry.id, 'down');
-                  }}>↓</button>
-                  <button
-                    data-notebook-transient-trigger={sectionMenu.id}
-                    type="button"
-                    aria-label={`${entry.label} actions`}
-                    aria-expanded={menuSectionId === entry.id && sectionMenu.isOpen}
-                    onClick={() => {
-                      if (menuSectionId === entry.id && sectionMenu.isOpen) {
-                        sectionMenu.close();
-                        setMenuSectionId(null);
-                      } else {
-                        setMenuSectionId(entry.id);
-                        sectionMenu.open();
+              ))}
+            </nav>
+            <div className="notebook-outline-list">
+              {visibleEntries.length > 0 ? visibleEntries.map((entry) => {
+                const kindLabel = entryKindLabel(entry);
+                const detailLabel = entry.nodeType === 'semanticBlock'
+                  ? entry.label.replace(new RegExp(`^${kindLabel}\\s*`, 'i'), '') || kindLabel
+                  : entry.label;
+                const depth = Math.min(entry.depth, 4);
+                const rowStyle = { '--notebook-outline-depth': depth } as CSSProperties;
+                return (
+                  <div
+                    key={entry.id}
+                    data-testid="notebook-outline-entry"
+                    data-node-id={entry.id}
+                    data-outline-kind={entry.nodeType}
+                    data-outline-depth={entry.depth}
+                    className={[
+                      'notebook-outline-entry',
+                      `is-${entry.nodeType}`,
+                      entry.id === selectedNodeId ? 'is-active' : '',
+                    ].filter(Boolean).join(' ')}
+                    style={rowStyle}
+                    title={entry.path.join(' / ')}
+                    onClick={(event) => {
+                      if (event.target === event.currentTarget && editor) {
+                        selectNotebookEditorNode(editor, entry.id);
                       }
                     }}
                   >
-                    <MoreHorizontal aria-hidden="true" size={14} />
-                  </button>
-                  {sectionActions(entry)}
+                    <button
+                      type="button"
+                      className="notebook-outline-drag"
+                      aria-label={`Move ${entry.label}`}
+                      data-notebook-block-drag-id={entry.id}
+                      data-notebook-block-drag-label={entry.label}
+                      data-notebook-block-drag-source="outline"
+                      title="Drag to reorder"
+                      onClick={() => {
+                        if (editor) selectNotebookEditorNode(editor, entry.id);
+                      }}
+                    ><GripVertical aria-hidden="true" size={15} /></button>
+                    <div className="notebook-outline-entry-main">
+                      <span className="notebook-outline-entry-copy">
+                        <small>{kindLabel}{entry.depth > 4 ? ` · ${entry.depth + 1}` : ''}</small>
+                        {editingSectionId === entry.id ? (
+                          <input
+                            aria-label="Rename section"
+                            autoFocus
+                            defaultValue={entry.label}
+                            onBlur={(event) => {
+                              if (editor) {
+                                updateNotebookSection(editor, entry.id, {
+                                  title: event.currentTarget.value.trim() || 'Untitled section',
+                                });
+                              }
+                              setEditingSectionId(null);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                if (editor) {
+                                  updateNotebookSection(editor, entry.id, {
+                                    title: event.currentTarget.value.trim() || 'Untitled section',
+                                  });
+                                }
+                                setEditingSectionId(null);
+                              } else if (event.key === 'Escape') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setEditingSectionId(null);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <button type="button" onClick={() => {
+                            if (editor) selectNotebookEditorNode(editor, entry.id);
+                          }}>
+                            <strong>{detailLabel}</strong>
+                          </button>
+                        )}
+                      </span>
+                      {entry.nodeType === 'section' ? <small className="notebook-outline-count">{entry.childCount}</small> : null}
+                    </div>
+                    {entry.nodeType === 'section' ? (
+                      <div className="notebook-outline-entry-actions">
+                        <button type="button" aria-label={`Move ${entry.label} up`} title="Move up" onClick={() => {
+                          if (editor) moveNotebookNodeInParent(editor, entry.id, 'up');
+                        }}>↑</button>
+                        <button type="button" aria-label={`Move ${entry.label} down`} title="Move down" onClick={() => {
+                          if (editor) moveNotebookNodeInParent(editor, entry.id, 'down');
+                        }}>↓</button>
+                        <button
+                          data-notebook-transient-trigger={sectionMenu.id}
+                          type="button"
+                          aria-label={`${entry.label} actions`}
+                          aria-expanded={menuSectionId === entry.id && sectionMenu.isOpen}
+                          onClick={() => {
+                            if (menuSectionId === entry.id && sectionMenu.isOpen) {
+                              sectionMenu.close();
+                              setMenuSectionId(null);
+                            } else {
+                              setMenuSectionId(entry.id);
+                              sectionMenu.open();
+                            }
+                          }}
+                        >
+                          <MoreHorizontal aria-hidden="true" size={14} />
+                        </button>
+                        {sectionActions(entry)}
+                      </div>
+                    ) : <ChevronRight aria-hidden="true" size={14} />}
+                  </div>
+                );
+              }) : (
+                <div className="notebook-outline-empty">
+                  {query
+                    ? 'No matching headings, figures, or academic containers.'
+                    : 'No headings, captioned figures, or academic containers yet.'}
                 </div>
-              ) : <ChevronRight aria-hidden="true" size={14} />}
+              )}
             </div>
-          );
-        }) : (
-          <div className="notebook-outline-empty">
-            {query
-              ? 'No matching headings, figures, or academic containers.'
-              : 'No headings, captioned figures, or academic containers yet.'}
-          </div>
+          </>
+        ) : (
+          <NotebookObjectLayers
+            document={document}
+            editor={editor}
+            selectedNodeId={selectedNodeId}
+          />
         )}
       </div>
       <div className="notebook-add-actions" aria-label="Add Notebook block">

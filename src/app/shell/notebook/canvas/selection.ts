@@ -7,6 +7,7 @@ import {
   normalizeNotebookMathSource,
   notebookSectionIsCollapsible,
   notebookSemanticIsCollapsible,
+  type NotebookObjectPlacement,
   type NotebookSemanticKind,
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
@@ -420,6 +421,89 @@ function notebookNodes(editor: Editor) {
 
 function locateNotebookNode(editor: Editor, id: string) {
   return notebookNodes(editor).find((node) => node.id === id) ?? null;
+}
+
+type FloatingNotebookNode = LocatedNotebookNode & {
+  placement: Extract<NotebookObjectPlacement, { mode: 'floating' }>;
+};
+
+export type NotebookFloatingLayerMove =
+  | 'backward'
+  | 'forward'
+  | 'send-to-back'
+  | 'bring-to-front';
+
+function floatingObjectPlacement(value: unknown): FloatingNotebookNode['placement'] | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const placement = value as Partial<Extract<NotebookObjectPlacement, { mode: 'floating' }>>;
+  return placement.mode === 'floating' && Number.isInteger(placement.zOrder)
+    ? placement as FloatingNotebookNode['placement']
+    : null;
+}
+
+function floatingNotebookNodes(editor: Editor): FloatingNotebookNode[] {
+  return notebookNodes(editor)
+    .map((node) => {
+      const placement = floatingObjectPlacement(node.node.attrs.notebookObjectPlacement);
+      return placement ? { ...node, placement } : null;
+    })
+    .filter((node): node is FloatingNotebookNode => node != null)
+    .sort((left, right) => left.placement.zOrder - right.placement.zOrder || left.position - right.position);
+}
+
+export function moveNotebookFloatingLayer(
+  editor: Editor,
+  id: string,
+  move: NotebookFloatingLayerMove,
+) {
+  const floatingNodes = floatingNotebookNodes(editor);
+  const currentIndex = floatingNodes.findIndex((node) => node.id === id);
+  if (currentIndex < 0) {
+    return false;
+  }
+  const ordered = [...floatingNodes];
+  const [selected] = ordered.splice(currentIndex, 1);
+  if (!selected) {
+    return false;
+  }
+  let nextIndex = currentIndex;
+  if (move === 'forward') {
+    nextIndex = Math.min(ordered.length, currentIndex + 1);
+  } else if (move === 'backward') {
+    nextIndex = Math.max(0, currentIndex - 1);
+  } else if (move === 'bring-to-front') {
+    nextIndex = ordered.length;
+  } else {
+    nextIndex = 0;
+  }
+  if (nextIndex === currentIndex && floatingNodes.every((node, index) => node.placement.zOrder === index)) {
+    return false;
+  }
+
+  ordered.splice(nextIndex, 0, selected);
+  const transaction = editor.state.tr;
+  let changed = false;
+  ordered.forEach((node, zOrder) => {
+    if (node.placement.zOrder === zOrder) {
+      return;
+    }
+    transaction.setNodeMarkup(node.position, undefined, {
+      ...node.node.attrs,
+      notebookObjectPlacement: {
+        ...node.placement,
+        zOrder,
+      },
+    });
+    changed = true;
+  });
+  if (!changed) {
+    return false;
+  }
+  transaction.setSelection(NodeSelection.create(transaction.doc, selected.position));
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
 }
 
 function siblingNotebookNodes(editor: Editor, source: LocatedNotebookNode) {
