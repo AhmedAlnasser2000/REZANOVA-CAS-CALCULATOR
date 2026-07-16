@@ -10,30 +10,114 @@ import {
 import {
   notebookPageGeometry,
   paginateNotebookBlocks,
+  type NotebookFloatingPaginationFragment,
   type NotebookPageSetup,
   type NotebookPaginationFragment,
 } from '../../../../lib/notebook';
+import {
+  notebookFloatingPaginationBlocks,
+  notebookPaginationBlockFromElement,
+  notebookPaginationDocumentMetadata,
+  notebookPaginationElementId,
+} from './notebook-pagination-dom';
 
 export type NotebookViewMode = 'print' | 'draft';
 
 export type NotebookPaginationMetrics = {
   currentPage: number;
   fragments: NotebookPaginationFragment[];
+  floating: NotebookFloatingPaginationFragment[];
+  returnedToFlowIds: string[];
   pageCount: number;
   pageGapPx: number;
   pageHeightPx: number;
 };
 
 const PAGE_GAP_PX = 24;
+const FLOATING_STYLE_PROPERTIES = [
+  '--notebook-floating-left-px',
+  '--notebook-floating-top-px',
+  '--notebook-floating-width-px',
+  '--notebook-floating-z-index',
+] as const;
+const FLOW_STYLE_PROPERTIES = [
+  '--notebook-flow-margin-left-px',
+  '--notebook-flow-margin-right-px',
+  '--notebook-flow-width-reduction-px',
+] as const;
 
-function blockKind(element: HTMLElement) {
-  if (element.matches('[data-notebook-page-break]')) return 'pageBreak';
-  if (element.matches('h1, h2, h3')) return 'heading';
-  if (element.matches('[data-notebook-section]')) return 'section';
-  if (element.matches('[data-notebook-semantic]')) return 'container';
-  if (element.matches('[data-notebook-image], [data-notebook-video]')) return 'media';
-  if (element.matches('[data-notebook-display-math]')) return 'math';
-  return 'prose';
+function clearFloatingPresentation(editorElement: HTMLElement) {
+  editorElement.querySelectorAll<HTMLElement>(
+    '[data-notebook-floating-object], [data-notebook-floating-draft-page]',
+  ).forEach((element) => {
+    delete element.dataset.notebookFloatingObject;
+    delete element.dataset.notebookFloatingPage;
+    delete element.dataset.notebookFloatingWrap;
+    delete element.dataset.notebookFloatingAnchor;
+    delete element.dataset.notebookFloatingDraftPage;
+    FLOATING_STYLE_PROPERTIES.forEach((property) => element.style.removeProperty(property));
+  });
+  editorElement.querySelectorAll<HTMLElement>('[data-notebook-floating-ancestor]')
+    .forEach((element) => delete element.dataset.notebookFloatingAncestor);
+  editorElement.querySelectorAll<HTMLElement>('[data-notebook-flow-wrap-inset]')
+    .forEach((element) => {
+      delete element.dataset.notebookFlowWrapInset;
+      FLOW_STYLE_PROPERTIES.forEach((property) => element.style.removeProperty(property));
+    });
+}
+
+function metricsMatch(left: NotebookPaginationMetrics, right: NotebookPaginationMetrics) {
+  const fragmentsMatch = left.fragments.length === right.fragments.length
+    && left.fragments.every((fragment, index) => {
+      const candidate = right.fragments[index];
+      return candidate
+        && fragment.id === candidate.id
+        && fragment.page === candidate.page
+        && fragment.fragment === candidate.fragment
+        && Math.abs(fragment.offsetPt - candidate.offsetPt) < 0.1
+        && Math.abs(fragment.heightPt - candidate.heightPt) < 0.1
+        && Math.abs(fragment.scale - candidate.scale) < 0.001
+        && Math.abs((fragment.insetLeftPt ?? 0) - (candidate.insetLeftPt ?? 0)) < 0.1
+        && Math.abs((fragment.insetRightPt ?? 0) - (candidate.insetRightPt ?? 0)) < 0.1;
+    });
+  const floatingMatch = left.floating.length === right.floating.length
+    && left.floating.every((fragment, index) => {
+      const candidate = right.floating[index];
+      return candidate
+        && fragment.id === candidate.id
+        && fragment.page === candidate.page
+        && Math.abs(fragment.xPt - candidate.xPt) < 0.1
+        && Math.abs(fragment.yPt - candidate.yPt) < 0.1
+        && Math.abs(fragment.widthPt - candidate.widthPt) < 0.1
+        && Math.abs(fragment.heightPt - candidate.heightPt) < 0.1;
+    });
+  return left.currentPage === right.currentPage
+    && left.pageCount === right.pageCount
+    && Math.abs(left.pageHeightPx - right.pageHeightPx) < 0.5
+    && fragmentsMatch
+    && floatingMatch
+    && left.returnedToFlowIds.join('\0') === right.returnedToFlowIds.join('\0');
+}
+
+function floatingElementMap(editorElement: HTMLElement) {
+  const elements = new Map<string, HTMLElement>();
+  [...editorElement.children].forEach((child, index) => {
+    if (!(child instanceof HTMLElement)) return;
+    elements.set(notebookPaginationElementId(child, index), child);
+  });
+  editorElement.querySelectorAll<HTMLElement>('[data-notebook-node-id]').forEach((element) => {
+    const id = element.dataset.notebookNodeId;
+    if (id && !elements.has(id)) elements.set(id, element);
+  });
+  return elements;
+}
+
+function markFloatingAncestors(element: HTMLElement, editorElement: HTMLElement) {
+  let ancestor = element.parentElement;
+  while (ancestor && ancestor !== editorElement) {
+    ancestor.dataset.notebookFloatingAncestor = 'true';
+    ancestor = ancestor.parentElement;
+  }
 }
 
 export function useNotebookPagination({
@@ -44,6 +128,7 @@ export function useNotebookPagination({
   stageRef,
   viewMode,
   onChange,
+  onReturnFloatingObjectsToFlow,
 }: {
   editor: Editor | null;
   pageSetup: NotebookPageSetup;
@@ -52,10 +137,13 @@ export function useNotebookPagination({
   stageRef: RefObject<HTMLDivElement | null>;
   viewMode: NotebookViewMode;
   onChange: (metrics: NotebookPaginationMetrics) => void;
+  onReturnFloatingObjectsToFlow?: (nodeIds: readonly string[]) => void;
 }) {
   const [metrics, setMetrics] = useState<NotebookPaginationMetrics>({
     currentPage: 1,
     fragments: [],
+    floating: [],
+    returnedToFlowIds: [],
     pageCount: 1,
     pageGapPx: PAGE_GAP_PX,
     pageHeightPx: 1,
@@ -79,24 +167,7 @@ export function useNotebookPagination({
     stage.prepend(styleElement);
 
     const commitMetrics = (next: NotebookPaginationMetrics) => {
-      const current = metricsRef.current;
-      const fragmentsMatch = current.fragments.length === next.fragments.length
-        && current.fragments.every((fragment, index) => {
-          const candidate = next.fragments[index];
-          return candidate
-            && fragment.id === candidate.id
-            && fragment.page === candidate.page
-            && fragment.fragment === candidate.fragment
-            && Math.abs(fragment.offsetPt - candidate.offsetPt) < 0.1
-            && Math.abs(fragment.heightPt - candidate.heightPt) < 0.1
-            && Math.abs(fragment.scale - candidate.scale) < 0.001;
-        });
-      if (
-        current.currentPage === next.currentPage
-        && current.pageCount === next.pageCount
-        && Math.abs(current.pageHeightPx - next.pageHeightPx) < 0.5
-        && fragmentsMatch
-      ) return;
+      if (metricsMatch(metricsRef.current, next)) return;
       metricsRef.current = next;
       setMetrics(next);
       onChange(next);
@@ -113,24 +184,12 @@ export function useNotebookPagination({
     const paginate = () => {
       frame = 0;
       const children = [...editorElement.children] as HTMLElement[];
-      const geometry = notebookPageGeometry(pageSetup);
-      const measuredLayout = (pointsPerPixel: number) => paginateNotebookBlocks(
-        children.map((element, index) => {
-          const computed = getComputedStyle(element);
-          const marginTop = Number.parseFloat(computed.marginTop) || 0;
-          const marginBottom = Number.parseFloat(computed.marginBottom) || 0;
-          return {
-            id: element.dataset.notebookNodeId ?? `notebook.block.${index}`,
-            kind: blockKind(element),
-            heightPt: Math.max(
-              0,
-              (element.getBoundingClientRect().height + marginTop + marginBottom) * pointsPerPixel,
-            ),
-          };
-        }),
-        geometry.usableHeight,
+      const nodeSelector = (nodeId: string) => (
+        `[data-notebook-pagination-scope="${scope}"] `
+        + `[data-notebook-node-id="${globalThis.CSS.escape(nodeId)}"]`
       );
-      styleElement.textContent = '';
+      const geometry = notebookPageGeometry(pageSetup);
+      const documentMetadata = notebookPaginationDocumentMetadata(editor.state.doc);
       stage.style.removeProperty('--notebook-page-count');
       stage.style.removeProperty('--notebook-page-height-px');
       stage.style.removeProperty('--notebook-page-gap-px');
@@ -140,12 +199,46 @@ export function useNotebookPagination({
       stage.style.removeProperty('--notebook-page-margin-left-px');
       stage.style.removeProperty('--notebook-object-max-height-px');
       stage.style.removeProperty('max-width');
+
       if (viewMode === 'draft') {
+        clearFloatingPresentation(editorElement);
+        const draftRules: string[] = [];
+        stage.dataset.notebookFloatingCount = '0';
+        stage.dataset.notebookReturnedToFlowCount = '0';
         const renderedContentWidth = Math.max(1, editorElement.getBoundingClientRect().width);
-        const draftLayout = measuredLayout(geometry.usableWidth / renderedContentWidth);
+        const pointsPerPixel = geometry.usableWidth / renderedContentWidth;
+        const draftBlocks = children.map((element, index) => (
+          notebookPaginationBlockFromElement(
+            element,
+            index,
+            pointsPerPixel,
+            documentMetadata,
+          )
+        ));
+        const draftLayout = paginateNotebookBlocks(draftBlocks, geometry.usableHeight);
+        const elements = floatingElementMap(editorElement);
+        documentMetadata.nodes.forEach((node) => {
+          const placement = node.objectPlacement;
+          if (placement?.mode !== 'floating' || placement.anchor.kind !== 'page') return;
+          const element = elements.get(node.id);
+          if (element) element.dataset.notebookFloatingDraftPage = String(placement.anchor.pageNumber);
+          const selector = nodeSelector(node.id);
+          draftRules.push(
+            `${selector} { position: relative; min-height: 52px; max-height: 96px; `
+              + 'overflow: hidden; border: 1px dashed var(--notebook-border-strong); '
+              + 'border-radius: 7px; opacity: 0.74; }',
+            `${selector}::before { content: "Page ${placement.anchor.pageNumber} · Floating object"; `
+              + 'position: absolute; z-index: 4; top: 7px; left: 7px; border-radius: 999px; '
+              + 'padding: 3px 7px; background: #172a2b; color: var(--page-ink); '
+              + "font: 0.66rem 'IBM Plex Mono', monospace; pointer-events: none; }",
+          );
+        });
+        styleElement.textContent = draftRules.join('\n');
         commitMetrics({
           currentPage: 1,
           fragments: draftLayout.fragments,
+          floating: [],
+          returnedToFlowIds: [],
           pageCount: draftLayout.pageCount,
           pageGapPx: PAGE_GAP_PX,
           pageHeightPx: geometry.height * (renderedContentWidth / geometry.usableWidth),
@@ -163,6 +256,30 @@ export function useNotebookPagination({
       const marginLeftPx = pageSetup.marginsPt.left * scale;
       const usableHeightPx = Math.max(1, pageHeightPx - marginTopPx - marginBottomPx);
       const stride = pageHeightPx + PAGE_GAP_PX;
+      const pointsPerPixel = 1 / scale;
+      const floatingBlocks = notebookFloatingPaginationBlocks(
+        editorElement,
+        pointsPerPixel,
+        documentMetadata,
+        geometry.width,
+      );
+      clearFloatingPresentation(editorElement);
+      styleElement.textContent = '';
+      const blocks = children.map((element, index) => notebookPaginationBlockFromElement(
+        element,
+        index,
+        pointsPerPixel,
+        documentMetadata,
+      ));
+      const publicationLayout = paginateNotebookBlocks(blocks, geometry.usableHeight, {
+        pageSetup,
+        paragraphAnchorBlockIds: documentMetadata.paragraphAnchorBlockIds,
+        floatingBlocks,
+      });
+      stage.dataset.notebookFloatingCount = String(publicationLayout.floating.length);
+      stage.dataset.notebookReturnedToFlowCount = String(
+        publicationLayout.returnedToFlowIds.length,
+      );
 
       stage.style.setProperty('--notebook-page-height-px', `${pageHeightPx}px`);
       stage.style.setProperty('--notebook-page-gap-px', `${PAGE_GAP_PX}px`);
@@ -171,87 +288,121 @@ export function useNotebookPagination({
       stage.style.setProperty('--notebook-page-margin-bottom-px', `${marginBottomPx}px`);
       stage.style.setProperty('--notebook-page-margin-left-px', `${marginLeftPx}px`);
       stage.style.setProperty('--notebook-object-max-height-px', `${usableHeightPx}px`);
+      stage.style.setProperty('--notebook-page-count', String(publicationLayout.pageCount));
 
-      let pageIndex = 0;
-      let cursor = marginTopPx;
-      let activeFloatBottom = 0;
+      const firstFragments = new Map<string, NotebookPaginationFragment>();
+      publicationLayout.fragments.forEach((fragment) => {
+        if (!firstFragments.has(fragment.id)) firstFragments.set(fragment.id, fragment);
+      });
+      const floatingIds = new Set(publicationLayout.floating.map((fragment) => fragment.id));
       const layoutRules: string[] = [];
+      let cursor = marginTopPx;
       const childSelector = (index: number) => (
         `[data-notebook-pagination-scope="${scope}"] .notebook-rich-editor > :nth-child(${index + 1})`
       );
       children.forEach((element, index) => {
-        const kind = blockKind(element);
+        const id = notebookPaginationElementId(element, index);
+        if (floatingIds.has(id)) return;
         const computed = getComputedStyle(element);
-        const squareMedia = kind === 'media'
-          && (computed.float === 'left' || computed.float === 'right');
-        if ((kind === 'pageBreak' || (kind === 'media' && !squareMedia)) && activeFloatBottom) {
-          cursor = Math.max(cursor, activeFloatBottom);
-          activeFloatBottom = 0;
-        }
         const baseMarginTop = Number.parseFloat(computed.marginTop) || 0;
         const marginBottom = Number.parseFloat(computed.marginBottom) || 0;
-        const height = element.getBoundingClientRect().height;
-        const contentEnd = pageIndex * stride + pageHeightPx - marginBottomPx;
-
-        if (kind === 'pageBreak') {
-          const nextTop = (pageIndex + 1) * stride + marginTopPx;
-          const breakHeight = Math.max(32, nextTop - cursor);
-          layoutRules.push(`${childSelector(index)} { height: ${breakHeight}px; }`);
-          pageIndex += 1;
+        const baseMarginLeft = Number.parseFloat(computed.marginLeft) || 0;
+        const baseMarginRight = Number.parseFloat(computed.marginRight) || 0;
+        const fragment = firstFragments.get(id);
+        if (fragment && blocks[index]?.kind === 'pageBreak') {
+          const nextTop = (fragment.page - 1) * stride + marginTopPx;
+          layoutRules.push(`${childSelector(index)} { height: ${Math.max(32, nextTop - cursor)}px; }`);
           cursor = nextTop;
           return;
         }
-
-        const next = children[index + 1];
-        const nextHeight = next && blockKind(next) !== 'pageBreak'
-          ? next.getBoundingClientRect().height
-          : 0;
-        const keepHeight = kind === 'heading' ? height + Math.min(nextHeight, usableHeightPx) : height;
-        const splittable = kind === 'section' || kind === 'container';
-        const shouldMove = cursor > pageIndex * stride + marginTopPx
-          && keepHeight <= usableHeightPx
-          && cursor + baseMarginTop + keepHeight + marginBottom > contentEnd;
-        if (shouldMove) {
-          pageIndex += 1;
-          const nextTop = pageIndex * stride + marginTopPx;
-          const offset = Math.max(0, nextTop - cursor);
-          layoutRules.push(
-            `${childSelector(index)} { margin-top: ${baseMarginTop + offset}px; }`,
-          );
-          cursor = nextTop + baseMarginTop;
-        } else {
-          cursor += baseMarginTop;
-        }
-        if (splittable && cursor + height + marginBottom > contentEnd) {
-          layoutRules.push(`${childSelector(index)} { box-decoration-break: clone; }`);
-        }
-        if (squareMedia) {
-          activeFloatBottom = Math.max(activeFloatBottom, cursor + height + marginBottom);
-          pageIndex = Math.max(
-            pageIndex,
-            Math.floor(Math.max(0, activeFloatBottom - 1) / stride),
-          );
+        if (!fragment) {
+          const nextFragment = children.slice(index + 1).map((candidate, nextIndex) => (
+            firstFragments.get(notebookPaginationElementId(
+              candidate,
+              index + nextIndex + 1,
+            ))
+          )).find(Boolean);
+          const nextTop = nextFragment
+            ? (nextFragment.page - 1) * stride + marginTopPx + nextFragment.offsetPt * scale
+            : (publicationLayout.pageCount - 1) * stride + marginTopPx;
+          layoutRules.push(`${childSelector(index)} { height: ${Math.max(32, nextTop - cursor)}px; }`);
+          cursor = nextTop;
           return;
         }
-        cursor += height + marginBottom;
-        if (cursor >= activeFloatBottom) activeFloatBottom = 0;
-        pageIndex = Math.max(pageIndex, Math.floor(Math.max(0, cursor - 1) / stride));
-        const pageTop = pageIndex * stride + marginTopPx;
-        if (cursor < pageTop) cursor = pageTop;
+        const targetTop = (fragment.page - 1) * stride + marginTopPx + fragment.offsetPt * scale;
+        const extraMargin = Math.max(0, targetTop - cursor - baseMarginTop);
+        const insetLeft = (fragment.insetLeftPt ?? 0) * scale;
+        const insetRight = (fragment.insetRightPt ?? 0) * scale;
+        const declarations = [`margin-top: ${baseMarginTop + extraMargin}px`];
+        if (insetLeft || insetRight) {
+          element.dataset.notebookFlowWrapInset = 'true';
+          element.style.setProperty(
+            '--notebook-flow-margin-left-px',
+            `${baseMarginLeft + insetLeft}px`,
+          );
+          element.style.setProperty(
+            '--notebook-flow-margin-right-px',
+            `${baseMarginRight + insetRight}px`,
+          );
+          element.style.setProperty(
+            '--notebook-flow-width-reduction-px',
+            `${baseMarginLeft + insetLeft + baseMarginRight + insetRight}px`,
+          );
+          declarations.push(
+            `margin-left: ${baseMarginLeft + insetLeft}px`,
+            `margin-right: ${baseMarginRight + insetRight}px`,
+            `width: calc(100% - ${baseMarginLeft + insetLeft + baseMarginRight + insetRight}px)`,
+          );
+        }
+        if (fragment.scale < 1) declarations.push(`max-height: ${fragment.heightPt * scale}px`);
+        if (fragment.fragment === 0
+          && publicationLayout.fragments.some((candidate) => (
+            candidate.id === id && candidate.fragment > 0
+          ))) {
+          declarations.push('box-decoration-break: clone');
+        }
+        layoutRules.push(`${childSelector(index)} { ${declarations.join('; ')}; }`);
+        cursor = targetTop + element.getBoundingClientRect().height + marginBottom;
       });
-
-      pageIndex = Math.max(
-        pageIndex,
-        Math.floor(Math.max(0, Math.max(cursor, activeFloatBottom) - 1) / stride),
-      );
+      const elements = floatingElementMap(editorElement);
+      publicationLayout.floating.forEach((fragment) => {
+        layoutRules.push(
+          `${nodeSelector(fragment.id)} { position: absolute !important; `
+            + `z-index: ${fragment.wrap === 'behind' ? 0 : fragment.zOrder + 3} !important; `
+            + `left: ${fragment.xPt * scale}px !important; `
+            + `top: ${(fragment.page - 1) * stride + fragment.yPt * scale}px !important; `
+            + `width: ${fragment.widthPt * scale}px !important; max-width: none !important; `
+            + 'margin: 0 !important; float: none !important; clear: none !important; '
+            + 'box-sizing: border-box; overflow: visible; }',
+        );
+        const element = elements.get(fragment.id);
+        if (!element) return;
+        markFloatingAncestors(element, editorElement);
+        element.dataset.notebookFloatingObject = 'true';
+        element.dataset.notebookFloatingPage = String(fragment.page);
+        element.dataset.notebookFloatingWrap = fragment.wrap;
+        element.dataset.notebookFloatingAnchor = fragment.anchorKind;
+        element.style.setProperty('--notebook-floating-left-px', `${fragment.xPt * scale}px`);
+        element.style.setProperty(
+          '--notebook-floating-top-px',
+          `${(fragment.page - 1) * stride + fragment.yPt * scale}px`,
+        );
+        element.style.setProperty('--notebook-floating-width-px', `${fragment.widthPt * scale}px`);
+        element.style.setProperty(
+          '--notebook-floating-z-index',
+          String(fragment.wrap === 'behind' ? 0 : fragment.zOrder + 3),
+        );
+      });
       styleElement.textContent = layoutRules.join('\n');
-      const publicationLayout = measuredLayout(1 / scale);
-      const pageCount = Math.max(1, pageIndex + 1, publicationLayout.pageCount);
-      stage.style.setProperty('--notebook-page-count', String(pageCount));
+      if (publicationLayout.returnedToFlowIds.length) {
+        onReturnFloatingObjectsToFlow?.(publicationLayout.returnedToFlowIds);
+      }
       commitMetrics({
-        currentPage: currentPage(pageHeightPx, pageCount),
+        currentPage: currentPage(pageHeightPx, publicationLayout.pageCount),
         fragments: publicationLayout.fragments,
-        pageCount,
+        floating: publicationLayout.floating,
+        returnedToFlowIds: publicationLayout.returnedToFlowIds,
+        pageCount: publicationLayout.pageCount,
         pageGapPx: PAGE_GAP_PX,
         pageHeightPx,
       });
@@ -279,12 +430,25 @@ export function useNotebookPagination({
       if (frame) cancelAnimationFrame(frame);
       observer?.disconnect();
       scrollRegion.removeEventListener('scroll', trackScroll);
+      clearFloatingPresentation(editorElement);
       styleElement.remove();
       if (stage.dataset.notebookPaginationScope === scope) {
         delete stage.dataset.notebookPaginationScope;
       }
+      delete stage.dataset.notebookFloatingCount;
+      delete stage.dataset.notebookReturnedToFlowCount;
     };
-  }, [editor, onChange, pageSetup, revision, scope, scrollRegionRef, stageRef, viewMode]);
+  }, [
+    editor,
+    onChange,
+    onReturnFloatingObjectsToFlow,
+    pageSetup,
+    revision,
+    scope,
+    scrollRegionRef,
+    stageRef,
+    viewMode,
+  ]);
 
   return metrics;
 }

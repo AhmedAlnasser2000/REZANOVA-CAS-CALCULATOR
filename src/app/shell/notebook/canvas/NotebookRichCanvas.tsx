@@ -1,8 +1,6 @@
 import type { Editor } from '@tiptap/core';
 import type { MathfieldElement } from 'mathlive';
-import { AllSelection, TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { Check, Sparkles } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -13,15 +11,14 @@ import {
 } from 'react';
 import { readClipboardEventFile } from '../../../../lib/clipboard';
 import {
-  NOTEBOOK_STARTER_TEMPLATES,
   createNotebookStarterContent,
-  detectNotebookMathCandidates,
+  clampNotebookFloatingPlacementToPageSetup,
   notebookPageGeometry,
   notebookSha256Hex,
   validateNotebookImage,
   type NotebookAssetPort,
-  type NotebookImageInspection,
   type NotebookHeaderFooterSettings,
+  type NotebookImageInspection,
   type NotebookPageSetup,
   type NotebookRichDocument,
   type NotebookStarterTemplateId,
@@ -32,6 +29,12 @@ import {
   notebookDocumentToTiptap,
 } from '../../../../lib/notebook/document/tiptap-adapter';
 import { createNotebookExtensions } from './extensions';
+import {
+  NotebookCanvasWarnings,
+  NotebookEmptyWritingPrompt,
+  NotebookMathSuggestion,
+  NotebookTemplateStart,
+} from './NotebookCanvasOverlays';
 import { NotebookRichToolbar } from './NotebookRichToolbar';
 import {
   NotebookImageDetailsDialog,
@@ -40,7 +43,6 @@ import {
 import {
   captureNotebookToolbarSelection,
   restoreNotebookToolbarSelection,
-  type NotebookToolbarSelection,
 } from './notebookToolbarSelection';
 import type { NotebookRibbonTab } from './ribbon-types';
 import {
@@ -66,13 +68,18 @@ import {
   type NotebookRunningMatterTarget,
 } from './NotebookPageSheets';
 import { useNotebookMathFieldController } from '../math-field';
-import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
+import { useNotebookTransientLayer } from '../transient-ui';
 import {
   NotebookSelectionToolbar,
   type NotebookPaletteMode,
   type NotebookPaletteRequest,
   type NotebookProseSelection,
 } from './NotebookSelectionToolbar';
+import {
+  isPristineNotebook,
+  selectedParagraphSuggestion,
+  selectedProseRange,
+} from './notebook-canvas-state';
 type NotebookRichCanvasProps = {
   activeRibbonTab: NotebookRibbonTab;
   assetPort: NotebookAssetPort;
@@ -92,23 +99,21 @@ type NotebookRichCanvasProps = {
   viewMode: NotebookViewMode;
 };
 export type { NotebookMediaStatus } from './NotebookDirectMediaCanvasCoordinator';
-type PendingImageInsert = {
-  mode: 'insert';
-  bytes: Uint8Array;
-  fileName: string;
-  inspection: NotebookImageInspection;
-  selection: NotebookToolbarSelection;
-  insertionPosition?: number;
-};
 type PendingImageEdit = {
   mode: 'edit';
   nodeId: string;
   initial: NotebookImageDetails;
 };
-type PendingImageDialog = PendingImageInsert | PendingImageEdit;
+type PendingImageDialog = PendingImageEdit;
 const NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX = 150_000;
 const NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS = 350;
+const NOTEBOOK_IMAGE_FILE_ACCEPT = '.png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml';
 const CSS_PX_PER_PT = 96 / 72;
+
+function isNotebookImageFile(file: File) {
+  return file.type.startsWith('image/')
+    || /\.(png|jpe?g|webp|svg)$/i.test(file.name);
+}
 
 function initialImageDisplaySize(
   inspection: NotebookImageInspection,
@@ -130,47 +135,6 @@ function initialImageDisplaySize(
   };
 }
 
-function selectedParagraphSuggestion(editor: Editor | null) {
-  if (!editor) {
-    return null;
-  }
-  const { selection } = editor.state;
-  if (selection.empty) {
-    return null;
-  }
-  const selectedText = editor.state.doc.textBetween(selection.from, selection.to, ' ');
-  const candidate = detectNotebookMathCandidates(selectedText)[0];
-  return candidate ? {
-    ...candidate,
-    from: selection.from + candidate.start,
-    to: selection.from + candidate.end,
-  } : null;
-}
-function selectedProseRange(editor: Editor): NotebookProseSelection | null {
-  const { selection } = editor.state;
-  if (!(selection instanceof TextSelection || selection instanceof AllSelection) || selection.empty) {
-    return null;
-  }
-  let containsText = false;
-  editor.state.doc.nodesBetween(selection.from, selection.to, (node) => {
-    if (node.isText && node.textContent.trim()) {
-      containsText = true;
-    }
-  });
-  return containsText ? { from: selection.from, to: selection.to } : null;
-}
-function isPristineNotebook(editor: Editor) {
-  const paragraph = editor.state.doc.firstChild;
-  if (editor.state.doc.childCount !== 1 || paragraph?.type.name !== 'paragraph') {
-    return false;
-  }
-  return paragraph.content.size === 0
-    && paragraph.attrs.notebookAlignment == null
-    && paragraph.attrs.notebookLineSpacing == null
-    && paragraph.attrs.notebookSpaceBeforePt == null
-    && paragraph.attrs.notebookSpaceAfterPt == null
-    && paragraph.attrs.notebookLeftIndentPt == null;
-}
 export function NotebookRichCanvas({
   activeRibbonTab,
   assetPort,
@@ -206,13 +170,17 @@ export function NotebookRichCanvas({
   const [paletteRequest, setPaletteRequest] = useState<NotebookPaletteRequest | null>(null);
   const [proseSelection, setProseSelection] = useState<NotebookProseSelection | null>(null);
   const [pendingMathFocusId, setPendingMathFocusId] = useState<string | null>(null);
-  const [pendingImageDialog, setPendingImageDialog] = useState<PendingImageDialog | null>(null);
-  const [imageBusy, setImageBusy] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
   const [runningMatterTarget, setRunningMatterTarget] = useState<NotebookRunningMatterTarget | null>(null);
   const [runningMatterDraft, setRunningMatterDraft] = useState(document.headerFooter);
   const [runningMatterEditor, setRunningMatterEditor] = useState<Editor | null>(null);
   const [runningMatterOverflow, setRunningMatterOverflow] = useState(false);
+  const [layoutWarning, setLayoutWarning] = useState<string | null>(null);
+  const [pendingImageDialog, setPendingImageDialog] = useState<PendingImageDialog | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const imageDialog = useNotebookTransientLayer({ id: 'notebook-image-details' });
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageDialogWasOpenRef = useRef(false);
   const runningMatterOriginalRef = useRef(document.headerFooter);
   const runningMatterSessionRef = useRef({
     target: runningMatterTarget,
@@ -225,16 +193,9 @@ export function NotebookRichCanvas({
     original: runningMatterOriginalRef.current,
   };
   const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
-  const imageDialog = useNotebookTransientLayer({ id: 'notebook-image-details' });
-  const imageDialogIsOpen = imageDialog.isOpen;
-  const openImageDialog = imageDialog.open;
-  const imageDialogWasOpenRef = useRef(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleMediaDragGrip,
     handleMediaInteraction,
-    imageCropMode,
-    publishImageCropMode,
     refreshSelectedMediaStatus,
     setPaginationMetrics,
   } = useNotebookPointerCoordinator({
@@ -247,9 +208,7 @@ export function NotebookRichCanvas({
   });
   const extensions = useMemo(
     () => createNotebookExtensions(onOpenMathInTool, assetPort, {
-      cropMode: imageCropMode,
       minimumSizePx: 48,
-      onCropModeChange: ({ nodeId, active }) => publishImageCropMode(nodeId, active),
       onMediaDragGrip: handleMediaDragGrip,
       onMediaInteraction: handleMediaInteraction,
     }),
@@ -257,9 +216,7 @@ export function NotebookRichCanvas({
       assetPort,
       handleMediaDragGrip,
       handleMediaInteraction,
-      imageCropMode,
       onOpenMathInTool,
-      publishImageCropMode,
     ],
   );
   const cancelDocumentSync = useCallback(() => {
@@ -334,6 +291,28 @@ export function NotebookRichCanvas({
       requestAnimationFrame(refreshSelectedMediaStatus);
     },
   });
+  const returnFloatingObjectsToFlow = useCallback((nodeIds: readonly string[]) => {
+    if (!editor || editor.isDestroyed || !nodeIds.length) return;
+    const ids = new Set(nodeIds);
+    const transaction = editor.state.tr;
+    editor.state.doc.descendants((node, position) => {
+      if (!ids.has(String(node.attrs.id ?? ''))
+        || node.attrs.notebookObjectPlacement?.mode !== 'floating') {
+        return;
+      }
+      transaction.setNodeMarkup(position, undefined, {
+        ...node.attrs,
+        notebookObjectPlacement: { mode: 'flow' },
+      });
+    });
+    if (!transaction.docChanged) return;
+    editor.view.dispatch(transaction);
+    setLayoutWarning(
+      nodeIds.length === 1
+        ? 'A floating structured object returned to document flow because it is taller than the usable page.'
+        : `${nodeIds.length} floating structured objects returned to document flow because they are taller than the usable page.`,
+    );
+  }, [editor]);
   const paginationMetrics = useNotebookPagination({
     editor,
     pageSetup: document.pageSetup,
@@ -342,6 +321,7 @@ export function NotebookRichCanvas({
     stageRef: pageStageRef,
     viewMode,
     onChange: onPaginationChange,
+    onReturnFloatingObjectsToFlow: returnFloatingObjectsToFlow,
   });
   const commitRunningMatter = useCallback(() => {
     if (!runningMatterTarget) return;
@@ -373,6 +353,25 @@ export function NotebookRichCanvas({
     if (!editor || editor.isDestroyed) return;
     editor.setEditable(!runningMatterTarget);
   }, [editor, runningMatterTarget]);
+
+  useEffect(() => {
+    if (!pendingImageDialog) {
+      imageDialogWasOpenRef.current = false;
+      return;
+    }
+    if (imageDialog.isOpen) {
+      imageDialogWasOpenRef.current = true;
+      return;
+    }
+    if (imageDialogWasOpenRef.current) {
+      imageDialogWasOpenRef.current = false;
+      setPendingImageDialog(null);
+      setImageBusy(false);
+      return;
+    }
+    imageDialog.open();
+  }, [imageDialog, pendingImageDialog]);
+
   useEffect(() => {
     if (!runningMatterTarget || activeRibbonTab === 'header-footer' || activeRibbonTab === 'home') return;
     commitRunningMatter();
@@ -399,20 +398,6 @@ export function NotebookRichCanvas({
     const frame = requestAnimationFrame(refreshSelectedMediaStatus);
     return () => cancelAnimationFrame(frame);
   }, [paginationMetrics, refreshSelectedMediaStatus, setPaginationMetrics, viewMode]);
-
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    const editorElement = editor.view.dom as HTMLElement;
-    const onCropModeRequest = (event: Event) => {
-      const detail = (event as CustomEvent<{ active?: boolean; nodeId?: string | null }>).detail;
-      if (!detail?.nodeId) return;
-      const selected = notebookEditorSelection(editor);
-      if (selected?.type !== 'imageFigure' || selected.id !== detail.nodeId) return;
-      publishImageCropMode(detail.nodeId, detail.active === true);
-    };
-    editorElement.addEventListener('notebook-image-crop-mode-request', onCropModeRequest);
-    return () => editorElement.removeEventListener('notebook-image-crop-mode-request', onCropModeRequest);
-  }, [editor, publishImageCropMode]);
 
   useEffect(() => {
     documentRef.current = document;
@@ -467,6 +452,7 @@ export function NotebookRichCanvas({
     }
     loadedDocumentIdRef.current = document.id;
     editor.commands.setContent(notebookDocumentToTiptap(document), { emitUpdate: false });
+    setRevision((current) => current + 1);
   }, [document, editor]);
 
   useEffect(() => {
@@ -567,30 +553,128 @@ export function NotebookRichCanvas({
     };
   }, [editor]);
 
-  useEffect(() => {
-    if (!pendingImageDialog) {
-      imageDialogWasOpenRef.current = false;
-      return;
-    }
-    if (imageDialogIsOpen) {
-      imageDialogWasOpenRef.current = true;
-      return;
-    }
-    if (imageDialogWasOpenRef.current) {
-      imageDialogWasOpenRef.current = false;
-      setPendingImageDialog(null);
-      setImageBusy(false);
-      return;
-    }
-    openImageDialog();
-  }, [imageDialogIsOpen, openImageDialog, pendingImageDialog]);
-
   if (!editor) {
     return <div className="notebook-rich-canvas-loading">Preparing document…</div>;
   }
 
   const suggestion = selectedParagraphSuggestion(editor);
   const isBlank = isPristineNotebook(editor);
+
+  async function stageImageFile(file: File, insertionPosition?: number) {
+    if (!editor || editor.isDestroyed) return;
+    if (!isNotebookImageFile(file)) {
+      setImageError('Choose a PNG, JPEG, WebP, or safe SVG image.');
+      return;
+    }
+    const selection = captureNotebookToolbarSelection(editor);
+    setImageError(null);
+    let storedAssetId: string | null = null;
+    let assetAlreadyExisted = false;
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const inspection = await validateNotebookImage(
+        bytes,
+        file.type.startsWith('image/') ? file.type : undefined,
+      );
+      const expectedAssetId = `sha256:${await notebookSha256Hex(bytes)}`;
+      assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
+      const metadata = await assetPort.put(bytes, inspection.mimeType);
+      storedAssetId = metadata.id;
+      const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
+      const displaySize = initialImageDisplaySize(inspection, documentRef.current.pageSetup);
+      const imageContent = {
+        type: 'imageFigure',
+        attrs: {
+          id: nodeId,
+          assetId: metadata.id,
+          altText: null,
+          decorative: null,
+          caption: null,
+          numbered: null,
+          widthPercent: null,
+          displayWidthPt: displaySize.displayWidthPt,
+          displayHeightPt: displaySize.displayHeightPt,
+          displayAspectRatio: displaySize.displayAspectRatio,
+          alignment: 'center',
+          placement: 'normal',
+          rotation: 0,
+          cropX: null,
+          cropY: null,
+          cropWidth: null,
+          cropHeight: null,
+        },
+      };
+      const inserted = insertionPosition === undefined
+        ? restoreNotebookToolbarSelection(editor, selection).insertContent(imageContent).run()
+        : editor.chain().focus().insertContentAt(
+            Math.max(0, Math.min(editor.state.doc.content.size, insertionPosition)),
+            imageContent,
+          ).run();
+      const insertedImage = notebookEditorNodeById(editor, nodeId);
+      if (!inserted || !insertedImage) {
+        throw new Error('The editor could not place this image.');
+      }
+      editor.commands.setNodeSelection(insertedImage.from);
+      onSelectRibbonTab('picture-format');
+      requestAnimationFrame(refreshSelectedMediaStatus);
+    } catch (error) {
+      if (storedAssetId && !assetAlreadyExisted) {
+        await assetPort.delete(storedAssetId).catch(() => {});
+      }
+      setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
+    } finally {
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.value = '';
+      }
+    }
+  }
+
+  function openImageDetails() {
+    if (!editor || editor.isDestroyed) return;
+    const selected = notebookEditorSelection(editor);
+    if (selected?.type !== 'imageFigure' || !selected.id) return;
+    setPendingImageDialog({
+      mode: 'edit',
+      nodeId: selected.id,
+      initial: {
+        altText: String(selected.attrs.altText ?? ''),
+        decorative: selected.attrs.decorative === true,
+        caption: String(selected.attrs.caption ?? ''),
+        numbered: selected.attrs.numbered === true,
+      },
+    });
+  }
+
+  async function confirmImageDetails(details: NotebookImageDetails) {
+    if (!pendingImageDialog || !editor || editor.isDestroyed) return;
+    setImageBusy(true);
+    setImageError(null);
+    const located = notebookEditorNodeById(editor, pendingImageDialog.nodeId);
+    const node = located?.type === 'imageFigure'
+      ? editor.state.doc.nodeAt(located.from)
+      : null;
+    if (!located || !node) {
+      setImageError('The selected image is no longer available.');
+      setImageBusy(false);
+      return;
+    }
+    try {
+      editor.view.dispatch(editor.state.tr.setNodeMarkup(located.from, undefined, {
+        ...node.attrs,
+        altText: details.altText || null,
+        decorative: details.decorative || null,
+        caption: details.caption || null,
+        numbered: details.numbered || null,
+      }));
+      editor.commands.setNodeSelection(located.from);
+      setPendingImageDialog(null);
+      imageDialog.close(false);
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : 'Image details could not be saved.');
+    } finally {
+      setImageBusy(false);
+    }
+  }
 
   function applyTemplate(templateId: NotebookStarterTemplateId) {
     cancelDocumentSync();
@@ -619,9 +703,43 @@ export function NotebookRichCanvas({
   }
 
   function changePageSetup(pageSetup: NotebookPageSetup) {
-    editor.view.dispatch(
-      editor.state.tr.setDocAttribute('notebookPageSetup', pageSetup),
-    );
+    const transaction = editor.state.tr.setDocAttribute('notebookPageSetup', pageSetup);
+    const oldGeometry = notebookPageGeometry(document.pageSetup);
+    const pageScale = paginationMetrics.pageHeightPx > 1
+      ? paginationMetrics.pageHeightPx / oldGeometry.height
+      : 1;
+    const elements = new Map<string, HTMLElement>();
+    (editor.view.dom as HTMLElement)
+      .querySelectorAll<HTMLElement>('[data-notebook-node-id]')
+      .forEach((element) => {
+        const id = element.dataset.notebookNodeId;
+        if (id && !elements.has(id)) elements.set(id, element);
+      });
+    let clampedCount = 0;
+    editor.state.doc.descendants((node, position) => {
+      const placement = node.attrs.notebookObjectPlacement;
+      if (placement?.mode !== 'floating') return;
+      const id = String(node.attrs.id ?? '');
+      const measuredHeightPt = elements.get(id)?.getBoundingClientRect().height;
+      const nextPlacement = clampNotebookFloatingPlacementToPageSetup(
+        placement,
+        pageSetup,
+        measuredHeightPt ? measuredHeightPt / pageScale : 36,
+        typeof node.attrs.rotation === 'number' ? node.attrs.rotation : 0,
+      );
+      if (JSON.stringify(nextPlacement) === JSON.stringify(placement)) return;
+      transaction.setNodeMarkup(position, undefined, {
+        ...node.attrs,
+        notebookObjectPlacement: nextPlacement,
+      });
+      clampedCount += 1;
+    });
+    editor.view.dispatch(transaction);
+    if (clampedCount) {
+      setLayoutWarning(
+        `${clampedCount} floating ${clampedCount === 1 ? 'object was' : 'objects were'} kept inside the new page geometry.`,
+      );
+    }
   }
 
   function changeHeaderFooter(headerFooter: NotebookHeaderFooterSettings) {
@@ -659,168 +777,10 @@ export function NotebookRichCanvas({
     setRunningMatterTarget((current) => current ? { ...current, ...next } : current);
   }
 
-  async function stageImage(file: File, insertionPosition?: number) {
-    const selection = captureNotebookToolbarSelection(editor);
-    setImageError(null);
-    let storedAssetId: string | null = null;
-    let assetAlreadyExisted = false;
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const declaredType = file.type.startsWith('image/') ? file.type : undefined;
-      const inspection = await validateNotebookImage(bytes, declaredType);
-      const expectedAssetId = `sha256:${await notebookSha256Hex(bytes)}`;
-      assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
-      const metadata = await assetPort.put(bytes, inspection.mimeType);
-      storedAssetId = metadata.id;
-      const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
-      const displaySize = initialImageDisplaySize(inspection, documentRef.current.pageSetup);
-      const imageContent = {
-        type: 'imageFigure',
-        attrs: {
-          id: nodeId,
-          assetId: metadata.id,
-          altText: null,
-          decorative: false,
-          caption: null,
-          numbered: null,
-          widthPercent: null,
-          displayWidthPt: displaySize.displayWidthPt,
-          displayHeightPt: displaySize.displayHeightPt,
-          alignment: 'center',
-          placement: 'normal',
-          rotation: null,
-          displayAspectRatio: displaySize.displayAspectRatio,
-          cropX: null,
-          cropY: null,
-          cropWidth: null,
-          cropHeight: null,
-        },
-      };
-      const inserted = insertionPosition === undefined
-        ? restoreNotebookToolbarSelection(editor, selection).insertContent(imageContent).run()
-        : editor.chain().focus().insertContentAt(
-            Math.max(0, Math.min(editor.state.doc.content.size, insertionPosition)),
-            imageContent,
-          ).run();
-      const image = notebookEditorNodeById(editor, nodeId);
-      if (!inserted || !image) {
-        throw new Error('The editor could not place this image.');
-      }
-      editor.commands.setNodeSelection(image.from);
-      onSelectRibbonTab('picture-format');
-      requestAnimationFrame(refreshSelectedMediaStatus);
-    } catch (error) {
-      if (storedAssetId && !assetAlreadyExisted) {
-        await assetPort.delete(storedAssetId).catch(() => {});
-      }
-      setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
-    } finally {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  }
-
-  function openSelectedImageDetails() {
-    const selected = notebookEditorSelection(editor);
-    if (selected?.type !== 'imageFigure' || !selected.id) return;
-    setPendingImageDialog({
-      mode: 'edit',
-      nodeId: selected.id,
-      initial: {
-        altText: String(selected.attrs.altText ?? ''),
-        decorative: selected.attrs.decorative === true,
-        caption: String(selected.attrs.caption ?? ''),
-        numbered: selected.attrs.numbered === true,
-      },
-    });
-  }
-
-  function updateImageDetails(nodeId: string, details: NotebookImageDetails) {
-    const selected = notebookEditorNodeById(editor, nodeId);
-    if (!selected || selected.type !== 'imageFigure') return false;
-    const node = editor.state.doc.nodeAt(selected.from);
-    if (!node) return false;
-    editor.view.dispatch(editor.state.tr.setNodeMarkup(selected.from, undefined, {
-      ...node.attrs,
-      altText: details.altText || null,
-      decorative: details.decorative,
-      caption: details.caption || null,
-      numbered: details.numbered,
-    }));
-    return true;
-  }
-
-  async function confirmImageDetails(details: NotebookImageDetails) {
-    if (!pendingImageDialog) return;
-    setImageBusy(true);
-    setImageError(null);
-    if (pendingImageDialog.mode === 'edit') {
-      if (!updateImageDetails(pendingImageDialog.nodeId, details)) {
-        setImageError('The selected image is no longer available.');
-        setImageBusy(false);
-        return;
-      }
-      setPendingImageDialog(null);
-      imageDialog.close(false);
-      setImageBusy(false);
-      return;
-    }
-
-    const pending = pendingImageDialog;
-    let storedAssetId: string | null = null;
-    let assetAlreadyExisted = false;
-    try {
-      const expectedAssetId = `sha256:${await notebookSha256Hex(pending.bytes)}`;
-      assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
-      const metadata = await assetPort.put(pending.bytes, pending.inspection.mimeType);
-      storedAssetId = metadata.id;
-      const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
-      const imageContent = {
-        type: 'imageFigure',
-        attrs: {
-          id: nodeId,
-          assetId: metadata.id,
-          altText: details.altText || null,
-          decorative: details.decorative,
-          caption: details.caption || null,
-          numbered: details.numbered,
-          widthPercent: null,
-          alignment: null,
-          placement: null,
-          rotation: null,
-          displayAspectRatio: null,
-          cropX: null,
-          cropY: null,
-          cropWidth: null,
-          cropHeight: null,
-        },
-      };
-      const inserted = pending.insertionPosition === undefined
-        ? restoreNotebookToolbarSelection(editor, pending.selection).insertContent(imageContent).run()
-        : editor.chain().focus().insertContentAt(
-            Math.max(0, Math.min(editor.state.doc.content.size, pending.insertionPosition)),
-            imageContent,
-          ).run();
-      const image = notebookEditorNodeById(editor, nodeId);
-      if (!inserted || !image) throw new Error('The editor could not place this image.');
-      editor.commands.setNodeSelection(image.from);
-      setPendingImageDialog(null);
-      imageDialog.close(false);
-    } catch (error) {
-      if (storedAssetId && !assetAlreadyExisted) {
-        await assetPort.delete(storedAssetId).catch(() => {});
-      }
-      setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
-    } finally {
-      setImageBusy(false);
-    }
-  }
-
-  const contextualSelection = notebookEditorSelection(editor);
-  const contextualTab = runningMatterTarget ? 'header-footer' : contextualSelection?.type === 'imageFigure'
-    ? 'picture-format'
-    : null;
+  const currentContextualSelection = notebookEditorSelection(editor);
+  const contextualTab = runningMatterTarget
+    ? 'header-footer'
+    : currentContextualSelection?.type === 'imageFigure' ? 'picture-format' : null;
 
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
@@ -839,17 +799,20 @@ export function NotebookRichCanvas({
         onInsertDisplayMath={() => insertNotebookDisplayMath(editor, {
           onInserted: setPendingMathFocusId,
         })}
+        onInsertImage={() => {
+          setImageError(null);
+          imageFileInputRef.current?.click();
+        }}
         onInsertInlineMath={() => insertNotebookInlineMath(editor, {
           onInserted: setPendingMathFocusId,
         })}
-        onInsertImage={() => fileInputRef.current?.click()}
-        onEditImageDetails={openSelectedImageDetails}
         onInsertPageBreak={() => insertNotebookPageBreak(editor)}
         onViewModeChange={onViewModeChange}
         onRequestPalette={requestPalette}
         runningMatterEditor={runningMatterEditor}
         runningMatterTarget={runningMatterTarget}
         onBeginHeaderFooter={() => beginRunningMatter()}
+        onEditImageDetails={openImageDetails}
         onCloseHeaderFooter={() => {
           commitRunningMatter();
           onSelectRibbonTab('home');
@@ -860,6 +823,25 @@ export function NotebookRichCanvas({
         ref={scrollRegionRef}
         className={`notebook-rich-scroll-region${runningMatterTarget ? ' is-running-matter-editing' : ''}`}
         data-empty={isBlank ? 'true' : 'false'}
+        onDragOver={(event) => {
+          const file = event.dataTransfer.files?.item?.(0) ?? event.dataTransfer.files?.[0] ?? null;
+          if (file && isNotebookImageFile(file)) {
+            event.preventDefault();
+          }
+        }}
+        onDrop={(event) => {
+          const file = event.dataTransfer.files?.item?.(0) ?? event.dataTransfer.files?.[0] ?? null;
+          if (!file || !isNotebookImageFile(file)) return;
+          event.preventDefault();
+          const position = editor.view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+          void stageImageFile(file, position);
+        }}
+        onPaste={(event) => {
+          const file = readClipboardEventFile(event.nativeEvent);
+          if (!file || !isNotebookImageFile(file)) return;
+          event.preventDefault();
+          void stageImageFile(file);
+        }}
         onDoubleClick={(event) => {
           if (runningMatterTarget && event.target instanceof Node && editor.view.dom.contains(event.target)) {
             commitRunningMatter();
@@ -892,34 +874,13 @@ export function NotebookRichCanvas({
             : 'default';
           beginRunningMatter({ pageIndex, kind, region, scope });
         }}
-        onDragOver={(event) => {
-          if (event.dataTransfer.files.length > 0) event.preventDefault();
-        }}
-        onDrop={(event) => {
-          const file = event.dataTransfer.files.item(0);
-          if (!file) return;
-          event.preventDefault();
-          const position = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
-          const insertionPosition = position?.pos ?? editor.state.doc.content.size;
-          void stageImage(file, insertionPosition);
-        }}
-        onPaste={(event) => {
-          const file = readClipboardEventFile(event);
-          if (!file) return;
-          event.preventDefault();
-          void stageImage(file);
-        }}
       >
         <div
           ref={pageStageRef}
           className={`notebook-page-stage is-${viewMode}`}
           data-page-count={paginationMetrics.pageCount}
         >
-          {isBlank ? (
-            <span className="notebook-empty-writing-prompt" aria-hidden="true">
-              Start writing your explanation...
-            </span>
-          ) : null}
+          {isBlank ? <NotebookEmptyWritingPrompt /> : null}
           {viewMode === 'print' ? (
             <NotebookPageSheets
               activeTarget={runningMatterTarget}
@@ -936,45 +897,38 @@ export function NotebookRichCanvas({
             />
           ) : null}
           <EditorContent className="notebook-rich-editor-host" editor={editor} />
-          {isBlank ? (
-            <div className="notebook-template-start" data-testid="notebook-template-start">
-              <div>
-                <Sparkles aria-hidden="true" size={18} />
-                <span>Prefer a structured starting point?</span>
-              </div>
-              <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
-                Start from template
-              </button>
-              {templateMenu.isOpen ? (
-                <NotebookFloatingLayer align="end" layerId={templateMenu.id} className="notebook-template-menu">
-                  {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
-                    <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
-                      <strong>{template.label}</strong>
-                      <span>{template.description}</span>
-                    </button>
-                  ))}
-                </NotebookFloatingLayer>
-              ) : null}
-            </div>
-          ) : null}
+          {isBlank ? <NotebookTemplateStart
+            isOpen={templateMenu.isOpen}
+            layerId={templateMenu.id}
+            onApply={applyTemplate}
+            onToggle={templateMenu.toggle}
+          /> : null}
         </div>
-        {runningMatterOverflow ? (
-          <div className="notebook-running-matter-warning" role="status">
-            Running matter exceeds the current margin band. Content is preserved.
-          </div>
-        ) : null}
+        <NotebookCanvasWarnings
+          layoutWarning={layoutWarning}
+          runningMatterOverflow={runningMatterOverflow}
+        />
       </div>
+      {!runningMatterTarget ? <NotebookSelectionToolbar
+        key={paletteRequest?.nonce ?? 0} editor={editor}
+        paletteRequest={paletteRequest} selection={proseSelection}
+      /> : null}
+      {suggestion ? <NotebookMathSuggestion
+        editor={editor}
+        onInserted={setPendingMathFocusId}
+        suggestion={suggestion}
+      /> : null}
       <input
-        ref={fileInputRef}
+        ref={imageFileInputRef}
+        aria-label="Choose image"
         className="sr-only"
         type="file"
-        accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
-        aria-label="Choose image"
+        accept={NOTEBOOK_IMAGE_FILE_ACCEPT}
         onChange={(event) => {
           const files = event.currentTarget.files;
           const file = files?.item?.(0) ?? files?.[0] ?? null;
           event.currentTarget.value = '';
-          if (file) void stageImage(file);
+          if (file) void stageImageFile(file);
         }}
       />
       {imageError ? (
@@ -985,50 +939,14 @@ export function NotebookRichCanvas({
       ) : null}
       {pendingImageDialog && imageDialog.isOpen ? (
         <NotebookImageDetailsDialog
-          key={pendingImageDialog.mode === 'insert'
-            ? pendingImageDialog.fileName
-            : pendingImageDialog.nodeId}
+          key={pendingImageDialog.nodeId}
           busy={imageBusy}
-          fileName={pendingImageDialog.mode === 'insert' ? pendingImageDialog.fileName : undefined}
-          initial={pendingImageDialog.mode === 'insert'
-            ? { altText: '', decorative: false, caption: '', numbered: true }
-            : pendingImageDialog.initial}
-          mode={pendingImageDialog.mode}
-          warnings={pendingImageDialog.mode === 'insert'
-            ? pendingImageDialog.inspection.warnings
-            : []}
+          initial={pendingImageDialog.initial}
+          mode="edit"
+          warnings={[]}
           onCancel={() => imageDialog.close()}
           onConfirm={(details) => void confirmImageDetails(details)}
         />
-      ) : null}
-      {!runningMatterTarget ? <NotebookSelectionToolbar
-        key={paletteRequest?.nonce ?? 0} editor={editor}
-        paletteRequest={paletteRequest} selection={proseSelection}
-      /> : null}
-      {suggestion ? (
-        <div className="notebook-math-suggestion" data-testid="notebook-math-suggestion">
-          <div>
-            <span>Possible math</span>
-            <strong>{suggestion.sourceText}</strong>
-          </div>
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => {
-              editor.chain().setTextSelection({
-                from: suggestion.from,
-                to: suggestion.to,
-              }).run();
-              insertNotebookInlineMath(editor, {
-                onInserted: setPendingMathFocusId,
-                sourceText: suggestion.sourceText,
-              });
-            }}
-          >
-            <Check aria-hidden="true" size={14} />
-            Convert selected text
-          </button>
-        </div>
       ) : null}
     </div>
   );

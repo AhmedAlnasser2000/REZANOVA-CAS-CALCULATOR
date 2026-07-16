@@ -302,9 +302,13 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
   const initialGeometry = await page.evaluate(() => {
     const stageBounds = document.querySelector('[data-testid="app-stage"]')!.getBoundingClientRect();
     const notebookBounds = document.querySelector('[data-testid="notebook-page"]')!.getBoundingClientRect();
-    const editorBounds = document.querySelector('.notebook-rich-editor')!.getBoundingClientRect();
-    const pageBounds = document.querySelector('.notebook-page-stage')!.getBoundingClientRect();
+    const sheetBounds = document.querySelector('.notebook-page-sheet')!.getBoundingClientRect();
     const scrollBounds = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
+    const pageStyle = getComputedStyle(document.querySelector('.notebook-page-stage')!);
+    const marginTop = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-top-px'));
+    const marginRight = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-right-px'));
+    const marginBottom = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-bottom-px'));
+    const marginLeft = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-left-px'));
     const promptBounds = [...document.querySelectorAll('span')]
       .find((element) => element.textContent === 'Start writing your explanation...')!
       .getBoundingClientRect();
@@ -312,34 +316,51 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
     return {
       stageWidth: stageBounds.width,
       notebookWidth: notebookBounds.width,
-      promptInsidePage: promptBounds.left >= editorBounds.left && promptBounds.top >= pageBounds.top,
+      promptInsidePage: promptBounds.left >= sheetBounds.left + marginLeft - 1
+        && promptBounds.right <= sheetBounds.right - marginRight + 1
+        && promptBounds.top >= sheetBounds.top + marginTop - 1,
+      templateInsidePage: templateBounds.left >= sheetBounds.left + marginLeft - 1
+        && templateBounds.right <= sheetBounds.right - marginRight + 1
+        && templateBounds.top >= sheetBounds.top + marginTop - 1
+        && templateBounds.bottom <= sheetBounds.bottom - marginBottom + 1,
       templateInsideViewport: templateBounds.top >= scrollBounds.top
         && templateBounds.bottom <= scrollBounds.bottom,
     };
   });
   expect(initialGeometry.notebookWidth).toBeGreaterThanOrEqual(initialGeometry.stageWidth - 2);
   expect(initialGeometry.promptInsidePage).toBe(true);
+  expect(initialGeometry.templateInsidePage).toBe(true);
   expect(initialGeometry.templateInsideViewport).toBe(true);
 
   for (const width of [1440, 1100]) {
     await page.setViewportSize({ width, height: 900 });
     const onboardingGeometry = await page.evaluate(() => {
-      const pageBounds = document.querySelector('.notebook-page-stage')!.getBoundingClientRect();
+      const sheetBounds = document.querySelector('.notebook-page-sheet')!.getBoundingClientRect();
       const scrollBounds = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
+      const pageStyle = getComputedStyle(document.querySelector('.notebook-page-stage')!);
+      const marginTop = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-top-px'));
+      const marginRight = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-right-px'));
+      const marginBottom = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-bottom-px'));
+      const marginLeft = Number.parseFloat(pageStyle.getPropertyValue('--notebook-page-margin-left-px'));
       const promptBounds = [...document.querySelectorAll('span')]
         .find((element) => element.textContent === 'Start writing your explanation...')!
         .getBoundingClientRect();
       const templateBounds = document.querySelector('[data-testid="notebook-template-start"]')!
         .getBoundingClientRect();
       return {
-        pageBounds: { left: pageBounds.left, top: pageBounds.top },
-        promptBounds: { left: promptBounds.left, top: promptBounds.top },
+        promptInsidePage: promptBounds.left >= sheetBounds.left + marginLeft - 1
+          && promptBounds.right <= sheetBounds.right - marginRight + 1
+          && promptBounds.top >= sheetBounds.top + marginTop - 1,
         scrollBounds: { bottom: scrollBounds.bottom, top: scrollBounds.top },
         templateBounds: { bottom: templateBounds.bottom, top: templateBounds.top },
+        templateInsidePage: templateBounds.left >= sheetBounds.left + marginLeft - 1
+          && templateBounds.right <= sheetBounds.right - marginRight + 1
+          && templateBounds.top >= sheetBounds.top + marginTop - 1
+          && templateBounds.bottom <= sheetBounds.bottom - marginBottom + 1,
       };
     });
-    expect(onboardingGeometry.promptBounds.left).toBeGreaterThanOrEqual(onboardingGeometry.pageBounds.left);
-    expect(onboardingGeometry.promptBounds.top).toBeGreaterThanOrEqual(onboardingGeometry.pageBounds.top);
+    expect(onboardingGeometry.promptInsidePage).toBe(true);
+    expect(onboardingGeometry.templateInsidePage).toBe(true);
     expect(onboardingGeometry.templateBounds.top).toBeGreaterThanOrEqual(onboardingGeometry.scrollBounds.top);
     expect(onboardingGeometry.templateBounds.bottom).toBeLessThanOrEqual(onboardingGeometry.scrollBounds.bottom);
   }
