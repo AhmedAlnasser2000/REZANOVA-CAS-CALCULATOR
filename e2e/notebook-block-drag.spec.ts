@@ -23,6 +23,15 @@ async function dragHandleBefore(page: Page, source: Locator, target: Locator) {
   );
 }
 
+async function dragHandleTo(page: Page, source: Locator, destination: { x: number; y: number }) {
+  await source.scrollIntoViewIfNeeded();
+  const bounds = await source.boundingBox();
+  expect(bounds).not.toBeNull();
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(destination.x, destination.y, { steps: 8 });
+}
+
 test('Notebook uses one pointer path for canvas and Outline block movement', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openWorkedExample(page);
@@ -61,6 +70,77 @@ test('Notebook uses one pointer path for canvas and Outline block movement', asy
     .getByRole('button', { name: /Move Untitled section/ })).toBeVisible();
   await expect(page.getByTestId('notebook-display-math-node')
     .getByRole('button', { name: 'Move separate equation' })).toBeVisible();
+});
+
+test('Notebook block drag into page whitespace creates a floating structured object', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openWorkedExample(page);
+  await expect(page.locator('.notebook-page-stage.is-print')).toBeVisible();
+
+  await page.getByLabel('Notebook rich document').click();
+  await page.getByRole('tab', { name: 'Insert' }).click();
+  await page.getByRole('button', { name: 'Insert evidence' }).click();
+  const evidenceHandle = page.getByRole('button', { name: /Move Evidence snapshot/ }).last();
+  await expect(evidenceHandle).toBeVisible();
+  const evidence = evidenceHandle.locator('xpath=ancestor::*[@data-notebook-block-type="evidenceSnapshot"][1]');
+  await expect(evidence).toBeVisible();
+  const evidenceBounds = await evidence.boundingBox();
+  expect(evidenceBounds).not.toBeNull();
+  const dropPoint = await page.evaluate((sourceCenterY) => {
+    const stage = document.querySelector('.notebook-page-stage')!.getBoundingClientRect();
+    return {
+      x: stage.right - 36,
+      y: Math.min(Math.max(stage.top + 80, sourceCenterY), stage.bottom - 80),
+    };
+  }, evidenceBounds!.y + evidenceBounds!.height / 2);
+
+  await dragHandleTo(
+    page,
+    evidenceHandle,
+    dropPoint,
+  );
+  await expect(page.locator('.notebook-block-floating-guide')).toContainText('Float here');
+  await page.mouse.up();
+  await expect(evidence).toHaveAttribute('data-notebook-floating-object', 'true');
+  await page.keyboard.press('Control+S');
+  await expect(page.getByText('Saved locally').first()).toBeVisible();
+  await expect.poll(async () => page.evaluate(async () => {
+    function findFloatingEvidence(nodes: unknown[]): { objectPlacement?: { mode?: string; wrap?: string }; type?: string } | undefined {
+      for (const node of nodes) {
+        if (!node || typeof node !== 'object') continue;
+        const record = node as {
+          content?: unknown[];
+          objectPlacement?: { mode?: string; wrap?: string };
+          type?: string;
+        };
+        if (record.type === 'evidenceSnapshot' && record.objectPlacement?.mode === 'floating') {
+          return record;
+        }
+        if (Array.isArray(record.content)) {
+          const nested = findFloatingEvidence(record.content);
+          if (nested) return nested;
+        }
+      }
+      return undefined;
+    }
+    const request = indexedDB.open('calcwiz-notebook-library-v1', 2);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const recordsRequest = database.transaction('records', 'readonly')
+      .objectStore('records').getAll();
+    const records = await new Promise<Array<{ document?: { content?: unknown[] } }>>((resolve, reject) => {
+      recordsRequest.onsuccess = () => resolve(recordsRequest.result as Array<{ document?: { content?: unknown[] } }>);
+      recordsRequest.onerror = () => reject(recordsRequest.error);
+    });
+    database.close();
+    return records.map((record) => findFloatingEvidence(record.document?.content ?? []))
+      .find(Boolean);
+  })).toMatchObject({
+    objectPlacement: { mode: 'floating', wrap: 'square' },
+    type: 'evidenceSnapshot',
+  });
 });
 
 for (const evidence of [

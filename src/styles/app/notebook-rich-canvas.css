@@ -1711,6 +1711,22 @@
   white-space: nowrap;
 }
 
+.notebook-block-floating-guide {
+  position: fixed;
+  z-index: 1001;
+  box-sizing: border-box;
+  border: 1px solid var(--notebook-accent);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--notebook-accent) 18%, #102021);
+  color: var(--page-ink);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
+  font-size: 0.74rem;
+  font-weight: 800;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .notebook-media-drop-guide {
   z-index: 1001;
   height: 2px;
@@ -2354,6 +2370,7 @@
   .notebook-image-crop-reset,
   .notebook-media-drag-ghost,
   .notebook-block-drag-ghost,
+  .notebook-block-floating-guide,
   .notebook-block-drag-handle {
     border-color: Highlight;
     background: Canvas;

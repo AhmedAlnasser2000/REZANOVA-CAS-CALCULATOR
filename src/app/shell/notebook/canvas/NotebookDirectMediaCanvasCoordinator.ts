@@ -21,6 +21,14 @@ import type {
   NotebookMediaDragGripEvent,
   NotebookMediaInteractionEvent,
 } from './NotebookDirectMediaInteraction';
+import {
+  floatingPlacementForBlockPointer,
+  nearestParagraphAnchor,
+  nextFloatingZOrder,
+  pointerIsInBlockFloatingDropZone,
+  renderNotebookBlockDragGhost,
+  renderNotebookBlockFloatingGuide,
+} from './NotebookFloatingBlockInteraction';
 import type {
   NotebookPaginationMetrics,
   NotebookViewMode,
@@ -83,14 +91,6 @@ function positionMediaDragGhost(
   ghost.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
 }
 
-function positionBlockDragGhost(
-  ghost: HTMLDivElement,
-  pointer: { clientX: number; clientY: number },
-) {
-  ghost.style.left = `${pointer.clientX + 14}px`;
-  ghost.style.top = `${pointer.clientY + 14}px`;
-}
-
 function positionMediaDropGuide(
   guide: HTMLDivElement,
   target: HTMLElement,
@@ -133,41 +133,6 @@ function pointInside(
     && point.clientY <= bounds.bottom;
 }
 
-function nearestParagraphAnchor(
-  editor: Editor,
-  sourcePosition: number,
-  fallbackPageNumber: number,
-): FloatingObjectPlacement['anchor'] {
-  let preceding: string | null = null;
-  let following: string | null = null;
-  editor.state.doc.descendants((node, position) => {
-    if (node.type.name !== 'paragraph') return;
-    const id = typeof node.attrs.id === 'string' && node.attrs.id.trim()
-      ? node.attrs.id
-      : null;
-    if (!id) return;
-    if (position < sourcePosition) {
-      preceding = id;
-    } else if (position > sourcePosition && !following) {
-      following = id;
-    }
-  });
-  return preceding || following
-    ? { kind: 'paragraph', nodeId: preceding ?? following! }
-    : { kind: 'page', pageNumber: fallbackPageNumber };
-}
-
-function nextFloatingZOrder(editor: Editor) {
-  let maximum = -1;
-  editor.state.doc.descendants((node) => {
-    const placement = node.attrs.notebookObjectPlacement;
-    if (placement?.mode === 'floating' && Number.isInteger(placement.zOrder)) {
-      maximum = Math.max(maximum, Number(placement.zOrder));
-    }
-  });
-  return maximum + 1;
-}
-
 /**
  * One Notebook pointer coordinator for block movement and direct media gestures.
  * Node views expose handles; this hook owns previews and delegates committed
@@ -195,6 +160,8 @@ export function useNotebookPointerCoordinator({
   const mediaAutoScrollVelocityRef = useRef(0);
   const latestMediaDragEventRef = useRef<NotebookMediaDragGripEvent | null>(null);
   const blockDragRef = useRef<BlockDragState | null>(null);
+  const blockFloatingDropRef = useRef(false);
+  const blockFloatingGuideRef = useRef<HTMLDivElement | null>(null);
   const blockDragGhostRef = useRef<HTMLDivElement | null>(null);
   const blockDropPlacementRef = useRef<NotebookMovePlacement | null>(null);
   const blockAutoScrollFrameRef = useRef<number | null>(null);
@@ -245,8 +212,15 @@ export function useNotebookPointerCoordinator({
     }
   }, []);
 
+  const clearBlockFloatingGuide = useCallback(() => {
+    blockFloatingDropRef.current = false;
+    blockFloatingGuideRef.current?.remove();
+    blockFloatingGuideRef.current = null;
+  }, []);
+
   const clearBlockDrag = useCallback(() => {
     stopBlockAutoScroll();
+    clearBlockFloatingGuide();
     try {
       blockDragRef.current?.pointerTarget.releasePointerCapture?.(
         blockDragRef.current.pointerId,
@@ -259,7 +233,7 @@ export function useNotebookPointerCoordinator({
     blockDragGhostRef.current?.remove();
     blockDragGhostRef.current = null;
     clearMediaDropTarget();
-  }, [clearMediaDropTarget, stopBlockAutoScroll]);
+  }, [clearBlockFloatingGuide, clearMediaDropTarget, stopBlockAutoScroll]);
 
   const clearMediaFlowTargets = useCallback(() => {
     mediaFlowTargetsElementRef.current?.remove();
@@ -719,20 +693,8 @@ export function useNotebookPointerCoordinator({
     updateMediaDragDestination,
   ]);
 
-  const renderBlockDragGhost = useCallback((state: BlockDragState, pointer: {
-    clientX: number;
-    clientY: number;
-  }) => {
-    let ghost = blockDragGhostRef.current;
-    if (!ghost) {
-      ghost = globalThis.document.createElement('div');
-      ghost.className = 'notebook-block-drag-ghost';
-      ghost.setAttribute('aria-hidden', 'true');
-      ghost.textContent = state.label;
-      globalThis.document.body.append(ghost);
-      blockDragGhostRef.current = ghost;
-    }
-    positionBlockDragGhost(ghost, pointer);
+  const renderBlockFloatingGuide = useCallback((pointer: { clientX: number; clientY: number }) => {
+    renderNotebookBlockFloatingGuide(blockFloatingGuideRef, pointer);
   }, []);
 
   const blockTargetAtPoint = useCallback((
@@ -787,20 +749,46 @@ export function useNotebookPointerCoordinator({
     state: BlockDragState,
     pointer: { clientX: number; clientY: number },
   ) => {
-    renderBlockDragGhost(state, pointer);
+    renderNotebookBlockDragGhost(blockDragGhostRef, state.label, pointer);
+    const editor = editorRef.current;
+    if (editor && !editor.isDestroyed && pointerIsInBlockFloatingDropZone({
+      editor,
+      pageStage: pageStageRef.current,
+      pointer,
+      scrollRegion: scrollRegionRef.current,
+      sourceId: state.nodeId,
+      viewMode: viewModeRef.current,
+    })) {
+      blockDropPlacementRef.current = null;
+      clearMediaDropTarget();
+      blockFloatingDropRef.current = true;
+      renderBlockFloatingGuide(pointer);
+      return;
+    }
     const target = blockTargetAtPoint(state.nodeId, pointer);
     if (!target) {
       blockDropPlacementRef.current = null;
       clearMediaDropTarget();
+      clearBlockFloatingGuide();
       return;
     }
+    clearBlockFloatingGuide();
     if (mediaDropTargetRef.current !== target.element) {
       clearMediaDropTarget();
       mediaDropTargetRef.current = target.element;
     }
     blockDropPlacementRef.current = target.placement;
     renderMediaDropGuide(target.element, target.placement);
-  }, [blockTargetAtPoint, clearMediaDropTarget, renderBlockDragGhost, renderMediaDropGuide]);
+  }, [
+    blockTargetAtPoint,
+    clearBlockFloatingGuide,
+    clearMediaDropTarget,
+    editorRef,
+    pageStageRef,
+    renderBlockFloatingGuide,
+    renderMediaDropGuide,
+    scrollRegionRef,
+  ]);
 
   const updateBlockAutoScroll = useCallback((
     pointer: { clientX: number; clientY: number },
@@ -898,16 +886,49 @@ export function useNotebookPointerCoordinator({
       const state = blockDragRef.current;
       if (!state || state.pointerId !== event.pointerId) return;
       const wasActive = state.active;
+      const pointer = { clientX: event.clientX, clientY: event.clientY };
+      const editor = editorRef.current;
+      const shouldFloat = blockFloatingDropRef.current
+        || Boolean(editor && !editor.isDestroyed
+          && pointerIsInBlockFloatingDropZone({
+            editor,
+            pageStage: pageStageRef.current,
+            pointer,
+            scrollRegion: scrollRegionRef.current,
+            sourceId: state.nodeId,
+            viewMode: viewModeRef.current,
+          }));
       const targetId = mediaDropTargetRef.current?.dataset.notebookNodeId
         ?? mediaDropTargetRef.current?.dataset.nodeId
         ?? null;
       const placement = blockDropPlacementRef.current;
       clearBlockDrag();
       if (cancelled) return;
-      const editor = editorRef.current;
       if (!editor || editor.isDestroyed) return;
       if (!wasActive) {
         selectNotebookEditorNode(editor, state.nodeId);
+        return;
+      }
+      if (shouldFloat) {
+        const placementForBlock = floatingPlacementForBlockPointer({
+          document: documentRef.current,
+          editor,
+          nodeId: state.nodeId,
+          pageStage: pageStageRef.current,
+          paginationMetrics: paginationMetricsRef.current,
+          pointer,
+          viewMode: viewModeRef.current,
+        });
+        const source = notebookEditorNodeById(editor, state.nodeId);
+        if (!placementForBlock || !source) return;
+        const node = editor.state.doc.nodeAt(source.from);
+        if (!node) return;
+        const transaction = editor.state.tr.setNodeMarkup(source.from, undefined, {
+          ...node.attrs,
+          notebookObjectPlacement: placementForBlock,
+        });
+        transaction.setSelection(NodeSelection.create(transaction.doc, source.from));
+        editor.view.dispatch(transaction.scrollIntoView());
         return;
       }
       if (targetId && placement) {
@@ -938,7 +959,10 @@ export function useNotebookPointerCoordinator({
     };
   }, [
     clearBlockDrag,
+    documentRef,
     editorRef,
+    pageStageRef,
+    scrollRegionRef,
     updateBlockAutoScroll,
     updateBlockDragDestination,
   ]);
