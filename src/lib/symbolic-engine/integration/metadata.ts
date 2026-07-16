@@ -1,4 +1,15 @@
-import { backcheckAntiderivative, type AntiderivativeBackcheck } from '../../calculus/engine/verification';
+import {
+  calculusAntiderivativeExpressionToAst,
+  renderCalculusAntiderivativeExpression,
+  type CalculusAntiderivativeExpression,
+  type CalculusIntegrationDetailNode,
+  type CalculusIntegrationFactNode,
+} from '../../calculus/engine/antiderivative-expression';
+import {
+  backcheckAntiderivative,
+  backcheckAntiderivativeAst,
+  type AntiderivativeBackcheck,
+} from '../../calculus/engine/verification';
 import {
   decomposeDistinctLinearPartialFractions,
   decomposeRationalPartialFractionReadiness,
@@ -24,23 +35,47 @@ export function symbolicSuccess(
   precomputedVerification?: AntiderivativeBackcheck,
   exactSupplementLatex?: string[],
   detailSections?: DisplayDetailSection[],
+  antiderivativeExpression?: CalculusAntiderivativeExpression,
+  factNodes?: CalculusIntegrationFactNode[],
+  detailNodes?: CalculusIntegrationDetailNode[],
 ): IntegralResolution {
-  const verification = precomputedVerification
-    ?? backcheckAntiderivative({
-      antiderivativeLatex: exactLatex,
-      integrand: node,
-      variable,
-    });
+  const expressionAst = antiderivativeExpression
+    ? calculusAntiderivativeExpressionToAst(antiderivativeExpression)
+    : undefined;
+  const canonicalLatex = antiderivativeExpression
+    ? renderCalculusAntiderivativeExpression(antiderivativeExpression)
+    : exactLatex;
+  const verification = antiderivativeExpression
+    ? expressionAst === undefined
+      ? {
+          status: 'not-checkable' as const,
+          reason: 'native antiderivative expression could not be differentiated',
+        }
+      : backcheckAntiderivativeAst({
+          antiderivative: expressionAst,
+          integrand: node,
+          variable,
+        })
+    : precomputedVerification ?? backcheckAntiderivative({
+        antiderivativeLatex: canonicalLatex,
+        integrand: node,
+        variable,
+      });
 
   return {
     kind: 'success',
-    exactLatex,
+    exactLatex: canonicalLatex,
+    ...(antiderivativeExpression
+      ? { antiderivativeExpression: structuredClone(antiderivativeExpression) }
+      : {}),
     origin: 'rule-based-symbolic',
     strategy,
     verification,
     candidate: buildSuccessfulCandidateMetadata(node, strategy, verification),
     exactSupplementLatex,
     detailSections,
+    ...(factNodes?.length ? { factNodes: structuredClone(factNodes) } : {}),
+    ...(detailNodes?.length ? { detailNodes: structuredClone(detailNodes) } : {}),
   };
 }
 

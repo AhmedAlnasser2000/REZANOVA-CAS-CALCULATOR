@@ -1,5 +1,10 @@
 import type { AntiderivativeBackcheck, AntiderivativeBackcheckStatus } from '../../calculus/engine/verification';
 import type { CalculusIntegrationStrategy, DisplayDetailSection } from '../../../types/calculator';
+import type {
+  CalculusAntiderivativeExpression,
+  CalculusIntegrationDetailNode,
+  CalculusIntegrationFactNode,
+} from '../../calculus/engine/antiderivative-expression';
 
 export const BY_PARTS_POLYNOMIAL_DEGREE_CAP = 6;
 export const LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP = 4;
@@ -43,16 +48,21 @@ export type IntegralResolution =
   | {
       kind: 'success';
       exactLatex: string;
+      antiderivativeExpression?: CalculusAntiderivativeExpression;
       origin: 'rule-based-symbolic';
       strategy: IntegralStrategy;
       verification: AntiderivativeBackcheck;
       candidate: IntegrationCandidateMetadata;
       exactSupplementLatex?: string[];
       detailSections?: DisplayDetailSection[];
+      factNodes?: CalculusIntegrationFactNode[];
+      detailNodes?: CalculusIntegrationDetailNode[];
     }
   | {
       kind: 'error';
       error: string;
       candidate: IntegrationCandidateMetadata;
       detailSections?: DisplayDetailSection[];
+      factNodes?: CalculusIntegrationFactNode[];
+      detailNodes?: CalculusIntegrationDetailNode[];
     };

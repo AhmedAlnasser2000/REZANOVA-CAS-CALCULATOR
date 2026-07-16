@@ -17,5 +17,6 @@
 
 ## Commits
 
-- `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1` - verified and approved for path-scoped commit; hash will be recorded in the next checkpoint because a commit cannot contain its own final hash.
-- Eight later approved commits remain pending.
+- `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1` - `64121dda`.
+- `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1` - verified and approved for path-scoped commit; hash will be recorded in the next checkpoint because a commit cannot contain its own final hash.
+- Seven later approved commits remain pending.

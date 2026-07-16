@@ -12,7 +12,11 @@ import {
 import { parseAffine } from '../../symbolic-engine/patterns';
 import type { DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
-import { backcheckAntiderivative } from './verification';
+import { backcheckAntiderivative, backcheckAntiderivativeAst } from './verification';
+import {
+  renderCalculusAntiderivativeExpression,
+  standardAntiderivativeExpression,
+} from './antiderivative-expression';
 import {
   orchestrateTranscendentalCertificateCandidate,
 } from '../../symbolic-engine/integration/transcendental-certificate/orchestrator';
@@ -159,14 +163,33 @@ function resolvedComputeEngineIntegral(
     return undefined;
   }
 
-  const backcheck = backcheckAntiderivative({
-    antiderivativeLatex: computed.latex,
-    integrand: body,
-    variable,
-  });
+  let antiderivativeExpression: CalculusCoreEvaluation['antiderivativeExpression'];
+  try {
+    antiderivativeExpression = standardAntiderivativeExpression({
+      mathJson: computed.json,
+      source: 'calculus.integration:compute-engine-native-result',
+    });
+  } catch {
+    antiderivativeExpression = undefined;
+  }
+  const exactLatex = antiderivativeExpression
+    ? renderCalculusAntiderivativeExpression(antiderivativeExpression)
+    : computed.latex;
+  const backcheck = antiderivativeExpression
+    ? backcheckAntiderivativeAst({
+        antiderivative: computed.json,
+        integrand: body,
+        variable,
+      })
+    : backcheckAntiderivative({
+        antiderivativeLatex: exactLatex,
+        integrand: body,
+        variable,
+      });
 
   return profileCalculusResult({
-    exactLatex: computed.latex,
+    exactLatex,
+    ...(antiderivativeExpression ? { antiderivativeExpression } : {}),
     approxText: latexToApproxText((computed.N?.() ?? computed).latex),
     warnings: [],
     resultOrigin: origin,
@@ -209,7 +232,9 @@ export function resolveIndefiniteIntegralFromAst(input: {
       ...(partialFractionDetail ? [partialFractionDetail] : []),
     ];
     const shouldNormalizeRuleLatex =
-      input.normalizeRuleLatex && symbolicEngine.candidate?.method !== 'partial-fractions';
+      input.normalizeRuleLatex
+      && !symbolicEngine.antiderivativeExpression
+      && symbolicEngine.candidate?.method !== 'partial-fractions';
     return profileCalculusResult({
       exactLatex: shouldNormalizeRuleLatex
         ? normalizeExactLatex(symbolicEngine.exactLatex)
@@ -220,6 +245,9 @@ export function resolveIndefiniteIntegralFromAst(input: {
       integrationStrategy: symbolicEngine.strategy,
       integrationCandidate: symbolicEngine.candidate,
       antiderivativeBackcheck: symbolicEngine.verification,
+      antiderivativeExpression: symbolicEngine.antiderivativeExpression,
+      integrationFactNodes: symbolicEngine.factNodes,
+      integrationDetailNodes: symbolicEngine.detailNodes,
       detailSections: mergeCalculusAssumptionDetails(
         integrationDetails.length > 0 ? integrationDetails : undefined,
         antiderivativeTrustFacts(symbolicEngine.verification),
@@ -275,6 +303,8 @@ export function resolveIndefiniteIntegralFromAst(input: {
       : input.unsupportedError,
     integrationCandidate: symbolicEngine.candidate,
     detailSections: symbolicEngine.detailSections,
+    integrationFactNodes: symbolicEngine.factNodes,
+    integrationDetailNodes: symbolicEngine.detailNodes,
   };
 }
 

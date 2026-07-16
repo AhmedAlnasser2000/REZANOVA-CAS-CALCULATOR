@@ -49,7 +49,7 @@ describe('calculus integrals', () => {
       integrationVariable: 'y',
     });
     expect(yResult.error).toBeUndefined();
-    expect(yResult.exactLatex).toContain('y^{3}');
+    expect(yResult.exactLatex).toContain('y^3');
 
     const tResult = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 't e^t',
@@ -64,7 +64,7 @@ describe('calculus integrals', () => {
     });
     expect(parameterResult.error).toBeUndefined();
     expect(parameterResult.exactLatex).toContain('x');
-    expect(parameterResult.exactLatex).toContain('t^{2}');
+    expect(parameterResult.exactLatex).toContain('t^2');
   });
 
   it('rejects equation-like indefinite-integral inputs with a controlled expression error', () => {

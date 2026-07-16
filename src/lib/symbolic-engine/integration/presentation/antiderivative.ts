@@ -4,8 +4,15 @@ import type {
 } from '../../../../types/calculator';
 import {
   backcheckAntiderivative,
+  backcheckAntiderivativeAst,
   type AntiderivativeBackcheck,
 } from '../../../calculus/engine/verification';
+import {
+  calculusAntiderivativeExpressionToAst,
+  renderCalculusAntiderivativeExpression,
+  withIntegrationConstant,
+  type CalculusAntiderivativeExpression,
+} from '../../../calculus/engine/antiderivative-expression';
 import {
   integrationDetailSection,
   integrationMathRow,
@@ -17,6 +24,7 @@ type PresentationInput = {
   integrand: unknown;
   variable: string;
   verification?: AntiderivativeBackcheck;
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
 };
 
 export type IntegrationPresentation = {
@@ -24,6 +32,7 @@ export type IntegrationPresentation = {
   answerRows?: DisplayAnswerRowsReadback;
   verification: AntiderivativeBackcheck;
   detailSections: DisplayDetailSection[];
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
 };
 
 function gcd(left: number, right: number): number {
@@ -146,6 +155,7 @@ function presentationDetail(input: {
   changedLatex: boolean;
   constantLatex: string;
   reusedExistingVerification: boolean;
+  nativeAuthority: boolean;
 }): DisplayDetailSection {
   const rows = [
     integrationMathRow(
@@ -159,6 +169,9 @@ function presentationDetail(input: {
   if (input.changedLatex) {
     rows.push(integrationTextRow('Canonical output was normalized for coefficient, fraction, and grouping readability.'));
   }
+  if (input.nativeAuthority) {
+    rows.push(integrationTextRow('Canonical output was rendered from the Calculus-owned antiderivative expression.'));
+  }
   rows.push(integrationTextRow('Visible output is kept as one antiderivative expression; Copy Result uses the same parseable LaTeX.'));
   return integrationDetailSection('Integration Presentation', rows);
 }
@@ -171,6 +184,38 @@ export function presentVerifiedIndefiniteAntiderivative(
   }
 
   const constantLatex = input.variable === 'C' ? 'K' : 'C';
+  if (input.antiderivativeExpression) {
+    const antiderivativeExpression = withIntegrationConstant(
+      input.antiderivativeExpression,
+      input.variable,
+    );
+    const expressionAst = calculusAntiderivativeExpressionToAst(antiderivativeExpression);
+    if (expressionAst === undefined) {
+      return undefined;
+    }
+    const verification = backcheckAntiderivativeAst({
+      antiderivative: expressionAst,
+      integrand: input.integrand,
+      variable: input.variable,
+    });
+    if (!isVerified(verification)) {
+      return undefined;
+    }
+    const exactLatex = renderCalculusAntiderivativeExpression(antiderivativeExpression);
+    return {
+      exactLatex,
+      answerRows: answerRowsFor(exactLatex),
+      verification,
+      antiderivativeExpression,
+      detailSections: [presentationDetail({
+        changedLatex: false,
+        constantLatex,
+        reusedExistingVerification: false,
+        nativeAuthority: true,
+      })],
+    };
+  }
+
   const baseLatex = normalizePresentationLatex(input.exactLatex);
   const exactLatex = `${baseLatex}+${constantLatex}`;
   const changedLatex = baseLatex !== input.exactLatex;
@@ -194,6 +239,7 @@ export function presentVerifiedIndefiniteAntiderivative(
       changedLatex,
       constantLatex,
       reusedExistingVerification: !changedLatex,
+      nativeAuthority: false,
     })],
   };
 }

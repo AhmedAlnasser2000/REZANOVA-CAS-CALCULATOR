@@ -29,6 +29,24 @@ const finiteMessages = {
 };
 
 describe('calculus core', () => {
+  it('carries producer-owned antiderivative structure through direct integration', () => {
+    const body = parse('x^2+3x');
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.antiderivativeExpression).toMatchObject({
+      kind: 'standard-math-json',
+      source: 'calculus.integration:direct-rule-native-result',
+    });
+    expect(result.antiderivativeBackcheck?.status).toBe('verified-exact');
+  });
+
   it('resolves app-owned indefinite integrals before Compute Engine provenance', () => {
     const body = parse('\\frac{1}{1+x^2}');
     const computed = parse('\\int \\frac{1}{1+x^2}\\,dx').evaluate();

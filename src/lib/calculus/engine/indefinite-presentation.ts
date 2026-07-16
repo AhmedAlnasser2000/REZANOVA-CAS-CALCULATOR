@@ -36,6 +36,7 @@ export function presentCalculusIndefiniteEvaluation(
     integrand,
     variable,
     verification: result.antiderivativeBackcheck,
+    antiderivativeExpression: result.antiderivativeExpression,
   });
   if (!presentation) {
     return result;
@@ -45,6 +46,8 @@ export function presentCalculusIndefiniteEvaluation(
     ...result,
     exactLatex: presentation.exactLatex,
     answerRows: presentation.answerRows,
+    antiderivativeExpression: presentation.antiderivativeExpression
+      ?? result.antiderivativeExpression,
     antiderivativeBackcheck: presentation.verification,
     detailSections: mergePresentationDetails(
       result.detailSections,

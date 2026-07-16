@@ -18,6 +18,11 @@ import type {
   ResultOrigin,
 } from '../../../types/calculator';
 import type { AntiderivativeBackcheck } from './verification';
+import type {
+  CalculusAntiderivativeExpression,
+  CalculusIntegrationDetailNode,
+  CalculusIntegrationFactNode,
+} from './antiderivative-expression';
 import {
   calculusDetailSection,
   calculusMathPart,
@@ -29,6 +34,7 @@ export const ce = new ComputeEngine();
 
 export type CalculusCoreEvaluation = {
   exactLatex?: string;
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
   answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   warnings: string[];
@@ -41,6 +47,8 @@ export type CalculusCoreEvaluation = {
   antiderivativeBackcheck?: AntiderivativeBackcheck;
   detailSections?: DisplayDetailSection[];
   mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
+  integrationFactNodes?: CalculusIntegrationFactNode[];
+  integrationDetailNodes?: CalculusIntegrationDetailNode[];
 };
 
 export type CalculusOwnedMathJsonLeaf = {

@@ -551,32 +551,21 @@ function areExactlyEquivalent(
   }
 }
 
-export function backcheckAntiderivative(input: {
-  antiderivativeLatex: string;
+function backcheckDerivativeAst(input: {
+  derivativeAst: unknown;
   integrand: unknown;
   variable: string;
   samplePoints?: number[];
 }): AntiderivativeBackcheck {
-  let derivativeAst: unknown;
   let derivativeLatex: string | undefined;
 
-  try {
-    const antiderivative = ce.parse(input.antiderivativeLatex);
-    derivativeAst = differentiateAst(antiderivative.json, input.variable);
-  } catch {
-    return {
-      status: 'not-checkable',
-      reason: 'candidate antiderivative could not be parsed or differentiated',
-    };
-  }
-
   const getDerivativeLatex = () => {
-    derivativeLatex ??= ce.box(derivativeAst as Parameters<typeof ce.box>[0]).latex;
+    derivativeLatex ??= ce.box(input.derivativeAst as Parameters<typeof ce.box>[0]).latex;
     return derivativeLatex;
   };
 
   const exactContext = createExactEquivalenceContext();
-  if (areExactlyEquivalent(derivativeAst, input.integrand, input.variable, exactContext)) {
+  if (areExactlyEquivalent(input.derivativeAst, input.integrand, input.variable, exactContext)) {
     return {
       status: 'verified-exact',
     };
@@ -584,7 +573,7 @@ export function backcheckAntiderivative(input: {
 
   let samplesChecked = 0;
   for (const sample of input.samplePoints ?? DEFAULT_SAMPLE_POINTS) {
-    const derivativeValue = evaluateNodeAt(derivativeAst, input.variable, sample);
+    const derivativeValue = evaluateNodeAt(input.derivativeAst, input.variable, sample);
     const integrandValue = evaluateNodeAt(input.integrand, input.variable, sample);
     if (derivativeValue === undefined || integrandValue === undefined) {
       continue;
@@ -616,4 +605,47 @@ export function backcheckAntiderivative(input: {
     samplesChecked,
     reason: 'numeric spot checks matched; this is confidence, not symbolic proof',
   };
+}
+
+export function backcheckAntiderivativeAst(input: {
+  antiderivative: unknown;
+  integrand: unknown;
+  variable: string;
+  samplePoints?: number[];
+}): AntiderivativeBackcheck {
+  try {
+    return backcheckDerivativeAst({
+      derivativeAst: differentiateAst(input.antiderivative, input.variable),
+      integrand: input.integrand,
+      variable: input.variable,
+      samplePoints: input.samplePoints,
+    });
+  } catch {
+    return {
+      status: 'not-checkable',
+      reason: 'candidate antiderivative node could not be differentiated',
+    };
+  }
+}
+
+export function backcheckAntiderivative(input: {
+  antiderivativeLatex: string;
+  integrand: unknown;
+  variable: string;
+  samplePoints?: number[];
+}): AntiderivativeBackcheck {
+  try {
+    const antiderivative = ce.parse(input.antiderivativeLatex);
+    return backcheckDerivativeAst({
+      derivativeAst: differentiateAst(antiderivative.json, input.variable),
+      integrand: input.integrand,
+      variable: input.variable,
+      samplePoints: input.samplePoints,
+    });
+  } catch {
+    return {
+      status: 'not-checkable',
+      reason: 'candidate antiderivative could not be parsed or differentiated',
+    };
+  }
 }

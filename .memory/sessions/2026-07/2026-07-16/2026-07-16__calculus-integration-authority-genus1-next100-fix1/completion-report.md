@@ -32,7 +32,7 @@
 ## Gate Status
 
 - `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1`: verified
-- `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1`: pending
+- `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1`: verified
 - `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: pending
 - `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: pending
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: pending
@@ -49,3 +49,12 @@
 - Every ordinary leaf and piecewise condition must retain producer-proven standard MathJSON; V4 rejects custom MathJSON operators inside those leaves.
 - Deterministic rendering feeds normalized consumers, History, clipboard/Copy Result, and editor transfer without reparsing rendered output.
 - No live producer selects V4 in this gate, so current app output is unchanged.
+
+## Completed Gate 2
+
+- Added a Calculus-owned antiderivative expression carrying standard MathJSON or typed V4 special-function structure plus route-owned fact/detail nodes.
+- Native authority survives scalar and additive composition, normal-form and trig retries, symbolic adoption, and Compute Engine fallback; string-only routes remain explicitly transitional for the following migration gates.
+- Native standard candidates are differentiated directly from AST and canonical LaTeX is rendered from structure rather than reparsed for meaning.
+- Verified indefinite families add `C` structurally on the right only after derivative backcheck.
+- Migrated foundational direct polynomial/power primitives as the first live native family and kept visible output as one antiderivative expression.
+- The frozen V1 runtime does not expose the core Trust section for the direct polynomial Playwright case; Gate 3 owns the V2 runtime authority handoff and Trust visibility rather than changing the frozen adapter here.

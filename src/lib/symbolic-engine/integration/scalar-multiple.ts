@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
+import { scaleAntiderivativeExpression } from '../../calculus/engine/antiderivative-expression';
 import { dependsOnVariable, flattenMultiply, isNodeArray } from '../patterns';
 import {
   integrationDetailSection,
@@ -110,6 +111,13 @@ export function finishScalarMultipleRetry(
   retried: Extract<IntegralResolution, { kind: 'success' }>,
 ): IntegralResolution | undefined {
   const exactLatex = scalePrimitiveLatex(split.coefficient, retried.exactLatex);
+  const antiderivativeExpression = retried.antiderivativeExpression
+    ? scaleAntiderivativeExpression({
+        coefficient: split.coefficient,
+        expression: retried.antiderivativeExpression,
+        source: 'calculus.integration:scalar-multiple',
+      })
+    : undefined;
   const checked = symbolicSuccess(
     node,
     variable,
@@ -121,6 +129,9 @@ export function finishScalarMultipleRetry(
       scalarMultipleDetail(split.coefficient, split.body),
       ...(retried.detailSections ?? []),
     ],
+    antiderivativeExpression,
+    retried.factNodes,
+    retried.detailNodes,
   );
 
   return checked.kind === 'success' && checked.verification.status === 'verified-exact'

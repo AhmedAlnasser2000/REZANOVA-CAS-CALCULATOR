@@ -1,5 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
+import {
+  resolveAntiderivativeRule,
+  resolveAntiderivativeRuleExpression,
+} from '../../calculus/engine/antiderivative-rules';
+import { addAntiderivativeExpressions } from '../../calculus/engine/antiderivative-expression';
 import {
   divideByNumericCoefficient,
   flattenAdd,
@@ -358,7 +362,16 @@ function tryRoute(
 
     const basic = resolveAntiderivativeRule(node, variable);
     if (basic) {
-      return symbolicSuccess(node, variable, basic, 'direct-rule');
+      return symbolicSuccess(
+        node,
+        variable,
+        basic,
+        'direct-rule',
+        undefined,
+        undefined,
+        undefined,
+        resolveAntiderivativeRuleExpression(node, variable),
+      );
     }
 
     const symbolicTrigProduct = tryRischNormanSymbolicTrigProductToSumRule(node, variable);
@@ -564,6 +577,9 @@ function tryNormalFormRetry(
       normalFormDetail(normalized.detailRows),
       ...(retried.detailSections ?? []),
     ],
+    retried.antiderivativeExpression,
+    retried.factNodes,
+    retried.detailNodes,
   );
 }
 
@@ -631,6 +647,9 @@ function tryTrigRewriteRetry(
     undefined,
     retried.exactSupplementLatex,
     detailSections,
+    retried.antiderivativeExpression,
+    retried.factNodes,
+    retried.detailNodes,
   );
   if (checked.kind !== 'success' || checked.verification.status === 'not-verified') {
     return undefined;
@@ -647,6 +666,9 @@ function tryTrigRewriteRetry(
     },
     retried.exactSupplementLatex,
     detailSections,
+    retried.antiderivativeExpression,
+    retried.factNodes,
+    retried.detailNodes,
   );
 }
 
@@ -722,6 +744,38 @@ function mergeDetailSections(results: IntegralResolution[]) {
   return merged.length > 0 ? merged : undefined;
 }
 
+function mergeFactNodes(results: IntegralResolution[]) {
+  const merged = results
+    .flatMap((result) => result.kind === 'success' ? (result.factNodes ?? []) : []);
+  return merged.length > 0 ? merged : undefined;
+}
+
+function mergeDetailNodes(results: IntegralResolution[]) {
+  const merged = results
+    .flatMap((result) => result.kind === 'success' ? (result.detailNodes ?? []) : []);
+  return merged.length > 0 ? merged : undefined;
+}
+
+function combineNativeAntiderivatives(
+  results: Array<Extract<IntegralResolution, { kind: 'success' }>>,
+  terms: Array<{ node: unknown; sign: 1 | -1 }>,
+) {
+  const nativeTerms: Parameters<typeof addAntiderivativeExpressions>[0]['terms'] = [];
+  for (const [index, result] of results.entries()) {
+    if (!result.antiderivativeExpression) {
+      return undefined;
+    }
+    nativeTerms.push({
+      expression: result.antiderivativeExpression,
+      sign: terms[index].sign,
+    });
+  }
+  return addAntiderivativeExpressions({
+    terms: nativeTerms,
+    source: 'calculus.integration:linear-combination',
+  });
+}
+
 function tryLinearCombinationFallback(
   node: unknown,
   variable: string,
@@ -766,6 +820,7 @@ function tryLinearCombinationFallback(
       sign: terms[index].sign,
     })),
   );
+  const antiderivativeExpression = combineNativeAntiderivatives(results, terms);
   return symbolicSuccess(
     node,
     variable,
@@ -777,6 +832,9 @@ function tryLinearCombinationFallback(
     },
     mergeSupplementLatex(results),
     mergeDetailSections(results),
+    antiderivativeExpression,
+    mergeFactNodes(results),
+    mergeDetailNodes(results),
   );
 }
 

@@ -19,6 +19,11 @@ import {
   tryAffineSinCosPowerAntiderivative,
   tryAffineTanSecCotCscPowerAntiderivative,
 } from './trig-power-identities';
+import {
+  scaleStandardMathJson,
+  standardAntiderivativeExpression,
+  type CalculusAntiderivativeBaseExpression,
+} from './antiderivative-expression';
 
 const ce = new ComputeEngine();
 
@@ -520,6 +525,7 @@ function separateConstantFactor(node: unknown, variable: string) {
     constantFactors.length === 1 ? constantFactors[0] : ['Multiply', ...constantFactors];
 
   return {
+    constantNode,
     constantLatex: boxLatex(constantNode),
     body: variableFactors[0],
   };
@@ -537,6 +543,71 @@ function joinAdditiveLatex(parts: string[]) {
 
     return current.startsWith('-') ? `${result}${current}` : `${result}+${current}`;
   }, '');
+}
+
+function directRuleMathJson(node: unknown, variable: string): unknown | undefined {
+  if (!dependsOnVariable(node, variable)) {
+    return finiteScalarValue(node) === 0 ? 0 : ['Multiply', structuredClone(node), variable];
+  }
+
+  if (node === variable) {
+    return ['Divide', ['Power', variable, 2], 2];
+  }
+
+  if (isNodeArray(node) && node[0] === 'Add') {
+    const terms = node.slice(1).map((term) => directRuleMathJson(term, variable));
+    return terms.some((term) => term === undefined)
+      ? undefined
+      : ['Add', ...terms];
+  }
+
+  const separated = separateConstantFactor(node, variable);
+  if (separated) {
+    const primitive = directRuleMathJson(separated.body, variable);
+    return primitive === undefined
+      ? undefined
+      : scaleStandardMathJson(separated.constantNode, primitive);
+  }
+
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {
+    if (node[2] === variable) {
+      return ['Ln', ['Abs', variable]];
+    }
+  }
+
+  if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const [base, exponent] = node.slice(1);
+    if (base === variable && isFiniteNumber(exponent)) {
+      if (exponent === -1) {
+        return ['Ln', ['Abs', variable]];
+      }
+      const nextExponent = exponent + 1;
+      return nextExponent === 0
+        ? undefined
+        : ['Divide', ['Power', variable, nextExponent], nextExponent];
+    }
+  }
+
+  return undefined;
+}
+
+export function resolveAntiderivativeRuleExpression(
+  node: unknown,
+  variable = 'x',
+): CalculusAntiderivativeBaseExpression | undefined {
+  const mathJson = directRuleMathJson(node, variable);
+  if (mathJson === undefined) {
+    return undefined;
+  }
+
+  try {
+    return standardAntiderivativeExpression({
+      mathJson,
+      source: 'calculus.integration:direct-rule-native-result',
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 export function resolveAntiderivativeRule(
