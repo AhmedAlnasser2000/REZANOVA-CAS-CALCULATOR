@@ -3,7 +3,7 @@ import {
   type MathJsonRouteId,
 } from './mathjson-route-registry';
 
-export type CanonicalResultProducerVersion = 1 | 2 | 3;
+export type CanonicalResultProducerVersion = 1 | 2 | 3 | 4;
 
 export type CanonicalResultProducerVersionPolicy = {
   defaultVersion: CanonicalResultProducerVersion;

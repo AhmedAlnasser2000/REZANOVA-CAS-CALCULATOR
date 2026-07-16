@@ -4,7 +4,6 @@ import type {
   CanonicalResultDocumentV2,
   CanonicalResultPrimaryV2,
 } from './canonical-result-v2-types';
-import type { CanonicalResultDocumentV1 } from './canonical-result-types';
 
 export type CanonicalResultAngleUnitV3 = 'deg' | 'rad' | 'grad';
 
@@ -26,10 +25,3 @@ export type CanonicalResultDocumentV3 = Omit<
   version: 3;
   primary?: CanonicalResultPrimaryV3;
 };
-
-export type CanonicalResultDocument =
-  | CanonicalResultDocumentV1
-  | CanonicalResultDocumentV2
-  | CanonicalResultDocumentV3;
-
-export type CanonicalResultVersion = CanonicalResultDocument['version'];

@@ -12,6 +12,7 @@ import {
   validateCanonicalResultDocumentV2,
 } from './validation-v2';
 import { validateCanonicalResultDocumentV3 } from './validation-v3';
+import { validateCanonicalResultDocumentV4 } from './validation-v4';
 
 export type ValidatedCanonicalResultDocumentVersioned = {
   value: CanonicalResultDocument;
@@ -52,6 +53,7 @@ export function validateCanonicalResultDocumentVersioned(
   if (version === 1) return validateCanonicalResultDocumentV1(cloned, limits);
   if (version === 2) return validateCanonicalResultDocumentV2(cloned, limits);
   if (version === 3) return validateCanonicalResultDocumentV3(cloned, limits);
+  if (version === 4) return validateCanonicalResultDocumentV4(cloned, limits);
   return {
     ok: false,
     failure: {

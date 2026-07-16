@@ -3,9 +3,11 @@ import type {
   CanonicalResultDocumentV1,
   CanonicalResultDocumentV2,
   CanonicalResultDocumentV3,
+  CanonicalResultDocumentV4,
   ResultProducerDraft,
   ResultProducerDraftV2,
   ResultProducerDraftV3,
+  ResultProducerDraftV4,
   VersionedResultProducerDraft,
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
@@ -28,6 +30,12 @@ export function requireCanonicalResultAuthority<
   outcome: Outcome,
   owner: string,
 ): Outcome & { canonicalResult: CanonicalResultDocumentV3 };
+export function requireCanonicalResultAuthority<
+  Outcome extends ResultProducerDraftV4,
+>(
+  outcome: Outcome,
+  owner: string,
+): Outcome & { canonicalResult: CanonicalResultDocumentV4 };
 export function requireCanonicalResultAuthority(
   outcome: Exclude<VersionedResultProducerDraft, { kind: 'prompt' }>,
   owner: string,

@@ -4,6 +4,7 @@ import type {
   CanonicalResultDocumentV2,
 } from './canonical-result-v2-types';
 import type { CanonicalResultDocumentV3 } from './canonical-result-v3-types';
+import type { CanonicalResultDocumentV4 } from './canonical-result-v4-types';
 import type { TransferTarget } from './execution-types';
 import type { ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
@@ -88,10 +89,21 @@ export type CanonicalRuntimeResultOutcomeV3 =
   | (CanonicalRuntimeResultBaseV3 & { kind: 'success' })
   | (CanonicalRuntimeResultBaseV3 & { kind: 'error' });
 
+type CanonicalRuntimeResultBaseV4 = {
+  canonicalResult: CanonicalResultDocumentV4;
+  actions?: never;
+  runtimeAdvisories?: RuntimeAdvisories;
+};
+
+export type CanonicalRuntimeResultOutcomeV4 =
+  | (CanonicalRuntimeResultBaseV4 & { kind: 'success' })
+  | (CanonicalRuntimeResultBaseV4 & { kind: 'error' });
+
 export type CanonicalRuntimeVersionedResultOutcome =
   | CanonicalRuntimeResultOutcome
   | CanonicalRuntimeResultOutcomeV2
-  | CanonicalRuntimeResultOutcomeV3;
+  | CanonicalRuntimeResultOutcomeV3
+  | CanonicalRuntimeResultOutcomeV4;
 
 export type CanonicalRuntimeAction =
   | CanonicalRuntimeActionV1

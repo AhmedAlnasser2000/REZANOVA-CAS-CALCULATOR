@@ -90,6 +90,73 @@ function addParts(
   }));
 }
 
+function addSpecialExpressionLeaves(
+  references: CanonicalMathLeafReference[],
+  expression: Extract<
+    NonNullable<CanonicalResultSemantics['primary']>,
+    { kind: 'special-function-expression' }
+  >['expression'],
+  path: string,
+) {
+  if (expression.kind === 'standard-math') {
+    add(
+      references,
+      expression.value,
+      path + '.value',
+      'primary.expression.standardMath[*]',
+    );
+    return;
+  }
+  if (expression.kind === 'named-function') {
+    expression.arguments.forEach((argument, index) => addSpecialExpressionLeaves(
+      references,
+      argument,
+      `${path}.arguments[${index}]`,
+    ));
+    return;
+  }
+  if (expression.kind === 'sum' || expression.kind === 'product') {
+    const entries = expression.kind === 'sum' ? expression.terms : expression.factors;
+    const key = expression.kind === 'sum' ? 'terms' : 'factors';
+    entries.forEach((entry, index) => addSpecialExpressionLeaves(
+      references,
+      entry,
+      `${path}.${key}[${index}]`,
+    ));
+    return;
+  }
+  if (expression.kind === 'quotient') {
+    addSpecialExpressionLeaves(references, expression.numerator, path + '.numerator');
+    addSpecialExpressionLeaves(references, expression.denominator, path + '.denominator');
+    return;
+  }
+  if (expression.kind === 'power') {
+    addSpecialExpressionLeaves(references, expression.base, path + '.base');
+    addSpecialExpressionLeaves(references, expression.exponent, path + '.exponent');
+    return;
+  }
+  if (expression.kind === 'negation') {
+    addSpecialExpressionLeaves(references, expression.operand, path + '.operand');
+    return;
+  }
+  expression.branches.forEach((branch, index) => {
+    add(
+      references,
+      branch.condition,
+      `${path}.branches[${index}].condition`,
+      'primary.expression.piecewiseConditions[*]',
+    );
+    addSpecialExpressionLeaves(
+      references,
+      branch.value,
+      `${path}.branches[${index}].value`,
+    );
+  });
+  if (expression.otherwise) {
+    addSpecialExpressionLeaves(references, expression.otherwise, path + '.otherwise');
+  }
+}
+
 export function collectCanonicalMathLeaves(
   input: CanonicalResultDocument | Pick<NormalizedCanonicalResult, 'sourceVersion' | 'semantics'>,
 ): CanonicalMathLeafReference[] {
@@ -116,6 +183,8 @@ export function collectCanonicalMathLeaves(
     ));
   } else if (primary?.kind === 'angle-quantity') {
     add(references, primary.magnitude, 'primary.magnitude', 'primary.magnitude');
+  } else if (primary?.kind === 'special-function-expression') {
+    addSpecialExpressionLeaves(references, primary.expression, 'primary.expression');
   }
 
   const request = semantics.request;

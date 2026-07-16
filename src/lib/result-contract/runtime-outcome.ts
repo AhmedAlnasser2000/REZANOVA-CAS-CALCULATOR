@@ -9,6 +9,7 @@ import type {
   CanonicalRuntimeResultOutcome,
   CanonicalRuntimeResultOutcomeV2,
   CanonicalRuntimeResultOutcomeV3,
+  CanonicalRuntimeResultOutcomeV4,
   PromptOutcome,
   ResultProducerActionDraft,
   VersionedResultProducerDraft,
@@ -380,6 +381,12 @@ export function createCanonicalRuntimeResult(
     runtimeAdvisories?: RuntimeAdvisories;
   },
 ): CanonicalRuntimeResultOutcomeV3;
+export function createCanonicalRuntimeResult(
+  canonicalResult: Extract<CanonicalResultDocument, { version: 4 }>,
+  options?: {
+    runtimeAdvisories?: RuntimeAdvisories;
+  },
+): CanonicalRuntimeResultOutcomeV4;
 export function createCanonicalRuntimeResult(
   canonicalResult: CanonicalResultDocument,
   options: {

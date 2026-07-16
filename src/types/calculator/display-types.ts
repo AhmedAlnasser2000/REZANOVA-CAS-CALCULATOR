@@ -15,6 +15,7 @@ import type {
 import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
 import type { CanonicalResultDocumentV2 } from './canonical-result-v2-types';
 import type { CanonicalResultDocumentV3 } from './canonical-result-v3-types';
+import type { CanonicalResultDocumentV4 } from './canonical-result-v4-types';
 import type {
   CanonicalRuntimeActionV2,
   CanonicalRuntimeActionV3,
@@ -211,7 +212,18 @@ export type ResultProducerDraftV3 =
       actions?: CanonicalRuntimeActionV3[];
     });
 
+export type ResultProducerDraftV4 =
+  | (Omit<Extract<ResultProducerDraft, { kind: 'success' }>, 'canonicalResult' | 'actions'> & {
+      canonicalResult: CanonicalResultDocumentV4;
+      actions?: never;
+    })
+  | (Omit<Extract<ResultProducerDraft, { kind: 'error' }>, 'canonicalResult' | 'actions'> & {
+      canonicalResult: CanonicalResultDocumentV4;
+      actions?: never;
+    });
+
 export type VersionedResultProducerDraft =
   | ResultProducerDraft
   | ResultProducerDraftV2
-  | ResultProducerDraftV3;
+  | ResultProducerDraftV3
+  | ResultProducerDraftV4;

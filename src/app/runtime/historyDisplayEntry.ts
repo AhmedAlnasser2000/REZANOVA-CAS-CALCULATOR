@@ -65,7 +65,7 @@ export type BuildHistoryDisplayEntryOptions = {
 
 export type HistoryResultReadModel = {
   source: 'structured';
-  sourceVersion: 1 | 2 | 3;
+  sourceVersion: 1 | 2 | 3 | 4;
   outcome: SuccessfulCanonicalOutcome;
   title: string;
   primaryLatex?: string;

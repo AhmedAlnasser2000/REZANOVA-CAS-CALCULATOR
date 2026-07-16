@@ -36,7 +36,7 @@ import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
 import type { MatrixReplaySeed, VectorReplaySeed } from './linear-algebra-types';
-import type { CanonicalResultDocument } from './canonical-result-v3-types';
+import type { CanonicalResultDocument } from './canonical-result-v4-types';
 import {
   DEFAULT_LANGUAGE_CODE,
   type LanguageCode,

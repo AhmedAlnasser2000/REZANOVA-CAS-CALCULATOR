@@ -7,6 +7,8 @@ export const CANONICAL_MATH_LEAF_PATHS = [
   'primary.period',
   'primary.phaseShift',
   'primary.magnitude',
+  'primary.expression.standardMath[*]',
+  'primary.expression.piecewiseConditions[*]',
   'primary.operand',
   'primary.operandVectors[*]',
   'request.value',

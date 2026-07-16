@@ -124,7 +124,7 @@ function hasHistoryEnvelope(value: unknown): value is Record<string, unknown> {
 function isFutureHistoryRow(value: unknown) {
   if (!hasHistoryEnvelope(value) || !isRecord(value.resultDocument)) return false;
   const version = value.resultDocument.version;
-  return typeof version === 'number' && Number.isInteger(version) && version > 3;
+  return typeof version === 'number' && Number.isInteger(version) && version > 4;
 }
 
 function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {

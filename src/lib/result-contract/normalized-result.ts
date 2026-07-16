@@ -7,12 +7,15 @@ import type {
   CanonicalResultDocumentV1,
   CanonicalResultDocumentV2,
   CanonicalResultDocumentV3,
+  CanonicalResultDocumentV4,
   CanonicalResultPeriodicFamilyV1,
+  CanonicalResultPrimaryV4,
   CanonicalResultPrimaryV3,
   CanonicalResultRequestV2,
   CanonicalResultRowOperationV2,
   CanonicalResultSemanticMetadataV1,
 } from '../../types/calculator';
+import { renderCanonicalSpecialFunctionExpressionV4 } from './special-function-expression-v4';
 
 type RelaxV2Math<Value> =
   Value extends CanonicalMathValueV2
@@ -23,7 +26,9 @@ type RelaxV2Math<Value> =
         ? { [Key in keyof Value]: RelaxV2Math<Value[Key]> }
         : Value;
 
-export type CanonicalResultPrimarySemantics = RelaxV2Math<CanonicalResultPrimaryV3>;
+export type CanonicalResultPrimarySemantics = RelaxV2Math<
+  CanonicalResultPrimaryV3 | CanonicalResultPrimaryV4
+>;
 export type CanonicalResultRequestSemantics = RelaxV2Math<CanonicalResultRequestV2>;
 export type CanonicalResultRowOperationSemantics = RelaxV2Math<CanonicalResultRowOperationV2>;
 
@@ -157,7 +162,7 @@ export type CanonicalResultSemantics = {
 };
 
 export type NormalizedCanonicalResult = {
-  sourceVersion: 1 | 2 | 3;
+  sourceVersion: 1 | 2 | 3 | 4;
   rawDocument: CanonicalResultDocument;
   presentation: CanonicalResultPresentation;
   semantics: CanonicalResultSemantics;
@@ -422,10 +427,12 @@ function modernRequestLatex(request: CanonicalResultDocumentV2['request']) {
 }
 
 function normalizeModern(
-  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV3,
+  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV3 | CanonicalResultDocumentV4,
 ): NormalizedCanonicalResult {
-  const compoundPresentation = document.primary?.kind !== 'math'
-    ? document.primary?.presentation
+  const compoundPresentation = document.primary
+    && document.primary.kind !== 'math'
+    && document.primary.kind !== 'special-function-expression'
+    ? document.primary.presentation
     : undefined;
   const answerRows = compoundPresentation?.answerRows ?? (
     document.answerRows
@@ -447,7 +454,9 @@ function normalizeModern(
         ? {
             primaryLatex: document.primary.kind === 'math'
               ? document.primary.value.canonicalLatex
-              : document.primary.presentation.primaryLatex,
+              : document.primary.kind === 'special-function-expression'
+                ? renderCanonicalSpecialFunctionExpressionV4(document.primary.expression)
+                : document.primary.presentation.primaryLatex,
           }
         : {}),
       ...(document.request
