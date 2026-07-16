@@ -52,6 +52,7 @@ type VectorValueCardProps = {
   vectorValues: readonly LinearAlgebraVectorNamedValue[];
   value: LinearAlgebraVectorNamedValue;
   resolvedValue?: readonly LinearAlgebraScalarWireV1[];
+  validationKey: string;
   onDeleteVectorValue: VectorWorkspaceProps['onDeleteVectorValue'];
   onDuplicateVectorValue: VectorWorkspaceProps['onDuplicateVectorValue'];
   onInsertVectorName: VectorWorkspaceProps['onInsertVectorName'];
@@ -70,6 +71,7 @@ function VectorValueCard({
   vectorValues,
   value,
   resolvedValue,
+  validationKey,
   onDeleteVectorValue,
   onDuplicateVectorValue,
   onInsertVectorName,
@@ -218,10 +220,14 @@ function VectorValueCard({
         {vector.map((_cell, index) => (
           <LinearAlgebraScalarCell
             ariaLabel={`Vector ${name} component ${index + 1}`}
+            columnIndex={index}
+            groupId={`vector-${id}`}
             key={`v${id}-${index}`}
-            value={vectorNamedValueCellLatex(value, index)}
-            resolvedLatex={resolvedValue?.[index]?.canonicalLatex}
             onCommit={(latex) => onSetVectorCellLatex(id, index, latex)}
+            resolvedLatex={resolvedValue?.[index]?.canonicalLatex}
+            rowIndex={0}
+            validationKey={validationKey}
+            value={vectorNamedValueCellLatex(value, index)}
           />
         ))}
       </div>
@@ -346,6 +352,7 @@ function VectorWorkspace({
             resolvedValue={'error' in resolutions[valueIndex]
               ? undefined
               : resolutions[valueIndex].operand.resolved}
+            validationKey={`${vectorDomain}:${vectorSubstitutionMode}`}
             onDeleteVectorValue={onDeleteVectorValue}
             onDuplicateVectorValue={onDuplicateVectorValue}
             onInsertVectorName={onInsertVectorName}

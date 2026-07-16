@@ -484,12 +484,60 @@ const LIMIT_TEMPLATE_ROW: KeypadButton[] = [
 ];
 
 const LINEAR_ALGEBRA_TEMPLATE_ROW: KeypadButton[] = [
-  { id: 'menu', label: 'Menu', alpha: '@', ctrl: 'Open', variant: 'utility', command: 'open-menu', layers: { alpha: { label: '@', latex: '@' }, ctrl: { label: 'Open', command: 'open-menu' } } },
-  { id: 'history', label: 'Hist', secondary: 'Ans', variant: 'utility', command: 'history', layers: { shift: { label: 'Ans', latex: 'Ans' } } },
-  { id: 'linear-matrix-template', label: '[ ]', variant: 'function', latex: '\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}' },
-  { id: 'linear-vector-template', label: 'vec', variant: 'function', latex: '\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}' },
-  { id: 'linear-row-break', label: 'row', variant: 'function', latex: '\\\\' },
-  { id: 'delete', label: 'DEL', variant: 'utility', command: 'delete', layers: { ctrl: { label: 'AC', command: 'clear' } } },
+  {
+    id: 'menu',
+    label: 'Menu',
+    alpha: '@',
+    ctrl: 'Open',
+    variant: 'utility',
+    command: 'open-menu',
+    layers: { alpha: { label: '@', latex: '@' }, ctrl: { label: 'Open', command: 'open-menu' } },
+  },
+  {
+    id: 'history',
+    label: 'Hist',
+    secondary: 'Ans',
+    ctrl: 'Panel',
+    variant: 'utility',
+    command: 'history',
+    layers: {
+      shift: { label: 'Ans', latex: 'Ans' },
+      ctrl: { label: 'Panel', command: 'history' },
+    },
+  },
+  {
+    id: 'linear-matrix-template',
+    label: '[ ]',
+    secondary: '[',
+    alpha: '{',
+    variant: 'function',
+    latex: '\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}',
+    layers: {
+      shift: { label: '[', latex: '[' },
+      alpha: { label: '{', latex: '\\{' },
+    },
+  },
+  {
+    id: 'linear-vector-template',
+    label: 'vec',
+    secondary: ']',
+    alpha: '}',
+    variant: 'function',
+    latex: '\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}',
+    layers: {
+      shift: { label: ']', latex: ']' },
+      alpha: { label: '}', latex: '\\}' },
+    },
+  },
+  { id: 'linear-row-break', label: 'row', alpha: '\\', variant: 'function', latex: '\\\\', layers: { alpha: { label: '\\', latex: '\\backslash' } } },
+  {
+    id: 'delete',
+    label: 'DEL',
+    ctrl: 'AC',
+    variant: 'utility',
+    command: 'delete',
+    layers: { ctrl: { label: 'AC', command: 'clear' } },
+  },
 ];
 
 const MATRIX_OPERATOR_ROW: KeypadButton[] = [
@@ -498,16 +546,61 @@ const MATRIX_OPERATOR_ROW: KeypadButton[] = [
   { id: 'linear-det', label: 'det', variant: 'function', latex: '\\det\\left(#0\\right)' },
   { id: 'linear-rank', label: 'rank', ctrl: 'nrank', variant: 'function', latex: '\\operatorname{rank}\\left(#0\\right)', layers: { ctrl: { label: 'nrank', latex: '\\operatorname{nrank}\\left(#0\\right)' } } },
   { id: 'linear-rref', label: 'rref', variant: 'function', latex: '\\operatorname{rref}\\left(#0\\right)' },
-  { id: 'linear-eigen', label: 'eigen', secondary: 'diag', ctrl: 'cond', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)', layers: { shift: { label: 'diag', latex: '\\operatorname{diag}\\left(#0\\right)' }, ctrl: { label: 'cond', latex: '\\operatorname{cond}\\left(#0\\right)' } } },
+  { id: 'linear-eigen', label: 'eigen', secondary: 'diagz', ctrl: 'cond', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)', layers: { shift: { label: 'diagz', latex: '\\operatorname{diagonalize}\\left(#0\\right)' }, ctrl: { label: 'cond', latex: '\\operatorname{cond}\\left(#0\\right)' } } },
 ];
 
 const MATRIX_MODIFIER_ROW: KeypadButton[] = [
-  { id: 'linear-transpose', label: 'Aᵀ', variant: 'function', latex: '^{\\mathsf{T}}' },
+  { id: 'linear-transpose', label: 'Aᵀ', secondary: 'trans', ctrl: 'adj', variant: 'function', latex: '^{\\mathsf{T}}', layers: { shift: { label: 'trans', latex: '\\operatorname{transpose}\\left(#0\\right)' }, ctrl: { label: 'adj', latex: '\\operatorname{adjoint}\\left(#0\\right)' } } },
   { id: 'linear-inverse', label: 'A⁻¹', secondary: 'pow', ctrl: 'pinv', variant: 'function', latex: '^{-1}', layers: { shift: { label: 'pow', latex: '\\operatorname{mpow}\\left(#0,#?\\right)' }, ctrl: { label: 'pinv', latex: '\\operatorname{pinv}\\left(#0\\right)' } } },
   { id: 'linear-null', label: 'null', variant: 'function', latex: '\\operatorname{null}\\left(#0\\right)' },
   { id: 'linear-col', label: 'col', secondary: 'proj', variant: 'function', latex: '\\operatorname{col}\\left(#0\\right)', layers: { shift: { label: 'proj', latex: '\\operatorname{projcol}\\left(#0,#?\\right)' } } },
   { id: 'linear-invertible', label: 'inv?', secondary: 'profile', ctrl: 'definite', variant: 'function', latex: '\\operatorname{invertible}\\left(#0\\right)', layers: { shift: { label: 'profile', latex: '\\operatorname{profile}\\left(#0\\right)' }, ctrl: { label: 'definite', latex: '\\operatorname{definite}\\left(#0\\right)' } } },
   { id: 'linear-qr', label: 'qr', secondary: 'ls', ctrl: 'svd', variant: 'function', latex: '\\operatorname{qr}\\left(#0\\right)', layers: { shift: { label: 'ls', latex: '\\operatorname{ls}\\left(#0,#?\\right)' }, ctrl: { label: 'svd', latex: '\\operatorname{svd}\\left(#0\\right)' } } },
+];
+
+const MATRIX_SYSTEM_ROW: KeypadButton[] = [
+  { id: 'linear-basis', label: 'basis', secondary: 'coords', variant: 'function', latex: '\\operatorname{basis}\\left(#0\\right)', layers: { shift: { label: 'coords', latex: '\\operatorname{coords}\\left(#0,#?\\right)' } } },
+  { id: 'linear-change-basis', label: 'change', secondary: 'solve', variant: 'function', latex: '\\operatorname{change}\\left(#0,#?\\right)', layers: { shift: { label: 'solve', latex: '#0x=#?' } } },
+  { id: 'linear-lu', label: 'lu', secondary: 'lusolve', variant: 'function', latex: '\\operatorname{lu}\\left(#0\\right)', layers: { shift: { label: 'lusolve', latex: '\\operatorname{lusolve}\\left(#0,#?\\right)' } } },
+  { id: 'linear-plu', label: 'plu', secondary: 'plusolve', variant: 'function', latex: '\\operatorname{plu}\\left(#0\\right)', layers: { shift: { label: 'plusolve', latex: '\\operatorname{plusolve}\\left(#0,#?\\right)' } } },
+  { id: 'linear-charpoly', label: 'char', secondary: 'pow', variant: 'function', latex: '\\operatorname{charpoly}\\left(#0\\right)', layers: { shift: { label: 'pow', latex: '\\operatorname{mpow}\\left(#0,#?\\right)' } } },
+  { id: 'linear-adjoint', label: 'A†', secondary: 'A*', variant: 'function', latex: '^{\\dagger}', layers: { shift: { label: 'A*', latex: '^{*}' } } },
+];
+
+const LINEAR_ALGEBRA_SYMBOL_ROW: KeypadButton[] = [
+  { id: 'linear-7', label: '7', secondary: '<=', alpha: 'd', variant: 'digit', latex: '7', layers: { shift: { label: '<=', latex: '\\le' }, alpha: { label: 'd', latex: 'd' } } },
+  { id: 'linear-8', label: '8', secondary: '>=', alpha: 'e', variant: 'digit', latex: '8', layers: { shift: { label: '>=', latex: '\\ge' }, alpha: { label: 'e', latex: 'e' } } },
+  { id: 'linear-9', label: '9', secondary: 'inf', alpha: 'f', variant: 'digit', latex: '9', layers: { shift: { label: 'inf', latex: '\\infty' }, alpha: { label: 'f', latex: 'f' } } },
+  { id: 'linear-times', label: '×', secondary: 'dot', alpha: 'g', variant: 'function', latex: '\\times', layers: { shift: { label: 'dot', latex: '\\cdot' }, alpha: { label: 'g', latex: 'g' } } },
+  { id: 'linear-equals', label: '=', secondary: '!=', alpha: 'h', variant: 'function', latex: '=', layers: { shift: { label: '!=', latex: '\\ne' }, alpha: { label: 'h', latex: 'h' } } },
+  { id: 'left', label: '◄', variant: 'utility', command: 'cursor-left' },
+];
+
+const LINEAR_ALGEBRA_ARITHMETIC_ROW: KeypadButton[] = [
+  { id: 'linear-4', label: '4', secondary: '<', alpha: 'i', variant: 'digit', latex: '4', layers: { shift: { label: '<', latex: '<' }, alpha: { label: 'i', latex: 'i' } } },
+  { id: 'linear-5', label: '5', secondary: '>', alpha: 'j', variant: 'digit', latex: '5', layers: { shift: { label: '>', latex: '>' }, alpha: { label: 'j', latex: 'j' } } },
+  { id: 'linear-6', label: '6', secondary: '+/-', alpha: 'l', variant: 'digit', latex: '6', layers: { shift: { label: '+/-', latex: '\\pm' }, alpha: { label: 'l', latex: 'l' } } },
+  { id: 'linear-minus', label: '-', secondary: '-/+', alpha: 'm', variant: 'function', latex: '-', layers: { shift: { label: '-/+', latex: '\\mp' }, alpha: { label: 'm', latex: 'm' } } },
+  { id: 'linear-x', label: 'x', alpha: 'x_i', variant: 'function', latex: 'x', layers: { alpha: { label: 'x_i', latex: 'x_{#0}' } } },
+  { id: 'right', label: '►', variant: 'utility', command: 'cursor-right' },
+];
+
+const LINEAR_ALGEBRA_DECIMAL_ROW: KeypadButton[] = [
+  { id: 'linear-1', label: '1', secondary: '!', alpha: 'o', variant: 'digit', latex: '1', layers: { shift: { label: '!', latex: '!' }, alpha: { label: 'o', latex: 'o' } } },
+  { id: 'linear-2', label: '2', secondary: 'nCr', alpha: 'p', variant: 'digit', latex: '2', layers: { shift: { label: 'nCr', latex: '\\binom{#0}{#?}' }, alpha: { label: 'p', latex: 'p' } } },
+  { id: 'linear-3', label: '3', secondary: 'cbrt', alpha: 'q', variant: 'digit', latex: '3', layers: { shift: { label: 'cbrt', latex: '\\sqrt[3]{#0}' }, alpha: { label: 'q', latex: 'q' } } },
+  { id: 'linear-plus', label: '+', secondary: 'or', alpha: 'r', variant: 'function', latex: '+', layers: { shift: { label: 'or', latex: '\\lor' }, alpha: { label: 'r', latex: 'r' } } },
+  { id: 'linear-dot-decimal', label: '.', secondary: ':', alpha: 's', variant: 'function', latex: '.', layers: { shift: { label: ':', latex: ':' }, alpha: { label: 's', latex: 's' } } },
+  { id: 'execute', label: 'EXE', variant: 'confirm', command: 'evaluate' },
+];
+
+const LINEAR_ALGEBRA_BOTTOM_ROW: KeypadButton[] = [
+  { id: 'linear-0', label: '0', secondary: 'space', alpha: 't', variant: 'digit', latex: '0', layers: { shift: { label: 'space', latex: '\\ ' }, alpha: { label: 't', latex: 't' } } },
+  { id: 'linear-00', label: '00', secondary: '000', alpha: 'u', variant: 'digit', latex: '00', layers: { shift: { label: '000', latex: '000' }, alpha: { label: 'u', latex: 'u' } } },
+  { id: 'linear-comma', label: ',', secondary: ';', alpha: 'v', variant: 'function', latex: ',', layers: { shift: { label: ';', latex: ';' }, alpha: { label: 'v', latex: 'v' } } },
+  { id: 'ans', label: 'Ans', secondary: 'prev', alpha: 'w', variant: 'function', latex: 'Ans', layers: { shift: { label: 'prev', latex: 'Ans' }, alpha: { label: 'w', latex: 'w' } } },
+  { id: 'linear-power10', label: '×10ˣ', secondary: '10^x', alpha: 'y', variant: 'function', latex: '\\times10^{#0}', layers: { shift: { label: '10^x', latex: '10^{#0}' }, alpha: { label: 'y', latex: 'y' } } },
+  { id: 'linear-imaginary', label: 'i', secondary: 'sqrt', alpha: 'z', variant: 'function', latex: 'i', layers: { shift: { label: 'sqrt', latex: '\\sqrt{#0}' }, alpha: { label: 'z', latex: 'z' } } },
 ];
 
 const VECTOR_OPERATOR_ROW: KeypadButton[] = [
@@ -595,15 +688,19 @@ const VECTOR_MODIFIER_ROW: KeypadButton[] = [
 ];
 
 function buildLinearAlgebraKeypadRows(
-  rows: KeypadButton[][],
   firstOperatorRow: KeypadButton[],
   secondOperatorRow: KeypadButton[],
+  thirdOperatorRow?: KeypadButton[],
 ) {
   return [
     LINEAR_ALGEBRA_TEMPLATE_ROW,
     firstOperatorRow,
     secondOperatorRow,
-    ...rows.slice(3),
+    ...(thirdOperatorRow ? [thirdOperatorRow] : []),
+    LINEAR_ALGEBRA_SYMBOL_ROW,
+    LINEAR_ALGEBRA_ARITHMETIC_ROW,
+    LINEAR_ALGEBRA_DECIMAL_ROW,
+    LINEAR_ALGEBRA_BOTTOM_ROW,
   ];
 }
 
@@ -612,11 +709,11 @@ export function getWorkspaceKeypadRows(
   context: WorkspaceKeypadContext,
 ) {
   if (context.mode === 'matrix') {
-    return buildLinearAlgebraKeypadRows(rows, MATRIX_OPERATOR_ROW, MATRIX_MODIFIER_ROW);
+    return buildLinearAlgebraKeypadRows(MATRIX_OPERATOR_ROW, MATRIX_MODIFIER_ROW, MATRIX_SYSTEM_ROW);
   }
 
   if (context.mode === 'vector') {
-    return buildLinearAlgebraKeypadRows(rows, VECTOR_OPERATOR_ROW, VECTOR_MODIFIER_ROW);
+    return buildLinearAlgebraKeypadRows(VECTOR_OPERATOR_ROW, VECTOR_MODIFIER_ROW);
   }
 
   if (context.mode !== 'calculus') {

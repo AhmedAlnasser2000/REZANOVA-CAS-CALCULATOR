@@ -116,6 +116,11 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{charpoly}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'characteristicPolynomial' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
     expect(parsed('\\operatorname{diag}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'diagonalization' });
+    expect(parsed('\\operatorname{diagonalize}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'diagonalization' });
+    expect(parsed('\\operatorname{transpose}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'transpose' });
+    expect(parsed('transpose(A)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'transpose' });
+    expect(parsed('\\operatorname{adjoint}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'adjoint' });
+    expect(parsed('diagonalize(A)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'diagonalization' });
     expect(parsed('\\operatorname{mpow}\\left(A,3\\right)', 'matrix')).toMatchObject({
       kind: 'matrixPower',
       matrix: { kind: 'named', name: 'A' },
@@ -196,6 +201,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('u+v', 'vector')).toMatchObject({ kind: 'binary', operator: 'add' });
     expect(parsed('u-v', 'vector')).toMatchObject({ kind: 'binary', operator: 'subtract' });
     expect(parsed('u\\cdot v', 'vector')).toMatchObject({ kind: 'binary', operator: 'dot' });
+    expect(parsed('\\operatorname{dot}\\left(u,v\\right)', 'vector')).toMatchObject({ kind: 'binary', operator: 'dot' });
     expect(parsed('u\\times v', 'vector')).toMatchObject({ kind: 'binary', operator: 'cross' });
     expect(parsed('\\left\\lVert u\\right\\rVert', 'vector')).toEqual({
       kind: 'unary',
@@ -243,6 +249,20 @@ describe('parseLinearAlgebraEditorLatex', () => {
       operands: [
         { kind: 'named', name: 'u', displayLatex: 'u' },
         { kind: 'named', name: 'v', displayLatex: 'v' },
+      ],
+    });
+    expect(parsed('\\operatorname{gramSchmidt}\\left(u,v\\right)', 'vector')).toMatchObject({
+      kind: 'gramSchmidt',
+      operands: [
+        { kind: 'named', name: 'u' },
+        { kind: 'named', name: 'v' },
+      ],
+    });
+    expect(parsed('gramSchmidt(u,v)', 'vector')).toMatchObject({
+      kind: 'gramSchmidt',
+      operands: [
+        { kind: 'named', name: 'u' },
+        { kind: 'named', name: 'v' },
       ],
     });
     expect(parsedWithOptions('gram(p,q,r)', {

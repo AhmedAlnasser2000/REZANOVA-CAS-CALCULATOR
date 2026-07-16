@@ -30,13 +30,9 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('The imaginary unit i requires Complex mode.');
 
     fireEvent.change(screen.getByLabelText('Scalar domain'), { target: { value: 'complex' } });
-    cell.setValue('i');
-    fireEvent.input(cell);
-    fireEvent.keyDown(cell, { key: 'Enter' });
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     cell.setValue('a');
     fireEvent.input(cell);
-    fireEvent.keyDown(cell, { key: 'Enter' });
     fireEvent.change(screen.getByLabelText('Parameter substitution'), {
       target: { value: 'use-stored-values' },
     });
@@ -48,6 +44,72 @@ describe('Linear algebra editor source', () => {
     await screen.findByText('Vector Workspace');
     expect(screen.getByLabelText('Scalar domain')).toHaveValue('real');
     expect(screen.getByLabelText('Parameter substitution')).toHaveValue('symbolic');
+  });
+
+  it('moves between Matrix and Vector scalar cells with arrow keys at cell edges', async () => {
+    const { user } = await renderAppMain();
+
+    await openLauncherApp(user, 'Linear', 'Matrix');
+    await screen.findByText('Matrix Workspace');
+
+    const a11 = screen.getByLabelText('Matrix A row 1 column 1') as HTMLElement & {
+      lastOffset: number;
+      position: number;
+      selectionIsCollapsed: boolean;
+      setValue: (value: string) => void;
+    };
+    const a12 = screen.getByLabelText('Matrix A row 1 column 2') as HTMLElement & {
+      lastOffset: number;
+      position: number;
+      selectionIsCollapsed: boolean;
+    };
+    const a21 = screen.getByLabelText('Matrix A row 2 column 1') as HTMLElement;
+
+    a11.focus();
+    a11.setValue('a');
+    fireEvent.input(a11);
+    a11.position = a11.lastOffset;
+    a11.selectionIsCollapsed = true;
+    fireEvent.keyDown(a11, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(a12);
+    expect(a12.position).toBe(0);
+
+    a12.selectionIsCollapsed = true;
+    a12.position = 0;
+    fireEvent.keyDown(a12, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(a11);
+    expect(a11.position).toBe(a11.lastOffset);
+
+    fireEvent.keyDown(a11, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(a21);
+
+    await openLauncherApp(user, 'Linear', 'Vector');
+    await screen.findByText('Vector Workspace');
+
+    const u1 = screen.getByLabelText('Vector u component 1') as HTMLElement & {
+      lastOffset: number;
+      position: number;
+      selectionIsCollapsed: boolean;
+      setValue: (value: string) => void;
+    };
+    const u2 = screen.getByLabelText('Vector u component 2') as HTMLElement & {
+      position: number;
+      selectionIsCollapsed: boolean;
+    };
+
+    u1.focus();
+    u1.setValue('p');
+    fireEvent.input(u1);
+    u1.position = u1.lastOffset;
+    u1.selectionIsCollapsed = true;
+    fireEvent.keyDown(u1, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(u2);
+    expect(u2.position).toBe(0);
+
+    u2.selectionIsCollapsed = true;
+    u2.position = 0;
+    fireEvent.keyDown(u2, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(u1);
   });
 
   it('uses the main editor for Matrix and Vector without secondary notation pads', async () => {
@@ -63,6 +125,10 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByTestId('keypad-linear-matrix-template')).toHaveTextContent('[ ]');
     expect(screen.getByTestId('keypad-linear-rank')).toHaveTextContent('rank');
     expect(screen.getByTestId('keypad-linear-rref')).toHaveTextContent('rref');
+    expect(screen.getByTestId('keypad-linear-basis')).toHaveTextContent('basis');
+    expect(screen.getByTestId('keypad-linear-charpoly')).toHaveTextContent('char');
+    expect(screen.getByTestId('keypad-linear-7')).toHaveTextContent('7');
+    expect(screen.getByTestId('keypad-left')).toHaveTextContent('◄');
     expect(screen.queryByTestId('keypad-sqrt')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Matrix Notation Pad')).not.toBeInTheDocument();
@@ -93,6 +159,10 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByTestId('keypad-linear-eigen')).toHaveTextContent('cond');
     expect(screen.getByTestId('keypad-linear-inverse')).toHaveTextContent('pinv');
     expect(screen.getByTestId('keypad-linear-qr')).toHaveTextContent('svd');
+    await user.click(screen.getByTestId('keypad-layer-shift'));
+    expect(screen.getByTestId('keypad-linear-eigen')).toHaveTextContent('diagz');
+    expect(screen.getByTestId('keypad-linear-basis')).toHaveTextContent('coords');
+    expect(screen.getByTestId('keypad-linear-charpoly')).toHaveTextContent('pow');
     await user.click(screen.getByTestId('keypad-layer-base'));
 
     await openLauncherApp(user, 'Linear', 'Vector');
@@ -113,6 +183,10 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByTestId('keypad-linear-vector-v')).toHaveTextContent('v');
     expect(screen.getByTestId('keypad-linear-dot')).toHaveTextContent('dot');
     expect(screen.getByTestId('keypad-linear-cross')).toHaveTextContent('cross');
+    expect(screen.getByTestId('keypad-linear-7')).toHaveTextContent('7');
+    expect(screen.getByTestId('keypad-left')).toHaveTextContent('◄');
+    expect(screen.queryByTestId('keypad-linear-basis')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('keypad-linear-charpoly')).not.toBeInTheDocument();
     await user.click(screen.getByTestId('keypad-layer-ctrl'));
     expect(screen.getByTestId('keypad-linear-proj-u')).toHaveTextContent('parallel');
     expect(screen.getByTestId('keypad-linear-proj-v')).toHaveTextContent('distance');

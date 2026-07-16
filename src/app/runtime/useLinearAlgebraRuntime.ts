@@ -666,7 +666,7 @@ export function useLinearAlgebraRuntime({
   }
 
   function setMatrixValueCellLatex(id: string, row: number, column: number, latex: string) {
-    const parsed = parseLinearAlgebraScalarWire(latex, matrixStateRef.current.domain);
+    const parsed = parseLinearAlgebraScalarWire(latex, matrixDomain);
     if (!parsed.ok) return parsed.error;
     setMatrixSubstitutionSnapshot(null);
     setMatrixValues((currentValues) => currentValues.map((currentValue) =>
@@ -677,7 +677,7 @@ export function useLinearAlgebraRuntime({
   }
 
   function setVectorValueCellLatex(id: string, index: number, latex: string) {
-    const parsed = parseLinearAlgebraScalarWire(latex, vectorStateRef.current.domain);
+    const parsed = parseLinearAlgebraScalarWire(latex, vectorDomain);
     if (!parsed.ok) return parsed.error;
     setVectorSubstitutionSnapshot(null);
     setVectorValues((currentValues) => currentValues.map((currentValue) =>

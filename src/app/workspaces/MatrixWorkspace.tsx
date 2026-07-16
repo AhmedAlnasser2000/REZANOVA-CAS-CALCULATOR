@@ -57,6 +57,7 @@ type MatrixValueCardProps = {
   matrixValues: readonly LinearAlgebraMatrixNamedValue[];
   value: LinearAlgebraMatrixNamedValue;
   resolvedValue?: readonly (readonly LinearAlgebraScalarWireV1[])[];
+  validationKey: string;
   onDeleteMatrixValue: MatrixWorkspaceProps['onDeleteMatrixValue'];
   onDuplicateMatrixValue: MatrixWorkspaceProps['onDuplicateMatrixValue'];
   onInsertMatrixName: MatrixWorkspaceProps['onInsertMatrixName'];
@@ -75,6 +76,7 @@ function MatrixValueCard({
   matrixValues,
   value,
   resolvedValue,
+  validationKey,
   onDeleteMatrixValue,
   onDuplicateMatrixValue,
   onInsertMatrixName,
@@ -237,10 +239,14 @@ function MatrixValueCard({
           row.map((_cell, columnIndex) => (
             <LinearAlgebraScalarCell
               ariaLabel={`Matrix ${name} row ${rowIndex + 1} column ${columnIndex + 1}`}
+              columnIndex={columnIndex}
+              groupId={`matrix-${id}`}
               key={`m${id}-${rowIndex}-${columnIndex}`}
-              value={matrixNamedValueCellLatex(value, rowIndex, columnIndex)}
-              resolvedLatex={resolvedValue?.[rowIndex]?.[columnIndex]?.canonicalLatex}
               onCommit={(latex) => onSetMatrixCellLatex(id, rowIndex, columnIndex, latex)}
+              resolvedLatex={resolvedValue?.[rowIndex]?.[columnIndex]?.canonicalLatex}
+              rowIndex={rowIndex}
+              validationKey={validationKey}
+              value={matrixNamedValueCellLatex(value, rowIndex, columnIndex)}
             />
           )),
         )}
@@ -366,6 +372,7 @@ function MatrixWorkspace({
             resolvedValue={'error' in resolutions[valueIndex]
               ? undefined
               : resolutions[valueIndex].operand.resolved}
+            validationKey={`${matrixDomain}:${matrixSubstitutionMode}`}
             onDeleteMatrixValue={onDeleteMatrixValue}
             onDuplicateMatrixValue={onDuplicateMatrixValue}
             onInsertMatrixName={onInsertMatrixName}

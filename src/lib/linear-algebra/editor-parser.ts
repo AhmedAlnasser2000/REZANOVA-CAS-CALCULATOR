@@ -660,6 +660,8 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['charpoly', 'characteristicPolynomial'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
+    ['diagonalize', 'diagonalization'],
+    ['transpose', 'transpose'],
     ['adjoint', 'adjoint'],
     ['norm', 'norm'],
     ['proj_u', 'projectionOntoU'],
@@ -696,6 +698,20 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return {
       kind: 'binary',
       operator: 'cross',
+      left: parseExpression(parts[0], options),
+      right: parseExpression(parts[1], options),
+    };
+  }
+
+  const dotArgument = functionArgument(input, 'dot');
+  if (dotArgument !== null) {
+    const parts = splitTopLevelComma(dotArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Dot product requires two vector operands.');
+    }
+    return {
+      kind: 'binary',
+      operator: 'dot',
       left: parseExpression(parts[0], options),
       right: parseExpression(parts[1], options),
     };
@@ -742,7 +758,9 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     };
   }
 
-  const gramArgument = functionArgument(input, 'gram');
+  const gramArgument = functionArgument(input, 'gram')
+    ?? functionArgument(input, 'gramSchmidt')
+    ?? functionArgument(input, 'gramschmidt');
   if (gramArgument !== null) {
     const operands = splitTopLevelArguments(gramArgument);
     if (!operands || operands.length < 1 || operands.length > 6) {
