@@ -19,9 +19,6 @@ const MIME_EXTENSIONS = {
   'image/png': 'png',
   'image/svg+xml': 'svg',
   'image/webp': 'webp',
-  'text/vtt': 'vtt',
-  'video/mp4': 'mp4',
-  'video/webm': 'webm',
 } as const;
 
 const SAFE_MATHML_TAGS = new Set([
@@ -58,16 +55,14 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
 .evidence { margin: 1rem 0; padding: 1rem; background: #f4f6f2; border: 1px solid #d7ddd4; }
 .evidence .warning { color: #8b3d27; }
 .media { max-width: 100%; margin: 1.25rem auto; text-align: center; }
-.media img, .media video { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-.media.has-display-aspect img, .media.has-display-aspect video { width: 100%; height: 100%; object-fit: fill; }
-.media video { width: 100%; background: #111; }
+.media img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.media.has-display-aspect img { width: 100%; height: 100%; object-fit: fill; }
 .media.is-left { margin-left: 0; }
 .media.is-right { margin-right: 0; }
 .media.is-square-left { float: left; margin: .25rem 1.25rem .75rem 0; }
 .media.is-square-right { float: right; margin: .25rem 0 .75rem 1.25rem; }
 .media.is-top-and-bottom { clear: both; }
 .media-description { text-align: left; }
-.video-note { color: #586257; font-size: .88rem; }
 .page-break { clear: both; height: 0; margin: 2rem 0; border: 0; border-top: 1px dashed #aab2a7; }
 .divider { clear: both; border: 0; border-top: 1px solid #aeb6ac; }
 .list-dash { list-style-type: "–  "; }
@@ -96,8 +91,6 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
   .web-page-number { display: inline; }
   .web-page-number::after { content: counter(page); }
   .semantic, .media, .evidence { break-inside: avoid; }
-  video { display: none !important; }
-  .video-note { display: block; }
 }
 `;
 
@@ -259,10 +252,8 @@ function assetFileName(assetId: string, mimeType: keyof typeof MIME_EXTENSIONS) 
 function collectLabels(nodes: readonly NotebookRichBlockNode[]) {
   const labels = new Map<string, string>();
   let figures = 0;
-  let videos = 0;
   walkNodes(nodes, (node) => {
     if (node.type === 'imageFigure' && node.numbered) labels.set(node.id, `Figure ${++figures}`);
-    if (node.type === 'videoFigure' && node.numbered) labels.set(node.id, `Video ${++videos}`);
   });
   return labels;
 }
@@ -327,18 +318,6 @@ function renderNode(node: NotebookRichBlockNode, context: RenderContext): string
     ) : '';
     return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, node.displayAspectRatio, context.styles)}"><img class="${[crop, rotation].filter(Boolean).join(' ')}" src="${path}" alt="${node.decorative ? '' : escapeHtml(node.altText ?? '')}" loading="lazy">${captionHtml(node.id, node.caption, context)}</figure>`;
   }
-  if (node.type === 'videoFigure') {
-    const source = context.assetPaths.get(node.assetId);
-    if (!source) throw new Error(`Web video asset ${node.assetId} is unavailable.`);
-    const poster = node.posterAssetId ? context.assetPaths.get(node.posterAssetId) : undefined;
-    const sourceAssetType = source.endsWith('.mp4') ? 'video/mp4' : 'video/webm';
-    const tracks = node.tracks?.map((track) => {
-      const trackPath = context.assetPaths.get(track.assetId);
-      if (!trackPath) throw new Error(`Web caption asset ${track.assetId} is unavailable.`);
-      return `<track src="${trackPath}" kind="${track.kind}" srclang="${escapeHtml(track.language)}" label="${escapeHtml(track.label)}"${track.default ? ' default' : ''}>`;
-    }).join('') ?? '';
-    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, node.displayAspectRatio, context.styles)}"><video controls preload="metadata"${node.loop ? ' loop' : ''}${poster ? ` poster="${poster}"` : ''}><source src="${source}" type="${sourceAssetType}">${tracks}<p>Your browser cannot play this local video.</p></video><div class="media-description"><strong>${escapeHtml(node.title)}</strong>${node.description ? `<p>${escapeHtml(node.description)}</p>` : ''}</div>${captionHtml(node.id, node.caption, context)}<p class="video-note">Interactive local playback is included in this Web package.</p></figure>`;
-  }
   if (node.type === 'bulletList' || node.type === 'orderedList') {
     const tag = node.type === 'bulletList' ? 'ul' : 'ol';
     const style = node.style && node.style !== 'disc' && node.style !== 'decimal'
@@ -379,7 +358,7 @@ export async function buildNotebookWebPackage(
     assetPaths.set(asset.metadata.id, path);
     zip.file(path, new Uint8Array(await asset.blob.arrayBuffer()), {
       binary: true,
-      compression: mimeType.startsWith('video/') ? 'STORE' : 'DEFLATE',
+      compression: 'DEFLATE',
     });
   }
   const styles = new StyleRegistry();

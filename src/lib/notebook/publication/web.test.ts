@@ -14,9 +14,6 @@ async function fixture() {
   const assets = createInMemoryNotebookAssetPort();
   const image = await assets.put(new Uint8Array([1, 2, 3]), 'image/png', NOW);
   const svg = await assets.put(new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4"/></svg>'), 'image/svg+xml', NOW);
-  const video = await assets.put(new Uint8Array([4, 5, 6, 7]), 'video/webm', NOW);
-  const poster = await assets.put(new Uint8Array([8, 9]), 'image/webp', NOW);
-  const track = await assets.put(new TextEncoder().encode('WEBVTT\n\n00:00.000 --> 00:01.000\nLimit'), 'text/vtt', NOW);
   const base = createNotebookRichDocument({ now: () => new Date(NOW), title: 'Limits <script>alert(1)</script>' });
   const document: NotebookRichDocument = {
     ...base,
@@ -56,12 +53,6 @@ async function fixture() {
       },
       { type: 'imageFigure', id: 'vector', assetId: svg.id, decorative: true, widthPercent: 25 },
       {
-        type: 'videoFigure', id: 'video', assetId: video.id, posterAssetId: poster.id,
-        title: 'Limit lesson', description: 'An offline video.', caption: 'Worked limit', numbered: true, loop: true,
-        alignment: 'left', placement: 'square-left', displayAspectRatio: 16 / 9,
-        tracks: [{ id: 'captions', assetId: track.id, kind: 'captions', label: 'English', language: 'en', default: true }],
-      },
-      {
         type: 'section', id: 'section', title: 'Applications',
         content: [{ type: 'evidenceSnapshot', id: 'evidence', source: 'manual-placeholder', title: 'Verification', inputLatex: 'x+1', facts: ['Exact result'], warnings: ['Check assumptions'] }],
       },
@@ -76,7 +67,7 @@ async function fixture() {
 }
 
 describe('Notebook Web publication', () => {
-  it('creates an offline ZIP with escaped author content, safe MathML, hashed assets, video, and print CSS', async () => {
+  it('creates an offline ZIP with escaped author content, safe MathML, hashed assets, and print CSS', async () => {
     const source = await fixture();
     const findings = notebookWebCompatibilityFindings(source.document.content);
     expect(findings).toContainEqual(expect.objectContaining({
@@ -104,8 +95,6 @@ describe('Notebook Web publication', () => {
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
     expect(html).toContain('<math xmlns="http://www.w3.org/1998/Math/MathML"');
-    expect(html).toContain('<video controls preload="metadata" loop');
-    expect(html).toContain('<track src="assets/');
     expect(html).toContain('Calculus &amp; analysis');
     expect(html).toContain('Offline publication');
     expect(html).toContain('web-page-number');
@@ -119,15 +108,14 @@ describe('Notebook Web publication', () => {
     expect(css).toContain('@page { size: Letter landscape;');
     expect(css).toContain('margin-inline-start: 72pt');
     expect(css).toContain('aspect-ratio: 1.25');
-    expect(css).toContain(`aspect-ratio: ${16 / 9}`);
     expect(css).toContain('transform: rotate(137deg)');
     expect(css).toContain('color: #335577');
     expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
       message: expect.stringContaining('omits live page numbers on screen'),
     }));
     const assetFiles = Object.keys(zip.files).filter((name) => name.startsWith('assets/') && !name.endsWith('/'));
-    expect(assetFiles).toHaveLength(5);
-    expect(assetFiles.every((name) => /^assets\/[a-f0-9]{64}\.(?:jpg|png|svg|webp|mp4|webm|vtt)$/u.test(name))).toBe(true);
+    expect(assetFiles).toHaveLength(2);
+    expect(assetFiles.every((name) => /^assets\/[a-f0-9]{64}\.(?:jpg|png|svg|webp)$/u.test(name))).toBe(true);
   });
 
   it('reports unsafe MathML conversion and emits escaped source text', async () => {
@@ -162,7 +150,6 @@ describe('Notebook Web publication', () => {
     const zip = await JSZip.loadAsync((await buildNotebookWebPackage(projection)).bytes);
     const html = await zip.file('index.html')!.async('string');
     expect(html).toContain('Applications');
-    expect(html).not.toContain('Limit lesson');
     await expect(buildNotebookWebPackage({
       ...projection,
       request: { format: 'pdf', scope: { kind: 'document' } },

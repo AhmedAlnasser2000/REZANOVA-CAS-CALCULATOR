@@ -15,7 +15,6 @@ import {
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   NOTEBOOK_RICH_DOCUMENT_VERSION,
   NOTEBOOK_TEXT_ALIGNMENTS,
-  NOTEBOOK_VIDEO_TRACK_KINDS,
   type NotebookDocumentSummary,
   type NotebookInlineNode,
   type NotebookParagraphFormat,
@@ -36,6 +35,7 @@ import {
   type NotebookRichDocumentV10,
   type NotebookRichDocumentV11,
   type NotebookRichDocumentV12,
+  type NotebookRichDocumentV13,
   type NotebookRichMark,
 } from './types';
 import {
@@ -464,6 +464,7 @@ function isRichBlockNode(
         'caption',
         'numbered',
         'widthPercent',
+        ...(allowObjectPlacement ? ['displayWidthPt', 'displayHeightPt'] : []),
         'alignment',
         'placement',
         'rotation',
@@ -507,6 +508,20 @@ function isRichBlockNode(
         : Number.isInteger(value.widthPercent)
           && Number(value.widthPercent) >= 10
           && Number(value.widthPercent) <= 100))
+      && (value.displayWidthPt === undefined || (
+        allowObjectPlacement
+        && typeof value.displayWidthPt === 'number'
+        && Number.isFinite(value.displayWidthPt)
+        && value.displayWidthPt >= 36
+        && value.displayWidthPt <= 2000
+      ))
+      && (value.displayHeightPt === undefined || (
+        allowObjectPlacement
+        && typeof value.displayHeightPt === 'number'
+        && Number.isFinite(value.displayHeightPt)
+        && value.displayHeightPt >= 36
+        && value.displayHeightPt <= 2000
+      ))
       && alignment !== null
       && placement !== null
       && placementAlignmentIsValid
@@ -566,7 +581,7 @@ function isRichBlockNode(
           || trackIds.has(track.id)
           || !/^sha256:[0-9a-f]{64}$/.test(String(track.assetId ?? ''))
           || trackAssets.has(String(track.assetId))
-          || !isOneOf(track.kind, NOTEBOOK_VIDEO_TRACK_KINDS)
+          || !isOneOf(track.kind, ['captions', 'subtitles'] as const)
           || typeof track.label !== 'string' || !track.label.trim()
           || typeof track.language !== 'string'
           || !/^[a-z]{2,8}(?:-[a-z0-9]{1,8})*$/i.test(track.language)
@@ -627,7 +642,7 @@ export function isNotebookRichDocument(value: unknown): value is NotebookRichDoc
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, true, true, true, true, true, true, true,
+      node, true, true, true, true, true, false, true, true, true, true,
     ))
     && isPageSetup(value.pageSetup)
     && isHeaderFooter(value.headerFooter)
@@ -841,6 +856,27 @@ export function isNotebookRichDocumentV12(value: unknown): value is NotebookRich
     && isHeaderFooter(value.headerFooter);
 }
 
+export function isNotebookRichDocumentV13(value: unknown): value is NotebookRichDocumentV13 {
+  return isRecord(value)
+    && value.version === 13
+    && Object.keys(value).every((key) => [
+      'version', 'id', 'title', 'createdAt', 'updatedAt', 'selectedNodeId',
+      'content', 'pageSetup', 'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, true, true, true,
+    ))
+    && isPageSetup(value.pageSetup)
+    && isHeaderFooter(value.headerFooter)
+    && isNotebookObjectPlacementGraphValid(value.content);
+}
+
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {
   return nodes.reduce((count, node) => {
     if (node.type === 'semanticBlock' || node.type === 'section') {
@@ -864,10 +900,6 @@ export function collectNotebookAssetIds(nodes: readonly NotebookRichBlockNode[])
     if (!node) continue;
     if (node.type === 'imageFigure') {
       assetIds.add(node.assetId);
-    } else if (node.type === 'videoFigure') {
-      assetIds.add(node.assetId);
-      if (node.posterAssetId) assetIds.add(node.posterAssetId);
-      node.tracks?.forEach((track) => assetIds.add(track.assetId));
     } else if (node.type === 'semanticBlock' || node.type === 'section') {
       pending.push(...node.content);
     } else if (node.type === 'bulletList' || node.type === 'orderedList') {
@@ -944,11 +976,6 @@ export function measureNotebookDocument(
     if (node.type === 'imageFigure') {
       metrics.wordCount += countWordsInText(node.caption);
       continue;
-    }
-    if (node.type === 'videoFigure') {
-      metrics.wordCount += countWordsInText(node.title);
-      metrics.wordCount += countWordsInText(node.description);
-      metrics.wordCount += countWordsInText(node.caption);
     }
   }
 

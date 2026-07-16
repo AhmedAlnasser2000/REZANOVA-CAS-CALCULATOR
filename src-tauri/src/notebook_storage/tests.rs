@@ -9,8 +9,7 @@ use super::{
 };
 use std::{
     fs,
-    io::{Cursor, Read, Write},
-    net::TcpStream,
+    io::{Cursor, Write},
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -29,7 +28,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 13,
+        "version": 14,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -271,7 +270,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 13);
+    assert_eq!(loaded.document["version"], 14);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -294,7 +293,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 13);
+    assert_eq!(versions[0].record.document["version"], 14);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -320,7 +319,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 13);
+    assert_eq!(inspection.document["version"], 14);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
     let version7 = legacy_record("library.legacy-v7", 1, "Image-era notebook", 7);
@@ -334,7 +333,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 13);
+    assert_eq!(loaded_v7.document["version"], 14);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
 
     let version8 = legacy_record("library.legacy-v8", 1, "Page-era notebook", 8);
@@ -348,7 +347,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version8.library_id)
         .expect("V8 record should load")
         .expect("V8 record should exist");
-    assert_eq!(loaded_v8.document["version"], 13);
+    assert_eq!(loaded_v8.document["version"], 14);
     assert_eq!(loaded_v8.document["content"], version8.document["content"]);
 
     let version9 = legacy_record("library.legacy-v9", 1, "Video-era notebook", 9);
@@ -363,7 +362,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version9.library_id)
         .expect("V9 record should load")
         .expect("V9 record should exist");
-    assert_eq!(loaded_v9.document["version"], 13);
+    assert_eq!(loaded_v9.document["version"], 14);
     assert_eq!(loaded_v9.document["content"], version9_content);
 
     let version10 = legacy_record("library.legacy-v10", 1, "Direct-media notebook", 10);
@@ -377,7 +376,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version10.library_id)
         .expect("V10 record should load")
         .expect("V10 record should exist");
-    assert_eq!(loaded_v10.document["version"], 13);
+    assert_eq!(loaded_v10.document["version"], 14);
     assert_eq!(
         loaded_v10.document["content"],
         version10.document["content"]
@@ -395,7 +394,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version11.library_id)
         .expect("V11 record should load")
         .expect("V11 record should exist");
-    assert_eq!(loaded_v11.document["version"], 13);
+    assert_eq!(loaded_v11.document["version"], 14);
     assert_eq!(
         loaded_v11.document["content"],
         version11.document["content"]
@@ -413,7 +412,7 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         .load_record(&version12.library_id)
         .expect("V12 record should load")
         .expect("V12 record should exist");
-    assert_eq!(loaded_v12.document["version"], 13);
+    assert_eq!(loaded_v12.document["version"], 14);
     assert_eq!(
         loaded_v12.document["content"],
         version12.document["content"]
@@ -439,7 +438,7 @@ fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sourc
         let inspected = storage
             .inspect_package(&package)
             .expect("supported legacy package should inspect");
-        assert_eq!(inspected.document["version"], 13);
+        assert_eq!(inspected.document["version"], 14);
         assert_eq!(inspected.document["content"], source.document["content"]);
 
         let imported = storage
@@ -447,7 +446,7 @@ fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sourc
             .expect("supported legacy package should import");
         assert_ne!(imported.library_id, source.library_id);
         assert_eq!(imported.revision, 1);
-        assert_eq!(imported.document["version"], 13);
+        assert_eq!(imported.document["version"], 14);
         assert_eq!(imported.document["content"], source.document["content"]);
         assert_eq!(package, original_package);
 
@@ -456,7 +455,7 @@ fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sourc
                 .expect("imported record should exist"),
         )
         .expect("imported record should remain readable");
-        assert_eq!(raw_imported["document"]["version"], 13);
+        assert_eq!(raw_imported["document"]["version"], 14);
     }
 
     for schema in 11..=12 {
@@ -469,7 +468,7 @@ fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sourc
         let imported = storage
             .import_package(&portable_package_for(&source))
             .expect("running-matter package should import");
-        assert_eq!(imported.document["version"], 13);
+        assert_eq!(imported.document["version"], 14);
         assert_eq!(imported.document["content"], source.document["content"]);
     }
 
@@ -515,7 +514,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("V10 record should exist");
     assert_eq!(loaded.source_document_version, 10);
     let mut opened = loaded.record;
-    assert_eq!(opened.document["version"], 13);
+    assert_eq!(opened.document["version"], 14);
     assert_eq!(opened.document["content"], legacy.document["content"]);
     assert_eq!(opened.document["pageSetup"], legacy.document["pageSetup"]);
     assert_eq!(
@@ -541,7 +540,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .expect("first upgraded save should succeed");
     let current_on_disk: serde_json::Value =
         serde_json::from_slice(&fs::read(&paths.target).unwrap()).unwrap();
-    assert_eq!(current_on_disk["document"]["version"], 13);
+    assert_eq!(current_on_disk["document"]["version"], 14);
 
     let snapshot_paths: Vec<_> = fs::read_dir(storage.versions_path(&legacy.library_id))
         .unwrap()
@@ -555,7 +554,7 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
     assert_eq!(raw_snapshot["record"]["document"]["version"], 10);
     let listed = storage.list_versions(&legacy.library_id).unwrap();
     assert_eq!(listed.len(), 1);
-    assert_eq!(listed[0].record.document["version"], 13);
+    assert_eq!(listed[0].record.document["version"], 14);
 
     opened.revision = 6;
     opened.saved_at = "2026-07-15T00:00:06.000Z".into();
@@ -570,8 +569,8 @@ fn upgrades_a_real_v10_record_only_on_save_and_preserves_one_raw_snapshot() {
         .load_record_with_source(&legacy.library_id)
         .unwrap()
         .expect("upgraded record should remain available");
-    assert_eq!(reopened.source_document_version, 13);
-    assert_eq!(reopened.record.document["version"], 13);
+    assert_eq!(reopened.source_document_version, 14);
+    assert_eq!(reopened.record.document["version"], 14);
     assert_eq!(
         reopened.record.document["content"],
         legacy.document["content"]
@@ -624,7 +623,7 @@ fn current_records_skip_upgrade_snapshots_and_legacy_failures_are_specific() {
 
     for (library_id, schema, expected) in [
         ("library.early", 5, "NOTEBOOK_SCHEMA_PRE_V6"),
-        ("library.future", 14, "NOTEBOOK_SCHEMA_NEWER"),
+        ("library.future", 15, "NOTEBOOK_SCHEMA_NEWER"),
     ] {
         let legacy = legacy_record(library_id, 1, "Unsupported notebook", schema);
         let paths = storage.record_paths(library_id);
@@ -804,7 +803,7 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
     legacy["version"] = 9.into();
     let original = legacy.clone();
     let migrated = migrate_notebook_document(legacy).expect("V9 document should migrate");
-    assert_eq!(migrated["version"], 13);
+    assert_eq!(migrated["version"], 14);
     assert_eq!(migrated["content"], original["content"]);
     assert_eq!(migrated["pageSetup"], original["pageSetup"]);
     assert_eq!(migrated["headerFooter"]["pageNumberStart"], 1);
@@ -830,154 +829,47 @@ fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
 }
 
 #[test]
-fn validates_v12_video_metadata_and_referenced_assets() {
-    let root = unique_storage("v9-video-model");
+fn rejects_current_video_nodes_and_migrates_legacy_v13_videos_to_text() {
+    let root = unique_storage("removed-video-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let video_id = format!("sha256:{}", "a".repeat(64));
-    let poster_id = format!("sha256:{}", "b".repeat(64));
-    let track_id = format!("sha256:{}", "c".repeat(64));
     let mut video_record = record("library.video", 1, "Video notebook");
-    video_record.asset_ids = vec![video_id.clone(), poster_id.clone(), track_id.clone()];
+    video_record.asset_ids = vec![video_id.clone()];
     video_record.document["content"] = serde_json::json!([{
         "type": "videoFigure",
         "id": "video.storage.1",
         "assetId": video_id,
         "title": "Worked limit",
-        "description": "A narrated worked example.",
-        "caption": "Evaluating the limit",
-        "numbered": true,
-        "posterAssetId": poster_id,
-        "tracks": [{
-            "id": "track.en",
-            "assetId": track_id,
-            "kind": "captions",
-            "label": "English",
-            "language": "en-US",
-            "default": true
-        }],
-        "widthPercent": 71.125,
-        "alignment": "left",
-        "placement": "square-left",
-        "displayAspectRatio": 1.777,
-        "loop": true
+        "description": ""
     }]);
-    storage
+    assert!(storage
         .save_record(video_record.clone(), None, true)
-        .expect("valid video metadata should save");
+        .expect_err("current schema must reject videos")
+        .contains("unsupported"));
 
-    let mut missing_track = video_record.clone();
-    missing_track.library_id = "library.video.missing-track".into();
-    missing_track.asset_ids.pop();
-    assert!(storage
-        .save_record(missing_track, None, true)
-        .expect_err("missing track asset should fail")
-        .contains("missing a referenced asset"));
-
-    let mut duplicate_default = video_record.clone();
-    duplicate_default.library_id = "library.video.defaults".into();
-    duplicate_default
-        .asset_ids
-        .push(format!("sha256:{}", "d".repeat(64)));
-    duplicate_default.document["content"][0]["tracks"]
-        .as_array_mut()
-        .expect("tracks should be an array")
-        .push(serde_json::json!({
-            "id": "track.ar",
-            "assetId": format!("sha256:{}", "d".repeat(64)),
-            "kind": "subtitles",
-            "label": "Arabic",
-            "language": "ar",
-            "default": true
-        }));
-    assert!(storage
-        .save_record(duplicate_default, None, true)
-        .expect_err("multiple default tracks should fail")
-        .contains("default text track"));
-
-    let mut image_property = video_record;
-    image_property.library_id = "library.video.image-property".into();
-    image_property.document["content"][0]["rotation"] = 90.into();
-    assert!(storage
-        .save_record(image_property, None, true)
-        .expect_err("image-only video property should fail")
-        .contains("invalid"));
+    video_record.document["version"] = 13.into();
+    let migrated = migrate_notebook_document(video_record.document)
+        .expect("legacy Schema 13 video document should migrate");
+    assert_eq!(migrated["version"], 14);
+    assert_eq!(
+        migrated["content"][0],
+        serde_json::json!({
+            "type": "paragraph",
+            "id": "video.storage.1",
+            "content": [{ "type": "text", "text": "Video removed: Worked limit" }]
+        })
+    );
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn streams_video_uploads_in_bounded_chunks_and_cleans_aborts() {
-    let root = unique_storage("streamed-video");
+fn rejects_streamed_video_uploads() {
+    let root = unique_storage("streamed-video-removed");
     let storage = NotebookStorage::load(root.clone()).unwrap();
-    let bytes = b"\0\0\0\x18ftypisomstreamed-video";
-    let upload_id = storage
-        .begin_asset_upload(
-            bytes.len() as u64,
-            "video/mp4".into(),
-            "2026-07-14T00:01:00.000Z".into(),
-        )
-        .unwrap();
-    storage
-        .append_asset_upload(&upload_id, &bytes[..7])
-        .unwrap();
-    storage
-        .append_asset_upload(&upload_id, &bytes[7..])
-        .unwrap();
-    let metadata = storage.finish_asset_upload(&upload_id).unwrap();
-    assert_eq!(metadata.byte_length, bytes.len() as u64);
-    assert_eq!(
-        storage.load_asset(&metadata.id).unwrap().unwrap().bytes,
-        bytes
-    );
-
-    let duplicate_id = storage
-        .begin_asset_upload(
-            bytes.len() as u64,
-            "video/mp4".into(),
-            "2026-07-14T00:00:00.000Z".into(),
-        )
-        .unwrap();
-    storage.append_asset_upload(&duplicate_id, bytes).unwrap();
-    assert_eq!(
-        storage.finish_asset_upload(&duplicate_id).unwrap(),
-        metadata
-    );
-
-    let url = storage.asset_url(&metadata.id).unwrap();
-    let address_and_path = url.strip_prefix("http://").unwrap();
-    let (address, path) = address_and_path.split_once('/').unwrap();
-    let mut range_stream = TcpStream::connect(address).unwrap();
-    write!(
-        range_stream,
-        "GET /{path} HTTP/1.1\r\nHost: {address}\r\nRange: bytes=4-7\r\nConnection: close\r\n\r\n"
-    )
-    .unwrap();
-    let mut range_response = Vec::new();
-    range_stream.read_to_end(&mut range_response).unwrap();
-    let range_response = String::from_utf8_lossy(&range_response);
-    assert!(range_response.starts_with("HTTP/1.1 206 Partial Content"));
-    assert!(range_response.contains(&format!("Content-Range: bytes 4-7/{}", bytes.len())));
-    assert!(range_response.ends_with("ftyp"));
-
-    let mut head_stream = TcpStream::connect(address).unwrap();
-    write!(
-        head_stream,
-        "HEAD /{path} HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\n\r\n"
-    )
-    .unwrap();
-    let mut head_response = String::new();
-    head_stream.read_to_string(&mut head_response).unwrap();
-    assert!(head_response.starts_with("HTTP/1.1 200 OK"));
-    assert!(head_response.contains("Accept-Ranges: bytes"));
-    assert!(head_response.ends_with("\r\n\r\n"));
-
-    let aborted_id = storage
-        .begin_asset_upload(12, "video/mp4".into(), "2026-07-14T00:00:00.000Z".into())
-        .unwrap();
-    storage
-        .append_asset_upload(&aborted_id, b"\0\0\0\x18ftyp")
-        .unwrap();
-    storage.abort_asset_upload(&aborted_id).unwrap();
-    assert!(storage.finish_asset_upload(&aborted_id).is_err());
+    assert!(storage
+        .begin_asset_upload(12, "video/mp4".into(), "2026-07-14T00:01:00.000Z".into(),)
+        .expect_err("video uploads should be unsupported")
+        .contains("unsupported"));
     assert!(std::fs::read_dir(root.join("uploads"))
         .unwrap()
         .next()
@@ -1201,8 +1093,8 @@ fn retains_bounded_version_history_and_round_trips_trash() {
 }
 
 #[test]
-fn round_trips_schema13_floating_placements_through_storage_history_trash_and_packages() {
-    let root = unique_storage("schema13-floating");
+fn round_trips_schema14_floating_placements_through_storage_history_trash_and_packages() {
+    let root = unique_storage("schema14-floating");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut stored = record("library.floating", 1, "Floating objects");
     stored.document["content"] = serde_json::json!([{

@@ -32,15 +32,7 @@ function fixture() {
         type: 'section',
         id: 'limits',
         title: 'Limits',
-        content: [{
-          type: 'videoFigure',
-          id: 'lesson',
-          assetId: `sha256:${'a'.repeat(64)}`,
-          title: 'Limit lesson',
-          description: 'Approaching a finite limit.',
-          caption: 'Worked explanation',
-          numbered: true,
-        }],
+        content: [{ type: 'paragraph', id: 'lesson', content: [{ type: 'text', text: 'Approaching a finite limit.' }] }],
       },
     ],
   };
@@ -76,7 +68,7 @@ describe('Notebook PDF publication dialog', () => {
     vi.unstubAllGlobals();
   });
 
-  it('previews static publication substitutions and invokes the system print flow', async () => {
+  it('previews publication output and invokes the system print flow', async () => {
     const user = userEvent.setup();
     const source = fixture();
     render(<NotebookPdfExportDialog
@@ -86,10 +78,8 @@ describe('Notebook PDF publication dialog', () => {
     />);
 
     const dialog = screen.getByRole('dialog', { name: 'Print or save Notebook as PDF' });
-    expect(await within(dialog).findByText('Interactive video has no poster and will be represented by descriptive text only.')).toBeInTheDocument();
-    expect(screen.getByTestId('notebook-print-projection')).toBeInTheDocument();
+    expect(await screen.findByTestId('notebook-print-projection')).toBeInTheDocument();
     expect(screen.getAllByText('Calculus notes')).toHaveLength(2);
-    expect(screen.getByText('Interactive playback is available in the Web package.')).toBeInTheDocument();
     expect(document.querySelectorAll('.notebook-print-page')).toHaveLength(2);
 
     await user.click(within(dialog).getByRole('button', { name: 'Open system print dialog' }));
@@ -105,7 +95,6 @@ describe('Notebook PDF publication dialog', () => {
       onClose={vi.fn()}
     />);
     const dialog = screen.getByRole('dialog', { name: 'Print or save Notebook as PDF' });
-    await within(dialog).findByText('Interactive video has no poster and will be represented by descriptive text only.');
 
     await user.click(within(dialog).getByLabelText('Physical pages'));
     await user.clear(within(dialog).getByLabelText('PDF from page'));

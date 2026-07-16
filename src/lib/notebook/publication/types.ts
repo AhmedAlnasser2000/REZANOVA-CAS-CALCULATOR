@@ -35,7 +35,6 @@ export type NotebookPublicationAssetV1 = {
 };
 
 export const NOTEBOOK_COMPATIBILITY_FINDING_KINDS = [
-  'video-static-substitution',
   'equation-fallback',
   'font-substitution',
   'layout-approximation',
@@ -54,7 +53,6 @@ export type NotebookCompatibilityReportV1 = {
   readonly format: NotebookExportFormat;
   readonly findings: readonly NotebookCompatibilityFindingV1[];
   readonly summary: {
-    readonly videoSubstitutions: number;
     readonly equationFallbacks: number;
     readonly fontSubstitutions: number;
     readonly layoutApproximations: number;

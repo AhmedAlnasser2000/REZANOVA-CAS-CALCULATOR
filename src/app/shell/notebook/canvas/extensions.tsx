@@ -16,10 +16,6 @@ import {
   createNotebookImageNodeView,
   type NotebookImageNodeViewOptions,
 } from './NotebookImageNodeView';
-import {
-  createNotebookVideoNodeView,
-  type NotebookDirectMediaNodeViewOptions,
-} from './NotebookVideoNodeView';
 import { NotebookParagraphFormatting } from './NotebookParagraphFormattingExtension';
 import {
   createNotebookMathNodeView,
@@ -41,7 +37,6 @@ const ID_NODE_TYPES = new Set([
   'semanticBlock',
   'notebookSection',
   'imageFigure',
-  'videoFigure',
   'pageBreak',
 ]);
 
@@ -143,7 +138,6 @@ const NotebookObjectPlacementAttributes = Extension.create({
         'evidenceSnapshot',
         'horizontalRule',
         'imageFigure',
-        'videoFigure',
         'semanticBlock',
         'notebookSection',
       ],
@@ -256,6 +250,8 @@ const ImageFigure = Node.create({
       caption: { default: null },
       numbered: { default: null },
       widthPercent: { default: null },
+      displayWidthPt: { default: null },
+      displayHeightPt: { default: null },
       alignment: { default: null },
       placement: { default: null },
       rotation: { default: null },
@@ -273,40 +269,6 @@ const ImageFigure = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     return ['figure', mergeAttributes(HTMLAttributes, { 'data-notebook-image': '' })];
-  },
-});
-
-const VideoFigure = Node.create({
-  name: 'videoFigure',
-  group: 'block',
-  atom: true,
-  draggable: false,
-  selectable: true,
-
-  addAttributes() {
-    return {
-      id: { default: '' },
-      assetId: { default: '' },
-      title: { default: 'Untitled video' },
-      description: { default: '' },
-      caption: { default: null },
-      numbered: { default: null },
-      posterAssetId: { default: null },
-      tracks: { default: null },
-      widthPercent: { default: null },
-      alignment: { default: null },
-      placement: { default: null },
-      displayAspectRatio: { default: null },
-      loop: { default: null },
-    };
-  },
-
-  parseHTML() {
-    return [{ tag: 'figure[data-notebook-video]' }];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ['figure', mergeAttributes(HTMLAttributes, { 'data-notebook-video': '' })];
   },
 });
 
@@ -419,7 +381,7 @@ const NotebookSection = Node.create({
 export function createNotebookExtensions(
   onOpenMathInTool: NotebookOpenMathHandler,
   assetPort: NotebookAssetPort,
-  mediaNodeViewOptions: NotebookImageNodeViewOptions & NotebookDirectMediaNodeViewOptions = {},
+  mediaNodeViewOptions: NotebookImageNodeViewOptions = {},
 ) {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -450,11 +412,6 @@ export function createNotebookExtensions(
     ImageFigure.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort, mediaNodeViewOptions));
-      },
-    }),
-    VideoFigure.extend({
-      addNodeView() {
-        return ReactNodeViewRenderer(createNotebookVideoNodeView(assetPort, mediaNodeViewOptions));
       },
     }),
     PageBreak,

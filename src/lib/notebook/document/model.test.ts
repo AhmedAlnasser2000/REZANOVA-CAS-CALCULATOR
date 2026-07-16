@@ -8,7 +8,6 @@ import {
   isNotebookRichDocumentV5,
   isNotebookRichDocumentV6,
   isNotebookRichDocumentV7,
-  isNotebookRichDocumentV8,
   isNotebookRichDocumentV9,
   isNotebookRichDocumentV11,
   summarizeNotebookDocument,
@@ -22,7 +21,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 13 document with default print geometry', () => {
+  it('creates an app-owned current-schema document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -40,63 +39,6 @@ describe('Notebook rich document model', () => {
       marginsPt: { top: 72, right: 72, bottom: 72, left: 72 },
     });
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
-  });
-
-  it('strictly validates V10 video geometry and keeps it out of V9', () => {
-    const document = createNotebookRichDocument({ now: fixedNow });
-    document.content = [{
-      type: 'videoFigure',
-      id: 'video.1',
-      assetId: `sha256:${'d'.repeat(64)}`,
-      title: 'Limit animation',
-      description: 'A point approaches the limiting value on a graph.',
-      caption: 'Approaching a finite limit',
-      numbered: true,
-      posterAssetId: `sha256:${'e'.repeat(64)}`,
-      tracks: [{
-        id: 'track.1',
-        assetId: `sha256:${'f'.repeat(64)}`,
-        kind: 'captions',
-        label: 'English',
-        language: 'en-US',
-        default: true,
-      }],
-      widthPercent: 75,
-      alignment: 'right',
-      placement: 'square-right',
-      displayAspectRatio: 16 / 9,
-      loop: true,
-    }];
-
-    expect(isNotebookRichDocument(document)).toBe(true);
-    expect(isNotebookRichDocumentV8({ ...document, version: 8 })).toBe(false);
-    expect(isNotebookRichDocumentV9({ ...document, version: 9 })).toBe(false);
-    expect(summarizeNotebookDocument(document).wordCount).toBe(15);
-
-    const duplicateDefault = structuredClone(document) as {
-      content: Array<{ tracks: Array<Record<string, unknown>> }>;
-    };
-    duplicateDefault.content[0]!.tracks.push({
-      id: 'track.2',
-      assetId: `sha256:${'1'.repeat(64)}`,
-      kind: 'subtitles',
-      label: 'Arabic',
-      language: 'ar',
-      default: true,
-    });
-    expect(isNotebookRichDocument(duplicateDefault)).toBe(false);
-
-    const invalidRemotePoster = structuredClone(document) as {
-      content: Array<{ posterAssetId: string }>;
-    };
-    invalidRemotePoster.content[0]!.posterAssetId = 'https://example.com/poster.png';
-    expect(isNotebookRichDocument(invalidRemotePoster)).toBe(false);
-
-    const imageOnlyProperty = structuredClone(document) as unknown as {
-      content: Array<Record<string, unknown>>;
-    };
-    imageOnlyProperty.content[0]!.rotation = 90;
-    expect(isNotebookRichDocument(imageOnlyProperty)).toBe(false);
   });
 
   it('strictly validates V8 page settings and keeps page breaks out of V7', () => {

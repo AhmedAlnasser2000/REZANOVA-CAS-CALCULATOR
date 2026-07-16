@@ -27,7 +27,7 @@ describe('Notebook durable persistence contracts', () => {
       savedAt: '2026-07-14T00:01:00.000Z',
     });
     expect(record.version).toBe(1);
-    expect(record.document.version).toBe(13);
+    expect(record.document.version).toBe(14);
     expect(record.libraryId).not.toBe(record.document.id);
     expect(isNotebookStoredRecordV1(record)).toBe(true);
     expect(summarizeNotebookStoredRecordV1(record)).toMatchObject({
@@ -83,7 +83,6 @@ describe('Notebook durable persistence contracts', () => {
 
   it('preserves V10 indentation and direct-media geometry in durable records', () => {
     const imageAssetId = `sha256:${'d'.repeat(64)}`;
-    const videoAssetId = `sha256:${'e'.repeat(64)}`;
     const document = createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
     });
@@ -97,15 +96,6 @@ describe('Notebook durable persistence contracts', () => {
       assetId: imageAssetId,
       displayAspectRatio: 1.25,
       rotation: 137,
-    }, {
-      type: 'videoFigure',
-      id: 'video.direct',
-      assetId: videoAssetId,
-      title: 'Direct media',
-      description: '',
-      alignment: 'left',
-      placement: 'square-left',
-      displayAspectRatio: 16 / 9,
     }];
     const record = createNotebookStoredRecordV1(document, {
       libraryId: 'library.v10-geometry',
@@ -113,7 +103,7 @@ describe('Notebook durable persistence contracts', () => {
     });
 
     expect(isNotebookStoredRecordV1(record)).toBe(true);
-    expect(record.assetIds).toEqual([imageAssetId, videoAssetId]);
+    expect(record.assetIds).toEqual([imageAssetId]);
     expect(record.document.content).toEqual(document.content);
   });
 
@@ -136,7 +126,7 @@ describe('Notebook durable persistence contracts', () => {
     expect(isNotebookVersionSnapshotV1({ ...snapshot, libraryId: '../escape' })).toBe(false);
   });
 
-  it('migrates V6 through V12 records and snapshots losslessly into the V13 envelope', () => {
+  it('migrates V6 through V12 records and snapshots losslessly into the current envelope', () => {
     const current = createNotebookStoredRecordV1(createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
       title: 'Legacy document',
@@ -151,7 +141,7 @@ describe('Notebook durable persistence contracts', () => {
     delete legacyDocument.pageSetup;
     delete legacyDocument.headerFooter;
     const migrated = migrateNotebookStoredRecordV1(legacy);
-    expect(migrated?.document.version).toBe(13);
+    expect(migrated?.document.version).toBe(14);
     expect(migrated?.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
     );
@@ -166,7 +156,7 @@ describe('Notebook durable persistence contracts', () => {
       record: legacy,
     };
     const migratedSnapshot = migrateNotebookVersionSnapshotV1(legacySnapshot);
-    expect(migratedSnapshot?.record.document.version).toBe(13);
+    expect(migratedSnapshot?.record.document.version).toBe(14);
     expect(migratedSnapshot?.record.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
     );
@@ -174,7 +164,7 @@ describe('Notebook durable persistence contracts', () => {
     const version7 = structuredClone(legacy);
     (version7.document as Record<string, unknown>).version = 7;
     const migratedV7 = migrateNotebookStoredRecordV1(version7);
-    expect(migratedV7?.document.version).toBe(13);
+    expect(migratedV7?.document.version).toBe(14);
     expect(migratedV7?.document.content).toEqual(
       (version7.document as { content: unknown }).content,
     );
@@ -186,7 +176,7 @@ describe('Notebook durable persistence contracts', () => {
       pageNumbering: { enabled: false, position: 'center', startAt: 1 },
     };
     const migratedV9 = migrateNotebookStoredRecordV1(version9);
-    expect(migratedV9?.document.version).toBe(13);
+    expect(migratedV9?.document.version).toBe(14);
     expect(migratedV9?.document.content).toEqual(
       (version9.document as { content: unknown }).content,
     );
@@ -194,19 +184,19 @@ describe('Notebook durable persistence contracts', () => {
     const version10 = structuredClone(version9);
     (version10.document as Record<string, unknown>).version = 10;
     const migratedV10 = requireDurableNotebookStoredRecordV1(version10);
-    expect(migratedV10.document.version).toBe(13);
+    expect(migratedV10.document.version).toBe(14);
     expect(migratedV10.document.headerFooter.pageNumberStart).toBe(1);
 
     const version11 = structuredClone(current) as unknown as Record<string, unknown>;
     (version11.document as Record<string, unknown>).version = 11;
     const migratedV11 = requireDurableNotebookStoredRecordV1(version11);
-    expect(migratedV11.document.version).toBe(13);
+    expect(migratedV11.document.version).toBe(14);
     expect(migratedV11.document.content).toEqual(current.document.content);
 
     const version12 = structuredClone(current) as unknown as Record<string, unknown>;
     (version12.document as Record<string, unknown>).version = 12;
     const migratedV12 = requireDurableNotebookStoredRecordV1(version12);
-    expect(migratedV12.document.version).toBe(13);
+    expect(migratedV12.document.version).toBe(14);
     expect(migratedV12.document.content).toEqual(current.document.content);
 
     const beforeUpgrade = createNotebookVersionSnapshotV1(migratedV10, {
@@ -224,7 +214,7 @@ describe('Notebook durable persistence contracts', () => {
     (early.document as Record<string, unknown>).version = 5;
     expect(() => requireDurableNotebookStoredRecordV1(early)).toThrow(/SCHEMA_PRE_V6/);
     const future = structuredClone(record) as unknown as Record<string, unknown>;
-    (future.document as Record<string, unknown>).version = 14;
+    (future.document as Record<string, unknown>).version = 15;
     expect(() => requireDurableNotebookStoredRecordV1(future)).toThrow(/SCHEMA_NEWER/);
   });
 });

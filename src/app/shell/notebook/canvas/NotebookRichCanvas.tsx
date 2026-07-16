@@ -72,10 +72,6 @@ import {
   type NotebookPaletteRequest,
   type NotebookProseSelection,
 } from './NotebookSelectionToolbar';
-import {
-  isNotebookVideoFile,
-  useNotebookVideoAuthoring,
-} from './useNotebookVideoAuthoring';
 type NotebookRichCanvasProps = {
   activeRibbonTab: NotebookRibbonTab;
   assetPort: NotebookAssetPort;
@@ -88,8 +84,6 @@ type NotebookRichCanvasProps = {
   onProseSelectionChange: (selection: NotebookProseSelection | null) => void;
   onSelectRibbonTab: (tab: NotebookRibbonTab) => void;
   onContextualSelectionChange: (selection: NotebookEditorSelection | null) => void;
-  onImageInserted: () => void;
-  onVideoInserted: () => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
   onPaginationChange: (metrics: NotebookPaginationMetrics) => void;
   onMediaStatusChange: (status: NotebookMediaStatus | null) => void;
@@ -166,8 +160,6 @@ export function NotebookRichCanvas({
   onProseSelectionChange,
   onSelectRibbonTab,
   onContextualSelectionChange,
-  onImageInserted,
-  onVideoInserted,
   onSelectionChange,
   onPaginationChange,
   onMediaStatusChange,
@@ -318,11 +310,6 @@ export function NotebookRichCanvas({
       setRevision((current) => current + 1);
       requestAnimationFrame(refreshSelectedMediaStatus);
     },
-  });
-  const videoAuthoring = useNotebookVideoAuthoring({
-    assetPort,
-    editor,
-    onInserted: onVideoInserted,
   });
   const paginationMetrics = useNotebookPagination({
     editor,
@@ -755,7 +742,6 @@ export function NotebookRichCanvas({
       editor.commands.setNodeSelection(image.from);
       setPendingImageDialog(null);
       imageDialog.close(false);
-      onImageInserted();
     } catch (error) {
       if (storedAssetId && !assetAlreadyExisted) {
         await assetPort.delete(storedAssetId).catch(() => {});
@@ -769,7 +755,7 @@ export function NotebookRichCanvas({
   const contextualSelection = notebookEditorSelection(editor);
   const contextualTab = runningMatterTarget ? 'header-footer' : contextualSelection?.type === 'imageFigure'
     ? 'picture-format'
-    : contextualSelection?.type === 'videoFigure' ? 'video-format' : null;
+    : null;
 
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
@@ -792,13 +778,7 @@ export function NotebookRichCanvas({
           onInserted: setPendingMathFocusId,
         })}
         onInsertImage={() => fileInputRef.current?.click()}
-        onInsertVideo={() => videoAuthoring.fileInputRef.current?.click()}
         onEditImageDetails={openSelectedImageDetails}
-        onEditVideoDetails={videoAuthoring.openDetails}
-        onChooseVideoPoster={videoAuthoring.choosePoster}
-        onRemoveVideoPoster={videoAuthoring.removePoster}
-        onChooseVideoTrack={videoAuthoring.chooseTrack}
-        onRemoveVideoTrack={videoAuthoring.removeTrack}
         onInsertPageBreak={() => insertNotebookPageBreak(editor)}
         onViewModeChange={onViewModeChange}
         onRequestPalette={requestPalette}
@@ -856,21 +836,13 @@ export function NotebookRichCanvas({
           event.preventDefault();
           const position = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
           const insertionPosition = position?.pos ?? editor.state.doc.content.size;
-          if (isNotebookVideoFile(file)) {
-            void videoAuthoring.stage(file, insertionPosition);
-          } else {
-            void stageImage(file, insertionPosition);
-          }
+          void stageImage(file, insertionPosition);
         }}
         onPaste={(event) => {
           const file = readClipboardEventFile(event);
           if (!file) return;
           event.preventDefault();
-          if (isNotebookVideoFile(file)) {
-            void videoAuthoring.stage(file);
-          } else {
-            void stageImage(file);
-          }
+          void stageImage(file);
         }}
       >
         <div
@@ -940,7 +912,6 @@ export function NotebookRichCanvas({
           if (file) void stageImage(file);
         }}
       />
-      {videoAuthoring.controls}
       {imageError ? (
         <div className="notebook-image-error" role="alert">
           <span>{imageError}</span>

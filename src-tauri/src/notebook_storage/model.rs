@@ -6,7 +6,7 @@ pub const STORED_RECORD_VERSION: u8 = 1;
 pub const ASSET_RECORD_VERSION: u8 = 1;
 pub const PACKAGE_MANIFEST_VERSION: u8 = 1;
 pub const VERSION_SNAPSHOT_VERSION: u8 = 1;
-pub const CURRENT_DOCUMENT_SCHEMA: u64 = 13;
+pub const CURRENT_DOCUMENT_SCHEMA: u64 = 14;
 pub const MINIMUM_DURABLE_DOCUMENT_SCHEMA: u64 = 6;
 pub const PACKAGE_KIND: &str = "calcwiz-notebook";
 pub const DOCUMENT_PATH: &str = "document.json";
@@ -451,6 +451,20 @@ fn validate_media_width(
     }
 }
 
+fn validate_optional_point_dimension(value: Option<&Value>, label: &str) -> Result<(), String> {
+    let Some(value) = value else {
+        return Ok(());
+    };
+    let Some(size) = value.as_f64() else {
+        return Err(format!("Notebook {label} is invalid."));
+    };
+    if size.is_finite() && (36.0..=2000.0).contains(&size) {
+        Ok(())
+    } else {
+        Err(format!("Notebook {label} is invalid."))
+    }
+}
+
 fn validate_image_figure(
     node: &Map<String, Value>,
     allow_direct_media: bool,
@@ -466,6 +480,8 @@ fn validate_image_figure(
         "caption",
         "numbered",
         "widthPercent",
+        "displayWidthPt",
+        "displayHeightPt",
         "alignment",
         "placement",
         "rotation",
@@ -495,6 +511,8 @@ fn validate_image_figure(
         "caption",
         "numbered",
         "widthPercent",
+        "displayWidthPt",
+        "displayHeightPt",
         "alignment",
         "placement",
         "rotation",
@@ -531,6 +549,8 @@ fn validate_image_figure(
         return Err("Notebook decorative image cannot carry alternative text.".into());
     }
     validate_media_width(node.get("widthPercent"), "image", allow_precise_media_width)?;
+    validate_optional_point_dimension(node.get("displayWidthPt"), "image display width")?;
+    validate_optional_point_dimension(node.get("displayHeightPt"), "image display height")?;
     validate_media_placement(node, "image")?;
     if let Some(rotation) = node.get("rotation") {
         let valid_rotation = rotation.as_u64().is_some_and(|value| {
@@ -1338,7 +1358,7 @@ pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
         document,
         CURRENT_DOCUMENT_SCHEMA,
         true,
-        true,
+        false,
         true,
         true,
         true,
@@ -1445,9 +1465,66 @@ fn migrate_legacy_running_matter(document: &mut Value) -> Result<(), String> {
     Ok(())
 }
 
+fn video_removed_paragraph(node: &Map<String, Value>) -> Value {
+    let title = node
+        .get("title")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or("Untitled video")
+        .trim();
+    json!({
+        "type": "paragraph",
+        "id": node.get("id").and_then(Value::as_str).unwrap_or("notebook.removed-video"),
+        "content": [{ "type": "text", "text": format!("Video removed: {title}") }]
+    })
+}
+
+fn strip_video_nodes_from_array(nodes: &mut Vec<Value>) {
+    let mut next = Vec::with_capacity(nodes.len());
+    for mut node in std::mem::take(nodes) {
+        let Some(record) = node.as_object_mut() else {
+            continue;
+        };
+        if record.get("type").and_then(Value::as_str) == Some("videoFigure") {
+            next.push(video_removed_paragraph(record));
+            continue;
+        }
+        if matches!(
+            record.get("type").and_then(Value::as_str),
+            Some("section" | "semanticBlock")
+        ) {
+            if let Some(content) = record.get_mut("content").and_then(Value::as_array_mut) {
+                strip_video_nodes_from_array(content);
+            }
+        } else if matches!(
+            record.get("type").and_then(Value::as_str),
+            Some("bulletList" | "orderedList")
+        ) {
+            if let Some(items) = record.get_mut("content").and_then(Value::as_array_mut) {
+                for item in items {
+                    if let Some(content) = item.get_mut("content").and_then(Value::as_array_mut) {
+                        strip_video_nodes_from_array(content);
+                    }
+                }
+            }
+        }
+        next.push(node);
+    }
+    *nodes = next;
+}
+
+fn strip_video_nodes(document: &mut Value) {
+    if let Some(content) = document.get_mut("content").and_then(Value::as_array_mut) {
+        strip_video_nodes_from_array(content);
+    }
+}
+
 pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(13) => validate_notebook_document(document),
+        Some(14) => validate_notebook_document(document),
+        Some(13) => validate_notebook_document_version(
+            document, 13, true, true, true, true, true, true, true,
+        ),
         Some(12) => validate_notebook_document_version(
             document, 12, true, true, true, true, true, true, false,
         ),
@@ -1481,11 +1558,20 @@ pub fn validate_durable_notebook_document(document: &Value) -> Result<(), String
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(13) => validate_notebook_document(&document)?,
+        Some(14) => validate_notebook_document(&document)?,
+        Some(13) => {
+            validate_notebook_document_version(
+                &document, 13, true, true, true, true, true, true, true,
+            )?;
+            strip_video_nodes(&mut document);
+            document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
+            validate_notebook_document(&document)?;
+        }
         Some(12) => {
             validate_notebook_document_version(
                 &document, 12, true, true, true, true, true, true, false,
             )?;
+            strip_video_nodes(&mut document);
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
@@ -1493,6 +1579,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
             validate_notebook_document_version(
                 &document, 11, true, true, true, true, true, false, false,
             )?;
+            strip_video_nodes(&mut document);
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
@@ -1501,6 +1588,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
                 &document, 10, true, true, true, true, false, false, false,
             )?;
             migrate_legacy_running_matter(&mut document)?;
+            strip_video_nodes(&mut document);
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
@@ -1510,6 +1598,7 @@ pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
             )?;
             document["version"] = Value::from(10);
             migrate_legacy_running_matter(&mut document)?;
+            strip_video_nodes(&mut document);
             document["version"] = Value::from(CURRENT_DOCUMENT_SCHEMA);
             validate_notebook_document(&document)?;
         }
@@ -1686,13 +1775,7 @@ pub fn validate_asset_metadata(metadata: &NotebookAssetMetadataV1) -> Result<(),
         || metadata.created_at.is_empty()
         || !matches!(
             metadata.mime_type.as_str(),
-            "image/png"
-                | "image/jpeg"
-                | "image/webp"
-                | "image/svg+xml"
-                | "video/mp4"
-                | "video/webm"
-                | "text/vtt"
+            "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml"
         )
     {
         return Err("Notebook asset metadata is invalid.".into());

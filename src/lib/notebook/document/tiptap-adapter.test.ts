@@ -196,45 +196,6 @@ describe('Notebook Tiptap adapter', () => {
     expect(isNotebookRichDocument(restored)).toBe(true);
   });
 
-  it('round-trips video details, poster, tracks, geometry, and loop state', () => {
-    const base = createNotebookRichDocument({ idPrefix: 'video', now: NOW });
-    const document: NotebookRichDocument = {
-      ...base,
-      content: [{
-        type: 'videoFigure',
-        id: 'figure.video',
-        assetId: `sha256:${'a'.repeat(64)}`,
-        title: 'Worked limit',
-        description: 'A narrated worked example.',
-        caption: 'Evaluating the limit',
-        numbered: true,
-        posterAssetId: `sha256:${'b'.repeat(64)}`,
-        tracks: [{
-          id: 'track.en',
-          assetId: `sha256:${'c'.repeat(64)}`,
-          kind: 'captions',
-          label: 'English',
-          language: 'en',
-          default: true,
-        }],
-        widthPercent: 71.125,
-        alignment: 'left',
-        placement: 'square-left',
-        displayAspectRatio: 1.777,
-        loop: true,
-      }],
-    };
-
-    const restored = notebookDocumentFromTiptap(
-      notebookDocumentToTiptap(document),
-      document,
-      { now: NOW },
-    );
-
-    expect(restored.content).toEqual(document.content);
-    expect(isNotebookRichDocument(restored)).toBe(true);
-  });
-
   it('round-trips explicit page breaks without serializing derived pages', () => {
     const base = createNotebookRichDocument({ idPrefix: 'pages', now: NOW });
     const document: NotebookRichDocument = {

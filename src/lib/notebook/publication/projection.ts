@@ -138,7 +138,6 @@ function requiredAssetIds(
   const ids = new Set<string>();
   walkNodes(content, (node) => {
     if (node.type === 'imageFigure') ids.add(node.assetId);
-    if (node.type === 'videoFigure' && node.posterAssetId) ids.add(node.posterAssetId);
   });
   return [...ids].sort();
 }
@@ -158,23 +157,14 @@ function compatibilityReport(
         if (inline.type === 'inlineMath') scopedNodeIds.add(inline.id);
       });
     }
-    if (node.type === 'videoFigure' && request.format !== 'web') {
-      findings.push({
-        kind: 'video-static-substitution',
-        nodeId: node.id,
-        message: node.posterAssetId
-          ? 'Interactive video will be represented by its poster and descriptive text.'
-          : 'Interactive video has no poster and will be represented by descriptive text only.',
-      });
-    }
-    if ((node.type === 'imageFigure' || node.type === 'videoFigure')
+    if (node.type === 'imageFigure'
       && request.format !== 'pdf'
       && node.placement
       && node.placement !== 'normal') {
       findings.push({
         kind: 'layout-approximation',
         nodeId: node.id,
-        message: `The target will approximate the Notebook ${node.type === 'imageFigure' ? 'image' : 'video'} wrapping preference.`,
+        message: 'The target will approximate the Notebook image wrapping preference.',
       });
     }
   });
@@ -221,7 +211,6 @@ function compatibilityReport(
     format: request.format,
     findings,
     summary: {
-      videoSubstitutions: findings.filter((item) => item.kind === 'video-static-substitution').length,
       equationFallbacks: findings.filter((item) => item.kind === 'equation-fallback').length,
       fontSubstitutions: findings.filter((item) => item.kind === 'font-substitution').length,
       layoutApproximations: findings.filter((item) => item.kind === 'layout-approximation').length,

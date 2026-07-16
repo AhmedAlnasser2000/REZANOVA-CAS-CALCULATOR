@@ -23,7 +23,7 @@ export const NOTEBOOK_MEDIA_RESIZE_HANDLES = [
 
 export type NotebookMediaResizeHandle = (typeof NOTEBOOK_MEDIA_RESIZE_HANDLES)[number]['value'];
 
-export type NotebookMediaKind = 'image' | 'video';
+export type NotebookMediaKind = 'image';
 
 export type NotebookMediaCrop = {
   x: number;
@@ -35,6 +35,8 @@ export type NotebookMediaCrop = {
 export type NotebookMediaPreview = {
   widthPercent: number;
   displayAspectRatio: number;
+  displayWidthPt?: number;
+  displayHeightPt?: number;
   /** Gesture-only viewport rectangle. It is never written to the document. */
   rectanglePx: NotebookMediaViewportRectangle;
   rotation?: number;
@@ -111,6 +113,8 @@ type DirectMediaInteractionOptions = {
   crop?: NotebookMediaCrop;
   cropMode?: boolean;
   displayAspectRatio?: number;
+  displayHeightPt?: number;
+  displayWidthPt?: number;
   editor: Editor;
   frameRef: RefObject<HTMLElement | null>;
   lockedAspectRatio?: number;
@@ -143,6 +147,9 @@ type GesturePointerSnapshot = Pick<GesturePointerEvent, 'clientX' | 'clientY' | 
 
 const MIN_CROP_AREA = 0.1;
 const MIN_CROP_EDGE = 0.01;
+const CSS_PX_PER_PT = 96 / 72;
+const MIN_OBJECT_SIZE_PT = 36;
+const MAX_OBJECT_SIZE_PT = 2000;
 
 function finiteNumber(value: unknown, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -155,6 +162,10 @@ function clamp(value: number, minimum: number, maximum: number) {
 function round(value: number, precision = 3) {
   const multiplier = 10 ** precision;
   return Math.round(value * multiplier) / multiplier;
+}
+
+function normalizeObjectDimensionPt(value: number) {
+  return round(clamp(value, MIN_OBJECT_SIZE_PT, MAX_OBJECT_SIZE_PT));
 }
 
 function normalizeRotation(value: number) {
@@ -292,9 +303,17 @@ function mediaPreview(
   const ratio = typeof options.displayAspectRatio === 'number'
     ? clamp(options.displayAspectRatio, 0.1, 10)
     : aspectRatioFromFrame(rectangle, 1);
+  const displayWidthPt = typeof options.displayWidthPt === 'number' && Number.isFinite(options.displayWidthPt)
+    ? Math.max(1, options.displayWidthPt)
+    : Math.max(1, rectangle.width / CSS_PX_PER_PT);
+  const displayHeightPt = typeof options.displayHeightPt === 'number' && Number.isFinite(options.displayHeightPt)
+    ? Math.max(1, options.displayHeightPt)
+    : Math.max(1, rectangle.height / CSS_PX_PER_PT);
   return {
     widthPercent,
     displayAspectRatio: clamp(ratio, 0.1, 10),
+    displayWidthPt: normalizeObjectDimensionPt(displayWidthPt),
+    displayHeightPt: normalizeObjectDimensionPt(displayHeightPt),
     rectanglePx: rectangle,
     ...(options.rotation === undefined ? {} : { rotation: normalizeRotation(options.rotation) }),
     ...(options.crop ? { crop: normalizeNotebookMediaCrop(options.crop) } : {}),
@@ -314,8 +333,8 @@ type ResizeRectangleInput = {
 
 /**
  * Computes the single content rectangle used by media, its selection border,
- * and its handles. Images lock only corners; videos supply lockedAspectRatio
- * so every handle remains proportional.
+ * and its handles. Corner handles preserve aspect ratio; side handles resize
+ * one dimension, matching direct image manipulation in document editors.
  */
 export function resizeNotebookMediaRectangle(input: ResizeRectangleInput) {
   const vector = handleVector(input.handle);
@@ -473,10 +492,16 @@ function resizedPreview(
   if (!handle) return gesture.initial;
   const minimumSize = Math.max(1, finiteNumber(options.minimumSizePx, 36));
   const contentWidth = editorContentWidth(options.editor, gesture.frame.width || 1);
-  const maximumWidth = Math.max(minimumSize, contentWidth);
+  const maximumObjectSizePx = MAX_OBJECT_SIZE_PT * CSS_PX_PER_PT;
+  const maximumWidth = Math.max(
+    minimumSize,
+    options.mediaType === 'image' ? maximumObjectSizePx : contentWidth,
+  );
   const maximumHeight = Math.max(
     minimumSize,
-    Math.min(contentWidth / 0.1, pageObjectMaximumHeight(options.editor)),
+    options.mediaType === 'image'
+      ? maximumObjectSizePx
+      : Math.min(contentWidth / 0.1, pageObjectMaximumHeight(options.editor)),
   );
   const radians = (gesture.rotation * Math.PI) / 180;
   const cosine = Math.cos(radians);
@@ -524,9 +549,15 @@ function resizedPreview(
   displayAspectRatio = clamp(width / height, 0.1, 10);
   rectangle = flowAlignedRectangle(gesture.frame, width, height, options.alignment);
   const widthPercent = normalizeNotebookMediaWidthPercent((width / contentWidth) * 100);
+  const initialWidthPt = gesture.initial.displayWidthPt ?? Math.max(1, gesture.frame.width / CSS_PX_PER_PT);
+  const initialHeightPt = gesture.initial.displayHeightPt ?? Math.max(1, gesture.frame.height / CSS_PX_PER_PT);
+  const displayWidthPt = initialWidthPt * (rectangle.width / Math.max(1, gesture.frame.width));
+  const displayHeightPt = initialHeightPt * (rectangle.height / Math.max(1, gesture.frame.height));
   return {
     ...gesture.initial,
     widthPercent,
+    displayWidthPt: normalizeObjectDimensionPt(displayWidthPt),
+    displayHeightPt: normalizeObjectDimensionPt(displayHeightPt),
     displayAspectRatio: round(displayAspectRatio),
     rectanglePx: rectangle,
   };
@@ -546,8 +577,12 @@ function rotatedPreview(
   const normalizedRotation = normalizeRotation(rotation);
   const contentWidth = editorContentWidth(options.editor, gesture.frame.width || 1);
   const maximumHeight = pageObjectMaximumHeight(options.editor);
-  const baseWidth = contentWidth * (gesture.initial.widthPercent / 100);
-  const baseHeight = baseWidth / gesture.initial.displayAspectRatio;
+  const baseWidth = gesture.initial.displayWidthPt !== undefined
+    ? gesture.initial.displayWidthPt * CSS_PX_PER_PT
+    : contentWidth * (gesture.initial.widthPercent / 100);
+  const baseHeight = gesture.initial.displayHeightPt !== undefined
+    ? gesture.initial.displayHeightPt * CSS_PX_PER_PT
+    : baseWidth / gesture.initial.displayAspectRatio;
   const fitted = fitNotebookRotatedMediaFrame(
     baseWidth,
     baseHeight,
@@ -559,6 +594,10 @@ function rotatedPreview(
     ...gesture.initial,
     rotation: normalizedRotation,
     widthPercent: normalizeNotebookMediaWidthPercent((fitted.width / contentWidth) * 100),
+    displayWidthPt: normalizeObjectDimensionPt((gesture.initial.displayWidthPt ?? Math.max(1, baseWidth / CSS_PX_PER_PT))
+      * (fitted.width / Math.max(1, baseWidth))),
+    displayHeightPt: normalizeObjectDimensionPt((gesture.initial.displayHeightPt ?? Math.max(1, baseHeight / CSS_PX_PER_PT))
+      * (fitted.height / Math.max(1, baseHeight))),
   };
 }
 
@@ -590,7 +629,17 @@ function croppedPreview(
 
 function attributesForGesture(gesture: Gesture, preview: NotebookMediaPreview) {
   const attributes: Record<string, unknown> = {};
-  if (preview.widthPercent !== gesture.initial.widthPercent) {
+  if (gesture.mode === 'resize' && preview.displayWidthPt !== undefined && preview.displayHeightPt !== undefined) {
+    if (preview.displayWidthPt !== gesture.initial.displayWidthPt) {
+      attributes.displayWidthPt = preview.displayWidthPt;
+    }
+    if (preview.displayHeightPt !== gesture.initial.displayHeightPt) {
+      attributes.displayHeightPt = preview.displayHeightPt;
+    }
+    if (gesture.initial.widthPercent !== undefined) {
+      attributes.widthPercent = null;
+    }
+  } else if (preview.widthPercent !== gesture.initial.widthPercent) {
     attributes.widthPercent = preview.widthPercent;
   }
   if (Math.abs(preview.displayAspectRatio - gesture.initial.displayAspectRatio) >= 0.001) {

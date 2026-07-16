@@ -10,7 +10,7 @@ import type { NotebookRichDocumentV9 } from './types';
 
 describe('Notebook rich document V9 migration', () => {
   it('changes only the version while preserving the V9 document tree', () => {
-    const version9: NotebookRichDocumentV9 = {
+    const version9 = {
       version: 9,
       id: 'notebook.v9',
       title: 'Direct-media draft',
@@ -45,15 +45,21 @@ describe('Notebook rich document V9 migration', () => {
         differentFirstPage: false,
         pageNumbering: { enabled: false, position: 'center', startAt: 1 },
       },
-    };
+    } as unknown as NotebookRichDocumentV9;
 
     expect(isNotebookRichDocumentV9(version9)).toBe(true);
     const migrated = migrateNotebookDocumentV9(version9);
-    expect(migrated).toMatchObject({
-      ...version9,
-      version: 13,
-      headerFooter: { differentFirstPage: false, pageNumberStart: 1 },
-    });
+    expect(migrated.version).toBe(14);
+    expect(migrated.headerFooter).toMatchObject({ differentFirstPage: false, pageNumberStart: 1 });
+    expect(migrated.content).toEqual([
+      version9.content[0],
+      version9.content[1],
+      {
+        type: 'paragraph',
+        id: 'video.1',
+        content: [{ type: 'text', text: 'Video removed: Worked limit' }],
+      },
+    ]);
     expect(migrateNotebookRichDocument(version9)).toEqual(migrated);
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });
@@ -71,12 +77,6 @@ describe('Notebook rich document V9 migration', () => {
         id: 'image.1',
         assetId: `sha256:${'c'.repeat(64)}`,
         rotation: 90,
-      }, {
-        type: 'videoFigure',
-        id: 'video.1',
-        assetId: `sha256:${'d'.repeat(64)}`,
-        title: 'Worked limit',
-        description: '',
       }],
       pageSetup: {
         paperSize: 'a4',
@@ -109,10 +109,5 @@ describe('Notebook rich document V9 migration', () => {
     withArbitraryRotation.content[1]!.rotation = 137;
     expect(isNotebookRichDocumentV9(withArbitraryRotation)).toBe(false);
 
-    const withVideoPlacement = structuredClone(version9) as {
-      content: Array<Record<string, unknown>>;
-    };
-    withVideoPlacement.content[2]!.placement = 'square-left';
-    expect(isNotebookRichDocumentV9(withVideoPlacement)).toBe(false);
   });
 });

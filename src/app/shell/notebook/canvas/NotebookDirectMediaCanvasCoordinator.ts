@@ -355,7 +355,7 @@ export function useNotebookPointerCoordinator({
     if (cropTargetId && (selection?.type !== 'imageFigure' || selection.id !== cropTargetId)) {
       publishImageCropMode(cropTargetId, false);
     }
-    if (!selection?.id || (selection.type !== 'imageFigure' && selection.type !== 'videoFigure')) {
+    if (!selection?.id || selection.type !== 'imageFigure') {
       mediaStatusChangeRef.current(null);
       return;
     }

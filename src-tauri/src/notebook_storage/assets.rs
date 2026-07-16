@@ -16,16 +16,6 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-pub fn validate_streamed_video_header(mime_type: &str, header: &[u8]) -> Result<(), String> {
-    match mime_type {
-        "video/mp4" if header.len() >= 12 && &header[4..8] == b"ftyp" => Ok(()),
-        "video/webm" if header.starts_with(&[0x1a, 0x45, 0xdf, 0xa3]) => Ok(()),
-        "video/mp4" => Err("Notebook MP4 container is invalid.".into()),
-        "video/webm" => Err("Notebook WebM container is invalid.".into()),
-        _ => Err("Notebook streamed asset type is unsupported.".into()),
-    }
-}
-
 fn contains_unsafe_css_url(value: &str) -> bool {
     let mut remainder = value;
     while let Some(start) = remainder.find("url(") {
@@ -399,19 +389,6 @@ pub fn validate_asset_bytes(
             validate_webp(bytes)?;
         }
         "image/svg+xml" => validate_svg(bytes)?,
-        "video/mp4" => {
-            validate_streamed_video_header("video/mp4", bytes)?;
-        }
-        "video/webm" => {
-            validate_streamed_video_header("video/webm", bytes)?;
-        }
-        "text/vtt" => {
-            let text = std::str::from_utf8(bytes)
-                .map_err(|_| "Notebook WebVTT must be UTF-8.".to_string())?;
-            if !text.trim_start_matches('\u{feff}').starts_with("WEBVTT") {
-                return Err("Notebook WebVTT header is invalid.".into());
-            }
-        }
         _ => return Err("Notebook asset type is unsupported.".into()),
     }
     Ok(())

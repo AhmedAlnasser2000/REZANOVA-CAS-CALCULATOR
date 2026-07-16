@@ -9,7 +9,7 @@ pub use model::{
     NotebookVersionSnapshotV1,
 };
 
-use assets::{sha256_hex, validate_asset_bytes, validate_streamed_video_header};
+use assets::{sha256_hex, validate_asset_bytes};
 use model::{
     is_asset_id, migrate_stored_record, migrate_version_snapshot, summarize_record,
     validate_asset_metadata, validate_durable_stored_record, validate_durable_version_snapshot,
@@ -760,35 +760,11 @@ impl NotebookStorage {
 
     pub fn begin_asset_upload(
         &self,
-        byte_length: u64,
-        mime_type: String,
-        created_at: String,
+        _byte_length: u64,
+        _mime_type: String,
+        _created_at: String,
     ) -> Result<String, String> {
-        if byte_length == 0 || !matches!(mime_type.as_str(), "video/mp4" | "video/webm") {
-            return Err("Notebook streamed video upload is invalid.".into());
-        }
-        let _guard = self
-            .operation_lock
-            .lock()
-            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
-        let upload_id = Uuid::new_v4().to_string();
-        let path = self.uploads_dir().join(format!("{upload_id}.part"));
-        let file = File::create(&path).map_err(|error| error.to_string())?;
-        let upload = NotebookAssetUpload {
-            path,
-            file,
-            hasher: Sha256::new(),
-            expected_length: byte_length,
-            received_length: 0,
-            mime_type,
-            created_at,
-            header: Vec::with_capacity(16),
-        };
-        self.uploads
-            .lock()
-            .map_err(|_| "Notebook upload state is unavailable.".to_string())?
-            .insert(upload_id.clone(), upload);
-        Ok(upload_id)
+        Err("Notebook streamed video upload is unsupported.".into())
     }
 
     pub fn append_asset_upload(&self, upload_id: &str, chunk: &[u8]) -> Result<(), String> {
@@ -842,7 +818,6 @@ impl NotebookStorage {
             if upload.received_length != upload.expected_length {
                 return Err("Notebook upload is incomplete.".into());
             }
-            validate_streamed_video_header(&upload.mime_type, &upload.header)?;
             upload.file.flush().map_err(|error| error.to_string())?;
             upload.file.sync_all().map_err(|error| error.to_string())?;
             let sha256 = format!("{:x}", upload.hasher.clone().finalize());

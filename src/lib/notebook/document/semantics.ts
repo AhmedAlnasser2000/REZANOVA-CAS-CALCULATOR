@@ -50,7 +50,7 @@ export function notebookSemanticTitle(
 export type NotebookOutlineEntry = {
   id: string;
   label: string;
-  nodeType: 'heading' | 'imageFigure' | 'videoFigure' | 'semanticBlock' | 'section';
+  nodeType: 'heading' | 'imageFigure' | 'semanticBlock' | 'section';
   semanticKind?: NotebookSemanticKind;
   parentId: string | null;
   depth: number;
@@ -140,21 +140,6 @@ export function buildNotebookOutline(
           id: node.id,
           label,
           nodeType: 'imageFigure',
-          parentId,
-          depth,
-          path: [...path, label],
-          childCount: 0,
-          collapsed: false,
-          topLevelIndex: rootIndex,
-        });
-        return;
-      }
-      if (node.type === 'videoFigure' && node.caption?.trim()) {
-        const label = node.caption.trim();
-        entries.push({
-          id: node.id,
-          label,
-          nodeType: 'videoFigure',
           parentId,
           depth,
           path: [...path, label],

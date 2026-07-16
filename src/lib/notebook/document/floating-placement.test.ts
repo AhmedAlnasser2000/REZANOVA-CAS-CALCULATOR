@@ -52,19 +52,12 @@ function floatingDocument(): NotebookRichDocument {
     placement: 'square-left',
     objectPlacement: floatingPlacement(0),
   }, {
-    type: 'videoFigure',
-    id: 'video.float',
-    assetId: `sha256:${'b'.repeat(64)}`,
-    title: 'Floating video',
-    description: '',
-    objectPlacement: floatingPlacement(1, { kind: 'page', pageNumber: 3 }),
-  }, {
     type: 'displayMath',
-    id: 'math.flow',
+    id: 'math.float',
     sourceText: 'x^2',
     latex: 'x^2',
     workspaceTarget: 'equation',
-    objectPlacement: { mode: 'flow' },
+    objectPlacement: floatingPlacement(1, { kind: 'page', pageNumber: 3 }),
   }, {
     type: 'evidenceSnapshot',
     id: 'evidence.float',
@@ -124,23 +117,23 @@ describe('Notebook floating-object document contract', () => {
     expect(isNotebookRichDocument(invalidLayer)).toBe(false);
 
     const missingAnchor = floatingDocument();
-    const evidence = missingAnchor.content[4];
+    const evidence = missingAnchor.content[3];
     if (evidence?.type === 'evidenceSnapshot' && evidence.objectPlacement?.mode === 'floating') {
       evidence.objectPlacement.anchor = { kind: 'paragraph', nodeId: 'paragraph.missing' };
     }
     expect(isNotebookRichDocument(missingAnchor)).toBe(false);
 
     const circularAnchor = floatingDocument();
-    const semantic = circularAnchor.content[6];
+    const semantic = circularAnchor.content[5];
     if (semantic?.type === 'semanticBlock' && semantic.objectPlacement?.mode === 'floating') {
       semantic.objectPlacement.anchor = { kind: 'paragraph', nodeId: 'paragraph.semantic' };
     }
     expect(isNotebookRichDocument(circularAnchor)).toBe(false);
 
     const narrowObject = floatingDocument();
-    const video = narrowObject.content[2];
-    if (video?.type === 'videoFigure' && video.objectPlacement?.mode === 'floating') {
-      video.objectPlacement.widthPt = 35.999;
+    const math = narrowObject.content[2];
+    if (math?.type === 'displayMath' && math.objectPlacement?.mode === 'floating') {
+      math.objectPlacement.widthPt = 35.999;
     }
     expect(isNotebookRichDocument(narrowObject)).toBe(false);
 

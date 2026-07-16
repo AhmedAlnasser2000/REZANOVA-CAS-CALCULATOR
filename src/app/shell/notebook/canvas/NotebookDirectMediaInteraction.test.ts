@@ -51,7 +51,7 @@ describe('Notebook direct media resize geometry', () => {
   });
 
   it.each(NOTEBOOK_MEDIA_RESIZE_HANDLES.map(({ value }) => value))(
-    'preserves a video source ratio from the %s handle',
+    'preserves a locked source ratio from the %s handle',
     (handle) => {
       const resized = resizeNotebookMediaRectangle({
         ...constraints,
@@ -65,7 +65,7 @@ describe('Notebook direct media resize geometry', () => {
     },
   );
 
-  it('clamps proportional media to the minimum and usable page bounds', () => {
+  it('clamps locked-ratio media to the minimum and usable page bounds', () => {
     const minimum = resizeNotebookMediaRectangle({
       ...constraints,
       handle: 'north-west',

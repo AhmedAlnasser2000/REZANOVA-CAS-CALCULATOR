@@ -26,7 +26,7 @@ describe('Notebook rich document V12 migration', () => {
     expect(isNotebookRichDocumentV12(version12)).toBe(true);
     expect(migrateNotebookDocumentV12(version12)).toEqual({
       ...version12,
-      version: 13,
+      version: 14,
     });
     expect(migrateNotebookDocumentV12(version12).content[0]).not.toHaveProperty(
       'objectPlacement',

@@ -90,24 +90,20 @@ describe('Notebook academic semantics', () => {
     expect(notebookSemanticTitle('warning')).toBe('Warning');
   });
 
-  it('projects only captioned figures and videos into the Outline', () => {
+  it('projects only captioned figures into the Outline', () => {
     expect(buildNotebookOutline([{
-      type: 'videoFigure',
-      id: 'video.captioned',
+      type: 'imageFigure',
+      id: 'image.captioned',
       assetId: `sha256:${'a'.repeat(64)}`,
-      title: 'Captioned video',
-      description: '',
-      caption: 'Worked example playback',
+      caption: 'Worked example diagram',
     }, {
-      type: 'videoFigure',
-      id: 'video.uncaptioned',
+      type: 'imageFigure',
+      id: 'image.uncaptioned',
       assetId: `sha256:${'b'.repeat(64)}`,
-      title: 'Uncaptioned video',
-      description: '',
     }])).toEqual([expect.objectContaining({
-      id: 'video.captioned',
-      label: 'Worked example playback',
-      nodeType: 'videoFigure',
+      id: 'image.captioned',
+      label: 'Worked example diagram',
+      nodeType: 'imageFigure',
     })]);
   });
 });

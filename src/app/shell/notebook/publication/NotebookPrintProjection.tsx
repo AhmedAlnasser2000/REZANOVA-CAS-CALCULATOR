@@ -142,14 +142,10 @@ function paragraphStyle(format?: NotebookParagraphFormat): CSSProperties {
 function collectNumberedLabels(nodes: readonly NotebookRichBlockNode[]) {
   const labels = new Map<string, string>();
   let figures = 0;
-  let videos = 0;
   const visit = (children: readonly NotebookRichBlockNode[]) => children.forEach((node) => {
     if (node.type === 'imageFigure' && node.numbered) {
       figures += 1;
       labels.set(node.id, `Figure ${figures}`);
-    } else if (node.type === 'videoFigure' && node.numbered) {
-      videos += 1;
-      labels.set(node.id, `Video ${videos}`);
     }
     if (node.type === 'section' || node.type === 'semanticBlock') visit(node.content);
     if (node.type === 'bulletList' || node.type === 'orderedList') {
@@ -214,20 +210,6 @@ function PublicationNode({
           src={assetUrls.get(node.assetId)}
         />
         {node.caption ? <figcaption>{labels.get(node.id)}{labels.has(node.id) ? ': ' : ''}{node.caption}</figcaption> : null}
-      </figure>
-    );
-  }
-  if (node.type === 'videoFigure') {
-    return (
-      <figure className={`notebook-print-media notebook-print-video is-${node.alignment ?? 'center'} is-${node.placement ?? 'normal'}`} style={{ width: `${node.widthPercent ?? 100}%` }}>
-        {node.posterAssetId ? <img alt="" src={assetUrls.get(node.posterAssetId)} style={{
-          aspectRatio: node.displayAspectRatio,
-          objectFit: node.displayAspectRatio ? 'contain' : undefined,
-        }} /> : null}
-        <strong>{node.title}</strong>
-        {node.description ? <p>{node.description}</p> : null}
-        {node.caption ? <figcaption>{labels.get(node.id)}{labels.has(node.id) ? ': ' : ''}{node.caption}</figcaption> : null}
-        <small>Interactive playback is available in the Web package.</small>
       </figure>
     );
   }

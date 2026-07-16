@@ -56,9 +56,6 @@ function entryKindLabel(entry: NotebookOutlineEntry) {
   if (entry.nodeType === 'imageFigure') {
     return 'Figure';
   }
-  if (entry.nodeType === 'videoFigure') {
-    return 'Video';
-  }
   return notebookSemanticDefinition(entry.semanticKind ?? 'note').label;
 }
 

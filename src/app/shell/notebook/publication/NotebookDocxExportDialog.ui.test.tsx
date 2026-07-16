@@ -22,10 +22,7 @@ function fixture() {
         type: 'section', id: 'limits', title: 'Limits',
         content: [{ type: 'displayMath', id: 'fallback', sourceText: '\\begin{matrix}', latex: '\\begin{matrix}', workspaceTarget: 'calculate' }],
       },
-      {
-        type: 'videoFigure', id: 'lesson', assetId: `sha256:${'a'.repeat(64)}`,
-        title: 'Lesson', description: 'Recorded explanation.',
-      },
+      { type: 'paragraph', id: 'lesson', content: [{ type: 'text', text: 'Recorded explanation.' }] },
     ],
   };
   return {
@@ -51,13 +48,11 @@ describe('Notebook Word publication dialog', () => {
     const dialog = screen.getByRole('dialog', { name: 'Export Notebook as Word document' });
 
     expect(await within(dialog).findByText(/static SVG\/PNG visual/u)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Interactive video has no poster/u)).toBeInTheDocument();
     expect(within(dialog).getByText(/reflows and does not preserve Notebook physical page numbers/u)).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Save .docx' })).toBeEnabled();
 
     await user.click(within(dialog).getByLabelText('Selected Sections'));
     expect(await within(dialog).findByLabelText('Limits')).toBeChecked();
-    expect(within(dialog).queryByText(/Interactive video has no poster/u)).not.toBeInTheDocument();
 
     await user.click(within(dialog).getByLabelText('Limits'));
     await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Save .docx' })).toBeDisabled());

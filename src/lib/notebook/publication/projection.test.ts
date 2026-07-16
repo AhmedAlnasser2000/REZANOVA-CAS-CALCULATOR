@@ -18,7 +18,7 @@ const NOW = '2026-07-14T10:00:00.000Z';
 
 type Fixture = {
   assets: NotebookAssetPort;
-  ids: { image: string; poster: string; track: string; video: string };
+  ids: { image: string };
   layout: NotebookPublicationLayoutV1;
   record: NotebookStoredRecordV1;
 };
@@ -26,9 +26,6 @@ type Fixture = {
 async function fixture(): Promise<Fixture> {
   const assets = createInMemoryNotebookAssetPort();
   const image = await assets.put(new Uint8Array([1, 2, 3]), 'image/png', NOW);
-  const video = await assets.put(new Uint8Array([4, 5, 6, 7]), 'video/webm', NOW);
-  const poster = await assets.put(new Uint8Array([8, 9]), 'image/svg+xml', NOW);
-  const track = await assets.put(new TextEncoder().encode('WEBVTT\n'), 'text/vtt', NOW);
   const base = createNotebookRichDocument({
     idPrefix: 'publication',
     now: () => new Date(NOW),
@@ -62,28 +59,8 @@ async function fixture(): Promise<Fixture> {
       {
         type: 'section',
         id: 'section-b',
-        title: 'Video lesson',
-        content: [{
-          type: 'videoFigure',
-          id: 'video-a',
-          assetId: video.id,
-          title: 'Limit lesson',
-          description: 'A short explanation.',
-          caption: 'Approaching the limit',
-          numbered: true,
-          alignment: 'right',
-          placement: 'square-right',
-          displayAspectRatio: 16 / 9,
-          posterAssetId: poster.id,
-          tracks: [{
-            id: 'track-a',
-            assetId: track.id,
-            kind: 'captions',
-            label: 'English',
-            language: 'en',
-            default: true,
-          }],
-        }],
+        title: 'Worked lesson',
+        content: [{ type: 'paragraph', id: 'lesson-prose', content: [{ type: 'text', text: 'A short explanation.' }] }],
       },
     ],
   };
@@ -102,14 +79,14 @@ async function fixture(): Promise<Fixture> {
   };
   return {
     assets,
-    ids: { image: image.id, poster: poster.id, track: track.id, video: video.id },
+    ids: { image: image.id },
     layout,
     record,
   };
 }
 
 describe('Notebook publication projection', () => {
-  it('builds an immutable PDF projection with static-video compatibility evidence', async () => {
+  it('builds an immutable PDF projection with image assets and compatibility evidence', async () => {
     const source = await fixture();
     const projection = await buildNotebookPublicationProjection({
       assetPort: source.assets,
@@ -126,10 +103,8 @@ describe('Notebook publication projection', () => {
     expect(projection.source).toMatchObject({ revision: 7, libraryId: 'library.publication' });
     expect(projection.assets.map((asset) => asset.metadata.id)).toEqual([
       source.ids.image,
-      source.ids.poster,
     ].sort());
     expect(projection.compatibility.summary).toEqual({
-      videoSubstitutions: 1,
       equationFallbacks: 1,
       fontSubstitutions: 1,
       layoutApproximations: 0,
@@ -138,47 +113,19 @@ describe('Notebook publication projection', () => {
     expect(Object.isFrozen(projection.content[1])).toBe(true);
     const intro = projection.content.find((node) => node.id === 'intro');
     const figure = projection.content.find((node) => node.id === 'section-a');
-    const video = projection.content.find((node) => node.id === 'section-b');
+    const lesson = projection.content.find((node) => node.id === 'section-b');
     expect(intro).toMatchObject({ type: 'paragraph', format: { leftIndentPt: 72 } });
     expect(figure).toMatchObject({
       type: 'section',
       content: [{ displayAspectRatio: 1.25, rotation: 137, type: 'imageFigure' }],
     });
-    expect(video).toMatchObject({
+    expect(lesson).toMatchObject({
       type: 'section',
-      content: [{
-        displayAspectRatio: 16 / 9,
-        placement: 'square-right',
-        type: 'videoFigure',
-      }],
+      content: [{ type: 'paragraph' }],
     });
     expect((await projection.assets[0].blob.arrayBuffer()).byteLength).toBe(
       projection.assets[0].metadata.byteLength,
     );
-  });
-
-  it('keeps interactive video assets only for Web publication', async () => {
-    const source = await fixture();
-    const projection = await buildNotebookPublicationProjection({
-      assetPort: source.assets,
-      layout: source.layout,
-      record: source.record,
-      request: { format: 'web', scope: { kind: 'document' } },
-    });
-
-    expect(projection.assets.map((asset) => asset.metadata.id)).toEqual([
-      source.ids.image,
-      source.ids.poster,
-      source.ids.track,
-      source.ids.video,
-    ].sort());
-    expect(projection.compatibility.summary.videoSubstitutions).toBe(0);
-    expect(projection.compatibility.summary.layoutApproximations).toBe(3);
-    expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
-      kind: 'layout-approximation',
-      nodeId: 'video-a',
-      message: expect.stringContaining('video wrapping preference'),
-    }));
   });
 
   it('selects top-level Section subtrees in document order', async () => {
@@ -199,7 +146,6 @@ describe('Notebook publication projection', () => {
 
     expect(projection.content.map((node) => node.id)).toEqual(['section-a', 'section-b']);
     expect(projection.content.every((node) => node.type === 'section')).toBe(true);
-    expect(projection.compatibility.summary.videoSubstitutions).toBe(1);
     expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
       message: 'Selected image approximation.',
     }));
@@ -265,7 +211,7 @@ describe('Notebook publication projection', () => {
     expect(job.sourceRevision).toBe(7);
     expect(projection.title).toBe('Frozen limits');
     expect(projection.source.revision).toBe(7);
-    expect(schedules).toBeGreaterThanOrEqual(3);
+    expect(schedules).toBeGreaterThanOrEqual(2);
   });
 
   it('cancels independently of the Notebook page lifecycle', async () => {

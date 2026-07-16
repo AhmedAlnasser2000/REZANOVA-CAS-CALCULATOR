@@ -1,6 +1,5 @@
 export * from './NotebookRichCanvas';
 export * from './NotebookPictureFormatControls';
-export * from './NotebookVideoFormatControls';
 export * from './node-view-stats';
 export * from './selection';
 export * from './ribbon-types';

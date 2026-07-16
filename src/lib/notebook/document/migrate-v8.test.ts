@@ -40,7 +40,7 @@ describe('Notebook rich document V8 migration', () => {
     const migrated = migrateNotebookDocumentV8(version8);
     expect(migrated).toMatchObject({
       ...version8,
-      version: 13,
+      version: 14,
       headerFooter: {
         differentFirstPage: true,
         pageNumberStart: 4,

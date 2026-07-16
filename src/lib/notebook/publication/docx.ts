@@ -289,10 +289,8 @@ function alternateMath(math: DocxMath, fallback: ImageRun) {
 function collectLabels(nodes: readonly NotebookRichBlockNode[]) {
   const labels = new Map<string, string>();
   let figure = 0;
-  let video = 0;
   walkNodes(nodes, (node) => {
     if (node.type === 'imageFigure' && node.numbered) labels.set(node.id, `Figure ${++figure}`);
-    if (node.type === 'videoFigure' && node.numbered) labels.set(node.id, `Video ${++video}`);
   });
   return labels;
 }
@@ -424,19 +422,6 @@ function renderNodes(nodes: readonly NotebookRichBlockNode[], context: RenderCon
       }));
       const imageCaption = caption(node.id, node.caption, context);
       if (imageCaption) output.push(imageCaption);
-    } else if (node.type === 'videoFigure') {
-      if (node.posterAssetId) {
-        const poster = context.assets.get(node.posterAssetId);
-        if (poster) output.push(new Paragraph({
-          children: [imageRun(poster, node.widthPercent, 0, '', node.displayAspectRatio)],
-          alignment: alignment(node.alignment),
-        }));
-      }
-      output.push(new Paragraph({ children: [new TextRun({ text: node.title || 'Video', bold: true })] }));
-      if (node.description) output.push(new Paragraph(node.description));
-      const videoCaption = caption(node.id, node.caption, context);
-      if (videoCaption) output.push(videoCaption);
-      output.push(new Paragraph({ children: [new TextRun({ text: 'Interactive playback is available in the Web package.', italics: true })] }));
     } else if (node.type === 'bulletList' || node.type === 'orderedList') {
       output.push(...renderList(node, context, depth));
     } else if (node.type === 'semanticBlock') {

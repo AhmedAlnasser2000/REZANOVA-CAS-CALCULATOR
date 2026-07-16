@@ -17,7 +17,6 @@ import {
   Strikethrough,
   Underline,
   Undo2,
-  Video,
 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 
@@ -49,8 +48,6 @@ import {
   NotebookLayoutControls,
   type NotebookViewMode,
 } from './NotebookLayoutControls';
-import { NotebookPictureFormatControls } from './NotebookPictureFormatControls';
-import { NotebookVideoFormatControls } from './NotebookVideoFormatControls';
 import { insertNotebookRunningPageNumber } from './notebook-running-matter';
 import type { NotebookRunningMatterTarget } from './NotebookPageSheets';
 
@@ -192,13 +189,7 @@ export function NotebookRichToolbar({
   onInsertDisplayMath,
   onInsertInlineMath,
   onInsertImage,
-  onInsertVideo,
   onEditImageDetails,
-  onEditVideoDetails,
-  onChooseVideoPoster,
-  onRemoveVideoPoster,
-  onChooseVideoTrack,
-  onRemoveVideoTrack,
   headerFooter,
   pageSetup,
   viewMode,
@@ -217,18 +208,12 @@ export function NotebookRichToolbar({
   editor: Editor;
   fileControl: ReactNode;
   hasProseSelection: boolean;
-  contextualTab?: Extract<NotebookRibbonTab, 'picture-format' | 'video-format' | 'header-footer'> | null;
+  contextualTab?: Extract<NotebookRibbonTab, 'picture-format' | 'header-footer'> | null;
   onSelectTab: (tab: NotebookRibbonTab) => void;
   onInsertDisplayMath: () => void;
   onInsertInlineMath: () => void;
   onInsertImage: () => void;
-  onInsertVideo: () => void;
   onEditImageDetails: () => void;
-  onEditVideoDetails: () => void;
-  onChooseVideoPoster: () => void;
-  onRemoveVideoPoster: () => void;
-  onChooseVideoTrack: () => void;
-  onRemoveVideoTrack: (trackId: string) => void;
   headerFooter: NotebookHeaderFooterSettings;
   pageSetup: NotebookPageSetup;
   viewMode: NotebookViewMode;
@@ -273,12 +258,10 @@ export function NotebookRichToolbar({
     onSelectTab(tab);
   }
 
-  const tabLabel = activeTab === 'picture-format'
-    ? 'Picture Format'
-    : activeTab === 'video-format'
-      ? 'Video Format'
-      : activeTab === 'header-footer' ? 'Header & Footer'
-        : activeTab === 'insert' ? 'Insert' : activeTab === 'layout' ? 'Layout' : 'Home';
+  const visibleActiveTab = activeTab;
+  const tabLabel = visibleActiveTab === 'picture-format' ? 'Picture Format'
+    : visibleActiveTab === 'header-footer' ? 'Header & Footer'
+    : visibleActiveTab === 'insert' ? 'Insert' : visibleActiveTab === 'layout' ? 'Layout' : 'Home';
 
   return (
     <div className="notebook-rich-ribbon">
@@ -290,7 +273,7 @@ export function NotebookRichToolbar({
             type="button"
             role="tab"
             aria-controls="notebook-ribbon-panel"
-            aria-selected={activeTab === 'home'}
+            aria-selected={visibleActiveTab === 'home'}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectRibbonTab('home')}
           >Home</button>
@@ -299,7 +282,7 @@ export function NotebookRichToolbar({
             type="button"
             role="tab"
             aria-controls="notebook-ribbon-panel"
-            aria-selected={activeTab === 'insert'}
+            aria-selected={visibleActiveTab === 'insert'}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectRibbonTab('insert')}
           >Insert</button>
@@ -308,7 +291,7 @@ export function NotebookRichToolbar({
             type="button"
             role="tab"
             aria-controls="notebook-ribbon-panel"
-            aria-selected={activeTab === 'layout'}
+            aria-selected={visibleActiveTab === 'layout'}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectRibbonTab('layout')}
           >Layout</button>
@@ -319,22 +302,10 @@ export function NotebookRichToolbar({
               role="tab"
               className="is-contextual"
               aria-controls="notebook-ribbon-panel"
-              aria-selected={activeTab === 'picture-format'}
+              aria-selected={visibleActiveTab === 'picture-format'}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectRibbonTab('picture-format')}
             >Picture Format</button>
-          ) : null}
-          {contextualTab === 'video-format' ? (
-            <button
-              id="notebook-ribbon-tab-video-format"
-              type="button"
-              role="tab"
-              className="is-contextual"
-              aria-controls="notebook-ribbon-panel"
-              aria-selected={activeTab === 'video-format'}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => selectRibbonTab('video-format')}
-            >Video Format</button>
           ) : null}
           {contextualTab === 'header-footer' ? (
             <button
@@ -343,7 +314,7 @@ export function NotebookRichToolbar({
               role="tab"
               className="is-contextual"
               aria-controls="notebook-ribbon-panel"
-              aria-selected={activeTab === 'header-footer'}
+              aria-selected={visibleActiveTab === 'header-footer'}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectRibbonTab('header-footer')}
             >Header & Footer</button>
@@ -354,11 +325,11 @@ export function NotebookRichToolbar({
         id="notebook-ribbon-panel"
         className="notebook-rich-toolbar"
         aria-label="Notebook formatting toolbar"
-        data-ribbon-tab={activeTab}
+        data-ribbon-tab={visibleActiveTab}
         role="tabpanel"
       >
         <span className="sr-only">{tabLabel} tools</span>
-        {activeTab === 'home' ? <>
+        {visibleActiveTab === 'home' ? <>
           <RibbonGroup label="Font">
         <ToolButton
           active={formattingEditor.isActive('bold')}
@@ -463,7 +434,7 @@ export function NotebookRichToolbar({
             </ToolButton>
           </RibbonGroup>
         </> : null}
-        {activeTab === 'insert' ? <>
+        {visibleActiveTab === 'insert' ? <>
           <RibbonGroup label="Structure">
             <ToolButton
               label="Add section"
@@ -515,13 +486,6 @@ export function NotebookRichToolbar({
             >
               <ImageIcon size={16} />
             </ToolButton>
-            <ToolButton
-              label="Video"
-              onClick={onInsertVideo}
-              transientTriggerId="notebook-video-details"
-            >
-              <Video size={16} />
-            </ToolButton>
           </RibbonGroup>
           <RibbonGroup label="Document">
             <ToolButton label="Insert evidence" onClick={() => insertNotebookEvidence(editor)}>
@@ -532,7 +496,7 @@ export function NotebookRichToolbar({
             </ToolButton>
           </RibbonGroup>
         </> : null}
-        {activeTab === 'layout' ? (
+        {visibleActiveTab === 'layout' ? (
           <>
             <RibbonGroup label="Page setup" className="is-page-setup">
               <NotebookLayoutControls
@@ -547,7 +511,7 @@ export function NotebookRichToolbar({
             </RibbonGroup>
           </>
         ) : null}
-        {activeTab === 'picture-format' ? (
+        {visibleActiveTab === 'picture-format' ? (
           <>
             <RibbonGroup label="Accessibility">
               <ToolButton
@@ -563,21 +527,9 @@ export function NotebookRichToolbar({
                 transientTriggerId="notebook-image-details"
               ><Captions size={16} /></ToolButton>
             </RibbonGroup>
-            <NotebookPictureFormatControls editor={editor} pageSetup={pageSetup} />
           </>
         ) : null}
-        {activeTab === 'video-format' ? (
-          <NotebookVideoFormatControls
-            editor={editor}
-            pageSetup={pageSetup}
-            onChoosePoster={onChooseVideoPoster}
-            onChooseTrack={onChooseVideoTrack}
-            onEditDetails={onEditVideoDetails}
-            onRemovePoster={onRemoveVideoPoster}
-            onRemoveTrack={onRemoveVideoTrack}
-          />
-        ) : null}
-        {activeTab === 'header-footer' && runningMatterEditor && runningMatterTarget ? (
+        {visibleActiveTab === 'header-footer' && runningMatterEditor && runningMatterTarget ? (
           <>
             <RibbonGroup label="Navigate">
               <ToolButton active={runningMatterTarget.kind === 'header'} label="Edit header" onClick={() => onNavigateRunningMatter({ kind: 'header' })}><span>Header</span></ToolButton>

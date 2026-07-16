@@ -23,10 +23,9 @@ describe('Notebook DOCX publication', () => {
     expect(convertNotebookLatexToOmml('')).toMatchObject({ kind: 'fallback' });
   });
 
-  it('packages editable OOXML with headings, lists, math, media, running content, and static video', async () => {
+  it('packages editable OOXML with headings, lists, math, images, and running content', async () => {
     const assetPort = createInMemoryNotebookAssetPort();
     const image = await assetPort.put(PNG, 'image/png', NOW);
-    const poster = await assetPort.put(PNG, 'image/png', NOW);
     const base = createNotebookRichDocument({ now: () => new Date(NOW), title: 'Limit laws / notes' });
     const document: NotebookRichDocument = {
       ...base,
@@ -64,11 +63,6 @@ describe('Notebook DOCX publication', () => {
         {
           type: 'imageFigure', id: 'image', assetId: image.id, altText: 'Limit graph', caption: 'A graph',
           numbered: true, widthPercent: 100, displayAspectRatio: 1.25, rotation: 137,
-        },
-        {
-          type: 'videoFigure', id: 'video', assetId: `sha256:${'b'.repeat(64)}`, posterAssetId: poster.id,
-          title: 'Limit lesson', description: 'A video explanation.', caption: 'Worked example', numbered: true,
-          alignment: 'right', placement: 'square-right', widthPercent: 100, displayAspectRatio: 16 / 9,
         },
         {
           type: 'section', id: 'section', title: 'Applications',
@@ -109,7 +103,6 @@ describe('Notebook DOCX publication', () => {
     expect(documentXml).toContain('rot="8220000"');
     expect(documentXml).toContain('cx="5943600" cy="4752975"');
     expect(documentXml).toContain('Limit law');
-    expect(documentXml).toContain('Interactive playback is available in the Web package.');
     expect(documentXml).toContain('w:pgSz');
     expect(numberingXml).toContain('lowerLetter');
     expect(relationshipsXml).toContain('/image');
@@ -143,7 +136,7 @@ describe('Notebook DOCX publication', () => {
       sourceLayout: { pageCount: 1, fragments: [] },
       compatibility: {
         version: 1, format: 'pdf', findings: [],
-        summary: { videoSubstitutions: 0, equationFallbacks: 0, fontSubstitutions: 0, layoutApproximations: 0 },
+        summary: { equationFallbacks: 0, fontSubstitutions: 0, layoutApproximations: 0 },
       },
     } as const;
     await expect(buildNotebookDocx(projection, {
