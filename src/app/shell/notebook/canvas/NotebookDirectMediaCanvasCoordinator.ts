@@ -3,9 +3,11 @@ import { NodeSelection } from '@tiptap/pm/state';
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 import {
+  NOTEBOOK_FLOATING_OBJECT_MIN_WIDTH_PT,
   normalizeNotebookMediaWidthPercent,
   notebookMaximumWrappedMediaWidthPercent,
   notebookPageGeometry,
+  type NotebookObjectPlacement,
   type NotebookRichDocument,
 } from '../../../../lib/notebook';
 import {
@@ -43,7 +45,8 @@ type MediaDragPreview = {
   pointer: { clientX: number; clientY: number };
 };
 
-type MediaFlowTarget = 'square-left' | 'normal' | 'square-right';
+type MediaFlowTarget = 'square-left' | 'normal' | 'square-right' | 'floating';
+type FloatingObjectPlacement = Extract<NotebookObjectPlacement, { mode: 'floating' }>;
 
 type BlockDragState = {
   active: boolean;
@@ -128,6 +131,41 @@ function pointInside(
     && point.clientX <= bounds.right
     && point.clientY >= bounds.top
     && point.clientY <= bounds.bottom;
+}
+
+function nearestParagraphAnchor(
+  editor: Editor,
+  sourcePosition: number,
+  fallbackPageNumber: number,
+): FloatingObjectPlacement['anchor'] {
+  let preceding: string | null = null;
+  let following: string | null = null;
+  editor.state.doc.descendants((node, position) => {
+    if (node.type.name !== 'paragraph') return;
+    const id = typeof node.attrs.id === 'string' && node.attrs.id.trim()
+      ? node.attrs.id
+      : null;
+    if (!id) return;
+    if (position < sourcePosition) {
+      preceding = id;
+    } else if (position > sourcePosition && !following) {
+      following = id;
+    }
+  });
+  return preceding || following
+    ? { kind: 'paragraph', nodeId: preceding ?? following! }
+    : { kind: 'page', pageNumber: fallbackPageNumber };
+}
+
+function nextFloatingZOrder(editor: Editor) {
+  let maximum = -1;
+  editor.state.doc.descendants((node) => {
+    const placement = node.attrs.notebookObjectPlacement;
+    if (placement?.mode === 'floating' && Number.isInteger(placement.zOrder)) {
+      maximum = Math.max(maximum, Number(placement.zOrder));
+    }
+  });
+  return maximum + 1;
 }
 
 /**
@@ -268,6 +306,7 @@ export function useNotebookPointerCoordinator({
         ['square-left', 'Wrap left'],
         ['normal', 'Normal flow'],
         ['square-right', 'Wrap right'],
+        ['floating', 'Float here'],
       ] as const).forEach(([target, label]) => {
         const item = globalThis.document.createElement('span');
         item.dataset.notebookMediaFlowTarget = target;
@@ -347,6 +386,72 @@ export function useNotebookPointerCoordinator({
     });
   }, [documentRef, editorRef, pageStageRef]);
 
+  const floatingPlacementForFrame = useCallback((
+    editor: Editor,
+    nodeId: string,
+    frame: MediaFrame,
+  ): FloatingObjectPlacement | null => {
+    if (viewModeRef.current !== 'print') return null;
+    const stage = pageStageRef.current;
+    if (!stage) return null;
+    const source = notebookEditorNodeById(editor, nodeId);
+    if (!source) return null;
+
+    const geometry = notebookPageGeometry(documentRef.current.pageSetup);
+    const stageBounds = stage.getBoundingClientRect();
+    if (stageBounds.width <= 0) return null;
+    const metrics = paginationMetricsRef.current;
+    const pageHeightPx = metrics?.pageHeightPx && metrics.pageHeightPx > 1
+      ? metrics.pageHeightPx
+      : stageBounds.width * (geometry.height / geometry.width);
+    const pageGapPx = metrics?.pageGapPx ?? 24;
+    const stride = pageHeightPx + pageGapPx;
+    const relativeY = Math.max(0, frame.top - stageBounds.top);
+    const pageIndex = Math.max(0, Math.floor(relativeY / stride));
+    const yWithinPage = relativeY - pageIndex * stride;
+    const scale = geometry.width / stageBounds.width;
+    const margins = documentRef.current.pageSetup.marginsPt;
+    return {
+      mode: 'floating',
+      anchor: nearestParagraphAnchor(editor, source.from, pageIndex + 1),
+      horizontalReference: 'margins',
+      verticalReference: 'margins',
+      xPt: Math.max(0, (frame.left - stageBounds.left) * scale - margins.left),
+      yPt: Math.max(0, yWithinPage * (geometry.height / pageHeightPx) - margins.top),
+      widthPt: Math.max(NOTEBOOK_FLOATING_OBJECT_MIN_WIDTH_PT, frame.width * scale),
+      wrap: 'square',
+      textDistancePt: { top: 6, right: 6, bottom: 6, left: 6 },
+      zOrder: nextFloatingZOrder(editor),
+    };
+  }, [documentRef, pageStageRef]);
+
+  const pointerIsInPageWhitespace = useCallback((
+    editor: Editor,
+    pointer: { clientX: number; clientY: number },
+  ) => {
+    if (viewModeRef.current !== 'print') return false;
+    const stage = pageStageRef.current;
+    const scrollRegion = scrollRegionRef.current;
+    const editorElement = editor.view.dom as HTMLElement | undefined;
+    if (!stage || !scrollRegion || !editorElement) return false;
+    const stageBounds = stage.getBoundingClientRect();
+    const scrollBounds = scrollRegion.getBoundingClientRect();
+    const content = editorContentBounds(editorElement);
+    const visibleStageBounds = {
+      bottom: Math.min(stageBounds.bottom, scrollBounds.bottom),
+      left: stageBounds.left,
+      right: stageBounds.right,
+      top: Math.max(stageBounds.top, scrollBounds.top),
+    };
+    const visibleContentBounds = {
+      bottom: visibleStageBounds.bottom,
+      left: content.left,
+      right: content.right,
+      top: visibleStageBounds.top,
+    };
+    return pointInside(pointer, visibleStageBounds) && !pointInside(pointer, visibleContentBounds);
+  }, [pageStageRef, scrollRegionRef]);
+
   const refreshSelectedMediaStatus = useCallback(() => {
     const editor = editorRef.current;
     if (!editor || editor.isDestroyed) return;
@@ -407,12 +512,25 @@ export function useNotebookPointerCoordinator({
     clearMediaDropTarget();
     const stageBounds = stage.getBoundingClientRect();
     const scrollBounds = scrollRegion.getBoundingClientRect();
-    const visibleContentBounds = {
+    const visibleStageBounds = {
       bottom: Math.min(stageBounds.bottom, scrollBounds.bottom),
-      left: content.left,
-      right: content.right,
+      left: stageBounds.left,
+      right: stageBounds.right,
       top: Math.max(stageBounds.top, scrollBounds.top),
     };
+    const visibleContentBounds = {
+      bottom: visibleStageBounds.bottom,
+      left: content.left,
+      right: content.right,
+      top: visibleStageBounds.top,
+    };
+    if (viewModeRef.current === 'print'
+      && pointInside(event.pointer, visibleStageBounds)
+      && !pointInside(event.pointer, visibleContentBounds)) {
+      mediaFlowTargetRef.current = 'floating';
+      renderMediaFlowTargets('floating', wrapEnabled);
+      return;
+    }
     if (!pointInside(event.pointer, visibleContentBounds) || content.width <= 0) {
       mediaFlowTargetRef.current = null;
       renderMediaFlowTargets(null, wrapEnabled);
@@ -516,9 +634,11 @@ export function useNotebookPointerCoordinator({
     const targetId = dropTarget?.dataset.notebookNodeId ?? null;
     const targetBounds = dropTarget?.getBoundingClientRect();
     const flowTarget = mediaFlowTargetRef.current;
+    const finalFrame = publishMediaDragPreview(event.frame, event.pointer);
+    const shouldFloat = flowTarget === 'floating' || pointerIsInPageWhitespace(editor, event.pointer);
     clearMediaDropTarget();
     clearMediaDragPreview();
-    if (targetId && targetBounds) {
+    if (!shouldFloat && targetId && targetBounds) {
       const placement = event.pointer.clientY < targetBounds.top + targetBounds.height / 2
         ? 'before'
         : 'after';
@@ -530,14 +650,31 @@ export function useNotebookPointerCoordinator({
       }
     }
 
-    if (!flowTarget) {
-      requestAnimationFrame(refreshSelectedMediaStatus);
-      return;
-    }
     const source = notebookEditorNodeById(editor, event.nodeId);
     if (!source) return;
     const node = editor.state.doc.nodeAt(source.from);
     if (!node) return;
+    if (shouldFloat) {
+      const objectPlacement = floatingPlacementForFrame(editor, event.nodeId, finalFrame);
+      if (!objectPlacement) {
+        requestAnimationFrame(refreshSelectedMediaStatus);
+        return;
+      }
+      const transaction = editor.state.tr.setNodeMarkup(source.from, undefined, {
+        ...node.attrs,
+        alignment: null,
+        notebookObjectPlacement: objectPlacement,
+        placement: null,
+      });
+      transaction.setSelection(NodeSelection.create(transaction.doc, source.from));
+      editor.view.dispatch(transaction.scrollIntoView());
+      requestAnimationFrame(refreshSelectedMediaStatus);
+      return;
+    }
+    if (!flowTarget) {
+      requestAnimationFrame(refreshSelectedMediaStatus);
+      return;
+    }
     const placement = flowTarget === 'normal' ? null : flowTarget;
     const alignment = flowTarget === 'square-left'
       ? 'left'
@@ -572,8 +709,10 @@ export function useNotebookPointerCoordinator({
     clearMediaDropTarget,
     documentRef,
     editorRef,
+    floatingPlacementForFrame,
     publishMediaDragPreview,
     publishMediaStatusForFrame,
+    pointerIsInPageWhitespace,
     refreshSelectedMediaStatus,
     renderMediaFlowTargets,
     updateMediaAutoScroll,

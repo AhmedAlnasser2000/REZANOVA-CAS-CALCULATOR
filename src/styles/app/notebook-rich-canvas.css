@@ -1760,7 +1760,7 @@
   position: fixed;
   z-index: 999;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   box-sizing: border-box;
   padding: 12px;
@@ -1785,7 +1785,9 @@
 .notebook-media-flow-targets[data-active-target='normal']
   > [data-notebook-media-flow-target='normal'],
 .notebook-media-flow-targets[data-active-target='square-right']
-  > [data-notebook-media-flow-target='square-right'] {
+  > [data-notebook-media-flow-target='square-right'],
+.notebook-media-flow-targets[data-active-target='floating']
+  > [data-notebook-media-flow-target='floating'] {
   border-style: solid;
   border-color: var(--notebook-accent);
   background: color-mix(in srgb, var(--notebook-accent) 18%, transparent);

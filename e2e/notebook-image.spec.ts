@@ -10,6 +10,12 @@ type StoredBrowserNotebook = {
       displayAspectRatio?: number;
       displayHeightPt?: number;
       displayWidthPt?: number;
+      objectPlacement?: {
+        mode?: string;
+        anchor?: { kind?: string; nodeId?: string; pageNumber?: number };
+        widthPt?: number;
+        wrap?: string;
+      };
       placement?: string;
       rotation?: number;
       type?: string;
@@ -419,4 +425,66 @@ test('Notebook image direct resizing keeps the selected boundary on the visible 
   await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await expectImageControlsMatchVisibleFrame(figure);
   await attachScreenshot(page, 'notebook-image-direct-resize-forced-colors-130');
+});
+
+test('Notebook image drag into page whitespace creates a floating object', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await openBlankNotebook(page);
+  const editor = page.getByLabel('Notebook rich document');
+  const ribbonTabs = page.getByRole('tablist', { name: 'Notebook ribbon tabs' });
+
+  await editor.click();
+  await page.keyboard.type('Anchor paragraph for a floating image.');
+  await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
+  await page.getByLabel('Choose image').setInputFiles({
+    name: 'floating-image.svg',
+    mimeType: 'image/svg+xml',
+    buffer: SAFE_SVG,
+  });
+
+  const figure = page.getByTestId('notebook-image-figure');
+  await expect(figure).toBeVisible();
+  await figure.click();
+  await expect(figure.locator('.notebook-image-frame'))
+    .toHaveAttribute('data-image-load-state', 'ready');
+
+  const stageBounds = await page.locator('.notebook-page-stage').boundingBox();
+  const figureBounds = await figure.boundingBox();
+  if (!stageBounds || !figureBounds) throw new Error('Notebook image or page stage is not visible.');
+  await dragNotebookControl(
+    page,
+    figure.getByRole('button', { name: 'Move image' }),
+    {
+      x: stageBounds.x + 24,
+      y: figureBounds.y + figureBounds.height / 2,
+    },
+  );
+
+  await expect(page.locator('[data-notebook-floating-object="true"]')).toHaveCount(1);
+  await page.keyboard.press('Control+S');
+  await expect(page.getByText('Saved locally').first()).toBeVisible();
+  await expect.poll(async () => page.evaluate(async () => {
+    const request = indexedDB.open('calcwiz-notebook-library-v1', 2);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const recordsRequest = database.transaction('records', 'readonly')
+      .objectStore('records').getAll();
+    const records = await new Promise<StoredBrowserNotebook[]>((resolve, reject) => {
+      recordsRequest.onsuccess = () => resolve(recordsRequest.result as StoredBrowserNotebook[]);
+      recordsRequest.onerror = () => reject(recordsRequest.error);
+    });
+    database.close();
+    return records.flatMap((record) => record.document?.content ?? [])
+      .find((node) => node.type === 'imageFigure');
+  })).toMatchObject({
+    objectPlacement: {
+      anchor: { kind: 'paragraph' },
+      mode: 'floating',
+      widthPt: expect.any(Number),
+      wrap: 'square',
+    },
+    type: 'imageFigure',
+  });
 });
