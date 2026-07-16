@@ -1,13 +1,14 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper, useEditorState } from '@tiptap/react';
+import { NodeSelection } from '@tiptap/pm/state';
 import { GripVertical, ImageOff, RotateCw } from 'lucide-react';
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
 } from 'react';
 
 import {
@@ -32,6 +33,16 @@ type ImageLoadState =
   | { status: 'missing' }
   | { status: 'ready'; url: string };
 
+function finiteAttr(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizeRotation(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? ((Math.round(value) % 360) + 360) % 360
+    : 0;
+}
+
 export function createNotebookImageNodeView(
   assetPort: NotebookAssetPort,
   options: NotebookImageNodeViewOptions = {},
@@ -48,7 +59,9 @@ export function createNotebookImageNodeView(
     const [loadState, setLoadState] = useState<ImageLoadState>({ status: 'loading' });
     const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
     const [renderedContentWidth, setRenderedContentWidth] = useState<number>();
+    const [eventCropMode, setEventCropMode] = useState(false);
     const frameRef = useRef<HTMLDivElement | null>(null);
+
     const figureNumber = useEditorState({
       editor,
       selector: ({ editor: currentEditor }) => {
@@ -120,6 +133,16 @@ export function createNotebookImageNodeView(
       };
     }, [editor]);
 
+    useEffect(() => {
+      const editorElement = editor.view.dom as HTMLElement;
+      const onCropModeChange = (event: Event) => {
+        const detail = (event as CustomEvent<{ active?: boolean; nodeId?: string | null }>).detail;
+        setEventCropMode(detail?.active === true && detail.nodeId === nodeId);
+      };
+      editorElement.addEventListener('notebook-image-crop-mode-change', onCropModeChange);
+      return () => editorElement.removeEventListener('notebook-image-crop-mode-change', onCropModeChange);
+    }, [editor, nodeId]);
+
     const crop = useMemo(() => {
       const { cropX, cropY, cropWidth, cropHeight } = node.attrs;
       if (![cropX, cropY, cropWidth, cropHeight].every((value) => typeof value === 'number')) {
@@ -132,21 +155,7 @@ export function createNotebookImageNodeView(
         height: Number(cropHeight),
       });
     }, [node.attrs]);
-    const commitAttributes = useCallback((attributes: Record<string, unknown>) => {
-      const cropAttributes = ['cropX', 'cropY', 'cropWidth', 'cropHeight'] as const;
-      const changesCrop = cropAttributes.some((attribute) => Object.hasOwn(attributes, attribute));
-      const clearsCrop = cropAttributes.every((attribute) => attributes[attribute] === null);
-      updateAttributes(changesCrop && !clearsCrop
-        ? {
-          ...attributes,
-          cropX: attributes.cropX ?? crop.x,
-          cropY: attributes.cropY ?? crop.y,
-          cropWidth: attributes.cropWidth ?? crop.width,
-          cropHeight: attributes.cropHeight ?? crop.height,
-        }
-        : attributes);
-    }, [crop, updateAttributes]);
-    const [eventCropMode, setEventCropMode] = useState(false);
+
     const configuredCropMode = useEditorState({
       editor,
       selector: ({ editor: currentEditor }) => {
@@ -156,30 +165,24 @@ export function createNotebookImageNodeView(
         return options.cropMode === true;
       },
     });
-    useEffect(() => {
-      const editorElement = editor.view.dom as HTMLElement;
-      const onCropModeChange = (event: Event) => {
-        const detail = (event as CustomEvent<{ active?: boolean; nodeId?: string | null }>).detail;
-        setEventCropMode(detail?.active === true && detail.nodeId === nodeId);
-      };
-      editorElement.addEventListener('notebook-image-crop-mode-change', onCropModeChange);
-      return () => editorElement.removeEventListener('notebook-image-crop-mode-change', onCropModeChange);
-    }, [editor, nodeId]);
     const cropMode = eventCropMode || configuredCropMode;
-    const rawWidthPercent = node.attrs.widthPercent;
-    const widthPercent = typeof rawWidthPercent === 'number' && Number.isFinite(rawWidthPercent)
-      ? normalizeNotebookMediaWidthPercent(rawWidthPercent)
-      : 100;
-    const rawRotation = Number(node.attrs.rotation);
-    const rotation = Number.isFinite(rawRotation)
-      ? ((Math.round(rawRotation) % 360) + 360) % 360
-      : 0;
-    const rawDisplayAspectRatio = Number(node.attrs.displayAspectRatio);
-    const displayAspectRatio = Number.isFinite(rawDisplayAspectRatio)
-      && rawDisplayAspectRatio >= 0.1
-      && rawDisplayAspectRatio <= 10
-      ? rawDisplayAspectRatio
-      : undefined;
+    const selectedImageNodeId = useEditorState({
+      editor,
+      selector: ({ editor: currentEditor }) => {
+        const { selection } = currentEditor.state;
+        return selection instanceof NodeSelection && selection.node.type.name === 'imageFigure'
+          ? String(selection.node.attrs.id ?? '')
+          : null;
+      },
+    });
+    const isSelected = selected || selectedImageNodeId === nodeId;
+    const widthPercent = normalizeNotebookMediaWidthPercent(finiteAttr(node.attrs.widthPercent) ?? 100);
+    const displayWidthPt = finiteAttr(node.attrs.displayWidthPt);
+    const displayHeightPt = finiteAttr(node.attrs.displayHeightPt);
+    const rotation = normalizeRotation(node.attrs.rotation);
+    const displayAspectRatio = finiteAttr(node.attrs.displayAspectRatio)
+      ?? (displayWidthPt && displayHeightPt ? displayWidthPt / displayHeightPt : undefined);
+
     const interaction = useNotebookDirectMediaInteraction({
       alignment: node.attrs.alignment === 'left' || node.attrs.alignment === 'right'
         ? node.attrs.alignment
@@ -187,6 +190,8 @@ export function createNotebookImageNodeView(
       crop,
       cropMode,
       displayAspectRatio,
+      displayHeightPt,
+      displayWidthPt,
       editor,
       frameRef,
       mediaType: 'image',
@@ -196,27 +201,48 @@ export function createNotebookImageNodeView(
       onMediaDragGrip: options.onMediaDragGrip,
       onMediaInteraction: options.onMediaInteraction,
       rotation,
-      selected,
-      updateAttributes: commitAttributes,
+      selected: isSelected,
+      updateAttributes,
       widthPercent,
     });
+
     const effectiveCrop = interaction.preview?.crop ?? crop;
     const effectiveWidthPercent = interaction.preview?.widthPercent ?? widthPercent;
     const effectiveRotation = interaction.preview?.rotation ?? rotation;
-    const effectiveAspectRatio = interaction.preview?.displayAspectRatio ?? displayAspectRatio;
-    const cropViewportStyle = useMemo<CSSProperties | undefined>(() => {
-      if (effectiveAspectRatio !== undefined) {
-        return { aspectRatio: String(effectiveAspectRatio) };
-      }
-      if (!naturalSize) return undefined;
-      return {
-        aspectRatio: `${naturalSize.width * effectiveCrop.width} / ${naturalSize.height * effectiveCrop.height}`,
-      };
-    }, [effectiveAspectRatio, effectiveCrop.height, effectiveCrop.width, naturalSize]);
+    const effectiveDisplayWidthPt = interaction.preview?.displayWidthPt ?? displayWidthPt;
+    const effectiveDisplayHeightPt = interaction.preview?.displayHeightPt ?? displayHeightPt;
+    const effectiveAspectRatio = interaction.preview?.displayAspectRatio
+      ?? displayAspectRatio
+      ?? (naturalSize ? naturalSize.width / naturalSize.height : undefined);
+    const imageWidth = interaction.activeGesture === 'resize' && interaction.preview?.rectanglePx.width
+      ? `calc(${interaction.preview.rectanglePx.width}px / var(--page-ui-scale, 1))`
+      : effectiveDisplayWidthPt !== undefined
+        ? `${effectiveDisplayWidthPt}pt`
+        : `${effectiveWidthPercent}%`;
+    const imageHeight = interaction.activeGesture === 'resize' && interaction.preview?.rectanglePx.height
+      ? `calc(${interaction.preview.rectanglePx.height}px / var(--page-ui-scale, 1))`
+      : effectiveDisplayHeightPt !== undefined
+        ? `${effectiveDisplayHeightPt}pt`
+        : undefined;
+    const figureStyle = {
+      '--notebook-image-width': imageWidth,
+      '--notebook-image-rotation': `${effectiveRotation}deg`,
+      boxSizing: 'border-box',
+      maxWidth: effectiveDisplayWidthPt !== undefined ? 'none' : '100%',
+      width: imageWidth,
+      ...(imageHeight === undefined ? {} : { '--notebook-image-height': imageHeight }),
+      ...(effectiveAspectRatio === undefined
+        ? {}
+        : { '--notebook-media-display-aspect-ratio': String(effectiveAspectRatio) }),
+    } as CSSProperties;
     const cropImageStyle = useMemo<CSSProperties>(() => ({
       width: `${100 / effectiveCrop.width}%`,
       height: `${100 / effectiveCrop.height}%`,
       left: `${-(effectiveCrop.x / effectiveCrop.width) * 100}%`,
+      maxHeight: 'none',
+      maxWidth: 'none',
+      objectFit: 'fill',
+      position: 'absolute',
       top: `${-(effectiveCrop.y / effectiveCrop.height) * 100}%`,
     }), [effectiveCrop]);
     const cropOverlayStyle = useMemo(() => ({
@@ -225,6 +251,16 @@ export function createNotebookImageNodeView(
       '--notebook-crop-width': `${effectiveCrop.width * 100}%`,
       '--notebook-crop-height': `${effectiveCrop.height * 100}%`,
     }) as CSSProperties, [effectiveCrop]);
+    const sourceAspectRatio = naturalSize
+      ? (naturalSize.width / Math.max(1, naturalSize.height)) * (effectiveCrop.width / effectiveCrop.height)
+      : effectiveAspectRatio;
+    const bitmapStageStyle = useMemo<CSSProperties>(() => {
+      if (sourceAspectRatio === undefined || effectiveAspectRatio === undefined) return {};
+      return {
+        '--notebook-image-source-aspect-ratio': String(sourceAspectRatio),
+        '--notebook-image-target-aspect-ratio': String(effectiveAspectRatio),
+      } as CSSProperties;
+    }, [effectiveAspectRatio, sourceAspectRatio]);
     const requestedPlacement = String(node.attrs.placement ?? 'normal') as NotebookImagePlacement;
     const pageSetup = useEditorState({
       editor,
@@ -239,154 +275,117 @@ export function createNotebookImageNodeView(
       effectiveWidthPercent,
       renderedContentWidth,
     );
-    const figureStyle = {
-      '--notebook-image-width': interaction.activeGesture === 'resize'
-        && interaction.preview?.rectanglePx.width
-        ? `calc(${interaction.preview.rectanglePx.width}px / var(--page-ui-scale, 1))`
-        : `${effectiveWidthPercent}%`,
-      '--notebook-image-rotation': `${effectiveRotation}deg`,
-      ...(effectiveAspectRatio === undefined
-        ? {}
-        : { '--notebook-media-display-aspect-ratio': String(effectiveAspectRatio) }),
-    } as CSSProperties;
     const caption = String(node.attrs.caption ?? '').trim();
     const altText = node.attrs.decorative === true ? '' : String(node.attrs.altText ?? '');
+    const selectImageNode = () => {
+      const position = getPos();
+      if (typeof position === 'number') {
+        editor.chain().focus().setNodeSelection(position).run();
+      }
+    };
 
     return (
       <NodeViewWrapper
         as="figure"
-        className={`notebook-image-figure${selected ? ' is-selected' : ''}${interaction.activeGesture ? ' is-media-manipulating' : ''}${cropMode && selected ? ' is-crop-mode' : ''}`}
+        className={`notebook-image-figure${isSelected ? ' is-selected' : ''}${interaction.activeGesture ? ' is-media-manipulating' : ''}${cropMode && isSelected ? ' is-crop-mode' : ''}`}
         contentEditable={false}
-        data-notebook-image=""
-        data-notebook-media-kind="image"
-        data-notebook-media-manipulating={interaction.activeGesture ?? undefined}
-        data-notebook-node-id={nodeId}
-        data-notebook-image-crop-mode={cropMode && selected ? 'true' : 'false'}
-        data-testid="notebook-image-figure"
-        data-image-alignment={String(node.attrs.alignment ?? 'center')}
+        data-image-alignment={node.attrs.alignment ?? 'center'}
         data-image-placement={effectivePlacement}
         data-image-requested-placement={requestedPlacement}
-        data-image-rendered-content-width={renderedContentWidth?.toFixed(1)}
-        data-image-wrap-fallback={effectivePlacement !== requestedPlacement ? 'true' : 'false'}
-        onClick={() => {
-          const position = getPos();
-          if (typeof position === 'number') {
-            editor.chain().focus().setNodeSelection(position).run();
-          }
-        }}
+        data-image-sizing={effectiveDisplayWidthPt !== undefined ? 'point' : 'percent'}
+        data-notebook-image=""
+        data-notebook-node-id={nodeId}
+        data-testid="notebook-image-figure"
         style={figureStyle}
+        onMouseDown={(event: MouseEvent<HTMLElement>) => {
+          if ((event.target as HTMLElement | null)?.closest('button')) return;
+          event.preventDefault();
+          selectImageNode();
+        }}
+        onClick={selectImageNode}
       >
-        <div ref={frameRef} className="notebook-media-transform-shell notebook-media-transform-shell--image">
-          <div className="notebook-image-frame">
+        <div
+          className="notebook-media-transform-shell"
+          ref={frameRef}
+          onPointerDown={(event) => {
+            if ((event.target as HTMLElement | null)?.closest('button')) return;
+            event.preventDefault();
+            selectImageNode();
+          }}
+        >
+          <div className="notebook-image-frame" data-image-load-state={loadState.status}>
             {loadState.status === 'ready' ? (
-            <div
-              className="notebook-image-crop-viewport"
-              data-natural-size={naturalSize ? 'ready' : 'pending'}
-              style={cropViewportStyle}
-            >
-              <img
-                alt={altText}
-                src={loadState.url}
-                style={cropImageStyle}
-                onLoad={(event) => setNaturalSize({
-                  width: event.currentTarget.naturalWidth || 1,
-                  height: event.currentTarget.naturalHeight || 1,
-                })}
-              />
-            </div>
-          ) : loadState.status === 'missing' ? (
-            <div className="notebook-image-missing" role="img" aria-label="Image asset is unavailable">
-              <ImageOff aria-hidden="true" size={24} />
-              <span>Image asset unavailable</span>
-            </div>
-          ) : (
-            <div className="notebook-image-loading" role="status">Loading image…</div>
-          )}
-            {selected && cropMode ? (
-            <div
-              className="notebook-image-crop-overlay"
-              data-testid="notebook-image-crop-overlay"
-              role="group"
-              aria-label="Crop image"
-              style={cropOverlayStyle}
-            >
-              <span className="notebook-image-crop-dim notebook-image-crop-dim--top" aria-hidden="true" />
-              <span className="notebook-image-crop-dim notebook-image-crop-dim--right" aria-hidden="true" />
-              <span className="notebook-image-crop-dim notebook-image-crop-dim--bottom" aria-hidden="true" />
-              <span className="notebook-image-crop-dim notebook-image-crop-dim--left" aria-hidden="true" />
-              <span className="notebook-image-crop-selection" aria-hidden="true" />
+              <div
+                className="notebook-image-crop-viewport"
+                data-natural-size={naturalSize ? 'ready' : 'pending'}
+              >
+                <div className="notebook-image-bitmap-stage" style={bitmapStageStyle}>
+                  <img
+                    alt={altText}
+                    draggable={false}
+                    src={loadState.url}
+                    style={cropImageStyle}
+                    onLoad={(event) => {
+                      const image = event.currentTarget;
+                      setNaturalSize({ width: image.naturalWidth || 1, height: image.naturalHeight || 1 });
+                    }}
+                  />
+                </div>
+              </div>
+            ) : loadState.status === 'missing' ? (
+              <div className="notebook-image-missing"><ImageOff size={18} /> Image unavailable</div>
+            ) : (
+              <div className="notebook-image-loading">Loading image…</div>
+            )}
+            {cropMode && isSelected ? (
+              <div className="notebook-image-crop-overlay" style={cropOverlayStyle}>
+                <div className="notebook-image-crop-dim notebook-image-crop-dim--top" />
+                <div className="notebook-image-crop-dim notebook-image-crop-dim--right" />
+                <div className="notebook-image-crop-dim notebook-image-crop-dim--bottom" />
+                <div className="notebook-image-crop-dim notebook-image-crop-dim--left" />
+                <div className="notebook-image-crop-selection" />
+                {NOTEBOOK_MEDIA_RESIZE_HANDLES.map((handle) => (
+                  <button
+                    key={handle.value}
+                  type="button"
+                  aria-label={`Crop image from ${handle.label}`}
+                  className={`notebook-image-crop-handle notebook-image-crop-handle--${handle.value}`}
+                  data-notebook-media-resize-handle={handle.value}
+                  onPointerDown={(event) => interaction.beginCrop(event, handle.value)}
+                />
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {isSelected ? (
+            <>
+              <button
+                type="button"
+                aria-label="Move image"
+                className="notebook-media-drag-grip"
+                onPointerDown={interaction.beginDrag}
+              >
+                <GripVertical size={13} />
+              </button>
               {NOTEBOOK_MEDIA_RESIZE_HANDLES.map((handle) => (
                 <button
                   key={handle.value}
                   type="button"
-                  className={`notebook-image-crop-handle notebook-image-crop-handle--${handle.value}`}
-                  data-notebook-image-crop-handle={handle.value}
-                  aria-label={`Crop image from the ${handle.label}`}
-                  title={`Crop from the ${handle.label}`}
-                  onClick={(event) => event.stopPropagation()}
-                  onPointerDown={(event) => interaction.beginCrop(event, handle.value)}
-                >
-                  <span aria-hidden="true" />
-                </button>
+                  aria-label={`Resize image from ${handle.label}`}
+                  className={`notebook-media-resize-handle notebook-media-resize-handle--${handle.value}`}
+                  data-notebook-media-resize-handle={handle.value}
+                  onPointerDown={(event) => interaction.beginResize(event, handle.value)}
+                />
               ))}
               <button
                 type="button"
-                className="notebook-image-crop-reset"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  commitAttributes({ cropX: null, cropY: null, cropWidth: null, cropHeight: null });
-                }}
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
+                aria-label="Rotate image"
+                className="notebook-image-rotation-handle"
+                onPointerDown={interaction.beginRotation}
               >
-                Reset crop
+                <RotateCw size={12} />
               </button>
-            </div>
-            ) : null}
-          </div>
-          {selected && !cropMode ? (
-          <div className="notebook-media-direct-controls" role="group" aria-label="Image controls">
-            <button
-              type="button"
-              className="notebook-media-drag-grip"
-              data-notebook-media-drag-grip="image"
-              aria-label="Drag image to reposition"
-              title="Drag image to reposition"
-              onClick={(event) => event.stopPropagation()}
-              onPointerDown={interaction.beginDrag}
-            >
-              <GripVertical aria-hidden="true" size={16} />
-            </button>
-            <div className="notebook-media-resize-handles" role="group" aria-label="Resize image">
-              {NOTEBOOK_MEDIA_RESIZE_HANDLES.map((handle) => (
-                <button
-                  key={handle.value}
-                  type="button"
-                  className={`notebook-media-resize-handle notebook-media-resize-handle--${handle.value}`}
-                  data-notebook-media-resize-handle={handle.value}
-                  aria-label={`Resize image from the ${handle.label}`}
-                  title={`Resize from the ${handle.label}`}
-                  onClick={(event) => event.stopPropagation()}
-                  onPointerDown={(event) => interaction.beginResize(event, handle.value)}
-                >
-                  <span aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              className="notebook-image-rotation-handle"
-              data-notebook-image-rotation-handle=""
-              aria-label="Rotate image"
-              title="Rotate image. Hold Shift to snap to 15 degrees."
-              onClick={(event) => event.stopPropagation()}
-              onPointerDown={interaction.beginRotation}
-            >
-              <RotateCw aria-hidden="true" size={15} />
-            </button>
-          </div>
+            </>
           ) : null}
         </div>
         {caption ? (

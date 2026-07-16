@@ -16,6 +16,7 @@ import {
   NOTEBOOK_STARTER_TEMPLATES,
   createNotebookStarterContent,
   detectNotebookMathCandidates,
+  notebookPageGeometry,
   notebookSha256Hex,
   validateNotebookImage,
   type NotebookAssetPort,
@@ -107,6 +108,28 @@ type PendingImageEdit = {
 type PendingImageDialog = PendingImageInsert | PendingImageEdit;
 const NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX = 150_000;
 const NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS = 350;
+const CSS_PX_PER_PT = 96 / 72;
+
+function initialImageDisplaySize(
+  inspection: NotebookImageInspection,
+  pageSetup: NotebookPageSetup,
+) {
+  const geometry = notebookPageGeometry(pageSetup);
+  const fallbackWidthPt = Math.min(geometry.usableWidth, 360);
+  const widthPt = inspection.width && inspection.width > 0
+    ? Math.min(geometry.usableWidth, Math.max(36, inspection.width / CSS_PX_PER_PT))
+    : fallbackWidthPt;
+  const ratio = inspection.width && inspection.height
+    ? Math.max(0.1, Math.min(10, inspection.width / inspection.height))
+    : 16 / 9;
+  const heightPt = Math.max(36, widthPt / ratio);
+  return {
+    displayAspectRatio: Math.round(ratio * 1000) / 1000,
+    displayHeightPt: Math.round(heightPt * 1000) / 1000,
+    displayWidthPt: Math.round(widthPt * 1000) / 1000,
+  };
+}
+
 function selectedParagraphSuggestion(editor: Editor | null) {
   if (!editor) {
     return null;
@@ -639,20 +662,62 @@ export function NotebookRichCanvas({
   async function stageImage(file: File, insertionPosition?: number) {
     const selection = captureNotebookToolbarSelection(editor);
     setImageError(null);
+    let storedAssetId: string | null = null;
+    let assetAlreadyExisted = false;
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const declaredType = file.type.startsWith('image/') ? file.type : undefined;
       const inspection = await validateNotebookImage(bytes, declaredType);
-      setPendingImageDialog({
-        mode: 'insert',
-        bytes,
-        fileName: file.name || 'Pasted image',
-        inspection,
-        selection,
-        ...(insertionPosition !== undefined ? { insertionPosition } : {}),
-      });
+      const expectedAssetId = `sha256:${await notebookSha256Hex(bytes)}`;
+      assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
+      const metadata = await assetPort.put(bytes, inspection.mimeType);
+      storedAssetId = metadata.id;
+      const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
+      const displaySize = initialImageDisplaySize(inspection, documentRef.current.pageSetup);
+      const imageContent = {
+        type: 'imageFigure',
+        attrs: {
+          id: nodeId,
+          assetId: metadata.id,
+          altText: null,
+          decorative: false,
+          caption: null,
+          numbered: null,
+          widthPercent: null,
+          displayWidthPt: displaySize.displayWidthPt,
+          displayHeightPt: displaySize.displayHeightPt,
+          alignment: 'center',
+          placement: 'normal',
+          rotation: null,
+          displayAspectRatio: displaySize.displayAspectRatio,
+          cropX: null,
+          cropY: null,
+          cropWidth: null,
+          cropHeight: null,
+        },
+      };
+      const inserted = insertionPosition === undefined
+        ? restoreNotebookToolbarSelection(editor, selection).insertContent(imageContent).run()
+        : editor.chain().focus().insertContentAt(
+            Math.max(0, Math.min(editor.state.doc.content.size, insertionPosition)),
+            imageContent,
+          ).run();
+      const image = notebookEditorNodeById(editor, nodeId);
+      if (!inserted || !image) {
+        throw new Error('The editor could not place this image.');
+      }
+      editor.commands.setNodeSelection(image.from);
+      onSelectRibbonTab('picture-format');
+      requestAnimationFrame(refreshSelectedMediaStatus);
     } catch (error) {
+      if (storedAssetId && !assetAlreadyExisted) {
+        await assetPort.delete(storedAssetId).catch(() => {});
+      }
       setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }
 
