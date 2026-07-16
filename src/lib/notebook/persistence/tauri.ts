@@ -159,7 +159,7 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
   };
 
   const asset: NotebookAssetPort = {
-    async put(bytes, mimeType, createdAt) {
+    async put(bytes, mimeType, createdAt, options) {
       requireTauriRuntime();
       if (!isNotebookSupportedAssetMimeType(mimeType)) {
         throw new TypeError('Notebook asset type is unsupported.');
@@ -167,6 +167,8 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
       const value = await invoke<unknown>('notebook_put_asset', {
         bytes: [...bytes],
         createdAt: createdAt ?? new Date().toISOString(),
+        imageHeightPx: options?.imageHeightPx ?? null,
+        imageWidthPx: options?.imageWidthPx ?? null,
         mimeType,
       });
       if (!isNotebookAssetMetadataV1(value)) {
@@ -200,7 +202,7 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
       await invoke('notebook_delete_asset', { assetId });
     },
   };
-  asset.putBlob = async (blob, mimeType, createdAt = new Date().toISOString()) => {
+  asset.putBlob = async (blob, mimeType, createdAt = new Date().toISOString(), options) => {
     requireTauriRuntime();
     if (!isNotebookSupportedAssetMimeType(mimeType)) {
       throw new TypeError('Notebook asset type is unsupported.');
@@ -208,6 +210,8 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
     const uploadId = await invoke<string>('notebook_begin_asset_upload', {
       byteLength: blob.size,
       createdAt,
+      imageHeightPx: options?.imageHeightPx ?? null,
+      imageWidthPx: options?.imageWidthPx ?? null,
       mimeType,
     });
     try {

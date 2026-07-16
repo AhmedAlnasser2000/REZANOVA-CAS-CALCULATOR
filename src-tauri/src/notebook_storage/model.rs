@@ -54,6 +54,10 @@ pub struct NotebookAssetMetadataV1 {
     pub byte_length: u64,
     pub mime_type: String,
     pub created_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_width_px: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_height_px: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -1773,6 +1777,9 @@ pub fn validate_asset_metadata(metadata: &NotebookAssetMetadataV1) -> Result<(),
         || !is_sha256(&metadata.sha256)
         || metadata.id != format!("sha256:{}", metadata.sha256)
         || metadata.created_at.is_empty()
+        || (metadata.image_width_px.is_some() != metadata.image_height_px.is_some())
+        || metadata.image_width_px == Some(0)
+        || metadata.image_height_px == Some(0)
         || !matches!(
             metadata.mime_type.as_str(),
             "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml"

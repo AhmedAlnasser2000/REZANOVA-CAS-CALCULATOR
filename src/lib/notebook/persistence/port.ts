@@ -61,11 +61,19 @@ export type NotebookAssetPort = {
     bytes: Uint8Array,
     mimeType: NotebookSupportedAssetMimeType,
     createdAt?: string,
+    options?: {
+      imageWidthPx?: number;
+      imageHeightPx?: number;
+    },
   ): Promise<NotebookAssetMetadataV1>;
   putBlob?(
     blob: Blob,
     mimeType: NotebookSupportedAssetMimeType,
     createdAt?: string,
+    options?: {
+      imageWidthPx?: number;
+      imageHeightPx?: number;
+    },
   ): Promise<NotebookAssetMetadataV1>;
   load(assetId: string): Promise<NotebookAssetPayloadV1 | null>;
   resolveUrl?(assetId: string): Promise<string | null> | string | null;
@@ -223,7 +231,7 @@ export function createInMemoryNotebookLibraryPort(
 export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
   const assets = new Map<string, NotebookAssetPayloadV1>();
   const port: NotebookAssetPort = {
-    async put(bytes, mimeType, createdAt = new Date().toISOString()) {
+    async put(bytes, mimeType, createdAt = new Date().toISOString(), options) {
       if (!isNotebookSupportedAssetMimeType(mimeType)) {
         throw new TypeError('Notebook asset type is unsupported.');
       }
@@ -235,6 +243,8 @@ export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
         byteLength: bytes.byteLength,
         mimeType,
         createdAt,
+        ...(options?.imageWidthPx !== undefined ? { imageWidthPx: options.imageWidthPx } : {}),
+        ...(options?.imageHeightPx !== undefined ? { imageHeightPx: options.imageHeightPx } : {}),
       };
       if (!isNotebookAssetMetadataV1(metadata)) {
         throw new TypeError('Notebook asset metadata is invalid.');
@@ -242,6 +252,9 @@ export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
       const existing = assets.get(metadata.id);
       if (existing && existing.metadata.mimeType !== metadata.mimeType) {
         throw new Error('Notebook asset hash already exists with a different media type.');
+      }
+      if (existing) {
+        return { ...existing.metadata };
       }
       assets.set(metadata.id, cloneNotebookAssetPayloadV1({ metadata, bytes }));
       return { ...metadata };
@@ -254,10 +267,11 @@ export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
       assets.delete(assetId);
     },
   };
-  port.putBlob = async (blob, mimeType, createdAt) => port.put(
+  port.putBlob = async (blob, mimeType, createdAt, options) => port.put(
     new Uint8Array(await blob.arrayBuffer()),
     mimeType,
     createdAt,
+    options,
   );
   return port;
 }

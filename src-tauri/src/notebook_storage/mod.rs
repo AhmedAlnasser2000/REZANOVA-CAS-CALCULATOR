@@ -712,6 +712,8 @@ impl NotebookStorage {
         bytes: &[u8],
         mime_type: &str,
         created_at: &str,
+        image_width_px: Option<u32>,
+        image_height_px: Option<u32>,
     ) -> Result<(NotebookAssetMetadataV1, bool), String> {
         let sha256 = sha256_hex(bytes);
         let metadata = NotebookAssetMetadataV1 {
@@ -721,6 +723,8 @@ impl NotebookStorage {
             byte_length: bytes.len() as u64,
             mime_type: mime_type.into(),
             created_at: created_at.into(),
+            image_width_px,
+            image_height_px,
         };
         validate_asset_bytes(&metadata, bytes)?;
         let (data_path, metadata_path) = self.asset_paths(&metadata.id)?;
@@ -749,13 +753,21 @@ impl NotebookStorage {
         bytes: Vec<u8>,
         mime_type: String,
         created_at: String,
+        image_width_px: Option<u32>,
+        image_height_px: Option<u32>,
     ) -> Result<NotebookAssetMetadataV1, String> {
         let _guard = self
             .operation_lock
             .lock()
             .map_err(|_| "Notebook storage is unavailable.".to_string())?;
-        self.put_asset_locked(&bytes, &mime_type, &created_at)
-            .map(|(metadata, _)| metadata)
+        self.put_asset_locked(
+            &bytes,
+            &mime_type,
+            &created_at,
+            image_width_px,
+            image_height_px,
+        )
+        .map(|(metadata, _)| metadata)
     }
 
     pub fn begin_asset_upload(
@@ -763,6 +775,8 @@ impl NotebookStorage {
         _byte_length: u64,
         _mime_type: String,
         _created_at: String,
+        _image_width_px: Option<u32>,
+        _image_height_px: Option<u32>,
     ) -> Result<String, String> {
         Err("Notebook streamed video upload is unsupported.".into())
     }
@@ -828,6 +842,8 @@ impl NotebookStorage {
                 byte_length: upload.expected_length,
                 mime_type: upload.mime_type.clone(),
                 created_at: upload.created_at.clone(),
+                image_width_px: None,
+                image_height_px: None,
             };
             validate_asset_metadata(&metadata)?;
             let (data_path, metadata_path) = self.asset_paths(&metadata.id)?;
@@ -1083,6 +1099,8 @@ impl NotebookStorage {
                 &asset.bytes,
                 &asset.metadata.mime_type,
                 &asset.metadata.created_at,
+                asset.metadata.image_width_px,
+                asset.metadata.image_height_px,
             ) {
                 Ok((metadata, true)) => created_assets.push(metadata.id),
                 Ok(_) => {}
@@ -1155,9 +1173,17 @@ pub fn notebook_put_asset(
     bytes: Vec<u8>,
     mime_type: String,
     created_at: String,
+    image_width_px: Option<u32>,
+    image_height_px: Option<u32>,
     state: State<'_, NotebookStorage>,
 ) -> Result<NotebookAssetMetadataV1, String> {
-    state.put_asset(bytes, mime_type, created_at)
+    state.put_asset(
+        bytes,
+        mime_type,
+        created_at,
+        image_width_px,
+        image_height_px,
+    )
 }
 
 #[tauri::command]
@@ -1165,9 +1191,17 @@ pub fn notebook_begin_asset_upload(
     byte_length: u64,
     mime_type: String,
     created_at: String,
+    image_width_px: Option<u32>,
+    image_height_px: Option<u32>,
     state: State<'_, NotebookStorage>,
 ) -> Result<String, String> {
-    state.begin_asset_upload(byte_length, mime_type, created_at)
+    state.begin_asset_upload(
+        byte_length,
+        mime_type,
+        created_at,
+        image_width_px,
+        image_height_px,
+    )
 }
 
 #[tauri::command]

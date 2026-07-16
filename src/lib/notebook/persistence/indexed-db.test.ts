@@ -89,6 +89,7 @@ describe('IndexedDB Notebook persistence ports', () => {
       bytes,
       'image/svg+xml',
       '2026-07-14T00:00:00.000Z',
+      { imageHeightPx: 768, imageWidthPx: 1024 },
     );
     const second = await ports.asset.put(
       bytes,
@@ -96,7 +97,9 @@ describe('IndexedDB Notebook persistence ports', () => {
       '2026-07-14T00:00:01.000Z',
     );
     expect(second.id).toBe(first.id);
+    expect(second).toMatchObject({ imageHeightPx: 768, imageWidthPx: 1024 });
     const loaded = await ports.asset.load(first.id);
+    expect(loaded?.metadata).toMatchObject({ imageHeightPx: 768, imageWidthPx: 1024 });
     expect(loaded?.bytes).toEqual(bytes);
     loaded!.bytes.fill(0);
     expect((await ports.asset.load(first.id))?.bytes).toEqual(bytes);

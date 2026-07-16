@@ -578,10 +578,22 @@ export function NotebookRichCanvas({
       );
       const expectedAssetId = `sha256:${await notebookSha256Hex(bytes)}`;
       assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
-      const metadata = await assetPort.put(bytes, inspection.mimeType);
+      const imageDimensions = inspection.width && inspection.height
+        ? { imageHeightPx: inspection.height, imageWidthPx: inspection.width }
+        : undefined;
+      const metadata = await assetPort.put(
+        bytes,
+        inspection.mimeType,
+        undefined,
+        imageDimensions,
+      );
       storedAssetId = metadata.id;
       const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
-      const displaySize = initialImageDisplaySize(inspection, documentRef.current.pageSetup);
+      const displaySize = initialImageDisplaySize({
+        ...inspection,
+        height: metadata.imageHeightPx ?? inspection.height,
+        width: metadata.imageWidthPx ?? inspection.width,
+      }, documentRef.current.pageSetup);
       const imageContent = {
         type: 'imageFigure',
         attrs: {

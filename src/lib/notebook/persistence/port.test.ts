@@ -78,11 +78,16 @@ describe('Notebook persistence port contract', () => {
   it('deduplicates assets by SHA-256 while returning isolated bytes', async () => {
     const port = createInMemoryNotebookAssetPort();
     const bytes = new TextEncoder().encode('<svg/>');
-    const first = await port.put(bytes, 'image/svg+xml', '2026-07-14T00:00:00.000Z');
+    const first = await port.put(bytes, 'image/svg+xml', '2026-07-14T00:00:00.000Z', {
+      imageHeightPx: 240,
+      imageWidthPx: 320,
+    });
     const second = await port.put(bytes, 'image/svg+xml', '2026-07-14T00:00:01.000Z');
     expect(second.id).toBe(first.id);
     expect(second.id).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(second).toMatchObject({ imageHeightPx: 240, imageWidthPx: 320 });
     const loaded = await port.load(first.id);
+    expect(loaded?.metadata).toMatchObject({ imageHeightPx: 240, imageWidthPx: 320 });
     expect(loaded?.bytes).toEqual(bytes);
     loaded?.bytes.fill(0);
     expect((await port.load(first.id))?.bytes).toEqual(bytes);

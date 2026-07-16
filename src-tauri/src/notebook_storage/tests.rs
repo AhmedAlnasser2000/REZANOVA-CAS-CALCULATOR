@@ -210,6 +210,8 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
             bytes.clone(),
             "image/svg+xml".into(),
             "2026-07-14T00:00:00.000Z".into(),
+            Some(320),
+            Some(240),
         )
         .expect("safe SVG should store");
     let second = storage
@@ -217,9 +219,13 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
             bytes,
             "image/svg+xml".into(),
             "2026-07-14T00:00:01.000Z".into(),
+            None,
+            None,
         )
         .expect("same SVG should deduplicate");
     assert_eq!(first.id, second.id);
+    assert_eq!(second.image_width_px, Some(320));
+    assert_eq!(second.image_height_px, Some(240));
     assert_eq!(fs::read_dir(storage.assets_dir()).unwrap().count(), 2);
 
     let unsafe_svg = br#"<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>"#;
@@ -228,6 +234,8 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
             unsafe_svg.to_vec(),
             "image/svg+xml".into(),
             "2026-07-14T00:00:02.000Z".into(),
+            None,
+            None,
         )
         .expect_err("scriptable SVG should fail")
         .contains("forbidden element"));
@@ -238,6 +246,8 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
             external_css.to_vec(),
             "image/svg+xml".into(),
             "2026-07-14T00:00:03.000Z".into(),
+            None,
+            None,
         )
         .expect_err("external CSS reference should fail")
         .contains("external CSS"));
@@ -247,6 +257,8 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
             png_with_dimensions(10_001, 10_000),
             "image/png".into(),
             "2026-07-14T00:00:04.000Z".into(),
+            Some(10_001),
+            Some(10_000),
         )
         .expect_err("oversized raster should fail")
         .contains("100 megapixel"));
@@ -867,7 +879,13 @@ fn rejects_streamed_video_uploads() {
     let root = unique_storage("streamed-video-removed");
     let storage = NotebookStorage::load(root.clone()).unwrap();
     assert!(storage
-        .begin_asset_upload(12, "video/mp4".into(), "2026-07-14T00:01:00.000Z".into(),)
+        .begin_asset_upload(
+            12,
+            "video/mp4".into(),
+            "2026-07-14T00:01:00.000Z".into(),
+            None,
+            None,
+        )
         .expect_err("video uploads should be unsupported")
         .contains("unsupported"));
     assert!(std::fs::read_dir(root.join("uploads"))
@@ -887,6 +905,8 @@ fn portable_export_uses_the_current_snapshot_and_imports_as_a_copy() {
             safe_svg(),
             "image/svg+xml".into(),
             "2026-07-14T00:00:00.000Z".into(),
+            None,
+            None,
         )
         .expect("asset should store");
     let mut saved = record("library.original", 1, "Saved title");
@@ -949,6 +969,8 @@ fn validates_the_complete_package_before_mutating_storage() {
         byte_length: unsafe_svg.len() as u64,
         mime_type: "image/svg+xml".into(),
         created_at: "2026-07-14T00:00:00.000Z".into(),
+        image_width_px: None,
+        image_height_px: None,
     };
     let document_bytes =
         serde_json::to_vec_pretty(&document("Unsafe package")).expect("document should serialize");

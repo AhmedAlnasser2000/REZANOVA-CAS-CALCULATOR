@@ -60,6 +60,25 @@ describe('Notebook durable persistence contracts', () => {
       mimeType: 'image/png',
       createdAt: '2026-07-14T00:00:00.000Z',
     })).toBe(false);
+    expect(isNotebookAssetMetadataV1({
+      version: 1,
+      id: `sha256:${'a'.repeat(64)}`,
+      sha256: 'a'.repeat(64),
+      byteLength: 1,
+      mimeType: 'image/png',
+      createdAt: '2026-07-14T00:00:00.000Z',
+      imageWidthPx: 640,
+      imageHeightPx: 480,
+    })).toBe(true);
+    expect(isNotebookAssetMetadataV1({
+      version: 1,
+      id: `sha256:${'a'.repeat(64)}`,
+      sha256: 'a'.repeat(64),
+      byteLength: 1,
+      mimeType: 'image/png',
+      createdAt: '2026-07-14T00:00:00.000Z',
+      imageWidthPx: 640,
+    })).toBe(false);
   });
 
   it('derives figure assets and rejects an incomplete stored record', () => {

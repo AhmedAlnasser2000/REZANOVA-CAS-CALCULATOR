@@ -325,7 +325,7 @@ export function createIndexedDbNotebookPorts(options: {
   };
 
   const asset: NotebookAssetPort = {
-    async put(bytes, mimeType, createdAt = new Date().toISOString()) {
+    async put(bytes, mimeType, createdAt = new Date().toISOString(), options) {
       if (!isNotebookSupportedAssetMimeType(mimeType)) {
         throw new TypeError('Notebook asset type is unsupported.');
       }
@@ -337,6 +337,8 @@ export function createIndexedDbNotebookPorts(options: {
         byteLength: bytes.byteLength,
         mimeType,
         createdAt,
+        ...(options?.imageWidthPx !== undefined ? { imageWidthPx: options.imageWidthPx } : {}),
+        ...(options?.imageHeightPx !== undefined ? { imageHeightPx: options.imageHeightPx } : {}),
       };
       if (!isNotebookAssetMetadataV1(metadata)) {
         throw new TypeError('Notebook asset metadata is invalid.');
@@ -348,6 +350,10 @@ export function createIndexedDbNotebookPorts(options: {
       if (current && current.metadata.mimeType !== metadata.mimeType) {
         transaction.abort();
         throw new Error('Notebook asset hash already exists with a different media type.');
+      }
+      if (current) {
+        await transactionComplete(transaction);
+        return { ...current.metadata };
       }
       const stored: StoredAsset = {
         id: metadata.id,

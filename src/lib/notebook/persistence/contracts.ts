@@ -57,6 +57,8 @@ export type NotebookAssetMetadataV1 = {
   byteLength: number;
   mimeType: NotebookSupportedAssetMimeType;
   createdAt: string;
+  imageWidthPx?: number;
+  imageHeightPx?: number;
 };
 
 export type NotebookAssetPayloadV1 = {
@@ -142,7 +144,16 @@ export function isNotebookAssetMetadataV1(value: unknown): value is NotebookAsse
     && Number.isSafeInteger(value.byteLength)
     && Number(value.byteLength) >= 0
     && isNotebookSupportedAssetMimeType(value.mimeType)
-    && isIsoDate(value.createdAt);
+    && isIsoDate(value.createdAt)
+    && (value.imageWidthPx === undefined || (
+      Number.isSafeInteger(value.imageWidthPx)
+      && Number(value.imageWidthPx) > 0
+    ))
+    && (value.imageHeightPx === undefined || (
+      Number.isSafeInteger(value.imageHeightPx)
+      && Number(value.imageHeightPx) > 0
+    ))
+    && ((value.imageWidthPx === undefined) === (value.imageHeightPx === undefined));
 }
 
 export function isNotebookStoredRecordSummaryV1(
