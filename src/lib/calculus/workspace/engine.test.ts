@@ -51,7 +51,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected success');
     }
-    expect(result.exactLatex).toContain('x^{2}');
+    expect(result.exactLatex).toMatch(/x\^\{?2\}?/);
     expect(result.exactLatex).not.toContain('9');
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
@@ -79,7 +79,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected success');
     }
-    expect(result.exactLatex).toContain('x^{2}');
+    expect(result.exactLatex).toMatch(/x\^\{?2\}?/);
     expect(result.exactLatex).not.toContain('9');
     expect(result.variableSubstitutions).toEqual([
       { name: 'mass', valueLatex: '4', numericValue: 4 },
@@ -238,6 +238,42 @@ describe('runCalculusWorkspaceMode stored values', () => {
       }
       expect(requireCanonicalResultAuthority(result, `${entry.screen} test`).canonicalResult, entry.screen)
         .toBeDefined();
+    }
+  });
+
+  it('keeps indefinite integration standard results and controlled errors on V2 authority', async () => {
+    const cases = [
+      {
+        bodyLatex: String.raw`\sqrt{4-x^2}`,
+        hasPrimary: true,
+      },
+      {
+        bodyLatex: String.raw`\frac{2x^4+x^2+1}{x^2+4x+1}`,
+        hasPrimary: true,
+      },
+      {
+        bodyLatex: String.raw`(\sec(x)+\cot(x))^2`,
+        hasPrimary: false,
+      },
+    ];
+
+    for (const entry of cases) {
+      const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
+        indefiniteIntegral: { bodyLatex: entry.bodyLatex },
+      }));
+      expect(result.kind, entry.bodyLatex).not.toBe('prompt');
+      if (result.kind === 'prompt') {
+        throw new Error('Indefinite integration authority test must return a result.');
+      }
+      const document = requireV2Document(result);
+      expect(document.version, entry.bodyLatex).toBe(2);
+      if (entry.hasPrimary) {
+        expect(document.primary, entry.bodyLatex).toMatchObject({ kind: 'math' });
+      } else {
+        expect(document.primary, entry.bodyLatex).toBeUndefined();
+      }
+      expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined), entry.bodyLatex)
+        .toBe(true);
     }
   });
 

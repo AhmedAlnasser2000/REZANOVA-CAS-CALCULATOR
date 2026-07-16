@@ -100,6 +100,8 @@ import type {
   VersionedResultProducerDraft,
 } from '../../../types/calculator';
 import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
+import type { CalculusIndefiniteIntegralAuthority } from '../engine/shared';
+import { createCalculusIndefiniteIntegralOutcomeV2 } from './integration-result-document';
 
 export type RunCalculusWorkspaceModeRequest = {
   screen: CalculusScreen;
@@ -327,8 +329,14 @@ export async function runCalculusWorkspaceMode(
     request: CalculusDerivativeAtPointEvidence;
     primary: CalculusDerivativeAtPointEvidence['result'];
   } | undefined;
+  let indefiniteIntegralAuthority: CalculusIndefiniteIntegralAuthority | undefined;
+  let indefiniteIntegralEvaluation: CalculusWorkspaceEvaluation | undefined;
   const captureEvaluation = (title: string, evaluation: CalculusWorkspaceEvaluation) => {
     mathJsonLeaves = [...(evaluation.mathJsonLeaves ?? [])];
+    if (evaluation.indefiniteIntegralAuthority) {
+      indefiniteIntegralAuthority = evaluation.indefiniteIntegralAuthority;
+      indefiniteIntegralEvaluation = evaluation;
+    }
     return toOutcome(title, evaluation);
   };
 
@@ -731,7 +739,9 @@ export async function runCalculusWorkspaceMode(
   const routeId = calculusMathJsonRouteForScreen(request.screen);
   const producerVersion = canonicalResultVersionForProducer({
     routeId,
-    selector: request.screen,
+    selector: request.screen === 'indefiniteIntegral'
+      ? indefiniteIntegralAuthority?.selector
+      : request.screen,
   });
   const ownedOutcome = hasNativeCalculusResultDocument(request.screen)
     ? finalOutcome.kind === 'prompt'
@@ -740,9 +750,24 @@ export async function runCalculusWorkspaceMode(
         ? (() => {
             const mathValue = calculusV2MathResolverFromOwnedLeaves({
               routeId,
-              leaves: mathJsonLeaves,
+              leaves: request.screen === 'indefiniteIntegral'
+                ? mathJsonLeaves.filter((leaf) =>
+                    !leaf.source.startsWith('calculus.stored-value-readback:'))
+                : mathJsonLeaves,
             });
             if (finalOutcome.kind === 'success') {
+              if (
+                request.screen === 'indefiniteIntegral'
+                && indefiniteIntegralAuthority?.selector === 'indefiniteIntegral:standard'
+                && indefiniteIntegralEvaluation
+              ) {
+                return createCalculusIndefiniteIntegralOutcomeV2({
+                  outcome: finalOutcome,
+                  evaluation: indefiniteIntegralEvaluation,
+                  authority: indefiniteIntegralAuthority,
+                  mathValue,
+                });
+              }
               if (!derivativePointV2Evidence) {
                 throw new Error(
                   'Calculus derivativePoint selected V2 without complete producer proof.',
@@ -755,6 +780,18 @@ export async function runCalculusWorkspaceMode(
                 appliedVariablePathLatex: derivativePointV2Evidence.request.appliedVariablePath
                   .map((value) => value.canonicalLatex),
                 pointLatex: derivativePointV2Evidence.request.point.canonicalLatex,
+                mathValue,
+              });
+            }
+            if (
+              request.screen === 'indefiniteIntegral'
+              && indefiniteIntegralAuthority
+              && indefiniteIntegralEvaluation
+            ) {
+              return createCalculusIndefiniteIntegralOutcomeV2({
+                outcome: finalOutcome,
+                evaluation: indefiniteIntegralEvaluation,
+                authority: indefiniteIntegralAuthority,
                 mathValue,
               });
             }

@@ -4,6 +4,7 @@ import {
   divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarToNumber,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
@@ -25,6 +26,7 @@ export type CompletedSquareQuadraticDenominator = {
     slope: ExactScalar;
     offset: ExactScalar;
     latex: string;
+    node: unknown;
   };
 };
 
@@ -86,6 +88,7 @@ export function completedSquareQuadraticDenominatorForm(
     slope: EXACT_ONE,
     offset: shift,
     latex: exactPolynomialToLatex(affinePolynomial),
+    node: exactPolynomialToNode(affinePolynomial),
   };
 
   return {

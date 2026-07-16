@@ -24,6 +24,7 @@ import { parseExactAffineArgument } from './exact-parts';
 import { scaleByExactScalar } from './rational';
 
 type HyperbolicTableResult = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -60,6 +61,16 @@ function nonzero(expressionLatex: string): ExactSupplementEntry {
 
 function exactScalarLatex(value: ExactScalar) {
   return boxLatex(buildExactScalarNode(value));
+}
+
+function scaledMathJsonTerm(value: ExactScalar, expression: unknown) {
+  if (value.numerator < 0) {
+    return ['Negate', ['Multiply',
+      buildExactScalarNode({ numerator: -value.numerator, denominator: value.denominator }),
+      expression,
+    ]];
+  }
+  return ['Multiply', buildExactScalarNode(value), expression];
 }
 
 function exactScalarIsTwo(node: unknown) {
@@ -147,6 +158,10 @@ export function tryHyperbolicSquareTableRule(
   }
 
   return {
+    antiderivativeNode: ['Add',
+      scaledMathJsonTerm(sinhCoefficient, ['Sinh', ['Multiply', 2, node[1][1]]]),
+      scaledMathJsonTerm(signedLinearCoefficient, node[1][1]),
+    ],
     exactLatex,
     verification,
     exactSupplementLatex: mergeExactSupplementLatex({

@@ -217,7 +217,7 @@ describe('Canonical Result V2 contract', () => {
     });
   });
 
-  it('routes only active V1 and V2 documents and preserves their source version', () => {
+  it('routes only active V1 through V4 documents and preserves their source version', () => {
     const v1: CanonicalResultDocumentV1 = {
       version: 1,
       outcomeKind: 'success',
@@ -225,6 +225,7 @@ describe('Canonical Result V2 contract', () => {
       primaryMath: { canonicalLatex: '1' },
       warnings: [],
     };
+    const v4Value = proven('1', 1);
     expect(validateCanonicalResultDocumentVersioned(v1)).toMatchObject({
       ok: true,
       validated: { value: { version: 1 } },
@@ -235,6 +236,23 @@ describe('Canonical Result V2 contract', () => {
     });
     expect(validateCanonicalResultDocumentVersioned({
       version: 4,
+      outcomeKind: 'success',
+      title: 'V4',
+      primary: {
+        kind: 'special-function-expression',
+        expression: {
+          kind: 'named-function',
+          name: 'erfi',
+          arguments: [{ kind: 'standard-math', value: v4Value }],
+        },
+      },
+      warnings: [],
+    })).toMatchObject({
+      ok: true,
+      validated: { value: { version: 4 } },
+    });
+    expect(validateCanonicalResultDocumentVersioned({
+      version: 5,
       outcomeKind: 'success',
       title: 'Future',
       warnings: [],
@@ -350,6 +368,7 @@ describe('Canonical Result V2 contract', () => {
       ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
+      'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
       'equation.domain-boundary': ['typedLabeledSupplement'],
       'equation.rational-radical': ['typedLabeledSupplement'],
       'trigonometry.right-triangle': ['rightTriangle'],
@@ -383,6 +402,8 @@ describe('Canonical Result V2 contract', () => {
       ].includes(routeId) ? 2 : 1;
       const selectorVersions = routeId === 'calculus.derivatives'
         ? { derivativePoint: 2 }
+        : routeId === 'calculus.integrals'
+          ? { 'indefiniteIntegral:standard': 2, 'indefiniteIntegral:error': 2 }
         : routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
           ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.right-triangle'

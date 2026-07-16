@@ -29,6 +29,7 @@ import {
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus0SymbolicStandardRadicalRule = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -113,6 +114,7 @@ function finish(input: {
 }): AlgebraicGenus0SymbolicStandardRadicalRule {
   const antiderivativeNode = simplifyMathJsonNodeOrOriginal(input.node);
   return profileSymbolicIntegrationResult({
+    antiderivativeNode,
     exactLatex: normalizeGeneratedIntegrationLatex(
       input.exactLatex ?? boxLatex(antiderivativeNode),
       input.variable,

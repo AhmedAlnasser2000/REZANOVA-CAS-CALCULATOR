@@ -20,6 +20,7 @@ import {
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 type Depth2SubstitutionResult = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
@@ -146,9 +147,11 @@ function condition(expressionLatex: string, relation: '>0' | '\\ne0'): ExactSupp
 function result(
   exactLatex: string,
   variable: string,
+  antiderivativeNode: unknown,
   exactSupplementLatex?: string[],
 ): Depth2SubstitutionResult {
   return profileSymbolicIntegrationResult({
+    antiderivativeNode,
     exactLatex: normalizeGeneratedIntegrationLatex(exactLatex, variable),
     verification: proof(),
     exactSupplementLatex,
@@ -168,6 +171,7 @@ function nestedExpProfileResult(
   return result(
     readableLatex(['Power', 'ExponentialE', profile.coreArgumentNode]),
     profile.variable,
+    ['Power', 'ExponentialE', profile.coreArgumentNode],
   );
 }
 
@@ -215,6 +219,9 @@ function tryNestedExpLogDerivative(
   return result(
     multiplyPrefactor(prefactor, String.raw`\ln\left(${readableLatex(denominator)}\right)`),
     variable,
+    prefactor
+      ? ['Multiply', ['Divide', coefficientNodeOrOne(coefficientNode), affine.slope], ['Ln', denominator]]
+      : ['Ln', denominator],
   );
 }
 
@@ -263,6 +270,9 @@ function tryNestedLogLogDerivative(
   return result(
     multiplyPrefactor(prefactor, String.raw`\ln\left|${logArgument}\right|`),
     variable,
+    prefactor
+      ? ['Multiply', ['Divide', coefficientNodeOrOne(coefficientNode), split.affine.slope], ['Ln', ['Abs', ['Ln', split.argumentNode]]]]
+      : ['Ln', ['Abs', ['Ln', split.argumentNode]]],
     supplement([
       condition(split.argumentLatex, '>0'),
       condition(logArgument, '\\ne0'),

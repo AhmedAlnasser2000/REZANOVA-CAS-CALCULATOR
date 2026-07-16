@@ -18,6 +18,7 @@ import { profileSymbolicIntegrationResult } from '../../display/printer';
 type TrigHead = 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc';
 
 export type TrigDerivativeProductRuleResult = {
+  antiderivativeNode?: unknown;
   exactLatex: string;
   verification?: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
@@ -148,6 +149,7 @@ function symbolicTrigDerivativeProductResult(
   affineSlope: unknown,
   affineSlopeLatex: string,
   primitiveLatex: string,
+  primitiveNode: unknown,
   reason: string,
   sign: 1 | -1,
   denominatorMultiplier?: unknown,
@@ -157,6 +159,7 @@ function symbolicTrigDerivativeProductResult(
     ? affineSlope
     : multiplyNodeFactors([denominatorMultiplier, affineSlope]);
   return profileSymbolicIntegrationResult({
+    antiderivativeNode: ['Multiply', ['Divide', numerator, denominator], primitiveNode],
     exactLatex: multiplyLatex(ratioLatex(numerator, denominator), primitiveLatex),
     verification: proof(reason),
     exactSupplementLatex: exactSupplementLatex([nonzeroFact(affineSlopeLatex)]),
@@ -252,6 +255,7 @@ export function tryTrigDerivativeProductRule(
         affine.slope,
         affine.slopeLatex,
         `\\sec\\left(${affine.latex}\\right)`,
+        ['Sec', secTan],
         'verified by symbolic affine secant-tangent derivative product proof',
         1,
       )
@@ -267,6 +271,7 @@ export function tryTrigDerivativeProductRule(
         affine.slope,
         affine.slopeLatex,
         `\\csc\\left(${affine.latex}\\right)`,
+        ['Csc', cscCot],
         'verified by symbolic affine cosecant-cotangent derivative product proof',
         -1,
       )
@@ -282,6 +287,7 @@ export function tryTrigDerivativeProductRule(
         affine.slope,
         affine.slopeLatex,
         `\\sin\\left(${affine.latex}\\right)^2`,
+        ['Power', ['Sin', sinCos], 2],
         'verified by symbolic affine sine-cosine derivative product proof',
         1,
         2,

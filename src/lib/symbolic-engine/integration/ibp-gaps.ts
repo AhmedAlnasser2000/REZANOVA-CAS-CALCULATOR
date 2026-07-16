@@ -47,6 +47,7 @@ import { tryRationalPartialFractionRule } from './rational';
 
 type IbpGapResult = {
   exactLatex: string;
+  antiderivativeNode?: unknown;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -473,8 +474,11 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
 
   const primitiveLatex = exactPolynomialToLatex(primitivePolynomial);
   const boundaryLatex = productWithFunctionLatex(primitiveLatex, product.factorLatex);
+  const rationalResidual = product.head === 'Arctan'
+    ? tryRationalPartialFractionRule(residualRationalNode(primitivePolynomial, product), variable)
+    : undefined;
   const residualLatex = product.head === 'Arctan'
-    ? tryRationalPartialFractionRule(residualRationalNode(primitivePolynomial, product), variable)?.exactLatex
+    ? rationalResidual?.exactLatex
     : integrateArcsinResidual(primitivePolynomial, product, variable);
   if (!residualLatex) {
     return undefined;
@@ -485,6 +489,15 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
     return undefined;
   }
   const exactLatex = normalizeGeneratedIntegrationLatex(candidateLatex, variable);
+  const boundaryNode = [
+    'Multiply',
+    exactPolynomialToNode(primitivePolynomial),
+    [product.head, structuredClone(product.argumentNode)],
+  ];
+  const antiderivativeNode = product.head === 'Arctan'
+    && rationalResidual?.antiderivativeNode !== undefined
+    ? ['Subtract', boundaryNode, rationalResidual.antiderivativeNode]
+    : undefined;
 
   const verification = verifiedResult(
     node,
@@ -500,6 +513,7 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
 
   return {
     exactLatex,
+    ...(antiderivativeNode === undefined ? {} : { antiderivativeNode }),
     verification,
     exactSupplementLatex: exactSupplementLatex([
       nonzeroFact(exactScalarLatex(product.affine.slope)),
@@ -605,6 +619,28 @@ function tryAffineTrigDerivativeByPartsRule(
     return undefined;
   }
   const exactLatex = normalizeGeneratedIntegrationLatex(candidateLatex, variable);
+  const trigNode = [
+    product.head === 'Sec' ? 'Tan' : 'Cot',
+    structuredClone(product.affine.node),
+  ];
+  const signedTrigNode = [
+    'Multiply',
+    exactPolynomialToNode(scaledPolynomial),
+    product.head === 'Sec' ? trigNode : ['Negate', trigNode],
+  ];
+  const logNode = exactScalarIsZero(logCoefficient)
+    ? undefined
+    : [
+        'Multiply',
+        buildExactScalarNode(logCoefficient),
+        [
+          'Ln',
+          ['Abs', [product.head === 'Sec' ? 'Cos' : 'Sin', structuredClone(product.affine.node)]],
+        ],
+      ];
+  const antiderivativeNode = logNode === undefined
+    ? signedTrigNode
+    : ['Add', signedTrigNode, logNode];
 
   const verification = verifiedResult(
     node,
@@ -618,6 +654,7 @@ function tryAffineTrigDerivativeByPartsRule(
 
   return {
     exactLatex,
+    antiderivativeNode,
     verification,
     exactSupplementLatex: exactSupplementLatex([
       nonzeroFact(exactScalarLatex(product.affine.slope)),

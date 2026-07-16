@@ -3,6 +3,7 @@ import {
   divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarIsZero,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
@@ -132,6 +133,7 @@ export function parseExactAffineArgument(node: unknown, variable: string) {
     : {
       slope,
       latex: exactPolynomialToLatex(polynomial),
+      node: exactPolynomialToNode(polynomial),
     };
 }
 
@@ -139,6 +141,7 @@ export function solveExactPolynomialTimesExponential(
   polynomial: ExactPolynomial,
   slope: ExactScalar,
   exponentLatex: string,
+  exponentNode: unknown,
 ) {
   if (
     exactScalarIsZero(slope)
@@ -169,16 +172,26 @@ export function solveExactPolynomialTimesExponential(
     antiderivative[degree] = solved;
   }
 
-  const polynomialLatex = exactPolynomialToLatex(
-    exactPolynomialFromAscendingCoefficients(antiderivative, polynomial.variable),
+  const polynomialResult = exactPolynomialFromAscendingCoefficients(
+    antiderivative,
+    polynomial.variable,
   );
-  return `e^{${exponentLatex}}\\left(${polynomialLatex}\\right)`;
+  const polynomialLatex = exactPolynomialToLatex(polynomialResult);
+  return {
+    exactLatex: `e^{${exponentLatex}}\\left(${polynomialLatex}\\right)`,
+    antiderivativeNode: [
+      'Multiply',
+      ['Power', 'ExponentialE', structuredClone(exponentNode)],
+      exactPolynomialToNode(polynomialResult),
+    ],
+  };
 }
 
 export function solveExactPolynomialTimesTrig(
   polynomial: ExactPolynomial,
   slope: ExactScalar,
   angleLatex: string,
+  angleNode: unknown,
   kind: 'sin' | 'cos',
 ) {
   const solution = buildExactTrigLinearSystem(polynomial, slope, kind);
@@ -186,24 +199,44 @@ export function solveExactPolynomialTimesTrig(
     return undefined;
   }
 
-  const sinLatex = exactPolynomialToLatex(
-    exactPolynomialFromAscendingCoefficients(solution.sinCoefficients, polynomial.variable),
+  const sinPolynomial = exactPolynomialFromAscendingCoefficients(
+    solution.sinCoefficients,
+    polynomial.variable,
   );
-  const cosLatex = exactPolynomialToLatex(
-    exactPolynomialFromAscendingCoefficients(solution.cosCoefficients, polynomial.variable),
+  const cosPolynomial = exactPolynomialFromAscendingCoefficients(
+    solution.cosCoefficients,
+    polynomial.variable,
   );
+  const sinLatex = exactPolynomialToLatex(sinPolynomial);
+  const cosLatex = exactPolynomialToLatex(cosPolynomial);
   const pieces: string[] = [];
+  const nodes: unknown[] = [];
   if (sinLatex !== '0') {
     pieces.push(multiplyLatex(
       groupPolynomialCoefficientLatex(sinLatex),
       `\\sin\\left(${angleLatex}\\right)`,
     ));
+    nodes.push([
+      'Multiply',
+      exactPolynomialToNode(sinPolynomial),
+      ['Sin', structuredClone(angleNode)],
+    ]);
   }
   if (cosLatex !== '0') {
     pieces.push(multiplyLatex(
       groupPolynomialCoefficientLatex(cosLatex),
       `\\cos\\left(${angleLatex}\\right)`,
     ));
+    nodes.push([
+      'Multiply',
+      exactPolynomialToNode(cosPolynomial),
+      ['Cos', structuredClone(angleNode)],
+    ]);
   }
-  return pieces.join('+') || undefined;
+  return pieces.length === 0
+    ? undefined
+    : {
+        exactLatex: pieces.join('+'),
+        antiderivativeNode: nodes.length === 1 ? nodes[0] : ['Add', ...nodes],
+      };
 }

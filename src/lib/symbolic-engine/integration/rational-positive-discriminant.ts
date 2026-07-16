@@ -5,6 +5,7 @@ import {
   divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarIsZero,
   exactScalarToNumber,
   getExactPolynomialCoefficient,
@@ -28,6 +29,11 @@ import {
 
 const EXACT_TWO = { numerator: 2, denominator: 1 };
 const EXACT_FOUR = { numerator: 4, denominator: 1 };
+
+type PositiveDiscriminantQuadraticRemainderPrimitive = {
+  exactLatex: string;
+  antiderivativeNode: unknown;
+};
 
 function joinAdditiveLatex(parts: string[]) {
   return parts
@@ -94,11 +100,32 @@ function scaleByIrrationalDenominator(
   return `${sign}${coefficientTimesLatex(coefficientLatex, latex)}`;
 }
 
+function scalarIsOne(value: ExactScalar) {
+  const normalized = normalizeExactScalar(value);
+  return normalized.numerator === normalized.denominator;
+}
+
+function scaleNode(node: unknown, coefficient: ExactScalar): unknown {
+  const normalized = normalizeExactScalar(coefficient);
+  if (scalarIsOne(normalized)) {
+    return node;
+  }
+  if (normalized.numerator === -normalized.denominator) {
+    return ['Negate', node];
+  }
+  return ['Multiply', buildExactScalarNode(normalized), node];
+}
+
+function positiveScalarSqrtNode(value: ExactScalar): unknown {
+  const root = scalarSquareRoot(value);
+  return root ? buildExactScalarNode(root) : ['Sqrt', buildExactScalarNode(value)];
+}
+
 export function buildPositiveDiscriminantQuadraticRemainder(input: {
   numerator: ExactPolynomial;
   denominator: ExactPolynomial;
   variable: string;
-}) {
+}): PositiveDiscriminantQuadraticRemainderPrimitive | undefined {
   if (
     exactPolynomialDegree(input.numerator) > 1
     || exactPolynomialDegree(input.denominator) !== 2
@@ -131,19 +158,25 @@ export function buildPositiveDiscriminantQuadraticRemainder(input: {
 
   const residual = subtractExactScalars(offset, multiplyExactScalars(logCoefficient, b));
   const pieces: string[] = [];
+  const nodes: unknown[] = [];
   if (!exactScalarIsZero(logCoefficient)) {
     pieces.push(scaleByExactScalar(
       `\\ln\\left|${exactPolynomialToLatex(input.denominator)}\\right|`,
       logCoefficient,
     ));
+    nodes.push(scaleNode(
+      ['Ln', ['Abs', exactPolynomialToNode(input.denominator)]],
+      logCoefficient,
+    ));
   }
 
   if (!exactScalarIsZero(residual)) {
-    const centerLatex = exactPolynomialToLatex(
-      buildExactPolynomialFromCoefficients(input.variable, [twoA, b]),
-    );
+    const center = buildExactPolynomialFromCoefficients(input.variable, [twoA, b]);
+    const centerLatex = exactPolynomialToLatex(center);
+    const centerNode = exactPolynomialToNode(center);
     const root = scalarSquareRoot(discriminant);
     const rootLatex = positiveScalarSqrtLatex(discriminant);
+    const rootNode = root ? buildExactScalarNode(root) : positiveScalarSqrtNode(discriminant);
     const ratioLog = `\\ln\\left|\\frac{${centerLatex}-${rootLatex}}{${centerLatex}+${rootLatex}}\\right|`;
     const scaled = root
       ? scaleByExactScalar(ratioLog, divideExactScalars(residual, root) ?? residual)
@@ -152,9 +185,25 @@ export function buildPositiveDiscriminantQuadraticRemainder(input: {
       return undefined;
     }
     pieces.push(scaled);
+    const ratioNode = [
+      'Divide',
+      ['Subtract', structuredClone(centerNode), structuredClone(rootNode)],
+      ['Add', structuredClone(centerNode), structuredClone(rootNode)],
+    ];
+    const ratioLogNode = ['Ln', ['Abs', ratioNode]];
+    const node = root
+      ? scaleNode(ratioLogNode, divideExactScalars(residual, root) ?? residual)
+      : ['Divide', scaleNode(ratioLogNode, residual), rootNode];
+    nodes.push(node);
   }
 
-  return joinAdditiveLatex(pieces);
+  const exactLatex = joinAdditiveLatex(pieces);
+  return exactLatex && nodes.length > 0
+    ? {
+        exactLatex,
+        antiderivativeNode: nodes.length === 1 ? nodes[0] : ['Add', ...nodes],
+      }
+    : undefined;
 }
 
 export function polynomialDivisionDetail(input: {

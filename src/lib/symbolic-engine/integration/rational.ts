@@ -1,4 +1,8 @@
-import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
+import {
+  resolveAntiderivativeRule,
+  resolveAntiderivativeRuleExpression,
+} from '../../calculus/engine/antiderivative-rules';
+import { calculusAntiderivativeExpressionToAst } from '../../calculus/engine/antiderivative-expression';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
@@ -13,6 +17,7 @@ import {
 } from '../../algebra/rational-function-core';
 import {
   buildExactScalarNode,
+  buildExactPolynomialFromCoefficients,
   divideExactPolynomials,
   divideExactScalars,
   exactPolynomialDegree,
@@ -62,26 +67,45 @@ import { profileSymbolicIntegrationResult } from '../../display/printer';
 export { scaleLatex, scaleByExactScalar } from './rational-latex';
 
 function joinAdditiveLatex(parts: string[]) {
-  return parts
-    .filter((part) => part !== '0')
-    .reduce((joined, part, index) => {
-      if (index === 0) {
-        return part;
-      }
-      return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
-    }, '') || undefined;
+  const kept = parts.filter((part) => part !== '0');
+  return kept.length > 0
+    ? kept.map((part, index) => index === 0 || part.startsWith('-') ? part : `+${part}`).join('')
+    : undefined;
 }
 
-function integratePolynomial(polynomial: ExactPolynomial, variable: string) {
-  return resolveAntiderivativeRule(exactPolynomialToNode(polynomial), variable);
+type RationalPrimitive = {
+  exactLatex: string;
+  antiderivativeNode: unknown;
+};
+
+function integratePolynomial(polynomial: ExactPolynomial, variable: string): RationalPrimitive | undefined {
+  const polynomialNode = exactPolynomialToNode(polynomial);
+  const exactLatex = resolveAntiderivativeRule(polynomialNode, variable);
+  const expression = resolveAntiderivativeRuleExpression(polynomialNode, variable);
+  const antiderivativeNode = expression
+    ? calculusAntiderivativeExpressionToAst(expression)
+    : undefined;
+  return exactLatex && antiderivativeNode !== undefined
+    ? { exactLatex, antiderivativeNode }
+    : undefined;
 }
 
-function integratePartialFractionDenominator(denominator: ExactPolynomial, coefficient: ExactScalar) {
+function integratePartialFractionDenominator(
+  denominator: ExactPolynomial,
+  coefficient: ExactScalar,
+): RationalPrimitive {
   const denominatorLatex = exactPolynomialToLatex(denominator);
-  return scaleByExactScalar(
-    `\\ln\\left|${denominatorLatex}\\right|`,
-    coefficient,
-  );
+  return {
+    exactLatex: scaleByExactScalar(
+      `\\ln\\left|${denominatorLatex}\\right|`,
+      coefficient,
+    ),
+    antiderivativeNode: [
+      'Multiply',
+      buildExactScalarNode(coefficient),
+      ['Ln', ['Abs', exactPolynomialToNode(denominator)]],
+    ],
+  };
 }
 
 function exactScalarLatex(value: ExactScalar) {
@@ -127,6 +151,7 @@ type ExactAffineForm = {
   slope: ExactScalar;
   offset: ExactScalar;
   latex: string;
+  node: unknown;
 };
 
 const EXACT_ONE = { numerator: 1, denominator: 1 };
@@ -142,11 +167,7 @@ function exponentIs(node: unknown, expected: number) {
 
 function exactInteger(node: unknown) {
   const scalar = readExactScalarNode(node);
-  if (!scalar || scalar.denominator !== 1) {
-    return undefined;
-  }
-
-  return scalar.numerator;
+  return scalar?.denominator === 1 ? scalar.numerator : undefined;
 }
 
 function exactAffineTerm(node: unknown, variable: string): ExactAffineForm | undefined {
@@ -164,6 +185,7 @@ function exactAffineTerm(node: unknown, variable: string): ExactAffineForm | und
     slope,
     offset: getExactPolynomialCoefficient(polynomial, 0),
     latex: exactPolynomialToLatex(polynomial),
+    node: exactPolynomialToNode(polynomial),
   };
 }
 
@@ -297,11 +319,9 @@ function repeatedQuadraticDivideForm(node: unknown, variable: string) {
 
 function exactAffineRatioLatex(affineLatex: string, denominator: ExactScalar) {
   const normalized = normalizeExactScalar(denominator);
-  if (normalized.numerator === normalized.denominator) {
-    return affineLatex;
-  }
-
-  return `\\frac{${affineLatex}}{${exactScalarLatex(normalized)}}`;
+  return normalized.numerator === normalized.denominator
+    ? affineLatex
+    : `\\frac{${affineLatex}}{${exactScalarLatex(normalized)}}`;
 }
 
 function affineRatioWithRootLatex(
@@ -608,7 +628,19 @@ function tryRepeatedLinearReciprocalPowerRule(node: unknown, variable: string) {
     : `${wrapGroupedLatex(form.affine.latex)}^{${form.power - 1}}`;
   const candidate = scaleByExactScalar(`\\frac{1}{${denominatorLatex}}`, coefficient);
   const verification = acceptedAntiderivativeVerification(candidate, node, variable);
-  return verification ? profileSymbolicIntegrationResult({ exactLatex: candidate, verification }) : undefined;
+  return verification
+    ? profileSymbolicIntegrationResult({
+        exactLatex: candidate,
+        verification,
+        antiderivativeNode: [
+          'Divide',
+          buildExactScalarNode(coefficient),
+          form.power === 2
+            ? form.affine.node
+            : ['Power', form.affine.node, form.power - 1],
+        ],
+      })
+    : undefined;
 }
 
 function linearFactorLatex(variable: string, root: ExactScalar) {
@@ -648,10 +680,29 @@ function integrateLinearPowerTerm(
     return undefined;
   }
 
-  return scaleByExactScalar(
-    linearPowerReciprocalLatex(variable, term.root, term.power - 1),
-    coefficient,
-  );
+  return {
+    exactLatex: scaleByExactScalar(
+      linearPowerReciprocalLatex(variable, term.root, term.power - 1),
+      coefficient,
+    ),
+    antiderivativeNode: [
+      'Divide',
+      buildExactScalarNode(coefficient),
+      term.power === 2
+        ? exactPolynomialToNode(buildExactPolynomialFromCoefficients(variable, [
+            EXACT_ONE,
+            negateExactScalar(term.root),
+          ]))
+        : [
+            'Power',
+            exactPolynomialToNode(buildExactPolynomialFromCoefficients(variable, [
+              EXACT_ONE,
+              negateExactScalar(term.root),
+            ])),
+            term.power - 1,
+          ],
+    ],
+  };
 }
 
 export function scaleByIrrationalDenominator(
@@ -682,7 +733,7 @@ function integrateQuadraticTerm(
   variable: string,
 ) {
   if (term.power > 1) {
-    return quadraticReciprocalNumeratorCandidateLatex(
+    const exactLatex = quadraticReciprocalNumeratorCandidateLatex(
       [
         'Divide',
         exactPolynomialToNode(term.numerator),
@@ -691,14 +742,22 @@ function integrateQuadraticTerm(
       variable,
       { preserveSubstitutionOverlap: false },
     );
+    return exactLatex ? { exactLatex, antiderivativeNode: undefined } : undefined;
   }
 
-  const pieces: string[] = [];
+  const pieces: RationalPrimitive[] = [];
   if (!exactScalarIsZero(term.derivativeCoefficient)) {
-    pieces.push(scaleByExactScalar(
-      `\\ln\\left(${term.factor.latex}\\right)`,
-      term.derivativeCoefficient,
-    ));
+    pieces.push({
+      exactLatex: scaleByExactScalar(
+        `\\ln\\left(${term.factor.latex}\\right)`,
+        term.derivativeCoefficient,
+      ),
+      antiderivativeNode: [
+        'Multiply',
+        buildExactScalarNode(term.derivativeCoefficient),
+        ['Ln', exactPolynomialToNode(term.factor.polynomial)],
+      ],
+    });
   }
 
   if (!exactScalarIsZero(term.residualConstant)) {
@@ -724,11 +783,51 @@ function integrateQuadraticTerm(
       ? scaleByExactScalar(arctanLatex, divideExactScalars(numerator, exactRoot) ?? numerator)
       : scaleByIrrationalDenominator(arctanLatex, numerator, rootLatex);
     if (scaled) {
-      pieces.push(scaled);
+      const rootNode = exactRoot
+        ? buildExactScalarNode(exactRoot)
+        : ['Sqrt', buildExactScalarNode(positiveDiscriminant)];
+      const argumentNumerator = ['Add', ['Multiply', 2, variable], buildExactScalarNode(
+        term.factor.linearCoefficient,
+      )];
+      const halfLinear = exactRoot && exactScalarEquals(exactRoot, { numerator: 2, denominator: 1 })
+        ? divideExactScalars(term.factor.linearCoefficient, { numerator: 2, denominator: 1 })
+        : undefined;
+      const argumentNode = halfLinear
+        ? exactPolynomialToNode(buildExactPolynomialFromCoefficients(variable, [EXACT_ONE, halfLinear]))
+        : exactRoot && exactScalarEquals(exactRoot, EXACT_ONE)
+          ? argumentNumerator
+          : ['Divide', argumentNumerator, rootNode];
+      const coefficient = exactRoot
+        ? divideExactScalars(numerator, exactRoot)
+        : numerator;
+      if (!coefficient) return undefined;
+      const arctanNode = ['Arctan', argumentNode];
+      pieces.push({
+        exactLatex: scaled,
+        antiderivativeNode: exactRoot
+          ? exactScalarEquals(coefficient, EXACT_ONE)
+            ? arctanNode
+            : ['Multiply', buildExactScalarNode(coefficient), arctanNode]
+          : [
+              'Divide',
+              exactScalarEquals(coefficient, EXACT_ONE)
+                ? arctanNode
+                : ['Multiply', buildExactScalarNode(coefficient), arctanNode],
+              rootNode,
+            ],
+      });
     }
   }
 
-  return joinAdditiveLatex(pieces);
+  const exactLatex = joinAdditiveLatex(pieces.map((piece) => piece.exactLatex));
+  return exactLatex
+    ? {
+        exactLatex,
+        antiderivativeNode: pieces.length === 1
+          ? pieces[0].antiderivativeNode
+          : ['Add', ...pieces.map((piece) => piece.antiderivativeNode)],
+      }
+    : undefined;
 }
 
 function integrateReadinessTerm(
@@ -764,6 +863,7 @@ function acceptedAntiderivativeVerification(
 
 type RationalPartialFractionRuleResult = {
   exactLatex: string;
+  antiderivativeNode?: unknown;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
@@ -809,7 +909,7 @@ export function tryRationalPartialFractionRule(
     return undefined;
   }
 
-  const parts: string[] = [];
+  const parts: RationalPrimitive[] = [];
   const detailSections: DisplayDetailSection[] = [];
   let usedPositiveDiscriminantRemainder = false;
   if (!exactPolynomialIsZero(division.quotient)) {
@@ -834,10 +934,8 @@ export function tryRationalPartialFractionRule(
     });
 
     if (distinctLinear.kind === 'success') {
-      parts.push(
-        ...distinctLinear.terms.map((term) =>
-          integratePartialFractionDenominator(term.denominator, term.coefficient)),
-      );
+      parts.push(...distinctLinear.terms.map((term) =>
+        integratePartialFractionDenominator(term.denominator, term.coefficient)));
     } else {
       const decomposed = decomposeRationalPartialFractionReadiness({
         variable: normalized.rational.variable,
@@ -862,12 +960,12 @@ export function tryRationalPartialFractionRule(
           return undefined;
         }
 
-        parts.push(...widenedParts as string[]);
+        parts.push(...widenedParts as RationalPrimitive[]);
       }
     }
   }
 
-  const candidate = joinAdditiveLatex(parts);
+  const candidate = joinAdditiveLatex(parts.map((part) => part.exactLatex));
   const verification = candidate
     ? acceptedAntiderivativeVerification(candidate, node, variable)
     : undefined;
@@ -887,6 +985,13 @@ export function tryRationalPartialFractionRule(
 
   return profileSymbolicIntegrationResult({
     exactLatex: candidate,
+    ...(parts.every((part) => part.antiderivativeNode !== undefined)
+      ? {
+          antiderivativeNode: parts.length === 1
+            ? parts[0].antiderivativeNode
+            : ['Add', ...parts.map((part) => part.antiderivativeNode)],
+        }
+      : {}),
     verification: finalVerification,
     detailSections: detailSections.length > 0 ? detailSections : undefined,
   });

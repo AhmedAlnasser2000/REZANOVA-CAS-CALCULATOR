@@ -16,8 +16,11 @@ import {
 } from '../../algebra/polynomial-core';
 import {
   tryAffineSinCosProductPowerAntiderivative,
+  tryAffineSinCosProductPowerAntiderivativeNode,
   tryAffineSinCosPowerAntiderivative,
+  tryAffineSinCosPowerAntiderivativeNode,
   tryAffineTanSecCotCscPowerAntiderivative,
+  tryAffineTanSecCotCscPowerAntiderivativeNode,
 } from './trig-power-identities';
 import {
   scaleStandardMathJson,
@@ -461,7 +464,7 @@ function normalizeProductToSumTerm(term: ProductToSumTerm, variable: string): Pr
   };
 }
 
-function tryTrigProductToSumRule(node: unknown, variable: string) {
+function productToSumExpansion(node: unknown, variable: string) {
   const product = scaledTrigProduct(node, variable);
   if (!product) {
     return undefined;
@@ -504,8 +507,30 @@ function tryTrigProductToSumRule(node: unknown, variable: string) {
     coefficient: multiplyExactScalars(product.coefficient, term.coefficient),
   }));
 
+  return terms;
+}
+
+function tryTrigProductToSumRule(node: unknown, variable: string) {
+  const terms = productToSumExpansion(node, variable);
+  if (!terms) return undefined;
   const integrated = terms.map((term) => integrateProductToSumTerm(term, variable));
   return integrated.some((term) => !term) ? undefined : joinAdditiveLatex(integrated as string[]);
+}
+
+function tryTrigProductToSumRuleNode(node: unknown, variable: string) {
+  const terms = productToSumExpansion(node, variable);
+  if (!terms) return undefined;
+  const integrated = terms.map((term) => {
+    const normalized = normalizeProductToSumTerm(term, variable);
+    return directRuleMathJson([
+      'Multiply',
+      buildExactScalarNode(normalized.coefficient),
+      [normalized.head, normalized.argument],
+    ], variable);
+  });
+  return integrated.some((term) => term === undefined)
+    ? undefined
+    : ['Add', ...integrated];
 }
 
 function separateConstantFactor(node: unknown, variable: string) {
@@ -561,6 +586,11 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
       : ['Add', ...terms];
   }
 
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    const primitive = directRuleMathJson(node[1], variable);
+    return primitive === undefined ? undefined : ['Negate', primitive];
+  }
+
   const separated = separateConstantFactor(node, variable);
   if (separated) {
     const primitive = directRuleMathJson(separated.body, variable);
@@ -569,6 +599,15 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
       : scaleStandardMathJson(separated.constantNode, primitive);
   }
 
+  const sinCosProductPower = tryAffineSinCosProductPowerAntiderivativeNode(node, variable);
+  if (sinCosProductPower) return sinCosProductPower;
+
+  const trigProductToSum = tryTrigProductToSumRuleNode(node, variable);
+  if (trigProductToSum) return trigProductToSum;
+
+  const tanSecCotCscPower = tryAffineTanSecCotCscPowerAntiderivativeNode(node, variable);
+  if (tanSecCotCscPower) return tanSecCotCscPower;
+
   if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {
     if (node[2] === variable) {
       return ['Ln', ['Abs', variable]];
@@ -576,6 +615,8 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
   }
 
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3) {
+    const sinCosPower = tryAffineSinCosPowerAntiderivativeNode(node, variable);
+    if (sinCosPower) return sinCosPower;
     const [base, exponent] = node.slice(1);
     if (base === variable && isFiniteNumber(exponent)) {
       if (exponent === -1) {
@@ -585,6 +626,95 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
       return nextExponent === 0
         ? undefined
         : ['Divide', ['Power', variable, nextExponent], nextExponent];
+    }
+
+
+    if (base === 'ExponentialE') {
+      const affine = parseAffine(exponent, variable);
+      const reciprocal = affine
+        ? divideExactScalars(EXACT_ONE, affine.aScalar)
+        : undefined;
+      return reciprocal
+        ? scaleStandardMathJson(buildExactScalarNode(reciprocal), structuredClone(node))
+        : undefined;
+    }
+
+    const positiveBase = positiveNonUnitExactScalar(base);
+    if (positiveBase) {
+      const affine = parseAffine(exponent, variable);
+      const reciprocal = affine
+        ? divideExactScalars(EXACT_ONE, affine.aScalar)
+        : undefined;
+      return reciprocal
+        ? [
+            'Divide',
+            scaleStandardMathJson(buildExactScalarNode(reciprocal), structuredClone(node)),
+            ['Ln', buildExactScalarNode(positiveBase)],
+          ]
+        : undefined;
+    }
+
+    if (exponent === 2 && isNodeArray(base) && base.length === 2) {
+      const affine = parseAffine(base[1], variable);
+      const reciprocal = affine
+        ? divideExactScalars(EXACT_ONE, affine.aScalar)
+        : undefined;
+      if (reciprocal && base[0] === 'Sec') {
+        return scaleStandardMathJson(
+          buildExactScalarNode(reciprocal),
+          ['Tan', structuredClone(base[1])],
+        );
+      }
+      if (reciprocal && base[0] === 'Csc') {
+        return scaleStandardMathJson(
+          buildExactScalarNode(negateExactScalar(reciprocal)),
+          ['Cot', structuredClone(base[1])],
+        );
+      }
+    }
+  }
+
+  if (isNodeArray(node) && node.length === 2) {
+    const affine = parseAffine(node[1], variable);
+    const reciprocal = affine
+      ? divideExactScalars(EXACT_ONE, affine.aScalar)
+      : undefined;
+    if (!reciprocal) return undefined;
+    if (node[0] === 'Sin') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(negateExactScalar(reciprocal)),
+        ['Cos', structuredClone(node[1])],
+      );
+    }
+    if (node[0] === 'Cos') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(reciprocal),
+        ['Sin', structuredClone(node[1])],
+      );
+    }
+    if (node[0] === 'Tan') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(negateExactScalar(reciprocal)),
+        ['Ln', ['Cos', structuredClone(node[1])]],
+      );
+    }
+    if (node[0] === 'Cot') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(reciprocal),
+        ['Ln', ['Sin', structuredClone(node[1])]],
+      );
+    }
+    if (node[0] === 'Sinh') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(reciprocal),
+        ['Cosh', structuredClone(node[1])],
+      );
+    }
+    if (node[0] === 'Cosh') {
+      return scaleStandardMathJson(
+        buildExactScalarNode(reciprocal),
+        ['Sinh', structuredClone(node[1])],
+      );
     }
   }
 
@@ -767,6 +897,20 @@ export function resolveAntiderivativeRule(
     if (node[0] === 'Cot') {
       return divideByExactCoefficient(
         `\\ln\\left(\\sin\\left(${affine.latex}\\right)\\right)`,
+        affine.aScalar,
+      );
+    }
+
+    if (node[0] === 'Sinh') {
+      return divideByExactCoefficient(
+        `\\cosh\\left(${affine.latex}\\right)`,
+        affine.aScalar,
+      );
+    }
+
+    if (node[0] === 'Cosh') {
+      return divideByExactCoefficient(
+        `\\sinh\\left(${affine.latex}\\right)`,
         affine.aScalar,
       );
     }

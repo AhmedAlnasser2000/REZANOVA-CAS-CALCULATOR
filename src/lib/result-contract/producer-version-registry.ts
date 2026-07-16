@@ -106,6 +106,7 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
 export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
   {
     'calculus.derivatives': ['derivativePoint'],
+    'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
     'equation.domain-boundary': ['typedLabeledSupplement'],
     'equation.rational-radical': ['typedLabeledSupplement'],
     'trigonometry.right-triangle': ['rightTriangle'],

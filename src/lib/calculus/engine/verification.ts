@@ -19,15 +19,21 @@ import {
 } from '../../symbolic-engine/differentiation';
 import { expandMathJsonNode } from '../../symbolic-engine/primitives/expansion/expansion';
 import { normalizeAst } from '../../symbolic-engine/normalize';
-import { flattenAdd, flattenMultiply, isNodeArray } from '../../symbolic-engine/patterns';
+import {
+  dependsOnVariable,
+  flattenAdd,
+  flattenMultiply,
+  isNodeArray,
+} from '../../symbolic-engine/patterns';
 import { areRawExactRationalFunctionsEquivalent } from './exact-rational-equivalence';
 import {
   normalizeTrigSinCosPowerIdentityPair,
   normalizeTrigTanSecCotCscPowerIdentityPair,
-} from './trig-power-identities';
+} from './trig-power-normalization';
 import { normalizeTrigProductIdentityPair } from './trig-product-equivalence';
 import { normalizeTrigSquareIdentityPair } from './trig-square-equivalence';
 import { simplifyExactScalarRadicalProducts } from './radical-equivalence';
+import { simplifyMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/simplification/simplification';
 
 const ce = new ComputeEngine();
 const DEFAULT_SAMPLE_POINTS = [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.25, 2.25];
@@ -607,6 +613,59 @@ function backcheckDerivativeAst(input: {
   };
 }
 
+function differentiateForCalculusBackcheck(node: unknown, variable: string): unknown {
+  if (!dependsOnVariable(node, variable)) {
+    return 0;
+  }
+  if (!isNodeArray(node) || node.length < 2) {
+    return differentiateAst(node, variable);
+  }
+
+  if (node[0] === 'Add') {
+    return simplifyMathJsonNodeOrOriginal([
+      'Add',
+      ...node.slice(1).map((term) => differentiateForCalculusBackcheck(term, variable)),
+    ]);
+  }
+  if (node[0] === 'Subtract' && node.length === 3) {
+    return simplifyMathJsonNodeOrOriginal([
+      'Subtract',
+      differentiateForCalculusBackcheck(node[1], variable),
+      differentiateForCalculusBackcheck(node[2], variable),
+    ]);
+  }
+  if (node[0] === 'Negate' && node.length === 2) {
+    return simplifyMathJsonNodeOrOriginal([
+      'Negate',
+      differentiateForCalculusBackcheck(node[1], variable),
+    ]);
+  }
+  if (
+    node[0] === 'Divide'
+    && node.length === 3
+    && !dependsOnVariable(node[2], variable)
+  ) {
+    return simplifyMathJsonNodeOrOriginal([
+      'Divide',
+      differentiateForCalculusBackcheck(node[1], variable),
+      node[2],
+    ]);
+  }
+  if (node[0] === 'Multiply') {
+    const factors = flattenMultiply(node);
+    const dependentFactors = factors.filter((factor) => dependsOnVariable(factor, variable));
+    if (dependentFactors.length === 1) {
+      return simplifyMathJsonNodeOrOriginal([
+        'Multiply',
+        ...factors.filter((factor) => factor !== dependentFactors[0]),
+        differentiateForCalculusBackcheck(dependentFactors[0], variable),
+      ]);
+    }
+  }
+
+  return differentiateAst(node, variable);
+}
+
 export function backcheckAntiderivativeAst(input: {
   antiderivative: unknown;
   integrand: unknown;
@@ -615,7 +674,7 @@ export function backcheckAntiderivativeAst(input: {
 }): AntiderivativeBackcheck {
   try {
     return backcheckDerivativeAst({
-      derivativeAst: differentiateAst(input.antiderivative, input.variable),
+      derivativeAst: differentiateForCalculusBackcheck(input.antiderivative, input.variable),
       integrand: input.integrand,
       variable: input.variable,
       samplePoints: input.samplePoints,

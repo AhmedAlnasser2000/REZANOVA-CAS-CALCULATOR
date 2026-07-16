@@ -7,6 +7,7 @@ import {
   exactPolynomialDegree,
   exactPolynomialIsZero,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarIsZero,
   getExactPolynomialCoefficient,
   parseExactPolynomial,
@@ -25,7 +26,13 @@ import {
   wrapGroupedLatex,
 } from '../patterns';
 import { BY_PARTS_POLYNOMIAL_DEGREE_CAP, LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP } from './types';
-import { numberLatex, numericNodeValue, proportionalScale, sameNode } from './node-helpers';
+import {
+  numberLatex,
+  numericNodeValue,
+  proportionalScale,
+  rationalApproximation,
+  sameNode,
+} from './node-helpers';
 import {
   isNumericBaseExponentialFactor,
   tryPolynomialTimesNumericBaseExponential,
@@ -38,10 +45,32 @@ import {
 import { scaleLatex } from './rational';
 import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
 
-export type PartsRuleDetailedResult = { exactLatex: string; verification?: AntiderivativeBackcheck };
+export type NativeRuleResult = {
+  exactLatex: string;
+  antiderivativeNode: unknown;
+};
+
+export type PartsRuleDetailedResult = {
+  exactLatex: string;
+  antiderivativeNode?: unknown;
+  verification?: AntiderivativeBackcheck;
+};
 
 function partsRuleString(result: string | PartsRuleDetailedResult | undefined) {
   return typeof result === 'string' ? result : result?.exactLatex;
+}
+
+function exactNumberNode(value: number): unknown {
+  const rational = rationalApproximation(value);
+  return rational && rational.denominator !== 1
+    ? ['Rational', rational.numerator, rational.denominator]
+    : rational?.numerator ?? value;
+}
+
+function scaleNativeNode(node: unknown, scale: number): unknown {
+  if (Math.abs(scale - 1) < 1e-10) return node;
+  if (Math.abs(scale + 1) < 1e-10) return ['Negate', node];
+  return ['Multiply', exactNumberNode(scale), node];
 }
 
 function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
@@ -49,23 +78,45 @@ function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
   const innerLatex = wrapGroupedLatex(boxLatex(inner));
 
   if (isNodeArray(outer) && outer[0] === 'Cos' && outer.length === 2) {
-    return applyScale(`\\sin\\left(${innerLatex}\\right)`);
+    return {
+      exactLatex: applyScale(`\\sin\\left(${innerLatex}\\right)`),
+      antiderivativeNode: scaleNativeNode(['Sin', inner], scale),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Sin' && outer.length === 2) {
-    return applyScale(`-\\cos\\left(${innerLatex}\\right)`);
+    return {
+      exactLatex: applyScale(`-\\cos\\left(${innerLatex}\\right)`),
+      antiderivativeNode: scaleNativeNode(['Negate', ['Cos', inner]], scale),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Ln' && outer.length === 2 && sameNode(outer[1], inner)) {
-    return applyScale(`${innerLatex}\\ln\\left(${innerLatex}\\right)-${innerLatex}`);
+    const primitive = ['Subtract', ['Multiply', inner, ['Ln', inner]], inner];
+    return {
+      exactLatex: applyScale(`${innerLatex}\\ln\\left(${innerLatex}\\right)-${innerLatex}`),
+      antiderivativeNode: scaleNativeNode(primitive, scale),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Log' && outer.length === 2 && sameNode(outer[1], inner)) {
-    return applyScale(`\\frac{${innerLatex}\\ln\\left(${innerLatex}\\right)-${innerLatex}}{\\ln(10)}`);
+    const primitive = [
+      'Divide',
+      ['Subtract', ['Multiply', inner, ['Ln', inner]], inner],
+      ['Ln', 10],
+    ];
+    return {
+      exactLatex: applyScale(`\\frac{${innerLatex}\\ln\\left(${innerLatex}\\right)-${innerLatex}}{\\ln(10)}`),
+      antiderivativeNode: scaleNativeNode(primitive, scale),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Sqrt' && outer.length === 2 && sameNode(outer[1], inner)) {
-    return scaleLatex(`${innerLatex}^{\\frac{3}{2}}`, (2 * scale) / 3);
+    const coefficient = (2 * scale) / 3;
+    return {
+      exactLatex: scaleLatex(`${innerLatex}^{\\frac{3}{2}}`, coefficient),
+      antiderivativeNode: scaleNativeNode(['Power', inner, ['Rational', 3, 2]], coefficient),
+    };
   }
 
   if (
@@ -75,7 +126,10 @@ function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
     && outer[1] === 'ExponentialE'
     && sameNode(outer[2], inner)
   ) {
-    return applyScale(`e^{${boxLatex(inner)}}`);
+    return {
+      exactLatex: applyScale(`e^{${boxLatex(inner)}}`),
+      antiderivativeNode: scaleNativeNode(['Power', 'ExponentialE', inner], scale),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Power' && outer.length === 3) {
@@ -85,7 +139,10 @@ function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
     }
 
     if (exponent === -1) {
-      return applyScale(`\\ln\\left|${innerLatex}\\right|`);
+      return {
+        exactLatex: applyScale(`\\ln\\left|${innerLatex}\\right|`),
+        antiderivativeNode: scaleNativeNode(['Ln', ['Abs', inner]], scale),
+      };
     }
 
     const nextExponent = exponent + 1;
@@ -93,15 +150,25 @@ function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
       return undefined;
     }
 
-    return scaleLatex(
-      `${innerLatex}^{${numberLatex(nextExponent)}}`,
-      scale / nextExponent,
-    );
+    const coefficient = scale / nextExponent;
+    return {
+      exactLatex: scaleLatex(
+        `${innerLatex}^{${numberLatex(nextExponent)}}`,
+        coefficient,
+      ),
+      antiderivativeNode: scaleNativeNode(
+        ['Power', inner, exactNumberNode(nextExponent)],
+        coefficient,
+      ),
+    };
   }
 
   if (isNodeArray(outer) && outer[0] === 'Divide' && outer.length === 3 && outer[1] === 1) {
     if (sameNode(outer[2], inner)) {
-      return applyScale(`\\ln\\left|${innerLatex}\\right|`);
+      return {
+        exactLatex: applyScale(`\\ln\\left|${innerLatex}\\right|`),
+        antiderivativeNode: scaleNativeNode(['Ln', ['Abs', inner]], scale),
+      };
     }
   }
 
@@ -382,28 +449,42 @@ function solvePolynomialTimesLog(
       -1,
     );
   const expressionParts: string[] = [];
+  const expressionNodes: unknown[] = [];
   if (!exactPolynomialIsZero(logPolynomial)) {
     expressionParts.push(
       `${groupPolynomialCoefficientLatex(exactPolynomialToLatex(logPolynomial))}\\ln\\left(${wrapGroupedLatex(exactPolynomialToLatex(affine))}\\right)`,
     );
+    expressionNodes.push([
+      'Multiply',
+      exactPolynomialToNode(logPolynomial),
+      ['Ln', exactPolynomialToNode(affine)],
+    ]);
   }
   if (correction.polynomialIntegral && !exactPolynomialIsZero(correction.polynomialIntegral)) {
-    expressionParts.push(exactPolynomialToLatex(scaleExactPolynomial(
+    const negatedCorrection = scaleExactPolynomial(
       correction.polynomialIntegral,
       { numerator: -1, denominator: 1 },
-    )));
+    );
+    expressionParts.push(exactPolynomialToLatex(negatedCorrection));
+    expressionNodes.push(exactPolynomialToNode(negatedCorrection));
   }
 
   const expression = joinAdditiveParts(expressionParts);
   if (!expression) {
     return undefined;
   }
+  const expressionNode = expressionNodes.length === 1
+    ? expressionNodes[0]
+    : ['Add', ...expressionNodes];
   return logFactor[0] === 'Log'
-    ? `\\frac{${expression}}{\\ln(10)}`
-    : expression;
+    ? {
+        exactLatex: `\\frac{${expression}}{\\ln(10)}`,
+        antiderivativeNode: ['Divide', expressionNode, ['Ln', 10]],
+      }
+    : { exactLatex: expression, antiderivativeNode: expressionNode };
 }
 
-export function derivativeRatioIntegral(node: unknown, variable: string) {
+export function derivativeRatioIntegral(node: unknown, variable: string): NativeRuleResult | undefined {
   if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
     return undefined;
   }
@@ -445,7 +526,10 @@ export function derivativeRatioIntegral(node: unknown, variable: string) {
     return undefined;
   }
 
-  return scaleLatex(`\\ln\\left|${wrapGroupedLatex(boxLatex(denominator))}\\right|`, ratio);
+  return {
+    exactLatex: scaleLatex(`\\ln\\left|${wrapGroupedLatex(boxLatex(denominator))}\\right|`, ratio),
+    antiderivativeNode: scaleNativeNode(['Ln', ['Abs', denominator]], ratio),
+  };
 }
 
 export function normalizeIntegralLatexInput(latex: string) {
@@ -618,6 +702,7 @@ export function tryPartsRuleDetailed(
             exactPolynomial,
             exactAffine.slope,
             exactAffine.latex,
+            exponential[2],
           );
           if (solved) {
             return solved;
@@ -663,10 +748,15 @@ export function tryPartsRuleDetailed(
     const trigKind =
       isNodeArray(trigFactor) && trigFactor[0] === 'Sin' ? 'sin' : 'cos';
     if (exactPolynomial && exactAffine) {
+      const angleNode = isNodeArray(trigFactor) ? trigFactor[1] : undefined;
+      if (angleNode === undefined) {
+        return undefined;
+      }
       const solved = solveExactPolynomialTimesTrig(
         exactPolynomial,
         exactAffine.slope,
         exactAffine.latex,
+        angleNode,
         trigKind,
       );
       if (solved) {

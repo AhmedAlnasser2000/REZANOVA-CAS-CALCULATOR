@@ -3,10 +3,9 @@ import {
   resolveAntiderivativeRule,
   resolveAntiderivativeRuleExpression,
 } from '../../calculus/engine/antiderivative-rules';
-import { addAntiderivativeExpressions } from '../../calculus/engine/antiderivative-expression';
+import { standardAntiderivativeExpression } from '../../calculus/engine/antiderivative-expression';
 import {
   divideByNumericCoefficient,
-  flattenAdd,
   isNodeArray,
   parseAffine,
   wrapGroupedLatex,
@@ -28,13 +27,7 @@ import {
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
-import {
-  integrationDetailSection,
-  integrationMathRow,
-  integrationTextRow,
-  type IntegrationDetailRow,
-} from './detail-readback';
-import { negateGeneratedLatex } from './generated-latex';
+import { tryLinearCombinationFallback } from './linear-combination';
 import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
 import { tryTextbookIbpGapRule } from './ibp-gaps';
 import { inverseTrigIntegral } from './inverse-trig';
@@ -48,10 +41,11 @@ import {
 import { tryRischNormanOrchestrator } from './risch-norman/orchestrator';
 import { tryRischNormanDepth2DerivativeSubstitutionRule } from './risch-norman/depth2-substitution';
 import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
+import { normalFormDetail, trigRewriteDetail } from './retry-details';
 import {
   derivativeRatioIntegral,
   normalizeIntegralLatexInput,
-  tryPartsRule,
+  tryPartsRuleDetailed,
   trySubstitutionRule,
 } from './rules';
 import {
@@ -66,28 +60,26 @@ import {
   trySymbolicQuadraticRepeatedPowerRule,
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
-import { finishScalarMultipleRetry, splitScalarMultiple } from './scalar-multiple';
+import { tryScalarMultipleRetry } from './scalar-multiple-retry';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigDerivativeProductRule } from './trig-derivative-products';
 import { unsupportedTrigPowerBoundary } from './trig-power-boundary';
 import { normalizeIntegrationTrigRewrite } from './trig-rewrite';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
-import type { IntegralResolution, IntegralStrategy } from './types';
-import type { DisplayDetailSection } from '../../../types/calculator';
+import type { IntegralResolution } from './types';
 
 const ce = new ComputeEngine();
 const RELATION_HEADS = new Set(['Equal', 'NotEqual', 'Less', 'LessEqual', 'Greater', 'GreaterEqual']);
-const LINEAR_COMBINATION_TERM_CAP = 6;
-
-type SymbolicIntegralOptions = {
-  recognitionGates?: boolean;
-};
 
 export const INTEGRATION_RELATION_INTEGRAND_ERROR =
   'Calculus integrals expect an expression f(x), not an equation or relation.';
 
 function isRelationRoot(node: unknown) {
   return isNodeArray(node) && typeof node[0] === 'string' && RELATION_HEADS.has(node[0]);
+}
+
+function nativeStandardAntiderivative(mathJson: unknown, source: string) {
+  return standardAntiderivativeExpression({ mathJson, source });
 }
 
 function tryRoute(
@@ -99,14 +91,38 @@ function tryRoute(
   if (route === 'inverse-trig') {
     const inverseTrig = inverseTrigIntegral(node, variable);
     return inverseTrig
-      ? symbolicSuccess(node, variable, inverseTrig, 'inverse-trig')
+      ? symbolicSuccess(
+        node,
+        variable,
+        inverseTrig.exactLatex,
+        'inverse-trig',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          inverseTrig.antiderivativeNode,
+          'calculus.integration:inverse-trig',
+        ),
+      )
       : undefined;
   }
 
   if (route === 'derivative-ratio') {
     const reciprocalBinomial = tryReciprocalBinomialDerivativeSubstitutionRule(node, variable);
     if (reciprocalBinomial) {
-      return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
+      return symbolicSuccess(
+        node,
+        variable,
+        reciprocalBinomial.exactLatex,
+        'u-substitution',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          reciprocalBinomial.antiderivativeNode,
+          'calculus.integration:reciprocal-binomial-substitution',
+        ),
+      );
     }
 
     const algebraicGenus0RationalInRadical = tryAlgebraicGenus0RationalInRadicalRule(node, variable);
@@ -118,6 +134,11 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0RationalInRadical.verification,
         algebraicGenus0RationalInRadical.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          algebraicGenus0RationalInRadical.antiderivativeNode,
+          'calculus.integration:algebraic-genus0-rational-radical',
+        ),
       );
     }
 
@@ -130,6 +151,11 @@ function tryRoute(
         'u-substitution',
         symbolicAlgebraicGenus0Standard.verification,
         symbolicAlgebraicGenus0Standard.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          symbolicAlgebraicGenus0Standard.antiderivativeNode,
+          'calculus.integration:algebraic-genus0-symbolic-radical',
+        ),
       );
     }
 
@@ -148,19 +174,48 @@ function tryRoute(
         symbolicLogDerivative.publicStrategy,
         symbolicLogDerivative.verification,
         symbolicLogDerivative.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          symbolicLogDerivative.antiderivativeNode,
+          'calculus.integration:risch-norman-log-derivative',
+        ),
       );
     }
 
     const derivativeRatio = derivativeRatioIntegral(node, variable);
     return derivativeRatio
-      ? symbolicSuccess(node, variable, derivativeRatio, 'derivative-ratio')
+      ? symbolicSuccess(
+        node,
+        variable,
+        derivativeRatio.exactLatex,
+        'derivative-ratio',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          derivativeRatio.antiderivativeNode,
+          'calculus.integration:derivative-ratio',
+        ),
+      )
       : undefined;
   }
 
   if (route === 'partial-fractions') {
     const reciprocalBinomial = tryReciprocalBinomialDerivativeSubstitutionRule(node, variable);
     if (reciprocalBinomial) {
-      return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
+      return symbolicSuccess(
+        node,
+        variable,
+        reciprocalBinomial.exactLatex,
+        'u-substitution',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          reciprocalBinomial.antiderivativeNode,
+          'calculus.integration:reciprocal-binomial-substitution',
+        ),
+      );
     }
 
     if (isPureQuadraticDerivativeOverlap(node, variable)) {
@@ -177,6 +232,17 @@ function tryRoute(
         partialFractions.verification,
         partialFractions.exactSupplementLatex,
         partialFractions.detailSections,
+        partialFractions.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              partialFractions.antiderivativeNode,
+              'calculus.integration:rational-partial-fractions',
+            ),
+        undefined,
+        undefined,
+        partialFractions.antiderivativeNode === undefined
+          ? 'backcheck'
+          : 'precomputed-trusted',
       );
     }
 
@@ -215,6 +281,11 @@ function tryRoute(
         partialFractionsRn.publicStrategy,
         partialFractionsRn.verification,
         partialFractionsRn.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          partialFractionsRn.antiderivativeNode,
+          'calculus.integration:risch-norman-partial-fractions',
+        ),
       );
     }
 
@@ -241,6 +312,30 @@ function tryRoute(
   }
 
   if (route === 'u-substitution') {
+    const trigSubstitutionRadical = tryTrigSubstitutionRadicalRule(node, variable);
+    if (trigSubstitutionRadical) {
+      return symbolicSuccess(
+        node,
+        variable,
+        trigSubstitutionRadical.exactLatex,
+        'u-substitution',
+        trigSubstitutionRadical.verification,
+        trigSubstitutionRadical.exactSupplementLatex,
+        trigSubstitutionRadical.detailSections,
+        trigSubstitutionRadical.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              trigSubstitutionRadical.antiderivativeNode,
+              'calculus.integration:trig-substitution-radical',
+            ),
+        trigSubstitutionRadical.factNodes,
+        undefined,
+        trigSubstitutionRadical.antiderivativeNode === undefined
+          ? 'backcheck'
+          : 'precomputed-exact',
+      );
+    }
+
     const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable, {
       symbolicAffine: recognitionGates,
     });
@@ -252,6 +347,13 @@ function tryRoute(
         'u-substitution',
         trigDerivativeProduct.verification,
         trigDerivativeProduct.exactSupplementLatex,
+        undefined,
+        trigDerivativeProduct.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              trigDerivativeProduct.antiderivativeNode,
+              'calculus.integration:trig-derivative-product',
+            ),
       );
     }
 
@@ -264,6 +366,11 @@ function tryRoute(
         'u-substitution',
         depth2Substitution.verification,
         depth2Substitution.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          depth2Substitution.antiderivativeNode,
+          'calculus.integration:risch-norman-depth2-substitution',
+        ),
       );
     }
 
@@ -271,17 +378,45 @@ function tryRoute(
     if (logPowerSubstitution) {
       return symbolicSuccess(node, variable, logPowerSubstitution.exactLatex, 'u-substitution',
         logPowerSubstitution.verification, logPowerSubstitution.exactSupplementLatex,
-        logPowerSubstitution.detailSections);
+        logPowerSubstitution.detailSections,
+        nativeStandardAntiderivative(
+          logPowerSubstitution.antiderivativeNode,
+          'calculus.integration:log-power-substitution',
+        ));
     }
 
     const substitution = trySubstitutionRule(node, variable);
     if (substitution) {
-      return symbolicSuccess(node, variable, substitution, 'u-substitution');
+      return symbolicSuccess(
+        node,
+        variable,
+        substitution.exactLatex,
+        'u-substitution',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          substitution.antiderivativeNode,
+          'calculus.integration:substitution',
+        ),
+      );
     }
 
     const binomialSubstitution = tryBinomialDerivativeSubstitutionRule(node, variable);
     if (binomialSubstitution) {
-      return symbolicSuccess(node, variable, binomialSubstitution, 'u-substitution');
+      return symbolicSuccess(
+        node,
+        variable,
+        binomialSubstitution.exactLatex,
+        'u-substitution',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          binomialSubstitution.antiderivativeNode,
+          'calculus.integration:binomial-substitution',
+        ),
+      );
     }
 
     const symbolicBinomial = trySymbolicBinomialSubstitutionRule(node, variable);
@@ -305,6 +440,14 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0StandardRadical.verification,
         algebraicGenus0StandardRadical.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          algebraicGenus0StandardRadical.antiderivativeNode,
+          'calculus.integration:algebraic-genus0-standard-radical',
+        ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -317,6 +460,14 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0RationalInRadical.verification,
         algebraicGenus0RationalInRadical.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          algebraicGenus0RationalInRadical.antiderivativeNode,
+          'calculus.integration:algebraic-genus0-rational-radical',
+        ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -329,21 +480,15 @@ function tryRoute(
         'u-substitution',
         symbolicAlgebraicGenus0Standard.verification,
         symbolicAlgebraicGenus0Standard.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          symbolicAlgebraicGenus0Standard.antiderivativeNode,
+          'calculus.integration:algebraic-genus0-symbolic-radical',
+        ),
       );
     }
 
-    const trigSubstitutionRadical = tryTrigSubstitutionRadicalRule(node, variable);
-    return trigSubstitutionRadical
-      ? symbolicSuccess(
-        node,
-        variable,
-        trigSubstitutionRadical.exactLatex,
-        'u-substitution',
-        trigSubstitutionRadical.verification,
-        trigSubstitutionRadical.exactSupplementLatex,
-        trigSubstitutionRadical.detailSections,
-      )
-      : undefined;
+    return undefined;
   }
 
   if (route === 'direct-rule') {
@@ -357,6 +502,10 @@ function tryRoute(
         hyperbolicSquare.verification,
         hyperbolicSquare.exactSupplementLatex,
         hyperbolicSquare.detailSections,
+        nativeStandardAntiderivative(
+          hyperbolicSquare.antiderivativeNode,
+          'calculus.integration:hyperbolic-square-table',
+        ),
       );
     }
 
@@ -419,17 +568,46 @@ function tryRoute(
         'direct-rule',
         targetFreePolynomial.verification,
         targetFreePolynomial.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          targetFreePolynomial.antiderivativeNode,
+          'calculus.integration:target-free-polynomial',
+        ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
     const expanded = tryExpandedDirectRule(node, variable);
     if (expanded) {
-      return symbolicSuccess(node, variable, expanded, 'direct-rule');
+      return symbolicSuccess(
+        node,
+        variable,
+        expanded.exactLatex,
+        'direct-rule',
+        expanded.verification,
+        undefined,
+        undefined,
+        expanded.antiderivativeExpression,
+      );
     }
 
     const affinePower = tryAffinePowerRule(node, variable);
     return affinePower
-      ? symbolicSuccess(node, variable, affinePower, 'direct-rule')
+      ? symbolicSuccess(
+        node,
+        variable,
+        affinePower.exactLatex,
+        'direct-rule',
+        undefined,
+        undefined,
+        undefined,
+        nativeStandardAntiderivative(
+          affinePower.antiderivativeNode,
+          'calculus.integration:affine-power',
+        ),
+      )
       : undefined;
   }
 
@@ -437,12 +615,36 @@ function tryRoute(
     const textbookIbpGap = tryTextbookIbpGapRule(node, variable);
     if (textbookIbpGap) {
       return symbolicSuccess(node, variable, textbookIbpGap.exactLatex, 'integration-by-parts',
-        textbookIbpGap.verification, textbookIbpGap.exactSupplementLatex, textbookIbpGap.detailSections);
+        textbookIbpGap.verification, textbookIbpGap.exactSupplementLatex, textbookIbpGap.detailSections,
+        textbookIbpGap.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              textbookIbpGap.antiderivativeNode,
+              'calculus.integration:textbook-ibp-gap',
+            ));
     }
 
-    const byParts = tryPartsRule(node, variable);
+    const byParts = tryPartsRuleDetailed(node, variable);
     if (byParts) {
-      return symbolicSuccess(node, variable, byParts, 'integration-by-parts');
+      const exactLatex = typeof byParts === 'string' ? byParts : byParts.exactLatex;
+      const antiderivativeNode = typeof byParts === 'string'
+        ? undefined
+        : byParts.antiderivativeNode;
+      return symbolicSuccess(
+        node,
+        variable,
+        exactLatex,
+        'integration-by-parts',
+        typeof byParts === 'string' ? undefined : byParts.verification,
+        undefined,
+        undefined,
+        antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              antiderivativeNode,
+              'calculus.integration:integration-by-parts',
+            ),
+      );
     }
 
     const symbolicParts = trySymbolicPartsRule(node, variable);
@@ -459,12 +661,23 @@ function tryRoute(
 
     const expandedByParts = tryExpandedPartsRule(node, variable);
     if (expandedByParts) {
+      const antiderivativeNode = 'antiderivativeNode' in expandedByParts
+        ? expandedByParts.antiderivativeNode
+        : undefined;
       return symbolicSuccess(
         node,
         variable,
         expandedByParts.exactLatex,
         'integration-by-parts',
         expandedByParts.verification,
+        undefined,
+        undefined,
+        antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+              antiderivativeNode,
+              'calculus.integration:expanded-integration-by-parts',
+            ),
       );
     }
 
@@ -479,12 +692,22 @@ function tryRoute(
         rischNorman.publicStrategy,
         rischNorman.verification,
         rischNorman.exactSupplementLatex,
+        undefined,
+        nativeStandardAntiderivative(
+          rischNorman.antiderivativeNode,
+          'calculus.integration:risch-norman-integration-by-parts',
+        ),
       )
       : undefined;
   }
 
   const affine = parseAffine(node, variable);
   if (affine && affine.a !== 0) {
+    const antiderivativeNode = [
+      'Divide',
+      ['Power', structuredClone(node), 2],
+      2 * affine.a,
+    ];
     return symbolicSuccess(
       node,
       variable,
@@ -493,6 +716,13 @@ function tryRoute(
         2 * affine.a,
       ),
       'affine-linear',
+      undefined,
+      undefined,
+      undefined,
+      nativeStandardAntiderivative(
+        antiderivativeNode,
+        'calculus.integration:affine-linear',
+      ),
     );
   }
 
@@ -513,35 +743,6 @@ function tryRoutes(
   }
 
   return undefined;
-}
-
-type SignedTerm = {
-  node: unknown;
-  sign: 1 | -1;
-};
-
-function signedAddTerms(node: unknown, sign: 1 | -1 = 1): SignedTerm[] {
-  if (isNodeArray(node) && node[0] === 'Add') {
-    return flattenAdd(node).flatMap((term) => signedAddTerms(term, sign));
-  }
-
-  if (isNodeArray(node) && node[0] === 'Subtract') {
-    const [first, ...rest] = node.slice(1);
-    return [
-      ...(first === undefined ? [] : signedAddTerms(first, sign)),
-      ...rest.flatMap((term) => signedAddTerms(term, sign === 1 ? -1 : 1)),
-    ];
-  }
-
-  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
-    return signedAddTerms(node[1], sign === 1 ? -1 : 1);
-  }
-
-  return [{ node, sign }];
-}
-
-function normalFormDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
-  return integrationDetailSection('Integration Normal Form', rows);
 }
 
 function tryNormalFormRetry(
@@ -581,37 +782,6 @@ function tryNormalFormRetry(
     retried.factNodes,
     retried.detailNodes,
   );
-}
-
-function trigRewriteDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
-  return integrationDetailSection('Integration Trig Rewrite', rows);
-}
-
-function tryScalarMultipleRetry(
-  node: unknown,
-  variable: string,
-  recognitionGates: boolean,
-  allowNormalForm: boolean,
-  allowTrigRewrite: boolean,
-): IntegralResolution | undefined {
-  const split = splitScalarMultiple(node, variable);
-  if (!split) {
-    return undefined;
-  }
-
-  const retried = resolveSymbolicIntegralFromAstInternal(
-    split.body,
-    variable,
-    recognitionGates,
-    allowNormalForm,
-    allowTrigRewrite,
-    false,
-  );
-  if (retried.kind !== 'success') {
-    return undefined;
-  }
-
-  return finishScalarMultipleRetry(node, variable, split, retried);
 }
 
 function tryTrigRewriteRetry(
@@ -702,142 +872,6 @@ function routeTermWithoutLinearCombination(
   return allowTrigRewrite ? tryTrigRewriteRetry(node, variable, recognitionGates) : undefined;
 }
 
-function combineSignedLatex(parts: Array<{ latex: string; sign: 1 | -1 }>) {
-  return parts.map((part, index) => {
-    const latex = part.sign === 1 ? part.latex : negateGeneratedLatex(part.latex);
-    return index === 0 || latex.startsWith('-') ? latex : `+${latex}`;
-  }).join('');
-}
-
-function dominantStrategy(strategies: IntegralStrategy[]): IntegralStrategy {
-  const [first] = strategies;
-  return strategies.every((strategy) => strategy === first)
-    ? first
-    : strategies.every((strategy) => strategy === 'direct-rule' || strategy === 'affine-linear')
-      ? 'direct-rule'
-      : strategies.includes('u-substitution')
-        ? 'u-substitution'
-        : 'integration-by-parts';
-}
-
-function mergeSupplementLatex(results: IntegralResolution[]) {
-  const seen = new Set<string>();
-  const merged: string[] = [];
-  for (const result of results) {
-    if (result.kind !== 'success') {
-      continue;
-    }
-    for (const line of result.exactSupplementLatex ?? []) {
-      if (seen.has(line)) {
-        continue;
-      }
-      seen.add(line);
-      merged.push(line);
-    }
-  }
-  return merged.length > 0 ? merged : undefined;
-}
-
-function mergeDetailSections(results: IntegralResolution[]) {
-  const merged = results
-    .flatMap((result) => result.kind === 'success' ? (result.detailSections ?? []) : []);
-  return merged.length > 0 ? merged : undefined;
-}
-
-function mergeFactNodes(results: IntegralResolution[]) {
-  const merged = results
-    .flatMap((result) => result.kind === 'success' ? (result.factNodes ?? []) : []);
-  return merged.length > 0 ? merged : undefined;
-}
-
-function mergeDetailNodes(results: IntegralResolution[]) {
-  const merged = results
-    .flatMap((result) => result.kind === 'success' ? (result.detailNodes ?? []) : []);
-  return merged.length > 0 ? merged : undefined;
-}
-
-function combineNativeAntiderivatives(
-  results: Array<Extract<IntegralResolution, { kind: 'success' }>>,
-  terms: Array<{ node: unknown; sign: 1 | -1 }>,
-) {
-  const nativeTerms: Parameters<typeof addAntiderivativeExpressions>[0]['terms'] = [];
-  for (const [index, result] of results.entries()) {
-    if (!result.antiderivativeExpression) {
-      return undefined;
-    }
-    nativeTerms.push({
-      expression: result.antiderivativeExpression,
-      sign: terms[index].sign,
-    });
-  }
-  return addAntiderivativeExpressions({
-    terms: nativeTerms,
-    source: 'calculus.integration:linear-combination',
-  });
-}
-
-function tryLinearCombinationFallback(
-  node: unknown,
-  variable: string,
-  recognitionGates: boolean,
-): IntegralResolution | undefined {
-  if (!isNodeArray(node) || (node[0] !== 'Add' && node[0] !== 'Subtract')) {
-    return undefined;
-  }
-
-  const terms = signedAddTerms(node);
-  if (terms.length < 2 || terms.length > LINEAR_COMBINATION_TERM_CAP) {
-    return undefined;
-  }
-
-  const results: Array<Extract<IntegralResolution, { kind: 'success' }>> = [];
-  const blockedTerms: string[] = [];
-  for (const term of terms) {
-    const result = routeTermWithoutLinearCombination(term.node, variable, recognitionGates);
-    if (!result || result.kind !== 'success') {
-      blockedTerms.push(`${term.sign === -1 ? '-' : ''}${ce.box(term.node as Parameters<typeof ce.box>[0]).latex}`);
-      continue;
-    }
-    results.push(result);
-  }
-
-  if (blockedTerms.length > 0) {
-    return {
-      kind: 'error',
-      error: 'This antiderivative could not be determined symbolically in this milestone.',
-      candidate: unsupportedCandidateMetadata(node, variable),
-      detailSections: [integrationDetailSection('Integration Term Plan', [
-        integrationTextRow(`Resolved terms: ${results.length}`),
-        integrationMathRow('Blocked terms: ', blockedTerms.join(', ')),
-        integrationTextRow('Calcwiz does not present a partial antiderivative as a complete answer.'),
-      ])],
-    };
-  }
-
-  const exactLatex = combineSignedLatex(
-    results.map((result, index) => ({
-      latex: result.exactLatex,
-      sign: terms[index].sign,
-    })),
-  );
-  const antiderivativeExpression = combineNativeAntiderivatives(results, terms);
-  return symbolicSuccess(
-    node,
-    variable,
-    exactLatex,
-    dominantStrategy(results.map((result) => result.strategy)),
-    {
-      status: 'verified-exact',
-      reason: 'verified by internal Risch-Norman linear-combination rule proof',
-    },
-    mergeSupplementLatex(results),
-    mergeDetailSections(results),
-    antiderivativeExpression,
-    mergeFactNodes(results),
-    mergeDetailNodes(results),
-  );
-}
-
 function resolveSymbolicIntegralFromAstInternal(
   node: unknown,
   variable: string,
@@ -859,7 +893,12 @@ function resolveSymbolicIntegralFromAstInternal(
     && (node[0] === 'Add' || node[0] === 'Subtract')
     && normalizeIntegrationTrigRewrite(node, variable).changed;
   if (additiveTrigRewriteCandidate) {
-    const linearCombination = tryLinearCombinationFallback(node, variable, recognitionGates);
+    const linearCombination = tryLinearCombinationFallback(
+      node,
+      variable,
+      recognitionGates,
+      routeTermWithoutLinearCombination,
+    );
     if (linearCombination) {
       return linearCombination;
     }
@@ -899,13 +938,19 @@ function resolveSymbolicIntegralFromAstInternal(
       recognitionGates,
       allowNormalForm,
       allowTrigRewrite,
+      resolveSymbolicIntegralFromAstInternal,
     );
     if (scalarMultiple) {
       return scalarMultiple;
     }
   }
 
-  const linearCombination = tryLinearCombinationFallback(node, variable, recognitionGates);
+  const linearCombination = tryLinearCombinationFallback(
+    node,
+    variable,
+    recognitionGates,
+    routeTermWithoutLinearCombination,
+  );
   if (linearCombination) {
     return linearCombination;
   }
@@ -935,7 +980,7 @@ function resolveSymbolicIntegralFromAstInternal(
 export function resolveSymbolicIntegralFromAst(
   node: unknown,
   variable = 'x',
-  options: SymbolicIntegralOptions = {},
+  options: { recognitionGates?: boolean } = {},
 ): IntegralResolution {
   const recognitionGates = options.recognitionGates !== false;
   return resolveSymbolicIntegralFromAstInternal(

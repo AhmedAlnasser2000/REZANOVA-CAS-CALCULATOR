@@ -29,6 +29,7 @@ import { parseAlgebraicGenus0StandardQuadratic } from './inverse-readback';
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus0RationalInRadicalRule = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -228,6 +229,7 @@ function tryQuadraticNumeratorOverStandardRadical(
   }
 
   return profileSymbolicIntegrationResult({
+    antiderivativeNode,
     exactLatex: normalizeGeneratedIntegrationLatex(boxLatex(antiderivativeNode), variable),
     verification: proof(),
     exactSupplementLatex: radicandSupplements(shape.radicand),

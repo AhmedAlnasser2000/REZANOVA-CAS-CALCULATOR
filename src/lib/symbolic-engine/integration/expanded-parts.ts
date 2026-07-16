@@ -61,6 +61,9 @@ export function tryExpandedPartsRule(node: unknown, variable: string) {
   if (typeof solved !== 'string' && solved.verification?.status === 'verified-exact') {
     return {
       exactLatex,
+      ...(solved.antiderivativeNode === undefined
+        ? {}
+        : { antiderivativeNode: solved.antiderivativeNode }),
       verification: {
         ...solved.verification,
         reason: 'verified by exact bounded expansion plus finite integration-by-parts recurrence',

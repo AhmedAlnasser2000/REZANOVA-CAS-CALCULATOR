@@ -1,4 +1,4 @@
-import { backcheckAntiderivative } from '../../calculus/engine/verification';
+import { backcheckAntiderivativeAst } from '../../calculus/engine/verification';
 import {
   addExactScalars,
   buildExactScalarNode,
@@ -447,7 +447,7 @@ function binomialBaseLatex(factor: BinomialPowerFactor, variable: string) {
   return basePolynomial ? exactPolynomialToLatex(basePolynomial) : undefined;
 }
 
-function binomialAntiderivativeLatex(
+function binomialAntiderivative(
   factor: BinomialPowerFactor,
   derivativeCoefficient: ExactScalar,
   variable: string,
@@ -464,10 +464,17 @@ function binomialAntiderivativeLatex(
   }
 
   if (factor.exponent === -1) {
-    return scaleByExactScalar(
-      `\\ln\\left|${wrapGroupedLatex(baseLatex)}\\right|`,
-      outerScale,
-    );
+    return {
+      exactLatex: scaleByExactScalar(
+        `\\ln\\left|${wrapGroupedLatex(baseLatex)}\\right|`,
+        outerScale,
+      ),
+      antiderivativeNode: [
+        'Multiply',
+        buildExactScalarNode(outerScale),
+        ['Ln', ['Abs', factor.base]],
+      ],
+    };
   }
 
   const nextExponent = factor.exponent + 1;
@@ -490,7 +497,16 @@ function binomialAntiderivativeLatex(
       ? wrappedBase
       : `${wrappedBase}^{${nextExponent}}`;
 
-  return scaleByExactScalar(powered, coefficient);
+  return {
+    exactLatex: scaleByExactScalar(powered, coefficient),
+    antiderivativeNode: [
+      'Multiply',
+      buildExactScalarNode(coefficient),
+      nextExponent === 1
+        ? factor.base
+        : ['Power', factor.base, nextExponent],
+    ],
+  };
 }
 
 function tryBinomialDerivativeSubstitutionRuleForKinds(
@@ -515,13 +531,13 @@ function tryBinomialDerivativeSubstitutionRuleForKinds(
       continue;
     }
 
-    const candidate = binomialAntiderivativeLatex(factor, derivativeCoefficient, variable);
+    const candidate = binomialAntiderivative(factor, derivativeCoefficient, variable);
     if (!candidate) {
       continue;
     }
 
-    const verification = backcheckAntiderivative({
-      antiderivativeLatex: candidate,
+    const verification = backcheckAntiderivativeAst({
+      antiderivative: candidate.antiderivativeNode,
       integrand: node,
       variable,
     });

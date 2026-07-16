@@ -4,6 +4,7 @@ import {
   buildExactScalarNode,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarToNumber,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
@@ -14,6 +15,7 @@ import {
   divideExactScalars,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
+import type { CalculusIntegrationFactNode } from '../../calculus/engine/antiderivative-expression';
 import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
 import {
   boxLatex,
@@ -34,9 +36,11 @@ import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 type TrigSubstitutionRadicalResult = {
   exactLatex: string;
+  antiderivativeNode?: unknown;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
   detailSections?: DisplayDetailSection[];
+  factNodes?: CalculusIntegrationFactNode[];
 };
 
 type SignedNode = {
@@ -47,6 +51,7 @@ type SignedNode = {
 type ExactAffine = {
   slope: ExactScalar;
   latex: string;
+  node: unknown;
 };
 
 type RadicalFamily = 'minus' | 'plus' | 'outside';
@@ -82,6 +87,24 @@ function nonzero(expressionLatex: string): ExactSupplementEntry {
     expressionLatex,
     relation: '\\ne0',
     source: 'candidate-validation',
+  };
+}
+
+function cloneMathNode(node: unknown) {
+  return structuredClone(node);
+}
+
+function factNode(input: {
+  role: CalculusIntegrationFactNode['role'];
+  presentationLatex: string;
+  mathJson: unknown;
+  source?: string;
+}): CalculusIntegrationFactNode {
+  return {
+    role: input.role,
+    presentationLatex: input.presentationLatex,
+    mathJson: input.mathJson,
+    source: input.source ?? 'calculus.integration:trig-substitution-radical-condition',
   };
 }
 
@@ -159,6 +182,7 @@ function parseExactAffine(node: unknown, variable: string): ExactAffine | undefi
   return {
     slope,
     latex: exactPolynomialToLatex(polynomial),
+    node: exactPolynomialToNode(polynomial),
   };
 }
 
@@ -261,6 +285,76 @@ function buildExactLatex(family: RadicalFamily, r: ExactScalar, affine: ExactAff
   return family === 'plus'
     ? `${firstTerm}+${logTerm}`
     : `${firstTerm}-${logTerm}`;
+}
+
+function exactScalarSqrtNode(value: ExactScalar): unknown {
+  const exactRoot = exactScalarSqrt(value);
+  return exactRoot ? buildExactScalarNode(exactRoot) : ['Sqrt', buildExactScalarNode(value)];
+}
+
+function multiplyNodes(factors: unknown[]): unknown {
+  const meaningful = factors.filter((factor) => {
+    const scalar = readExactScalarNode(factor);
+    return !scalar || scalar.numerator !== 1 || scalar.denominator !== 1;
+  });
+  return meaningful.length === 0
+    ? 1
+    : meaningful.length === 1
+      ? meaningful[0]
+      : ['Multiply', ...meaningful];
+}
+
+function divideNode(numerator: unknown, denominator: unknown): unknown {
+  const denominatorScalar = readExactScalarNode(denominator);
+  return denominatorScalar?.numerator === 1 && denominatorScalar.denominator === 1
+    ? numerator
+    : ['Divide', numerator, denominator];
+}
+
+function buildRadicandNode(family: RadicalFamily, r: ExactScalar, affine: ExactAffine): unknown {
+  const squaredAffine = ['Power', affine.node, 2];
+  switch (family) {
+    case 'minus':
+      return ['Subtract', buildExactScalarNode(r), squaredAffine];
+    case 'plus':
+      return ['Add', squaredAffine, buildExactScalarNode(r)];
+    case 'outside':
+      return ['Subtract', squaredAffine, buildExactScalarNode(r)];
+  }
+}
+
+function buildPlainRadicalAntiderivativeNode(
+  family: RadicalFamily,
+  r: ExactScalar,
+  affine: ExactAffine,
+): unknown {
+  const radicand = buildRadicandNode(family, r, affine);
+  const rootTerm = multiplyNodes([affine.node, ['Sqrt', radicand]]);
+  const denominator = buildExactScalarNode(multiplyExactScalars({ numerator: 2, denominator: 1 }, affine.slope));
+  if (family === 'minus') {
+    return divideNode(
+      ['Add',
+        rootTerm,
+        multiplyNodes([
+          buildExactScalarNode(r),
+          ['Arcsin', divideNode(affine.node, exactScalarSqrtNode(r))],
+        ]),
+      ],
+      denominator,
+    );
+  }
+
+  const inverseTerm = multiplyNodes([
+    buildExactScalarNode(r),
+    [
+      family === 'plus' ? 'Arsinh' : 'Arcosh',
+      divideNode(affine.node, exactScalarSqrtNode(r)),
+    ],
+  ]);
+  const numerator = family === 'plus'
+    ? ['Add', rootTerm, inverseTerm]
+    : ['Subtract', rootTerm, inverseTerm];
+  return divideNode(numerator, denominator);
 }
 
 function buildReciprocalThreeHalvesLatex(
@@ -440,6 +534,21 @@ function supplementsFor(family: RadicalFamily, r: ExactScalar, affine: ExactAffi
   });
 }
 
+function factNodesFor(family: RadicalFamily, r: ExactScalar, affine: ExactAffine) {
+  if (family === 'plus') {
+    return [];
+  }
+
+  const rLatex = exactScalarLatex(r);
+  const uGrouped = wrapGroupedLatex(affine.latex);
+  const radicandLatex = buildRadicandLatex(family, rLatex, uGrouped);
+  return [factNode({
+    role: 'condition',
+    presentationLatex: `${radicandLatex}\\ge0`,
+    mathJson: ['GreaterEqual', buildRadicandNode(family, r, affine), 0],
+  })];
+}
+
 export function tryTrigSubstitutionRadicalRule(
   node: unknown,
   variable: string,
@@ -456,6 +565,11 @@ export function tryTrigSubstitutionRadicalRule(
         exactLatex,
         verification: proof(squaredAffineOverRadical.family),
         exactSupplementLatex: supplementsFor(
+          squaredAffineOverRadical.family,
+          squaredAffineOverRadical.r,
+          squaredAffineOverRadical.affine,
+        ),
+        factNodes: factNodesFor(
           squaredAffineOverRadical.family,
           squaredAffineOverRadical.r,
           squaredAffineOverRadical.affine,
@@ -483,6 +597,11 @@ export function tryTrigSubstitutionRadicalRule(
     const rootLatex = exactScalarLatex(reciprocalAffineOutsideSqrt.root);
     const uGrouped = wrapGroupedLatex(reciprocalAffineOutsideSqrt.affine.latex);
     const branchCondition = `${uGrouped}-${rootLatex}`;
+    const branchConditionNode = [
+      'Subtract',
+      cloneMathNode(reciprocalAffineOutsideSqrt.affine.node),
+      buildExactScalarNode(reciprocalAffineOutsideSqrt.root),
+    ];
     return profileSymbolicIntegrationResult({
       exactLatex: scaleByExactScalar(
         `\\arccos\\left(\\frac{${rootLatex}}{${uGrouped}}\\right)`,
@@ -492,6 +611,18 @@ export function tryTrigSubstitutionRadicalRule(
         status: 'verified-exact',
         reason: 'verified by positive-branch affine inverse-secant radical template proof',
       },
+      antiderivativeNode: [
+        'Multiply',
+        buildExactScalarNode(coefficient),
+        [
+          'Arccos',
+          [
+            'Divide',
+            buildExactScalarNode(reciprocalAffineOutsideSqrt.root),
+            reciprocalAffineOutsideSqrt.affine.node,
+          ],
+        ],
+      ],
       exactSupplementLatex: mergeExactSupplementLatex({
         entries: [
           positive(branchCondition),
@@ -500,6 +631,27 @@ export function tryTrigSubstitutionRadicalRule(
         ],
         source: 'candidate-validation',
       }),
+      factNodes: [
+        factNode({
+          role: 'condition',
+          presentationLatex: `${branchCondition}>0`,
+          mathJson: ['Greater', branchConditionNode, 0],
+        }),
+        factNode({
+          role: 'exclusion',
+          presentationLatex: `${uGrouped}\\ne0`,
+          mathJson: ['NotEqual', cloneMathNode(reciprocalAffineOutsideSqrt.affine.node), 0],
+        }),
+        factNode({
+          role: 'condition',
+          presentationLatex: `${uGrouped}^{2}-${exactScalarLatex(reciprocalAffineOutsideSqrt.r)}\\ge0`,
+          mathJson: [
+            'GreaterEqual',
+            buildRadicandNode('outside', reciprocalAffineOutsideSqrt.r, reciprocalAffineOutsideSqrt.affine),
+            0,
+          ],
+        }),
+      ],
       detailSections: [radicalTemplateDetail([
         integrationMathRow('Recognized inverse-secant radical: ', boxLatex(node)),
         integrationMathRow('Positive branch carrier: ', reciprocalAffineOutsideSqrt.affine.latex),
@@ -528,6 +680,7 @@ export function tryTrigSubstitutionRadicalRule(
         exactLatex,
         verification: proof(parsed.family),
         exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
+        factNodes: factNodesFor(parsed.family, parsed.r, parsed.affine),
         detailSections: [radicalTemplateDetail([
           integrationMathRow('Recognized reciprocal radical: ', boxLatex(node)),
           integrationMathRow('Template family: ', parsed.family === 'minus' ? 'a^2-u^2' : 'u^2+a^2'),
@@ -540,8 +693,10 @@ export function tryTrigSubstitutionRadicalRule(
 
   return profileSymbolicIntegrationResult({
     exactLatex: buildExactLatex(parsed.family, parsed.r, parsed.affine),
+    antiderivativeNode: buildPlainRadicalAntiderivativeNode(parsed.family, parsed.r, parsed.affine),
     verification: proof(parsed.family),
     exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
+    factNodes: factNodesFor(parsed.family, parsed.r, parsed.affine),
     detailSections: [radicalTemplateDetail([
       integrationMathRow('Recognized radical: ', boxLatex(node)),
       integrationTextRow(`Template family: ${parsed.family}`),

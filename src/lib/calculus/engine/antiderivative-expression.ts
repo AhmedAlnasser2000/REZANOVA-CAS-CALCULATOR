@@ -46,7 +46,7 @@ export type CalculusIntegrationDetailNode = {
   lines: CalculusIntegrationDetailNodePart[][];
 };
 
-function standardMathLatex(mathJson: unknown) {
+function printedStandardMathLatex(mathJson: unknown) {
   const printed = printMathJson({
     mathJson,
     profile: 'pedagogical-v1',
@@ -56,6 +56,211 @@ function standardMathLatex(mathJson: unknown) {
     throw new Error('Calculus antiderivative MathJSON could not be rendered: ' + printed.message);
   }
   return printed.canonicalLatex;
+}
+
+function positiveMagnitudeNode(node: unknown): unknown | undefined {
+  if (typeof node === 'number' && node < 0) return -node;
+  if (
+    Array.isArray(node)
+    && node[0] === 'Rational'
+    && node.length === 3
+    && typeof node[1] === 'number'
+    && node[1] < 0
+  ) {
+    return ['Rational', -node[1], node[2]];
+  }
+  return undefined;
+}
+
+function isUnitScalarNode(node: unknown) {
+  return node === 1 || (
+    Array.isArray(node)
+    && node[0] === 'Rational'
+    && node.length === 3
+    && node[1] === node[2]
+  );
+}
+
+function isScalarNode(node: unknown) {
+  return typeof node === 'number' || (
+    Array.isArray(node)
+    && node[0] === 'Rational'
+    && node.length === 3
+  );
+}
+
+type ExactRational = { numerator: number; denominator: number };
+
+function exactRationalScalar(node: unknown): ExactRational | undefined {
+  if (typeof node === 'number' && Number.isInteger(node)) {
+    return { numerator: node, denominator: 1 };
+  }
+  if (
+    Array.isArray(node)
+    && node[0] === 'Rational'
+    && node.length === 3
+    && typeof node[1] === 'number'
+    && Number.isInteger(node[1])
+    && typeof node[2] === 'number'
+    && Number.isInteger(node[2])
+    && node[2] !== 0
+  ) {
+    return { numerator: node[1], denominator: node[2] };
+  }
+  return undefined;
+}
+
+function gcd(left: number, right: number) {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b !== 0) {
+    const remainder = a % b;
+    a = b;
+    b = remainder;
+  }
+  return a || 1;
+}
+
+function multiplyExactRationals(left: ExactRational, right: ExactRational): ExactRational {
+  const numerator = left.numerator * right.numerator;
+  const denominator = left.denominator * right.denominator;
+  const divisor = gcd(numerator, denominator);
+  const denominatorSign = denominator < 0 ? -1 : 1;
+  return {
+    numerator: denominatorSign * numerator / divisor,
+    denominator: denominatorSign * denominator / divisor,
+  };
+}
+
+function divideExactRationals(left: ExactRational, right: ExactRational): ExactRational | undefined {
+  if (right.numerator === 0) return undefined;
+  return multiplyExactRationals(left, {
+    numerator: right.denominator,
+    denominator: right.numerator,
+  });
+}
+
+function rationalNode(value: ExactRational): unknown {
+  return value.denominator === 1
+    ? value.numerator
+    : ['Rational', value.numerator, value.denominator];
+}
+
+function flattenProductFactors(node: unknown): unknown[] {
+  return Array.isArray(node) && node[0] === 'Multiply'
+    ? node.slice(1).flatMap(flattenProductFactors)
+    : [node];
+}
+
+function splitProductCoefficient(node: unknown): {
+  coefficient: ExactRational;
+  factors: unknown[];
+} {
+  let coefficient: ExactRational = { numerator: 1, denominator: 1 };
+  const factors = flattenProductFactors(node).map((factor) => {
+    if (Array.isArray(factor) && factor[0] === 'Negate' && factor.length === 2) {
+      coefficient = multiplyExactRationals(coefficient, { numerator: -1, denominator: 1 });
+      return factor[1];
+    }
+    const scalar = exactRationalScalar(factor);
+    if (!scalar) return factor;
+    coefficient = multiplyExactRationals(coefficient, scalar);
+    return undefined;
+  }).filter((factor) => factor !== undefined && !isUnitScalarNode(factor));
+  return { coefficient, factors };
+}
+
+function standardMathLatex(mathJson: unknown): string {
+  if (Array.isArray(mathJson) && mathJson[0] === 'Divide' && mathJson.length === 3) {
+    const numerator = positiveMagnitudeNode(mathJson[1]);
+    if (numerator !== undefined) {
+      return `-${standardMathLatex(['Divide', numerator, mathJson[2]])}`;
+    }
+    const numeratorSplit = splitProductCoefficient(mathJson[1]);
+    const denominatorScalar = exactRationalScalar(mathJson[2]);
+    if (denominatorScalar) {
+      const coefficient = divideExactRationals(numeratorSplit.coefficient, denominatorScalar);
+      if (coefficient) {
+        return standardMathLatex(
+          numeratorSplit.factors.length === 0
+            ? rationalNode(coefficient)
+            : ['Multiply', rationalNode(coefficient), ...numeratorSplit.factors],
+        );
+      }
+    }
+    if (
+      numeratorSplit.factors.length > 0
+      && numeratorSplit.coefficient.numerator !== numeratorSplit.coefficient.denominator
+    ) {
+      const negative = numeratorSplit.coefficient.numerator < 0;
+      const absoluteCoefficient = {
+        numerator: Math.abs(numeratorSplit.coefficient.numerator),
+        denominator: numeratorSplit.coefficient.denominator,
+      };
+      const coefficientDenominator = absoluteCoefficient.denominator === 1
+        ? mathJson[2]
+        : ['Multiply', absoluteCoefficient.denominator, mathJson[2]];
+      const rendered = printedStandardMathLatex([
+        'Multiply',
+        ['Divide', absoluteCoefficient.numerator, coefficientDenominator],
+        ...numeratorSplit.factors,
+      ]);
+      return negative ? `-${rendered}` : rendered;
+    }
+  }
+
+  if (Array.isArray(mathJson) && mathJson[0] === 'Multiply' && mathJson.length >= 3) {
+    let negative = false;
+    let exactCoefficient: ExactRational = { numerator: 1, denominator: 1 };
+    const factors = mathJson.slice(1).flatMap(flattenProductFactors).map((factor) => {
+      if (Array.isArray(factor) && factor[0] === 'Negate' && factor.length === 2) {
+        negative = !negative;
+        return factor[1];
+      }
+      const scalar = exactRationalScalar(factor);
+      if (scalar) {
+        exactCoefficient = multiplyExactRationals(exactCoefficient, scalar);
+        return undefined;
+      }
+      return factor;
+    }).filter((factor) => factor !== undefined && !isUnitScalarNode(factor));
+    if (exactCoefficient.numerator < 0) {
+      negative = !negative;
+      exactCoefficient = { ...exactCoefficient, numerator: -exactCoefficient.numerator };
+    }
+    if (exactCoefficient.numerator !== exactCoefficient.denominator) {
+      factors.unshift(exactCoefficient.denominator === 1
+        ? exactCoefficient.numerator
+        : ['Rational', exactCoefficient.numerator, exactCoefficient.denominator]);
+    }
+    const ordered = [
+      ...factors.filter(isScalarNode),
+      ...factors.filter((factor) => !isScalarNode(factor)),
+    ];
+    const normalized = ordered.length === 0
+      ? '1'
+      : ordered.length === 1
+        ? standardMathLatex(ordered[0])
+        : printedStandardMathLatex(['Multiply', ...ordered]);
+    return negative ? `-${normalized}` : normalized;
+  }
+
+  if (!Array.isArray(mathJson) || mathJson[0] !== 'Add' || mathJson.length < 2) {
+    return printedStandardMathLatex(mathJson);
+  }
+
+  return mathJson.slice(1).map((term, index) => {
+    if (
+      Array.isArray(term)
+      && term[0] === 'Negate'
+      && term.length === 2
+      && (!Array.isArray(term[1]) || (term[1][0] !== 'Add' && term[1][0] !== 'Subtract'))
+    ) {
+      return `-${standardMathLatex(term[1])}`;
+    }
+    const rendered = standardMathLatex(term);
+    return index === 0 || rendered.startsWith('-') ? rendered : `+${rendered}`;
+  }).join('');
 }
 
 function standardLeaf(

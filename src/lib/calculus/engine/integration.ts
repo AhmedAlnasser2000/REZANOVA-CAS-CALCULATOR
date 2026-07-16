@@ -187,6 +187,10 @@ function resolvedComputeEngineIntegral(
         variable,
       });
 
+  if (!trustedAntiderivative(backcheck)) {
+    return undefined;
+  }
+
   return profileCalculusResult({
     exactLatex,
     ...(antiderivativeExpression ? { antiderivativeExpression } : {}),
@@ -209,6 +213,23 @@ function resolvedTranscendentalCertificate(
     : undefined;
 }
 
+function unsupportedIndefiniteDetails(input: {
+  existing?: DisplayDetailSection[];
+  candidate?: IntegrationCandidateMetadata;
+}): DisplayDetailSection[] {
+  if (input.existing?.length) {
+    return input.existing;
+  }
+
+  return [
+    calculusDetailSection('Integration Boundary', calculusTextRows([
+      'Integration stopped before adoption because no bounded symbolic route accepted the full indefinite integrand.',
+      'No partial antiderivative was returned; this controlled stop preserves the exact-backcheck policy.',
+      ...(input.candidate?.readinessNotes ?? []),
+    ])),
+  ];
+}
+
 export function resolveIndefiniteIntegralFromAst(input: {
   body: unknown;
   variable: string;
@@ -225,7 +246,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
   const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable, {
     recognitionGates: input.recognitionGates,
   });
-  if (symbolicEngine.kind === 'success') {
+  if (symbolicEngine.kind === 'success' && trustedAntiderivative(symbolicEngine.verification)) {
     const partialFractionDetail = partialFractionReadbackDetail(symbolicEngine.candidate);
     const integrationDetails = [
       ...(symbolicEngine.detailSections ?? []),
@@ -296,13 +317,17 @@ export function resolveIndefiniteIntegralFromAst(input: {
     }
   }
 
+  const symbolicError = symbolicEngine.kind === 'error' ? symbolicEngine.error : undefined;
   return {
     warnings: [],
-    error: symbolicEngine.error === INTEGRATION_RELATION_INTEGRAND_ERROR
-      ? symbolicEngine.error
+    error: symbolicError === INTEGRATION_RELATION_INTEGRAND_ERROR
+      ? symbolicError
       : input.unsupportedError,
     integrationCandidate: symbolicEngine.candidate,
-    detailSections: symbolicEngine.detailSections,
+    detailSections: unsupportedIndefiniteDetails({
+      existing: symbolicEngine.detailSections,
+      candidate: symbolicEngine.candidate,
+    }),
     integrationFactNodes: symbolicEngine.factNodes,
     integrationDetailNodes: symbolicEngine.detailNodes,
   };

@@ -6,6 +6,7 @@ import {
 } from './inverse-readback';
 
 export type AlgebraicGenus0StandardRadicalRule = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -38,6 +39,7 @@ export function tryAlgebraicGenus0StandardRadicalRule(
   }
 
   return {
+    antiderivativeNode: result.antiderivativeNode,
     exactLatex: result.exactLatex,
     verification: result.verification,
     exactSupplementLatex: userFacingSupplements(result),

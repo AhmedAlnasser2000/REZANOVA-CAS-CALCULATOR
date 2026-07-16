@@ -28,6 +28,7 @@ const ZERO: ExactScalar = { numerator: 0, denominator: 1 };
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
 
 type TargetFreePolynomialRuleResult = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -213,7 +214,7 @@ function integrateMonomialNode(
     powerNode(variable, nextDegree),
   ]);
   const divisor = denominator
-    ? multiplyNodes([buildExactScalarNode(nextDegree), denominator])
+    ? multiplyNodes([buildExactScalarNode(nextDegree), structuredClone(denominator)])
     : buildExactScalarNode(nextDegree);
   return divisor === 1 ? numerator : ['Divide', numerator, divisor];
 }
@@ -283,11 +284,17 @@ export function tryTargetFreePolynomialDirectRule(
     return undefined;
   }
 
-  const antiderivativeTerms = polynomial.map((monomial) =>
-    integrateMonomialLatex(monomial, variable, denominator));
-  if (antiderivativeTerms.some((term) => term === undefined)) {
+  const antiderivativeNodes = polynomial.map((monomial) =>
+    integrateMonomialNode(monomial, variable, denominator));
+  if (antiderivativeNodes.some((term) => term === undefined)) {
     return undefined;
   }
+
+  const antiderivativeNode = antiderivativeNodes.length === 1
+    ? antiderivativeNodes[0]
+    : ['Add', ...antiderivativeNodes];
+  const antiderivativeTerms = polynomial.map((monomial) =>
+    integrateMonomialLatex(monomial, variable, denominator));
 
   const exactLatex = joinAdditiveLatex(antiderivativeTerms as string[]);
   if (!exactLatex) {
@@ -296,6 +303,7 @@ export function tryTargetFreePolynomialDirectRule(
 
   const denominatorLatex = denominator ? boxLatex(denominator) : undefined;
   return {
+    antiderivativeNode,
     exactLatex,
     verification: proof(),
     exactSupplementLatex: denominatorLatex

@@ -1,7 +1,7 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { ExactSupplementEntry } from '../../../types/calculator/exact-supplement-types';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
-import { readExactScalarNode, type ExactScalar } from '../../algebra/polynomial-core';
+import { buildExactScalarNode, readExactScalarNode, type ExactScalar } from '../../algebra/polynomial-core';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
@@ -17,6 +17,7 @@ import { sameNode } from './node-helpers';
 import { scaleByExactScalar } from './rational-latex';
 
 type LogPowerResult = {
+  antiderivativeNode: unknown;
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
@@ -137,6 +138,7 @@ function verifiedLogPowerResult(
   node: unknown,
   variable: string,
   exactLatex: string,
+  antiderivativeNode: unknown,
   detail: readonly IntegrationDetailRow[],
   needsLogExclusion: boolean,
 ): LogPowerResult | undefined {
@@ -147,6 +149,7 @@ function verifiedLogPowerResult(
   }));
   return verification
     ? {
+      antiderivativeNode,
       exactLatex,
       verification,
       exactSupplementLatex: supplements(variable, needsLogExclusion),
@@ -169,6 +172,7 @@ export function tryLogPowerSubstitutionRule(
       node,
       variable,
       scaleByExactScalar(positiveLogPowerLatex(variable, numeratorLogPower + 1), coefficient),
+      ['Multiply', buildExactScalarNode(coefficient), ['Power', ['Ln', variable], numeratorLogPower + 1]],
       [
         integrationMathRow('Recognized form: ', `ln(${variable})^${numeratorLogPower}/${variable}`, '.'),
         integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),
@@ -187,6 +191,7 @@ export function tryLogPowerSubstitutionRule(
       node,
       variable,
       `\\ln\\left|${logLatex(variable)}\\right|`,
+      ['Ln', ['Abs', ['Ln', variable]]],
       [
         integrationMathRow('Recognized form: ', `1/(${variable} ln(${variable}))`, '.'),
         integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),
@@ -202,6 +207,10 @@ export function tryLogPowerSubstitutionRule(
       numerator: -1,
       denominator: denominatorLogPower - 1,
     }),
+    ['Multiply',
+      buildExactScalarNode({ numerator: -1, denominator: denominatorLogPower - 1 }),
+      ['Power', ['Ln', variable], -(denominatorLogPower - 1)],
+    ],
     [
       integrationMathRow('Recognized form: ', `1/(${variable} ln(${variable})^${denominatorLogPower})`, '.'),
       integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),

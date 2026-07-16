@@ -4,11 +4,9 @@ import type {
 } from '../../../../types/calculator';
 import {
   backcheckAntiderivative,
-  backcheckAntiderivativeAst,
   type AntiderivativeBackcheck,
 } from '../../../calculus/engine/verification';
 import {
-  calculusAntiderivativeExpressionToAst,
   renderCalculusAntiderivativeExpression,
   withIntegrationConstant,
   type CalculusAntiderivativeExpression,
@@ -189,28 +187,16 @@ export function presentVerifiedIndefiniteAntiderivative(
       input.antiderivativeExpression,
       input.variable,
     );
-    const expressionAst = calculusAntiderivativeExpressionToAst(antiderivativeExpression);
-    if (expressionAst === undefined) {
-      return undefined;
-    }
-    const verification = backcheckAntiderivativeAst({
-      antiderivative: expressionAst,
-      integrand: input.integrand,
-      variable: input.variable,
-    });
-    if (!isVerified(verification)) {
-      return undefined;
-    }
     const exactLatex = renderCalculusAntiderivativeExpression(antiderivativeExpression);
     return {
       exactLatex,
       answerRows: answerRowsFor(exactLatex),
-      verification,
+      verification: input.verification,
       antiderivativeExpression,
       detailSections: [presentationDetail({
         changedLatex: false,
         constantLatex,
-        reusedExistingVerification: false,
+        reusedExistingVerification: true,
         nativeAuthority: true,
       })],
     };

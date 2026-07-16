@@ -1,4 +1,7 @@
-import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
+import {
+  resolveAntiderivativeRule,
+  resolveAntiderivativeRuleExpression,
+} from '../../calculus/engine/antiderivative-rules';
 import { backcheckAntiderivative } from '../../calculus/engine/verification';
 import { expandMathJsonNode } from '../primitives/expansion/expansion';
 import { dependsOnVariable, isNodeArray } from '../patterns';
@@ -95,5 +98,13 @@ export function tryExpandedDirectRule(node: unknown, variable: string) {
     variable,
   });
 
-  return verification.status === 'verified-exact' ? integrated : undefined;
+  if (verification.status !== 'verified-exact') {
+    return undefined;
+  }
+  const expression = resolveAntiderivativeRuleExpression(expanded.node, variable);
+  return {
+    exactLatex: integrated,
+    verification,
+    antiderivativeExpression: expression,
+  };
 }

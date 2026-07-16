@@ -49,12 +49,19 @@ export type CalculusCoreEvaluation = {
   mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
   integrationFactNodes?: CalculusIntegrationFactNode[];
   integrationDetailNodes?: CalculusIntegrationDetailNode[];
+  indefiniteIntegralAuthority?: CalculusIndefiniteIntegralAuthority;
 };
 
 export type CalculusOwnedMathJsonLeaf = {
   canonicalLatex: string;
   mathJson: unknown;
   source: string;
+};
+
+export type CalculusIndefiniteIntegralAuthority = {
+  selector: 'indefiniteIntegral:standard' | 'indefiniteIntegral:special-function' | 'indefiniteIntegral:error';
+  request: CalculusOwnedMathJsonLeaf;
+  primary?: CalculusOwnedMathJsonLeaf;
 };
 
 export type BoxedLike = {

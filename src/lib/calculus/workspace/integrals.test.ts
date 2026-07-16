@@ -56,7 +56,7 @@ describe('calculus integrals', () => {
       integrationVariable: 't',
     });
     expect(tResult.error).toBeUndefined();
-    expect(tResult.exactLatex).toContain('e^{t}');
+    expect(tResult.exactLatex).toContain('\\exponentialE^{t}');
 
     const parameterResult = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'x t',
@@ -318,8 +318,10 @@ describe('calculus integrals', () => {
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.integrationStrategy).toBe('partial-fractions');
-    expect(result.exactLatex).toContain('k\\cdot \\ln');
-    expect(result.exactLatex).toContain('ax^2+bx+c');
+    expect(result.exactLatex).toMatch(/k(?:\\cdot )?\\ln/);
+    expect(result.exactLatex).toContain('ax^2');
+    expect(result.exactLatex).toContain('bx');
+    expectParseableLatex(result.exactLatex);
   });
 
   it('handles bounded rational partial-fraction primitives', () => {
@@ -350,7 +352,7 @@ describe('calculus integrals', () => {
     expect(quadratic.error).toBeUndefined();
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.integrationStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C');
+    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C');
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 
@@ -374,7 +376,7 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{2x^3-3x^2+1}{x^2-3x+1}`,
     });
     expect(rational.error).toBeUndefined();
-    expect(rational.exactLatex).toContain('x^{2}+3x');
+    expect(rational.exactLatex).toContain('x^2+3x');
     expect(rational.exactLatex).not.toContain(String.raw`2\left(\frac{x^{2}}{2}\right)`);
     expect(rational.exactLatex).toContain(String.raw`\frac{17}{2\sqrt{5}}\ln`);
     expect(rational.answerRows?.rows).toEqual([
@@ -407,7 +409,7 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\sinh^2(x)`,
     });
     expect(sinh.error).toBeUndefined();
-    expect(sinh.exactLatex).toBe(String.raw`\frac{1}{4}\sinh\left(2x\right)-\frac{1}{2}x+C`);
+    expect(sinh.exactLatex).toBe(String.raw`\frac{1}{4}\sinh(2x)-\frac{1}{2}x+C`);
     expectParseableLatex(sinh.exactLatex);
 
     const cosh = evaluateCalculusIndefiniteIntegral({
@@ -415,7 +417,7 @@ describe('calculus integrals', () => {
     });
     expect(cosh.error).toBeUndefined();
     expect(cosh.exactLatex).not.toContain(String.raw`2\left(\left(2x+1\right)\right)`);
-    expect(cosh.exactLatex).toContain(String.raw`\sinh\left(2\left(2x+1\right)\right)`);
+    expect(cosh.exactLatex).toContain(String.raw`\sinh(2(2x+1))`);
     expect(cosh.exactLatex?.endsWith('+C')).toBe(true);
     expectParseableLatex(cosh.exactLatex);
 
@@ -435,6 +437,10 @@ describe('calculus integrals', () => {
       bodyLatex: '\\sin(x^3)',
     });
     expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Integration Boundary');
+    expect(result.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
+      'No partial antiderivative was returned',
+    );
   });
 
   it('keeps adopted simple single-variable indefinite integrals on app-owned symbolic rules', () => {

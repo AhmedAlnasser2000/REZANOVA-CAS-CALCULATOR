@@ -46,3 +46,19 @@
 - `npm run test:file-sizes` - pass, 1,991 files checked against five baseline caps.
 - `npm run test:memory-protocol` - pass.
 - `git diff --check` - pass.
+
+## CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1
+
+- gate_type: backend/ui
+- status: verified
+- Focused Vitest: `npx vitest run src/lib/calculus/workspace/integrals.test.ts src/lib/calculus/workspace/engine.test.ts src/lib/calculus/engine/antiderivative-expression.test.ts src/lib/result-contract/v2-contract.test.ts --maxWorkers=2` - pass, 62 tests.
+- Incremental TypeScript: `npx tsc -b --pretty false` - pass.
+- Canonical authority: `node tools/canonical-result-v2-enforcement.mjs` - pass for the frozen-producer enforcement inventory.
+- Display inversion ratchet: `node tools/display-contract-inversion-ratchet.test.mjs` - pass, 24 subtests.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 950 unique source-backed indefinite integration cases, 50 duplicate records, 1373 run results, and 84 scan findings.
+- File-size gate: `npm run test:file-sizes` - pass after extracting integration dispatch, scalar retry, retry details, and trig-power normalization helpers.
+- Authority inventory: `env AUTHORITY_INVENTORY_START=0 AUTHORITY_INVENTORY_COUNT=120 ./node_modules/.bin/vite-node .task_tmp/calculus-integration-authority-genus1-next100-fix1/authority-inventory.ts` - pass, sampled ordinary successes as `indefiniteIntegral:standard` and controlled errors as `indefiniteIntegral:error`.
+- Playwright visual verification: `npx playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-v2-authority.config.ts --project=chromium` - pass.
+- Playwright inspected `sqrt(4-x^2)`, `sqrt(x^2+4)`, `(2x^4+x^2+1)/(x^2+4x+1)`, and controlled error `(sec(x)+cot(x))^2` for answer/error cards, Valid When facts, integration detail cards, Trust/Detailed Facts, Copy Result `+C`, To Editor transfer, History replay, and overflow/readability.
+- Known unrelated blocker: the broader `npm run test:result-contract` path is not used as this gate's evidence because unrelated dirty MathJSON coverage work in the shared tree changes `calculate.integrals` coverage totals. This gate instead ran the focused V2 contract tests plus frozen-producer and display-inversion ratchets.
+- `git diff --check` - pass.

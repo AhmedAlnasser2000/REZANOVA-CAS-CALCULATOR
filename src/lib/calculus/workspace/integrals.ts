@@ -31,6 +31,7 @@ import {
   calculusTextRows,
 } from '../detail-readback';
 import { profileCalculusResult } from '../../display/printer';
+import { calculusAntiderivativeExpressionToAst } from '../engine/antiderivative-expression';
 
 const ce = new ComputeEngine();
 const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
@@ -126,30 +127,75 @@ function substituteMathJson(node: unknown, variable: string, value: number): unk
   return node.map((child, index) => index === 0 ? child : substituteMathJson(child, variable, value));
 }
 
-function indefiniteMathJsonLeaves(
+function withIndefiniteIntegralAuthority(
   evaluation: CalculusWorkspaceEvaluation,
   body: unknown,
   variable: string,
+  canonicalBodyLatex: string,
 ) {
-  if (evaluation.error || !evaluation.exactLatex) return evaluation;
-  const antiderivative = directAntiderivativeMathJson(body, variable);
-  if (!antiderivative) return evaluation;
-  const constant = variable === 'C' ? 'K' : 'C';
-  const answer = ['Add', antiderivative, constant];
+  const request = {
+    canonicalLatex: `\\int ${canonicalBodyLatex}\\,d${variable}`,
+    mathJson: ['Integrate', structuredClone(body), variable],
+    source: 'calculus.indefinite-integral:request',
+  };
+  if (evaluation.error || !evaluation.exactLatex) {
+    return {
+      ...evaluation,
+      indefiniteIntegralAuthority: {
+        selector: 'indefiniteIntegral:error',
+        request,
+      },
+      mathJsonLeaves: [
+        ...(evaluation.mathJsonLeaves ?? []),
+        request,
+      ],
+    } satisfies CalculusWorkspaceEvaluation;
+  }
+
+  const expression = evaluation.antiderivativeExpression;
+  const answer = expression
+    ? calculusAntiderivativeExpressionToAst(expression)
+    : undefined;
+  if (!expression || answer === undefined) return evaluation;
+  const primary = {
+    canonicalLatex: evaluation.exactLatex,
+    mathJson: answer,
+    source: expression.kind === 'indefinite-family'
+      ? expression.antiderivative.source
+      : expression.source,
+  };
+  const selector = expression.kind === 'special-function-expression'
+    || (expression.kind === 'indefinite-family'
+      && expression.antiderivative.kind === 'special-function-expression')
+    ? 'indefiniteIntegral:special-function' as const
+    : 'indefiniteIntegral:standard' as const;
+  const nodeLeaves = [
+    ...(evaluation.integrationFactNodes ?? []).map((fact) => ({
+      canonicalLatex: fact.presentationLatex,
+      mathJson: fact.mathJson,
+      source: fact.source,
+    })),
+    ...(evaluation.integrationDetailNodes ?? []).flatMap((section) =>
+      section.lines.flatMap((line) => line.flatMap((part) => part.kind === 'math'
+        ? [{
+            canonicalLatex: part.canonicalLatex,
+            mathJson: part.mathJson,
+            source: part.source,
+          }]
+        : []))),
+  ];
   return {
     ...evaluation,
+    indefiniteIntegralAuthority: {
+      selector,
+      request,
+      primary,
+    },
     mathJsonLeaves: [
       ...(evaluation.mathJsonLeaves ?? []),
-      {
-        canonicalLatex: evaluation.exactLatex,
-        mathJson: answer,
-        source: 'calculus.indefinite-integral:verified-direct-answer',
-      },
-      {
-        canonicalLatex: constant,
-        mathJson: constant,
-        source: 'calculus.indefinite-integral:constant',
-      },
+      request,
+      primary,
+      ...nodeLeaves,
     ],
   } satisfies CalculusWorkspaceEvaluation;
 }
@@ -376,10 +422,11 @@ export function evaluateCalculusIndefiniteIntegral(
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
       performanceBudgetMs: INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS,
     });
-    return indefiniteMathJsonLeaves(
+    return withIndefiniteIntegralAuthority(
       presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id),
       integrand.body,
       variable.id,
+      integrand.canonicalBodyLatex,
     );
   } catch {
     return {

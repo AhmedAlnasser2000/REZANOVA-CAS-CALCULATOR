@@ -1,7 +1,9 @@
 import {
   divideExactScalars,
+  buildExactScalarNode,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarIsZero,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
@@ -50,10 +52,18 @@ function affinePowerAntiderivative(
   }
 
   const affineLatex = exactPolynomialToLatex(affine);
+  const affineNode = exactPolynomialToNode(affine);
   if (exponent === -1) {
     const coefficient = reciprocalCoefficient(slope);
     return coefficient
-      ? scaleByExactScalar(`\\ln\\left|${wrapGroupedLatex(affineLatex)}\\right|`, coefficient)
+      ? {
+          exactLatex: scaleByExactScalar(`\\ln\\left|${wrapGroupedLatex(affineLatex)}\\right|`, coefficient),
+          antiderivativeNode: [
+            'Multiply',
+            buildExactScalarNode(coefficient),
+            ['Ln', ['Abs', affineNode]],
+          ],
+        }
       : undefined;
   }
 
@@ -74,7 +84,14 @@ function affinePowerAntiderivative(
   const powered = nextExponent === 1
     ? wrapGroupedLatex(affineLatex)
     : `${wrapGroupedLatex(affineLatex)}^{${nextExponent}}`;
-  return scaleByExactScalar(powered, coefficient);
+  return {
+    exactLatex: scaleByExactScalar(powered, coefficient),
+    antiderivativeNode: [
+      'Multiply',
+      buildExactScalarNode(coefficient),
+      nextExponent === 1 ? affineNode : ['Power', affineNode, nextExponent],
+    ],
+  };
 }
 
 export function tryAffinePowerRule(node: unknown, variable: string) {

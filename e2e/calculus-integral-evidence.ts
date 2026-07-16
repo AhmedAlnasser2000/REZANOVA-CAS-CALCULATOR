@@ -60,7 +60,9 @@ async function rawLatexIn(locator: Locator) {
 }
 
 export async function expectAnswerLatex(page: Page, ...snippets: string[]) {
-  const exact = page.getByTestId('display-outcome-exact');
+  const exact = page
+    .getByTestId('display-outcome-answer-block')
+    .getByTestId('display-outcome-exact');
   await expect(exact).toBeVisible();
   for (const snippet of snippets) {
     await expect.poll(() => rawLatexIn(exact)).toContain(snippet);

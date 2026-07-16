@@ -531,12 +531,12 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 404);
+    assert.equal(report.summary.producerCount, 405);
     assert.equal(report.summary.consumerCount, 57);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 91);
-    assert.equal(report.summary.nativeDocumentCount, 155);
+    assert.equal(report.summary.nativeDocumentCount, 156);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

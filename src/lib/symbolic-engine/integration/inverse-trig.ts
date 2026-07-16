@@ -3,6 +3,7 @@ import {
   divideExactScalars,
   exactPolynomialDegree,
   exactPolynomialToLatex,
+  exactPolynomialToNode,
   exactScalarIsZero,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
@@ -21,6 +22,7 @@ const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
 type ExactAffineForm = {
   slope: ExactScalar;
   latex: string;
+  node: unknown;
 };
 
 function exactScalarLatex(value: ExactScalar) {
@@ -64,6 +66,7 @@ function parseExactAffineForm(node: unknown, variable: string): ExactAffineForm 
   return {
     slope,
     latex: exactPolynomialToLatex(polynomial),
+    node: exactPolynomialToNode(polynomial),
   };
 }
 
@@ -229,6 +232,7 @@ function arctanDenominatorForm(denominator: unknown, variable: string) {
       affine: {
         slope: completed.affine.slope,
         latex: completed.affine.latex,
+        node: ['Add', variable, buildExactScalarNode(completed.affine.offset)],
       },
     }
     : undefined;
@@ -285,14 +289,31 @@ export function inverseTrigIntegral(node: unknown, variable: string) {
         ? divideExactScalars(reciprocal.coefficient, multiplyExactScalars(slopeScale, form.root))
         : divideExactScalars(reciprocal.coefficient, slopeScale);
       if (coefficient) {
+        const rootNode = form.root
+          ? buildExactScalarNode(form.root)
+          : ['Sqrt', buildExactScalarNode(form.constant)];
+        const argumentNode = form.root
+          && normalizeExactScalar(form.root).numerator === normalizeExactScalar(form.root).denominator
+          ? form.affine.node
+          : ['Divide', form.affine.node, rootNode];
+        const functionNode = ['Arctan', argumentNode];
         const arctanLatex = `\\arctan\\left(${affineRatioWithRootLatex(
           form.affine.latex,
           form.root,
           rootLatex,
         )}\\right)`;
-        return form.root
+        const exactLatex = form.root
           ? scaleByExactScalar(arctanLatex, coefficient)
           : scaleByIrrationalDenominator(arctanLatex, coefficient, rootLatex);
+        if (!exactLatex) {
+          return undefined;
+        }
+        return {
+          exactLatex,
+          antiderivativeNode: form.root
+            ? ['Multiply', buildExactScalarNode(coefficient), functionNode]
+            : ['Divide', ['Multiply', buildExactScalarNode(coefficient), functionNode], rootNode],
+        };
       }
     }
   }
@@ -304,10 +325,24 @@ export function inverseTrigIntegral(node: unknown, variable: string) {
       const rootLatex = form.root ? exactScalarLatex(form.root) : `\\sqrt{${exactScalarLatex(form.constant)}}`;
       const coefficient = divideExactScalars(sqrtReciprocal.coefficient, form.affine.slope);
       if (coefficient) {
-        return scaleByExactScalar(
-          `\\arcsin\\left(${affineRatioWithRootLatex(form.affine.latex, form.root, rootLatex)}\\right)`,
-          coefficient,
-        );
+        const rootNode = form.root
+          ? buildExactScalarNode(form.root)
+          : ['Sqrt', buildExactScalarNode(form.constant)];
+        const argumentNode = form.root
+          && normalizeExactScalar(form.root).numerator === normalizeExactScalar(form.root).denominator
+          ? form.affine.node
+          : ['Divide', form.affine.node, rootNode];
+        return {
+          exactLatex: scaleByExactScalar(
+            `\\arcsin\\left(${affineRatioWithRootLatex(form.affine.latex, form.root, rootLatex)}\\right)`,
+            coefficient,
+          ),
+          antiderivativeNode: [
+            'Multiply',
+            buildExactScalarNode(coefficient),
+            ['Arcsin', argumentNode],
+          ],
+        };
       }
     }
   }

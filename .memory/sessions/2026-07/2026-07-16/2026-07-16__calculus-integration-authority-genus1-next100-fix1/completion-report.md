@@ -33,7 +33,7 @@
 
 - `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1`: verified
 - `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1`: verified
-- `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: pending
+- `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: verified
 - `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: pending
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: pending
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: pending
@@ -58,3 +58,12 @@
 - Verified indefinite families add `C` structurally on the right only after derivative backcheck.
 - Migrated foundational direct polynomial/power primitives as the first live native family and kept visible output as one antiderivative expression.
 - The frozen V1 runtime does not expose the core Trust section for the direct polynomial Playwright case; Gate 3 owns the V2 runtime authority handoff and Trust visibility rather than changing the frozen adapter here.
+
+## Completed Gate 3
+
+- Migrated ordinary indefinite-integration successes and math-bearing controlled errors onto Calculus-owned V2 authority through integration-specific adapters, without editing the frozen shared Calculus V1 adapter boundary.
+- Preserved one visible antiderivative expression, structural right-hand `+C`, and route-owned fact/detail sections while routing Copy Result, To Editor, History replay, and runtime outcomes from native authority rather than reparsing rendered LaTeX.
+- Fail-closed Compute Engine fallback now rejects untrusted symbolic candidates; unsupported indefinite cases receive an app-visible Integration Boundary detail when no more specific route detail exists.
+- Threaded native expressions through rational positive-discriminant division, trig-substitution radicals, scalar/additive retries, target-free polynomial routes, hyperbolic/direct primitives, and related route metadata.
+- Extracted integration helper files to keep file-size ratchets green: linear combination fallback, scalar-multiple retry, retry detail builders, and trig-power normalization.
+- Playwright verified ordinary V2 answers, boundary errors, facts/details, Trust, Copy Result, To Editor, History replay, and readability for representative affected integration routes.

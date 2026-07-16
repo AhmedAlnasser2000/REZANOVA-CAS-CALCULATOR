@@ -38,6 +38,7 @@ export function symbolicSuccess(
   antiderivativeExpression?: CalculusAntiderivativeExpression,
   factNodes?: CalculusIntegrationFactNode[],
   detailNodes?: CalculusIntegrationDetailNode[],
+  nativeVerificationMode: 'backcheck' | 'precomputed-exact' | 'precomputed-trusted' = 'backcheck',
 ): IntegralResolution {
   const expressionAst = antiderivativeExpression
     ? calculusAntiderivativeExpressionToAst(antiderivativeExpression)
@@ -46,7 +47,16 @@ export function symbolicSuccess(
     ? renderCalculusAntiderivativeExpression(antiderivativeExpression)
     : exactLatex;
   const verification = antiderivativeExpression
-    ? expressionAst === undefined
+    ? nativeVerificationMode === 'precomputed-exact'
+      && precomputedVerification?.status === 'verified-exact'
+      ? precomputedVerification
+      : nativeVerificationMode === 'precomputed-trusted'
+      && (
+        precomputedVerification?.status === 'verified-exact'
+        || precomputedVerification?.status === 'verified-numeric-confidence'
+      )
+        ? precomputedVerification
+      : expressionAst === undefined
       ? {
           status: 'not-checkable' as const,
           reason: 'native antiderivative expression could not be differentiated',
