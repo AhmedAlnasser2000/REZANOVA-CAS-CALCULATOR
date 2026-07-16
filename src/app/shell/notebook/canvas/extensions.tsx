@@ -11,6 +11,7 @@ import {
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
+import { NotebookFloatingAnchorRepair } from './NotebookFloatingAnchorRepairExtension';
 import { NotebookFontSize } from './NotebookFontSizeExtension';
 import {
   createNotebookImageNodeView,
@@ -393,6 +394,7 @@ export function createNotebookExtensions(
     NotebookDocumentLayout,
     NotebookNodeIds,
     NotebookObjectPlacementAttributes,
+    NotebookFloatingAnchorRepair,
     InlineMath.extend({
       addNodeView() {
         return ReactNodeViewRenderer(
