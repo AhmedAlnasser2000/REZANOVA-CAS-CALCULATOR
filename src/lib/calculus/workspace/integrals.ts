@@ -42,6 +42,7 @@ const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
 type BoxedLike = {
   latex: string;
   json: unknown;
+  isValid?: boolean;
   evaluate: () => BoxedLike;
   simplify?: () => BoxedLike;
   N?: () => BoxedLike;
@@ -125,6 +126,40 @@ function directAntiderivativeMathJson(body: unknown, variable: string): unknown 
   return undefined;
 }
 
+function containsComputeEngineErrorNode(node: unknown): boolean {
+  if (Array.isArray(node)) {
+    if (node[0] === 'Error') return true;
+    return node.slice(1).some(containsComputeEngineErrorNode);
+  }
+  if (node && typeof node === 'object') {
+    const record = node as Record<string, unknown>;
+    return Object.values(record).some(containsComputeEngineErrorNode);
+  }
+  return false;
+}
+
+function proofSafeMathJsonLeaf(
+  leaf: {
+    canonicalLatex: string;
+    mathJson: unknown;
+    source: string;
+  },
+) {
+  if (containsComputeEngineErrorNode(leaf.mathJson)) {
+    return undefined;
+  }
+  try {
+    const boxed = ce.box(leaf.mathJson as Parameters<typeof ce.box>[0]) as BoxedLike;
+    const parsed = ce.parse(leaf.canonicalLatex) as BoxedLike;
+    if (boxed.isValid === false || parsed.isValid === false) {
+      return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+  return leaf;
+}
+
 function substituteMathJson(node: unknown, variable: string, value: number): unknown {
   if (node === variable) return value;
   if (!Array.isArray(node)) return node;
@@ -142,16 +177,17 @@ function withIndefiniteIntegralAuthority(
     mathJson: ['Integrate', structuredClone(body), variable],
     source: 'calculus.indefinite-integral:request',
   };
+  const safeRequest = proofSafeMathJsonLeaf(request);
   if (evaluation.error || !evaluation.exactLatex) {
     return {
       ...evaluation,
       indefiniteIntegralAuthority: {
         selector: 'indefiniteIntegral:error',
-        request,
+        ...(safeRequest ? { request: safeRequest } : {}),
       },
       mathJsonLeaves: [
         ...(evaluation.mathJsonLeaves ?? []),
-        request,
+        ...(safeRequest ? [safeRequest] : []),
       ],
     } satisfies CalculusWorkspaceEvaluation;
   }
@@ -206,13 +242,13 @@ function withIndefiniteIntegralAuthority(
     ...evaluation,
     indefiniteIntegralAuthority: {
       selector,
-      request,
+      ...(safeRequest ? { request: safeRequest } : {}),
       ...(primary ? { primary } : {}),
       ...(specialExpression ? { specialExpression } : {}),
     },
     mathJsonLeaves: [
       ...(evaluation.mathJsonLeaves ?? []),
-      request,
+      ...(safeRequest ? [safeRequest] : []),
       ...(primary ? [primary] : []),
       ...expressionLeaves,
       ...nodeLeaves,

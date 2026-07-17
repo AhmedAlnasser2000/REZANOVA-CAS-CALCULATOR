@@ -201,6 +201,27 @@ function isAdditiveNode(node: unknown) {
   return Array.isArray(node) && (node[0] === 'Add' || node[0] === 'Subtract');
 }
 
+function isSafeFormalFunctionName(name: string) {
+  return /^[A-Za-z][A-Za-z0-9_]*$/u.test(name);
+}
+
+function isFormalApplyNode(node: unknown) {
+  return Array.isArray(node)
+    && node[0] === 'Apply'
+    && node.length === 3
+    && typeof node[1] === 'string'
+    && isSafeFormalFunctionName(node[1]);
+}
+
+function containsFormalApply(node: unknown): boolean {
+  return isFormalApplyNode(node)
+    || (Array.isArray(node) && node.slice(1).some(containsFormalApply));
+}
+
+function formalApplyLatex(node: unknown[]) {
+  return `${node[1]}\\left(${standardMathLatex(node[2])}\\right)`;
+}
+
 function explicitProductLatex(factors: unknown[]) {
   return factors.map((factor) =>
     isAdditiveNode(factor)
@@ -209,6 +230,22 @@ function explicitProductLatex(factors: unknown[]) {
 }
 
 function standardMathLatex(mathJson: unknown): string {
+  if (Array.isArray(mathJson) && isFormalApplyNode(mathJson)) {
+    return formalApplyLatex(mathJson);
+  }
+
+  if (
+    Array.isArray(mathJson)
+    && mathJson[0] === 'Power'
+    && mathJson.length === 3
+    && containsFormalApply(mathJson[1])
+  ) {
+    const exponentLatex = standardMathLatex(mathJson[2]);
+    return /^[A-Za-z0-9]+$/u.test(exponentLatex)
+      ? `${standardMathLatex(mathJson[1])}^${exponentLatex}`
+      : `${standardMathLatex(mathJson[1])}^{${exponentLatex}}`;
+  }
+
   if (Array.isArray(mathJson) && mathJson[0] === 'Divide' && mathJson.length === 3) {
     const numerator = positiveMagnitudeNode(mathJson[1]);
     if (numerator !== undefined) {
@@ -216,6 +253,18 @@ function standardMathLatex(mathJson: unknown): string {
     }
     const numeratorSplit = splitProductCoefficient(mathJson[1]);
     const denominatorScalar = exactRationalScalar(mathJson[2]);
+    if (
+      containsFormalApply(mathJson[1])
+      && denominatorScalar
+      && numeratorSplit.coefficient.numerator === numeratorSplit.coefficient.denominator
+      && numeratorSplit.factors.length > 0
+    ) {
+      const denominator = standardMathLatex(mathJson[2]);
+      const numeratorLatex = numeratorSplit.factors.length === 1
+        ? standardMathLatex(numeratorSplit.factors[0])
+        : explicitProductLatex(numeratorSplit.factors);
+      return `\\frac{${numeratorLatex}}{${denominator}}`;
+    }
     if (denominatorScalar) {
       const coefficient = divideExactRationals(numeratorSplit.coefficient, denominatorScalar);
       if (coefficient) {
@@ -279,7 +328,7 @@ function standardMathLatex(mathJson: unknown): string {
       ? '1'
       : ordered.length === 1
         ? standardMathLatex(ordered[0])
-        : ordered.some(isAdditiveNode)
+        : ordered.some(isAdditiveNode) || ordered.some(containsFormalApply)
           ? explicitProductLatex(ordered)
           : printedStandardMathLatex(['Multiply', ...ordered]);
     return negative ? `-${normalized}` : normalized;

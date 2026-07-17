@@ -45,7 +45,7 @@ import { normalizeGeneratedIntegrationLatex } from './readback-hygiene';
 import { scaleByExactScalar } from './rational-latex';
 import { tryRationalPartialFractionRule } from './rational';
 
-type IbpGapResult = {
+type TextbookByPartsResult = {
   exactLatex: string;
   antiderivativeNode?: unknown;
   verification: AntiderivativeBackcheck;
@@ -453,7 +453,7 @@ function byPartsDetail(title: string, rows: readonly IntegrationDetailRow[]): Di
   return integrationDetailSection(title, rows);
 }
 
-function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResult | undefined {
+function tryInverseTrigByPartsRule(node: unknown, variable: string): TextbookByPartsResult | undefined {
   const product = findInverseTrigProduct(node, variable);
   if (!product) {
     return undefined;
@@ -582,7 +582,7 @@ function findAffineTrigDerivativeProduct(node: unknown, variable: string) {
 function tryAffineTrigDerivativeByPartsRule(
   node: unknown,
   variable: string,
-): IbpGapResult | undefined {
+): TextbookByPartsResult | undefined {
   const product = findAffineTrigDerivativeProduct(node, variable);
   if (
     !product
@@ -670,7 +670,7 @@ function tryAffineTrigDerivativeByPartsRule(
   };
 }
 
-export function tryTextbookIbpGapRule(node: unknown, variable: string): IbpGapResult | undefined {
+export function tryTextbookByPartsRule(node: unknown, variable: string): TextbookByPartsResult | undefined {
   return tryInverseTrigByPartsRule(node, variable)
     ?? tryAffineTrigDerivativeByPartsRule(node, variable);
 }

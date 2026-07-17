@@ -210,10 +210,14 @@ export function createCalculusIndefiniteIntegralOutcomeV2(input: {
           },
         }
       : {}),
-    request: {
-      kind: 'math',
-      value: mathValue(authority.request.canonicalLatex, 'request.value'),
-    },
+    ...(authority.request
+      ? {
+          request: {
+            kind: 'math' as const,
+            value: mathValue(authority.request.canonicalLatex, 'request.value'),
+          },
+        }
+      : {}),
     answerRows: authority.primary
       ? { rows: [{ math: mathValue(authority.primary.canonicalLatex, 'answerRows.rows[0].math') }] }
       : null,
@@ -252,10 +256,14 @@ export function createCalculusIndefiniteIntegralOutcomeV4(input: {
         'primary.expression',
       ),
     },
-    request: {
-      kind: 'math',
-      value: mathValue(authority.request.canonicalLatex, 'request.value'),
-    },
+    ...(authority.request
+      ? {
+          request: {
+            kind: 'math' as const,
+            value: mathValue(authority.request.canonicalLatex, 'request.value'),
+          },
+        }
+      : {}),
     supplements: supplementsV4(evaluation.integrationFactNodes, mathValue),
     details,
     warnings: outcome.warnings,

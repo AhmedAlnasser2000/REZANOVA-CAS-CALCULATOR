@@ -61,7 +61,7 @@ export type CalculusOwnedMathJsonLeaf = {
 
 export type CalculusIndefiniteIntegralAuthority = {
   selector: 'indefiniteIntegral:standard' | 'indefiniteIntegral:special-function' | 'indefiniteIntegral:error';
-  request: CalculusOwnedMathJsonLeaf;
+  request?: CalculusOwnedMathJsonLeaf;
   primary?: CalculusOwnedMathJsonLeaf;
   specialExpression?: CanonicalSpecialFunctionExpressionV4;
 };

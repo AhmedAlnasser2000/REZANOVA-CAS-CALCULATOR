@@ -123,3 +123,19 @@
 - Playwright visual verification: `./node_modules/.bin/playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-substitution-root-gaps.config.ts --project=chromium` - pass, 2 Chromium tests. The run inspected success and boundary answer/error cards, Integration Presentation, Trust, Copy Result, To Editor on the final success case, and overflow/readability screenshots.
 - Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
 - File-size gate: `npm run test:file-sizes` - pass, 2009 files and 5 baseline caps.
+
+## CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2
+
+- gate_type: backend/ui
+- status: verified
+- Added bounded trig/IBP/formal coverage for `sec^2(x)csc^2(x)`, structured `x\ln(x)^2`, and formal `f(x)f'(x)`.
+- Renamed the live production helper from milestone-style `ibp-gaps.ts` to `by-parts-textbook.ts`; the stale `root-substitution-gaps.ts` tab is not present in live source.
+- Fixed the malformed pasted `x\ln^2(x)` runtime path by skipping invalid request MathJSON leaves on V2 controlled errors, so it renders as an Integration Boundary instead of a worker proof failure.
+- Focused Vitest: `./node_modules/.bin/vitest run src/lib/symbolic-engine/integration-trig-ibp-formal.test.ts src/lib/calculus/engine/antiderivative-expression.test.ts --maxWorkers=1` - pass, 9 tests.
+- Focused workspace/native-result Vitest: `./node_modules/.bin/vitest run src/lib/calculus/workspace/integrals.test.ts src/lib/calculus/workspace/engine.test.ts --maxWorkers=1` - pass, 53 tests.
+- Backend probe: `./node_modules/.bin/vite-node .task_tmp/calculus-integration-authority-genus1-next100-fix1/probe-next100-regressions.ts` - pass. `sec^2(x)csc^2(x)` returns `-2\cot(2x)+C`, structured `x\ln(x)^2` returns `\frac{1}{2}x^2\ln(x)^2-\frac{1}{2}x^2\ln(x)+\frac{1}{4}x^2+C`, malformed `x\ln^2(x)` remains a controlled Integration Boundary, and prior next100 successes remain intact.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 950 source-backed unique cases, 50 duplicate records, 1373 run results, and 84 scan findings.
+- Playwright visual verification: `./node_modules/.bin/playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-substitution-root-gaps.config.ts --project=chromium` - pass, 2 Chromium tests. The run inspected success and boundary answer/error cards, Integration Trig Identity, Integration By Parts, Integration Presentation, Trust, Copy Result, To Editor, and overflow/readability.
+- Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
+- File-size gate: `npm run test:file-sizes` - pass after extracting `dispatch-by-parts.ts`; `dispatch.ts` is 911 lines.
+- `git diff --check` - pass.

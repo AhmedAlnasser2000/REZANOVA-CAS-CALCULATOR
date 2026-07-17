@@ -26,10 +26,9 @@ import {
   type IntegrationRouteFamily,
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
-import { tryExpandedPartsRule } from './expanded-parts';
+import { tryIntegrationByPartsRoute } from './dispatch-by-parts';
 import { tryLinearCombinationFallback } from './linear-combination';
 import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
-import { tryTextbookIbpGapRule } from './ibp-gaps';
 import { inverseTrigIntegral } from './inverse-trig';
 import { tryLogPowerSubstitutionRule } from './log-power-substitution';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
@@ -45,13 +44,11 @@ import { normalFormDetail, trigRewriteDetail } from './retry-details';
 import {
   derivativeRatioIntegral,
   normalizeIntegralLatexInput,
-  tryPartsRuleDetailed,
   trySubstitutionRule,
 } from './rules';
 import {
   trySymbolicBinomialSubstitutionRule,
   trySymbolicDirectRule,
-  trySymbolicPartsRule,
   trySymbolicTrigPowerDirectRule,
 } from './symbolic-coefficients';
 import {
@@ -614,93 +611,7 @@ function tryRoute(
   }
 
   if (route === 'integration-by-parts') {
-    const textbookIbpGap = tryTextbookIbpGapRule(node, variable);
-    if (textbookIbpGap) {
-      return symbolicSuccess(node, variable, textbookIbpGap.exactLatex, 'integration-by-parts',
-        textbookIbpGap.verification, textbookIbpGap.exactSupplementLatex, textbookIbpGap.detailSections,
-        textbookIbpGap.antiderivativeNode === undefined
-          ? undefined
-          : nativeStandardAntiderivative(
-              textbookIbpGap.antiderivativeNode,
-              'calculus.integration:textbook-ibp-gap',
-            ));
-    }
-
-    const byParts = tryPartsRuleDetailed(node, variable);
-    if (byParts) {
-      const exactLatex = typeof byParts === 'string' ? byParts : byParts.exactLatex;
-      const antiderivativeNode = typeof byParts === 'string'
-        ? undefined
-        : byParts.antiderivativeNode;
-      return symbolicSuccess(
-        node,
-        variable,
-        exactLatex,
-        'integration-by-parts',
-        typeof byParts === 'string' ? undefined : byParts.verification,
-        undefined,
-        undefined,
-        antiderivativeNode === undefined
-          ? undefined
-          : nativeStandardAntiderivative(
-              antiderivativeNode,
-              'calculus.integration:integration-by-parts',
-            ),
-      );
-    }
-
-    const symbolicParts = trySymbolicPartsRule(node, variable);
-    if (symbolicParts) {
-      return symbolicSuccess(
-        node,
-        variable,
-        symbolicParts.exactLatex,
-        'integration-by-parts',
-        symbolicParts.verification,
-        symbolicParts.exactSupplementLatex,
-      );
-    }
-
-    const expandedByParts = tryExpandedPartsRule(node, variable);
-    if (expandedByParts) {
-      const antiderivativeNode = 'antiderivativeNode' in expandedByParts
-        ? expandedByParts.antiderivativeNode
-        : undefined;
-      return symbolicSuccess(
-        node,
-        variable,
-        expandedByParts.exactLatex,
-        'integration-by-parts',
-        expandedByParts.verification,
-        undefined,
-        undefined,
-        antiderivativeNode === undefined
-          ? undefined
-          : nativeStandardAntiderivative(
-              antiderivativeNode,
-              'calculus.integration:expanded-integration-by-parts',
-            ),
-      );
-    }
-
-    const rischNorman = tryRischNormanOrchestrator(node, variable, {
-      publicStrategies: ['integration-by-parts'],
-    });
-    return rischNorman
-      ? symbolicSuccess(
-        node,
-        variable,
-        rischNorman.exactLatex,
-        rischNorman.publicStrategy,
-        rischNorman.verification,
-        rischNorman.exactSupplementLatex,
-        undefined,
-        nativeStandardAntiderivative(
-          rischNorman.antiderivativeNode,
-          'calculus.integration:risch-norman-integration-by-parts',
-        ),
-      )
-      : undefined;
+    return tryIntegrationByPartsRoute(node, variable);
   }
 
   const affine = parseAffine(node, variable);

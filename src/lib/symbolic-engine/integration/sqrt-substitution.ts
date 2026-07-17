@@ -21,7 +21,7 @@ import {
   solveExactPolynomialTimesExponential,
   solveExactPolynomialTimesTrig,
 } from './exact-parts';
-import { tryTextbookIbpGapRule as tryTextbookIbpRule } from './ibp-gaps';
+import { tryTextbookByPartsRule as tryTextbookIbpRule } from './by-parts-textbook';
 
 const SQRT_SUBSTITUTION_POLYNOMIAL_DEGREE_CAP = 6;
 const EXACT_TWO: ExactScalar = { numerator: 2, denominator: 1 };

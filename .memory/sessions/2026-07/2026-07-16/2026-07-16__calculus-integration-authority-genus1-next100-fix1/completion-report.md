@@ -38,7 +38,7 @@
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: verified
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: verified
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: verified
-- `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: pending
+- `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: verified
 - `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1`: pending
 
 ## Completed Gate 1
@@ -98,3 +98,10 @@
 - Verified representative next100 regressions: `sin(x)/cos^3(x)`, `sin(tan(x))/cos^2(x)`, `arctan(2x)/(1+4x^2)`, `arctan(sqrt(x))`, and `sin(sqrt(x))`.
 - Kept later-scope `sec^2(x)csc^2(x)` and `x ln^2(x)` as visible controlled Integration Boundary rows for the following trig/IBP/formal gate.
 - Visual verification confirmed answer/error cards, Integration Presentation, Trust, Copy Result, To Editor on the final success case, and readability through the real app.
+
+## Completed Gate 8
+
+- Added bounded trig/IBP/formal coverage for `sec^2(x)csc^2(x)`, structured polynomial-log IBP such as `x ln(x)^2`, and formal `f(x)f'(x)` antiderivative rendering.
+- Kept malformed pasted `x\ln^2(x)` as a controlled Integration Boundary and avoided attaching an invalid request MathJSON leaf to the V2 error document.
+- Renamed the live production IBP helper from milestone-style `ibp-gaps.ts` to capability-oriented `by-parts-textbook.ts` and extracted by-parts dispatch into `dispatch-by-parts.ts` to keep the dispatch file below the file-size cap.
+- Visual verification confirmed success and boundary outputs, Integration Trig Identity, Integration By Parts, Integration Presentation, Trust, Copy Result, To Editor, and readability through the real app.

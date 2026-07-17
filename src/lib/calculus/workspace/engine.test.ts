@@ -264,6 +264,12 @@ describe('runCalculusWorkspaceMode stored values', () => {
       {
         bodyLatex: String.raw`(\sec(x)+\cot(x))^2`,
         hasPrimary: false,
+        hasRequest: true,
+      },
+      {
+        bodyLatex: String.raw`x\ln^2(x)`,
+        hasPrimary: false,
+        hasRequest: false,
       },
     ];
 
@@ -282,6 +288,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
       } else {
         expect(document.primary, entry.bodyLatex).toBeUndefined();
       }
+      expect(Boolean(document.request), entry.bodyLatex).toBe(entry.hasRequest ?? true);
       expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined), entry.bodyLatex)
         .toBe(true);
     }

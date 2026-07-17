@@ -477,19 +477,48 @@ describe('calculus integrals', () => {
     expectParseableLatex(sinRoot.exactLatex);
   });
 
-  it('leaves later trig and log-power regressions controlled for the next gate', () => {
+  it('recognizes next100 trig identity and log-power IBP regressions', () => {
     const trigProduct = evaluateCalculusIndefiniteIntegral({
       bodyLatex: String.raw`\sec^2(x)\csc^2(x)`,
     });
-    expect(trigProduct.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(trigProduct.error).toBeUndefined();
+    expect(trigProduct.integrationStrategy).toBe('integration-by-parts');
+    expect(trigProduct.exactLatex).toBe(String.raw`-2\cot(2x)+C`);
+    expectParseableLatex(trigProduct.exactLatex);
     expect(trigProduct.detailSections?.map((section) => section.title))
-      .toContain('Integration Boundary');
+      .toContain('Integration Trig Identity');
 
     const logPower = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`x\ln(x)^2`,
+    });
+    expect(logPower.error).toBeUndefined();
+    expect(logPower.integrationStrategy).toBe('integration-by-parts');
+    expect(logPower.exactLatex).toBe(
+      String.raw`\frac{1}{2}x^2\ln(x)^2-\frac{1}{2}x^2\ln(x)+\frac{1}{4}x^2+C`,
+    );
+    expectParseableLatex(logPower.exactLatex);
+    expect(logPower.detailSections?.map((section) => section.title))
+      .toContain('Integration By Parts');
+
+    const malformedLogPower = evaluateCalculusIndefiniteIntegral({
       bodyLatex: String.raw`x\ln^2(x)`,
     });
-    expect(logPower.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
-    expect(logPower.detailSections?.map((section) => section.title))
+    expect(malformedLogPower.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(malformedLogPower.indefiniteIntegralAuthority?.selector).toBe('indefiniteIntegral:error');
+    expect(malformedLogPower.mathJsonLeaves?.some((leaf) =>
+      leaf.source === 'calculus.indefinite-integral:request')).not.toBe(true);
+    for (const leaf of malformedLogPower.mathJsonLeaves ?? []) {
+      expect(() => requireProvenCanonicalMathValueV2({
+        canonicalLatex: leaf.canonicalLatex,
+        mathJson: leaf.mathJson,
+        owner: 'calculus',
+        routeId: 'calculus.integrals',
+        source: leaf.source,
+      })).not.toThrow();
+    }
+    expect(trigProduct.detailSections?.map((section) => section.title))
+      .not.toContain('Integration Boundary');
+    expect(malformedLogPower.detailSections?.map((section) => section.title))
       .toContain('Integration Boundary');
   });
 
