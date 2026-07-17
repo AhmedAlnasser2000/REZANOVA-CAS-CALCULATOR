@@ -24,6 +24,8 @@ import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-u
 import { notebookEditorNodeById, notebookEditorSelection } from './selection';
 
 const WIDTH_PRESETS = [25, 50, 75, 100] as const;
+const POINT_SIZE_MIN = 36;
+const POINT_SIZE_MAX = 2000;
 const WRAP_OPTIONS: ReadonlyArray<{
   value: NotebookImagePlacement;
   label: string;
@@ -59,6 +61,16 @@ function boundedWidth(value: string) {
   return Number.isFinite(parsed) ? normalizeNotebookMediaWidthPercent(parsed) : 10;
 }
 
+function imagePointDimension(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function boundedPointDimension(value: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.round(Math.min(POINT_SIZE_MAX, Math.max(POINT_SIZE_MIN, parsed)) * 1000) / 1000;
+}
+
 function editorContentWidth(editor: Editor) {
   const element = editor.view.dom as HTMLElement;
   const style = getComputedStyle(element);
@@ -84,6 +96,8 @@ export function NotebookPictureFormatControls({
   const alignment = imageAlignment(attrs.alignment);
   const placement = imagePlacement(attrs.placement);
   const rotation = typeof attrs.rotation === 'number' ? attrs.rotation : 0;
+  const displayWidthPt = imagePointDimension(attrs.displayWidthPt);
+  const displayHeightPt = imagePointDimension(attrs.displayHeightPt);
   const hasCrop = ['cropX', 'cropY', 'cropWidth', 'cropHeight']
     .every((key) => typeof attrs[key] === 'number');
   const effectivePlacement = notebookEffectiveImagePlacement(
@@ -130,6 +144,21 @@ export function NotebookPictureFormatControls({
 
   function setWidth(nextWidth: number) {
     updateImage({ widthPercent: nextWidth === 100 ? null : nextWidth });
+  }
+
+  function setPointDimension(axis: 'width' | 'height', value: string) {
+    const next = boundedPointDimension(value);
+    if (next === null) return;
+    const nextWidth = axis === 'width' ? next : displayWidthPt;
+    const nextHeight = axis === 'height' ? next : displayHeightPt;
+    updateImage({
+      ...(nextWidth === undefined ? {} : { displayWidthPt: nextWidth }),
+      ...(nextHeight === undefined ? {} : { displayHeightPt: nextHeight }),
+      ...(nextWidth !== undefined && nextHeight !== undefined
+        ? { displayAspectRatio: Math.round((nextWidth / nextHeight) * 1000) / 1000 }
+        : {}),
+      widthPercent: null,
+    });
   }
 
   function setAlignment(nextAlignment: NotebookImageAlignment) {
@@ -250,6 +279,36 @@ export function NotebookPictureFormatControls({
               </NotebookFloatingLayer>
             ) : null}
           </div>
+          <label className="notebook-picture-point-size">
+            <span>W</span>
+            <input
+              type="number"
+              min={POINT_SIZE_MIN}
+              max={POINT_SIZE_MAX}
+              step="1"
+              aria-label="Image width in points"
+              value={displayWidthPt ?? ''}
+              onChange={(event) => {
+                rememberTarget();
+                setPointDimension('width', event.target.value);
+              }}
+            />
+          </label>
+          <label className="notebook-picture-point-size">
+            <span>H</span>
+            <input
+              type="number"
+              min={POINT_SIZE_MIN}
+              max={POINT_SIZE_MAX}
+              step="1"
+              aria-label="Image height in points"
+              value={displayHeightPt ?? ''}
+              onChange={(event) => {
+                rememberTarget();
+                setPointDimension('height', event.target.value);
+              }}
+            />
+          </label>
         </div>
         <span className="notebook-ribbon-group-label">Size</span>
       </section>

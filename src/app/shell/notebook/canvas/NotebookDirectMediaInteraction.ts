@@ -331,6 +331,76 @@ type ResizeRectangleInput = {
   rectangle: NotebookMediaViewportRectangle;
 };
 
+export type NotebookMediaKeyboardResizeInput = {
+  displayAspectRatio?: number;
+  displayHeightPt?: number;
+  displayWidthPt?: number;
+  handle: NotebookMediaResizeHandle;
+  key: string;
+  shiftKey?: boolean;
+};
+
+export type NotebookMediaKeyboardResizeResult = {
+  displayAspectRatio: number;
+  displayHeightPt: number;
+  displayWidthPt: number;
+};
+
+function dimensionOrFallback(value: unknown, fallback: number) {
+  return normalizeObjectDimensionPt(finiteNumber(value, fallback));
+}
+
+export function resizeNotebookMediaByKeyboard(
+  input: NotebookMediaKeyboardResizeInput,
+): NotebookMediaKeyboardResizeResult | null {
+  const horizontalDirection = input.key === 'ArrowRight' ? 1 : input.key === 'ArrowLeft' ? -1 : 0;
+  const verticalDirection = input.key === 'ArrowDown' ? 1 : input.key === 'ArrowUp' ? -1 : 0;
+  if (horizontalDirection === 0 && verticalDirection === 0) return null;
+
+  const vector = handleVector(input.handle);
+  const step = input.shiftKey === true ? 10 : 1;
+  let width = dimensionOrFallback(input.displayWidthPt, 144);
+  let height = dimensionOrFallback(
+    input.displayHeightPt,
+    width / clamp(finiteNumber(input.displayAspectRatio, 1), 0.1, 10),
+  );
+  const ratio = clamp(width / Math.max(1, height), 0.1, 10);
+  const corner = isCornerHandle(input.handle);
+
+  if (corner) {
+    let widthDelta = 0;
+    if (vector.horizontal !== 0 && horizontalDirection !== 0) {
+      widthDelta = horizontalDirection * vector.horizontal * step;
+    }
+    if (vector.vertical !== 0 && verticalDirection !== 0) {
+      const heightDeltaAsWidth = verticalDirection * vector.vertical * step * ratio;
+      if (Math.abs(heightDeltaAsWidth) > Math.abs(widthDelta)) {
+        widthDelta = heightDeltaAsWidth;
+      }
+    }
+    if (widthDelta === 0) return null;
+    width = normalizeObjectDimensionPt(width + widthDelta);
+    height = normalizeObjectDimensionPt(width / ratio);
+  } else {
+    let changed = false;
+    if (vector.horizontal !== 0 && horizontalDirection !== 0) {
+      width = normalizeObjectDimensionPt(width + horizontalDirection * vector.horizontal * step);
+      changed = true;
+    }
+    if (vector.vertical !== 0 && verticalDirection !== 0) {
+      height = normalizeObjectDimensionPt(height + verticalDirection * vector.vertical * step);
+      changed = true;
+    }
+    if (!changed) return null;
+  }
+
+  return {
+    displayAspectRatio: round(clamp(width / Math.max(1, height), 0.1, 10)),
+    displayHeightPt: height,
+    displayWidthPt: width,
+  };
+}
+
 /**
  * Computes the single content rectangle used by media, its selection border,
  * and its handles. Corner handles preserve aspect ratio; side handles resize

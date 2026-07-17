@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   NOTEBOOK_MEDIA_RESIZE_HANDLES,
   fitNotebookRotatedMediaFrame,
+  resizeNotebookMediaByKeyboard,
   resizeNotebookMediaRectangle,
 } from './NotebookDirectMediaInteraction';
 
@@ -106,5 +107,32 @@ describe('Notebook direct media resize geometry', () => {
     const renderedHeight = fitted.width * Math.sin(radians) + fitted.height * Math.cos(radians);
     expect(renderedWidth).toBeLessThanOrEqual(600.000_001);
     expect(renderedHeight).toBeLessThanOrEqual(700.000_001);
+  });
+
+  it('supports keyboard resizing in point units without falling back to percentage width', () => {
+    expect(resizeNotebookMediaByKeyboard({
+      displayAspectRatio: 2,
+      displayHeightPt: 100,
+      displayWidthPt: 200,
+      handle: 'east',
+      key: 'ArrowLeft',
+    })).toEqual({
+      displayAspectRatio: 1.99,
+      displayHeightPt: 100,
+      displayWidthPt: 199,
+    });
+
+    expect(resizeNotebookMediaByKeyboard({
+      displayAspectRatio: 2,
+      displayHeightPt: 100,
+      displayWidthPt: 200,
+      handle: 'north-west',
+      key: 'ArrowLeft',
+      shiftKey: true,
+    })).toEqual({
+      displayAspectRatio: 2,
+      displayHeightPt: 105,
+      displayWidthPt: 210,
+    });
   });
 });

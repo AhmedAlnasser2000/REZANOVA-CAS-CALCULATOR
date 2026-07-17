@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent,
   type MouseEvent,
 } from 'react';
 
@@ -22,6 +23,7 @@ import {
 import {
   NOTEBOOK_MEDIA_RESIZE_HANDLES,
   normalizeNotebookMediaCrop,
+  resizeNotebookMediaByKeyboard,
   useNotebookDirectMediaInteraction,
   type NotebookImageNodeViewOptions,
 } from './NotebookDirectMediaInteraction';
@@ -43,6 +45,43 @@ function normalizeRotation(value: unknown) {
     : 0;
 }
 
+function roundPoint(value: number) {
+  return Math.round(value * 1000) / 1000;
+}
+
+function keyboardStep(event: KeyboardEvent<HTMLElement>) {
+  return event.shiftKey ? 10 : 1;
+}
+
+function arrowDelta(event: KeyboardEvent<HTMLElement>) {
+  const step = keyboardStep(event);
+  switch (event.key) {
+    case 'ArrowLeft':
+      return { x: -step, y: 0 };
+    case 'ArrowRight':
+      return { x: step, y: 0 };
+    case 'ArrowUp':
+      return { x: 0, y: -step };
+    case 'ArrowDown':
+      return { x: 0, y: step };
+    default:
+      return null;
+  }
+}
+
+function isFloatingPlacement(value: unknown): value is {
+  mode: 'floating';
+  xPt: number;
+  yPt: number;
+  [key: string]: unknown;
+} {
+  return Boolean(value && typeof value === 'object'
+    && !Array.isArray(value)
+    && (value as { mode?: unknown }).mode === 'floating'
+    && typeof (value as { xPt?: unknown }).xPt === 'number'
+    && typeof (value as { yPt?: unknown }).yPt === 'number');
+}
+
 export function createNotebookImageNodeView(
   assetPort: NotebookAssetPort,
   options: NotebookImageNodeViewOptions = {},
@@ -60,6 +99,7 @@ export function createNotebookImageNodeView(
     const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
     const [renderedContentWidth, setRenderedContentWidth] = useState<number>();
     const [eventCropMode, setEventCropMode] = useState(false);
+    const [accessibilityStatus, setAccessibilityStatus] = useState('');
     const frameRef = useRef<HTMLDivElement | null>(null);
 
     const figureNumber = useEditorState({
@@ -283,6 +323,71 @@ export function createNotebookImageNodeView(
         editor.chain().focus().setNodeSelection(position).run();
       }
     };
+    const currentPointSize = () => {
+      const frame = frameRef.current?.getBoundingClientRect();
+      const width = effectiveDisplayWidthPt
+        ?? (frame && frame.width > 0 ? frame.width / (96 / 72) : 144);
+      const height = effectiveDisplayHeightPt
+        ?? (frame && frame.height > 0 ? frame.height / (96 / 72) : width / (effectiveAspectRatio ?? 1));
+      return { height, width };
+    };
+    const announceSize = (width: number, height: number) => {
+      setAccessibilityStatus(`Image size ${Math.round(width)} by ${Math.round(height)} points.`);
+    };
+    const handleResizeKeyDown = (
+      event: KeyboardEvent<HTMLButtonElement>,
+      handle: (typeof NOTEBOOK_MEDIA_RESIZE_HANDLES)[number]['value'],
+    ) => {
+      const { height, width } = currentPointSize();
+      const result = resizeNotebookMediaByKeyboard({
+        displayAspectRatio: effectiveAspectRatio,
+        displayHeightPt: height,
+        displayWidthPt: width,
+        handle,
+        key: event.key,
+        shiftKey: event.shiftKey,
+      });
+      if (!result) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectImageNode();
+      updateAttributes({
+        displayAspectRatio: result.displayAspectRatio,
+        displayHeightPt: result.displayHeightPt,
+        displayWidthPt: result.displayWidthPt,
+        widthPercent: null,
+      });
+      announceSize(result.displayWidthPt, result.displayHeightPt);
+    };
+    const handleRotateKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+      const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? keyboardStep(event)
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -keyboardStep(event)
+          : 0;
+      if (delta === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectImageNode();
+      const nextRotation = normalizeRotation(effectiveRotation + delta);
+      updateAttributes({ rotation: nextRotation === 0 ? null : nextRotation });
+      setAccessibilityStatus(`Image rotation ${nextRotation} degrees.`);
+    };
+    const handleMoveKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+      const delta = arrowDelta(event);
+      const placement = node.attrs.notebookObjectPlacement;
+      if (!delta || !isFloatingPlacement(placement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectImageNode();
+      const nextPlacement = {
+        ...placement,
+        xPt: roundPoint(placement.xPt + delta.x),
+        yPt: roundPoint(placement.yPt + delta.y),
+      };
+      updateAttributes({ notebookObjectPlacement: nextPlacement });
+      setAccessibilityStatus(`Image position ${Math.round(nextPlacement.xPt)} by ${Math.round(nextPlacement.yPt)} points.`);
+    };
 
     return (
       <NodeViewWrapper
@@ -362,7 +467,12 @@ export function createNotebookImageNodeView(
               <button
                 type="button"
                 aria-label="Move image"
+                aria-describedby={`${nodeId}-image-accessibility-status`}
                 className="notebook-media-drag-grip"
+                title={isFloatingPlacement(node.attrs.notebookObjectPlacement)
+                  ? 'Move floating image with arrow keys. Hold Shift for 10 pt.'
+                  : 'Drag image into page whitespace to make it floating.'}
+                onKeyDown={handleMoveKeyDown}
                 onPointerDown={interaction.beginDrag}
               >
                 <GripVertical size={13} />
@@ -372,19 +482,33 @@ export function createNotebookImageNodeView(
                   key={handle.value}
                   type="button"
                   aria-label={`Resize image from ${handle.label}`}
+                  aria-describedby={`${nodeId}-image-accessibility-status`}
                   className={`notebook-media-resize-handle notebook-media-resize-handle--${handle.value}`}
                   data-notebook-media-resize-handle={handle.value}
+                  title="Resize image with arrow keys. Hold Shift for 10 pt."
+                  onKeyDown={(event) => handleResizeKeyDown(event, handle.value)}
                   onPointerDown={(event) => interaction.beginResize(event, handle.value)}
                 />
               ))}
               <button
                 type="button"
                 aria-label="Rotate image"
+                aria-describedby={`${nodeId}-image-accessibility-status`}
                 className="notebook-image-rotation-handle"
+                title="Rotate image with arrow keys. Hold Shift for 10 degrees."
+                onKeyDown={handleRotateKeyDown}
                 onPointerDown={interaction.beginRotation}
               >
                 <RotateCw size={12} />
               </button>
+              <span
+                id={`${nodeId}-image-accessibility-status`}
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+              >
+                {accessibilityStatus || 'Selected image. Use handles to resize, move, or rotate.'}
+              </span>
             </>
           ) : null}
         </div>
