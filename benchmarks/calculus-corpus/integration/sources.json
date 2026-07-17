@@ -134,6 +134,21 @@
         "Do not use for the first undergraduate textbook scan unless a case needs definition-level confirmation",
         "Advanced genus-heavy benchmark batches remain deferred"
       ]
+    },
+    {
+      "source_id": "internal-regression-next100",
+      "title": "Internal Calculus Integration Next100 Regression Set",
+      "source_type": "internal-regression",
+      "access": "internal",
+      "calculus_lane": "integration",
+      "integration_relevance": "reference",
+      "license": "internal-regression-metadata",
+      "locator_policy": "Use historical scratch locators and compact mathematical metadata only; do not count these rows as source-backed textbook coverage.",
+      "integration_scope_notes": [
+        "Regression-derived rows from the archived next100 unsupported sweep",
+        "Preserves historical blockers and fixes without increasing the 950 source-backed textbook count",
+        "Only indefinite integration rows are included"
+      ]
     }
   ]
 }

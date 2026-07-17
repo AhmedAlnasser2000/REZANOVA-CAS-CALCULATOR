@@ -27,6 +27,10 @@ import {
   standardAntiderivativeExpression,
   type CalculusAntiderivativeBaseExpression,
 } from './antiderivative-expression';
+import {
+  repeatedSinCosProductAsPower,
+  scaledByLinearSlope,
+} from './antiderivative-linear-helpers';
 
 const ce = new ComputeEngine();
 
@@ -117,6 +121,23 @@ function scaleExactScalarByInteger(value: ExactScalar, factor: number): ExactSca
     numerator: value.numerator * factor,
     denominator: value.denominator,
   });
+}
+
+function scaledAffineArgumentNode(affine: AffineForm, factor: number, variable: string): unknown {
+  const slope = scaleExactScalarByInteger(affine.aScalar, factor);
+  const slopeNode = buildExactScalarNode(slope);
+  const variableTerm = slope.numerator === slope.denominator
+    ? variable
+    : ['Multiply', slopeNode, variable];
+  const offset = affine.b * factor;
+  if (offset === 0) {
+    return variableTerm;
+  }
+  return ['Add', variableTerm, offset];
+}
+
+function scaledAffineArgumentLatex(affine: AffineForm, factor: number, variable: string) {
+  return boxLatex(scaledAffineArgumentNode(affine, factor, variable));
 }
 
 function divideByExactCoefficient(numeratorLatex: string, denominator: ExactScalar) {
@@ -322,7 +343,7 @@ function integralOfAffineTrigSquare(
   affine: AffineForm,
   variable: string,
 ) {
-  const doubleAngleLatex = `2${wrapGroupedLatex(affine.latex)}`;
+  const doubleAngleLatex = scaledAffineArgumentLatex(affine, 2, variable);
   if (kind === 'Sin') {
     return joinAdditiveLatex([
       divideByExactCoefficient(wrapGroupedLatex(affine.latex), scaleExactScalarByInteger(affine.aScalar, 2)),
@@ -599,6 +620,12 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
       : scaleStandardMathJson(separated.constantNode, primitive);
   }
 
+  const repeatedSinCosProduct = repeatedSinCosProductAsPower(node);
+  if (repeatedSinCosProduct) {
+    const primitive = directRuleMathJson(repeatedSinCosProduct, variable);
+    if (primitive) return primitive;
+  }
+
   const sinCosProductPower = tryAffineSinCosProductPowerAntiderivativeNode(node, variable);
   if (sinCosProductPower) return sinCosProductPower;
 
@@ -656,6 +683,36 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
 
     if (exponent === 2 && isNodeArray(base) && base.length === 2) {
       const affine = parseAffine(base[1], variable);
+      if (affine && (base[0] === 'Sin' || base[0] === 'Cos')) {
+        const reciprocalHalf = divideExactScalars(EXACT_ONE, scaleExactScalarByInteger(affine.aScalar, 2));
+        const reciprocalQuarter = divideExactScalars(EXACT_ONE, scaleExactScalarByInteger(affine.aScalar, 4));
+        if (reciprocalHalf && reciprocalQuarter) {
+          const angle = structuredClone(base[1]);
+          const doubleAngle = scaledAffineArgumentNode(affine, 2, variable);
+          const sign = base[0] === 'Sin' ? -1 : 1;
+          return [
+            'Add',
+            scaleStandardMathJson(buildExactScalarNode(reciprocalHalf), angle),
+            scaleStandardMathJson(
+              buildExactScalarNode(sign === 1 ? reciprocalQuarter : negateExactScalar(reciprocalQuarter)),
+              ['Sin', doubleAngle],
+            ),
+          ];
+        }
+      }
+      if (affine && (base[0] === 'Tan' || base[0] === 'Cot')) {
+        const reciprocal = divideExactScalars(EXACT_ONE, affine.aScalar);
+        if (reciprocal) {
+          return [
+            'Add',
+            scaleStandardMathJson(
+              buildExactScalarNode(base[0] === 'Tan' ? reciprocal : negateExactScalar(reciprocal)),
+              [base[0] === 'Tan' ? 'Tan' : 'Cot', structuredClone(base[1])],
+            ),
+            ['Negate', variable],
+          ];
+        }
+      }
       const reciprocal = affine
         ? divideExactScalars(EXACT_ONE, affine.aScalar)
         : undefined;
@@ -675,46 +732,37 @@ function directRuleMathJson(node: unknown, variable: string): unknown | undefine
   }
 
   if (isNodeArray(node) && node.length === 2) {
-    const affine = parseAffine(node[1], variable);
-    const reciprocal = affine
-      ? divideExactScalars(EXACT_ONE, affine.aScalar)
-      : undefined;
-    if (!reciprocal) return undefined;
     if (node[0] === 'Sin') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(negateExactScalar(reciprocal)),
-        ['Cos', structuredClone(node[1])],
-      );
+      return scaledByLinearSlope(['Negate', ['Cos', structuredClone(node[1])]], node[1], variable);
     }
     if (node[0] === 'Cos') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(reciprocal),
-        ['Sin', structuredClone(node[1])],
-      );
+      return scaledByLinearSlope(['Sin', structuredClone(node[1])], node[1], variable);
     }
     if (node[0] === 'Tan') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(negateExactScalar(reciprocal)),
-        ['Ln', ['Cos', structuredClone(node[1])]],
-      );
+      return scaledByLinearSlope(['Negate', ['Ln', ['Cos', structuredClone(node[1])]]], node[1], variable);
     }
     if (node[0] === 'Cot') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(reciprocal),
-        ['Ln', ['Sin', structuredClone(node[1])]],
+      return scaledByLinearSlope(['Ln', ['Sin', structuredClone(node[1])]], node[1], variable);
+    }
+    if (node[0] === 'Sec') {
+      return scaledByLinearSlope(
+        ['Ln', ['Abs', ['Add', ['Sec', structuredClone(node[1])], ['Tan', structuredClone(node[1])]]]],
+        node[1],
+        variable,
+      );
+    }
+    if (node[0] === 'Csc') {
+      return scaledByLinearSlope(
+        ['Ln', ['Abs', ['Subtract', ['Csc', structuredClone(node[1])], ['Cot', structuredClone(node[1])]]]],
+        node[1],
+        variable,
       );
     }
     if (node[0] === 'Sinh') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(reciprocal),
-        ['Cosh', structuredClone(node[1])],
-      );
+      return scaledByLinearSlope(['Cosh', structuredClone(node[1])], node[1], variable);
     }
     if (node[0] === 'Cosh') {
-      return scaleStandardMathJson(
-        buildExactScalarNode(reciprocal),
-        ['Sinh', structuredClone(node[1])],
-      );
+      return scaledByLinearSlope(['Sinh', structuredClone(node[1])], node[1], variable);
     }
   }
 
@@ -772,6 +820,14 @@ export function resolveAntiderivativeRule(
     }
 
     return multiplyLatex(separated.constantLatex, integral);
+  }
+
+  const repeatedSinCosProduct = repeatedSinCosProductAsPower(node);
+  if (repeatedSinCosProduct) {
+    const integral = resolveAntiderivativeRule(repeatedSinCosProduct, variable);
+    if (integral) {
+      return integral;
+    }
   }
 
   if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && node[1] === 1) {

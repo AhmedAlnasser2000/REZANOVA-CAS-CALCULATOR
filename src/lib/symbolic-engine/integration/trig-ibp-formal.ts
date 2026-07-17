@@ -275,7 +275,7 @@ function tryPolynomialLogPowerByPartsRule(
   };
 }
 
-function squaredTrigFactor(factor: unknown, head: 'Sec' | 'Csc') {
+function squaredTrigFactor(factor: unknown, head: 'Sin' | 'Sec' | 'Csc') {
   return isNodeArray(factor)
     && factor[0] === 'Power'
     && factor.length === 3
@@ -285,6 +285,86 @@ function squaredTrigFactor(factor: unknown, head: 'Sec' | 'Csc') {
     && factor[1].length === 2
     ? factor[1][1]
     : undefined;
+}
+
+function trigFunctionFactor(factor: unknown, head: 'Sin' | 'Cos', argument: unknown) {
+  return isNodeArray(factor)
+    && factor[0] === head
+    && factor.length === 2
+    && sameNode(factor[1], argument);
+}
+
+function findLinearVariableTimesTrig(node: unknown, variable: string) {
+  const factors = flattenMultiply(node);
+  const variableIndex = factors.findIndex((factor) => sameNode(factor, variable));
+  if (variableIndex < 0) {
+    return undefined;
+  }
+
+  const rest = factors.filter((_, index) => index !== variableIndex);
+  if (rest.length === 1) {
+    const sinSquaredArgument = squaredTrigFactor(rest[0], 'Sin');
+    if (sinSquaredArgument && sameNode(sinSquaredArgument, variable)) {
+      return { kind: 'x-sin-squared' as const };
+    }
+  }
+
+  if (
+    rest.length === 2
+    && (
+      (trigFunctionFactor(rest[0], 'Sin', variable) && trigFunctionFactor(rest[1], 'Cos', variable))
+      || (trigFunctionFactor(rest[0], 'Cos', variable) && trigFunctionFactor(rest[1], 'Sin', variable))
+    )
+  ) {
+    return { kind: 'x-sin-cos' as const };
+  }
+
+  return undefined;
+}
+
+function tryLinearVariableTrigProductByPartsRule(
+  node: unknown,
+  variable: string,
+): TrigIbpFormalResult | undefined {
+  const product = findLinearVariableTimesTrig(node, variable);
+  if (!product) {
+    return undefined;
+  }
+
+  const doubled = () => ['Multiply', 2, variable];
+  const antiderivativeNode = product.kind === 'x-sin-squared'
+    ? ['Add',
+        ['Divide', ['Power', variable, 2], 4],
+        ['Negate', ['Divide', ['Multiply', variable, ['Sin', doubled()]], 4]],
+        ['Negate', ['Divide', ['Cos', doubled()], 8]],
+      ]
+    : ['Add',
+        ['Negate', ['Divide', ['Multiply', variable, ['Cos', doubled()]], 4]],
+        ['Divide', ['Sin', doubled()], 8],
+      ];
+  const verification = verifiedAstResult(
+    node,
+    variable,
+    antiderivativeNode,
+    'verified by bounded trig product identity plus integration by parts',
+  );
+  if (!verification) {
+    return undefined;
+  }
+
+  return {
+    exactLatex: boxLatex(antiderivativeNode),
+    antiderivativeNode,
+    verification,
+    detailSections: [byPartsDetail('Integration By Parts', [
+      integrationMathRow('Recognized product: ', product.kind === 'x-sin-squared'
+        ? `${variable}\\sin^2(${variable})`
+        : `${variable}\\sin(${variable})\\cos(${variable})`, '.'),
+      integrationTextRow('Used a bounded double-angle rewrite before integration by parts.'),
+      integrationTextRow('Accepted only after derivative backcheck against the original integrand.'),
+    ])],
+    trustMode: 'precomputed-exact',
+  };
 }
 
 function findSecCscSquareProduct(node: unknown, variable: string) {
@@ -336,7 +416,7 @@ function trySecCscSquareIdentityRule(
     return undefined;
   }
   return {
-    exactLatex: boxLatex(antiderivativeNode),
+    exactLatex: `${boxLatex(buildExactScalarNode(coefficient))}\\cot(${boxLatex(doubledArgument)})`,
     antiderivativeNode,
     verification,
     exactSupplementLatex: exactSupplementLatex([
@@ -462,7 +542,8 @@ export function tryTrigIbpFormalRule(
   node: unknown,
   variable: string,
 ): TrigIbpFormalResult | undefined {
-  return trySecCscSquareIdentityRule(node, variable)
+  return tryLinearVariableTrigProductByPartsRule(node, variable)
+    ?? trySecCscSquareIdentityRule(node, variable)
     ?? tryPolynomialLogPowerByPartsRule(node, variable)
     ?? tryFormalFunctionProductRule(node, variable);
 }

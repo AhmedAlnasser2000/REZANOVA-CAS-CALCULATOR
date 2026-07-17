@@ -36,6 +36,7 @@ import {
   calculusAntiderivativeExpressionToAst,
   calculusAntiderivativeSpecialExpression,
 } from '../engine/antiderivative-expression';
+import { findCustomMathJsonOperator } from '../../result-contract';
 
 const ce = new ComputeEngine();
 const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
@@ -146,6 +147,9 @@ function proofSafeMathJsonLeaf(
   },
 ) {
   if (containsComputeEngineErrorNode(leaf.mathJson)) {
+    return undefined;
+  }
+  if (findCustomMathJsonOperator(leaf.mathJson)) {
     return undefined;
   }
   try {
@@ -461,13 +465,15 @@ export function evaluateCalculusIndefiniteIntegral(
     };
   }
 
+  let integrand: ReturnType<typeof parseIntegralBody> | undefined;
   try {
-    const integrand = parseIntegralBody(bodyLatex);
+    const parsedIntegrand = parseIntegralBody(bodyLatex);
+    integrand = parsedIntegrand;
     const resolved = resolveIndefiniteIntegralFromAst({
-      body: integrand.body,
+      body: parsedIntegrand.body,
       variable: variable.id,
       computeEngineFallback: () => {
-        const parsed = ce.parse(`\\int ${integrand.canonicalBodyLatex}\\,d${variable.latex}`) as BoxedLike;
+        const parsed = ce.parse(`\\int ${parsedIntegrand.canonicalBodyLatex}\\,d${variable.latex}`) as BoxedLike;
         const exact = parsed.evaluate();
         return {
           computed: exact,
@@ -479,15 +485,29 @@ export function evaluateCalculusIndefiniteIntegral(
       performanceBudgetMs: INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS,
     });
     return withIndefiniteIntegralAuthority(
-      presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id),
-      integrand.body,
+      presentCalculusIndefiniteEvaluation(resolved, parsedIntegrand.body, variable.id),
+      parsedIntegrand.body,
       variable.id,
-      integrand.canonicalBodyLatex,
+      parsedIntegrand.canonicalBodyLatex,
     );
   } catch {
-    return {
+    const failure = {
       warnings: [],
       error: 'This antiderivative could not be determined symbolically in Calculus.',
+    } satisfies CalculusWorkspaceEvaluation;
+    if (integrand) {
+      return withIndefiniteIntegralAuthority(
+        failure,
+        integrand.body,
+        variable.id,
+        integrand.canonicalBodyLatex,
+      );
+    }
+    return {
+      ...failure,
+      indefiniteIntegralAuthority: {
+        selector: 'indefiniteIntegral:error',
+      },
     };
   }
 }

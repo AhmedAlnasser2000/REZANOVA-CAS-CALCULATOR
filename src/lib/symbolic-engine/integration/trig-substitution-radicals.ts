@@ -329,7 +329,7 @@ function buildPlainRadicalAntiderivativeNode(
   affine: ExactAffine,
 ): unknown {
   const radicand = buildRadicandNode(family, r, affine);
-  const rootTerm = multiplyNodes([affine.node, ['Sqrt', radicand]]);
+  const rootTerm = multiplyNodes([cloneMathNode(affine.node), ['Sqrt', cloneMathNode(radicand)]]);
   const denominator = buildExactScalarNode(multiplyExactScalars({ numerator: 2, denominator: 1 }, affine.slope));
   if (family === 'minus') {
     return divideNode(
@@ -378,6 +378,58 @@ function buildReciprocalThreeHalvesLatex(
     `\\frac{${uGrouped}}{\\sqrt{${radicandLatex}}}`,
     coefficient,
   );
+}
+
+function buildReciprocalThreeHalvesAntiderivativeNode(
+  family: RadicalFamily,
+  r: ExactScalar,
+  affine: ExactAffine,
+): unknown | undefined {
+  if (family === 'outside') {
+    return undefined;
+  }
+  const coefficient = divideExactScalars({ numerator: 1, denominator: 1 }, multiplyExactScalars(r, affine.slope));
+  if (!coefficient) {
+    return undefined;
+  }
+  return multiplyNodes([
+    buildExactScalarNode(coefficient),
+    divideNode(affine.node, ['Sqrt', buildRadicandNode(family, r, affine)]),
+  ]);
+}
+
+function buildSquaredAffineOverRadicalAntiderivativeNode(
+  family: RadicalFamily,
+  r: ExactScalar,
+  affine: ExactAffine,
+): unknown | undefined {
+  const denominator = multiplyExactScalars({ numerator: 2, denominator: 1 }, affine.slope);
+  const rootCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, denominator);
+  const inverseCoefficient = divideExactScalars(r, denominator);
+  if (!rootCoefficient || !inverseCoefficient) {
+    return undefined;
+  }
+
+  const radicand = buildRadicandNode(family, r, affine);
+  const rootTerm = multiplyNodes([affine.node, ['Sqrt', radicand]]);
+  const scaledRoot = multiplyNodes([buildExactScalarNode(rootCoefficient), rootTerm]);
+  if (family === 'minus') {
+    return ['Add',
+      multiplyNodes([
+        buildExactScalarNode(inverseCoefficient),
+        ['Arcsin', divideNode(cloneMathNode(affine.node), exactScalarSqrtNode(r))],
+      ]),
+      ['Negate', scaledRoot],
+    ];
+  }
+
+  const logTerm = multiplyNodes([
+    buildExactScalarNode(inverseCoefficient),
+    ['Ln', ['Abs', ['Add', cloneMathNode(affine.node), ['Sqrt', cloneMathNode(radicand)]]]],
+  ]);
+  return family === 'plus'
+    ? ['Add', scaledRoot, ['Negate', logTerm]]
+    : ['Add', scaledRoot, logTerm];
 }
 
 function joinAdditiveLatex(parts: Array<string | undefined>) {
@@ -563,6 +615,11 @@ export function tryTrigSubstitutionRadicalRule(
     return exactLatex
       ? {
         exactLatex,
+        antiderivativeNode: buildSquaredAffineOverRadicalAntiderivativeNode(
+          squaredAffineOverRadical.family,
+          squaredAffineOverRadical.r,
+          squaredAffineOverRadical.affine,
+        ),
         verification: proof(squaredAffineOverRadical.family),
         exactSupplementLatex: supplementsFor(
           squaredAffineOverRadical.family,
@@ -678,6 +735,11 @@ export function tryTrigSubstitutionRadicalRule(
     return exactLatex
       ? {
         exactLatex,
+        antiderivativeNode: buildReciprocalThreeHalvesAntiderivativeNode(
+          parsed.family,
+          parsed.r,
+          parsed.affine,
+        ),
         verification: proof(parsed.family),
         exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
         factNodes: factNodesFor(parsed.family, parsed.r, parsed.affine),

@@ -32,11 +32,13 @@ Allowed `source_type` values:
 
 - `local-pdf`
 - `website`
+- `internal-regression`
 
 Allowed `access` values:
 
 - `local`
 - `web`
+- `internal`
 
 Allowed `calculus_lane` values:
 
@@ -64,6 +66,7 @@ Required fields:
 - `expected_result_kind`
 - `run_policy`
 - `status`
+- `provenance_class`
 - `source_id`
 - `source_locator`
 
@@ -99,6 +102,11 @@ Allowed `status` values:
 - `needs-upgrade`
 - `not-run`
 - `boundary-deferred`
+
+Allowed `provenance_class` values:
+
+- `source-backed`
+- `regression-derived`
 
 Optional fields:
 

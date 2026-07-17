@@ -1,6 +1,7 @@
 import type { ExactSupplementEntry } from '../../../types/calculator/exact-supplement-types';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import {
+  buildExactScalarNode,
   exactPolynomialDegree,
   exactPolynomialIsZero,
   exactPolynomialToLatex,
@@ -28,6 +29,7 @@ type SymbolicRuleResult = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
+  antiderivativeNode?: unknown;
 };
 
 type SymbolicAffine = {
@@ -75,11 +77,13 @@ function success(
   exactLatex: string,
   reason: string,
   entries: ExactSupplementEntry[],
+  antiderivativeNode?: unknown,
 ): SymbolicRuleResult {
   return {
     exactLatex,
     verification: proof(reason),
     exactSupplementLatex: supplements(entries),
+    antiderivativeNode,
   };
 }
 
@@ -118,11 +122,25 @@ function multiplyNodes(factors: unknown[]): unknown {
   return meaningful.length === 1 ? meaningful[0] : ['Multiply', ...meaningful];
 }
 
+function divideNode(numerator: unknown, denominator: unknown): unknown {
+  const scalar = readExactScalarNode(denominator);
+  return scalar && scalar.numerator === scalar.denominator ? numerator : ['Divide', numerator, denominator];
+}
+
+function subtractNode(left: unknown, right: unknown): unknown {
+  return ['Subtract', left, right];
+}
+
 function addNodes(nodes: unknown[]): unknown {
   if (nodes.length === 0) {
     return 0;
   }
   return nodes.length === 1 ? nodes[0] : ['Add', ...nodes];
+}
+
+function scaleBySymbolicDenominator(numerator: unknown, denominator: unknown, sign: 1 | -1 = 1): unknown {
+  const signedNumerator = sign === 1 ? numerator : negateNode(numerator);
+  return divideNode(signedNumerator, denominator);
 }
 
 function signedAddTerms(node: unknown, sign: 1 | -1 = 1): SignedNode[] {
@@ -152,6 +170,13 @@ function parseLinearSignedTerm(
   const { node, sign } = term;
   if (node === variable) {
     return { kind: 'slope', node: signedNode(1, sign) };
+  }
+
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3 && targetFree(node[2], variable)) {
+    const numerator = parseLinearSignedTerm({ node: node[1], sign }, variable);
+    return numerator
+      ? { kind: numerator.kind, node: divideNode(numerator.node, node[2]) }
+      : null;
   }
 
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
@@ -272,6 +297,10 @@ function symbolicAffinePower(
       divideBySymbolic(`\\ln\\left|${groupedBase}\\right|`, affine.slopeLatex),
       'verified by symbolic affine reciprocal rule proof',
       facts,
+      scaleBySymbolicDenominator(
+        ['Ln', ['Abs', structuredClone(base)]],
+        structuredClone(affine.slope),
+      ),
     );
   }
 
@@ -282,10 +311,18 @@ function symbolicAffinePower(
 
   const numerator = nextExponent === 1 ? groupedBase : `${groupedBase}^{${nextExponent}}`;
   const denominator = multiplyDenominator(String(nextExponent), affine.slopeLatex);
+  const antiderivativeNode = scaleBySymbolicDenominator(
+    nextExponent === 1 ? structuredClone(base) : ['Power', structuredClone(base), nextExponent],
+    multiplyNodes([
+      buildExactScalarNode({ numerator: nextExponent, denominator: 1 }),
+      structuredClone(affine.slope),
+    ]),
+  );
   return success(
     divideBySymbolic(numerator, denominator),
     'verified by symbolic affine power rule proof',
     facts,
+    antiderivativeNode,
   );
 }
 
@@ -306,6 +343,10 @@ export function trySymbolicDirectRule(node: unknown, variable: string): Symbolic
           divideBySymbolic(`e^{${affine.latex}}`, affine.slopeLatex),
           'verified by symbolic affine exponential rule proof',
           [nonzero(affine.slopeLatex)],
+          scaleBySymbolicDenominator(
+            ['Power', 'ExponentialE', structuredClone(node[2])],
+            structuredClone(affine.slope),
+          ),
         )
         : undefined;
     }
@@ -321,6 +362,13 @@ export function trySymbolicDirectRule(node: unknown, variable: string): Symbolic
           ),
           'verified by positive symbolic-base affine exponential rule proof',
           [positive(baseLatex), nonzero(`${baseLatex}-1`), nonzero(affine.slopeLatex)],
+          scaleBySymbolicDenominator(
+            ['Power', structuredClone(node[1]), structuredClone(node[2])],
+            multiplyNodes([
+              structuredClone(affine.slope),
+              ['Ln', structuredClone(node[1])],
+            ]),
+          ),
         )
         : undefined;
     }
@@ -358,27 +406,50 @@ export function trySymbolicDirectRule(node: unknown, variable: string): Symbolic
         divideBySymbolic(`\\cos\\left(${angle}\\right)`, affine.slopeLatex, -1),
         'verified by symbolic affine sine rule proof',
         facts,
+        scaleBySymbolicDenominator(
+          ['Cos', structuredClone(node[1])],
+          structuredClone(affine.slope),
+          -1,
+        ),
       );
     case 'Cos':
       return success(
         divideBySymbolic(`\\sin\\left(${angle}\\right)`, affine.slopeLatex),
         'verified by symbolic affine cosine rule proof',
         facts,
+        scaleBySymbolicDenominator(
+          ['Sin', structuredClone(node[1])],
+          structuredClone(affine.slope),
+        ),
       );
     case 'Tan':
       return success(
         divideBySymbolic(`\\ln\\left(\\cos\\left(${angle}\\right)\\right)`, affine.slopeLatex, -1),
         'verified by symbolic affine tangent rule proof',
         facts,
+        scaleBySymbolicDenominator(
+          ['Ln', ['Cos', structuredClone(node[1])]],
+          structuredClone(affine.slope),
+          -1,
+        ),
       );
     case 'Cot':
       return success(
         divideBySymbolic(`\\ln\\left(\\sin\\left(${angle}\\right)\\right)`, affine.slopeLatex),
         'verified by symbolic affine cotangent rule proof',
         facts,
+        scaleBySymbolicDenominator(
+          ['Ln', ['Sin', structuredClone(node[1])]],
+          structuredClone(affine.slope),
+        ),
       );
     case 'Ln': {
       const grouped = wrapGroupedLatex(angle);
+      const argument = structuredClone(node[1]);
+      const primitive = subtractNode(
+        multiplyNodes([structuredClone(argument), ['Ln', ['Abs', structuredClone(argument)]]]),
+        structuredClone(argument),
+      );
       return success(
         divideBySymbolic(
           `${grouped}\\ln\\left|${grouped}\\right|-${grouped}`,
@@ -386,10 +457,16 @@ export function trySymbolicDirectRule(node: unknown, variable: string): Symbolic
         ),
         'verified by symbolic affine logarithm rule proof',
         [nonzero(affine.slopeLatex), positive(angle)],
+        scaleBySymbolicDenominator(primitive, structuredClone(affine.slope)),
       );
     }
     case 'Log': {
       const grouped = wrapGroupedLatex(angle);
+      const argument = structuredClone(node[1]);
+      const primitive = subtractNode(
+        multiplyNodes([structuredClone(argument), ['Ln', ['Abs', structuredClone(argument)]]]),
+        structuredClone(argument),
+      );
       return success(
         divideBySymbolic(
           `${grouped}\\ln\\left|${grouped}\\right|-${grouped}`,
@@ -397,6 +474,10 @@ export function trySymbolicDirectRule(node: unknown, variable: string): Symbolic
         ),
         'verified by symbolic affine base-ten logarithm rule proof',
         [nonzero(affine.slopeLatex), positive(angle)],
+        scaleBySymbolicDenominator(
+          primitive,
+          multiplyNodes([structuredClone(affine.slope), ['Ln', 10]]),
+        ),
       );
     }
     default:
@@ -430,11 +511,20 @@ export function trySymbolicTrigPowerDirectRule(
       divideBySymbolic(`\\tan\\left(${affine.latex}\\right)`, affine.slopeLatex),
       'verified by symbolic affine secant-square rule proof',
       [nonzero(affine.slopeLatex)],
+      scaleBySymbolicDenominator(
+        ['Tan', structuredClone(node[1][1])],
+        structuredClone(affine.slope),
+      ),
     )
     : success(
       divideBySymbolic(`\\cot\\left(${affine.latex}\\right)`, affine.slopeLatex, -1),
       'verified by symbolic affine cosecant-square rule proof',
       [nonzero(affine.slopeLatex)],
+      scaleBySymbolicDenominator(
+        ['Cot', structuredClone(node[1][1])],
+        structuredClone(affine.slope),
+        -1,
+      ),
     );
 }
 

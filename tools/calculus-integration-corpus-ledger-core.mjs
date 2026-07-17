@@ -24,6 +24,7 @@ const REQUIRED_UNIQUE_CASE_FIELDS = [
   'expected_result_kind',
   'run_policy',
   'status',
+  'provenance_class',
   'source_id',
   'source_locator',
 ];
@@ -53,9 +54,10 @@ const REQUIRED_SCAN_FINDING_FIELDS = [
   'summary',
 ];
 
-const ALLOWED_SOURCE_TYPES = ['local-pdf', 'website'];
-const ALLOWED_SOURCE_ACCESS = ['local', 'web'];
+const ALLOWED_SOURCE_TYPES = ['local-pdf', 'website', 'internal-regression'];
+const ALLOWED_SOURCE_ACCESS = ['local', 'web', 'internal'];
 const ALLOWED_SOURCE_RELEVANCE = ['primary', 'secondary', 'reference', 'deferred'];
+const ALLOWED_PROVENANCE_CLASSES = ['source-backed', 'regression-derived'];
 const ALLOWED_CALCULUS_LANES = ['integration'];
 const ALLOWED_INTEGRAL_KINDS = ['indefinite'];
 const ALLOWED_DOMAINS = ['real', 'complex', 'real-with-conditions', 'mixed-or-unspecified'];
@@ -223,6 +225,8 @@ function validateSources(sourcesPath) {
 function validateUniqueCases(filePath, sourceIds) {
   const caseIds = new Set();
   const rows = readJsonl(filePath);
+  let sourceBackedCount = 0;
+  let regressionDerivedCount = 0;
 
   for (const { record, lineNumber } of rows) {
     const context = `${normalizeRepoPath(filePath)}:${lineNumber}`;
@@ -233,13 +237,19 @@ function validateUniqueCases(filePath, sourceIds) {
     assertEnum(record.expected_result_kind, ALLOWED_EXPECTED_RESULT_KINDS, `${context}.expected_result_kind`);
     assertEnum(record.run_policy, ALLOWED_RUN_POLICIES, `${context}.run_policy`);
     assertEnum(record.status, ALLOWED_CASE_STATUSES, `${context}.status`);
+    assertEnum(record.provenance_class, ALLOWED_PROVENANCE_CLASSES, `${context}.provenance_class`);
+    if (record.provenance_class === 'source-backed') {
+      sourceBackedCount += 1;
+    } else {
+      regressionDerivedCount += 1;
+    }
 
     if (!sourceIds.has(record.source_id)) {
       throw new Error(`${context} references unknown source_id "${record.source_id}"`);
     }
   }
 
-  return { caseIds, count: rows.length };
+  return { caseIds, count: rows.length, sourceBackedCount, regressionDerivedCount };
 }
 
 function validateDuplicateCases(filePath, sourceIds, caseIds) {
@@ -377,7 +387,12 @@ export function validateCalculusIntegrationCorpusLedger(options = {}) {
   assertAllowedCorpusEntries(corpusDir);
 
   const sourceIds = validateSources(sourcesPath);
-  const { caseIds, count: uniqueCaseCount } = validateUniqueCases(uniqueCasesPath, sourceIds);
+  const {
+    caseIds,
+    count: uniqueCaseCount,
+    sourceBackedCount,
+    regressionDerivedCount,
+  } = validateUniqueCases(uniqueCasesPath, sourceIds);
   const duplicateCaseCount = validateDuplicateCases(duplicateCasesPath, sourceIds, caseIds);
   const runResultCount = validateRunResults(runResultsPath, caseIds);
   const scanFindingCount = validateScanFindings(scanFindingsPath, sourceIds, caseIds);
@@ -385,6 +400,8 @@ export function validateCalculusIntegrationCorpusLedger(options = {}) {
   return {
     sourceCount: sourceIds.size,
     uniqueCaseCount,
+    sourceBackedUniqueCaseCount: sourceBackedCount,
+    regressionDerivedUniqueCaseCount: regressionDerivedCount,
     duplicateCaseCount,
     runResultCount,
     scanFindingCount,

@@ -41,7 +41,7 @@ describe('Calculus native antiderivative expression', () => {
       mathJson: [
         'Add',
         ['Divide', ['Power', 'x', 2], 2],
-        ['Multiply', 3, ['Negate', ['Cos', 'x']]],
+        ['Negate', ['Multiply', 3, ['Cos', 'x']]],
       ],
     });
     expect(renderCalculusAntiderivativeExpression(combined!)).toContain('x');

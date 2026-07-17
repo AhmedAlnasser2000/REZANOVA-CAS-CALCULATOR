@@ -20,6 +20,7 @@ import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
 } from './binomial-substitution';
+import { tryBoundedCarrierSubstitutionRule } from './bounded-carrier-substitution';
 import {
   classifyIntegrandForm,
   INTEGRATION_ROUTE_PRECEDENCE,
@@ -75,8 +76,29 @@ function isRelationRoot(node: unknown) {
   return isNodeArray(node) && typeof node[0] === 'string' && RELATION_HEADS.has(node[0]);
 }
 
+function containsSqrtNode(node: unknown): boolean {
+  return isNodeArray(node)
+    && (node[0] === 'Sqrt' || node.slice(1).some((child) => containsSqrtNode(child)));
+}
+
 function nativeStandardAntiderivative(mathJson: unknown, source: string) {
   return standardAntiderivativeExpression({ mathJson, source });
+}
+
+function tryBoundedCarrierSubstitutionRoute(node: unknown, variable: string) {
+  const boundedCarrierSubstitution = tryBoundedCarrierSubstitutionRule(node, variable);
+  return boundedCarrierSubstitution
+    ? symbolicSuccess(node, variable, boundedCarrierSubstitution.exactLatex, 'u-substitution',
+      boundedCarrierSubstitution.verification, boundedCarrierSubstitution.exactSupplementLatex,
+      boundedCarrierSubstitution.detailSections,
+      nativeStandardAntiderivative(
+        boundedCarrierSubstitution.antiderivativeNode,
+        'calculus.integration:bounded-carrier-substitution',
+      ),
+      undefined,
+      undefined,
+      boundedCarrierSubstitution.trustMode ?? 'backcheck')
+    : undefined;
 }
 
 function tryRoute(
@@ -120,6 +142,13 @@ function tryRoute(
           'calculus.integration:reciprocal-binomial-substitution',
         ),
       );
+    }
+
+    if (containsSqrtNode(node)) {
+      const boundedCarrierSubstitution = tryBoundedCarrierSubstitutionRoute(node, variable);
+      if (boundedCarrierSubstitution) {
+        return boundedCarrierSubstitution;
+      }
     }
 
     const algebraicGenus0RationalInRadical = tryAlgebraicGenus0RationalInRadicalRule(node, variable);
@@ -311,6 +340,11 @@ function tryRoute(
   }
 
   if (route === 'u-substitution') {
+    const boundedCarrierSubstitution = tryBoundedCarrierSubstitutionRoute(node, variable);
+    if (boundedCarrierSubstitution) {
+      return boundedCarrierSubstitution;
+    }
+
     const trigSubstitutionRadical = tryTrigSubstitutionRadicalRule(node, variable);
     if (trigSubstitutionRadical) {
       return symbolicSuccess(
@@ -543,6 +577,13 @@ function tryRoute(
         'direct-rule',
         symbolicTrigPower.verification,
         symbolicTrigPower.exactSupplementLatex,
+        undefined,
+        symbolicTrigPower.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+            symbolicTrigPower.antiderivativeNode,
+            'calculus.integration:symbolic-trig-power',
+          ),
       );
     }
 
@@ -555,6 +596,13 @@ function tryRoute(
         'direct-rule',
         symbolicDirect.verification,
         symbolicDirect.exactSupplementLatex,
+        undefined,
+        symbolicDirect.antiderivativeNode === undefined
+          ? undefined
+          : nativeStandardAntiderivative(
+            symbolicDirect.antiderivativeNode,
+            'calculus.integration:symbolic-direct-rule',
+          ),
       );
     }
 

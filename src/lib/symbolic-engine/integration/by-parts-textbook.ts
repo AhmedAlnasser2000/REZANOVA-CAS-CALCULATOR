@@ -96,6 +96,35 @@ function productNodeFromFactors(factors: unknown[]) {
   return factors.length === 1 ? factors[0] : ['Multiply', ...factors];
 }
 
+function addNodeParts(parts: Array<unknown | undefined>) {
+  const meaningful = parts.filter((part): part is unknown => part !== undefined);
+  if (meaningful.length === 0) {
+    return undefined;
+  }
+  return meaningful.length === 1 ? meaningful[0] : ['Add', ...meaningful];
+}
+
+function scaleNodeByExact(node: unknown, coefficient: ExactScalar) {
+  if (exactScalarIsZero(coefficient)) {
+    return undefined;
+  }
+  if (coefficient.numerator === coefficient.denominator) {
+    return node;
+  }
+  return ['Multiply', buildExactScalarNode(coefficient), node];
+}
+
+function substituteVariableNode(node: unknown, variable: string, replacement: unknown): unknown {
+  if (node === variable) {
+    return structuredClone(replacement);
+  }
+  if (!isNodeArray(node)) {
+    return structuredClone(node);
+  }
+  return [node[0], ...node.slice(1).map((child) =>
+    substituteVariableNode(child, variable, replacement))];
+}
+
 function productWithoutSelectedFactor(factors: unknown[], selectedIndex: number) {
   return productNodeFromFactors(factors.filter((_, index) => index !== selectedIndex));
 }
@@ -395,7 +424,7 @@ function integrateArcsinResidual(
   variable: string,
 ) {
   if (sameNode(product.argumentNode, variable)) {
-    return integrateArcsinKernelPolynomial(primitivePolynomial, variable, variable);
+    return integrateArcsinKernelPolynomial(primitivePolynomial, variable, variable, variable);
   }
 
   const carrierVariable = 'z';
@@ -408,13 +437,19 @@ function integrateArcsinResidual(
     return undefined;
   }
 
-  return integrateArcsinKernelPolynomial(carrierPolynomial, product.affine.latex, carrierVariable);
+  return integrateArcsinKernelPolynomial(
+    carrierPolynomial,
+    product.affine.latex,
+    carrierVariable,
+    product.argumentNode,
+  );
 }
 
 function integrateArcsinKernelPolynomial(
   primitivePolynomial: ExactPolynomial,
   carrierLatex: string,
   carrierVariable: string,
+  carrierNode: unknown,
 ) {
   const degree = exactPolynomialDegree(primitivePolynomial);
   const kernels = buildArcsinKernelTable(primitivePolynomial.variable, degree);
@@ -445,8 +480,22 @@ function integrateArcsinKernelPolynomial(
       substituteCarrierLatex(exactPolynomialToLatex(radicalPolynomial), carrierVariable, carrierLatex),
       radicalLatex(carrierLatex),
     );
+  const arcsinNode = exactScalarIsZero(arcsinCoefficient)
+    ? undefined
+    : scaleNodeByExact(['Arcsin', structuredClone(carrierNode)], arcsinCoefficient);
+  const radicalPolynomialNode = exactPolynomialIsZero(radicalPolynomial)
+    ? undefined
+    : substituteVariableNode(exactPolynomialToNode(radicalPolynomial), carrierVariable, carrierNode);
+  const radicalTermNode = radicalPolynomialNode === undefined
+    ? undefined
+    : productNodeFromFactors([
+      radicalPolynomialNode,
+      ['Sqrt', ['Subtract', 1, ['Power', structuredClone(carrierNode), 2]]],
+    ]);
+  const node = addNodeParts([arcsinNode, radicalTermNode]);
+  const latex = joinAdditiveLatex([arcsinLatex, radicalTermLatex]);
 
-  return joinAdditiveLatex([arcsinLatex, radicalTermLatex]);
+  return latex && node !== undefined ? { latex, node } : undefined;
 }
 
 function byPartsDetail(title: string, rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
@@ -477,9 +526,12 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): TextbookByP
   const rationalResidual = product.head === 'Arctan'
     ? tryRationalPartialFractionRule(residualRationalNode(primitivePolynomial, product), variable)
     : undefined;
+  const arcsinResidual = product.head === 'Arcsin'
+    ? integrateArcsinResidual(primitivePolynomial, product, variable)
+    : undefined;
   const residualLatex = product.head === 'Arctan'
     ? rationalResidual?.exactLatex
-    : integrateArcsinResidual(primitivePolynomial, product, variable);
+    : arcsinResidual?.latex;
   if (!residualLatex) {
     return undefined;
   }
@@ -497,7 +549,9 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): TextbookByP
   const antiderivativeNode = product.head === 'Arctan'
     && rationalResidual?.antiderivativeNode !== undefined
     ? ['Subtract', boundaryNode, rationalResidual.antiderivativeNode]
-    : undefined;
+    : product.head === 'Arcsin' && arcsinResidual?.node !== undefined
+      ? ['Subtract', boundaryNode, arcsinResidual.node]
+      : undefined;
 
   const verification = verifiedResult(
     node,

@@ -24,5 +24,5 @@
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1` - `fdbba6bf`.
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1` - `13bab89a`.
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2` - `a56a4b50`.
-- `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2` - verified and approved for path-scoped commit; hash will be recorded in the next checkpoint because a commit cannot contain its own final hash.
-- One later approved commit remains pending.
+- `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2` - `dd0f092e`.
+- `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1` - committed in this checkpoint; final self-hash is reported in the handoff because amending the file changes the commit hash.

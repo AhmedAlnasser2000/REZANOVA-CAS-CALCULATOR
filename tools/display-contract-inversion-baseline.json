@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "MATRIX-SYMBOLIC-SPECTRAL1 extends the existing Matrix V2 owner path with bounded symbolic characteristic-polynomial and spectral selectors.",
+  "acceptedReason": "CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1 adds the Calculus indefinite-integration V2 attachment and refreshes current owner-assembly inventory.",
   "registryDigest": "eba50f74665771ea4d5f",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -36,7 +36,7 @@
     "calculus": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 5
+      "nativeDocument": 6
     },
     "display-read-model": {
       "compatibilityProjection": 0,
@@ -154,6 +154,9 @@
       "src/lib/calculus/workspace/engine.ts": [
         "f50a96b8992833d7cb0c:1",
         "65afd2d6e9a26cb45590:1"
+      ],
+      "src/lib/calculus/workspace/integration-result-document.ts": [
+        "ac4ff5320d4132f0b56b:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
         "a80cb0dc818ddbe48aed:1",
@@ -473,7 +476,7 @@
       ],
       "src/lib/statistics/core.ts": [
         "4d2f023d12da623801ae:1",
-        "88b887a606f6171917ab:1"
+        "96f4e72ff0d24bc2a1c5:1"
       ],
       "src/lib/trigonometry/core.ts": [
         "86ce8490875073913cc7:1",

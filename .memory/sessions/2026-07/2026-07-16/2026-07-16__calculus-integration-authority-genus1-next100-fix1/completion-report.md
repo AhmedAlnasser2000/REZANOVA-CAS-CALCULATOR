@@ -39,7 +39,7 @@
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: verified
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: verified
 - `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: verified
-- `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1`: pending
+- `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1`: verified
 
 ## Completed Gate 1
 
@@ -105,3 +105,12 @@
 - Kept malformed pasted `x\ln^2(x)` as a controlled Integration Boundary and avoided attaching an invalid request MathJSON leaf to the V2 error document.
 - Renamed the live production IBP helper from milestone-style `ibp-gaps.ts` to capability-oriented `by-parts-textbook.ts` and extracted by-parts dispatch into `dispatch-by-parts.ts` to keep the dispatch file below the file-size cap.
 - Visual verification confirmed success and boundary outputs, Integration Trig Identity, Integration By Parts, Integration Presentation, Trust, Copy Result, To Editor, and readability through the real app.
+
+## Completed Gate 9
+
+- Promoted the 21 historical next100 regression-derived indefinite-integration rows into the main integration corpus ledger with `provenance_class: regression-derived` and an `internal-regression` source.
+- Preserved the source-backed textbook count at 950; the runnable unique ledger now has 971 rows, while duplicate records remain separate.
+- Appended backend, Playwright, answer/facts/detail/trust, performance, and resolution evidence for the regression-derived rows without promoting the earlier ambiguous scratch run as source truth.
+- Added a bounded carrier-substitution route and presentation/readability refinements needed by the promoted rows while preserving one visible antiderivative expression rather than Equation-style answer splitting.
+- Updated Canonical MathJSON and display-inversion ratchets for the current integration authority surface; the MathJSON coverage change intentionally ratchets `calculate.integrals` from 31 to 26 leaves because `+C` is no longer a separate visible answer row.
+- Visual verification confirmed all 21 regression-derived rows and selected source-backed presentation regressions through the real app, including answer/error cards, facts/details, Trust, `+C`, Copy Result, To Editor, History replay, overflow, and readability.

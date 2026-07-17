@@ -649,7 +649,38 @@ function oddCscPowerTerms(exponent: number, affine: AffineArgument): LatexTerm[]
     ]
     : undefined;
 }
-
+function trigNode(head: PoweredTrigFactor['head'], affine: AffineArgument): unknown {
+  return [head, structuredClone(affine.argument)];
+}
+function trigPowerNode(head: PoweredTrigFactor['head'], affine: AffineArgument, exponent: number): unknown {
+  return exponent === 1 ? trigNode(head, affine) : ['Power', trigNode(head, affine), exponent];
+}
+function oddPowerNodes(kind: 'sec' | 'csc', exponent: number, affine: AffineArgument): unknown[] | undefined {
+  const heads = kind === 'sec'
+    ? { primary: 'Sec' as const, companion: 'Tan' as const, sign: EXACT_ONE, residual: 'Add' as const }
+    : { primary: 'Csc' as const, companion: 'Cot' as const, sign: EXACT_MINUS_ONE, residual: 'Subtract' as const };
+  if (exponent === 1) {
+    const coefficient = divideByExact(EXACT_ONE, affine.slope);
+    return coefficient ? [scaledNode(coefficient, ['Ln', ['Abs', [heads.residual, trigNode(heads.primary, affine), trigNode(heads.companion, affine)]]])] : undefined;
+  }
+  const coefficient = divideByExact(heads.sign, multiplyExactScalars(affine.slope, exact(exponent - 1)));
+  const rest = oddPowerNodes(kind, exponent - 2, affine)?.map((term) => scaledNode(exact(exponent - 2, exponent - 1), term));
+  return coefficient && rest ? [
+    scaledNode(coefficient, normalizeAst(['Multiply', trigPowerNode(heads.primary, affine, exponent - 2), trigNode(heads.companion, affine)])),
+    ...rest,
+  ] : undefined;
+}
+function evenCompanionOddPrimaryIntegralNodes(companionExponent: number, primaryExponent: number, affine: AffineArgument, kind: 'sec' | 'csc') {
+  const half = companionExponent / 2;
+  const pieces: unknown[] = [];
+  for (let index = 0; index <= half; index += 1) {
+    const coefficient = exact((half - index) % 2 === 0 ? binomial(half, index) : -binomial(half, index));
+    const terms = oddPowerNodes(kind, primaryExponent + 2 * index, affine);
+    if (!terms) return undefined;
+    pieces.push(...terms.map((term) => scaledNode(coefficient, term)));
+  }
+  return pieces;
+}
 function evenTanOddSecIntegral(tanExponent: number, secExponent: number, affine: AffineArgument) {
   const halfTan = tanExponent / 2;
   const pieces: LatexTerm[] = [];
@@ -934,6 +965,8 @@ export function tryAffineTanSecCotCscPowerAntiderivativeNode(node: unknown, vari
         );
       }).filter((entry): entry is unknown => entry !== undefined);
       if (nodes.length !== reduced + 1) return undefined;
+    } else if (powers.sec > 0 && powers.sec % 2 === 1 && powers.tan % 2 === 0) {
+      nodes = evenCompanionOddPrimaryIntegralNodes(powers.tan, powers.sec, affine, 'sec');
     } else if (powers.sec === 0) {
       nodes = tanPowerIntegralNodes(powers.tan, affine);
     }
@@ -957,6 +990,8 @@ export function tryAffineTanSecCotCscPowerAntiderivativeNode(node: unknown, vari
         );
       }).filter((entry): entry is unknown => entry !== undefined);
       if (nodes.length !== reduced + 1) return undefined;
+    } else if (powers.csc > 0 && powers.csc % 2 === 1 && powers.cot % 2 === 0) {
+      nodes = evenCompanionOddPrimaryIntegralNodes(powers.cot, powers.csc, affine, 'csc');
     } else if (powers.csc === 0) {
       nodes = cotPowerIntegralNodes(powers.cot, affine);
     }

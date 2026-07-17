@@ -393,9 +393,9 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{1}{(4-x^2)^{3/2}}`,
     });
     expect(differenceRadical.error).toBeUndefined();
-    expect(differenceRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4-x^{2}}}+C`);
+    expect(differenceRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4-x^2}}+C`);
     expect(differenceRadical.answerRows?.rows).toEqual([
-      { latex: String.raw`\frac{x}{4\sqrt{4-x^{2}}}+C` },
+      { latex: String.raw`\frac{x}{4\sqrt{4-x^2}}+C` },
     ]);
     expectParseableLatex(differenceRadical.exactLatex);
 
@@ -403,7 +403,7 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{1}{(x^2+4)^{3/2}}`,
     });
     expect(sumRadical.error).toBeUndefined();
-    expect(sumRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4+x^{2}}}+C`);
+    expect(sumRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{x^2+4}}+C`);
     expectParseableLatex(sumRadical.exactLatex);
 
     const sinh = evaluateCalculusIndefiniteIntegral({
@@ -439,7 +439,7 @@ describe('calculus integrals', () => {
     });
     expect(reciprocalCosPower.error).toBeUndefined();
     expect(reciprocalCosPower.integrationStrategy).toBe('u-substitution');
-    expect(reciprocalCosPower.exactLatex).toBe(String.raw`\frac{1}{2}\cos(x)^{-2}+C`);
+    expect(reciprocalCosPower.exactLatex).toBe(String.raw`\frac{1}{2}\cos^{-2}(x)+C`);
     expectParseableLatex(reciprocalCosPower.exactLatex);
 
     const nestedTan = evaluateCalculusIndefiniteIntegral({
@@ -472,7 +472,7 @@ describe('calculus integrals', () => {
     expect(sinRoot.error).toBeUndefined();
     expect(sinRoot.integrationStrategy).toBe('u-substitution');
     expect(sinRoot.exactLatex).toBe(
-      String.raw`2\cdot\left(\sin(\sqrt{x})-\sqrt{x}\cos(\sqrt{x})\right)+C`,
+      String.raw`2(\sin(\sqrt{x})-\sqrt{x}\cos(\sqrt{x}))+C`,
     );
     expectParseableLatex(sinRoot.exactLatex);
   });
@@ -553,7 +553,7 @@ describe('calculus integrals', () => {
       'indefiniteIntegral:special-function',
     );
     expect(result.exactLatex).toContain(String.raw`\operatorname{EllipticF}`);
-    expect(result.exactLatex).toContain(String.raw`\cdot\sqrt{x^3+x}`);
+    expect(result.exactLatex).toContain(String.raw`\sqrt{x^3+x}`);
     expect(result.exactLatex).not.toContain('A_{\\alpha');
     expect(result.exactLatex?.endsWith('+C')).toBe(true);
     for (const leaf of result.mathJsonLeaves ?? []) {

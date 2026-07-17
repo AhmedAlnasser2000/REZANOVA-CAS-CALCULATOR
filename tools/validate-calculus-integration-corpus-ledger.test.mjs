@@ -38,6 +38,7 @@ function uniqueCase(overrides = {}) {
     expected_result_kind: 'elementary-antiderivative',
     run_policy: 'run-once-per-case-per-sweep',
     status: 'pending',
+    provenance_class: 'source-backed',
     source_id: 'openstax-calculus-v1-local',
     source_locator: '5.1 Antiderivatives and Indefinite Integration',
     ...overrides,
@@ -65,11 +66,13 @@ afterEach(() => {
 describe('calculus integration corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateCalculusIntegrationCorpusLedger(), {
-      sourceCount: 8,
-      uniqueCaseCount: 950,
+      sourceCount: 9,
+      uniqueCaseCount: 971,
+      sourceBackedUniqueCaseCount: 950,
+      regressionDerivedUniqueCaseCount: 21,
       duplicateCaseCount: 50,
-      runResultCount: 1373,
-      scanFindingCount: 84,
+      runResultCount: 1394,
+      scanFindingCount: 105,
     });
   });
 
@@ -91,8 +94,10 @@ describe('calculus integration corpus ledger validation', () => {
     writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
 
     assert.deepEqual(validateCalculusIntegrationCorpusLedger({ rootDir }), {
-      sourceCount: 8,
+      sourceCount: 9,
       uniqueCaseCount: 1,
+      sourceBackedUniqueCaseCount: 1,
+      regressionDerivedUniqueCaseCount: 0,
       duplicateCaseCount: 1,
       runResultCount: 1,
       scanFindingCount: 0,

@@ -58,7 +58,7 @@ function completeDocument(): CanonicalResultDocumentV1 {
   };
 }
 
-function completeV2SemanticInputs(): Array<Parameters<typeof collectCanonicalMathLeaves>[0]> {
+function completeVersionedSemanticInputs(): Array<Parameters<typeof collectCanonicalMathLeaves>[0]> {
   const value = standardV2MathValue('1', 1);
   return [
     {
@@ -151,12 +151,32 @@ function completeV2SemanticInputs(): Array<Parameters<typeof collectCanonicalMat
         },
       },
     },
+    {
+      sourceVersion: 4,
+      semantics: {
+        primary: {
+          kind: 'special-function-expression',
+          expression: {
+            kind: 'piecewise',
+            branches: [{
+              value: { kind: 'standard-math', value },
+              condition: value,
+            }],
+            otherwise: {
+              kind: 'named-function',
+              name: 'erfi',
+              arguments: [{ kind: 'standard-math', value }],
+            },
+          },
+        },
+      },
+    },
   ];
 }
 
 describe('MathJSON coverage registry', () => {
   it('enumerates every canonical math leaf path exactly once', () => {
-    const paths = [completeDocument(), ...completeV2SemanticInputs()].flatMap((document) =>
+    const paths = [completeDocument(), ...completeVersionedSemanticInputs()].flatMap((document) =>
       collectCanonicalMathLeaves(document).map((entry) => entry.leafPath));
     expect([...new Set(paths)].sort()).toEqual([...CANONICAL_MATH_LEAF_PATHS].sort());
   });
@@ -198,8 +218,8 @@ describe('MathJSON coverage registry', () => {
     expect(report.evidenceCount).toBe(146);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
     expect(report.totals).toMatchObject({
-      leaves: 466,
-      proven: 466,
+      leaves: 461,
+      proven: 461,
       exempt: 0,
       missing: 0,
     });

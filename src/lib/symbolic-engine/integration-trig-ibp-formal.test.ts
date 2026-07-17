@@ -30,6 +30,20 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
       .toContain('Integration Trig Identity');
   });
 
+  it('integrates bounded linear trig products by double-angle integration by parts', () => {
+    const sinSquared = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`x\sin^2(x)`));
+    expect(sinSquared.strategy).toBe('integration-by-parts');
+    expect(sinSquared.verification.status).toBe('verified-exact');
+    expect(sinSquared.exactLatex).toContain(String.raw`\frac{1}{4}x^2`);
+    expect(sinSquared.exactLatex).toContain(String.raw`x\sin(2x)`);
+
+    const sinCos = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`x\sin(x)\cos(x)`));
+    expect(sinCos.strategy).toBe('integration-by-parts');
+    expect(sinCos.verification.status).toBe('verified-exact');
+    expect(sinCos.exactLatex).toContain(String.raw`x\cos(2x)`);
+    expect(sinCos.exactLatex).toContain(String.raw`\frac{1}{8}\sin(2x)`);
+  });
+
   it('integrates polynomial times logarithm powers by bounded integration by parts', () => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(
       String.raw`x\ln(x)^2`,

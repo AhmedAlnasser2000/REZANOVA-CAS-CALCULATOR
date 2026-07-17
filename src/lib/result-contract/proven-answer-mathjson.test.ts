@@ -3,6 +3,7 @@ import {
   canonicalMathValueFromProof,
   declareProducerOwnedAnswerMathJson,
   proveAnswerMathJson,
+  proveStandardAnswerMathJson,
 } from './proven-answer-mathjson';
 
 function candidate(mathJson: unknown) {
@@ -70,6 +71,33 @@ describe('producer-proven answer MathJSON', () => {
         printerSource: 'compatibility-fallback',
       },
     });
+  });
+
+  it('accepts standard formal Apply trees behind visible function notation', () => {
+    const result = proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\frac{f\left(x\right)^2}{2}+C`,
+      candidate: candidate([
+        'Add',
+        ['Divide', ['Power', ['Apply', 'f', 'x'], 2], 2],
+        'C',
+      ]),
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      evidence: {
+        semanticRelation: 'equal',
+        printerSource: 'compatibility-fallback',
+      },
+    });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\frac{f\left(x\right)^2}{2}+C`,
+      candidate: candidate([
+        'Add',
+        ['Divide', ['Power', ['f', 'x'], 2], 2],
+        'C',
+      ]),
+    })).toMatchObject({ ok: false });
   });
 
   it('rejects mismatched answers and mismatched ownership', () => {

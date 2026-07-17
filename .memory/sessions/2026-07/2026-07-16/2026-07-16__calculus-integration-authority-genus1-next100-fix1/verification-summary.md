@@ -139,3 +139,17 @@
 - Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
 - File-size gate: `npm run test:file-sizes` - pass after extracting `dispatch-by-parts.ts`; `dispatch.ts` is 911 lines.
 - `git diff --check` - pass.
+
+## CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1
+
+- gate_type: backend/ui
+- status: verified
+- Promoted 21 internal regression-derived indefinite-integration rows into the integration corpus ledger while preserving 950 source-backed unique rows and 50 duplicate records.
+- Closeout backend survey: `node .task_tmp/calculus-integration-authority-genus1-next100-fix1/closeout-unique971-survey.bundle.mjs` - pass. Summary: 971 total, 950 source-backed, 21 regression-derived, 908 supported, 42 unsupported, 21 timeout/performance-boundary rows, 0 exceptions; selectors: 907 standard, 1 special-function, 42 error.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 9 sources, 971 unique cases, 50 duplicate records, 1394 run results, and 105 scan findings.
+- Focused Vitest: `./node_modules/.bin/vitest run src/lib/calculus/engine/antiderivative-expression.test.ts src/lib/result-contract/proven-answer-mathjson.test.ts src/lib/symbolic-engine/integration-bounded-carrier-substitution.test.ts src/lib/symbolic-engine/integration-trig-ibp-formal.test.ts src/lib/calculus/workspace/integrals.test.ts src/lib/calculus/workspace/engine.test.ts --maxWorkers=1` - pass, 79 tests. Expected stderr: formal `Apply` fallback for the abstract `f` proof case.
+- Playwright visual verification: `./node_modules/.bin/playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-next100-regression-promotion.config.ts --project=chromium` - pass, 2 Chromium tests. Checked all 21 regression-derived rows plus source-backed presentation rows `cos(2x)cos(2x)`, `sin(2x)sin(2x)`, and `x\arcsin(x)` for answer/error cards, facts/details, Trust, `+C`, Copy Result, To Editor, History replay, overflow, and readability.
+- Canonical authority gate: `npm run test:canonical-result-v2-enforcement` - pass after accepting the Calculus integration V2 attachment in the display-inversion baseline and aligning MathJSON coverage with one-expression `+C` presentation. Expected stderr: two known Compute Engine compile fallback notices for `dot` and `cross` in unrelated coverage probes.
+- Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
+- File-size gate: `npm run test:file-sizes` - pass after extracting `antiderivative-standard-math.ts` and `antiderivative-linear-helpers.ts`.
+- Shared-worktree note: live working-tree MathJSON coverage files also contain unrelated Linear Algebra baseline changes for another agent; the final staged calculus commit uses a path-scoped index version that keeps only the V4 coverage enumeration and the Calculus/Calculate integration coverage ratchet.

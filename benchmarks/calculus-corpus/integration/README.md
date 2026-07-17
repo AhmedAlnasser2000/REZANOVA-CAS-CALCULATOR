@@ -4,6 +4,8 @@ This folder is the source-controlled starting point for textbook and reference-b
 
 It is not runtime data. Application code must not import this folder.
 
+The headline source-backed textbook/reference count is tracked separately from internal regressions. Rows with `provenance_class: "source-backed"` count toward source coverage; rows with `provenance_class: "regression-derived"` preserve historical app regressions and must not inflate the source-backed total.
+
 ## Purpose
 
 The ledger records indefinite integration cases from approved textbooks and reference websites, deduplicates mathematically equivalent integrands, runs only the canonical case once per sweep, and keeps failure reasons so integration planning is evidence-based.
