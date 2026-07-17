@@ -37,7 +37,7 @@
 - `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: verified
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: verified
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: verified
-- `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: pending
+- `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: verified
 - `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: pending
 - `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1`: pending
 
@@ -90,3 +90,11 @@
 - The selected `sqrt(x^3)sqrt(x^2+1)` regression now returns a typed V4 correction-plus-`EllipticF` expression with structural `+C`, branch facts `x\ge0` and `x^2+1>0`, and verified standard MathJSON leaves.
 - True second-kind residuals remain controlled boundaries with visible genus-1 preconditioner and live-boundary detail cards.
 - Visual verification confirmed the success and boundary outputs in the real app; Playwright required sandbox escalation for Chromium and reused the local Vite server.
+
+## Completed Gate 7
+
+- Added bounded substitution recognition for exact derivative-product rows, including reciprocal trig-power equivalents, nested tangent carrier substitutions, and inverse-trig self-carrier products.
+- Added a Calculus-owned square-root substitution route for supported `sqrt(x)` carriers with bounded polynomial factors, using structured substitution and existing exact polynomial-times-function routes rather than rendered-output parsing.
+- Verified representative next100 regressions: `sin(x)/cos^3(x)`, `sin(tan(x))/cos^2(x)`, `arctan(2x)/(1+4x^2)`, `arctan(sqrt(x))`, and `sin(sqrt(x))`.
+- Kept later-scope `sec^2(x)csc^2(x)` and `x ln^2(x)` as visible controlled Integration Boundary rows for the following trig/IBP/formal gate.
+- Visual verification confirmed answer/error cards, Integration Presentation, Trust, Copy Result, To Editor on the final success case, and readability through the real app.

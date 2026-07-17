@@ -110,3 +110,16 @@
 - File-size gate: `npm run test:file-sizes` - pass, 2008 files and 5 baseline caps.
 - Memory protocol: `npm run test:memory-protocol` - pass.
 - `git diff --check` - pass.
+
+## CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2
+
+- gate_type: backend/ui
+- status: verified
+- Added exact derivative-product substitution coverage for reciprocal trig-power equivalents, nested `tan(x)` carriers, and inverse-trig self-carrier products.
+- Added a bounded square-root substitution route in `src/lib/symbolic-engine/integration/sqrt-substitution.ts` for supported `sqrt(x)` carriers with polynomial factors, avoiding the earlier scratch-style `gaps` source filename.
+- Focused Vitest: `./node_modules/.bin/vitest run src/lib/calculus/workspace/integrals.test.ts --maxWorkers=1` - pass, 29 tests.
+- Backend probe: `./node_modules/.bin/vite-node .task_tmp/calculus-integration-authority-genus1-next100-fix1/probe-next100-regressions.ts` - pass. New standard successes include `sin(x)/cos^3(x)`, `sin(tan(x))/cos^2(x)`, `arctan(2x)/(1+4x^2)`, `arctan(sqrt(x))`, and `sin(sqrt(x))`; `sec^2(x)csc^2(x)` and `x ln^2(x)` remain controlled Integration Boundary rows for the following gate.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 950 source-backed unique cases, 50 duplicate records, 1373 run results, and 84 scan findings.
+- Playwright visual verification: `./node_modules/.bin/playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-substitution-root-gaps.config.ts --project=chromium` - pass, 2 Chromium tests. The run inspected success and boundary answer/error cards, Integration Presentation, Trust, Copy Result, To Editor on the final success case, and overflow/readability screenshots.
+- Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
+- File-size gate: `npm run test:file-sizes` - pass, 2009 files and 5 baseline caps.

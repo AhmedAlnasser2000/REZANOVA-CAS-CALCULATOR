@@ -433,6 +433,66 @@ describe('calculus integrals', () => {
     expectParseableLatex(affineCarrierRadical.exactLatex);
   });
 
+  it('recognizes next100 substitution and square-root substitution regressions', () => {
+    const reciprocalCosPower = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{\sin(x)}{\cos^3(x)}`,
+    });
+    expect(reciprocalCosPower.error).toBeUndefined();
+    expect(reciprocalCosPower.integrationStrategy).toBe('u-substitution');
+    expect(reciprocalCosPower.exactLatex).toBe(String.raw`\frac{1}{2}\cos(x)^{-2}+C`);
+    expectParseableLatex(reciprocalCosPower.exactLatex);
+
+    const nestedTan = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{\sin(\tan(x))}{\cos^2(x)}`,
+    });
+    expect(nestedTan.error).toBeUndefined();
+    expect(nestedTan.integrationStrategy).toBe('u-substitution');
+    expect(nestedTan.exactLatex).toBe(String.raw`-\cos(\tan(x))+C`);
+    expectParseableLatex(nestedTan.exactLatex);
+
+    const arctanQuadratic = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{\arctan(2x)}{1+4x^2}`,
+    });
+    expect(arctanQuadratic.error).toBeUndefined();
+    expect(arctanQuadratic.integrationStrategy).toBe('u-substitution');
+    expect(arctanQuadratic.exactLatex).toBe(String.raw`\frac{1}{4}\arctan(2x)^2+C`);
+    expectParseableLatex(arctanQuadratic.exactLatex);
+
+    const arctanRoot = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\arctan(\sqrt{x})`,
+    });
+    expect(arctanRoot.error).toBeUndefined();
+    expect(arctanRoot.integrationStrategy).toBe('u-substitution');
+    expect(arctanRoot.exactLatex).toBe(String.raw`(x+1)\arctan(\sqrt{x})-\sqrt{x}+C`);
+    expectParseableLatex(arctanRoot.exactLatex);
+
+    const sinRoot = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\sin(\sqrt{x})`,
+    });
+    expect(sinRoot.error).toBeUndefined();
+    expect(sinRoot.integrationStrategy).toBe('u-substitution');
+    expect(sinRoot.exactLatex).toBe(
+      String.raw`2\cdot\left(\sin(\sqrt{x})-\sqrt{x}\cos(\sqrt{x})\right)+C`,
+    );
+    expectParseableLatex(sinRoot.exactLatex);
+  });
+
+  it('leaves later trig and log-power regressions controlled for the next gate', () => {
+    const trigProduct = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\sec^2(x)\csc^2(x)`,
+    });
+    expect(trigProduct.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(trigProduct.detailSections?.map((section) => section.title))
+      .toContain('Integration Boundary');
+
+    const logPower = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`x\ln^2(x)`,
+    });
+    expect(logPower.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
+    expect(logPower.detailSections?.map((section) => section.title))
+      .toContain('Integration Boundary');
+  });
+
   it('fails cleanly for unsupported antiderivatives', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\sin(x^3)',

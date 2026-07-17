@@ -1,4 +1,4 @@
-import { differentiateNode, simplifyNode } from '../differentiation';
+import { areEquivalentNodes, differentiateNode, simplifyNode } from '../differentiation';
 import {
   addExactPolynomials,
   buildExactPolynomialFromCoefficients,
@@ -37,6 +37,7 @@ import {
   isNumericBaseExponentialFactor,
   tryPolynomialTimesNumericBaseExponential,
 } from './numeric-base-exponential-parts';
+import { trySquareRootSubstitutionRule } from './sqrt-substitution';
 import {
   parseExactAffineArgument,
   solveExactPolynomialTimesExponential,
@@ -76,6 +77,14 @@ function scaleNativeNode(node: unknown, scale: number): unknown {
 function integralOfOuter(inner: unknown, outer: unknown, scale = 1) {
   const applyScale = (latex: string) => scaleLatex(latex, scale);
   const innerLatex = wrapGroupedLatex(boxLatex(inner));
+
+  if (sameNode(outer, inner)) {
+    const coefficient = scale / 2;
+    return {
+      exactLatex: scaleLatex(`${innerLatex}^{2}`, coefficient),
+      antiderivativeNode: scaleNativeNode(['Power', inner, 2], coefficient),
+    };
+  }
 
   if (isNodeArray(outer) && outer[0] === 'Cos' && outer.length === 2) {
     return {
@@ -603,6 +612,14 @@ function substitutionFactors(node: unknown): unknown[] {
 function substitutionInner(outer: unknown) {
   if (
     isNodeArray(outer)
+    && ['Arctan', 'Arcsin'].includes(String(outer[0]))
+    && outer.length === 2
+  ) {
+    return outer;
+  }
+
+  if (
+    isNodeArray(outer)
     && ['Sin', 'Cos', 'Ln', 'Log', 'Sqrt'].includes(String(outer[0]))
     && outer.length === 2
   ) {
@@ -629,7 +646,163 @@ function derivativeFactorFromRemaining(factors: unknown[], selectedIndex: number
   return remaining.length === 1 ? remaining[0] : ['Multiply', ...remaining];
 }
 
+function isPowerOfFunction(node: unknown, head: string, exponent: number) {
+  return isNodeArray(node)
+    && node[0] === 'Power'
+    && node.length === 3
+    && numericNodeValue(node[2]) === exponent
+    && isNodeArray(node[1])
+    && node[1][0] === head
+    && node[1].length === 2
+    ? node[1][1]
+    : undefined;
+}
+
+function reciprocalDenominatorEquivalentScale(
+  candidate: unknown,
+  reference: unknown,
+  variable: string,
+): number | undefined {
+  if (!isNodeArray(candidate) || candidate[0] !== 'Power' || candidate.length !== 3) {
+    return undefined;
+  }
+  if (numericNodeValue(candidate[2]) !== -1) {
+    return undefined;
+  }
+
+  if (
+    isNodeArray(reference)
+    && reference[0] === 'Divide'
+    && reference.length === 3
+  ) {
+    const numerator = numericNodeValue(reference[1]);
+    return numerator !== undefined
+      && Math.abs(numerator) > 1e-10
+      && equivalentDenominator(candidate[1], reference[2], variable)
+      ? 1 / numerator
+      : undefined;
+  }
+
+  return undefined;
+}
+
+function equivalentExactPolynomials(left: unknown, right: unknown, variable: string) {
+  const leftPolynomial = parseExactPolynomial(
+    expandSimplePolynomialPowers(simplifyNode(left), variable),
+    variable,
+    BY_PARTS_POLYNOMIAL_DEGREE_CAP,
+  );
+  const rightPolynomial = parseExactPolynomial(
+    expandSimplePolynomialPowers(simplifyNode(right), variable),
+    variable,
+    BY_PARTS_POLYNOMIAL_DEGREE_CAP,
+  );
+  if (!leftPolynomial || !rightPolynomial) {
+    return false;
+  }
+  const degree = Math.max(
+    exactPolynomialDegree(leftPolynomial),
+    exactPolynomialDegree(rightPolynomial),
+  );
+  for (let index = 0; index <= degree; index += 1) {
+    const leftCoefficient = getExactPolynomialCoefficient(leftPolynomial, index);
+    const rightCoefficient = getExactPolynomialCoefficient(rightPolynomial, index);
+    if (!exactScalarIsZero({
+      numerator: leftCoefficient.numerator * rightCoefficient.denominator
+        - rightCoefficient.numerator * leftCoefficient.denominator,
+      denominator: leftCoefficient.denominator * rightCoefficient.denominator,
+    })) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function equivalentDenominator(left: unknown, right: unknown, variable: string) {
+  return areEquivalentNodes(simplifyNode(left), simplifyNode(right))
+    || equivalentExactPolynomials(left, right, variable);
+}
+
+function expandSimplePolynomialPowers(node: unknown, variable: string): unknown {
+  if (!isNodeArray(node)) {
+    return node;
+  }
+
+  if (
+    node[0] === 'Power'
+    && node.length === 3
+    && numericNodeValue(node[2]) === 2
+    && isNodeArray(node[1])
+    && node[1][0] === 'Multiply'
+    && node[1].length === 3
+  ) {
+    const leftScalar = numericNodeValue(node[1][1]);
+    if (leftScalar !== undefined && node[1][2] === variable) {
+      return ['Multiply', leftScalar * leftScalar, ['Power', variable, 2]];
+    }
+    const rightScalar = numericNodeValue(node[1][2]);
+    if (rightScalar !== undefined && node[1][1] === variable) {
+      return ['Multiply', rightScalar * rightScalar, ['Power', variable, 2]];
+    }
+  }
+
+  return [node[0], ...node.slice(1).map((child) => expandSimplePolynomialPowers(child, variable))];
+}
+
+function trigIdentityDerivativeScale(candidate: unknown, reference: unknown): number | undefined {
+  const candidateCos = isPowerOfFunction(candidate, 'Cos', -2);
+  const referenceSec = isPowerOfFunction(reference, 'Sec', 2);
+  if (candidateCos !== undefined && referenceSec !== undefined && sameNode(candidateCos, referenceSec)) {
+    return 1;
+  }
+
+  const candidateSec = isPowerOfFunction(candidate, 'Sec', 2);
+  const referenceCos = isPowerOfFunction(reference, 'Cos', -2);
+  if (candidateSec !== undefined && referenceCos !== undefined && sameNode(candidateSec, referenceCos)) {
+    return 1;
+  }
+
+  const candidateCsc = isPowerOfFunction(candidate, 'Csc', 2);
+  const referenceSin = isPowerOfFunction(reference, 'Sin', -2);
+  if (candidateCsc !== undefined && referenceSin !== undefined && sameNode(candidateCsc, referenceSin)) {
+    return 1;
+  }
+
+  const candidateSin = isPowerOfFunction(candidate, 'Sin', -2);
+  const referenceCsc = isPowerOfFunction(reference, 'Csc', 2);
+  if (candidateSin !== undefined && referenceCsc !== undefined && sameNode(candidateSin, referenceCsc)) {
+    return 1;
+  }
+
+  return undefined;
+}
+
+function derivativeScale(candidate: unknown, reference: unknown, variable: string): number | undefined {
+  const direct = proportionalScale(candidate, reference, variable);
+  if (direct !== undefined) {
+    return direct;
+  }
+
+  if (isNodeArray(reference) && reference[0] === 'Negate' && reference.length === 2) {
+    const negated = derivativeScale(candidate, reference[1], variable);
+    return negated === undefined ? undefined : -negated;
+  }
+
+  if (isNodeArray(candidate) && candidate[0] === 'Negate' && candidate.length === 2) {
+    const negated = derivativeScale(candidate[1], reference, variable);
+    return negated === undefined ? undefined : -negated;
+  }
+
+  return trigIdentityDerivativeScale(candidate, reference)
+    ?? reciprocalDenominatorEquivalentScale(candidate, reference, variable);
+}
+
 export function trySubstitutionRule(node: unknown, variable: string) {
+  const squareRootSubstitution = trySquareRootSubstitutionRule(node, variable);
+  if (squareRootSubstitution) {
+    return squareRootSubstitution;
+  }
+
   const factors = substitutionFactors(node);
   for (let index = 0; index < factors.length; index += 1) {
     const outer = factors[index];
@@ -645,7 +818,7 @@ export function trySubstitutionRule(node: unknown, variable: string) {
 
     const derivative = simplifyNode(differentiateNode(inner, variable));
     const derivativeFactor = derivativeFactorFromRemaining(factors, index);
-    const scale = proportionalScale(derivativeFactor, derivative, variable);
+    const scale = derivativeScale(derivativeFactor, derivative, variable);
     if (scale === undefined) {
       continue;
     }
