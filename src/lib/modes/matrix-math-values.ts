@@ -1,7 +1,8 @@
 import type { MatrixOperation } from '../../types/calculator';
-import type {
-  LinearAlgebraCanonicalEvidence,
-  LinearAlgebraCanonicalLeafEvidence,
+import {
+  proofLatexForLinearAlgebraPresentation,
+  type LinearAlgebraCanonicalEvidence,
+  type LinearAlgebraCanonicalLeafEvidence,
 } from '../linear-algebra/canonical-evidence';
 import {
   requireProvenCanonicalMathValueV2,
@@ -19,13 +20,17 @@ export function proveMatrixCanonicalEvidence(
   path: string,
 ): ProvenCanonicalMathValueV2 {
   try {
-    return requireProvenCanonicalMathValueV2({
-      canonicalLatex: evidence.canonicalLatex,
+    const proofLatex = proofLatexForLinearAlgebraPresentation(evidence.canonicalLatex);
+    const proof = requireProvenCanonicalMathValueV2({
+      canonicalLatex: proofLatex,
       mathJson: evidence.mathJson,
       owner: 'matrix',
       routeId,
       source: evidence.source,
     });
+    return proofLatex === evidence.canonicalLatex
+      ? proof
+      : { ...proof, canonicalLatex: evidence.canonicalLatex };
   } catch (error) {
     throw new Error(
       `Matrix canonical proof failed at ${path} from ${evidence.source}: ${error instanceof Error ? error.message : String(error)}`,

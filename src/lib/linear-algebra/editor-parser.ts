@@ -13,6 +13,7 @@ import {
   isVectorNamedValueName,
 } from './named-values';
 import { splitTopLevelArguments } from './editor-parser-arguments';
+import { splitInlineVectorCells } from './editor-list-split';
 import { normalizeLinearAlgebraEditorLatex } from './editor-normalize';
 import {
   parseScalarExpression,
@@ -383,7 +384,7 @@ function parseSymbolicInlineVector(
   if (input.startsWith('[') && input.endsWith(']')) {
     const body = input.slice(1, -1);
     if (body && !body.includes('[') && !body.includes(']')) {
-      cells = splitTopLevelArguments(body);
+      cells = splitInlineVectorCells(body);
     }
   } else {
     const column = /^\\begin\{bmatrix\}(.+)\\end\{bmatrix\}$/u.exec(input);

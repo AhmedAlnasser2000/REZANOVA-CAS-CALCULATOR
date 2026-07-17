@@ -58,6 +58,7 @@ describe('bounded symbolic Matrix systems', () => {
       const result = nonPrompt(runMatrixMode(request(operation, [['a']])));
       expect(result.kind).toBe('success');
       expect(result.canonicalResult?.version).toBe(2);
+      expect(result.exactLatex).toContain(',');
       if (result.canonicalResult?.version !== 2) continue;
       const primary = result.canonicalResult.primary;
       expect(primary?.kind).toBe('math');
@@ -77,7 +78,9 @@ describe('bounded symbolic Matrix systems', () => {
     expect(result.exactLatex).toContain('u');
     expect(result.exactLatex).toContain('a\\ne0');
     expect(result.exactLatex).toContain('a=0');
-    expect(result.exactLatex).toContain('emptyset');
+    expect(result.exactLatex).toContain(',');
+    expect(result.exactLatex).toContain('\\varnothing');
+    expect(result.exactLatex).not.toContain('emptyset');
   });
 
   it('closes spaces, basis, invertibility, and profile on symbolic matrices', () => {
@@ -164,6 +167,13 @@ describe('bounded symbolic Matrix systems', () => {
     expect(dispatchMatrixEditorLatex({ ...base, latex: 'A[u;v]=[1,2]' })).toMatchObject({
       ok: true,
       request: { systemUnknowns: ['u', 'v'] },
+    });
+    expect(dispatchMatrixEditorLatex({ ...base, latex: 'A[u;v]=[e;f]' })).toMatchObject({
+      ok: true,
+      request: {
+        systemUnknowns: ['u', 'v'],
+        systemRhs: { source: [{ canonicalLatex: 'e' }, { canonicalLatex: 'f' }] },
+      },
     });
     const sixParameter = dispatchMatrixEditorLatex({ ...base, latex: 'A[u;v]=[g,h]' });
     expect(sixParameter).toMatchObject({

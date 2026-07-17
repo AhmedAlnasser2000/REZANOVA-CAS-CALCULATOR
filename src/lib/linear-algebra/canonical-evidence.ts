@@ -87,6 +87,13 @@ export function canonicalLeafEvidence(
   return { canonicalLatex, mathJson: copy(mathJson), source };
 }
 
+export function proofLatexForLinearAlgebraPresentation(canonicalLatex: string) {
+  if (!canonicalLatex.includes('\\begin{cases}')) return canonicalLatex;
+  // Compute Engine treats a visual comma in a cases value cell as a Sequence,
+  // but the comma is only a presentation separator before the condition column.
+  return canonicalLatex.replace(/,\s*&/gu, '&');
+}
+
 export function exactScalarMathJson(value: ExactScalar) {
   const node = buildExactScalarNode(value);
   if (typeof node === 'number' && node < 0) return ['Negate', -node];

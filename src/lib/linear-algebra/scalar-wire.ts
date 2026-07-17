@@ -35,6 +35,7 @@ const ce = new ComputeEngine();
 const standardOperatorCe = new ComputeEngine();
 const ZERO: ExactScalarWire = { numerator: 0, denominator: 1 };
 const ONE: ExactScalarWire = { numerator: 1, denominator: 1 };
+const BARE_E_PARAMETER_SENTINEL = 'calcwizbaree';
 
 const STANDARD_STRUCTURAL_OPERATORS = new Set([
   'Complex',
@@ -270,6 +271,9 @@ function normalizeScalarMathJson(node: unknown): unknown {
   if (operator === 'OverBar' || operator === 'Superstar' || operator === 'conj') {
     return ['Conjugate', operands[0]];
   }
+  if (/^[a-z][A-Za-z0-9_]*$/u.test(operator) && operands.length > 0) {
+    return ['Apply', operator, ...operands];
+  }
   if (
     !STANDARD_STRUCTURAL_OPERATORS.has(operator)
     && standardOperatorCe.lookupDefinition(operator) === undefined
@@ -287,6 +291,25 @@ function errorOperator(node: unknown): string | undefined {
     if (found) return found;
   }
   return undefined;
+}
+
+function rewriteBareEParameterLatex(latex: string) {
+  return latex.replace(
+    /(?<![A-Za-z_\\{])e(?![A-Za-z0-9_])/gu,
+    `\\mathrm{${BARE_E_PARAMETER_SENTINEL}}`,
+  );
+}
+
+function restoreBareEParameterNode(node: unknown): unknown {
+  if (node === BARE_E_PARAMETER_SENTINEL) return 'e';
+  if (Array.isArray(node)) return node.map(restoreBareEParameterNode);
+  if (node && typeof node === 'object') {
+    return Object.fromEntries(Object.entries(node).map(([key, value]) => [
+      key,
+      restoreBareEParameterNode(value),
+    ]));
+  }
+  return node;
 }
 
 export function linearAlgebraScalarWireFromMathJson(
@@ -341,13 +364,19 @@ export function parseLinearAlgebraScalarWire(
   const trimmed = latex.trim();
   if (!trimmed) return { ok: false, error: 'Enter a scalar expression.' };
 
+  let parsedJson: unknown;
   try {
     const normalizedNamed = normalizeExplicitNamedVariablesInLatex(trimmed);
-    const parsed = ce.parse(normalizedNamed.latex, { canonical: false } as never);
-    return linearAlgebraScalarWireFromMathJson(parsed.json, domain);
+    const parserCe = new ComputeEngine();
+    const parsed = parserCe.parse(
+      rewriteBareEParameterLatex(normalizedNamed.latex),
+      { canonical: false } as never,
+    );
+    parsedJson = restoreBareEParameterNode(parsed.json);
   } catch {
     return { ok: false, error: 'This scalar expression could not be parsed.' };
   }
+  return linearAlgebraScalarWireFromMathJson(parsedJson, domain);
 }
 
 function sameExactValue(left: unknown, right: unknown) {

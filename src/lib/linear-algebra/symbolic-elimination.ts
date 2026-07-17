@@ -600,8 +600,25 @@ export function symbolicCasesMathJson<T extends { conditions: SymbolicZeroPredic
   return ['Which', ...cases.flatMap((entry) => [caseConditionMathJson(entry.conditions), value(entry)])];
 }
 
-export function symbolicMathJsonLatex(value: unknown) {
+function linearAlgebraStructuralLatex(value: unknown) {
   return ce.box(value as never, { form: 'structural' }).latex;
+}
+
+function linearAlgebraSpecialLatex(value: unknown): string | null {
+  if (value === 'EmptySet') return '\\varnothing';
+  if (!Array.isArray(value) || value[0] !== 'Which') return null;
+  const rows: string[] = [];
+  for (let index = 1; index < value.length; index += 2) {
+    const condition = value[index];
+    const branchValue = value[index + 1];
+    if (branchValue === undefined) return null;
+    rows.push(`${symbolicMathJsonLatex(branchValue)}, & ${symbolicMathJsonLatex(condition)}`);
+  }
+  return `\\begin{cases}${rows.join('\\\\')}\\end{cases}`;
+}
+
+export function symbolicMathJsonLatex(value: unknown) {
+  return linearAlgebraSpecialLatex(value) ?? linearAlgebraStructuralLatex(value);
 }
 
 export function nullSpaceBasisForCase(

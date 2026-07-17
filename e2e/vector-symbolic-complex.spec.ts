@@ -18,9 +18,22 @@ async function setScalarCell(cell: Locator, latex: string) {
   }, latex);
 }
 
+async function setNumberInput(input: Locator, value: string) {
+  await input.evaluate((element, nextValue) => {
+    const inputElement = element as HTMLInputElement;
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    );
+    descriptor?.set?.call(inputElement, nextValue);
+    inputElement.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    inputElement.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  }, value);
+}
+
 async function setVector(page: Page, name: string, values: readonly string[]) {
   const lengthInput = page.getByLabel(`Vector ${name} length`);
-  await lengthInput.fill(String(values.length));
+  await setNumberInput(lengthInput, String(values.length));
   await expect(lengthInput).toHaveValue(String(values.length));
   await expect(page.getByLabel(`Vector ${name} component ${values.length}`)).toBeVisible();
   for (let index = 0; index < values.length; index += 1) {
@@ -121,12 +134,26 @@ test('renders Hermitian orthogonality and the Principal line angle in Complex mo
   await setVector(page, 'u', ['1', 'i']);
   await setVector(page, 'v', ['i', '1']);
 
+  await runEditor(page, String.raw`u\cdot v`);
+  await expect.poll(() => primaryLatex(page)).toBe('0');
+
   await runEditor(page, String.raw`\operatorname{orthogonal}(u,v)`);
   await expect.poll(() => primaryLatex(page)).toBe(String.raw`\text{Orthogonal}`);
 
   await runEditor(page, String.raw`\angle(u,v)`);
   await expect(page.getByTestId('display-outcome-title')).toHaveText('Principal line angle');
   await expect(page.getByTestId('display-outcome-success')).not.toContainText(/orientation|handedness/i);
+  await expect(page.getByTestId('display-outcome-success').evaluate(
+    (element) => element.scrollWidth <= element.clientWidth + 1,
+  )).resolves.toBe(true);
+
+  await runEditor(page, String.raw`\operatorname{gramSchmidt}(u,v)`);
+  await expect(page.getByTestId('display-outcome-success')).not.toContainText(
+    'This scalar expression could not be parsed.',
+  );
+  await expect(page.getByTestId('display-outcome-success')).not.toContainText(
+    'Unsupported Matrix/Vector editor expression.',
+  );
   await expect(page.getByTestId('display-outcome-success').evaluate(
     (element) => element.scrollWidth <= element.clientWidth + 1,
   )).resolves.toBe(true);

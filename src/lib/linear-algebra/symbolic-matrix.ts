@@ -22,6 +22,7 @@ import {
   symbolicScalarSubtract,
   symbolicScalarZeroStatus,
 } from './symbolic-scalar-core';
+import { symbolicMathJsonLatex } from './symbolic-elimination';
 import { runSymbolicMatrixSystemsOperation } from './symbolic-matrix-systems';
 import { runSymbolicMatrixSpectralOperation } from './symbolic-matrix-spectral';
 
@@ -53,9 +54,21 @@ export function symbolicMatrixMathJson(matrix: SymbolicMatrix) {
   ])], "'[]'"];
 }
 
+function scalarMatrixEntryLatex(value: LinearAlgebraScalarWireV1): string {
+  const latexFromNode = (node: unknown): string => {
+    if (Array.isArray(node) && node[0] === 'Divide' && node.length === 3) {
+      return `\\frac{${latexFromNode(node[1])}}{${latexFromNode(node[2])}}`;
+    }
+    return symbolicMathJsonLatex(node);
+  };
+  return Array.isArray(value.mathJson) && value.mathJson[0] === 'Divide'
+    ? latexFromNode(value.mathJson)
+    : value.canonicalLatex;
+}
+
 export function symbolicMatrixLatex(matrix: SymbolicMatrix) {
   return `\\begin{bmatrix}${matrix
-    .map((row) => row.map((value) => value.canonicalLatex).join('&'))
+    .map((row) => row.map(scalarMatrixEntryLatex).join('&'))
     .join('\\\\')}\\end{bmatrix}`;
 }
 

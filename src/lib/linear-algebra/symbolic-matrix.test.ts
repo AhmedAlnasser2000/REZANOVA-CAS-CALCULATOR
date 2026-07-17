@@ -121,6 +121,22 @@ describe('bounded symbolic Matrix arithmetic', () => {
       0,
     ]);
   });
+
+  it('proves symbolic inverse output for mixed formal 2 by 2 entries', () => {
+    const value = matrix([['u', 'v'], ['3', '2']]);
+    const result = runMatrixMode({
+      operation: 'inverseA',
+      operandEncoding: 'scalar-v1',
+      matrixA: operand(value),
+      matrixB: operand(value),
+      domain: 'real',
+    });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected symbolic inverse success.');
+    expect(result.canonicalResult?.version).toBe(2);
+    expect(result.exactLatex).toContain('2u-3v');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('2u-3v');
+  });
 });
 
 describe('symbolic Matrix editor aliases', () => {

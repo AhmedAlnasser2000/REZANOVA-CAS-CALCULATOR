@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { dispatchVectorEditorLatex } from './editor-dispatch';
 import { parseLinearAlgebraScalarWire } from './scalar-wire';
 
-function scalar(latex: string) {
-  const parsed = parseLinearAlgebraScalarWire(latex, 'real');
+function scalar(latex: string, domain: 'real' | 'complex' = 'real') {
+  const parsed = parseLinearAlgebraScalarWire(latex, domain);
   if (!parsed.ok) throw new Error(parsed.error);
   return parsed.value;
 }
@@ -63,8 +63,8 @@ describe('symbolic Vector editor dispatch', () => {
       vectorA: [1, 0],
       vectorB: [0, 1],
       vectorValues: [
-        { id: 'u', name: 'u', encoding: 'scalar-v1', value: [scalar('1'), scalar('0')] },
-        { id: 'v', name: 'v', encoding: 'scalar-v1', value: [scalar('0'), scalar('1')] },
+        { id: 'u', name: 'u', encoding: 'scalar-v1', value: [scalar('1', 'complex'), scalar('i', 'complex')] },
+        { id: 'v', name: 'v', encoding: 'scalar-v1', value: [scalar('i', 'complex'), scalar('1', 'complex')] },
       ],
       angleUnit: 'rad',
       domain: 'complex',
@@ -79,6 +79,44 @@ describe('symbolic Vector editor dispatch', () => {
       operation: 'dot',
       domain: 'complex',
       complexExactForm: 'cis',
+    });
+  });
+
+  it('routes complex named vector functions instead of falling into scalar parse errors', () => {
+    const base = {
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorValues: [
+        { id: 'u', name: 'u', encoding: 'scalar-v1' as const, value: [scalar('1', 'complex'), scalar('i', 'complex')] },
+        { id: 'v', name: 'v', encoding: 'scalar-v1' as const, value: [scalar('i', 'complex'), scalar('1', 'complex')] },
+      ],
+      angleUnit: 'grad' as const,
+      domain: 'complex' as const,
+      substitutionMode: 'symbolic' as const,
+      storedVariables: [],
+      complexExactForm: 'rectangular' as const,
+    };
+
+    expect(dispatchVectorEditorLatex({
+      ...base,
+      latex: '\\operatorname{orthogonal}\\left(u,v\\right)',
+    })).toMatchObject({
+      ok: true,
+      request: { operation: 'orthogonalCheck', operandEncoding: 'scalar-v1' },
+    });
+    expect(dispatchVectorEditorLatex({
+      ...base,
+      latex: '\\angle\\left(u,v\\right)',
+    })).toMatchObject({
+      ok: true,
+      request: { operation: 'angle', operandEncoding: 'scalar-v1', angleUnit: 'grad' },
+    });
+    expect(dispatchVectorEditorLatex({
+      ...base,
+      latex: '\\operatorname{gramSchmidt}\\left(u,v\\right)',
+    })).toMatchObject({
+      ok: true,
+      request: { operation: 'gramSchmidtUV', operandEncoding: 'scalar-v1' },
     });
   });
 

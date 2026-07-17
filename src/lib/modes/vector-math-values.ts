@@ -1,7 +1,8 @@
 import type { VectorOperation } from '../../types/calculator';
-import type {
-  LinearAlgebraCanonicalEvidence,
-  LinearAlgebraCanonicalLeafEvidence,
+import {
+  proofLatexForLinearAlgebraPresentation,
+  type LinearAlgebraCanonicalEvidence,
+  type LinearAlgebraCanonicalLeafEvidence,
 } from '../linear-algebra/canonical-evidence';
 import {
   requireProvenCanonicalMathValueV2,
@@ -19,13 +20,17 @@ export function proveVectorCanonicalEvidence(
   path: string,
 ): ProvenCanonicalMathValueV2 {
   try {
-    return requireProvenCanonicalMathValueV2({
-      canonicalLatex: evidence.canonicalLatex,
+    const proofLatex = proofLatexForLinearAlgebraPresentation(evidence.canonicalLatex);
+    const proof = requireProvenCanonicalMathValueV2({
+      canonicalLatex: proofLatex,
       mathJson: evidence.mathJson,
       owner: 'vector',
       routeId,
       source: evidence.source,
     });
+    return proofLatex === evidence.canonicalLatex
+      ? proof
+      : { ...proof, canonicalLatex: evidence.canonicalLatex };
   } catch (error) {
     throw new Error(
       `Vector canonical proof failed at ${path} from ${evidence.source}: ${error instanceof Error ? error.message : String(error)}`,

@@ -62,6 +62,7 @@ test('renders the distinct complex adjoint', async ({ page }) => {
 
   await runEditor(page, 'adjoint(A)');
   await expect.poll(() => primaryLatex(page)).toContain('imaginaryI');
+  await expect.poll(() => primaryLatex(page)).not.toContain('0-\\imaginaryI');
   await expect.poll(() => primaryLatex(page)).toMatch(/a\^\\star|a\^\{\\star\}/);
 
   await page.screenshot({
@@ -77,9 +78,10 @@ test('shows the familiar symbolic determinant', async ({ page }) => {
 });
 
 test('shows the symbolic inverse condition and replays the result', async ({ page }) => {
-  await setMatrixA(page, [['a', '0'], ['0', '1']]);
+  await setMatrixA(page, [['u', 'v'], ['3', '2']]);
   await runEditor(page, String.raw`A^{-1}`);
   await expect(page.getByTestId('display-outcome-success')).toContainText('Valid when');
+  await expect.poll(() => primaryLatex(page)).toContain('2u-3v');
   const inverseLatex = await primaryLatex(page);
   await page.getByTestId('history-toggle').click();
   await page.getByTestId('history-entry-replay').last().click();

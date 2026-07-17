@@ -15,6 +15,10 @@ describe('Linear Algebra scalar wire', () => {
     expect(parseLinearAlgebraScalarWire('a_1+\\alpha+\\sqrt{2}', 'real')).toMatchObject({ ok: true });
     expect(parseLinearAlgebraScalarWire('@mass+\\operatorname{var}(speed)+\\beta_2', 'real'))
       .toMatchObject({ ok: true });
+    expect(parseLinearAlgebraScalarWire('e+f', 'real')).toMatchObject({
+      ok: true,
+      value: { mathJson: ['Add', 'e', 'f'] },
+    });
     const opaque = parseLinearAlgebraScalarWire('f(t)+1', 'real');
     expect(opaque).toMatchObject({
       ok: true,

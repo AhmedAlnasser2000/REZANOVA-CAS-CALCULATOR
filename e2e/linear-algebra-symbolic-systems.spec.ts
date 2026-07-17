@@ -18,6 +18,19 @@ async function setScalarCell(cell: Locator, latex: string) {
   }, latex);
 }
 
+async function setMatrixA(page: Page, values: readonly (readonly string[])[]) {
+  await page.getByLabel('Matrix A rows').fill(String(values.length));
+  await page.getByLabel('Matrix A columns').fill(String(values[0].length));
+  for (let row = 0; row < values.length; row += 1) {
+    for (let column = 0; column < values[row].length; column += 1) {
+      await setScalarCell(
+        page.getByLabel(`Matrix A row ${row + 1} column ${column + 1}`),
+        values[row][column],
+      );
+    }
+  }
+}
+
 async function runEditor(page: Page, latex: string) {
   await setMathFieldLatex(page, latex);
   await page.getByTestId('editor-runtime-run').click();
@@ -51,7 +64,9 @@ test('renders and replays the bounded [a]u=[1] solution cases', async ({ page })
   await runEditor(page, 'Au=[1]');
   await expect.poll(() => primaryLatex(page)).toContain('a\\ne0');
   await expect.poll(() => primaryLatex(page)).toContain('a=0');
-  await expect.poll(() => primaryLatex(page)).toContain('emptyset');
+  await expect.poll(() => primaryLatex(page)).toContain(', &');
+  await expect.poll(() => primaryLatex(page)).toContain('\\varnothing');
+  await expect.poll(() => primaryLatex(page)).not.toContain('emptyset');
   await expect(page.getByTestId('display-outcome-success').evaluate(
     (element) => element.scrollWidth <= element.clientWidth + 1,
   )).resolves.toBe(true);
@@ -65,6 +80,48 @@ test('renders and replays the bounded [a]u=[1] solution cases', async ({ page })
     fullPage: true,
     path: `${screenshotDir}/conditional-system-and-readable-matrix-pad.png`,
   });
+});
+
+test('renders conditional rank and RREF with visible case separators', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Matrix');
+  await expect(page.getByText('Matrix Workspace')).toBeVisible();
+  await setMatrixA(page, [['u']]);
+
+  await runEditor(page, String.raw`\operatorname{rank}(A)`);
+  await expect.poll(() => primaryLatex(page)).toContain(', &');
+  await expect.poll(() => primaryLatex(page)).toContain('u\\ne0');
+  await expect.poll(() => primaryLatex(page)).toContain('u=0');
+
+  await runEditor(page, String.raw`\operatorname{rref}(A)`);
+  await expect.poll(() => primaryLatex(page)).toContain(', &');
+  await expect.poll(() => primaryLatex(page)).toContain('u\\ne0');
+  await expect.poll(() => primaryLatex(page)).toContain('u=0');
+  await expect(page.getByTestId('display-outcome-success').evaluate(
+    (element) => element.scrollWidth <= element.clientWidth + 1,
+  )).resolves.toBe(true);
+
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/rank-rref-visible-condition-separators.png`,
+  });
+});
+
+test('parses explicit ordered unknown systems with formal e and f parameters', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Matrix');
+  await expect(page.getByText('Matrix Workspace')).toBeVisible();
+  await setMatrixA(page, [['a', 'b'], ['c', 'd']]);
+
+  await runEditor(page, 'A[u;v]=[e;f]');
+  await expect.poll(() => primaryLatex(page)).toContain('u');
+  await expect.poll(() => primaryLatex(page)).toContain('v');
+  await expect.poll(() => primaryLatex(page)).toContain('e');
+  await expect.poll(() => primaryLatex(page)).toContain('f');
+  await expect(page.getByTestId('display-outcome-success')).not.toContainText(
+    'outside Matrix/Vector structured forms',
+  );
+  await expect(page.getByTestId('display-outcome-success').evaluate(
+    (element) => element.scrollWidth <= element.clientWidth + 1,
+  )).resolves.toBe(true);
 });
 
 test('renders conditional Vector independence as a mathematical case', async ({ page }) => {

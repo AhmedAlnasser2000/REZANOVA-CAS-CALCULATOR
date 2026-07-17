@@ -134,6 +134,14 @@ describe('symbolic and complex Vector producer', () => {
     expect(result.canonicalResult?.version).toBe(2);
   });
 
+  it('proves the formal principal line angle instead of failing canonical validation', () => {
+    const result = nonPrompt(runVectorMode(request('angle', ['a', 'b'], ['c', 'd'])));
+    expect(result.kind).toBe('success');
+    expect(result.title).toBe('∠(u,v)');
+    expect(result.canonicalResult?.version).toBe(2);
+    expect(result.exactLatex).toContain('\\arccos');
+  });
+
   it('keeps every Milestone 9 symbolic Vector family on producer-proven V2', () => {
     const operations: VectorOperation[] = [
       'add', 'subtract', 'dot', 'cross', 'normA', 'normB', 'projectionUofV',
