@@ -35,7 +35,7 @@
 - `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1`: verified
 - `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: verified
 - `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: verified
-- `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: pending
+- `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: verified
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: pending
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: pending
 - `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: pending
@@ -75,3 +75,11 @@
 - Typed V4 now carries `li`, `Ei`, `Si`, and `erfi` special-function expressions with producer-proven standard MathJSON leaves and conditions; `Erf` and Fresnel outputs remain standard V2.
 - V4 rendering preserves route-owned affine readback such as `2x+1` without recovering meaning from rendered LaTeX.
 - Playwright verified special V4 output, standard V2 special-family output, Copy Result, To Editor, History replay, cards, and readability; representative authority inventory found no V1 indefinite outcomes.
+
+## Completed Gate 5
+
+- Added a backend-only cubic Hermite preconditioner for exact squarefree cubic curves `y^2=P(x)`.
+- The reducer rewrites polynomial-over-radical differentials into an exact correction `Q(x)y` plus residual basis `dx/y` and `x dx/y`, ready for the live second-kind route.
+- Repeated-root cubic inputs remain delegated to the existing genus-0 degeneration fallback instead of widening this gate.
+- The selected radical product normalization is branch-gated: `sqrt(x^3)sqrt(x^2+1)` normalizes only with displayed real-branch facts.
+- No app-visible result changes in this gate; adoption and Playwright output verification move to the live second-kind gate.

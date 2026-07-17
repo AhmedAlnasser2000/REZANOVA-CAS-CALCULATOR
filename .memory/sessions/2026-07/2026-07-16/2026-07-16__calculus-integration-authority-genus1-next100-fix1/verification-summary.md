@@ -78,3 +78,18 @@
 - Verification-caught fixes: cloned repeated affine condition leaves to avoid V4 duplicate-reference validation failure, kept Risch-Norman log/partial-fraction adoption on route-owned precomputed trust, preserved route-owned affine readback such as `2x+1` in V4 leaves while proving standard MathJSON, and rendered standard `Erf` with V2-compatible casing.
 - File-size gate: `npm run test:file-sizes` - pass after keeping `src/lib/symbolic-engine/integration/dispatch.ts` at the committed 1000-line cap.
 - `git diff --check` - pass.
+
+## ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1
+
+- gate_type: backend
+- status: verified
+- Added `buildAlgebraicGenus1CubicHermitePreconditioner` as a backend-only exact reducer for polynomial-over-square-root cubic differentials.
+- The reducer accepts exact squarefree cubic `y^2=P(x)` inputs, computes a correction `Q(x)y`, and leaves only the `dx/y` plus `x dx/y` residual basis for the following live second-kind gate.
+- Radical-product normalization is intentionally bounded: the selected `sqrt(x^3)sqrt(x^2+1)` family normalizes to a polynomial-over-cubic-radical shape only with explicit real-branch facts `x\\ge0` and `x^2+1>0`; unproved radical products fail closed.
+- Repeated-root cubics stop with `repeated-root-degeneration` so the existing genus-0 degeneration route remains the live owner.
+- Focused Vitest: `npx vitest run src/lib/symbolic-engine/integration-algebraic-genus1-cubic-hermite-preconditioner.test.ts --maxWorkers=1` - pass, 4 tests.
+- Incremental TypeScript: `npx tsc -b --pretty false` - pass.
+- File-size gate: `npm run test:file-sizes` - pass, 2003 files and 5 baseline caps.
+- `git diff --check` - pass.
+- Adjacent regression attempt: grouped `integration-algebraic-function-field-orchestrator`, `integration-algebraic-genus1-elementarity-certificate`, and `integration-algebraic-genus1-second-kind-solve-backcheck-surface` Vitest run was interrupted after the existing genus-1 surface became performance-bound; individual orchestrator and elementarity reruns were also interrupted after 60s with no completion. This gate is backend-only and the new focused reducer suite is the authoritative evidence for the new surface.
+- Playwright: not applicable for this gate because no app-visible integration result or boundary output changed; live adoption and visual verification belong to `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`.
