@@ -303,11 +303,30 @@
 
 .notebook-print-page-body {
   position: absolute;
+  z-index: 1;
   top: var(--notebook-print-margin-top);
   right: var(--notebook-print-margin-right);
   bottom: var(--notebook-print-margin-bottom);
   left: var(--notebook-print-margin-left);
   overflow: hidden;
+}
+
+.notebook-print-floating-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.notebook-print-floating-layer.is-behind { z-index: 0; }
+.notebook-print-floating-layer.is-front { z-index: 2; }
+
+.notebook-print-floating-object {
+  position: absolute;
+  overflow: visible;
+}
+
+.notebook-print-floating-content {
+  position: absolute;
 }
 
 .notebook-print-fragment {
@@ -361,6 +380,11 @@
   gap: 4pt;
   margin: 8pt auto;
   text-align: center;
+}
+
+.notebook-print-media.is-floating {
+  height: 100%;
+  margin: 0;
 }
 
 .notebook-print-media.is-left { margin-left: 0; }

@@ -69,6 +69,33 @@ function validateLayout(layout: NotebookPublicationLayoutV1) {
   ))) {
     throw new TypeError('Notebook publication layout fragments are invalid.');
   }
+  const floating = layout.floating ?? [];
+  if (!Array.isArray(floating) || !floating.every((fragment) => (
+    typeof fragment.id === 'string'
+    && fragment.id.length > 0
+    && Number.isSafeInteger(fragment.page)
+    && fragment.page >= 1
+    && fragment.page <= layout.pageCount
+    && Number.isFinite(fragment.xPt)
+    && Number.isFinite(fragment.yPt)
+    && Number.isFinite(fragment.widthPt)
+    && fragment.widthPt > 0
+    && Number.isFinite(fragment.heightPt)
+    && fragment.heightPt > 0
+    && Number.isFinite(fragment.boundsXPt)
+    && Number.isFinite(fragment.boundsYPt)
+    && Number.isFinite(fragment.boundsWidthPt)
+    && fragment.boundsWidthPt > 0
+    && Number.isFinite(fragment.boundsHeightPt)
+    && fragment.boundsHeightPt > 0
+    && Number.isFinite(fragment.scale)
+    && fragment.scale > 0
+    && ['square', 'top-and-bottom', 'in-front', 'behind'].includes(fragment.wrap)
+    && Number.isSafeInteger(fragment.zOrder)
+    && (fragment.anchorKind === 'paragraph' || fragment.anchorKind === 'page')
+  ))) {
+    throw new TypeError('Notebook publication floating layout fragments are invalid.');
+  }
 }
 
 function validateRequest(
@@ -152,6 +179,27 @@ function compatibilityReport(
   const scopedNodeIds = new Set<string>();
   walkNodes(content, (node) => {
     scopedNodeIds.add(node.id);
+    if ('objectPlacement' in node && node.objectPlacement?.mode === 'floating') {
+      if (request.format === 'web') {
+        findings.push({
+          kind: 'layout-approximation',
+          nodeId: node.id,
+          message: 'Responsive Web output keeps this floating Notebook object in ordered flow on narrow screens.',
+        });
+      } else if (request.format === 'docx') {
+        findings.push({
+          kind: 'layout-approximation',
+          nodeId: node.id,
+          message: 'Word output may approximate this floating Notebook object as editable flow content when anchored positioning is not supported.',
+        });
+      } else if (request.scope.kind === 'sections') {
+        findings.push({
+          kind: 'layout-approximation',
+          nodeId: node.id,
+          message: 'Selected-Section PDF output repaginates this floating object with its exported Section.',
+        });
+      }
+    }
     if (node.type === 'paragraph' || node.type === 'heading') {
       node.content?.forEach((inline) => {
         if (inline.type === 'inlineMath') scopedNodeIds.add(inline.id);

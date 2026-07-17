@@ -48,8 +48,20 @@ async function fixture() {
       },
       {
         type: 'imageFigure', id: 'figure', assetId: image.id, altText: 'Limit graph', caption: 'Finite limit',
-        numbered: true, widthPercent: 50, placement: 'square-left', displayAspectRatio: 1.25,
+        numbered: true, widthPercent: 50, displayWidthPt: 216, placement: 'square-left', displayAspectRatio: 1.25,
         rotation: 137, crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 },
+        objectPlacement: {
+          mode: 'floating',
+          anchor: { kind: 'page', pageNumber: 1 },
+          horizontalReference: 'margins',
+          verticalReference: 'margins',
+          xPt: 72,
+          yPt: 96,
+          widthPt: 216,
+          wrap: 'square',
+          textDistancePt: { top: 6, right: 6, bottom: 6, left: 6 },
+          zOrder: 0,
+        },
       },
       { type: 'imageFigure', id: 'vector', assetId: svg.id, decorative: true, widthPercent: 25 },
       {
@@ -72,6 +84,10 @@ describe('Notebook Web publication', () => {
     const findings = notebookWebCompatibilityFindings(source.document.content);
     expect(findings).toContainEqual(expect.objectContaining({
       kind: 'layout-approximation', nodeId: 'figure',
+    }));
+    expect(findings).toContainEqual(expect.objectContaining({
+      message: expect.stringContaining('ordered flow'),
+      nodeId: 'figure',
     }));
     const projection = await buildNotebookPublicationProjection({
       assetPort: source.assets,
@@ -100,6 +116,7 @@ describe('Notebook Web publication', () => {
     expect(html).toContain('web-page-number');
     expect(html).toContain('<strong><span class="web-page-number"');
     expect(html).toContain('is-square-left');
+    expect(html).toContain('is-floating-fallback');
     expect(html).not.toMatch(/\b(?:src|href)=["'](?:file:|https?:|data:|blob:)/u);
     expect(html).not.toContain('serviceWorker');
     expect(css).toContain('.cwiz-notebook');
@@ -108,6 +125,7 @@ describe('Notebook Web publication', () => {
     expect(css).toContain('@page { size: Letter landscape;');
     expect(css).toContain('margin-inline-start: 72pt');
     expect(css).toContain('aspect-ratio: 1.25');
+    expect(css).toContain('width: 216pt');
     expect(css).toContain('transform: rotate(137deg)');
     expect(css).toContain('color: #335577');
     expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({

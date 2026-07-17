@@ -63,6 +63,23 @@ describe('Notebook DOCX publication', () => {
         {
           type: 'imageFigure', id: 'image', assetId: image.id, altText: 'Limit graph', caption: 'A graph',
           numbered: true, widthPercent: 100, displayAspectRatio: 1.25, rotation: 137,
+          objectPlacement: {
+            mode: 'floating',
+            anchor: { kind: 'page', pageNumber: 1 },
+            horizontalReference: 'margins',
+            verticalReference: 'margins',
+            xPt: 72,
+            yPt: 96,
+            widthPt: 240,
+            wrap: 'square',
+            textDistancePt: {
+              top: 6,
+              right: 6,
+              bottom: 6,
+              left: 6,
+            },
+            zOrder: 0,
+          },
         },
         {
           type: 'section', id: 'section', title: 'Applications',
@@ -76,6 +93,11 @@ describe('Notebook DOCX publication', () => {
     });
     const findings = notebookDocxCompatibilityFindings(document.content);
     expect(findings.some((item) => item.kind === 'equation-fallback')).toBe(true);
+    expect(findings).toContainEqual(expect.objectContaining({
+      kind: 'layout-approximation',
+      message: expect.stringContaining('floating Notebook object'),
+      nodeId: 'image',
+    }));
     const projection = await buildNotebookPublicationProjection({
       assetPort,
       compatibilityFindings: findings,

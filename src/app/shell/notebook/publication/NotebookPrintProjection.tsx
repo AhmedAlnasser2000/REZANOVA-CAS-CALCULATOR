@@ -11,6 +11,7 @@ import {
   notebookPageGeometry,
   notebookSemanticTitle,
   paginateNotebookBlocks,
+  type NotebookFloatingPaginationFragment,
   type NotebookInlineNode,
   type NotebookParagraphFormat,
   type NotebookPublicationProjectionV1,
@@ -164,10 +165,12 @@ function listStyle(node: Extract<NotebookRichBlockNode, { type: 'bulletList' | '
 
 function PublicationNode({
   assetUrls,
+  floating = false,
   labels,
   node,
 }: {
   assetUrls: ReadonlyMap<string, string>;
+  floating?: boolean;
   labels: ReadonlyMap<string, string>;
   node: NotebookRichBlockNode;
 }): ReactNode {
@@ -200,8 +203,16 @@ function PublicationNode({
   if (node.type === 'horizontalRule') return <hr />;
   if (node.type === 'pageBreak') return null;
   if (node.type === 'imageFigure') {
+    const width = floating
+      ? '100%'
+      : node.displayWidthPt !== undefined
+        ? `${node.displayWidthPt}pt`
+        : `${node.widthPercent ?? 100}%`;
     return (
-      <figure className={`notebook-print-media is-${node.alignment ?? 'center'} is-${node.placement ?? 'normal'}`} style={{ width: `${node.widthPercent ?? 100}%` }}>
+      <figure
+        className={`notebook-print-media is-${node.alignment ?? 'center'} is-${node.placement ?? 'normal'}${floating ? ' is-floating' : ''}`}
+        style={{ width }}
+      >
         <PublicationImage
           alt={node.decorative ? '' : node.altText ?? ''}
           crop={node.crop}
@@ -263,6 +274,19 @@ function printFragments(projection: NotebookPublicationProjectionV1): PageFragme
   })), geometry.usableHeight).fragments;
 }
 
+function collectNodeMap(nodes: readonly NotebookRichBlockNode[]) {
+  const output = new Map<string, NotebookRichBlockNode>();
+  const visit = (children: readonly NotebookRichBlockNode[]) => children.forEach((node) => {
+    output.set(node.id, node);
+    if (node.type === 'section' || node.type === 'semanticBlock') visit(node.content);
+    if (node.type === 'bulletList' || node.type === 'orderedList') {
+      node.content.forEach((item) => visit(item.content));
+    }
+  });
+  visit(nodes);
+  return output;
+}
+
 function visiblePages(projection: NotebookPublicationProjectionV1, fragments: readonly PageFragment[]) {
   if (projection.request.scope.kind === 'page-range') {
     const { fromPage, toPage } = projection.request.scope;
@@ -271,8 +295,74 @@ function visiblePages(projection: NotebookPublicationProjectionV1, fragments: re
       (_, index) => fromPage + index,
     );
   }
+  if (projection.request.scope.kind !== 'sections') {
+    return Array.from({ length: projection.sourceLayout.pageCount }, (_, index) => index + 1);
+  }
   const lastPage = fragments.reduce((maximum, fragment) => Math.max(maximum, fragment.page), 1);
   return Array.from({ length: lastPage }, (_, index) => index + 1);
+}
+
+function floatingFragmentsForPage(
+  projection: NotebookPublicationProjectionV1,
+  nodes: ReadonlyMap<string, NotebookRichBlockNode>,
+  page: number,
+  behind: boolean,
+) {
+  if (projection.request.scope.kind === 'sections') return [];
+  return (projection.sourceLayout.floating ?? [])
+    .filter((fragment) => fragment.page === page
+      && nodes.has(fragment.id)
+      && (behind ? fragment.wrap === 'behind' : fragment.wrap !== 'behind'));
+}
+
+function FloatingLayer({
+  assetUrls,
+  behind = false,
+  fragments,
+  labels,
+  nodes,
+}: {
+  assetUrls: ReadonlyMap<string, string>;
+  behind?: boolean;
+  fragments: readonly NotebookFloatingPaginationFragment[];
+  labels: ReadonlyMap<string, string>;
+  nodes: ReadonlyMap<string, NotebookRichBlockNode>;
+}) {
+  if (fragments.length === 0) return null;
+  return (
+    <div className={`notebook-print-floating-layer ${behind ? 'is-behind' : 'is-front'}`} aria-hidden={behind || undefined}>
+      {fragments.map((fragment) => {
+        const node = nodes.get(fragment.id);
+        if (!node) return null;
+        return (
+          <div
+            className={`notebook-print-floating-object is-${fragment.wrap}`}
+            data-node-id={fragment.id}
+            key={`${fragment.id}.${fragment.page}`}
+            style={{
+              height: `${fragment.boundsHeightPt}pt`,
+              left: `${fragment.boundsXPt}pt`,
+              top: `${fragment.boundsYPt}pt`,
+              width: `${fragment.boundsWidthPt}pt`,
+              zIndex: fragment.zOrder,
+            }}
+          >
+            <div
+              className="notebook-print-floating-content"
+              style={{
+                height: `${fragment.heightPt}pt`,
+                left: `${fragment.xPt - fragment.boundsXPt}pt`,
+                top: `${fragment.yPt - fragment.boundsYPt}pt`,
+                width: `${fragment.widthPt}pt`,
+              }}
+            >
+              <PublicationNode assetUrls={assetUrls} floating labels={labels} node={node} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function NotebookPrintProjection({
@@ -288,7 +378,7 @@ export function NotebookPrintProjection({
   const labels = useMemo(() => collectNumberedLabels(projection.content), [projection.content]);
   const fragments = useMemo(() => printFragments(projection), [projection]);
   const pages = useMemo(() => visiblePages(projection, fragments), [fragments, projection]);
-  const nodes = useMemo(() => new Map(projection.content.map((node) => [node.id, node])), [projection.content]);
+  const nodes = useMemo(() => collectNodeMap(projection.content), [projection.content]);
   const geometry = notebookPageGeometry(projection.pageSetup);
   const isRepaginated = projection.request.scope.kind === 'sections';
 
@@ -306,6 +396,8 @@ export function NotebookPrintProjection({
           ? projection.headerFooter.firstPageFooter
           : projection.headerFooter.defaultFooter;
         const pageFragments = fragments.filter((fragment) => fragment.page === page);
+        const behindFloating = floatingFragmentsForPage(projection, nodes, page, true);
+        const frontFloating = floatingFragmentsForPage(projection, nodes, page, false);
         return (
           <article
             className="notebook-print-page"
@@ -327,6 +419,13 @@ export function NotebookPrintProjection({
                 </span>
               ))}
             </header>
+            <FloatingLayer
+              assetUrls={assetUrls}
+              behind
+              fragments={behindFloating}
+              labels={labels}
+              nodes={nodes}
+            />
             <div className="notebook-print-page-body">
               {pageFragments.map((fragment) => {
                 const node = nodes.get(fragment.id);
@@ -359,6 +458,12 @@ export function NotebookPrintProjection({
                 );
               })}
             </div>
+            <FloatingLayer
+              assetUrls={assetUrls}
+              fragments={frontFloating}
+              labels={labels}
+              nodes={nodes}
+            />
             <footer className="notebook-print-running-matter">
               {(['left', 'center', 'right'] as const).map((region) => (
                 <span className={`is-${region}`} key={region}>

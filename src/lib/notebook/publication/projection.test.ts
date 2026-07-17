@@ -54,6 +54,18 @@ async function fixture(): Promise<Fixture> {
           placement: 'square-left',
           displayAspectRatio: 1.25,
           rotation: 137,
+          objectPlacement: {
+            mode: 'floating',
+            anchor: { kind: 'page', pageNumber: 1 },
+            horizontalReference: 'margins',
+            verticalReference: 'margins',
+            xPt: 72,
+            yPt: 96,
+            widthPt: 240,
+            wrap: 'square',
+            textDistancePt: { top: 6, right: 6, bottom: 6, left: 6 },
+            zOrder: 0,
+          },
         }],
       },
       {
@@ -76,6 +88,22 @@ async function fixture(): Promise<Fixture> {
       { id: 'section-a', page: 1, offsetPt: 30, heightPt: 300, scale: 1, fragment: 0 },
       { id: 'section-b', page: 2, offsetPt: 0, heightPt: 280, scale: 1, fragment: 0 },
     ],
+    floating: [{
+      id: 'figure-a',
+      page: 1,
+      xPt: 72,
+      yPt: 96,
+      widthPt: 240,
+      heightPt: 192,
+      boundsXPt: 72,
+      boundsYPt: 96,
+      boundsWidthPt: 240,
+      boundsHeightPt: 192,
+      scale: 1,
+      wrap: 'square',
+      zOrder: 0,
+      anchorKind: 'page',
+    }],
   };
   return {
     assets,
@@ -126,6 +154,7 @@ describe('Notebook publication projection', () => {
     expect((await projection.assets[0].blob.arrayBuffer()).byteLength).toBe(
       projection.assets[0].metadata.byteLength,
     );
+    expect(projection.sourceLayout.floating).toEqual(source.layout.floating);
   });
 
   it('selects top-level Section subtrees in document order', async () => {
@@ -188,6 +217,15 @@ describe('Notebook publication projection', () => {
       record: source.record,
       request: { format: 'web', scope: { kind: 'sections', sectionIds: ['figure-a'] } },
     })).rejects.toThrow('top-level Sections');
+    await expect(buildNotebookPublicationProjection({
+      assetPort: source.assets,
+      layout: {
+        ...source.layout,
+        floating: source.layout.floating?.map((fragment) => ({ ...fragment, page: 3 })),
+      },
+      record: source.record,
+      request: { format: 'pdf', scope: { kind: 'document' } },
+    })).rejects.toThrow('floating layout');
   });
 
   it('freezes the current revision before a low-priority job runs', async () => {

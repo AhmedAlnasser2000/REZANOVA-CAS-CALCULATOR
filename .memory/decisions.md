@@ -2980,6 +2980,10 @@
 
 - [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Notebook preferences are local app settings, not document data. They may seed new Notebook sessions and UI behavior through the existing Settings-to-Notebook seam, but they must not reinterpret existing documents, disable recovery/safety ceilings, or be embedded in `.cwiznb`.
 
+## 2026-07-16 - NOTEBOOK-PUBLICATION-PARITY1
+
+- [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Notebook PDF/print is the publication target that consumes authoritative physical-page floating coordinates. Web and DOCX remain publication projections, not Notebook round-trip formats; when floating objects cannot be represented with equal fidelity, they must emit explicit compatibility findings and preserve safe ordered-flow/editable fallbacks rather than silently pretending exact parity.
+
 ## 2026-07-16 - CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1
 
 - [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Ordinary indefinite-integration successes and math-bearing controlled errors use Calculus-owned V2 authority at the runtime boundary. Producer-owned native antiderivative expressions, not rendered LaTeX reparsing, drive Copy Result, To Editor, History replay, Trust, and structural `+C`.

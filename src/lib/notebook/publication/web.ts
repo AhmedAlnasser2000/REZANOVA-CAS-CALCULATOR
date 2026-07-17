@@ -62,6 +62,7 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
 .media.is-square-left { float: left; margin: .25rem 1.25rem .75rem 0; }
 .media.is-square-right { float: right; margin: .25rem 0 .75rem 1.25rem; }
 .media.is-top-and-bottom { clear: both; }
+.media.is-floating-fallback { outline: 1px dashed #bcc8b7; outline-offset: 3px; }
 .media-description { text-align: left; }
 .page-break { clear: both; height: 0; margin: 2rem 0; border: 0; border-top: 1px dashed #aab2a7; }
 .divider { clear: both; border: 0; border-top: 1px solid #aeb6ac; }
@@ -160,6 +161,13 @@ export function notebookWebCompatibilityFindings(
       findings.push({
         kind: 'layout-approximation', nodeId: node.id,
         message: 'The Web publication approximates the Notebook image crop with a static clip region.',
+      });
+    }
+    if ('objectPlacement' in node && node.objectPlacement?.mode === 'floating') {
+      findings.push({
+        kind: 'layout-approximation',
+        nodeId: node.id,
+        message: 'Responsive Web output keeps this floating Notebook object in ordered flow on narrow screens.',
       });
     }
   });
@@ -266,19 +274,27 @@ type RenderContext = {
 
 function mediaClasses(
   widthPercent: number | undefined,
+  displayWidthPt: number | undefined,
   alignment: string | undefined,
   placement: string | undefined,
   displayAspectRatio: number | undefined,
+  floating: boolean | undefined,
   styles: StyleRegistry,
 ) {
   const classes = ['media', `is-${alignment ?? 'center'}`];
   if (placement && placement !== 'normal') classes.push(`is-${placement}`);
+  if (floating) classes.push('is-floating-fallback');
   if (displayAspectRatio) {
     classes.push('has-display-aspect');
     classes.push(styles.add(`aspect:${displayAspectRatio}`, `aspect-ratio: ${displayAspectRatio}`));
   }
-  const width = Math.max(10, Math.min(100, widthPercent ?? 100));
-  classes.push(styles.add(`width:${width}`, `width: ${width}%`));
+  if (displayWidthPt !== undefined) {
+    const width = Math.max(36, displayWidthPt);
+    classes.push(styles.add(`width-pt:${width}`, `width: ${width}pt; max-width: 100%`));
+  } else {
+    const width = Math.max(10, Math.min(100, widthPercent ?? 100));
+    classes.push(styles.add(`width:${width}`, `width: ${width}%`));
+  }
   return classes.join(' ');
 }
 
@@ -316,7 +332,7 @@ function renderNode(node: NotebookRichBlockNode, context: RenderContext): string
       `crop:${node.crop.x}:${node.crop.y}:${node.crop.width}:${node.crop.height}`,
       `clip-path: inset(${node.crop.y * 100}% ${(1 - node.crop.x - node.crop.width) * 100}% ${(1 - node.crop.y - node.crop.height) * 100}% ${node.crop.x * 100}%)`,
     ) : '';
-    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, node.displayAspectRatio, context.styles)}"><img class="${[crop, rotation].filter(Boolean).join(' ')}" src="${path}" alt="${node.decorative ? '' : escapeHtml(node.altText ?? '')}" loading="lazy">${captionHtml(node.id, node.caption, context)}</figure>`;
+    return `<figure class="${mediaClasses(node.widthPercent, node.displayWidthPt, node.alignment, node.placement, node.displayAspectRatio, node.objectPlacement?.mode === 'floating', context.styles)}"><img class="${[crop, rotation].filter(Boolean).join(' ')}" src="${path}" alt="${node.decorative ? '' : escapeHtml(node.altText ?? '')}" loading="lazy">${captionHtml(node.id, node.caption, context)}</figure>`;
   }
   if (node.type === 'bulletList' || node.type === 'orderedList') {
     const tag = node.type === 'bulletList' ? 'ul' : 'ol';

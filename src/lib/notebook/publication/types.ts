@@ -6,7 +6,10 @@ import type {
 import type {
   NotebookAssetMetadataV1,
 } from '../persistence/contracts';
-import type { NotebookPaginationFragment } from '../document/pagination';
+import type {
+  NotebookFloatingPaginationFragment,
+  NotebookPaginationFragment,
+} from '../document/pagination';
 
 export const NOTEBOOK_PUBLICATION_PROJECTION_VERSION = 1 as const;
 export const NOTEBOOK_COMPATIBILITY_REPORT_VERSION = 1 as const;
@@ -27,6 +30,7 @@ export type NotebookExportRequest = {
 export type NotebookPublicationLayoutV1 = {
   readonly pageCount: number;
   readonly fragments: readonly NotebookPaginationFragment[];
+  readonly floating?: readonly NotebookFloatingPaginationFragment[];
 };
 
 export type NotebookPublicationAssetV1 = {

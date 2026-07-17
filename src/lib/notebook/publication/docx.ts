@@ -129,6 +129,13 @@ export function notebookDocxCompatibilityFindings(
         message: 'Word will preserve the image and rotation but approximate its Notebook crop.',
       });
     }
+    if ('objectPlacement' in node && node.objectPlacement?.mode === 'floating') {
+      findings.push({
+        kind: 'layout-approximation',
+        nodeId: node.id,
+        message: 'Word output may approximate this floating Notebook object as editable flow content when anchored positioning is not supported.',
+      });
+    }
   });
   return findings;
 }
@@ -219,13 +226,23 @@ function imageRun(
   rotation = 0,
   alt = '',
   displayAspectRatio?: number,
+  displayWidthPt?: number,
+  displayHeightPt?: number,
 ) {
-  const maximumWidth = 624 * Math.max(0.1, Math.min(1, widthPercent / 100));
-  const scale = Math.min(1, maximumWidth / image.width);
+  const requestedWidth = displayWidthPt !== undefined
+    ? displayWidthPt * (96 / 72)
+    : 624 * Math.max(0.1, Math.min(1, widthPercent / 100));
+  const scale = displayWidthPt !== undefined
+    ? requestedWidth / image.width
+    : Math.min(1, requestedWidth / image.width);
   const width = Math.max(1, Math.round(image.width * scale));
   const transformation = {
     width,
-    height: Math.max(1, Math.round(displayAspectRatio ? width / displayAspectRatio : image.height * scale)),
+    height: Math.max(1, Math.round(
+      displayHeightPt !== undefined
+        ? displayHeightPt * (96 / 72)
+        : displayAspectRatio ? width / displayAspectRatio : image.height * scale,
+    )),
     rotation,
   };
   const altText = { name: alt || 'Notebook image', description: alt };
@@ -417,6 +434,8 @@ function renderNodes(nodes: readonly NotebookRichBlockNode[], context: RenderCon
           node.rotation,
           node.decorative ? '' : node.altText,
           node.displayAspectRatio,
+          node.displayWidthPt,
+          node.displayHeightPt,
         )],
         alignment: alignment(node.alignment),
       }));

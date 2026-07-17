@@ -90,6 +90,47 @@ function selectionUsesInspector(
     || selection?.type === 'notebookSection';
 }
 
+function paginationFragmentsMatch(
+  left: NotebookPaginationMetrics['fragments'],
+  right: NotebookPaginationMetrics['fragments'],
+) {
+  return left.length === right.length && left.every((fragment, index) => {
+    const candidate = right[index];
+    return candidate
+      && fragment.id === candidate.id
+      && fragment.page === candidate.page
+      && fragment.fragment === candidate.fragment
+      && Math.abs(fragment.offsetPt - candidate.offsetPt) < 0.01
+      && Math.abs(fragment.heightPt - candidate.heightPt) < 0.01
+      && Math.abs(fragment.scale - candidate.scale) < 0.01
+      && Math.abs((fragment.insetLeftPt ?? 0) - (candidate.insetLeftPt ?? 0)) < 0.01
+      && Math.abs((fragment.insetRightPt ?? 0) - (candidate.insetRightPt ?? 0)) < 0.01;
+  });
+}
+
+function floatingFragmentsMatch(
+  left: NotebookPaginationMetrics['floating'],
+  right: NotebookPaginationMetrics['floating'],
+) {
+  return left.length === right.length && left.every((fragment, index) => {
+    const candidate = right[index];
+    return candidate
+      && fragment.id === candidate.id
+      && fragment.page === candidate.page
+      && fragment.wrap === candidate.wrap
+      && fragment.zOrder === candidate.zOrder
+      && fragment.anchorKind === candidate.anchorKind
+      && Math.abs(fragment.xPt - candidate.xPt) < 0.01
+      && Math.abs(fragment.yPt - candidate.yPt) < 0.01
+      && Math.abs(fragment.widthPt - candidate.widthPt) < 0.01
+      && Math.abs(fragment.heightPt - candidate.heightPt) < 0.01
+      && Math.abs(fragment.boundsXPt - candidate.boundsXPt) < 0.01
+      && Math.abs(fragment.boundsYPt - candidate.boundsYPt) < 0.01
+      && Math.abs(fragment.boundsWidthPt - candidate.boundsWidthPt) < 0.01
+      && Math.abs(fragment.boundsHeightPt - candidate.boundsHeightPt) < 0.01;
+  });
+}
+
 function NotebookPageContent({
   exportSavePort: suppliedExportSavePort,
   instanceId,
@@ -165,9 +206,10 @@ function NotebookPageContent({
   const isLargeDocument = (documentAnalysis?.blockCount ?? 0) > NOTEBOOK_LIVE_BLOCK_TARGET;
   const effectiveViewMode = isLargeDocument ? 'draft' : uiState.viewMode;
   const publicationLayout = useMemo(() => ({
+    floating: pagination.floating,
     fragments: pagination.fragments,
     pageCount: pagination.pageCount,
-  }), [pagination.fragments, pagination.pageCount]);
+  }), [pagination.floating, pagination.fragments, pagination.pageCount]);
   const workbenchStyle = {
     '--notebook-inspector-width': `${uiState.inspectorWidth}px`,
     '--notebook-outline-width': `${uiState.outlineWidth}px`,
@@ -225,6 +267,11 @@ function NotebookPageContent({
       current.currentPage === next.currentPage
       && current.pageCount === next.pageCount
       && Math.abs(current.pageHeightPx - next.pageHeightPx) < 0.5
+      && Math.abs(current.pageGapPx - next.pageGapPx) < 0.5
+      && paginationFragmentsMatch(current.fragments, next.fragments)
+      && floatingFragmentsMatch(current.floating, next.floating)
+      && current.returnedToFlowIds.length === next.returnedToFlowIds.length
+      && current.returnedToFlowIds.every((id, index) => id === next.returnedToFlowIds[index])
         ? current
         : next
     ));
