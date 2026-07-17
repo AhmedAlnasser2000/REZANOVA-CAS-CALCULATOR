@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createNotebookRichDocument, isNotebookRichDocumentV12 } from './model';
+import { createNotebookRichDocument } from './model';
+import { isNotebookRichDocumentV12 } from './compatibility';
 import { migrateNotebookDocumentV12 } from './migrate-v12';
-import type { NotebookRichDocumentV12 } from './types';
+import type { NotebookRichDocumentV12 } from './compatibility';
 
 describe('Notebook rich document V12 migration', () => {
   it('changes only the version and leaves every legacy object in flow', () => {

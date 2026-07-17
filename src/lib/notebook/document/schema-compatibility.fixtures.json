@@ -1,0 +1,251 @@
+{
+  "fixtures": [
+    {
+      "schema": 6,
+      "document": {
+        "version": 6,
+        "id": "fixture.schema6",
+        "title": "Schema 6 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema6",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema6",
+            "content": [{ "type": "text", "text": "Shared schema 6 fixture" }]
+          }
+        ]
+      }
+    },
+    {
+      "schema": 7,
+      "document": {
+        "version": 7,
+        "id": "fixture.schema7",
+        "title": "Schema 7 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema7",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema7",
+            "content": [{ "type": "text", "text": "Shared schema 7 fixture" }]
+          }
+        ]
+      }
+    },
+    {
+      "schema": 8,
+      "document": {
+        "version": 8,
+        "id": "fixture.schema8",
+        "title": "Schema 8 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema8",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema8",
+            "content": [{ "type": "text", "text": "Shared schema 8 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "headerText": "",
+          "footerText": "",
+          "differentFirstPage": false,
+          "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+        }
+      }
+    },
+    {
+      "schema": 9,
+      "document": {
+        "version": 9,
+        "id": "fixture.schema9",
+        "title": "Schema 9 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema9",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema9",
+            "content": [{ "type": "text", "text": "Shared schema 9 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "headerText": "",
+          "footerText": "",
+          "differentFirstPage": false,
+          "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+        }
+      }
+    },
+    {
+      "schema": 10,
+      "document": {
+        "version": 10,
+        "id": "fixture.schema10",
+        "title": "Schema 10 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema10",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema10",
+            "content": [{ "type": "text", "text": "Shared schema 10 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "headerText": "",
+          "footerText": "",
+          "differentFirstPage": false,
+          "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+        }
+      }
+    },
+    {
+      "schema": 11,
+      "document": {
+        "version": 11,
+        "id": "fixture.schema11",
+        "title": "Schema 11 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema11",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema11",
+            "content": [{ "type": "text", "text": "Shared schema 11 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "defaultHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "defaultFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "differentFirstPage": false,
+          "pageNumberStart": 1
+        }
+      }
+    },
+    {
+      "schema": 12,
+      "document": {
+        "version": 12,
+        "id": "fixture.schema12",
+        "title": "Schema 12 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema12",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema12",
+            "content": [{ "type": "text", "text": "Shared schema 12 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "defaultHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "defaultFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "differentFirstPage": false,
+          "pageNumberStart": 1
+        }
+      }
+    },
+    {
+      "schema": 13,
+      "document": {
+        "version": 13,
+        "id": "fixture.schema13",
+        "title": "Schema 13 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema13",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema13",
+            "content": [{ "type": "text", "text": "Shared schema 13 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "defaultHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "defaultFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "differentFirstPage": false,
+          "pageNumberStart": 1
+        }
+      }
+    },
+    {
+      "schema": 14,
+      "document": {
+        "version": 14,
+        "id": "fixture.schema14",
+        "title": "Schema 14 fixture",
+        "createdAt": "2026-07-16T00:00:00.000Z",
+        "updatedAt": "2026-07-16T00:00:00.000Z",
+        "selectedNodeId": "paragraph.schema14",
+        "content": [
+          {
+            "type": "paragraph",
+            "id": "paragraph.schema14",
+            "content": [{ "type": "text", "text": "Shared schema 14 fixture" }]
+          }
+        ],
+        "pageSetup": {
+          "paperSize": "a4",
+          "orientation": "portrait",
+          "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+          "defaultHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "defaultFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageHeader": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "firstPageFooter": { "left": [{ "type": "paragraph" }], "center": [{ "type": "paragraph" }], "right": [{ "type": "paragraph" }] },
+          "differentFirstPage": false,
+          "pageNumberStart": 1
+        }
+      }
+    }
+  ]
+}

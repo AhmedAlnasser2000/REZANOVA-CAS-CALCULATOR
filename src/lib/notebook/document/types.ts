@@ -350,66 +350,6 @@ export type NotebookRichDocument = NotebookRichDocumentBase & {
   headerFooter: NotebookHeaderFooterSettings;
 };
 
-export type NotebookRichDocumentV2 = NotebookRichDocumentBase & {
-  version: 2;
-};
-
-export type NotebookRichDocumentV3 = NotebookRichDocumentBase & {
-  version: 3;
-};
-
-export type NotebookRichDocumentV4 = NotebookRichDocumentBase & {
-  version: 4;
-};
-
-export type NotebookRichDocumentV5 = NotebookRichDocumentBase & {
-  version: 5;
-};
-
-export type NotebookRichDocumentV6 = NotebookRichDocumentBase & {
-  version: 6;
-};
-
-export type NotebookRichDocumentV7 = NotebookRichDocumentBase & {
-  version: 7;
-};
-
-export type NotebookRichDocumentV8 = NotebookRichDocumentBase & {
-  version: 8;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookLegacyHeaderFooterSettings;
-};
-
-export type NotebookRichDocumentV9 = NotebookRichDocumentBase & {
-  version: 9;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookLegacyHeaderFooterSettings;
-};
-
-export type NotebookRichDocumentV10 = NotebookRichDocumentBase & {
-  version: 10;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookLegacyHeaderFooterSettings;
-};
-
-export type NotebookRichDocumentV11 = NotebookRichDocumentBase & {
-  version: 11;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookHeaderFooterSettings;
-};
-
-export type NotebookRichDocumentV12 = NotebookRichDocumentBase & {
-  version: 12;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookHeaderFooterSettings;
-};
-
-export type NotebookRichDocumentV13 = NotebookRichDocumentBase & {
-  version: 13;
-  pageSetup: NotebookPageSetup;
-  headerFooter: NotebookHeaderFooterSettings;
-};
-
 export type NotebookDocumentSummary = {
   id: string;
   title: string;

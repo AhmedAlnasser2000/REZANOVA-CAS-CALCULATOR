@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isNotebookRichDocument,
-  isNotebookRichDocumentV5,
 } from './model';
+import { isNotebookRichDocumentV5 } from './compatibility';
 import { migrateNotebookDocumentV5 } from './migrate-v5';
-import type { NotebookRichDocumentV5 } from './types';
+import type { NotebookRichDocumentV5 } from './compatibility';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 describe('Notebook rich document V5 migration', () => {
   it('preserves visible behavior and removes ignored collapse flags recursively', () => {
@@ -47,7 +48,7 @@ describe('Notebook rich document V5 migration', () => {
 
     expect(isNotebookRichDocumentV5(version5)).toBe(true);
     const migrated = migrateNotebookDocumentV5(version5);
-    expect(migrated.version).toBe(13);
+    expect(migrated.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.content[0]).toMatchObject({
       type: 'section',
       id: 'section.1',

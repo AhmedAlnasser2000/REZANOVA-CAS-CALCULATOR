@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createNotebookRichDocument, isNotebookRichDocumentV11 } from './model';
+import { createNotebookRichDocument } from './model';
+import { isNotebookRichDocumentV11 } from './compatibility';
 import { migrateNotebookDocumentV11 } from './migrate-v11';
-import type { NotebookRichDocumentV11 } from './types';
+import type { NotebookRichDocumentV11 } from './compatibility';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 describe('Notebook rich document V11 migration', () => {
   it('changes only the version and preserves integer media widths', () => {
@@ -24,7 +26,7 @@ describe('Notebook rich document V11 migration', () => {
     expect(isNotebookRichDocumentV11(version11)).toBe(true);
     expect(migrateNotebookDocumentV11(version11)).toEqual({
       ...version11,
-      version: 13,
+      version: NOTEBOOK_RICH_DOCUMENT_VERSION,
     });
   });
 });

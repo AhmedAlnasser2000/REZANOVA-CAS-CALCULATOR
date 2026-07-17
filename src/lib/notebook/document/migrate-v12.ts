@@ -1,5 +1,6 @@
 import { migrateNotebookDocumentV13 } from './migrate-v13';
-import type { NotebookRichDocument, NotebookRichDocumentV12, NotebookRichDocumentV13 } from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV12, NotebookRichDocumentV13 } from './compatibility';
 
 /** V13 adds optional floating-object placement; every V12 object remains in flow. */
 export function migrateNotebookDocumentV12(

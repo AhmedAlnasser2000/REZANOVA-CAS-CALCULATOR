@@ -1,9 +1,6 @@
 import { migrateNotebookDocumentV9 } from './migrate-v9';
-import type {
-  NotebookRichDocument,
-  NotebookRichDocumentV8,
-  NotebookRichDocumentV9,
-} from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV8, NotebookRichDocumentV9 } from './compatibility';
 
 /** V9 adds local video figures without changing existing V8 content or page settings. */
 export function migrateNotebookDocumentV8(

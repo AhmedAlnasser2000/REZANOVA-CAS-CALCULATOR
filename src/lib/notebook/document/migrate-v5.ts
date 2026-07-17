@@ -2,9 +2,8 @@ import { notebookSemanticIsCollapsible } from './structured-blocks';
 import {
   type NotebookRichBlockNode,
   type NotebookRichDocument,
-  type NotebookRichDocumentV5,
-  type NotebookRichDocumentV6,
 } from './types';
+import type { NotebookRichDocumentV5, NotebookRichDocumentV6 } from './compatibility';
 import { migrateNotebookDocumentV6 } from './migrate-v6';
 
 function migrateBlock(node: NotebookRichBlockNode): NotebookRichBlockNode {

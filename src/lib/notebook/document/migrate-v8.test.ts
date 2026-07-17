@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isNotebookRichDocument,
-  isNotebookRichDocumentV8,
 } from './model';
+import { isNotebookRichDocumentV8 } from './compatibility';
 import { migrateNotebookDocumentV8 } from './migrate-v8';
-import type { NotebookRichDocumentV8 } from './types';
+import type { NotebookRichDocumentV8 } from './compatibility';
 
 describe('Notebook rich document V8 migration', () => {
   it('changes only the version when no video formatting exists', () => {

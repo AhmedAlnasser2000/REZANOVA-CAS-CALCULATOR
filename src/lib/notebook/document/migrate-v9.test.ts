@@ -4,9 +4,9 @@ import { migrateNotebookRichDocument } from './migrate';
 import { migrateNotebookDocumentV9 } from './migrate-v9';
 import {
   isNotebookRichDocument,
-  isNotebookRichDocumentV9,
 } from './model';
-import type { NotebookRichDocumentV9 } from './types';
+import { isNotebookRichDocumentV9 } from './compatibility';
+import type { NotebookRichDocumentV9 } from './compatibility';
 
 describe('Notebook rich document V9 migration', () => {
   it('changes only the version while preserving the V9 document tree', () => {

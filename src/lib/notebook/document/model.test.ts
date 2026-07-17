@@ -4,14 +4,16 @@ import {
   countNotebookBlocks,
   createNotebookRichDocument,
   isNotebookRichDocument,
+  summarizeNotebookDocument,
+} from './model';
+import {
   isNotebookRichDocumentV4,
   isNotebookRichDocumentV5,
   isNotebookRichDocumentV6,
   isNotebookRichDocumentV7,
   isNotebookRichDocumentV9,
   isNotebookRichDocumentV11,
-  summarizeNotebookDocument,
-} from './model';
+} from './compatibility';
 import {
   NOTEBOOK_FONT_SIZE_MAX,
   NOTEBOOK_FONT_SIZE_MIN,

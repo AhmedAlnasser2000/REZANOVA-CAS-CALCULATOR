@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isNotebookRichDocument, isNotebookRichDocumentV7 } from './model';
+import { isNotebookRichDocument } from './model';
+import { isNotebookRichDocumentV7 } from './compatibility';
 import { migrateNotebookDocumentV7 } from './migrate-v7';
-import type { NotebookRichDocumentV7 } from './types';
+import type { NotebookRichDocumentV7 } from './compatibility';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 describe('Notebook rich document V7 migration', () => {
   it('adds only default page settings while preserving V7 image content', () => {
@@ -24,7 +26,7 @@ describe('Notebook rich document V7 migration', () => {
 
     expect(isNotebookRichDocumentV7(version7)).toBe(true);
     const migrated = migrateNotebookDocumentV7(version7);
-    expect(migrated.version).toBe(13);
+    expect(migrated.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.content).toEqual(version7.content);
     expect(migrated.pageSetup).toEqual({
       paperSize: 'a4',

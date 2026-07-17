@@ -1,9 +1,6 @@
 import { migrateNotebookDocumentV5 } from './migrate-v5';
-import type {
-  NotebookRichDocument,
-  NotebookRichDocumentV4,
-  NotebookRichDocumentV5,
-} from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV4, NotebookRichDocumentV5 } from './compatibility';
 
 /** V5 adds only optional formatting; an unformatted V4 tree migrates by version alone. */
 export function migrateNotebookDocumentV4(

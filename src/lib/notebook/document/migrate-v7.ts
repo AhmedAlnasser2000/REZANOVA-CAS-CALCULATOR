@@ -3,11 +3,8 @@ import {
   DEFAULT_NOTEBOOK_PAGE_SETUP,
 } from './page-layout';
 import { migrateNotebookDocumentV8 } from './migrate-v8';
-import type {
-  NotebookRichDocument,
-  NotebookRichDocumentV7,
-  NotebookRichDocumentV8,
-} from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV7, NotebookRichDocumentV8 } from './compatibility';
 
 /** V8 adds persisted page geometry, simple running matter, and explicit page breaks. */
 export function migrateNotebookDocumentV7(

@@ -14,6 +14,12 @@ import { migrateNotebookDocumentV12 } from './migrate-v12';
 import { migrateNotebookDocumentV13 } from './migrate-v13';
 import {
   isNotebookRichDocument,
+} from './model';
+import {
+  isNotebookRichDocumentV10,
+  isNotebookRichDocumentV11,
+  isNotebookRichDocumentV12,
+  isNotebookRichDocumentV13,
   isNotebookRichDocumentV2,
   isNotebookRichDocumentV3,
   isNotebookRichDocumentV4,
@@ -22,11 +28,8 @@ import {
   isNotebookRichDocumentV7,
   isNotebookRichDocumentV8,
   isNotebookRichDocumentV9,
-  isNotebookRichDocumentV10,
-  isNotebookRichDocumentV11,
-  isNotebookRichDocumentV12,
-  isNotebookRichDocumentV13,
-} from './model';
+  NOTEBOOK_DOCUMENT_COMPATIBILITY_MANIFEST,
+} from './compatibility';
 import type { NotebookRichDocument } from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -41,22 +44,52 @@ function isNotebookDocumentV1(value: unknown): value is NotebookDocument {
     && Array.isArray(value.blocks);
 }
 
+function documentSchema(value: unknown): number | null {
+  if (!isRecord(value)) return null;
+  return typeof value.version === 'number' && Number.isInteger(value.version)
+    ? value.version
+    : null;
+}
+
+const SUPPORTED_SOURCE_SCHEMAS = new Set<number>([
+  ...NOTEBOOK_DOCUMENT_COMPATIBILITY_MANIFEST.bestEffortRecoverySchemas,
+  ...NOTEBOOK_DOCUMENT_COMPATIBILITY_MANIFEST.supportedDurableSchemas,
+]);
+
 export function migrateNotebookRichDocument(
   value: unknown,
 ): NotebookRichDocument | null {
   if (isNotebookRichDocument(value)) return value;
-  if (isNotebookDocumentV1(value)) return migrateNotebookDocumentV1(value);
-  if (isNotebookRichDocumentV2(value)) return migrateNotebookDocumentV2(value);
-  if (isNotebookRichDocumentV3(value)) return migrateNotebookDocumentV3(value);
-  if (isNotebookRichDocumentV4(value)) return migrateNotebookDocumentV4(value);
-  if (isNotebookRichDocumentV5(value)) return migrateNotebookDocumentV5(value);
-  if (isNotebookRichDocumentV6(value)) return migrateNotebookDocumentV6(value);
-  if (isNotebookRichDocumentV7(value)) return migrateNotebookDocumentV7(value);
-  if (isNotebookRichDocumentV8(value)) return migrateNotebookDocumentV8(value);
-  if (isNotebookRichDocumentV9(value)) return migrateNotebookDocumentV9(value);
-  if (isNotebookRichDocumentV10(value)) return migrateNotebookDocumentV10(value);
-  if (isNotebookRichDocumentV11(value)) return migrateNotebookDocumentV11(value);
-  if (isNotebookRichDocumentV12(value)) return migrateNotebookDocumentV12(value);
-  if (isNotebookRichDocumentV13(value)) return migrateNotebookDocumentV13(value);
-  return null;
+  const schema = documentSchema(value);
+  if (schema === null || !SUPPORTED_SOURCE_SCHEMAS.has(schema)) return null;
+  switch (schema) {
+    case 1:
+      return isNotebookDocumentV1(value) ? migrateNotebookDocumentV1(value) : null;
+    case 2:
+      return isNotebookRichDocumentV2(value) ? migrateNotebookDocumentV2(value) : null;
+    case 3:
+      return isNotebookRichDocumentV3(value) ? migrateNotebookDocumentV3(value) : null;
+    case 4:
+      return isNotebookRichDocumentV4(value) ? migrateNotebookDocumentV4(value) : null;
+    case 5:
+      return isNotebookRichDocumentV5(value) ? migrateNotebookDocumentV5(value) : null;
+    case 6:
+      return isNotebookRichDocumentV6(value) ? migrateNotebookDocumentV6(value) : null;
+    case 7:
+      return isNotebookRichDocumentV7(value) ? migrateNotebookDocumentV7(value) : null;
+    case 8:
+      return isNotebookRichDocumentV8(value) ? migrateNotebookDocumentV8(value) : null;
+    case 9:
+      return isNotebookRichDocumentV9(value) ? migrateNotebookDocumentV9(value) : null;
+    case 10:
+      return isNotebookRichDocumentV10(value) ? migrateNotebookDocumentV10(value) : null;
+    case 11:
+      return isNotebookRichDocumentV11(value) ? migrateNotebookDocumentV11(value) : null;
+    case 12:
+      return isNotebookRichDocumentV12(value) ? migrateNotebookDocumentV12(value) : null;
+    case 13:
+      return isNotebookRichDocumentV13(value) ? migrateNotebookDocumentV13(value) : null;
+    default:
+      return null;
+  }
 }

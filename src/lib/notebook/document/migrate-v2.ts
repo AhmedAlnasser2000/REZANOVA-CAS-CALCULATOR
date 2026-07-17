@@ -1,9 +1,6 @@
 import { migrateNotebookDocumentV3 } from './migrate-v3';
-import type {
-  NotebookRichDocument,
-  NotebookRichDocumentV2,
-  NotebookRichDocumentV3,
-} from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV2, NotebookRichDocumentV3 } from './compatibility';
 
 export function migrateNotebookDocumentV2(
   document: NotebookRichDocumentV2,

@@ -10,9 +10,9 @@ import type {
   NotebookInlineNode,
   NotebookRichBlockNode,
   NotebookRichDocument,
-  NotebookRichDocumentV5,
   NotebookRichMark,
 } from './types';
+import type { NotebookRichDocumentV5 } from './compatibility';
 
 function richMark(mark: NotebookTextMark): NotebookRichMark {
   if (mark.kind === 'highlight') {

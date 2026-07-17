@@ -1,9 +1,9 @@
 import type {
   NotebookRichBlockNode,
   NotebookRichDocument,
-  NotebookRichDocumentV13,
   NotebookRichTextNode,
 } from './types';
+import type { NotebookRichDocumentV13 } from './compatibility';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));

@@ -8,6 +8,7 @@ import {
   notebookLibrarySurfaceStateFromSlot,
   notebookRichSurfaceStateFromSlot,
 } from './surface-state';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 const NOW = () => new Date('2026-07-12T00:00:00.000Z');
 
@@ -15,7 +16,7 @@ describe('Notebook rich surface state', () => {
   it('creates an empty current-schema session document', () => {
     const state = createNotebookRichSurfaceState({ idPrefix: 'page', now: NOW });
     expect(state.kind).toBe('notebook-surface-state');
-    expect(state.document.version).toBe(13);
+    expect(state.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(state.document.content).toEqual([
       expect.objectContaining({ type: 'paragraph' }),
     ]);
@@ -30,7 +31,7 @@ describe('Notebook rich surface state', () => {
 
     const legacy = createNotebookSurfaceState({ idPrefix: 'legacy', now: NOW });
     const migrated = notebookRichSurfaceStateFromSlot(legacy);
-    expect(migrated.document.version).toBe(13);
+    expect(migrated.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.document.id).toBe(legacy.document.id);
     expect(migrated.document.content.length).toBe(legacy.document.blocks.length);
   });
@@ -43,7 +44,7 @@ describe('Notebook rich surface state', () => {
       document: version2,
     });
 
-    expect(migrated.document.version).toBe(13);
+    expect(migrated.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.document.content).toEqual(version2.content);
   });
 
@@ -55,7 +56,7 @@ describe('Notebook rich surface state', () => {
       document: version3,
     });
 
-    expect(migrated.document.version).toBe(13);
+    expect(migrated.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.document.content).toEqual(version3.content);
   });
 
@@ -67,7 +68,7 @@ describe('Notebook rich surface state', () => {
       document: version4,
     });
 
-    expect(migrated.document.version).toBe(13);
+    expect(migrated.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.document.content).toEqual(version4.content);
   });
 
@@ -79,7 +80,7 @@ describe('Notebook rich surface state', () => {
       document: version5,
     });
 
-    expect(migrated.document.version).toBe(13);
+    expect(migrated.document.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.document.content).toEqual(version5.content);
   });
 

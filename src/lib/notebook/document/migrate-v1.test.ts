@@ -8,6 +8,7 @@ import {
 } from '../index';
 import type { NotebookTextBlock } from '../types';
 import { migrateNotebookDocumentV1 } from './migrate-v1';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 const fixedNow = () => new Date('2026-07-06T12:00:00.000Z');
 
@@ -25,7 +26,7 @@ describe('Notebook V1 to V2 migration', () => {
     const migrated = migrateNotebookDocumentV1(legacy);
     const paragraph = migrated.content[index];
 
-    expect(migrated.version).toBe(13);
+    expect(migrated.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(paragraph.type).toBe('paragraph');
     expect(paragraph).toMatchObject({ id: original.id });
     if (paragraph.type !== 'paragraph') {

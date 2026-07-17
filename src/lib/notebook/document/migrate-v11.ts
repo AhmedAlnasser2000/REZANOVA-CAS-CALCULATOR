@@ -1,9 +1,6 @@
 import { migrateNotebookDocumentV12 } from './migrate-v12';
-import type {
-  NotebookRichDocument,
-  NotebookRichDocumentV11,
-  NotebookRichDocumentV12,
-} from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV11, NotebookRichDocumentV12 } from './compatibility';
 
 /** V12 permits media widths normalized to one-thousandth of a percent. */
 export function migrateNotebookDocumentV11(

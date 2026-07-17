@@ -24,18 +24,6 @@ import {
   type NotebookRunningMatterContent,
   type NotebookRichBlockNode,
   type NotebookRichDocument,
-  type NotebookRichDocumentV2,
-  type NotebookRichDocumentV3,
-  type NotebookRichDocumentV4,
-  type NotebookRichDocumentV5,
-  type NotebookRichDocumentV6,
-  type NotebookRichDocumentV7,
-  type NotebookRichDocumentV8,
-  type NotebookRichDocumentV9,
-  type NotebookRichDocumentV10,
-  type NotebookRichDocumentV11,
-  type NotebookRichDocumentV12,
-  type NotebookRichDocumentV13,
   type NotebookRichMark,
 } from './types';
 import {
@@ -649,7 +637,7 @@ export function isNotebookRichDocument(value: unknown): value is NotebookRichDoc
     && isNotebookObjectPlacementGraphValid(value.content);
 }
 
-export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichDocumentV2 {
+function isNotebookRichDocumentSchema2(value: unknown): boolean {
   return isRecord(value)
     && value.version === 2
     && typeof value.id === 'string'
@@ -663,7 +651,7 @@ export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichDocumentV3 {
+function isNotebookRichDocumentSchema3(value: unknown): boolean {
   return isRecord(value)
     && value.version === 3
     && typeof value.id === 'string'
@@ -677,7 +665,7 @@ export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV4(value: unknown): value is NotebookRichDocumentV4 {
+function isNotebookRichDocumentSchema4(value: unknown): boolean {
   return isRecord(value)
     && value.version === 4
     && typeof value.id === 'string'
@@ -691,7 +679,7 @@ export function isNotebookRichDocumentV4(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV5(value: unknown): value is NotebookRichDocumentV5 {
+function isNotebookRichDocumentSchema5(value: unknown): boolean {
   return isRecord(value)
     && value.version === 5
     && typeof value.id === 'string'
@@ -705,7 +693,7 @@ export function isNotebookRichDocumentV5(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV6(value: unknown): value is NotebookRichDocumentV6 {
+function isNotebookRichDocumentSchema6(value: unknown): boolean {
   return isRecord(value)
     && value.version === 6
     && typeof value.id === 'string'
@@ -719,7 +707,7 @@ export function isNotebookRichDocumentV6(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV7(value: unknown): value is NotebookRichDocumentV7 {
+function isNotebookRichDocumentSchema7(value: unknown): boolean {
   return isRecord(value)
     && value.version === 7
     && Object.keys(value).every((key) => [
@@ -742,7 +730,7 @@ export function isNotebookRichDocumentV7(value: unknown): value is NotebookRichD
     ));
 }
 
-export function isNotebookRichDocumentV8(value: unknown): value is NotebookRichDocumentV8 {
+function isNotebookRichDocumentSchema8(value: unknown): boolean {
   return isRecord(value)
     && value.version === 8
     && Object.keys(value).every((key) => [
@@ -769,7 +757,7 @@ export function isNotebookRichDocumentV8(value: unknown): value is NotebookRichD
     && isLegacyHeaderFooter(value.headerFooter);
 }
 
-export function isNotebookRichDocumentV9(value: unknown): value is NotebookRichDocumentV9 {
+function isNotebookRichDocumentSchema9(value: unknown): boolean {
   return isRecord(value)
     && value.version === 9
     && Object.keys(value).every((key) => [
@@ -796,7 +784,7 @@ export function isNotebookRichDocumentV9(value: unknown): value is NotebookRichD
     && isLegacyHeaderFooter(value.headerFooter);
 }
 
-export function isNotebookRichDocumentV10(value: unknown): value is NotebookRichDocumentV10 {
+function isNotebookRichDocumentSchema10(value: unknown): boolean {
   return isRecord(value)
     && value.version === 10
     && Object.keys(value).every((key) => [
@@ -816,7 +804,7 @@ export function isNotebookRichDocumentV10(value: unknown): value is NotebookRich
     && isLegacyHeaderFooter(value.headerFooter);
 }
 
-export function isNotebookRichDocumentV11(value: unknown): value is NotebookRichDocumentV11 {
+function isNotebookRichDocumentSchema11(value: unknown): boolean {
   return isRecord(value)
     && value.version === 11
     && Object.keys(value).every((key) => [
@@ -836,7 +824,7 @@ export function isNotebookRichDocumentV11(value: unknown): value is NotebookRich
     && isHeaderFooter(value.headerFooter);
 }
 
-export function isNotebookRichDocumentV12(value: unknown): value is NotebookRichDocumentV12 {
+function isNotebookRichDocumentSchema12(value: unknown): boolean {
   return isRecord(value)
     && value.version === 12
     && Object.keys(value).every((key) => [
@@ -856,7 +844,7 @@ export function isNotebookRichDocumentV12(value: unknown): value is NotebookRich
     && isHeaderFooter(value.headerFooter);
 }
 
-export function isNotebookRichDocumentV13(value: unknown): value is NotebookRichDocumentV13 {
+function isNotebookRichDocumentSchema13(value: unknown): boolean {
   return isRecord(value)
     && value.version === 13
     && Object.keys(value).every((key) => [
@@ -875,6 +863,19 @@ export function isNotebookRichDocumentV13(value: unknown): value is NotebookRich
     && isPageSetup(value.pageSetup)
     && isHeaderFooter(value.headerFooter)
     && isNotebookObjectPlacementGraphValid(value.content);
+}
+
+const NOTEBOOK_LEGACY_SCHEMA_VALIDATORS: Record<number, (value: unknown) => boolean> = {
+  2: isNotebookRichDocumentSchema2, 3: isNotebookRichDocumentSchema3,
+  4: isNotebookRichDocumentSchema4, 5: isNotebookRichDocumentSchema5,
+  6: isNotebookRichDocumentSchema6, 7: isNotebookRichDocumentSchema7,
+  8: isNotebookRichDocumentSchema8, 9: isNotebookRichDocumentSchema9,
+  10: isNotebookRichDocumentSchema10, 11: isNotebookRichDocumentSchema11,
+  12: isNotebookRichDocumentSchema12, 13: isNotebookRichDocumentSchema13,
+};
+
+export function isNotebookLegacyRichDocumentSchema(value: unknown, schema: number): boolean {
+  return NOTEBOOK_LEGACY_SCHEMA_VALIDATORS[schema]?.(value) ?? false;
 }
 
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {

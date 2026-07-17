@@ -2,10 +2,9 @@ import { createEmptyNotebookRunningMatterRegions } from './page-layout';
 import type {
   NotebookHeaderFooterSettings,
   NotebookRichDocument,
-  NotebookRichDocumentV10,
-  NotebookRichDocumentV11,
   NotebookRunningMatterContent,
 } from './types';
+import type { NotebookRichDocumentV10, NotebookRichDocumentV11 } from './compatibility';
 import { migrateNotebookDocumentV11 } from './migrate-v11';
 
 function textContent(text: string): NotebookRunningMatterContent {

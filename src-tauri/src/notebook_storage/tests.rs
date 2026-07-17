@@ -2,8 +2,8 @@ use super::{
     assets::sha256_hex,
     model::{
         migrate_notebook_document, NotebookAssetMetadataV1, NotebookPackageManifestV1,
-        NotebookStoredRecordV1, NotebookVersionSnapshotV1, DOCUMENT_PATH, PACKAGE_KIND,
-        PACKAGE_MANIFEST_VERSION,
+        NotebookStoredRecordV1, NotebookVersionSnapshotV1, CURRENT_DOCUMENT_SCHEMA, DOCUMENT_PATH,
+        MINIMUM_DURABLE_DOCUMENT_SCHEMA, PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
     },
     with_export_extension, NotebookStorage,
 };
@@ -267,7 +267,39 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes() {
+fn migrates_shared_v6_through_v14_fixture_documents() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../src/lib/notebook/document/schema-compatibility.fixtures.json"
+    ))
+    .expect("shared schema fixture should parse");
+    let fixtures = fixture["fixtures"]
+        .as_array()
+        .expect("shared schema fixture should contain a fixture list");
+    let expected_schemas: Vec<u64> =
+        (MINIMUM_DURABLE_DOCUMENT_SCHEMA..=CURRENT_DOCUMENT_SCHEMA).collect();
+    let actual_schemas: Vec<u64> = fixtures
+        .iter()
+        .map(|entry| {
+            entry["schema"]
+                .as_u64()
+                .expect("fixture schema should be numeric")
+        })
+        .collect();
+    assert_eq!(actual_schemas, expected_schemas);
+
+    for entry in fixtures {
+        let schema = entry["schema"]
+            .as_u64()
+            .expect("fixture schema should be numeric");
+        let migrated = migrate_notebook_document(entry["document"].clone())
+            .unwrap_or_else(|err| panic!("schema {schema} fixture should migrate: {err}"));
+        assert_eq!(migrated["version"], CURRENT_DOCUMENT_SCHEMA);
+        assert_eq!(migrated["content"][0]["type"], "paragraph");
+    }
+}
+
+#[test]
+fn migrates_v6_through_v13_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let legacy = legacy_record("library.legacy", 1, "Legacy notebook", 6);
@@ -429,11 +461,29 @@ fn migrates_v6_through_v12_records_versions_and_packages_without_content_changes
         loaded_v12.document["content"],
         version12.document["content"]
     );
+
+    let mut version13 = record("library.legacy-v13", 1, "Floating-object notebook");
+    version13.document["version"] = 13.into();
+    let version13_paths = storage.record_paths(&version13.library_id);
+    NotebookStorage::write_synced(
+        &version13_paths.target,
+        &serde_json::to_vec_pretty(&version13).expect("V13 record should serialize"),
+    )
+    .expect("V13 record should write");
+    let loaded_v13 = storage
+        .load_record(&version13.library_id)
+        .expect("V13 record should load")
+        .expect("V13 record should exist");
+    assert_eq!(loaded_v13.document["version"], 14);
+    assert_eq!(
+        loaded_v13.document["content"],
+        version13.document["content"]
+    );
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sources() {
+fn imports_v6_through_v13_packages_as_new_current_records_without_mutating_sources() {
     let root = unique_storage("v6-v10-package-import");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
 
@@ -470,7 +520,7 @@ fn imports_v6_through_v12_packages_as_new_current_records_without_mutating_sourc
         assert_eq!(raw_imported["document"]["version"], 14);
     }
 
-    for schema in 11..=12 {
+    for schema in 11..=13 {
         let mut source = record(
             &format!("library.package-v{schema}"),
             schema,

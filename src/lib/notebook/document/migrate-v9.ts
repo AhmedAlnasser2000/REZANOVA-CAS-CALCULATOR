@@ -1,4 +1,5 @@
-import type { NotebookRichDocument, NotebookRichDocumentV9, NotebookRichDocumentV10 } from './types';
+import type { NotebookRichDocument } from './types';
+import type { NotebookRichDocumentV9, NotebookRichDocumentV10 } from './compatibility';
 import { migrateNotebookDocumentV10 } from './migrate-v10';
 
 /** V10 adds direct-media geometry and paragraph indentation without changing legacy values. */

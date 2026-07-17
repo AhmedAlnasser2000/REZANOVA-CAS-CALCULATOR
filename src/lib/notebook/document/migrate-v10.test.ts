@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isNotebookRichDocument, isNotebookRichDocumentV10 } from './model';
+import { isNotebookRichDocument } from './model';
+import { isNotebookRichDocumentV10 } from './compatibility';
 import { migrateNotebookDocumentV10 } from './migrate-v10';
-import type { NotebookRichDocumentV10 } from './types';
+import type { NotebookRichDocumentV10 } from './compatibility';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 describe('Notebook rich document V10 migration', () => {
   it('preserves legacy running matter and converts page numbering to a live field', () => {
@@ -28,7 +30,7 @@ describe('Notebook rich document V10 migration', () => {
     };
     expect(isNotebookRichDocumentV10(version10)).toBe(true);
     const migrated = migrateNotebookDocumentV10(version10);
-    expect(migrated.version).toBe(13);
+    expect(migrated.version).toBe(NOTEBOOK_RICH_DOCUMENT_VERSION);
     expect(migrated.headerFooter.pageNumberStart).toBe(7);
     expect(migrated.headerFooter.defaultHeader.left[0]?.content).toEqual([
       { type: 'text', text: 'Course notes' },

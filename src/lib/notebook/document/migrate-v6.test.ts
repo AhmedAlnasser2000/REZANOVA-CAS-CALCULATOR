@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isNotebookRichDocument, isNotebookRichDocumentV6 } from './model';
+import { isNotebookRichDocument } from './model';
+import { isNotebookRichDocumentV6 } from './compatibility';
 import { migrateNotebookDocumentV6 } from './migrate-v6';
-import type { NotebookRichDocumentV6 } from './types';
+import type { NotebookRichDocumentV6 } from './compatibility';
+import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 
 describe('Notebook rich document V6 migration', () => {
   it('preserves V6 content while adding the default V8 page contract', () => {
@@ -24,7 +26,7 @@ describe('Notebook rich document V6 migration', () => {
 
     expect(isNotebookRichDocumentV6(version6)).toBe(true);
     const migrated = migrateNotebookDocumentV6(version6);
-    expect(migrated).toMatchObject({ ...version6, version: 13 });
+    expect(migrated).toMatchObject({ ...version6, version: NOTEBOOK_RICH_DOCUMENT_VERSION });
     expect(migrated.pageSetup).toEqual({
       paperSize: 'a4',
       orientation: 'portrait',

@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   createNotebookRichDocument,
   isNotebookRichDocument,
-  isNotebookRichDocumentV12,
 } from './model';
+import { isNotebookRichDocumentV12 } from './compatibility';
 import {
   notebookDocumentFromTiptap,
   notebookDocumentToTiptap,
@@ -12,8 +12,8 @@ import {
 import type {
   NotebookObjectPlacement,
   NotebookRichDocument,
-  NotebookRichDocumentV12,
 } from './types';
+import type { NotebookRichDocumentV12 } from './compatibility';
 
 const NOW = () => new Date('2026-07-16T01:00:00.000Z');
 
