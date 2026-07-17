@@ -55,11 +55,11 @@ describe('algebraic function-field orchestrator', () => {
 
     expect(genus2.family).toBe('genus2-hyperelliptic-boundary');
     expect(genus2.resolution.kind).toBe('error');
-    expect(genus1.family).toBe('genus1-boundary');
+    expect(genus1.family).toBe('genus1-second-kind-live');
     expect(genus1.resolution.kind).toBe('error');
     if (genus2.resolution.kind === 'error' && genus1.resolution.kind === 'error') {
       expect(genus2.resolution.error).toContain('hyperelliptic/genus-2');
-      expect(genus1.resolution.error).toContain('elliptic/genus-1 analysis');
+      expect(genus1.resolution.error).toContain('second-kind elliptic residual');
     }
   });
 

@@ -197,6 +197,17 @@ function splitProductCoefficient(node: unknown): {
   return { coefficient, factors };
 }
 
+function isAdditiveNode(node: unknown) {
+  return Array.isArray(node) && (node[0] === 'Add' || node[0] === 'Subtract');
+}
+
+function explicitProductLatex(factors: unknown[]) {
+  return factors.map((factor) =>
+    isAdditiveNode(factor)
+      ? String.raw`\left(${standardMathLatex(factor)}\right)`
+      : standardMathLatex(factor)).join(String.raw`\cdot`);
+}
+
 function standardMathLatex(mathJson: unknown): string {
   if (Array.isArray(mathJson) && mathJson[0] === 'Divide' && mathJson.length === 3) {
     const numerator = positiveMagnitudeNode(mathJson[1]);
@@ -268,7 +279,9 @@ function standardMathLatex(mathJson: unknown): string {
       ? '1'
       : ordered.length === 1
         ? standardMathLatex(ordered[0])
-        : printedStandardMathLatex(['Multiply', ...ordered]);
+        : ordered.some(isAdditiveNode)
+          ? explicitProductLatex(ordered)
+          : printedStandardMathLatex(['Multiply', ...ordered]);
     return negative ? `-${normalized}` : normalized;
   }
 

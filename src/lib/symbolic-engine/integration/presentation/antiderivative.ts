@@ -13,7 +13,6 @@ import {
 } from '../../../calculus/engine/antiderivative-expression';
 import {
   integrationDetailSection,
-  integrationMathRow,
   integrationTextRow,
 } from '../detail-readback';
 
@@ -156,13 +155,11 @@ function presentationDetail(input: {
   nativeAuthority: boolean;
 }): DisplayDetailSection {
   const rows = [
-    integrationMathRow(
-      'Added integration constant ',
-      input.constantLatex,
+    integrationTextRow(`Added integration constant ${input.constantLatex} ${
       input.reusedExistingVerification
-        ? ' after the existing antiderivative verification.'
-        : ' after derivative backcheck.',
-    ),
+        ? 'after the existing antiderivative verification.'
+        : 'after derivative backcheck.'
+    }`),
   ];
   if (input.changedLatex) {
     rows.push(integrationTextRow('Canonical output was normalized for coefficient, fraction, and grouping readability.'));

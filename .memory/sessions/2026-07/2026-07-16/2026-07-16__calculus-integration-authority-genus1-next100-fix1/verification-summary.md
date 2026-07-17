@@ -93,3 +93,20 @@
 - `git diff --check` - pass.
 - Adjacent regression attempt: grouped `integration-algebraic-function-field-orchestrator`, `integration-algebraic-genus1-elementarity-certificate`, and `integration-algebraic-genus1-second-kind-solve-backcheck-surface` Vitest run was interrupted after the existing genus-1 surface became performance-bound; individual orchestrator and elementarity reruns were also interrupted after 60s with no completion. This gate is backend-only and the new focused reducer suite is the authoritative evidence for the new surface.
 - Playwright: not applicable for this gate because no app-visible integration result or boundary output changed; live adoption and visual verification belong to `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`.
+
+## ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1
+
+- gate_type: backend/ui
+- status: verified
+- Added a live genus-1 cubic Hermite adoption route for exact cubic reductions whose residual is first-kind after the preconditioner.
+- The selected radical-product regression `sqrt(x^3)sqrt(x^2+1)` now normalizes under real-branch facts to a correction plus typed V4 `EllipticF(2 arctan sqrt(x), 1/2)` residual, with structural `+C`, typed branch facts, and producer-proven standard MathJSON leaves.
+- True second-kind residuals such as `sqrt(x^3-x)` still fail closed with a visible route-owned boundary and detail evidence; no partial antiderivative is adopted.
+- Fixed V4 leaf proof/readability issues found by Playwright: additive coefficient products now render with explicit `\cdot`, the `x^3+x` residual prefers the cleaner lemniscatic chart over artificial `A_{\alpha_1}` root symbols, and Integration Presentation keeps its backcheck sentence visible as plain text in V4 details.
+- Focused Vitest: `./node_modules/.bin/vitest run src/lib/symbolic-engine/integration-algebraic-genus1-second-kind-live.test.ts src/lib/calculus/workspace/integrals.test.ts --maxWorkers=1` - pass, 30 tests.
+- Incremental TypeScript: `./node_modules/.bin/tsc -b --pretty false` - pass.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 950 unique source-backed cases, 50 duplicate records, 1373 run results, and 84 scan findings.
+- Playwright visual verification: `./node_modules/.bin/playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-genus1-second-kind-live.reuse.config.ts` - pass after escalation was required for Chromium sandbox launch. The managed webServer config failed to start against the existing dev server, so the reuse config targeted the already-running Vite server on port 1431.
+- Playwright inspected the selected radical-product success and the unresolved true second-kind boundary for answer/error cards, Valid When facts, genus-1 detail cards, Integration Presentation backcheck wording, Copy Result, overflow/readability, and screenshots.
+- File-size gate: `npm run test:file-sizes` - pass, 2008 files and 5 baseline caps.
+- Memory protocol: `npm run test:memory-protocol` - pass.
+- `git diff --check` - pass.

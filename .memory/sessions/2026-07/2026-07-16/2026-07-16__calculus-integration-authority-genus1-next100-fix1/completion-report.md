@@ -36,7 +36,7 @@
 - `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: verified
 - `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: verified
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: verified
-- `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: pending
+- `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: verified
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: pending
 - `CALCULUS-INTEGRATION-TRIG-IBP-FORMAL2`: pending
 - `CALCULUS-INTEGRATION-NEXT100-REGRESSION-PROMOTION1`: pending
@@ -83,3 +83,10 @@
 - Repeated-root cubic inputs remain delegated to the existing genus-0 degeneration fallback instead of widening this gate.
 - The selected radical product normalization is branch-gated: `sqrt(x^3)sqrt(x^2+1)` normalizes only with displayed real-branch facts.
 - No app-visible result changes in this gate; adoption and Playwright output verification move to the live second-kind gate.
+
+## Completed Gate 6
+
+- Added the live genus-1 cubic Hermite adoption slice for reductions whose residual is first-kind.
+- The selected `sqrt(x^3)sqrt(x^2+1)` regression now returns a typed V4 correction-plus-`EllipticF` expression with structural `+C`, branch facts `x\ge0` and `x^2+1>0`, and verified standard MathJSON leaves.
+- True second-kind residuals remain controlled boundaries with visible genus-1 preconditioner and live-boundary detail cards.
+- Visual verification confirmed the success and boundary outputs in the real app; Playwright required sandbox escalation for Chromium and reused the local Vite server.

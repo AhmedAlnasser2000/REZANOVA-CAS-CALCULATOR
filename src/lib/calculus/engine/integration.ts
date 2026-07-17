@@ -318,11 +318,15 @@ export function resolveIndefiniteIntegralFromAst(input: {
   }
 
   const symbolicError = symbolicEngine.kind === 'error' ? symbolicEngine.error : undefined;
+  const routeOwnedBoundaryError = symbolicEngine.kind === 'error'
+    && (symbolicEngine.detailSections?.length ?? 0) > 0
+    ? symbolicEngine.error
+    : undefined;
   return {
     warnings: [],
-    error: symbolicError === INTEGRATION_RELATION_INTEGRAND_ERROR
+    error: routeOwnedBoundaryError ?? (symbolicError === INTEGRATION_RELATION_INTEGRAND_ERROR
       ? symbolicError
-      : input.unsupportedError,
+      : input.unsupportedError),
     integrationCandidate: symbolicEngine.candidate,
     detailSections: unsupportedIndefiniteDetails({
       existing: symbolicEngine.detailSections,

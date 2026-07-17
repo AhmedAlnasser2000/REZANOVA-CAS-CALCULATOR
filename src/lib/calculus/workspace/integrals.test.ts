@@ -5,6 +5,7 @@ import {
   evaluateCalculusImproperIntegral,
   evaluateCalculusIndefiniteIntegral,
 } from './integrals';
+import { requireProvenCanonicalMathValueV2 } from '../../result-contract';
 import { resolveSymbolicIntegralFromLatex } from '../../symbolic-engine/integration';
 
 const ce = new ComputeEngine();
@@ -451,6 +452,30 @@ describe('calculus integrals', () => {
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.integrationStrategy).not.toBe('compute-engine');
     expect(result.antiderivativeBackcheck?.status).toMatch(/verified-/);
+  });
+
+  it('keeps genus-1 special-function integration on V4 authority with proven leaves', () => {
+    const result = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\sqrt{x^3}\sqrt{x^2+1}`,
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.indefiniteIntegralAuthority?.selector).toBe(
+      'indefiniteIntegral:special-function',
+    );
+    expect(result.exactLatex).toContain(String.raw`\operatorname{EllipticF}`);
+    expect(result.exactLatex).toContain(String.raw`\cdot\sqrt{x^3+x}`);
+    expect(result.exactLatex).not.toContain('A_{\\alpha');
+    expect(result.exactLatex?.endsWith('+C')).toBe(true);
+    for (const leaf of result.mathJsonLeaves ?? []) {
+      expect(() => requireProvenCanonicalMathValueV2({
+        canonicalLatex: leaf.canonicalLatex,
+        mathJson: leaf.mathJson,
+        owner: 'calculus',
+        routeId: 'calculus.integrals',
+        source: leaf.source,
+      })).not.toThrow();
+    }
   });
 
   it('supports improper convergent integrals', () => {

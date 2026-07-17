@@ -6,6 +6,7 @@ import { tryAlgebraicGenus1DegenerationFallbackRule } from './algebraic-genus1/d
 import { tryAlgebraicGenus1EllipticKindsRule } from './algebraic-genus1/elliptic-kinds-live';
 import { tryAlgebraicHyperellipticBoundaryStop } from './algebraic-genus1/hyperelliptic-boundary';
 import { tryAlgebraicGenus1RationalInRadicalHermiteRule } from './algebraic-genus1/rational-in-radical-hermite';
+import { tryAlgebraicGenus1SecondKindLiveRule } from './algebraic-genus1/second-kind-live';
 import { symbolicSuccess } from './metadata';
 import type { IntegralResolution } from './types';
 
@@ -16,6 +17,7 @@ export type AlgebraicFunctionFieldFamily =
   | 'genus1-degeneration-fallback'
   | 'genus1-elliptic-kinds'
   | 'genus1-rational-in-radical-hermite'
+  | 'genus1-second-kind-live'
   | 'genus1-boundary'
   | 'genus2-hyperelliptic-boundary';
 
@@ -119,6 +121,38 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         genus1Hermite.exactSupplementLatex,
         genus1Hermite.detailSections,
         genus1Hermite.antiderivativeExpression,
+      ),
+    };
+  }
+
+  const genus1SecondKindLive = tryAlgebraicGenus1SecondKindLiveRule(node, variable);
+  if (genus1SecondKindLive) {
+    if (genus1SecondKindLive.kind === 'boundary') {
+      return {
+        family: 'genus1-second-kind-live',
+        resolution: {
+          kind: 'error',
+          error: genus1SecondKindLive.error,
+          candidate: genus1SecondKindLive.candidate,
+          detailSections: genus1SecondKindLive.detailSections,
+        },
+      };
+    }
+
+    return {
+      family: 'genus1-second-kind-live',
+      resolution: symbolicSuccess(
+        node,
+        variable,
+        genus1SecondKindLive.exactLatex,
+        'u-substitution',
+        genus1SecondKindLive.verification,
+        genus1SecondKindLive.exactSupplementLatex,
+        genus1SecondKindLive.detailSections,
+        genus1SecondKindLive.antiderivativeExpression,
+        genus1SecondKindLive.factNodes,
+        undefined,
+        'precomputed-exact',
       ),
     };
   }
