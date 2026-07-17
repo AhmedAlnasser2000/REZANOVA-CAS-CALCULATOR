@@ -51,6 +51,26 @@ describe('Notebook direct media resize geometry', () => {
     expect(south).toEqual({ left: 100, top: 200, right: 700, bottom: 600, width: 600, height: 400 });
   });
 
+  it('shrinks image width around the actual content rectangle instead of leaving a stale shell', () => {
+    const eastShrink = resizeNotebookMediaRectangle({
+      ...constraints,
+      handle: 'east',
+      movementX: -240,
+      movementY: 0,
+      rectangle,
+    });
+    const westShrink = resizeNotebookMediaRectangle({
+      ...constraints,
+      handle: 'west',
+      movementX: 240,
+      movementY: 0,
+      rectangle,
+    });
+
+    expect(eastShrink).toEqual({ left: 100, top: 200, right: 460, bottom: 500, width: 360, height: 300 });
+    expect(westShrink).toEqual({ left: 340, top: 200, right: 700, bottom: 500, width: 360, height: 300 });
+  });
+
   it.each(NOTEBOOK_MEDIA_RESIZE_HANDLES.map(({ value }) => value))(
     'preserves a locked source ratio from the %s handle',
     (handle) => {

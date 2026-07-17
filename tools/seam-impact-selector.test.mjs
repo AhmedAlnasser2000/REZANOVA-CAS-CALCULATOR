@@ -110,6 +110,24 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects the Notebook gesture ratchet for editor, layout, publication, and e2e paths', () => {
+    const plan = buildExplicitPathPlan([
+      'src/app/shell/notebook/canvas/NotebookDirectMediaInteraction.ts',
+      'src/app/shell/notebook/publication/NotebookPrintProjection.tsx',
+      'src/lib/notebook/document/pagination.ts',
+      'src/styles/app/notebook-rich-canvas.css',
+      'e2e/notebook-floating-layout.spec.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'notebook-authoring-publication',
+    ]);
+    assert.deepEqual(plan.laneIds, ['guide-notebook', 'tooling']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'notebook-gesture-ratchet',
+    ]);
+  });
+
   it('selects canonical result contracts for the neutral document district', () => {
     const plan = buildExplicitPathPlan([
       'src/lib/result-contract/runtime-outcome.ts',

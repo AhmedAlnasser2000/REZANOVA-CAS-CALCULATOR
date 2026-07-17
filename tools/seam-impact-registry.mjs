@@ -64,6 +64,11 @@ export const SEAM_COMMANDS = [
     label: 'Versioned History replay ratchet',
     argv: ['npm', 'run', 'test:history-replay'],
   },
+  {
+    id: 'notebook-gesture-ratchet',
+    label: 'Notebook image geometry, floating layout, and publication ratchet',
+    argv: ['npm', 'run', 'test:notebook-gesture-ratchet'],
+  },
 ];
 
 export const BASELINE_EVIDENCE = [
@@ -202,6 +207,24 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: ['clipboard-contracts', 'app-runtime-contracts', 'display-contracts'],
     baselineEvidenceIds: ['workspace-canaries', 'compartment-boundaries', 'ui-tests', 'file-sizes'],
+  },
+  {
+    id: 'notebook-authoring-publication',
+    label: 'Notebook authoring, object manipulation, and publication surfaces',
+    matchers: [
+      ...prefix(
+        'src/app/shell/notebook/',
+        'src/lib/notebook/',
+        'src/styles/app/notebook-',
+        'e2e/notebook-',
+      ),
+      ...exact(
+        'src/app/shell/NotebookPage.tsx',
+        'src/app/shell/NotebookPage.ui.test.tsx',
+      ),
+    ],
+    additionalCommandIds: ['notebook-gesture-ratchet'],
+    baselineEvidenceIds: ['ui-tests', 'file-sizes'],
   },
   {
     id: 'display-contract',
@@ -419,7 +442,19 @@ export const LANE_REGISTRY = [
     ],
   },
   { id: 'table', matchers: prefix('src/lib/modes/table') },
-  { id: 'guide-notebook', matchers: prefix('src/lib/guide/', 'src/lib/notebook/') },
+  {
+    id: 'guide-notebook',
+    matchers: [
+      ...prefix(
+        'src/lib/guide/',
+        'src/lib/notebook/',
+        'src/app/shell/notebook/',
+        'src/styles/app/notebook-',
+        'e2e/notebook-',
+      ),
+      ...exact('src/app/shell/NotebookPage.tsx', 'src/app/shell/NotebookPage.ui.test.tsx'),
+    ],
+  },
   { id: 'tooling', matchers: prefix('tools/', 'e2e/') },
   { id: 'docs-memory', matchers: prefix('docs/', '.memory/') },
   { id: 'configuration', matchers: prefix('.github/', 'package', 'tsconfig', 'vite', 'vitest', 'playwright', 'eslint') },
