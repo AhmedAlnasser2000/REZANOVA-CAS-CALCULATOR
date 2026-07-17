@@ -75,6 +75,11 @@ export const EXECUTABLE_FEATURE_PROBES = {
     testFile: 'src/components/SettingsPanel.ui.test.tsx',
     testName: 'configures calculator memory and exposes reset actions',
   },
+  'notebook-settings-component': {
+    kind: 'component',
+    testFile: 'src/app/shell/SettingsPage.ui.test.tsx',
+    testName: 'persists Notebook preferences through the Settings page',
+  },
   'auto-equation-component': {
     kind: 'component',
     testFile: 'src/app/shell/ModeStrip.ui.test.tsx',
@@ -166,6 +171,10 @@ export const FEATURE_PROBE_REGISTRY = {
   calculatorMemoryAutosaveIntervalSeconds: {
     policyClass: 'persistence-privacy',
     probes: ['calculator-memory-policy-persistence', 'calculator-memory-settings-component'],
+  },
+  notebook: {
+    policyClass: 'persistence-privacy',
+    probes: ['notebook-settings-component'],
   },
   autoSwitchToEquation: {
     policyClass: 'shell-accessibility',

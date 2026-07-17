@@ -2,16 +2,28 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 import {
   DEFAULT_NOTEBOOK_UI_STATE,
+  type NotebookPreferences,
   type NotebookUiState,
 } from '../../../lib/notebook';
 
 const notebookUiStateByInstance = new Map<string, NotebookUiState>();
 const notebookUiListenersByInstance = new Map<string, Set<() => void>>();
 
-function getNotebookUiState(instanceId: string) {
+function notebookUiStateFromPreferences(preferences?: NotebookPreferences): NotebookUiState {
+  return {
+    ...DEFAULT_NOTEBOOK_UI_STATE,
+    inspectorMode: preferences?.interface.initialInspectorMode
+      ?? DEFAULT_NOTEBOOK_UI_STATE.inspectorMode,
+    outlineCollapsed: preferences?.interface.initialOutlineState === 'collapsed',
+    viewMode: preferences?.newDocuments.defaultViewMode
+      ?? DEFAULT_NOTEBOOK_UI_STATE.viewMode,
+  };
+}
+
+function getNotebookUiState(instanceId: string, preferences?: NotebookPreferences) {
   let state = notebookUiStateByInstance.get(instanceId);
   if (!state) {
-    state = { ...DEFAULT_NOTEBOOK_UI_STATE };
+    state = notebookUiStateFromPreferences(preferences);
     notebookUiStateByInstance.set(instanceId, state);
   }
   return state;
@@ -29,19 +41,19 @@ function subscribeNotebookUiState(instanceId: string, listener: () => void) {
   };
 }
 
-export function useNotebookUiState(instanceId: string) {
+export function useNotebookUiState(instanceId: string, preferences?: NotebookPreferences) {
   const subscribe = useCallback(
     (listener: () => void) => subscribeNotebookUiState(instanceId, listener),
     [instanceId],
   );
-  const getSnapshot = useCallback(() => getNotebookUiState(instanceId), [instanceId]);
+  const getSnapshot = useCallback(() => getNotebookUiState(instanceId, preferences), [instanceId, preferences]);
   const uiState = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const patchUiState = useCallback((patch: Partial<NotebookUiState>) => {
-    const next = { ...getNotebookUiState(instanceId), ...patch };
+    const next = { ...getNotebookUiState(instanceId, preferences), ...patch };
     notebookUiStateByInstance.set(instanceId, next);
     notebookUiListenersByInstance.get(instanceId)?.forEach((listener) => listener());
-  }, [instanceId]);
+  }, [instanceId, preferences]);
 
   return { patchUiState, uiState };
 }

@@ -20,8 +20,10 @@ import {
   createNotebookExportSavePort,
   createNotebookPerformanceFixture,
   createNotebookRichDocument,
+  DEFAULT_NOTEBOOK_PREFERENCES,
   getDefaultNotebookLibraryService,
   requestNotebookWorkspaceClose,
+  type NotebookPreferences,
   type NotebookLibraryService,
   type NotebookExportSavePort,
   type NotebookPerformanceProfile,
@@ -73,6 +75,7 @@ type NotebookPageProps = {
   libraryService?: NotebookLibraryService;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
   onUpdateSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
+  preferences?: NotebookPreferences;
   surfaceState: WorkspaceInstanceStateSlot;
 };
 
@@ -93,6 +96,7 @@ function NotebookPageContent({
   libraryService,
   onOpenMathInTool,
   onUpdateSurfaceState,
+  preferences = DEFAULT_NOTEBOOK_PREFERENCES,
   surfaceState,
 }: NotebookPageProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -118,13 +122,15 @@ function NotebookPageContent({
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
   const collapsedInspectorSelectionIdRef = useRef<string | null>(null);
-  const { patchUiState, uiState } = useNotebookUiState(instanceId);
+  const { patchUiState, uiState } = useNotebookUiState(instanceId, preferences);
   const [service] = useState(() => libraryService ?? getDefaultNotebookLibraryService());
   const [fallbackExportSavePort] = useState(() => createNotebookExportSavePort());
   const exportSavePort = suppliedExportSavePort ?? fallbackExportSavePort;
   const librarySession = useNotebookLibrarySession({
+    autosaveDelayMs: preferences.savingHistory.autosaveSeconds * 1_000,
     instanceId,
     onUpdateSurfaceState,
+    periodicSnapshotIntervalMs: preferences.savingHistory.periodicVersionMinutes * 60 * 1_000,
     service,
     surfaceState,
   });
@@ -416,6 +422,7 @@ function NotebookPageContent({
             className={activeDrawer === 'outline' ? 'is-drawer-open' : undefined}
             document={document}
             editor={editor}
+            initialRailMode={preferences.interface.initialObjectsLayersState}
             selectedNodeId={inspectedSelection?.id ?? document.selectedNodeId}
             onClose={() => {
               patchUiState({ outlineCollapsed: true });

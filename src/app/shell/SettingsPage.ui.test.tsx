@@ -26,6 +26,7 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('settings-category-display')).toBeInTheDocument();
     expect(screen.getByTestId('settings-category-math')).toBeInTheDocument();
     expect(screen.getByTestId('settings-category-runtime')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-category-notebook')).toBeInTheDocument();
     expect(screen.getByTestId('settings-category-privacy')).toBeInTheDocument();
     expect(screen.getByTestId('settings-category-language')).toBeInTheDocument();
     expect(screen.getByTestId('settings-active-category')).toHaveTextContent('General');
@@ -123,5 +124,42 @@ describe('SettingsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: settingsText.actions.useRenderedMath }));
 
     expect(onPatch).toHaveBeenCalledWith({ historyPageNotationMode: 'rendered' });
+  });
+
+  it('persists Notebook preferences through the Settings page', () => {
+    const onPatch = vi.fn();
+
+    render(
+      <SettingsPage
+        settings={DEFAULT_SETTINGS}
+        onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('settings-category-notebook'));
+
+    expect(screen.getByTestId('settings-active-category')).toHaveTextContent('Notebook');
+    fireEvent.click(screen.getByRole('button', { name: 'Draft' }));
+    expect(onPatch).toHaveBeenCalledWith({
+      notebook: expect.objectContaining({
+        newDocuments: expect.objectContaining({ defaultViewMode: 'draft' }),
+      }),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Floating' }));
+    expect(onPatch).toHaveBeenCalledWith({
+      notebook: expect.objectContaining({
+        authoring: expect.objectContaining({ defaultObjectPlacement: 'floating' }),
+      }),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '1.5s' }));
+    expect(onPatch).toHaveBeenCalledWith({
+      notebook: expect.objectContaining({
+        savingHistory: expect.objectContaining({ autosaveSeconds: 1.5 }),
+      }),
+    });
   });
 });

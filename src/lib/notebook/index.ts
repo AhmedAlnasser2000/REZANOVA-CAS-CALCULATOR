@@ -1,6 +1,7 @@
 export * from './math-aware-text';
 export * from './media';
 export * from './model';
+export * from './preferences';
 export * from './types';
 export * from './document/migrate-v1';
 export * from './document/migrate';

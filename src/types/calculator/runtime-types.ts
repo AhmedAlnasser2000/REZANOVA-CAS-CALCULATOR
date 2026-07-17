@@ -41,6 +41,10 @@ import {
   DEFAULT_LANGUAGE_CODE,
   type LanguageCode,
 } from '../../lib/language';
+import {
+  DEFAULT_NOTEBOOK_PREFERENCES,
+  type NotebookPreferences,
+} from '../../lib/notebook/preferences';
 
 export * from './mode-types';
 export * from './execution-types';
@@ -962,6 +966,7 @@ export type Settings = {
   numericNotationMode: NumericNotationMode;
   scientificNotationStyle: ScientificNotationStyle;
   detailedFactsEnabled: boolean;
+  notebook: NotebookPreferences;
 };
 
 export type SettingsPatch = Partial<Settings>;
@@ -1039,6 +1044,7 @@ export const DEFAULT_SETTINGS: Settings = {
   numericNotationMode: 'decimal',
   scientificNotationStyle: 'times10',
   detailedFactsEnabled: false,
+  notebook: DEFAULT_NOTEBOOK_PREFERENCES,
 };
 
 export const DEFAULT_MODE_TREE: MenuNode[] = [

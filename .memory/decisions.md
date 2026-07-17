@@ -2976,6 +2976,10 @@
 
 - [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Visual floating-object order is exposed beside, not inside, the semantic Outline. The left rail has an Objects & Layers mode that lists current floating objects and mutates only existing `objectPlacement.zOrder` values through layer-order commands; it does not create a second layout model or reintroduce video.
 
+## 2026-07-16 - NOTEBOOK-SETTINGS1
+
+- [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Notebook preferences are local app settings, not document data. They may seed new Notebook sessions and UI behavior through the existing Settings-to-Notebook seam, but they must not reinterpret existing documents, disable recovery/safety ceilings, or be embedded in `.cwiznb`.
+
 ## 2026-07-16 - CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1
 
 - [agent: codex | model: gpt-5.5 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.5 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.5 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.5 | verified_by_agent_family: sol | attribution_basis: live] Ordinary indefinite-integration successes and math-bearing controlled errors use Calculus-owned V2 authority at the runtime boundary. Producer-owned native antiderivative expressions, not rendered LaTeX reparsing, drive Copy Result, To Editor, History replay, Trust, and structural `+C`.

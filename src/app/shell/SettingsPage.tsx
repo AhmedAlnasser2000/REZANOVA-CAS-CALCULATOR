@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   CheckCircle2,
   CircleGauge,
   Database,
@@ -30,6 +31,7 @@ import type {
   Settings,
   SettingsPatch,
 } from '../../types/calculator';
+import { NotebookSettingsPanel } from './settings/NotebookSettingsPanel';
 
 type SettingsPageProps = {
   settings: Settings;
@@ -43,6 +45,7 @@ type SettingsCategoryId =
   | 'display'
   | 'math'
   | 'runtime'
+  | 'notebook'
   | 'privacy'
   | 'language';
 
@@ -119,7 +122,7 @@ function SettingsRow({
   );
 }
 
-function SegmentedControl<T extends string>({
+function SegmentedControl<T extends string | number>({
   getLabel,
   onChange,
   options,
@@ -303,6 +306,13 @@ export function SettingsPage({
       id: 'runtime',
       label: 'Runtime',
       value: settings.calculatorMemoryEnabled ? 'Memory on' : 'Memory off',
+    },
+    {
+      description: 'Document authoring',
+      icon: BookOpen,
+      id: 'notebook',
+      label: 'Notebook',
+      value: settings.notebook.newDocuments.defaultViewMode === 'print' ? 'Print layout' : 'Draft view',
     },
     {
       description: 'Local data controls',
@@ -661,6 +671,15 @@ export function SettingsPage({
     );
   }
 
+  function renderNotebook() {
+    return (
+      <NotebookSettingsPanel
+        preferences={settings.notebook}
+        onChange={(notebook) => onPatch({ notebook })}
+      />
+    );
+  }
+
   function renderLanguage() {
     return (
       <SettingsSection title="Language" eyebrow="Language">
@@ -688,6 +707,8 @@ export function SettingsPage({
         return renderMath();
       case 'runtime':
         return renderRuntime();
+      case 'notebook':
+        return renderNotebook();
       case 'privacy':
         return renderPrivacy();
       case 'language':

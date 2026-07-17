@@ -9,6 +9,14 @@ import {
   DEFAULT_LANGUAGE_CODE,
   resolveLanguageCode,
 } from '../language';
+import {
+  DEFAULT_NOTEBOOK_PREFERENCES,
+  NOTEBOOK_AUTOSAVE_SECONDS_OPTIONS,
+  NOTEBOOK_GRID_STEP_PT_OPTIONS,
+  NOTEBOOK_PERIODIC_VERSION_MINUTES_OPTIONS,
+  NOTEBOOK_RETAINED_VERSION_OPTIONS,
+  NOTEBOOK_RETENTION_DAYS_OPTIONS,
+} from '../notebook/preferences';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
 import { validateCanonicalResultDocumentVersioned } from '../result-contract';
 import {
@@ -57,6 +65,87 @@ export const languageCodeSchema = z.preprocess(
   (value) => resolveLanguageCode(value),
   z.literal(DEFAULT_LANGUAGE_CODE),
 );
+const notebookBoundedPointSchema = (minimum: number, maximum: number, fallback: number) => z.preprocess(
+  (value) =>
+    typeof value === 'number'
+      ? Math.min(maximum, Math.max(minimum, Math.round(value)))
+      : value,
+  z.number().int().min(minimum).max(maximum).default(fallback),
+);
+const notebookPreferencesSchema = z.object({
+  authoring: z.object({
+    advancedArrangeVisible: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.advancedArrangeVisible),
+    defaultFloatingAnchor: z.enum(['paragraph', 'page']).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.defaultFloatingAnchor),
+    defaultObjectPlacement: z.enum(['flow', 'floating']).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.defaultObjectPlacement),
+    defaultObjectWidthPt: notebookBoundedPointSchema(72, 720, DEFAULT_NOTEBOOK_PREFERENCES.authoring.defaultObjectWidthPt),
+    defaultReference: z.enum(['margins', 'page']).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.defaultReference),
+    defaultWrap: z.enum(['square', 'top-and-bottom', 'in-front', 'behind']).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.defaultWrap),
+    gridStepPt: z.union(NOTEBOOK_GRID_STEP_PT_OPTIONS.map((value) => z.literal(value)) as [
+      z.ZodLiteral<6>,
+      z.ZodLiteral<12>,
+      z.ZodLiteral<18>,
+      z.ZodLiteral<24>,
+    ]).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.gridStepPt),
+    showAnchors: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.showAnchors),
+    showBoundaries: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.showBoundaries),
+    showCoordinates: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.showCoordinates),
+    showGrid: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.showGrid),
+    showGuides: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.authoring.showGuides),
+    textDistancePt: notebookBoundedPointSchema(0, 72, DEFAULT_NOTEBOOK_PREFERENCES.authoring.textDistancePt),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.authoring),
+  export: z.object({
+    defaultScope: z.enum(['document', 'sections']).default(DEFAULT_NOTEBOOK_PREFERENCES.export.defaultScope),
+    rememberChoices: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.export.rememberChoices),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.export),
+  images: z.object({
+    defaultAlignment: z.enum(['left', 'center', 'right']).default(DEFAULT_NOTEBOOK_PREFERENCES.images.defaultAlignment),
+    defaultWidthPt: notebookBoundedPointSchema(72, 720, DEFAULT_NOTEBOOK_PREFERENCES.images.defaultWidthPt),
+    numberCaptionsByDefault: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.images.numberCaptionsByDefault),
+    warningMode: z.enum(['confirm', 'notify']).default(DEFAULT_NOTEBOOK_PREFERENCES.images.warningMode),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.images),
+  interface: z.object({
+    contextualTabs: z.enum(['automatic', 'manual']).default(DEFAULT_NOTEBOOK_PREFERENCES.interface.contextualTabs),
+    initialInspectorMode: z.enum(['auto', 'manual', 'pinned', 'collapsed']).default(DEFAULT_NOTEBOOK_PREFERENCES.interface.initialInspectorMode),
+    initialObjectsLayersState: z.enum(['outline', 'objects']).default(DEFAULT_NOTEBOOK_PREFERENCES.interface.initialObjectsLayersState),
+    initialOutlineState: z.enum(['open', 'collapsed']).default(DEFAULT_NOTEBOOK_PREFERENCES.interface.initialOutlineState),
+    statusBarDetail: z.enum(['standard', 'coordinates']).default(DEFAULT_NOTEBOOK_PREFERENCES.interface.statusBarDetail),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.interface),
+  largeDocuments: z.object({
+    openBehavior: z.enum(['ask', 'draft']).default(DEFAULT_NOTEBOOK_PREFERENCES.largeDocuments.openBehavior),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.largeDocuments),
+  newDocuments: z.object({
+    defaultViewMode: z.enum(['print', 'draft']).default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.defaultViewMode),
+    differentFirstPage: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.differentFirstPage),
+    margins: z.enum(['normal', 'narrow', 'moderate', 'wide']).default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.margins),
+    orientation: z.enum(['portrait', 'landscape']).default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.orientation),
+    pageNumbering: z.boolean().default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.pageNumbering),
+    paper: z.enum(['a4', 'letter', 'legal']).default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments.paper),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.newDocuments),
+  savingHistory: z.object({
+    autosaveSeconds: z.union(NOTEBOOK_AUTOSAVE_SECONDS_OPTIONS.map((value) => z.literal(value)) as [
+      z.ZodLiteral<0.5>,
+      z.ZodLiteral<0.75>,
+      z.ZodLiteral<1.5>,
+      z.ZodLiteral<3>,
+    ]).default(DEFAULT_NOTEBOOK_PREFERENCES.savingHistory.autosaveSeconds),
+    periodicVersionMinutes: z.union(NOTEBOOK_PERIODIC_VERSION_MINUTES_OPTIONS.map((value) => z.literal(value)) as [
+      z.ZodLiteral<5>,
+      z.ZodLiteral<10>,
+      z.ZodLiteral<15>,
+      z.ZodLiteral<30>,
+    ]).default(DEFAULT_NOTEBOOK_PREFERENCES.savingHistory.periodicVersionMinutes),
+    retainedVersions: z.union(NOTEBOOK_RETAINED_VERSION_OPTIONS.map((value) => z.literal(value)) as [
+      z.ZodLiteral<25>,
+      z.ZodLiteral<50>,
+      z.ZodLiteral<100>,
+    ]).default(DEFAULT_NOTEBOOK_PREFERENCES.savingHistory.retainedVersions),
+    retentionDays: z.union(NOTEBOOK_RETENTION_DAYS_OPTIONS.map((value) => z.literal(value)) as [
+      z.ZodLiteral<7>,
+      z.ZodLiteral<30>,
+      z.ZodLiteral<90>,
+    ]).default(DEFAULT_NOTEBOOK_PREFERENCES.savingHistory.retentionDays),
+  }).default(DEFAULT_NOTEBOOK_PREFERENCES.savingHistory),
+}).default(DEFAULT_NOTEBOOK_PREFERENCES);
 
 export const settingsSchema = z.object({
   languageCode: languageCodeSchema.default(DEFAULT_LANGUAGE_CODE),
@@ -95,6 +184,7 @@ export const settingsSchema = z.object({
   numericNotationMode: numericNotationModeSchema.default('decimal'),
   scientificNotationStyle: scientificNotationStyleSchema.default('times10'),
   detailedFactsEnabled: z.boolean().default(false),
+  notebook: notebookPreferencesSchema,
 });
 
 export const menuNodeSchema: z.ZodType<MenuNode> = z.lazy(() =>

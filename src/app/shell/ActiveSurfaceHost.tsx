@@ -167,6 +167,7 @@ export function ActiveSurfaceHost({
           instanceId={activeInstance.id}
           onOpenMathInTool={onOpenNotebookMathInTool}
           onUpdateSurfaceState={onUpdateNotebookSurfaceState}
+          preferences={settings.notebook}
           surfaceState={activeInstance.surfaceState}
         />
       </section>

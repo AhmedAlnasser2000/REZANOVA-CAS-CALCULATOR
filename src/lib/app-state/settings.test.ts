@@ -97,6 +97,50 @@ describe('settings schema', () => {
     expect(parsed.calculatorMemoryAutosaveIntervalSeconds).toBe(20);
   });
 
+  it('defaults and validates Notebook preferences', () => {
+    const defaulted = settingsSchema.parse({
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      autoSwitchToEquation: false,
+      notebook: {
+        authoring: {
+          defaultObjectPlacement: 'floating',
+          defaultObjectWidthPt: 5_000,
+          gridStepPt: 18,
+          textDistancePt: -10,
+        },
+        savingHistory: {
+          autosaveSeconds: 1.5,
+          periodicVersionMinutes: 15,
+          retainedVersions: 100,
+          retentionDays: 90,
+        },
+      },
+    });
+
+    expect(defaulted.notebook.authoring.defaultObjectPlacement).toBe('floating');
+    expect(defaulted.notebook.authoring.defaultObjectWidthPt).toBe(720);
+    expect(defaulted.notebook.authoring.gridStepPt).toBe(18);
+    expect(defaulted.notebook.authoring.textDistancePt).toBe(0);
+    expect(defaulted.notebook.images.defaultAlignment).toBe('center');
+    expect(defaulted.notebook.savingHistory.autosaveSeconds).toBe(1.5);
+    expect(defaulted.notebook.savingHistory.periodicVersionMinutes).toBe(15);
+    expect(defaulted.notebook.savingHistory.retainedVersions).toBe(100);
+    expect(defaulted.notebook.savingHistory.retentionDays).toBe(90);
+
+    expect(() => settingsSchema.parse({
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      historyEnabled: true,
+      notebook: {
+        savingHistory: {
+          autosaveSeconds: 2,
+        },
+      },
+    })).toThrow();
+  });
+
   it('preserves explicit complex exact display forms', () => {
     expect(settingsSchema.parse({
       angleUnit: 'deg',

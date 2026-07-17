@@ -48,8 +48,10 @@ export type NotebookLibraryBatchResult = {
 };
 
 type UseNotebookLibrarySessionOptions = {
+  autosaveDelayMs?: number;
   instanceId: string;
   onUpdateSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
+  periodicSnapshotIntervalMs?: number;
   service: NotebookLibraryService;
   surfaceState: WorkspaceInstanceStateSlot;
 };
@@ -131,8 +133,10 @@ async function settleLibraryOperations(
 }
 
 export function useNotebookLibrarySession({
+  autosaveDelayMs = AUTOSAVE_DELAY_MS,
   instanceId,
   onUpdateSurfaceState,
+  periodicSnapshotIntervalMs = PERIODIC_SNAPSHOT_INTERVAL_MS,
   service,
   surfaceState,
 }: UseNotebookLibrarySessionOptions) {
@@ -288,7 +292,7 @@ export function useNotebookLibrarySession({
       }
       service.forgetWarmRecord(stored.libraryId);
       const lastSnapshot = lastSnapshotAtRef.current;
-      if (lastSnapshot === null || Date.now() - lastSnapshot >= PERIODIC_SNAPSHOT_INTERVAL_MS) {
+      if (lastSnapshot === null || Date.now() - lastSnapshot >= periodicSnapshotIntervalMs) {
         try {
           await saveSnapshot(stored, 'periodic');
         } catch {
@@ -310,7 +314,7 @@ export function useNotebookLibrarySession({
     });
     savingRef.current = operation;
     return operation;
-  }, [saveSnapshot, service, updateSurfaceReference]);
+  }, [periodicSnapshotIntervalMs, saveSnapshot, service, updateSurfaceReference]);
 
   const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
     const titleChanged = documentRef.current?.title !== nextDocument.title;
@@ -663,9 +667,10 @@ export function useNotebookLibrarySession({
     if (!document || !dirtyRef.current || saveStatus === 'failed') {
       return;
     }
-    const handle = window.setTimeout(() => void saveNow(), AUTOSAVE_DELAY_MS);
+    const boundedDelayMs = Math.max(100, Math.round(autosaveDelayMs));
+    const handle = window.setTimeout(() => void saveNow(), boundedDelayMs);
     return () => window.clearTimeout(handle);
-  }, [document, saveNow, saveStatus]);
+  }, [autosaveDelayMs, document, saveNow, saveStatus]);
 
   useEffect(() => {
     const saveShortcut = (event: KeyboardEvent) => {

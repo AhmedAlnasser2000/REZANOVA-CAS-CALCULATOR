@@ -44,6 +44,7 @@ type NotebookOutlineProps = {
   className?: string;
   document: NotebookRichDocument;
   editor: Editor | null;
+  initialRailMode?: 'outline' | 'objects';
   onClose: () => void;
   selectedNodeId: string | null;
 };
@@ -108,13 +109,14 @@ export function NotebookOutline({
   className,
   document,
   editor,
+  initialRailMode = 'outline',
   onClose,
   selectedNodeId,
 }: NotebookOutlineProps) {
   const [query, setQuery] = useState('');
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [menuSectionId, setMenuSectionId] = useState<string | null>(null);
-  const [railMode, setRailMode] = useState<'outline' | 'objects'>('outline');
+  const [railMode, setRailMode] = useState<'outline' | 'objects'>(initialRailMode);
   const sectionMenu = useNotebookTransientLayer({
     id: 'notebook-section-actions',
     parentId: 'notebook-outline-drawer',
