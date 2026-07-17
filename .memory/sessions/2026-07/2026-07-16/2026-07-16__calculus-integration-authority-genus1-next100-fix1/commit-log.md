@@ -19,5 +19,6 @@
 
 - `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1` - `64121dda`.
 - `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1` - `e1726dc1`.
-- `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1` - verified and approved for path-scoped commit; hash will be recorded in the next checkpoint because a commit cannot contain its own final hash.
-- Six later approved commits remain pending.
+- `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1` - `5ff011d5`.
+- `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1` - verified and approved for path-scoped commit; hash will be recorded in the next checkpoint because a commit cannot contain its own final hash.
+- Five later approved commits remain pending.

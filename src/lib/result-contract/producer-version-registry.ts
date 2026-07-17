@@ -119,11 +119,20 @@ export const CANONICAL_RESULT_V3_PRODUCER_SELECTORS = (
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
+export const CANONICAL_RESULT_V4_PRODUCER_SELECTORS = (
+  {
+    'calculus.integrals': ['indefiniteIntegral:special-function'],
+  } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
+);
+
 const v2DefaultRoutes = new Set<string>(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES);
 const v2Selectors = CANONICAL_RESULT_V2_PRODUCER_SELECTORS as Partial<
   Record<MathJsonRouteId, readonly string[]>
 >;
 const v3Selectors = CANONICAL_RESULT_V3_PRODUCER_SELECTORS as Partial<
+  Record<MathJsonRouteId, readonly string[]>
+>;
+const v4Selectors = CANONICAL_RESULT_V4_PRODUCER_SELECTORS as Partial<
   Record<MathJsonRouteId, readonly string[]>
 >;
 
@@ -138,6 +147,7 @@ export const CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY = Object.freeze(
         selectorVersions: Object.freeze(Object.fromEntries([
           ...(v2Selectors[routeId] ?? []).map((selector) => [selector, 2] as const),
           ...(v3Selectors[routeId] ?? []).map((selector) => [selector, 3] as const),
+          ...(v4Selectors[routeId] ?? []).map((selector) => [selector, 4] as const),
         ])),
       },
     ]),

@@ -15,6 +15,7 @@ import { boxLatex, wrapGroupedLatex } from '../../patterns';
 import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import { certificateUxDetailSections } from './certificate-ux';
 import type { TranscendentalNonElementaryCertificate } from './result-shape';
+import { standardAntiderivativeExpression } from '../../../calculus/engine/antiderivative-expression';
 
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
 const TWO: ExactScalar = { numerator: 2, denominator: 1 };
@@ -277,6 +278,95 @@ function fresnelQuadraticLatex(input: {
   return normalizeGeneratedIntegrationLatex(exactLatex, input.variable);
 }
 
+function exactScalarNode(value: ExactScalar) {
+  return buildExactScalarNode(normalizeExactScalar(value));
+}
+
+function fresnelArgumentNode(absA: ExactScalar, shift: ExactScalar, variable: string): unknown {
+  const normalized = normalizeExactScalar(absA);
+  const scale = ['Sqrt', ['Divide', ['Multiply', 2, normalized.numerator], ['Multiply', normalized.denominator, 'Pi']]];
+  const shifted = exactScalarIsZero(shift)
+    ? variable
+    : ['Add', variable, exactScalarNode(shift)];
+  return ['Multiply', scale, shifted];
+}
+
+function fresnelPrefactorNode(absA: ExactScalar): unknown {
+  const normalized = normalizeExactScalar(absA);
+  return ['Sqrt', ['Divide', ['Multiply', normalized.denominator, 'Pi'], 2 * normalized.numerator]];
+}
+
+function addNodes(...terms: unknown[]) {
+  return terms.length === 1 ? terms[0] : ['Add', ...terms];
+}
+
+function multiplyNodes(...factors: unknown[]) {
+  return factors.length === 1 ? factors[0] : ['Multiply', ...factors];
+}
+
+function negateNode(node: unknown) {
+  return ['Negate', node];
+}
+
+function fresnelInnerNode(input: {
+  head: FresnelTrigHead;
+  positiveLeading: boolean;
+  completedSquareConstant: ExactScalar;
+  argumentNode: unknown;
+}): unknown {
+  const fresnelS = ['FresnelS', input.argumentNode];
+  const fresnelC = ['FresnelC', input.argumentNode];
+  if (exactScalarIsZero(input.completedSquareConstant)) {
+    if (input.head === 'Cos') return fresnelC;
+    return input.positiveLeading ? fresnelS : negateNode(fresnelS);
+  }
+
+  const k = exactScalarNode(input.completedSquareConstant);
+  const sinK = ['Sin', k];
+  const cosK = ['Cos', k];
+  if (input.positiveLeading && input.head === 'Sin') {
+    return addNodes(multiplyNodes(cosK, fresnelS), multiplyNodes(sinK, fresnelC));
+  }
+  if (input.positiveLeading && input.head === 'Cos') {
+    return addNodes(multiplyNodes(cosK, fresnelC), negateNode(multiplyNodes(sinK, fresnelS)));
+  }
+  if (!input.positiveLeading && input.head === 'Sin') {
+    return addNodes(multiplyNodes(sinK, fresnelC), negateNode(multiplyNodes(cosK, fresnelS)));
+  }
+  return addNodes(multiplyNodes(cosK, fresnelC), multiplyNodes(sinK, fresnelS));
+}
+
+function fresnelQuadraticAntiderivativeExpression(input: {
+  integrand: FresnelIntegrand;
+  quadratic: FresnelQuadratic;
+  variable: string;
+}): TranscendentalNonElementaryCertificate['antiderivativeExpression'] {
+  const { leading, linear, constant } = input.quadratic;
+  const twoA = multiplyExactScalars(TWO, leading);
+  const fourA = multiplyExactScalars(FOUR, leading);
+  const bSquared = multiplyExactScalars(linear, linear);
+  const squareCorrection = divideExactScalars(bSquared, fourA);
+  const shift = divideExactScalars(linear, twoA);
+  if (!squareCorrection || !shift) return undefined;
+
+  const completedSquareConstant = subtractExactScalars(constant, squareCorrection);
+  const positiveLeading = leading.numerator > 0;
+  const absA = positiveLeading ? leading : negateExactScalar(leading);
+  return standardAntiderivativeExpression({
+    mathJson: multiplyNodes(
+      exactScalarNode(input.integrand.coefficient),
+      fresnelPrefactorNode(absA),
+      fresnelInnerNode({
+        head: input.integrand.head,
+        positiveLeading,
+        completedSquareConstant,
+        argumentNode: fresnelArgumentNode(absA, shift, input.variable),
+      }),
+    ),
+    source: 'calculus.integration:fresnel-quadratic',
+  });
+}
+
 function fresnelQuadraticFieldLatex(input: {
   integrand: FresnelIntegrand;
   quadraticLatex: string;
@@ -374,6 +464,11 @@ export function buildFresnelQuadraticSpecialFunctionCertificate(
     family: 'fresnel-quadratic',
     variable,
     exactLatex,
+    antiderivativeExpression: fresnelQuadraticAntiderivativeExpression({
+      integrand,
+      quadratic,
+      variable,
+    }),
     antiderivativeKind: 'special-function',
     fieldLatex: fresnelQuadraticFieldLatex({
       integrand,

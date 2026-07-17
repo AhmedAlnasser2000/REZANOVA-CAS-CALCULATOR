@@ -31,6 +31,15 @@ import {
 } from './result-shape';
 import { certificateUxDetailSections } from './certificate-ux';
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
+import {
+  namedSpecialFunctionCallExpression,
+  specialFunctionAntiderivativeExpression,
+  specialFunctionAntiderivativeExpressionFromMathJson,
+  standardAntiderivativeExpression,
+  standardSpecialFunctionExpression,
+  standardSpecialFunctionExpressionFromMathJson,
+} from '../../../calculus/engine/antiderivative-expression';
+import type { CanonicalSpecialFunctionExpressionV4 } from '../../../../types/calculator';
 
 export { buildFresnelQuadraticSpecialFunctionCertificate } from './fresnel';
 
@@ -154,8 +163,67 @@ function exactQuadraticSpecialFunctionLatex(proof: ExpQuadraticCertificateProof)
   const absA = positiveBranch ? a : negateExactScalar(a);
   const fn = positiveBranch ? 'erfi' : 'erf';
   const argument = argumentLatex(absA, shift, proof.variable);
+  const functionLatex = fn === 'erf'
+    ? String.raw`\mathrm{Erf}\left(${argument}\right)`
+    : String.raw`\operatorname{${fn}}\left(${argument}\right)`;
 
-  return String.raw`${prefactorLatex(absA, completedSquareConstant)}\cdot \operatorname{${fn}}\left(${argument}\right)`;
+  return String.raw`${prefactorLatex(absA, completedSquareConstant)}\cdot ${functionLatex}`;
+}
+
+function quadraticArgumentNode(absA: ExactScalar, shift: ExactScalar, variable: string): unknown {
+  const squareRoot = exactSquareRoot(absA);
+  if (squareRoot) {
+    return affineNode(squareRoot, multiplyExactScalars(squareRoot, shift), variable);
+  }
+  const shifted = exactScalarIsZero(shift)
+    ? variable
+    : ['Add', variable, buildExactScalarNode(shift)];
+  return ['Multiply', ['Sqrt', buildExactScalarNode(absA)], shifted];
+}
+
+function quadraticPrefactorNode(absA: ExactScalar, completedSquareConstant: ExactScalar): unknown {
+  const squareRoot = exactSquareRoot(absA);
+  const denominator = squareRoot
+    ? buildExactScalarNode(multiplyExactScalars(TWO, squareRoot))
+    : ['Multiply', 2, ['Sqrt', buildExactScalarNode(absA)]];
+  const base = ['Divide', ['Sqrt', 'Pi'], denominator];
+  if (exactScalarIsZero(completedSquareConstant)) {
+    return base;
+  }
+  return ['Multiply', base, ['Power', 'ExponentialE', buildExactScalarNode(completedSquareConstant)]];
+}
+
+function exactQuadraticAntiderivativeExpression(
+  proof: ExpQuadraticCertificateProof,
+): TranscendentalNonElementaryCertificate['antiderivativeExpression'] {
+  const coefficients = exactQuadraticCoefficients(proof);
+  if (!coefficients) return undefined;
+  const { a, b, c } = coefficients;
+  const twoA = multiplyExactScalars(TWO, a);
+  const fourA = multiplyExactScalars(FOUR, a);
+  const bSquared = multiplyExactScalars(b, b);
+  const squareCorrection = divideExactScalars(bSquared, fourA);
+  const shift = divideExactScalars(b, twoA);
+  if (!squareCorrection || !shift) return undefined;
+
+  const completedSquareConstant = subtractExactScalars(c, squareCorrection);
+  const positiveBranch = a.numerator > 0;
+  const absA = positiveBranch ? a : negateExactScalar(a);
+  const head = positiveBranch ? 'Erfi' : 'Erf';
+  const antiderivativeNode = [
+    'Multiply',
+    quadraticPrefactorNode(absA, completedSquareConstant),
+    [head, quadraticArgumentNode(absA, shift, proof.variable)],
+  ];
+  return positiveBranch
+    ? specialFunctionAntiderivativeExpressionFromMathJson({
+        mathJson: antiderivativeNode,
+        source: 'calculus.integration:exp-quadratic-erfi',
+      })
+    : standardAntiderivativeExpression({
+        mathJson: antiderivativeNode,
+        source: 'calculus.integration:exp-quadratic-erf',
+      });
 }
 
 function casewiseLatex(rows: Array<{ valueLatex: string; conditionLatex: string }>) {
@@ -369,6 +437,156 @@ function multiplyPrefactorByFunction(prefactorLatex: string | undefined, functio
   return String.raw`${prefactorLatex}\cdot ${functionLatex}`;
 }
 
+function sameMathJson(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function prefactorNode(profile: Depth2TowerProfileReady): unknown | undefined {
+  if (profile.derivativeCarrier.kind !== 'affine-slope') {
+    return undefined;
+  }
+  const coefficientNode = coefficientNodeOrOne(profile);
+  const coefficientScalar = readExactScalarNode(coefficientNode);
+  const slopeScalar = readExactScalarNode(profile.derivativeCarrier.slopeNode);
+  if (coefficientScalar && slopeScalar) {
+    const ratio = divideExactScalars(coefficientScalar, slopeScalar);
+    return ratio ? buildExactScalarNode(normalizeExactScalar(ratio)) : undefined;
+  }
+  if (sameMathJson(coefficientNode, profile.derivativeCarrier.slopeNode)) {
+    return 1;
+  }
+  if (sameMathJson(profile.derivativeCarrier.slopeNode, 1)) {
+    return coefficientNode;
+  }
+  return ['Divide', coefficientNode, profile.derivativeCarrier.slopeNode];
+}
+
+function applyPrefactorExpression(
+  expression: CanonicalSpecialFunctionExpressionV4,
+  profile: Depth2TowerProfileReady,
+): CanonicalSpecialFunctionExpressionV4 | undefined {
+  const coefficient = prefactorNode(profile);
+  if (coefficient === undefined) return undefined;
+  if (sameMathJson(coefficient, 1)) return expression;
+  return {
+    kind: 'product',
+    factors: [
+      standardSpecialFunctionExpressionFromMathJson(coefficient),
+      expression,
+    ],
+  };
+}
+
+function namedCallExpression(
+  name: 'Si' | 'Ci' | 'Ei' | 'li' | 'erfi',
+  argumentNode: unknown,
+  argumentLatex?: string,
+): CanonicalSpecialFunctionExpressionV4 {
+  return namedSpecialFunctionCallExpression({
+    name,
+    arguments: [standardSpecialFunctionExpression({
+      mathJson: argumentNode,
+      ...(argumentLatex ? { canonicalLatex: argumentLatex } : {}),
+    })],
+  });
+}
+
+function conditionValue(mathJson: unknown, canonicalLatex?: string) {
+  const expression = standardSpecialFunctionExpression({
+    mathJson,
+    ...(canonicalLatex ? { canonicalLatex } : {}),
+  });
+  return expression.kind === 'standard-math' ? expression.value : undefined;
+}
+
+function depth2Condition(profile: Depth2TowerProfileReady, relation: '>' | '<', value: unknown) {
+  const valueLatex = typeof value === 'number' || typeof value === 'string'
+    ? String(value)
+    : boxLatex(value);
+  return conditionValue([
+    relation === '>' ? 'Greater' : 'Less',
+    structuredClone(profile.coreArgumentNode),
+    value,
+  ], `${profile.coreArgumentLatex}${relation === '>' ? String.raw`\gt` : String.raw`\lt`}${valueLatex}`);
+}
+
+function positiveIntervalCondition(profile: Depth2TowerProfileReady) {
+  return conditionValue([
+    'And',
+    ['Greater', structuredClone(profile.coreArgumentNode), 0],
+    ['Less', structuredClone(profile.coreArgumentNode), 1],
+  ], `${profile.coreArgumentLatex}${String.raw`\gt0\land`}${profile.coreArgumentLatex}${String.raw`\lt1`}`);
+}
+
+function depth2SpecialAntiderivativeExpression(input: {
+  profile: Depth2TowerProfileReady;
+  functionName: 'Si' | 'Ci' | 'Ei' | 'li';
+  source: string;
+}): TranscendentalNonElementaryCertificate['antiderivativeExpression'] {
+  const argument = input.profile.coreArgumentNode;
+  const argumentLatex = input.profile.coreArgumentLatex;
+  const base = namedCallExpression(input.functionName, argument, argumentLatex);
+  if (input.functionName === 'Si') {
+    const expression = applyPrefactorExpression(base, input.profile);
+    return expression
+      ? specialFunctionAntiderivativeExpression({ expression, source: input.source })
+      : undefined;
+  }
+
+  if (input.functionName === 'Ci') {
+    const positive = depth2Condition(input.profile, '>', 0);
+    const negative = depth2Condition(input.profile, '<', 0);
+    if (!positive || !negative) return undefined;
+    const casewise = applyPrefactorExpression({
+      kind: 'piecewise',
+      branches: [
+        { value: base, condition: positive },
+        {
+          value: namedCallExpression(
+            'Ci',
+            ['Negate', structuredClone(argument)],
+            `-${wrapGroupedLatex(argumentLatex)}`,
+          ),
+          condition: negative,
+        },
+      ],
+    }, input.profile);
+    return casewise
+      ? specialFunctionAntiderivativeExpression({ expression: casewise, source: input.source })
+      : undefined;
+  }
+
+  if (input.functionName === 'Ei') {
+    const positive = depth2Condition(input.profile, '>', 0);
+    const negative = depth2Condition(input.profile, '<', 0);
+    if (!positive || !negative) return undefined;
+    const casewise = applyPrefactorExpression({
+      kind: 'piecewise',
+      branches: [
+        { value: base, condition: positive },
+        { value: base, condition: negative },
+      ],
+    }, input.profile);
+    return casewise
+      ? specialFunctionAntiderivativeExpression({ expression: casewise, source: input.source })
+      : undefined;
+  }
+
+  const greaterThanOne = depth2Condition(input.profile, '>', 1);
+  const betweenZeroAndOne = positiveIntervalCondition(input.profile);
+  if (!greaterThanOne || !betweenZeroAndOne) return undefined;
+  const casewise = applyPrefactorExpression({
+    kind: 'piecewise',
+    branches: [
+      { value: base, condition: greaterThanOne },
+      { value: base, condition: betweenZeroAndOne },
+    ],
+  }, input.profile);
+  return casewise
+    ? specialFunctionAntiderivativeExpression({ expression: casewise, source: input.source })
+    : undefined;
+}
+
 function operatorFunctionLatex(name: 'Si' | 'Ci', argumentLatex: string) {
   return String.raw`\operatorname{${name}}\left(${argumentLatex}\right)`;
 }
@@ -484,6 +702,11 @@ export function buildSiCiAffineQuotientSpecialFunctionCertificate(
     family: 'depth2-affine-quotient',
     variable: profile.variable,
     exactLatex,
+    antiderivativeExpression: depth2SpecialAntiderivativeExpression({
+      profile,
+      functionName,
+      source: 'calculus.integration:depth2-affine-quotient-special-function',
+    }),
     antiderivativeKind: 'special-function',
     fieldLatex: depth2FieldLatex(profile),
     theorem: 'depth2-affine-quotient-transcendental-risch',
@@ -657,6 +880,11 @@ export function buildDepth2ExpCompositionSpecialFunctionCertificate(
     family: 'depth2-exp-composition',
     variable: profile.variable,
     exactLatex,
+    antiderivativeExpression: depth2SpecialAntiderivativeExpression({
+      profile,
+      functionName,
+      source: 'calculus.integration:depth2-exp-composition-special-function',
+    }),
     antiderivativeKind: 'special-function',
     fieldLatex: depth2CompositionFieldLatex(profile),
     theorem: 'depth2-exp-composition-transcendental-risch',
@@ -722,6 +950,11 @@ export function buildEiLiAffineSpecialFunctionCertificate(
     family: 'depth2-affine-quotient',
     variable: profile.variable,
     exactLatex,
+    antiderivativeExpression: depth2SpecialAntiderivativeExpression({
+      profile,
+      functionName,
+      source: 'calculus.integration:depth2-affine-quotient-special-function',
+    }),
     antiderivativeKind: 'special-function',
     fieldLatex: depth2EiLiFieldLatex(profile),
     theorem: 'depth2-affine-quotient-transcendental-risch',
@@ -753,6 +986,7 @@ export function buildExpQuadraticSpecialFunctionCertificateFromProof(
   return profileSymbolicIntegrationResult({
     ...certificate,
     exactLatex: functionLatex,
+    antiderivativeExpression: exactQuadraticAntiderivativeExpression(proof),
     antiderivativeKind: 'special-function',
     detailSections: [
       ...updateProofScopeForSpecialFunction(certificate.detailSections),

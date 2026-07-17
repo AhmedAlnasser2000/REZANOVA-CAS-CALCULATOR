@@ -160,10 +160,10 @@ describe('calculus integrals', () => {
   });
 
   it('renders non-elementary certificates for quadratic exponentials after elementary routes miss', () => {
-    for (const [bodyLatex, specialFunction] of [
-      ['e^{x^2}', 'erfi'],
-      ['e^{-x^2}', 'erf'],
-      ['e^{2*x^2+3*x+1}', 'erfi'],
+    for (const [bodyLatex, specialFunctionLatex] of [
+      ['e^{x^2}', String.raw`\operatorname{erfi}`],
+      ['e^{-x^2}', String.raw`\mathrm{Erf}`],
+      ['e^{2*x^2+3*x+1}', String.raw`\operatorname{erfi}`],
     ] as const) {
       const result = evaluateCalculusIndefiniteIntegral({ bodyLatex });
 
@@ -171,7 +171,7 @@ describe('calculus integrals', () => {
       expect(result.resultOrigin).toBe('rule-based-symbolic');
       expect(result.integrationStrategy).toBeUndefined();
       expect(result.antiderivativeBackcheck).toBeUndefined();
-      expect(result.exactLatex).toContain(`\\operatorname{${specialFunction}}`);
+      expect(result.exactLatex).toContain(specialFunctionLatex);
       expect(result.exactLatex).not.toContain('+C');
       expect(result.detailSections?.map((section) => section.title)).toContain('Proof Scope');
       expect(result.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');

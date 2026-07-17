@@ -179,6 +179,7 @@ function tryRoute(
           symbolicLogDerivative.antiderivativeNode,
           'calculus.integration:risch-norman-log-derivative',
         ),
+        undefined, undefined, 'precomputed-trusted',
       );
     }
 
@@ -286,6 +287,7 @@ function tryRoute(
           partialFractionsRn.antiderivativeNode,
           'calculus.integration:risch-norman-partial-fractions',
         ),
+        undefined, undefined, 'precomputed-trusted',
       );
     }
 

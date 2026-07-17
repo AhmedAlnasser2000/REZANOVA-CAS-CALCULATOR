@@ -5,6 +5,7 @@ import { runCalculusWorkspaceMode } from './engine';
 import type {
   CalculusScreen,
   CanonicalResultDocumentV2,
+  CanonicalResultDocumentV4,
   VersionedResultProducerDraft,
 } from '../../../types/calculator';
 
@@ -33,6 +34,15 @@ function requireV2Document(
 ): CanonicalResultDocumentV2 {
   if (result.kind === 'prompt' || result.canonicalResult?.version !== 2) {
     throw new Error('Expected a V2 canonical result document.');
+  }
+  return result.canonicalResult;
+}
+
+function requireV4Document(
+  result: VersionedResultProducerDraft,
+): CanonicalResultDocumentV4 {
+  if (result.kind === 'prompt' || result.canonicalResult?.version !== 4) {
+    throw new Error('Expected a V4 canonical result document.');
   }
   return result.canonicalResult;
 }
@@ -275,6 +285,31 @@ describe('runCalculusWorkspaceMode stored values', () => {
       expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined), entry.bodyLatex)
         .toBe(true);
     }
+  });
+
+  it('keeps special-function indefinite integration on typed V4 authority', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
+      indefiniteIntegral: { bodyLatex: String.raw`\frac{1}{\ln(2x+1)}` },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected special-function integral success.');
+    }
+    const document = requireV4Document(result);
+    expect(document.primary).toMatchObject({
+      kind: 'special-function-expression',
+      expression: {
+        kind: 'product',
+        factors: [
+          { kind: 'standard-math', value: { canonicalLatex: String.raw`\frac{1}{2}` } },
+          { kind: 'piecewise' },
+        ],
+      },
+    });
+    expect(document.title).toBe('Indefinite Integral');
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
   });
 
   it('builds native documents for every remaining Calculus result screen', async () => {

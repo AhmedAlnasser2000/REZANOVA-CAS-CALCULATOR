@@ -21,6 +21,8 @@ import {
 } from '../../patterns';
 import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import { buildAlgebraicGenus1ElementarityCertificate } from './elementarity-certificate';
+import type { CalculusAntiderivativeExpression } from '../../../calculus/engine/antiderivative-expression';
+import { specialFunctionAntiderivativeExpressionFromMathJson } from '../../../calculus/engine/antiderivative-expression';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
@@ -29,6 +31,7 @@ export type AlgebraicGenus1RationalInRadicalHermiteRule = {
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
   detailSections: DisplayDetailSection[];
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
   basisKinds: Array<'first-kind' | 'second-kind' | 'third-kind'>;
 };
 
@@ -487,6 +490,10 @@ function buildRule(input: {
         source: 'hermite-reduction',
       })),
     ],
+    antiderivativeExpression: specialFunctionAntiderivativeExpressionFromMathJson({
+      mathJson: input.antiderivativeNode,
+      source: 'calculus.integration:genus1-rational-in-radical-hermite',
+    }),
     basisKinds: input.basisKinds,
   };
 }

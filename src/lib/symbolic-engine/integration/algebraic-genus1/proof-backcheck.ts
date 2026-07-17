@@ -52,6 +52,7 @@ export type AlgebraicGenus1EllipticProofObligation = {
   head?: AlgebraicGenus1EllipticBasisObligation['head'];
   proofStatus: AlgebraicGenus1EllipticProofStatus;
   prototypeAntiderivativeLatex?: string;
+  prototypeAntiderivativeNode?: unknown;
   derivativeLatex?: string;
   expectedIntegrandLatex?: string;
   proofReason: string;
@@ -182,6 +183,7 @@ export function buildAlgebraicGenus1EllipticProofBackcheck(
       head: obligation.head,
       proofStatus: 'template-proved',
       prototypeAntiderivativeLatex: obligation.prototypeAntiderivativeLatex,
+      prototypeAntiderivativeNode: obligation.prototypeAntiderivativeNode,
       derivativeLatex: certificateProofNodeLatex(proofDifferentiation.derivativeNode),
       expectedIntegrandLatex: boxLatex(node),
       proofReason:

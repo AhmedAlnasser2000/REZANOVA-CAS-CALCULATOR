@@ -1,5 +1,6 @@
 import type {
   CanonicalMathValueV2,
+  CanonicalSpecialFunctionNameV4,
   CanonicalSpecialFunctionExpressionV4,
 } from '../../../types/calculator';
 import { printMathJson } from '../../display/printer';
@@ -46,6 +47,30 @@ export type CalculusIntegrationDetailNode = {
   lines: CalculusIntegrationDetailNodePart[][];
 };
 
+export type CalculusAntiderivativeExpressionMathLeaf = {
+  canonicalLatex: string;
+  mathJson: unknown;
+  source: string;
+};
+
+const SPECIAL_FUNCTION_HEADS = new Map<string, CanonicalSpecialFunctionNameV4>([
+  ['Erfi', 'erfi'],
+  ['Si', 'Si'],
+  ['Ci', 'Ci'],
+  ['Ei', 'Ei'],
+  ['LogarithmicIntegral', 'li'],
+  ['EllipticF', 'EllipticF'],
+  ['EllipticE', 'EllipticE'],
+  ['EllipticPi', 'EllipticPi'],
+]);
+
+const V4_EXCLUDED_STANDARD_SPECIAL_HEADS = new Set([
+  'Erf',
+  'Erfc',
+  'FresnelS',
+  'FresnelC',
+]);
+
 function printedStandardMathLatex(mathJson: unknown) {
   const printed = printMathJson({
     mathJson,
@@ -55,7 +80,9 @@ function printedStandardMathLatex(mathJson: unknown) {
   if (!printed.ok) {
     throw new Error('Calculus antiderivative MathJSON could not be rendered: ' + printed.message);
   }
-  return printed.canonicalLatex;
+  return printed.canonicalLatex
+    .replace(/\\operatorname\{erf\}/gu, String.raw`\mathrm{Erf}`)
+    .replace(/\\operatorname\{erfc\}/gu, String.raw`\mathrm{Erfc}`);
 }
 
 function positiveMagnitudeNode(node: unknown): unknown | undefined {
@@ -272,12 +299,178 @@ function standardLeaf(
   };
 }
 
+function containsHead(node: unknown, heads: ReadonlySet<string>): boolean {
+  if (!Array.isArray(node)) return false;
+  const head = node[0];
+  if (typeof head === 'string' && heads.has(head)) return true;
+  return node.slice(1).some((child) => containsHead(child, heads));
+}
+
+type SpecialExpressionConversion = {
+  expression: CanonicalSpecialFunctionExpressionV4;
+  containsSpecial: boolean;
+};
+
+function mathJsonToSpecialExpressionResult(node: unknown): SpecialExpressionConversion | undefined {
+  if (containsHead(node, V4_EXCLUDED_STANDARD_SPECIAL_HEADS)) return undefined;
+  if (!Array.isArray(node) || typeof node[0] !== 'string') {
+    return {
+      expression: { kind: 'standard-math', value: standardLeaf(node) },
+      containsSpecial: false,
+    };
+  }
+
+  const mapped = SPECIAL_FUNCTION_HEADS.get(node[0]);
+  if (mapped) {
+    const args = node.slice(1).map(mathJsonToSpecialExpressionResult);
+    if (args.some((arg) => arg === undefined)) return undefined;
+    return {
+      expression: {
+        kind: 'named-function',
+        name: mapped,
+        arguments: args.map((arg) => arg!.expression),
+      },
+      containsSpecial: true,
+    };
+  }
+
+  if (node[0] === 'Add' || node[0] === 'Multiply') {
+    const children = node.slice(1).map(mathJsonToSpecialExpressionResult);
+    if (children.some((child) => child === undefined)) return undefined;
+    const containsSpecial = children.some((child) => child!.containsSpecial);
+    if (!containsSpecial) {
+      return {
+        expression: { kind: 'standard-math', value: standardLeaf(node) },
+        containsSpecial: false,
+      };
+    }
+    return {
+      expression: node[0] === 'Add'
+        ? { kind: 'sum', terms: children.map((child) => child!.expression) }
+        : { kind: 'product', factors: children.map((child) => child!.expression) },
+      containsSpecial: true,
+    };
+  }
+
+  if (node[0] === 'Divide' && node.length === 3) {
+    const numerator = mathJsonToSpecialExpressionResult(node[1]);
+    const denominator = mathJsonToSpecialExpressionResult(node[2]);
+    if (!numerator || !denominator) return undefined;
+    if (!numerator.containsSpecial && !denominator.containsSpecial) {
+      return {
+        expression: { kind: 'standard-math', value: standardLeaf(node) },
+        containsSpecial: false,
+      };
+    }
+    return {
+      expression: {
+        kind: 'quotient',
+        numerator: numerator.expression,
+        denominator: denominator.expression,
+      },
+      containsSpecial: true,
+    };
+  }
+
+  if (node[0] === 'Power' && node.length === 3) {
+    const base = mathJsonToSpecialExpressionResult(node[1]);
+    const exponent = mathJsonToSpecialExpressionResult(node[2]);
+    if (!base || !exponent) return undefined;
+    if (!base.containsSpecial && !exponent.containsSpecial) {
+      return {
+        expression: { kind: 'standard-math', value: standardLeaf(node) },
+        containsSpecial: false,
+      };
+    }
+    return {
+      expression: {
+        kind: 'power',
+        base: base.expression,
+        exponent: exponent.expression,
+      },
+      containsSpecial: true,
+    };
+  }
+
+  if (node[0] === 'Negate' && node.length === 2) {
+    const operand = mathJsonToSpecialExpressionResult(node[1]);
+    if (!operand) return undefined;
+    if (!operand.containsSpecial) {
+      return {
+        expression: { kind: 'standard-math', value: standardLeaf(node) },
+        containsSpecial: false,
+      };
+    }
+    return {
+      expression: { kind: 'negation', operand: operand.expression },
+      containsSpecial: true,
+    };
+  }
+
+  return {
+    expression: { kind: 'standard-math', value: standardLeaf(node) },
+    containsSpecial: false,
+  };
+}
+
+export function mathJsonToCanonicalSpecialFunctionExpression(
+  mathJson: unknown,
+): CanonicalSpecialFunctionExpressionV4 | undefined {
+  const converted = mathJsonToSpecialExpressionResult(mathJson);
+  return converted?.containsSpecial ? converted.expression : undefined;
+}
+
+export function specialFunctionAntiderivativeExpressionFromMathJson(input: {
+  mathJson: unknown;
+  source: string;
+}): CalculusAntiderivativeBaseExpression | undefined {
+  const expression = mathJsonToCanonicalSpecialFunctionExpression(input.mathJson);
+  return expression
+    ? specialFunctionAntiderivativeExpression({
+        expression,
+        source: input.source,
+      })
+    : undefined;
+}
+
 function asSpecialExpression(
   expression: CalculusAntiderivativeBaseExpression,
 ): CanonicalSpecialFunctionExpressionV4 {
   return expression.kind === 'special-function-expression'
     ? expression.expression
     : { kind: 'standard-math', value: standardLeaf(expression.mathJson) };
+}
+
+export function standardSpecialFunctionExpressionFromMathJson(
+  mathJson: unknown,
+): CanonicalSpecialFunctionExpressionV4 {
+  return { kind: 'standard-math', value: standardLeaf(mathJson) };
+}
+
+export function standardSpecialFunctionExpression(input: {
+  mathJson: unknown;
+  canonicalLatex?: string;
+}): CanonicalSpecialFunctionExpressionV4 {
+  return {
+    kind: 'standard-math',
+    value: input.canonicalLatex
+      ? {
+          canonicalLatex: input.canonicalLatex,
+          mathJson: structuredClone(input.mathJson) as CanonicalMathValueV2['mathJson'],
+        }
+      : standardLeaf(input.mathJson),
+  };
+}
+
+export function namedSpecialFunctionCallExpression(input: {
+  name: CanonicalSpecialFunctionNameV4;
+  arguments: CanonicalSpecialFunctionExpressionV4[];
+}): CanonicalSpecialFunctionExpressionV4 {
+  return {
+    kind: 'named-function',
+    name: input.name,
+    arguments: structuredClone(input.arguments),
+  };
 }
 
 function baseExpression(
@@ -402,6 +595,95 @@ export function withIntegrationConstant(
     antiderivative: expression,
     constantSymbol: variable === 'C' ? 'K' : 'C',
   };
+}
+
+export function calculusAntiderivativeSpecialExpression(
+  expression: CalculusAntiderivativeExpression,
+): CanonicalSpecialFunctionExpressionV4 | undefined {
+  if (expression.kind === 'special-function-expression') return structuredClone(expression.expression);
+  if (expression.kind !== 'indefinite-family') return undefined;
+  if (expression.antiderivative.kind !== 'special-function-expression') return undefined;
+  return {
+    kind: 'sum',
+    terms: [
+      structuredClone(expression.antiderivative.expression),
+      { kind: 'standard-math', value: standardLeaf(expression.constantSymbol) },
+    ],
+  };
+}
+
+function collectSpecialExpressionMathLeaves(
+  expression: CanonicalSpecialFunctionExpressionV4,
+  source: string,
+): CalculusAntiderivativeExpressionMathLeaf[] {
+  if (expression.kind === 'standard-math') {
+    return [{
+      canonicalLatex: expression.value.canonicalLatex,
+      mathJson: structuredClone(expression.value.mathJson),
+      source,
+    }];
+  }
+  if (expression.kind === 'named-function') {
+    return expression.arguments.flatMap((argument) =>
+      collectSpecialExpressionMathLeaves(argument, source));
+  }
+  if (expression.kind === 'sum') {
+    return expression.terms.flatMap((term) => collectSpecialExpressionMathLeaves(term, source));
+  }
+  if (expression.kind === 'product') {
+    return expression.factors.flatMap((factor) => collectSpecialExpressionMathLeaves(factor, source));
+  }
+  if (expression.kind === 'quotient') {
+    return [
+      ...collectSpecialExpressionMathLeaves(expression.numerator, source),
+      ...collectSpecialExpressionMathLeaves(expression.denominator, source),
+    ];
+  }
+  if (expression.kind === 'power') {
+    return [
+      ...collectSpecialExpressionMathLeaves(expression.base, source),
+      ...collectSpecialExpressionMathLeaves(expression.exponent, source),
+    ];
+  }
+  if (expression.kind === 'negation') {
+    return collectSpecialExpressionMathLeaves(expression.operand, source);
+  }
+  return [
+    ...expression.branches.flatMap((branch) => [
+      ...collectSpecialExpressionMathLeaves(branch.value, source),
+      {
+        canonicalLatex: branch.condition.canonicalLatex,
+        mathJson: structuredClone(branch.condition.mathJson),
+        source,
+      },
+    ]),
+    ...(expression.otherwise
+      ? collectSpecialExpressionMathLeaves(expression.otherwise, source)
+      : []),
+  ];
+}
+
+export function calculusAntiderivativeExpressionMathLeaves(
+  expression: CalculusAntiderivativeExpression,
+): CalculusAntiderivativeExpressionMathLeaf[] {
+  if (expression.kind === 'standard-math-json') {
+    return [{
+      canonicalLatex: standardMathLatex(expression.mathJson),
+      mathJson: structuredClone(expression.mathJson),
+      source: expression.source,
+    }];
+  }
+  if (expression.kind === 'special-function-expression') {
+    return collectSpecialExpressionMathLeaves(expression.expression, expression.source);
+  }
+  return [
+    ...calculusAntiderivativeExpressionMathLeaves(expression.antiderivative),
+    {
+      canonicalLatex: expression.constantSymbol,
+      mathJson: expression.constantSymbol,
+      source: 'calculus.indefinite-integral:constant',
+    },
+  ];
 }
 
 export function renderCalculusAntiderivativeExpression(

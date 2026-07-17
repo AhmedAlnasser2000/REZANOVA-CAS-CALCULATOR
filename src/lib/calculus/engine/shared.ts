@@ -13,6 +13,7 @@ import type {
 } from '../../symbolic-engine/integration';
 import type {
   CalculusDerivativeStrategy,
+  CanonicalSpecialFunctionExpressionV4,
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
   ResultOrigin,
@@ -62,6 +63,7 @@ export type CalculusIndefiniteIntegralAuthority = {
   selector: 'indefiniteIntegral:standard' | 'indefiniteIntegral:special-function' | 'indefiniteIntegral:error';
   request: CalculusOwnedMathJsonLeaf;
   primary?: CalculusOwnedMathJsonLeaf;
+  specialExpression?: CanonicalSpecialFunctionExpressionV4;
 };
 
 export type BoxedLike = {

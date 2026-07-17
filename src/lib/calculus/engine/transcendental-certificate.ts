@@ -6,6 +6,7 @@ export function transcendentalCertificateToCalculusEvaluation(
 ): CalculusCoreEvaluation {
   return {
     exactLatex: certificate.exactLatex,
+    antiderivativeExpression: certificate.antiderivativeExpression,
     exactSupplementLatex: certificate.exactSupplementLatex,
     warnings: [],
     resultOrigin: 'rule-based-symbolic',

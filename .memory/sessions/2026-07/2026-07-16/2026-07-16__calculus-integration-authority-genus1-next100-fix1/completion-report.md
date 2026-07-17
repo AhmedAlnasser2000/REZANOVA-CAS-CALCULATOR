@@ -34,7 +34,7 @@
 - `CANONICAL-RESULT-V4-SPECIAL-FUNCTION-EXPRESSION1`: verified
 - `CALCULUS-INTEGRATION-NATIVE-RESULT-IR1`: verified
 - `CALCULUS-INTEGRATION-V2-AUTHORITY-MIGRATION1`: verified
-- `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: pending
+- `CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1`: verified
 - `ALGEBRAIC-GENUS1-CUBIC-HERMITE-PRECONDITIONER1`: pending
 - `ALGEBRAIC-GENUS1-SECOND-KIND-LIVE1`: pending
 - `CALCULUS-INTEGRATION-SUBSTITUTION-ROOT-GAPS2`: pending
@@ -67,3 +67,11 @@
 - Threaded native expressions through rational positive-discriminant division, trig-substitution radicals, scalar/additive retries, target-free polynomial routes, hyperbolic/direct primitives, and related route metadata.
 - Extracted integration helper files to keep file-size ratchets green: linear combination fallback, scalar-multiple retry, retry detail builders, and trig-power normalization.
 - Playwright verified ordinary V2 answers, boundary errors, facts/details, Trust, Copy Result, To Editor, History replay, and readability for representative affected integration routes.
+
+## Completed Gate 4
+
+- Migrated existing named special-function and elliptic indefinite-integration successes to typed V4 authority when the expression uses approved non-standard functions.
+- Added the live `indefiniteIntegral:special-function` selector while keeping ordinary successes and controlled errors on Calculus-owned V2.
+- Typed V4 now carries `li`, `Ei`, `Si`, and `erfi` special-function expressions with producer-proven standard MathJSON leaves and conditions; `Erf` and Fresnel outputs remain standard V2.
+- V4 rendering preserves route-owned affine readback such as `2x+1` without recovering meaning from rendered LaTeX.
+- Playwright verified special V4 output, standard V2 special-family output, Copy Result, To Editor, History replay, cards, and readability; representative authority inventory found no V1 indefinite outcomes.

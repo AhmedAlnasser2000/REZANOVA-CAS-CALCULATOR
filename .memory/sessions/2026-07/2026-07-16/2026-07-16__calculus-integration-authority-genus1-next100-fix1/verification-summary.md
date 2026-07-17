@@ -62,3 +62,19 @@
 - Playwright inspected `sqrt(4-x^2)`, `sqrt(x^2+4)`, `(2x^4+x^2+1)/(x^2+4x+1)`, and controlled error `(sec(x)+cot(x))^2` for answer/error cards, Valid When facts, integration detail cards, Trust/Detailed Facts, Copy Result `+C`, To Editor transfer, History replay, and overflow/readability.
 - Known unrelated blocker: the broader `npm run test:result-contract` path is not used as this gate's evidence because unrelated dirty MathJSON coverage work in the shared tree changes `calculate.integrals` coverage totals. This gate instead ran the focused V2 contract tests plus frozen-producer and display-inversion ratchets.
 - `git diff --check` - pass.
+
+## CALCULUS-INTEGRATION-V4-SPECIAL-MIGRATION1
+
+- gate_type: backend/ui
+- status: verified
+- Focused Vitest: `npx vitest run src/lib/calculus/engine/core.test.ts src/lib/calculus/workspace/engine.test.ts src/lib/calculus/workspace/integrals.test.ts src/lib/calculus/engine/antiderivative-expression.test.ts src/lib/result-contract/v2-contract.test.ts src/lib/result-contract/v4-special-function-expression.test.ts src/lib/symbolic-engine/integration-transcendental-certificate-result-shape.test.ts --maxWorkers=2` - pass, 101 tests.
+- Focused regression Vitest after dispatch line tightening: `npx vitest run src/lib/calculus/engine/core.test.ts -t "guards lazy Compute Engine fallback" --maxWorkers=1` - pass.
+- Incremental TypeScript: `npx tsc -b --pretty false` - pass.
+- Calculus corpus gate: `npm run test:calculus-integration-corpus` - pass, validating 950 unique source-backed indefinite integration cases, 50 duplicate records, 1373 run results, and 84 scan findings.
+- Authority inventory: `AUTHORITY_INVENTORY_START=0 AUTHORITY_INVENTORY_COUNT=120 npx vite-node .task_tmp/calculus-integration-authority-genus1-next100-fix1/authority-inventory.ts` - pass across 68 representative corpus families with 65 `indefiniteIntegral:standard`, 3 `indefiniteIntegral:error`, and no V1 outcomes.
+- Special authority probe: `npx vite-node .task_tmp/calculus-integration-authority-genus1-next100-fix1/special-authority-probe.ts` - pass. `1/ln(2x+1)`, `e^x/x`, `sin(e^x)`, and `e^{x^2}` select V4 typed special-function authority, while `e^{-x^2}` and `sin(x^2)` remain standard V2.
+- Playwright visual verification: `npx playwright test --config .task_tmp/calculus-integration-authority-genus1-next100-fix1/playwright-v2-authority.config.ts --project=chromium` - pass, 2 Chromium tests after sandbox escalation was required only to bind the local preview server.
+- Playwright inspected typed V4 `li(2x+1)` output, standard V2 `Erf` output, ordinary V2 answers, controlled boundary errors, facts/detail cards, Trust, Copy Result, To Editor, History replay, and overflow/readability. Screenshots include `test-results/v2-authority-visual-V4-spe-85f10-definite-integration-output-chromium/li-affine-v4.png` and `test-results/v2-authority-visual-V4-spe-85f10-definite-integration-output-chromium/erf-standard-v2.png`.
+- Verification-caught fixes: cloned repeated affine condition leaves to avoid V4 duplicate-reference validation failure, kept Risch-Norman log/partial-fraction adoption on route-owned precomputed trust, preserved route-owned affine readback such as `2x+1` in V4 leaves while proving standard MathJSON, and rendered standard `Erf` with V2-compatible casing.
+- File-size gate: `npm run test:file-sizes` - pass after keeping `src/lib/symbolic-engine/integration/dispatch.ts` at the committed 1000-line cap.
+- `git diff --check` - pass.

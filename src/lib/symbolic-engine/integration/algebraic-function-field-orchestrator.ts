@@ -101,6 +101,7 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         genus1EllipticKinds.verification,
         genus1EllipticKinds.exactSupplementLatex,
         genus1EllipticKinds.detailSections,
+        genus1EllipticKinds.antiderivativeExpression,
       ),
     };
   }
@@ -117,6 +118,7 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         genus1Hermite.verification,
         genus1Hermite.exactSupplementLatex,
         genus1Hermite.detailSections,
+        genus1Hermite.antiderivativeExpression,
       ),
     };
   }

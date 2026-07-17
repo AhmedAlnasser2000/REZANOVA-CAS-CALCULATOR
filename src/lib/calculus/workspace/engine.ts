@@ -101,7 +101,10 @@ import type {
 } from '../../../types/calculator';
 import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 import type { CalculusIndefiniteIntegralAuthority } from '../engine/shared';
-import { createCalculusIndefiniteIntegralOutcomeV2 } from './integration-result-document';
+import {
+  createCalculusIndefiniteIntegralOutcomeV2,
+  createCalculusIndefiniteIntegralOutcomeV4,
+} from './integration-result-document';
 
 export type RunCalculusWorkspaceModeRequest = {
   screen: CalculusScreen;
@@ -809,13 +812,37 @@ export async function runCalculusWorkspaceMode(
                 : {}),
             });
           })()
-        : createCalculusResultOutcome(finalOutcome, {
-            mathValues: calculusMathValuesFromOwnedLeaves({
-              outcome: finalOutcome,
+        : producerVersion === 4
+          ? (() => {
+              const mathValue = calculusV2MathResolverFromOwnedLeaves({
+                routeId,
+                leaves: request.screen === 'indefiniteIntegral'
+                  ? mathJsonLeaves.filter((leaf) =>
+                      !leaf.source.startsWith('calculus.stored-value-readback:'))
+                  : mathJsonLeaves,
+              });
+              if (
+                request.screen === 'indefiniteIntegral'
+                && indefiniteIntegralAuthority?.selector === 'indefiniteIntegral:special-function'
+                && indefiniteIntegralEvaluation
+                && finalOutcome.kind === 'success'
+              ) {
+                return createCalculusIndefiniteIntegralOutcomeV4({
+                  outcome: finalOutcome,
+                  evaluation: indefiniteIntegralEvaluation,
+                  authority: indefiniteIntegralAuthority,
+                  mathValue,
+                });
+              }
+              throw new Error('Calculus selected V4 without a supported V4 integration producer.');
+            })()
+          : createCalculusResultOutcome(finalOutcome, {
+              mathValues: calculusMathValuesFromOwnedLeaves({
+                outcome: finalOutcome,
                 routeId,
                 leaves: mathJsonLeaves,
-            }),
-          })
+              }),
+            })
     : finalOutcome;
   return requireCanonicalResultAuthority(ownedOutcome, 'Calculus');
 }

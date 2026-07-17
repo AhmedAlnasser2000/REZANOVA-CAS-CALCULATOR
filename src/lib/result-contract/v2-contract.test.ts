@@ -17,6 +17,7 @@ import {
   CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES,
   CANONICAL_RESULT_V2_PRODUCER_SELECTORS,
   CANONICAL_RESULT_V3_PRODUCER_SELECTORS,
+  CANONICAL_RESULT_V4_PRODUCER_SELECTORS,
   FROZEN_V1_PRODUCER_ROUTE_IDS,
   canonicalResultVersionForProducer,
 } from './producer-version-registry';
@@ -376,6 +377,9 @@ describe('Canonical Result V2 contract', () => {
     expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({
       'vector.angle': ['angle:grad'],
     });
+    expect(CANONICAL_RESULT_V4_PRODUCER_SELECTORS).toEqual({
+      'calculus.integrals': ['indefiniteIntegral:special-function'],
+    });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
       const defaultVersion = [
         'trigonometry.angle-conversion',
@@ -403,7 +407,11 @@ describe('Canonical Result V2 contract', () => {
       const selectorVersions = routeId === 'calculus.derivatives'
         ? { derivativePoint: 2 }
         : routeId === 'calculus.integrals'
-          ? { 'indefiniteIntegral:standard': 2, 'indefiniteIntegral:error': 2 }
+          ? {
+              'indefiniteIntegral:standard': 2,
+              'indefiniteIntegral:error': 2,
+              'indefiniteIntegral:special-function': 4,
+            }
         : routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
           ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.right-triangle'
@@ -441,5 +449,9 @@ describe('Canonical Result V2 contract', () => {
       routeId: 'vector.angle',
       selector: 'angle:grad',
     })).toBe(3);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'calculus.integrals',
+      selector: 'indefiniteIntegral:special-function',
+    })).toBe(4);
   });
 });

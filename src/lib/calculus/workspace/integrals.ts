@@ -31,7 +31,11 @@ import {
   calculusTextRows,
 } from '../detail-readback';
 import { profileCalculusResult } from '../../display/printer';
-import { calculusAntiderivativeExpressionToAst } from '../engine/antiderivative-expression';
+import {
+  calculusAntiderivativeExpressionMathLeaves,
+  calculusAntiderivativeExpressionToAst,
+  calculusAntiderivativeSpecialExpression,
+} from '../engine/antiderivative-expression';
 
 const ce = new ComputeEngine();
 const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
@@ -153,22 +157,33 @@ function withIndefiniteIntegralAuthority(
   }
 
   const expression = evaluation.antiderivativeExpression;
-  const answer = expression
-    ? calculusAntiderivativeExpressionToAst(expression)
-    : undefined;
-  if (!expression || answer === undefined) return evaluation;
-  const primary = {
-    canonicalLatex: evaluation.exactLatex,
-    mathJson: answer,
-    source: expression.kind === 'indefinite-family'
-      ? expression.antiderivative.source
-      : expression.source,
-  };
+  if (!expression) return evaluation;
   const selector = expression.kind === 'special-function-expression'
     || (expression.kind === 'indefinite-family'
       && expression.antiderivative.kind === 'special-function-expression')
     ? 'indefiniteIntegral:special-function' as const
     : 'indefiniteIntegral:standard' as const;
+  const specialExpression = selector === 'indefiniteIntegral:special-function'
+    ? calculusAntiderivativeSpecialExpression(expression)
+    : undefined;
+  const answer = selector === 'indefiniteIntegral:standard'
+    ? calculusAntiderivativeExpressionToAst(expression)
+    : undefined;
+  if (selector === 'indefiniteIntegral:special-function' && !specialExpression) {
+    return evaluation;
+  }
+  if (selector === 'indefiniteIntegral:standard' && answer === undefined) {
+    return evaluation;
+  }
+  const primary = selector === 'indefiniteIntegral:standard'
+    ? {
+        canonicalLatex: evaluation.exactLatex,
+        mathJson: answer,
+        source: expression.kind === 'indefinite-family'
+          ? expression.antiderivative.source
+          : expression.source,
+      }
+    : undefined;
   const nodeLeaves = [
     ...(evaluation.integrationFactNodes ?? []).map((fact) => ({
       canonicalLatex: fact.presentationLatex,
@@ -184,17 +199,22 @@ function withIndefiniteIntegralAuthority(
           }]
         : []))),
   ];
+  const expressionLeaves = selector === 'indefiniteIntegral:special-function'
+    ? calculusAntiderivativeExpressionMathLeaves(expression)
+    : [];
   return {
     ...evaluation,
     indefiniteIntegralAuthority: {
       selector,
       request,
-      primary,
+      ...(primary ? { primary } : {}),
+      ...(specialExpression ? { specialExpression } : {}),
     },
     mathJsonLeaves: [
       ...(evaluation.mathJsonLeaves ?? []),
       request,
-      primary,
+      ...(primary ? [primary] : []),
+      ...expressionLeaves,
       ...nodeLeaves,
     ],
   } satisfies CalculusWorkspaceEvaluation;

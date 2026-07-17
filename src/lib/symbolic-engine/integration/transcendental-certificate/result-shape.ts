@@ -1,5 +1,6 @@
 import type { DisplayDetailSection } from '../../../../types/calculator';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import type { CalculusAntiderivativeExpression } from '../../../calculus/engine/antiderivative-expression';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import type {
   ExpQuadraticCertificateProof,
@@ -20,6 +21,7 @@ export type TranscendentalNonElementaryCertificate = {
     | 'fresnel-quadratic';
   variable: string;
   exactLatex: string;
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
   antiderivativeKind?: 'special-function';
   fieldLatex: string;
   theorem:

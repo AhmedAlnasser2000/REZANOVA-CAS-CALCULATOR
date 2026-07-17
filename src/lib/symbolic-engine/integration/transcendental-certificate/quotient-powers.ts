@@ -1,4 +1,5 @@
 import {
+  buildExactScalarNode,
   divideExactScalars,
   multiplyExactScalars,
   normalizeExactScalar,
@@ -22,6 +23,12 @@ import { normalizeCertificateProofNode } from './proof-diff';
 import { certificateUxDetailSections } from './certificate-ux';
 import type { TranscendentalNonElementaryCertificate } from './result-shape';
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
+import {
+  namedSpecialFunctionCallExpression,
+  specialFunctionAntiderivativeExpression,
+  standardSpecialFunctionExpressionFromMathJson,
+} from '../../../calculus/engine/antiderivative-expression';
+import type { CanonicalSpecialFunctionExpressionV4 } from '../../../../types/calculator';
 
 const MAX_QUOTIENT_POWER = 6;
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
@@ -378,6 +385,23 @@ function externalPrefactor(input: ParsedQuotientPower) {
   };
 }
 
+function externalPrefactorNode(input: ParsedQuotientPower): unknown | undefined {
+  const coefficientNode = input.coefficientNode ?? 1;
+  const coefficientScalar = readExactScalarNode(coefficientNode);
+  const slopeScalar = readExactScalarNode(input.slopeNode);
+  if (coefficientScalar && slopeScalar) {
+    const ratio = divideExactScalars(coefficientScalar, slopeScalar);
+    return ratio ? buildExactScalarNode(normalizeExactScalar(ratio)) : undefined;
+  }
+  if (sameNode(coefficientNode, input.slopeNode)) {
+    return 1;
+  }
+  if (sameNode(input.slopeNode, 1)) {
+    return coefficientNode;
+  }
+  return ['Divide', coefficientNode, input.slopeNode];
+}
+
 function applyExactPrefactor(
   terms: RecurrenceTerm[],
   prefactor: ExactScalar,
@@ -526,6 +550,129 @@ function quotientPowerLatex(input: ParsedQuotientPower) {
   return multiplyLatexPrefactor(outerPrefactor, main);
 }
 
+function carrierNode(carrier: QuotientPowerKind, argumentNode: unknown) {
+  if (carrier === 'exp') {
+    return ['Power', 'ExponentialE', argumentNode];
+  }
+  return [carrier === 'sin' ? 'Sin' : 'Cos', argumentNode];
+}
+
+function coefficientExpression(
+  coefficient: ExactScalar,
+  expression: CanonicalSpecialFunctionExpressionV4,
+): CanonicalSpecialFunctionExpressionV4 {
+  const normalized = normalizeExactScalar(coefficient);
+  if (normalized.numerator === normalized.denominator) {
+    return expression;
+  }
+  return {
+    kind: 'product',
+    factors: [
+      standardSpecialFunctionExpressionFromMathJson(buildExactScalarNode(normalized)),
+      expression,
+    ],
+  };
+}
+
+function recurrenceTermExpression(
+  term: RecurrenceTerm,
+  argumentNode: unknown,
+  ciArgumentOverride?: unknown,
+): CanonicalSpecialFunctionExpressionV4 {
+  if (term.kind === 'special') {
+    return coefficientExpression(
+      term.coefficient,
+      namedSpecialFunctionCallExpression({
+        name: term.name,
+        arguments: [standardSpecialFunctionExpressionFromMathJson(
+          term.name === 'Ci' && ciArgumentOverride !== undefined
+            ? ciArgumentOverride
+            : argumentNode,
+        )],
+      }),
+    );
+  }
+
+  const denominator = term.denominatorPower === 1
+    ? argumentNode
+    : ['Power', argumentNode, term.denominatorPower];
+  return coefficientExpression(
+    term.coefficient,
+    standardSpecialFunctionExpressionFromMathJson([
+      'Divide',
+      carrierNode(term.carrier, argumentNode),
+      denominator,
+    ]),
+  );
+}
+
+function recurrenceExpression(
+  terms: RecurrenceTerm[],
+  argumentNode: unknown,
+  ciArgumentOverride?: unknown,
+): CanonicalSpecialFunctionExpressionV4 {
+  const expressions = terms.map((term) =>
+    recurrenceTermExpression(term, argumentNode, ciArgumentOverride));
+  return expressions.length === 1
+    ? expressions[0]
+    : { kind: 'sum', terms: expressions };
+}
+
+function conditionValue(mathJson: unknown) {
+  const expression = standardSpecialFunctionExpressionFromMathJson(mathJson);
+  return expression.kind === 'standard-math' ? expression.value : undefined;
+}
+
+function quotientPowerExpression(
+  input: ParsedQuotientPower,
+): TranscendentalNonElementaryCertificate['antiderivativeExpression'] {
+  const prefactor = externalPrefactorNode(input);
+  if (prefactor === undefined) return undefined;
+  const baseTerms = recurrenceTerms(input.kind, input.denominatorPower);
+  const main = recurrenceExpression(baseTerms, input.argumentNode);
+  const positive = conditionValue(['Greater', input.argumentNode, 0]);
+  const negative = conditionValue(['Less', input.argumentNode, 0]);
+  let expression: CanonicalSpecialFunctionExpressionV4;
+  if (hasSpecial(baseTerms, 'Ci')) {
+    if (!positive || !negative) return undefined;
+    expression = {
+      kind: 'piecewise',
+      branches: [
+        { value: main, condition: positive },
+        {
+          value: recurrenceExpression(baseTerms, input.argumentNode, ['Negate', input.argumentNode]),
+          condition: negative,
+        },
+      ],
+    };
+  } else if (hasSpecial(baseTerms, 'Ei')) {
+    if (!positive || !negative) return undefined;
+    expression = {
+      kind: 'piecewise',
+      branches: [
+        { value: main, condition: positive },
+        { value: main, condition: negative },
+      ],
+    };
+  } else {
+    expression = main;
+  }
+
+  if (!sameNode(prefactor, 1)) {
+    expression = {
+      kind: 'product',
+      factors: [
+        standardSpecialFunctionExpressionFromMathJson(prefactor),
+        expression,
+      ],
+    };
+  }
+  return specialFunctionAntiderivativeExpression({
+    expression,
+    source: 'calculus.integration:quotient-power-special-function',
+  });
+}
+
 function factEntry(fact: CertificateFact): ExactSupplementEntry {
   return {
     kind: fact.relation === '\\ne0' ? 'exclusion' : 'condition',
@@ -629,6 +776,7 @@ export function buildQuotientPowerSpecialFunctionCertificate(
     family: 'depth2-affine-quotient',
     variable: parsed.variable,
     exactLatex: normalizedExactLatex,
+    antiderivativeExpression: quotientPowerExpression(parsed),
     antiderivativeKind: 'special-function',
     fieldLatex: fieldLatex(parsed),
     theorem: 'depth2-affine-quotient-transcendental-risch',

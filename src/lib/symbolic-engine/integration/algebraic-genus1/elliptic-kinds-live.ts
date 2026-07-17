@@ -11,12 +11,15 @@ import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
 import { buildAlgebraicGenus1ElementarityCertificate } from './elementarity-certificate';
 import { buildAlgebraicGenus1NormalForm } from './normal-form';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
+import type { CalculusAntiderivativeExpression } from '../../../calculus/engine/antiderivative-expression';
+import { specialFunctionAntiderivativeExpressionFromMathJson } from '../../../calculus/engine/antiderivative-expression';
 
 export type AlgebraicGenus1EllipticKindsRule = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
   detailSections: DisplayDetailSection[];
+  antiderivativeExpression?: CalculusAntiderivativeExpression;
   kind: 'first-kind' | 'second-kind' | 'third-kind';
 };
 
@@ -173,6 +176,12 @@ export function tryAlgebraicGenus1EllipticKindsRule(
         source: 'legendre-template',
       }),
     ],
+    antiderivativeExpression: obligation.prototypeAntiderivativeNode === undefined
+      ? undefined
+      : specialFunctionAntiderivativeExpressionFromMathJson({
+          mathJson: obligation.prototypeAntiderivativeNode,
+          source: 'calculus.integration:genus1-legendre-template',
+        }),
     kind: obligation.basisKind,
   };
 }
