@@ -17,6 +17,12 @@ playground/level-0-research/external-compute/profiles/*.local.json
 playground/sources/mirrors/**
 !playground/sources/mirrors/
 !playground/sources/mirrors/.gitkeep
+playground/sources/editors/**/mirror/**
+!playground/sources/editors/
+!playground/sources/editors/**/
+!playground/sources/editors/**/README.md
+!playground/sources/editors/metadata/
+!playground/sources/editors/metadata/*.yaml
 
 .memory/logs/**
 !.memory/logs/.gitkeep
