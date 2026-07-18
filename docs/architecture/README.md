@@ -48,6 +48,9 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 ## Linear Algebra
 - `linear-algebra/linear-system-ownership-audit.md`: docs-only boundary lock for Matrix-owned structured linear systems, Equation-owned free-form solving, and explicit Equation handoff posture
 
+## Notebook
+- `notebook/object-frame-authority-v1.md`: contract-only Schema 15 design for one persisted object frame, ingress migration, command/undo ownership, derived layout, interaction overlay, registry/layers, publication, and legacy deletion
+
 ## Engine
 - `engine/engine-root-surface-audit.md`: audit map for the Engine execution and planning bridge surface
 - `engine/engine-semantic-planner-district-audit.md`: audit map for the Engine semantic planner surface
