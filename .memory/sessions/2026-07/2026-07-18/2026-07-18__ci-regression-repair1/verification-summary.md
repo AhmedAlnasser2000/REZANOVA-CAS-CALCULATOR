@@ -50,6 +50,15 @@
 - Equation rendered the `e^x=-1` Range Guard as an empty-set answer with the no-real-solution reason, readable cards, and no overflow.
 - Captures are ignored under `.task_tmp/ci-regression-repair1/`.
 
+## Golden follow-up
+
+- Updated `equation-range-impossibility-stop` to require successful typed `\\varnothing`, answer-row, warning, Range Guard badge, symbolic origin, and retained runtime stop advisory.
+- Updated `trigonometry-periodic-sine-equation` to require both exact degree families, answer rows, branch readback, integer supplement, planner badge, and symbolic origin.
+- Updated the matching Trigonometry core test to preserve the no-Equation-handoff rule while accepting the intentional successful empty-set result.
+- `npm run test:golden` passes 47/47; the combined golden and Trigonometry core run passes 60/60.
+- Fresh Playwright inspection passes 2/2 with `npx playwright test e2e/.tmp-golden-visual.spec.ts --project=chromium`. The Equation card visibly renders `\\varnothing`, the no-real-solution warning, and the Range Guard badge; the periodic-family card visibly renders both exact branches, `n\\in\\mathbb{Z}`, Solve Target, and Parameterized Trig Solve details without horizontal overflow. The temporary spec was removed; captures remain ignored under `.task_tmp/golden-ci-repair/`.
+
 ## Remaining posture
 
-- The original repair is committed as `9a7a87bc`. The narrow enforcement correction is uncommitted pending explicit approval; no push is authorized.
+- The original repair is committed as `9a7a87bc`, the Graphing authority commit remains `ac2572bf`, and the published enforcement correction remains unchanged as `ef392095`.
+- The golden expectation delta is verified and staged as a normal child commit after repairing the accidental local amend. No push is authorized.

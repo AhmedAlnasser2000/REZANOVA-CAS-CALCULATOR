@@ -24,3 +24,5 @@
 - User approved the post-commit enforcement correction on 2026-07-18.
 - Follow-up commit subject: `CI-REGRESSION-REPAIR1 restore inversion floors`.
 - The Graphing authority commit remains independent. No push is authorized.
+- User requested history recovery after the golden-corpus amendment diverged from the already-published correction commit on 2026-07-18.
+- The published `ef392095` commit remains unchanged; the golden-corpus follow-up is a normal child commit. No push is authorized.

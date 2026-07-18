@@ -484,8 +484,13 @@ export const goldenCases: GoldenCase[] = [
     mode: 'equation',
     equationLatex: '\\sin\\left(x\\right)=2',
     expected: {
-      kind: 'error',
+      kind: 'success',
       title: 'Solve',
+      exactEquals: '\\varnothing',
+      answerRowsInclude: ['\\varnothing'],
+      warningIncludes: ['between -1 and 1'],
+      solveBadgesInclude: ['Range Guard'],
+      resultOrigin: 'symbolic',
       runtimeStopReasonKind: 'range-guard',
     },
   },
@@ -582,7 +587,12 @@ export const goldenCases: GoldenCase[] = [
     },
     expected: {
       kind: 'success',
-      exactIncludes: ['\\arcsin(\\frac{1}{2})', '360n'],
+      exactIncludes: ['30+360n', '150+360n'],
+      answerRowsInclude: ['x=30+360n', 'x=150+360n'],
+      branchIncludes: ['30+360n', '150+360n'],
+      supplementIncludes: ['n\\in\\mathbb{Z}'],
+      plannerBadgesInclude: ['Trig Solve Backend'],
+      resultOrigin: 'symbolic',
     },
   },
   {

@@ -135,16 +135,17 @@ describe('trigonometry core draft runner', () => {
     expect(outcome.error).toContain('expression-only');
   });
 
-  it('does not offer Equation handoff for range-proven impossible trig equations', () => {
+  it('returns a typed empty set without Equation handoff for range-proven impossible trig equations', () => {
     const { outcome } = runTrigonometryCoreDraft('\\sin\\left(x^2\\right)=5', {
       screenHint: 'equationSolve',
       angleUnit: 'deg',
     });
 
-    expect(outcome.kind).toBe('error');
-    if (outcome.kind !== 'error') {
-      throw new Error('Expected trig equation error');
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected trig equation empty-set success');
     }
+    expect(outcome.exactLatex).toBe('\\varnothing');
     expect(outcome.solveBadges).toContain('Range Guard');
     expect(outcome.actions).toBeUndefined();
   });
