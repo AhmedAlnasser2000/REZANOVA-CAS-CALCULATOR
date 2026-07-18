@@ -306,7 +306,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(await screen.findByRole('button', { name: /core/i }));
     await user.click(await screen.findByRole('button', { name: /equation/i }));
     await screen.findByRole('button', { name: /symbolic/i });
-    expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument());
   });
 
   it('routes keypad layers and lock while preserving one-shot reset behavior', async () => {

@@ -2641,8 +2641,8 @@ export default function App() {
   const copyGeometryWorkbenchExpression = () =>
     void copyText(geometryWorkbenchExpression, 'Geometry request copied');
 
-  function renderActiveSideSurface(presentation: SideSurfacePresentation) {
-    if (sideSurface === 'settings') {
+  function renderActiveSideSurface(surface: string, presentation: SideSurfacePresentation) {
+    if (surface === 'settings') {
       return (
         <SettingsPanel
           presentation={presentation}
@@ -2656,7 +2656,7 @@ export default function App() {
       );
     }
 
-    if (sideSurface === 'history') {
+    if (surface === 'history') {
       return (
         <HistoryPanel
           presentation={presentation}
@@ -2674,7 +2674,7 @@ export default function App() {
       );
     }
 
-    if (sideSurface === 'variables') {
+    if (surface === 'variables') {
       return (
         <VariablesPanel
           presentation={presentation}
@@ -2688,7 +2688,7 @@ export default function App() {
       );
     }
 
-    if (sideSurface === 'ooeDiagnostics' && ooeDiagnosticsEnabled) {
+    if (surface === 'ooeDiagnostics' && ooeDiagnosticsEnabled) {
       return (
         <OoeDiagnosticsPanel
           presentation={presentation}
@@ -2700,8 +2700,8 @@ export default function App() {
     return null;
   }
 
-  function renderActiveLeftInspector(presentation: SideSurfacePresentation) {
-    if (leftInspectorSurface === 'menu') {
+  function renderActiveLeftInspector(surface: string, presentation: SideSurfacePresentation) {
+    if (surface === 'menu') {
       return (
         <MenuInspectorPanel
           presentation={presentation}
