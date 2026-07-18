@@ -149,9 +149,13 @@ function moveTrailingComplexIntegerCondition(outcome: ResultProducerDraft): Resu
   const match = outcome.exactLatex.match(/^(.*),\\\s*([a-z](?:,[a-z])*)\\in\\mathbb\{Z\}\s*$/u);
   if (!match) return outcome;
 
-  const draft = { ...outcome };
-  delete draft.canonicalResult;
-  delete draft.primaryMath;
+  const {
+    canonicalResult: omittedCanonicalResult,
+    primaryMath: omittedPrimaryMath,
+    ...draft
+  } = outcome;
+  void omittedCanonicalResult;
+  void omittedPrimaryMath;
   return createEquationResultOutcome({
     ...draft,
     exactLatex: match[1].trim(),

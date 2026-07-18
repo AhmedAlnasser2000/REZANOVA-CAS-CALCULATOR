@@ -35,6 +35,14 @@
 - Workspace canaries: 19/19 passed with one worker.
 - Focused Linear Algebra editor UI: 6/6 passed; focused Complex-domain regression: 30/30 passed.
 
+## Post-commit enforcement correction
+
+- GitHub exposed two remaining Display inversion assertions after `9a7a87bc`: Equation compatibility was `1` instead of `0`, and the producer floor was `441` instead of `440`.
+- Root cause was the lint-motivated `delete` form in `moveTrailingComplexIntegerCondition`, which preserved runtime behavior but hid the canonical-field omission from the static inversion scanner.
+- The correction restores a typed rest omission with explicit `void` uses. The full Canonical Result V2 enforcement command passes with 440 producers, 58 consumers, 0 compatibility projections, 40 owner assemblies, 92 producer-draft reads, 0 legacy reads, and 162 native documents.
+- Focused Complex-domain tests pass 30/30; TypeScript, focused ESLint, and diff hygiene pass.
+- Concurrent Graphing work was preserved and subsequently committed as `ac2572bf` before the final durable-memory update. The correction remains isolated to its Equation source and this CI gate's memory evidence.
+
 ## Playwright visual evidence
 
 - At 1280 by 720, Settings rendered above its dimming backdrop and its controls were clickable.
@@ -44,4 +52,4 @@
 
 ## Remaining posture
 
-- The repair remains uncommitted pending explicit approval. The branch already contains an unrelated concurrent commit and no push is authorized.
+- The original repair is committed as `9a7a87bc`. The narrow enforcement correction is uncommitted pending explicit approval; no push is authorized.

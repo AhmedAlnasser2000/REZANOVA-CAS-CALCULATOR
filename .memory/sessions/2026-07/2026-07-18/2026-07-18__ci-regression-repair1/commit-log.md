@@ -21,3 +21,6 @@
 - Commit subject: `CI-REGRESSION-REPAIR1 repair Linux CI gates`.
 - The commit hash is recorded by git history because a commit cannot contain its own final hash.
 - The concurrent untracked Graphing architecture work is excluded. No push is authorized.
+- User approved the post-commit enforcement correction on 2026-07-18.
+- Follow-up commit subject: `CI-REGRESSION-REPAIR1 restore inversion floors`.
+- The Graphing authority commit remains independent. No push is authorized.

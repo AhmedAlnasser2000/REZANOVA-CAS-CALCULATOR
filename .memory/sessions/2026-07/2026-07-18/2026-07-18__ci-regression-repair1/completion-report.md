@@ -38,3 +38,4 @@
 ## Commit posture
 
 - The user approved the scoped gate commit on 2026-07-18. The commit hash is recorded in git history; no push is authorized.
+- A post-commit static-inversion correction is verified and remains uncommitted pending separate approval. Concurrent staged Graphing work remains outside this gate.
