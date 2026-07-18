@@ -54,6 +54,13 @@ function matchTargetBaseCarrier(node: unknown, target: string): TargetBaseCarrie
         message: 'Nested selected-target exp/log bases are outside PARAM10.',
       };
     }
+    // Ordinary integral powers belong to the algebraic route. Treating them as
+    // exp/log inverses silently chooses a principal root and loses even-power
+    // branches such as (x-3)^2=16.
+    const exponentValue = numericValueOfNode(exponentNode);
+    if (exponentValue !== null && Number.isInteger(exponentValue)) {
+      return { kind: 'none' };
+    }
     return {
       kind: 'matched',
       carrier: {

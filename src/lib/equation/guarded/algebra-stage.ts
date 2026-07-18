@@ -47,10 +47,10 @@ import {
   type EquationResultProducerInput,
 } from '../solve-result/producer';
 import {
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
-} from '../solve-result/math-values';
+} from '../solve-result/owned-readback-math';
 import {
   readEquationStageResultCarrier,
 } from '../solve-result/stage-carrier';
@@ -63,7 +63,7 @@ function rebuildEquationOutcome(
   previous: Exclude<ResultProducerDraft, { kind: 'prompt' }>,
 ) {
   return createEquationResultOutcome(input, {
-    mathValues: equationMathValuesFromOwnedLeaves({
+    mathValues: equationMathValuesWithOwnedReadback({
       outcome: input,
       routeId: inferEquationMathJsonRoute(input),
       leaves: equationOwnedMathJsonLeavesFromDocument(

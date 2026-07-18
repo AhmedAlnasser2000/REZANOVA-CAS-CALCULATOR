@@ -43,6 +43,7 @@ import {
   type ComplexRegionSubdivisionDiagnostics,
 } from './complex-region-subdivision';
 import { unsupportedComplexLocusOutcome } from './outcomes';
+import { tryDirectComplexLocusOutcome } from './complex-direct-locus';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
@@ -473,6 +474,13 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     target: selectedTarget,
   });
   if (locusPolicy.hasLocusDeferredCarrier) {
+    const directLocus = tryDirectComplexLocusOutcome({
+      equationLatex: input.equationLatex,
+      target: selectedTarget,
+    });
+    if (directLocus) {
+      return directLocus;
+    }
     return unsupportedComplexLocusOutcome(locusPolicy, {
       equationLatex: input.equationLatex,
       target: selectedTarget,

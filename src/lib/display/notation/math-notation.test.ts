@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatMathTextForDisplay, latexToPlainText, latexToVisibleText } from '../math-notation';
+import {
+  formatMathTextForDisplay,
+  getDisplayLatex,
+  latexToPlainText,
+  latexToVisibleText,
+} from '../math-notation';
 
 describe('math notation formatting', () => {
   it('formats common latex commands into readable unicode plain text', () => {
@@ -30,5 +35,12 @@ describe('math notation formatting', () => {
         flattenNestedRootsWhenSafe: true,
       }),
     ).toBe('root(6, x)');
+  });
+
+  it('renders canonical absolute-value functions as bars without changing solver input', () => {
+    expect(getDisplayLatex('\\operatorname{abs}(x+5)=0'))
+      .toBe('\\left|x+5\\right|=0');
+    expect(getDisplayLatex('\\operatorname{abs}(x+\\operatorname{abs}(y))'))
+      .toBe('\\left|x+\\left|y\\right|\\right|');
   });
 });

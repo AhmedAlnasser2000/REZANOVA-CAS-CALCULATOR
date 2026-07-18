@@ -50,9 +50,9 @@ import {
   type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
 import {
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
   inferEquationMathJsonRoute,
-} from '../solve-result/math-values';
+} from '../solve-result/owned-readback-math';
 import { tryProvenCanonicalMathValue } from '../../result-contract';
 
 const ce = new ComputeEngine();
@@ -337,7 +337,7 @@ function runBoundedPolynomialSolve(
           ),
         };
         return createEquationResultOutcome(producerInput, {
-          mathValues: equationMathValuesFromOwnedLeaves({
+          mathValues: equationMathValuesWithOwnedReadback({
             outcome: producerInput,
             routeId: inferEquationMathJsonRoute(producerInput),
             leaves: provenCarrierRootLeaves(
@@ -403,7 +403,7 @@ function runBoundedPolynomialSolve(
           }),
         ),
       };
-      const allRootValues = equationMathValuesFromOwnedLeaves({
+      const allRootValues = equationMathValuesWithOwnedReadback({
         outcome: producerInput,
         routeId: inferEquationMathJsonRoute(producerInput),
         leaves: provenCarrierRootLeaves(

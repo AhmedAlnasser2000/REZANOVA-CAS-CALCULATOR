@@ -1,5 +1,5 @@
 import type { AngleUnit, DisplayDetailSection, SerializableMathJson } from '../../../types/calculator';
-import { readExactScalarNode } from '../../algebra/polynomial-core';
+import { buildExactScalarNode, readExactScalarNode, type ExactScalar } from '../../algebra/polynomial-core';
 import {
   createPeriodicFamily,
   piRationalFromDegrees,
@@ -230,16 +230,32 @@ function periodicBranchMathJson(
   ];
 }
 
+function periodicFamilyScalarMathJson(value: ExactScalar, angleUnit: AngleUnit): MathJson {
+  const scalar = buildExactScalarNode(value) as MathJson;
+  if (angleUnit === 'rad') {
+    return simplifyNode(['Multiply', scalar, 'Pi'] as MathJson);
+  }
+  return simplifyNode([
+    'Multiply',
+    scalar,
+    angleUnit === 'deg' ? 180 : 200,
+  ] as MathJson);
+}
+
+function periodicFamilyMathJson(family: PeriodicFamily, angleUnit: AngleUnit): MathJson {
+  const offset = periodicFamilyScalarMathJson(family.offset, angleUnit);
+  const period = periodicFamilyScalarMathJson(family.period, angleUnit);
+  const periodTerm = simplifyNode(['Multiply', period, family.parameter] as MathJson);
+  return offset === 0
+    ? periodTerm
+    : simplifyNode(['Add', offset, periodTerm] as MathJson);
+}
+
 function periodicBranchFamilies(
   kind: TrigCarrierKind,
   value: MathJson,
-  angleUnit: AngleUnit,
   targetLatex: string,
 ): PeriodicFamily[] | null {
-  if (angleUnit !== 'rad') {
-    return null;
-  }
-
   if (isZeroNode(value)) {
     return zeroBranchFamilies(kind, targetLatex);
   }
@@ -594,9 +610,9 @@ export function solveDirectParameterizedTrigFromJson(
   }
 
   const argumentLatex = latexForNode(carrier.argument);
-  const branchFamilies = periodicBranchFamilies(carrier.kind, carrierValue, angleUnit, argumentLatex);
+  const branchFamilies = periodicBranchFamilies(carrier.kind, carrierValue, argumentLatex);
   const branchValues = branchFamilies
-    ? branchFamilies.map(renderPeriodicFamilyExpression)
+    ? branchFamilies.map((family) => renderPeriodicFamilyExpression(family, angleUnit))
     : periodicBranchValues(carrier.kind, carrierValue, carrierValueLatex, angleUnit);
   const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
@@ -652,18 +668,21 @@ export function solveDirectParameterizedTrigFromJson(
   const renderedFamilies = solutionFamilies && solutionFamilies.length === branchFamilies?.length
     ? renderPeriodicFamilies(solutionFamilies, {
       source: 'equation-parameterized-trig',
+      angleUnit,
     })
     : null;
   const solutionExpressions = renderedFamilies
     ? renderedFamilies.branchesLatex
     : branchValues.map((branchValue) =>
       solveArgumentForTarget(argument.affine, branchValue));
-  const solutionMathJson = periodicBranchMathJson(carrier.kind, carrierValue, angleUnit)
-    .map((branch) => simplifyNode([
-      'Divide',
-      ['Subtract', branch, argument.affine.constant],
-      argument.affine.coefficient,
-    ] as MathJson));
+  const solutionMathJson = renderedFamilies
+    ? renderedFamilies.families.map((family) => periodicFamilyMathJson(family, angleUnit))
+    : periodicBranchMathJson(carrier.kind, carrierValue, angleUnit)
+      .map((branch) => simplifyNode([
+        'Divide',
+        ['Subtract', branch, argument.affine.constant],
+        argument.affine.coefficient,
+      ] as MathJson));
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     nonzeroFactForNode(argument.affine.coefficient),

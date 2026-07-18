@@ -75,12 +75,22 @@ import type {
   CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
+  EquationSystemCell,
   HistoryEntry,
   PolynomialEquationView,
   SimultaneousEquationView,
 } from '../../types/calculator';
-function copySystem(system: number[][]) {
+function copySystem(system: readonly (readonly EquationSystemCell[])[]) {
   return system.map((row) => [...row]);
+}
+
+function systemCellToLatex(value: EquationSystemCell) {
+  return typeof value === 'number' ? `${value}` : value;
+}
+
+function normalizeCommittedSystemCell(latex: string) {
+  const trimmed = trimHarmlessTrailingMathSpacing(latex.trim());
+  return trimmed || '0';
 }
 export function useEquationRuntime({
   activeFieldRef,
@@ -131,11 +141,11 @@ export function useEquationRuntime({
   ]);
   const [polynomialSystem2Latex, setPolynomialSystem2Latex] =
     useState<readonly [string, string]>(['', '']);
-  const [system2, setSystem2] = useState([
+  const [system2, setSystem2] = useState<EquationSystemCell[][]>([
     [1, 1, 3],
     [2, -1, 0],
   ]);
-  const [system3, setSystem3] = useState([
+  const [system3, setSystem3] = useState<EquationSystemCell[][]>([
     [1, 1, 1, 6],
     [2, -1, 1, 3],
     [1, 2, -1, 3],
@@ -612,15 +622,17 @@ export function useEquationRuntime({
     );
   }
 
-  function setSystemCell(size: 2 | 3, row: number, column: number, value: number) {
+  function setSystemCell(size: 2 | 3, row: number, column: number, latex: string) {
+    const nextValue = normalizeCommittedSystemCell(latex);
     const setter = size === 2 ? setSystem2 : setSystem3;
     setter((currentSystem) =>
       currentSystem.map((currentRow, rowIndex) =>
         currentRow.map((cell, columnIndex) =>
-          rowIndex === row && columnIndex === column ? (Number.isFinite(value) ? value : 0) : cell,
+          rowIndex === row && columnIndex === column ? nextValue : cell,
         ),
       ),
     );
+    return null;
   }
 
   function setPolynomialSystemEquation(index: 0 | 1, latex: string) {
@@ -761,6 +773,11 @@ export function useEquationRuntime({
     system3,
     systemInputRefs,
     onSetSystemCell: setSystemCell,
+    systemCellToLatex,
+    onFocusSystemField: (screen: 'linear2' | 'linear3', field: MathfieldElement) => {
+      systemInputRefs.current[screen] = field;
+      activeFieldRef.current = field;
+    },
     polynomialSystem2Latex,
     onSetPolynomialSystemEquation: setPolynomialSystemEquation,
     onFocusPolynomialSystemField: (field: MathfieldElement) => {

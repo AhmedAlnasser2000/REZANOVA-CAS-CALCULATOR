@@ -218,8 +218,8 @@ describe('MathJSON coverage registry', () => {
     expect(report.evidenceCount).toBe(146);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
     expect(report.totals).toMatchObject({
-      leaves: 486,
-      proven: 486,
+      leaves: 504,
+      proven: 504,
       exempt: 0,
       missing: 0,
     });

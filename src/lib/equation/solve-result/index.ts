@@ -1,10 +1,22 @@
 export * from './boundary';
 export * from './contract';
 export * from './factory';
-export * from './finite-root-producer';
+export {
+  createEquationFiniteRootSuccessOutcome,
+  type EquationFiniteRootSuccessInput,
+} from './runtime-finite-root-producer';
 export * from './math-values';
+export * from './owned-readback-math';
 export * from './native-result';
 export * from './producer';
-export * from './producer-v2';
-export * from './producer-adapter';
+export {
+  buildEquationRuntimeCanonicalResultDocument as buildEquationCanonicalResultDocumentForRuntime,
+} from './runtime-producer-v2';
+export {
+  buildEquationSolveResultFromProducerDraft,
+  type BuildEquationSolveResultOptions,
+  type EquationSolveResultBuildFailure,
+  type EquationSolveResultBuildResult,
+} from './producer-adapter';
+export { finalizeEquationCanonicalRuntimeOutcome } from './runtime-producer-adapter';
 export * from './validation';

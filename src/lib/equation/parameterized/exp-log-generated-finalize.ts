@@ -77,6 +77,14 @@ function approxTextForBranches(target: string, branches: readonly string[]) {
     : `${target} ~= ${formatted.join(', ')}`;
 }
 
+function exactAssignmentMathJson(target: string, assignment: string): SerializableMathJson | undefined {
+  try {
+    return ce.parse(`${target}=${assignment}`).json as SerializableMathJson;
+  } catch {
+    return undefined;
+  }
+}
+
 function legacyFactExpression(factLatex: string): { expressionLatex: string; operator: '>' | '\\ge' | '\\ne' } | null {
   const fact = cleanLatex(factLatex).replace(/\s+/gu, '');
   const comparison = fact.match(/^(.*?)(\\ge|\\ne|>)0$/u);
@@ -288,9 +296,43 @@ function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
   return [exactLatex];
 }
 
+function integerNodeValue(node: unknown): number | null {
+  if (typeof node === 'number' && Number.isSafeInteger(node)) return node;
+  if (Array.isArray(node) && node[0] === 'Negate' && node.length === 2) {
+    const child = integerNodeValue(node[1]);
+    return child === null ? null : -child;
+  }
+  return null;
+}
+
+function exactIntegerPowerLatex(latex: string) {
+  let node: unknown;
+  try {
+    node = ce.parse(latex).json;
+  } catch {
+    return latex;
+  }
+  if (!Array.isArray(node) || node[0] !== 'Power' || node.length !== 3) return latex;
+  const base = integerNodeValue(node[1]);
+  const exponent = integerNodeValue(node[2]);
+  if (base === null || exponent === null || base === 0 || Math.abs(exponent) > 32) return latex;
+  const magnitude = BigInt(Math.abs(base)) ** BigInt(Math.abs(exponent));
+  if (magnitude.toString().length > 96) return latex;
+  const sign = base < 0 && Math.abs(exponent) % 2 === 1 ? '-' : '';
+  if (exponent === 0) return '1';
+  if (exponent > 0) return `${sign}${magnitude}`;
+  return `${sign}\\frac{1}{${magnitude}}`;
+}
+
 function normalizeGeneratedRhsLatex(latex: string) {
-  return cleanLatex(latex)
+  const cleaned = cleanLatex(latex)
     .replace(/\\ln\\left\(([^{}]*)\\right\)/gu, '\\ln($1)');
+  return exactIntegerPowerLatex(cleaned);
+}
+
+function isExactNumericIntegerPower(latex: string) {
+  const cleaned = cleanLatex(latex);
+  return exactIntegerPowerLatex(cleaned) !== cleaned;
 }
 
 function generatedDirectTargetAssignment(generatedEquationLatex: string, target: string) {
@@ -301,45 +343,6 @@ function generatedDirectTargetAssignment(generatedEquationLatex: string, target:
 
   const rhs = generatedEquationLatex.slice(prefix.length);
   return rhs.includes(target) ? null : normalizeGeneratedRhsLatex(rhs);
-}
-
-function subtractLatexExpression(left: string, right: string) {
-  return right.startsWith('-') ? `${left}+${right.slice(1)}` : `${left}-${right}`;
-}
-
-function addLatexExpression(left: string, right: string) {
-  return right.startsWith('-') ? `${left}${right}` : `${left}+${right}`;
-}
-
-function generatedAffineTargetAssignment(generatedEquationLatex: string, target: string) {
-  const equalIndex = generatedEquationLatex.indexOf('=');
-  if (equalIndex < 0) {
-    return null;
-  }
-
-  const lhs = generatedEquationLatex.slice(0, equalIndex).replace(/\s+/gu, '');
-  const rhs = generatedEquationLatex.slice(equalIndex + 1);
-  if (!lhs.includes(target) || rhs.includes(target)) {
-    return null;
-  }
-
-  const normalizedRhs = normalizeGeneratedRhsLatex(rhs);
-  let match = lhs.match(new RegExp(`^${target}\\+(.+)$`, 'u'));
-  if (match) {
-    return subtractLatexExpression(normalizedRhs, match[1]);
-  }
-
-  match = lhs.match(new RegExp(`^${target}-(.+)$`, 'u'));
-  if (match) {
-    return addLatexExpression(match[1], normalizedRhs);
-  }
-
-  match = lhs.match(new RegExp(`^(.+)\\+${target}$`, 'u'));
-  if (match) {
-    return subtractLatexExpression(normalizedRhs, match[1]);
-  }
-
-  return null;
 }
 
 function generatedPureSquareAssignment(generatedEquationLatex: string, target: string) {
@@ -360,7 +363,7 @@ export function finalizeGeneratedExpLogSolve({
   target,
   parameterNames,
   generatedEquationLatex,
-  generatedEquationMathJson,
+  generatedEquationMathJson: _generatedEquationMathJson,
   domainFacts = [],
   carrierLabel,
   searchTrace,
@@ -379,12 +382,15 @@ export function finalizeGeneratedExpLogSolve({
     `Isolated ${carrierLabel} using a bounded exp/log inverse-pair rule.`,
     `Delegated ${generatedEquationLatex} to existing selected-target parameter solvers.`,
   ];
-  const useExactLogShortcut = !searchTrace && /\\ln/u.test(generatedEquationLatex);
-
-  const directAssignment = useExactLogShortcut
-    ? generatedDirectTargetAssignment(generatedEquationLatex, target)
-    : null;
-  if (directAssignment) {
+  const directAssignment = generatedDirectTargetAssignment(generatedEquationLatex, target);
+  // Leave ordinary generated equations to the established handoff so its
+  // route evidence and traditional readback remain intact. The one exception
+  // is a numeric integral power, whose evaluation otherwise leaks decimals
+  // into textbook base-log answers (for example 9^(-2)).
+  const rawDirectAssignment = generatedEquationLatex.startsWith(`${target}=`)
+    ? generatedEquationLatex.slice(`${target}=`.length)
+    : undefined;
+  if (directAssignment && rawDirectAssignment && isExactNumericIntegerPower(rawDirectAssignment)) {
     const exactSupplementLatex = normalizeGeneratedDomainFacts(domainFacts);
     const domainStop = generatedCandidateDomainStop(
       directAssignment,
@@ -395,13 +401,12 @@ export function finalizeGeneratedExpLogSolve({
     if (domainStop) {
       return domainStop;
     }
-    const primaryMath = Array.isArray(generatedEquationMathJson)
-      && generatedEquationMathJson[0] === 'Equal'
-      && generatedEquationMathJson[1] === target
+    const assignmentMathJson = exactAssignmentMathJson(target, directAssignment);
+    const primaryMath = assignmentMathJson
       ? {
           version: 1 as const,
           canonicalLatex: `${target}=${directAssignment}`,
-          mathJson: generatedEquationMathJson,
+          mathJson: assignmentMathJson,
         }
       : undefined;
     return profileEquationResult({
@@ -429,47 +434,7 @@ export function finalizeGeneratedExpLogSolve({
     });
   }
 
-  const affineAssignment = useExactLogShortcut
-    ? generatedAffineTargetAssignment(generatedEquationLatex, target)
-    : null;
-  if (affineAssignment) {
-    const exactSupplementLatex = normalizeGeneratedDomainFacts(domainFacts);
-    const domainStop = generatedCandidateDomainStop(
-      affineAssignment,
-      target,
-      parameterNames,
-      exactSupplementLatex,
-    );
-    if (domainStop) {
-      return domainStop;
-    }
-    return profileEquationResult({
-      kind: 'success',
-      target,
-      parameterNames,
-      exactLatex: `${target}=${affineAssignment}`,
-      branchReadback: finiteBranchReadbackForNormalizedBranches({
-        targetLatex: target,
-        branchesLatex: [affineAssignment],
-        source: 'equation-parameterized-exp-log',
-      }),
-      approxText: approxTextForBranches(target, [affineAssignment]),
-      exactSupplementLatex,
-      detailSections: buildParameterizedDetailSections({
-        target,
-        parameterNames,
-        familyTitle: 'Parameterized Exp/Log Solve',
-        familyLines,
-      }),
-      generatedEquationLatex,
-      answerDomain: 'real',
-      mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
-    });
-  }
-
-  const pureSquareAssignment = useExactLogShortcut
-    ? generatedPureSquareAssignment(generatedEquationLatex, target)
-    : null;
+  const pureSquareAssignment = generatedPureSquareAssignment(generatedEquationLatex, target);
   if (pureSquareAssignment) {
     const branches = [`-\\sqrt{${pureSquareAssignment}}`, `\\sqrt{${pureSquareAssignment}}`];
     const exactSupplementLatex = normalizeGeneratedDomainFacts([
@@ -615,10 +580,10 @@ export function finalizeComplexPreimageExpLogSolve({
     );
   }
 
-  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+  const baseSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     ...domainFacts,
     ...(solved.exactSupplementLatex ?? []),
-  ].map(cleanLatex)));
+  ].map(cleanLatex))) ?? [];
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
     parameterNames,
@@ -635,6 +600,10 @@ export function finalizeComplexPreimageExpLogSolve({
     exactLatex: cleanLatex(solved.exactLatex),
     branchReadback: solved.branchReadback,
   })));
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+    ...baseSupplementLatex,
+    ...(renderedFamily.parameterLatex ? [renderedFamily.parameterLatex] : []),
+  ]));
 
   return {
     kind: 'success',

@@ -14,11 +14,8 @@ import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-
 import type { ComplexSolveRegion, ResultProducerDraft, EquationAnswerMode, PlannerBadge, SerializableMathJson, SolutionKind } from '../../../types/calculator';
 import {
   createEquationResultOutcome,
-  type EquationResultProducerInput,
 } from '../../equation/equation-solve-result';
 import {
-  equationMathValuesFromOwnedLeaves,
-  equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
 } from '../../equation/solve-result/math-values';
 
@@ -145,8 +142,29 @@ export function withEquationNumericRouteKind(outcome: ResultProducerDraft): Resu
   return withEquationSolutionKind(outcome, 'approximate-numeric');
 }
 
+function moveTrailingComplexIntegerCondition(outcome: ResultProducerDraft): ResultProducerDraft {
+  if (outcome.kind !== 'success' || outcome.answerDomain !== 'complex' || !outcome.exactLatex) {
+    return outcome;
+  }
+  const match = outcome.exactLatex.match(/^(.*),\\\s*([a-z](?:,[a-z])*)\\in\\mathbb\{Z\}\s*$/u);
+  if (!match) return outcome;
+
+  const { canonicalResult: _canonicalResult, primaryMath: _primaryMath, ...draft } = outcome;
+  return createEquationResultOutcome({
+    ...draft,
+    exactLatex: match[1].trim(),
+    exactSupplementLatex: [...new Set([
+      ...(outcome.exactSupplementLatex ?? []),
+      `${match[2]}\\in\\mathbb{Z}`,
+    ])],
+  });
+}
+
 export function finalizeSelectedTargetSymbolicOutcome(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
-  return ensureSafeEquationSuccessOutcome(formatNamedEquationOutcomeTarget(outcome, target), target);
+  return ensureSafeEquationSuccessOutcome(
+    formatNamedEquationOutcomeTarget(moveTrailingComplexIntegerCondition(outcome), target),
+    target,
+  );
 }
 
 export function numericIntervalSolveNeedsIntervalOutcome(): ResultProducerDraft {
@@ -383,35 +401,27 @@ export function unsupportedComplexLocusOutcome(
   } = {},
 ): ResultProducerDraft {
   return createEquationResultOutcome({
-    kind: 'error',
+    kind: 'success',
     title: 'Solve',
-    error: 'This complex equation is outside the supported guarded complex preimage families.',
+    exactLatex: options.equationLatex,
+    answerRows: options.equationLatex
+      ? {
+          label: 'Recognized locus',
+          rows: [{ latex: options.equationLatex }],
+        }
+      : undefined,
     warnings: [],
     detailSections: [
-      {
-        title: 'Complex Locus Policy',
-        lineKind: 'text',
-        lines: report.detailLines,
-      },
       ...buildComplexLocusEvidenceSections({
         report,
         equationLatex: options.equationLatex,
         target: options.target,
         complexRegion: options.complexRegion,
       }),
-      {
-        title: 'What To Try',
-        lineKind: 'text',
-        lines: [
-          'Read these as locus/set conditions: for example Re(z)=1 is a vertical line, and |z-a|=r is a circle when r>0.',
-          'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
-          'Use holomorphic equations for bounded Complex Region solving.',
-          'Wait for the future two-real-variable/locus engine for full complex magnitude, conjugate, real-part, or imaginary-part conditions.',
-        ],
-      },
     ],
     answerMode: 'exact',
     answerDomain: 'complex',
+    resultOrigin: 'rule-based-symbolic',
   });
 }
 
@@ -456,55 +466,6 @@ function realDomainComplexRootsOutcome(target: string): ResultProducerDraft {
   });
 }
 
-function conditionTextFromLegacySupplement(fact: string) {
-  return fact.replace(/^\\text\{Conditions:\s*\}\s*/u, '').trim();
-}
-
-function isTargetDependentConditionSupplement(fact: string, target: string) {
-  return fact.includes('\\text{Conditions:')
-    && new RegExp(`(^|[^A-Za-z])${target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}([^A-Za-z]|$)`, 'u').test(fact);
-}
-
-function withScopedTargetDependentConditions(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
-  if (outcome.kind !== 'success' || !outcome.exactSupplementLatex?.length) {
-    return outcome;
-  }
-
-  const scoped = outcome.exactSupplementLatex.filter((fact) =>
-    isTargetDependentConditionSupplement(fact, target));
-  if (scoped.length === 0) {
-    return outcome;
-  }
-
-  const remaining = outcome.exactSupplementLatex.filter((fact) =>
-    !isTargetDependentConditionSupplement(fact, target));
-  const compatibilityOutcome = { ...outcome };
-  delete compatibilityOutcome.canonicalResult;
-  const producerInput: EquationResultProducerInput = {
-    ...compatibilityOutcome,
-    exactSupplementLatex: remaining.length > 0 ? remaining : undefined,
-    detailSections: [
-      ...(outcome.detailSections ?? []),
-      {
-        title: 'Branch Guards',
-        lineKind: 'text',
-        lines: scoped.map((fact) =>
-          `${conditionTextFromLegacySupplement(fact)} was checked against the displayed candidate root(s).`),
-      },
-    ],
-  };
-  return createEquationResultOutcome(producerInput, {
-    mathValues: equationMathValuesFromOwnedLeaves({
-      outcome: producerInput,
-      routeId: inferEquationMathJsonRoute(producerInput),
-      leaves: equationOwnedMathJsonLeavesFromDocument(
-        outcome.canonicalResult,
-        'equation-scoped-condition-rebuild',
-      ),
-    }),
-  });
-}
-
 export function finalizeSharedSymbolicOutcome(input: {
   sharedOutcome: ResultProducerDraft;
   solveTarget: string;
@@ -516,13 +477,10 @@ export function finalizeSharedSymbolicOutcome(input: {
   allowNumericOnly?: boolean;
   realDomainOnly?: boolean;
 }): ResultProducerDraft {
-  const outcome = withScopedTargetDependentConditions(
-    ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
-      input.sharedOutcome,
-      input.solveTarget,
-    ), input.solveTarget),
+  const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
+    input.sharedOutcome,
     input.solveTarget,
-  );
+  ), input.solveTarget);
   const finalOutcome = input.realDomainOnly && answerPayloadContainsImaginaryUnit(outcome)
     ? realDomainComplexRootsOutcome(input.solveTarget)
     : input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)

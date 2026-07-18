@@ -6,6 +6,7 @@ type LinearAlgebraScalarCellProps = {
   columnIndex: number;
   groupId: string;
   onCommit: (latex: string) => string | null;
+  onFocus?: (field: MathfieldElement) => void;
   resolvedLatex?: string;
   rowIndex: number;
   validationKey: string;
@@ -60,6 +61,7 @@ export function LinearAlgebraScalarCell({
   columnIndex,
   groupId,
   onCommit,
+  onFocus,
   resolvedLatex,
   rowIndex,
   validationKey,
@@ -86,10 +88,11 @@ export function LinearAlgebraScalarCell({
       setFeedback(null);
     };
     const handleBlur = () => commit();
+    const handleFocus = () => onFocus?.(field);
     const handleKeydown = (event: KeyboardEvent) => {
-      event.stopPropagation();
       if (event.key === 'Enter') {
         event.preventDefault();
+        event.stopPropagation();
         if (!commit()) {
           focusRelativeCell(field, event.shiftKey ? -1 : 1);
         }
@@ -98,32 +101,38 @@ export function LinearAlgebraScalarCell({
       } else if (event.key === 'ArrowRight') {
         if (field.selectionIsCollapsed && field.position >= field.lastOffset) {
           event.preventDefault();
+          event.stopPropagation();
           focusRelativeCell(field, 1);
         }
       } else if (event.key === 'ArrowLeft') {
         if (field.selectionIsCollapsed && field.position <= 0) {
           event.preventDefault();
+          event.stopPropagation();
           focusRelativeCell(field, -1);
         }
       } else if (event.key === 'ArrowDown') {
         if (focusCoordinateCell(field, 1)) {
           event.preventDefault();
+          event.stopPropagation();
         }
       } else if (event.key === 'ArrowUp') {
         if (focusCoordinateCell(field, -1)) {
           event.preventDefault();
+          event.stopPropagation();
         }
       }
     };
     field.addEventListener('input', handleInput);
     field.addEventListener('blur', handleBlur);
+    field.addEventListener('focus', handleFocus);
     field.addEventListener('keydown', handleKeydown);
     return () => {
       field.removeEventListener('input', handleInput);
       field.removeEventListener('blur', handleBlur);
+      field.removeEventListener('focus', handleFocus);
       field.removeEventListener('keydown', handleKeydown);
     };
-  }, [onCommit]);
+  }, [onCommit, onFocus]);
 
   useEffect(() => {
     const field = fieldRef.current;

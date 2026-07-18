@@ -65,9 +65,28 @@ describe('Equation Complex companion fix gate', () => {
       const result = expectSuccess(equationLatex);
       expect(result.answerDomain).toBe('complex');
       expect(result.exactLatex).toContain(expectedSnippet);
-      expect(result.exactLatex).toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactLatex).not.toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactSupplementLatex).toContain(String.raw`k\in\mathbb{Z}`);
       expect(collectOutcomeText(result)).toContain('positive numeric-base complex exponential');
     }
+  });
+
+  it('keeps a Complex logarithmic branch parameter in the validity condition', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      angleUnit: 'rad',
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`9^z=27`,
+      equationSolveTarget: 'z',
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected a Complex branch family');
+    expect(result.exactLatex).toBe(String.raw`z=\frac{3}{2}+\frac{2\pi i k}{\ln(9)}`);
+    expect(result.exactSupplementLatex).toContain(String.raw`k\in\mathbb{Z}`);
   });
 
   it('returns controlled empty-set evidence for the scoped Complex abs boundary case', () => {

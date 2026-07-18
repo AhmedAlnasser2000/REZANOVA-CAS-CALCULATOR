@@ -378,12 +378,13 @@ describe('runGuardedEquationSolve stage routing', () => {
       resolvedLatex: '\\sin\\left(x^2\\right)=5',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected guarded solve error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded no-solution result');
     }
+    expect(result.exactLatex).toBe('\\varnothing');
     expect(result.solveBadges).toContain('Range Guard');
-    expect(result.error).toContain('between -1 and 1');
+    expect(result.warnings[0]).toContain('between -1 and 1');
   });
 
   it('hard-stops bounded trig products that cannot reach the target', () => {
@@ -393,10 +394,11 @@ describe('runGuardedEquationSolve stage routing', () => {
       resolvedLatex: '\\sin\\left(x^2\\right)\\cos\\left(x\\right)=5',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected guarded solve error');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected guarded no-solution result');
     }
+    expect(result.exactLatex).toBe('\\varnothing');
     expect(result.solveBadges).toContain('Range Guard');
     expect(solveSummaryPlainText(result)).toContain('[-1, 1]');
   });
@@ -428,7 +430,7 @@ describe('runGuardedEquationSolve stage routing', () => {
       throw new Error('Expected guarded solve success');
     }
     expect(result.exactLatex).toBe('x=\\frac{5}{4}');
-    expect(result.solveBadges).toContain('Log Quotient');
+    expect(result.solveBadges).toContain('Candidate Checked');
   });
 
   it('solves bounded mixed-base log equations when change-of-base coefficients stay rational', () => {

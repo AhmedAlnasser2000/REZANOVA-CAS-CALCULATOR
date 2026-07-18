@@ -289,6 +289,51 @@ function normalizeReadableText(text: string) {
     .trim();
 }
 
+function balancedParenEnd(source: string, start: number) {
+  if (source[start] !== '(') return -1;
+  let depth = 0;
+  for (let index = start; index < source.length; index += 1) {
+    if (source[index] === '(') depth += 1;
+    if (source[index] === ')') {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+/** Presentation-only: preserve canonical abs() input while displaying standard bars. */
+export function normalizeAbsoluteValueDisplayLatex(latex: string) {
+  let result = '';
+  let index = 0;
+  const marker = '\\operatorname{abs}';
+  while (index < latex.length) {
+    if (!latex.startsWith(marker, index)) {
+      result += latex[index];
+      index += 1;
+      continue;
+    }
+
+    let argumentStart = index + marker.length;
+    while (/\s/u.test(latex[argumentStart] ?? '')) argumentStart += 1;
+    if (latex.startsWith('\\left', argumentStart)) {
+      argumentStart += '\\left'.length;
+      while (/\s/u.test(latex[argumentStart] ?? '')) argumentStart += 1;
+    }
+    const end = balancedParenEnd(latex, argumentStart);
+    if (end < 0) {
+      result += marker;
+      index += marker.length;
+      continue;
+    }
+    const body = normalizeAbsoluteValueDisplayLatex(latex.slice(argumentStart + 1, end));
+    result += `\\left|${body}\\right|`;
+    index = end + 1;
+    if (latex.startsWith('\\right', index)) index += '\\right'.length;
+  }
+  return result;
+}
+
 export function latexToPlainText(latex: string) {
   return normalizeReadableText(convertLatexFragment(latex));
 }
@@ -297,11 +342,10 @@ export function getDisplayLatex(
   latex: string,
   displayPrefs?: SymbolicDisplayPrefs,
 ) {
-  if (displayPrefs?.symbolicDisplayMode !== 'roots') {
-    return latex;
-  }
+  const absoluteValueNormalized = normalizeAbsoluteValueDisplayLatex(latex);
+  if (displayPrefs?.symbolicDisplayMode !== 'roots') return absoluteValueNormalized;
 
-  return latex.replace(
+  return absoluteValueNormalized.replace(
     /([A-Za-z0-9]+|\{[^{}]+\})\^\{\\frac\{1\}\{([2-9]\d*)\}\}/g,
     (_match, rawBase: string, denominator: string) => {
       const base = rawBase.startsWith('{') && rawBase.endsWith('}')

@@ -486,7 +486,7 @@ describe('display contract inversion ratchet', () => {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.ownerAssemblyCount, 28);
+    assert.equal(report.summary.ownerAssemblyCount, 40);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [],
@@ -531,12 +531,12 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 405);
-    assert.equal(report.summary.consumerCount, 57);
+    assert.equal(report.summary.producerCount, 440);
+    assert.equal(report.summary.consumerCount, 58);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
-    assert.equal(report.summary.producerDraftReadCount, 91);
-    assert.equal(report.summary.nativeDocumentCount, 156);
+    assert.equal(report.summary.producerDraftReadCount, 92);
+    assert.equal(report.summary.nativeDocumentCount, 162);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

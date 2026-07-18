@@ -4,10 +4,12 @@ import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
 import { VariableHintStrip } from '../../components/VariableHintStrip';
+import { LinearAlgebraScalarCell } from './LinearAlgebraScalarCell';
 import type {
   EquationRouteMeta,
   EquationAnswerMode,
   EquationScreen,
+  EquationSystemCell,
   PeriodicIntervalSuggestion,
   PolynomialEquationView,
   StoredVariableValue,
@@ -42,10 +44,12 @@ type EquationWorkspaceProps = {
   menuFooterText: string;
   onOpenScreen: (screen: EquationScreen) => void;
   onHoverMenuIndex: (screen: 'home' | 'polynomialMenu' | 'simultaneousMenu', index: number) => void;
-  system2: number[][];
-  system3: number[][];
+  system2: EquationSystemCell[][];
+  system3: EquationSystemCell[][];
   systemInputRefs: RefObject<Record<string, HTMLElement | null>>;
-  onSetSystemCell: (size: 2 | 3, row: number, column: number, value: number) => void;
+  onSetSystemCell: (size: 2 | 3, row: number, column: number, latex: string) => string | null;
+  systemCellToLatex: (value: EquationSystemCell) => string;
+  onFocusSystemField: (screen: 'linear2' | 'linear3', field: MathfieldElement) => void;
   polynomialSystem2Latex: readonly [string, string];
   onSetPolynomialSystemEquation: (index: 0 | 1, latex: string) => void;
   onFocusPolynomialSystemField: (field: MathfieldElement) => void;
@@ -121,6 +125,8 @@ export function EquationWorkspace({
   system3,
   systemInputRefs,
   onSetSystemCell,
+  systemCellToLatex,
+  onFocusSystemField,
   polynomialSystem2Latex,
   onSetPolynomialSystemEquation,
   onFocusPolynomialSystemField,
@@ -295,26 +301,32 @@ export function EquationWorkspace({
             </div>
             <p className="equation-hint">{routeMeta?.helpText}</p>
           </div>
-          <div className="system-grid" data-columns={screen === 'linear2' ? 3 : 4}>
+          <div className="system-grid equation-system-grid" data-columns={screen === 'linear2' ? 3 : 4}>
             {(screen === 'linear2' ? system2 : system3).map((row, rowIndex) =>
               row.map((value, columnIndex) => (
                 <label key={`${screen}-${rowIndex}-${columnIndex}`}>
                   <span>{columnIndex < (screen === 'linear2' ? 2 : 3) ? ['x', 'y', 'z'][columnIndex] : '='}</span>
-                  <SignedNumberInput
-                    ref={(node) => {
-                      if (rowIndex === 0 && columnIndex === 0) {
-                        systemInputRefs.current[screen] = node;
-                      }
-                    }}
-                    value={value}
-                    onValueChange={(nextValue) =>
+                  <LinearAlgebraScalarCell
+                    ariaLabel={`${routeMeta?.label ?? 'Linear system'} row ${rowIndex + 1} ${columnIndex < (screen === 'linear2' ? 2 : 3) ? `${['x', 'y', 'z'][columnIndex]} coefficient` : 'right side'}`}
+                    columnIndex={columnIndex}
+                    groupId={`equation-${screen}`}
+                    onCommit={(nextLatex) =>
                       onSetSystemCell(
                         screen === 'linear2' ? 2 : 3,
                         rowIndex,
                         columnIndex,
-                        nextValue,
+                        nextLatex,
                       )
                     }
+                    onFocus={(field) => {
+                      if (rowIndex === 0 && columnIndex === 0) {
+                        systemInputRefs.current[screen] = field;
+                      }
+                      onFocusSystemField(screen, field);
+                    }}
+                    rowIndex={rowIndex}
+                    validationKey={screen}
+                    value={systemCellToLatex(value)}
                   />
                 </label>
               )),

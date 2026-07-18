@@ -6,7 +6,7 @@ import type { ParameterizedTrigSolveSuccess } from '../../equation/parameterized
 import {
   createEquationFiniteRootSuccessOutcome,
   createEquationResultOutcome,
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
 } from '../../equation/equation-solve-result';
 
 export function createBoundedComplexEquationOutcome(
@@ -75,7 +75,7 @@ function createExpLogOrTrigOutcome(
     ...(result.answerDomain ? { answerDomain: result.answerDomain } : {}),
     ...('approxText' in result ? { approxText: result.approxText } : {}),
   };
-  const supplemental = equationMathValuesFromOwnedLeaves({
+  const supplemental = equationMathValuesWithOwnedReadback({
     outcome: input,
     routeId: 'equation.trig-exp-log',
     leaves: result.mathJsonLeaves ?? [],

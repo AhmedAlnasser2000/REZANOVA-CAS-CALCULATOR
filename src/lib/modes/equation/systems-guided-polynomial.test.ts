@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   runEquationMode,
 } from '../equation';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/solve-result';
 import { makeRequest } from './test-support';
 
 describe('Equation mode systems and guided polynomial', () => {
@@ -18,6 +19,9 @@ describe('Equation mode systems and guided polynomial', () => {
     }
     expect(result.exactLatex).toContain('x=1');
     expect(result.exactLatex).toContain('y=2');
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized system result');
+    expect(finalized.canonicalResult.version).toBe(2);
   });
 
   it('routes scan3 textbook 2x2 systems through the existing linear screen', () => {
@@ -58,6 +62,102 @@ describe('Equation mode systems and guided polynomial', () => {
     expect(result.exactLatex).toContain('x=1');
     expect(result.exactLatex).toContain('y=2');
     expect(result.exactLatex).toContain('z=3');
+  });
+
+  it('renders an inconsistent 2x2 system as an empty answer with rank evidence', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear2',
+      system2: [
+        [3, 5, 9],
+        [30, 50, -90],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected a success outcome');
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.answerRows?.rows).toEqual([{ latex: '\\varnothing', label: 'No solution' }]);
+    expect(result.detailSections?.map((section) => section.title)).toContain('System Evidence');
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized system result');
+    expect(finalized.canonicalResult.version).toBe(2);
+  });
+
+  it('renders a dependent 2x2 system as a parameter family', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear2',
+      system2: [
+        [1, 1, 2],
+        [2, 2, 4],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected a success outcome');
+    expect(result.exactLatex).toContain('x=2-t');
+    expect(result.exactLatex).toContain('y=t');
+    expect(result.exactSupplementLatex).toContain('t\\in\\mathbb{R}');
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized system result');
+    expect(finalized.canonicalResult.version).toBe(2);
+  });
+
+  it('solves a bounded affine-parameter 2x2 system under a determinant condition', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear2',
+      system2: [
+        ['a', '1', '3'],
+        ['1', 'b', '4'],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected a success outcome');
+    expect(result.exactLatex).toContain('x=');
+    expect(result.exactLatex).toContain('y=');
+    expect(result.exactSupplementLatex?.[0]).toContain('ab-1\\ne0');
+    expect(result.systemReadback?.source).toBe('equation-linear-2x2-symbolic');
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized system result');
+    expect(finalized.canonicalResult.version).toBe(2);
+  });
+
+  it('cancels common symbolic determinant factors in bounded 3x3 Cramer answers', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear3',
+      system3: [
+        ['a', '0', '0', '2'],
+        ['0', '1', '0', '3'],
+        ['0', '0', '1', '4'],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected a success outcome');
+    expect(result.exactLatex).toContain('x=\\frac{2}{a}');
+    expect(result.exactLatex).toContain('y=3');
+    expect(result.exactLatex).toContain('z=4');
+    expect(result.exactSupplementLatex).toContain('a\\ne0');
+  });
+
+  it('stops symbolic systems with an identically zero determinant at the case-splitting boundary', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear3',
+      system3: [
+        ['a', '0', '0', '1'],
+        ['2a', '0', '0', '2'],
+        ['0', '0', '0', '0'],
+      ],
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') throw new Error('Expected a controlled stop');
+    expect(result.error).toContain('case-splitting');
   });
 
   it('solves polynomial 2x2 systems through bounded resultant projection', () => {

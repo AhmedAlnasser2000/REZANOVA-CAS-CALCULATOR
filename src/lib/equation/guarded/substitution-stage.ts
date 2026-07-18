@@ -39,11 +39,11 @@ import {
   type EquationResultProducerInput,
 } from '../solve-result/producer';
 import {
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
   type EquationOwnedMathJsonLeaf,
-} from '../solve-result/math-values';
+} from '../solve-result/owned-readback-math';
 import {
   buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
@@ -66,7 +66,7 @@ function rebuildSubstitutionOutcome(
     ...additionalLeaves,
   ];
   return buildEquationStageResultCarrier(createEquationResultOutcome(input, {
-    mathValues: equationMathValuesFromOwnedLeaves({
+    mathValues: equationMathValuesWithOwnedReadback({
       outcome: input,
       routeId: inferEquationMathJsonRoute(input),
       leaves,
@@ -78,6 +78,7 @@ function acceptedCanonicalEvidence(
   source: EquationStageResultCarrierV1,
   exactLatex: string | undefined,
   acceptedLatex: readonly string[],
+  target: string,
 ) {
   if (!exactLatex) return undefined;
   const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
@@ -88,8 +89,8 @@ function acceptedCanonicalEvidence(
     sourceLeaves.find((leaf) => leaf.canonicalLatex === latex)?.mathJson);
   if (nodes.some((node) => node === undefined)) return undefined;
   const mathJson: SerializableMathJson = nodes.length === 1
-    ? ['Equal', 'x', nodes[0] as SerializableMathJson]
-    : ['Element', 'x', ['Set', ...nodes] as SerializableMathJson];
+    ? ['Equal', target, nodes[0] as SerializableMathJson]
+    : ['Element', target, ['Set', ...nodes] as SerializableMathJson];
   return {
     primaryMath: { canonicalLatex: exactLatex, mathJson },
     leaves: [{
@@ -414,8 +415,9 @@ function substitutionSolve(
   const acceptedLatex = acceptedExactLatex.length === validation.accepted.length
     ? acceptedExactLatex
     : [];
+  const target = request.solveTarget ?? 'x';
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
-    ? solutionsToLatex('x', acceptedLatex)
+    ? solutionsToLatex(target, acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
   const rejectedEvidence = rejectedCandidateEvidence(
@@ -424,7 +426,7 @@ function substitutionSolve(
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex);
+  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex, target);
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
@@ -440,7 +442,7 @@ function substitutionSolve(
       { latex: merged.exactSupplementLatex, source: 'legacy' },
       { latex: substitutionSupplementLatex, source: 'transform' },
     ),
-    approxText: `x ~= ${formattedAccepted.join(', ')}`,
+    approxText: `${target} ~= ${formattedAccepted.join(', ')}`,
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
@@ -654,8 +656,9 @@ async function substitutionSolveAsync(
   const acceptedLatex = acceptedExactLatex.length === validation.accepted.length
     ? acceptedExactLatex
     : [];
+  const target = request.solveTarget ?? 'x';
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
-    ? solutionsToLatex('x', acceptedLatex)
+    ? solutionsToLatex(target, acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
   const rejectedEvidence = rejectedCandidateEvidence(
@@ -664,7 +667,7 @@ async function substitutionSolveAsync(
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex);
+  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex, target);
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
@@ -680,7 +683,7 @@ async function substitutionSolveAsync(
       { latex: merged.exactSupplementLatex, source: 'legacy' },
       { latex: substitutionSupplementLatex, source: 'transform' },
     ),
-    approxText: `x ~= ${formattedAccepted.join(', ')}`,
+    approxText: `${target} ~= ${formattedAccepted.join(', ')}`,
     warnings: merged.warnings,
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],

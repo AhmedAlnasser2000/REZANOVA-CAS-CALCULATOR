@@ -200,9 +200,9 @@ describe('useEquationRuntime', () => {
 
     act(() => {
       hook.result.current.openEquationScreen('linear2');
-      hook.result.current.equationWorkspaceProps.onSetSystemCell(2, 0, 1, 5);
+      hook.result.current.equationWorkspaceProps.onSetSystemCell(2, 0, 1, '5');
     });
-    expect(hook.result.current.system2[0][1]).toBe(5);
+    expect(hook.result.current.system2[0][1]).toBe('5');
 
     act(() => {
       hook.result.current.openEquationScreen('polynomialSystem2');
@@ -567,7 +567,7 @@ describe('useEquationRuntime', () => {
 
     act(() => {
       hook.result.current.openEquationScreen('linear2');
-      hook.result.current.equationWorkspaceProps.onSetSystemCell(2, 0, 0, 9);
+      hook.result.current.equationWorkspaceProps.onSetSystemCell(2, 0, 0, '9');
       hook.result.current.resetEquationRuntime();
     });
     expect(hook.result.current.equationScreen).toBe('home');

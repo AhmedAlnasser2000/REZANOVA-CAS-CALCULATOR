@@ -159,7 +159,10 @@ function replaceXToken(value: string, target: string, latex = true) {
     return value;
   }
 
-  return value.replace(/\bx\b/g, latex ? equationTargetLatex(target) : target);
+  // In mathematical LaTex, a variable may be adjacent to a coefficient
+  // (9x) without a word boundary. Keep command and identifier interiors
+  // intact, but retarget that implicit-product form as well.
+  return value.replace(/(?<![A-Za-z_\\])x(?![A-Za-z_])/g, latex ? equationTargetLatex(target) : target);
 }
 
 function rewritePeriodicFamilyTarget(

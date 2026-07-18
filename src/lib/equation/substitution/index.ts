@@ -36,21 +36,24 @@ function matchSubstitutionSolve(
     return trig;
   }
 
-  const normalizedEquationAst = normalizeAst(ce.parse(equationLatex).json);
+  const parsedEquationAst = ce.parse(equationLatex).json;
+  const normalizedEquationAst = normalizeAst(parsedEquationAst);
 
   const sameBaseEquality = matchSameBaseEquality(normalizedEquationAst);
   if (sameBaseEquality.kind !== 'none') {
     return sameBaseEquality;
   }
 
+  // Log arguments such as ln(3) must remain structural until the
+  // product/quotient laws have had a chance to combine them exactly.
+  const logCombine = matchLogCombineSolve(parsedEquationAst);
+  if (logCombine.kind !== 'none') {
+    return logCombine;
+  }
+
   const inverse = matchInverseIsolation(normalizedEquationAst);
   if (inverse.kind !== 'none') {
     return inverse;
-  }
-
-  const logCombine = matchLogCombineSolve(normalizedEquationAst);
-  if (logCombine.kind !== 'none') {
-    return logCombine;
   }
 
   const exponential = matchExponentialPolynomialSubstitution(zeroForm);

@@ -16,6 +16,7 @@ import type {
   CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
+  EquationSystemCell,
   ModeId,
   OutputStyle,
   StoredVariableValue,
@@ -59,8 +60,8 @@ type EquationComplexRegionRuntimeDeps = {
   cubicCoefficients: number[];
   quarticCoefficients: number[];
   polynomialSystem2Latex: readonly [string, string];
-  system2: number[][];
-  system3: number[][];
+  system2: EquationSystemCell[][];
+  system3: EquationSystemCell[][];
   equationComplexRegionPanel: EquationComplexRegionPanelState;
   currentMode: ModeId;
   ansLatex: string;

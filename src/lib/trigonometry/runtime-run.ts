@@ -1,5 +1,6 @@
 import type {
   CanonicalRuntimeOutcome,
+  ResultProducerDraft,
   TrigParseResult,
   TrigReplaySeed,
   TrigScreen,
@@ -7,6 +8,8 @@ import type {
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
 import {
+  attachCanonicalResultV2ToProducerDraft,
+  buildCanonicalResultDocumentV2FromProducerDraft,
   canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
@@ -23,6 +26,7 @@ import {
   trigonometryMathJsonRouteForRequest,
   trigonometryMathValuesFromOwnedLeaves,
   trigonometryV2MathResolverFromOwnedLeaves,
+  type TrigonometryOwnedMathJsonLeaf,
 } from './math-values';
 
 export type TrigonometryModeRunPayload = {
@@ -38,6 +42,35 @@ export type CanonicalTrigonometryModeRunPayload = Omit<
 > & {
   outcome: CanonicalRuntimeOutcome;
 };
+
+function compactLatex(latex: string) {
+  return latex.replace(/\s+/gu, '');
+}
+
+function sharedEquationAnswerRowLeaves(
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>,
+  leaves: readonly TrigonometryOwnedMathJsonLeaf[],
+): TrigonometryOwnedMathJsonLeaf[] {
+  if (outcome.kind !== 'success' || !outcome.answerRows?.rows.length || !outcome.branchReadback) {
+    return [];
+  }
+  const targetLatex = outcome.branchReadback.targetLatex;
+  const targetLeaf = leaves.find((leaf) =>
+    compactLatex(leaf.canonicalLatex) === compactLatex(targetLatex));
+  if (!targetLeaf) return [];
+
+  return outcome.answerRows.rows.flatMap((row): TrigonometryOwnedMathJsonLeaf[] => {
+    const branchLeaf = leaves.find((leaf) =>
+      compactLatex(row.latex) === compactLatex(`${targetLatex}=${leaf.canonicalLatex}`));
+    return branchLeaf
+      ? [{
+          canonicalLatex: row.latex,
+          mathJson: ['Equal', targetLeaf.mathJson, branchLeaf.mathJson],
+          source: 'trigonometry.equation.shared-equation-answer-row',
+        }]
+      : [];
+  });
+}
 
 export function buildTrigonometryModeRunPayload(
   request: RunTrigonometryRuntimeRequest,
@@ -62,6 +95,12 @@ export function buildTrigonometryModeRunPayload(
     : parsed.ok
       ? (() => {
           const routeId = trigonometryMathJsonRouteForRequest(parsed.request);
+          const routeLeaves = parsed.request.kind === 'equationSolve'
+            ? [
+                ...mathJsonLeaves,
+                ...sharedEquationAnswerRowLeaves(outcome, mathJsonLeaves),
+              ]
+            : mathJsonLeaves;
           const version = canonicalResultVersionForProducer({
             routeId,
             selector: parsed.request.kind,
@@ -72,7 +111,7 @@ export function buildTrigonometryModeRunPayload(
           ) {
             const mathValue = trigonometryV2MathResolverFromOwnedLeaves({
               routeId,
-              leaves: mathJsonLeaves,
+              leaves: routeLeaves,
             });
             if (outcome.kind === 'error' && !requestEvidence) {
               return createTrigonometryRequestErrorOutcomeV2(outcome, mathValue);
@@ -88,6 +127,16 @@ export function buildTrigonometryModeRunPayload(
               mathValue,
             });
           }
+          if (version === 2 && parsed.request.kind === 'equationSolve') {
+            const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+              draft: outcome,
+              mathValue: trigonometryV2MathResolverFromOwnedLeaves({
+                routeId,
+                leaves: routeLeaves,
+              }),
+            });
+            return attachCanonicalResultV2ToProducerDraft(canonicalResult, outcome);
+          }
           if (version === 2 && parsed.request.kind === 'periodPhase') {
             if (!periodPhaseEvidence) {
               throw new Error(
@@ -98,7 +147,7 @@ export function buildTrigonometryModeRunPayload(
               periodPhase: periodPhaseEvidence,
               mathValue: trigonometryV2MathResolverFromOwnedLeaves({
                 routeId,
-                leaves: mathJsonLeaves,
+                leaves: routeLeaves,
               }),
             });
           }
@@ -106,7 +155,7 @@ export function buildTrigonometryModeRunPayload(
             mathValues: trigonometryMathValuesFromOwnedLeaves({
               outcome,
               routeId,
-              leaves: mathJsonLeaves,
+              leaves: routeLeaves,
             }),
           });
         })()

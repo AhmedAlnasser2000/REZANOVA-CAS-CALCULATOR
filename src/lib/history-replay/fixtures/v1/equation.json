@@ -98,7 +98,7 @@
         },
         "cardinalities": {
           "warnings": 0,
-          "supplements": 0,
+          "supplements": 2,
           "answerRows": 0,
           "branchRows": 0,
           "systemRows": 0,
@@ -2031,7 +2031,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\ln(x)+\\ln(x+1)=2"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.supplements[0].canonicalLatex=x>0\ncanonicalResult.supplements[1].canonicalLatex=x+1>0\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\ln(x)+\\ln(x+1)=2"
       }
     },
     {
@@ -2337,14 +2337,15 @@
       },
       "expected": {
         "identity": {
-          "kind": "error",
+          "kind": "success",
           "title": "Solve",
+          "resultOrigin": "symbolic",
           "runtimeStopReasonKind": "range-guard"
         },
         "cardinalities": {
-          "warnings": 0,
+          "warnings": 1,
           "supplements": 1,
-          "answerRows": 0,
+          "answerRows": 1,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -2352,7 +2353,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.supplements[0].canonicalLatex=\\text{Exclusions: } x\\ne0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\\ne 0\ncanonicalResult.summaries.solve[0][1].math.canonicalLatex=1\ncanonicalResult.summaries.solve[0][3].math.canonicalLatex=[1, 1]\ncanonicalResult.summaries.solve[0][5].math.canonicalLatex=0\ncanonicalResult.metadata.resolvedInput.canonicalLatex=1=0"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\varnothing\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\varnothing\ncanonicalResult.supplements[0].canonicalLatex=\\text{Exclusions: } x\\ne0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\\ne 0\ncanonicalResult.summaries.solve[0][1].math.canonicalLatex=1\ncanonicalResult.summaries.solve[0][3].math.canonicalLatex=[1, 1]\ncanonicalResult.summaries.solve[0][5].math.canonicalLatex=0\ncanonicalResult.metadata.resolvedInput.canonicalLatex=1=0"
       }
     },
     {

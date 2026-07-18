@@ -16,7 +16,7 @@ import {
 import {
   createEquationFiniteRootSuccessOutcome,
   createEquationResultOutcome,
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
 } from '../solve-result';
 
 type SolveLike = ReturnType<typeof solveTrigEquation>;
@@ -50,7 +50,7 @@ function directTrigSolve(request: GuardedSolveRequest): ResultProducerDraft | nu
       plannerBadges: ['Trig Solve Backend'] as PlannerBadge[],
     };
     if (parameterized.primaryMath) {
-      const supplementalValues = equationMathValuesFromOwnedLeaves({
+      const supplementalValues = equationMathValuesWithOwnedReadback({
         outcome: producerInput,
         routeId: 'equation.trig-exp-log',
         leaves: parameterized.mathJsonLeaves ?? [],

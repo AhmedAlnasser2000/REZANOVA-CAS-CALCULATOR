@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { solvePolynomialSystem2x2 } from '../equation-polynomial-system';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../solve-result';
 import type { StoredVariableValue } from '../../../types/calculator';
 
 function expectSuccess(result: ReturnType<typeof solvePolynomialSystem2x2>) {
@@ -135,6 +136,33 @@ describe('solvePolynomialSystem2x2', () => {
     expect(result.error).toContain('no real solution pairs');
     expect(result.detailSections?.find((section) => section.title === 'Resultant Projection')?.lines.join(' '))
       .toContain('nonzero constant');
+  });
+
+  it('solves direct square substitutions before resultant projection', () => {
+    const result = expectSuccess(solvePolynomialSystem2x2([
+      'y^2-x^2=9',
+      '3x^2+2y^2=8',
+    ]));
+
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.answerRows?.rows[0]?.label).toBe('No real solution pairs');
+    expect(result.detailSections?.[0]?.title).toBe('Square Substitution');
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized direct system result');
+    expect(finalized.canonicalResult.version).toBe(2);
+  });
+
+  it('solves reciprocal-square substitutions with denominator exclusions', () => {
+    const result = expectSuccess(solvePolynomialSystem2x2([
+      '4/x^2+1/y^2=24',
+      '5/x^2-2/y^2+4=0',
+    ]));
+
+    expect(result.systemReadback?.rows).toHaveLength(4);
+    expect(result.exactSupplementLatex).toEqual(['x\\ne0', 'y\\ne0']);
+    const finalized = finalizeEquationCanonicalRuntimeOutcome(result);
+    if (finalized.kind === 'prompt') throw new Error('Expected a finalized direct system result');
+    expect(finalized.canonicalResult.version).toBe(2);
   });
 
   it('stops cleanly when projection or candidate caps are exceeded', () => {

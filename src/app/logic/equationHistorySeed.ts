@@ -1,7 +1,7 @@
 import type { RunEquationModeRequest } from '../../lib/modes/equation';
-import type { EquationReplaySeed } from '../../types/calculator';
+import type { EquationReplaySeed, EquationSystemCell } from '../../types/calculator';
 
-function copySystem(system: readonly (readonly number[])[]) {
+function copySystem(system: readonly (readonly EquationSystemCell[])[]) {
   return system.map((row) => [...row]);
 }
 

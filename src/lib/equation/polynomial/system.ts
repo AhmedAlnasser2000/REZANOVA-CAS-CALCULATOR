@@ -17,6 +17,7 @@ import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-fact
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import { storedValueReadbackSections } from '../../algebra/variable-memory';
 import { trimHarmlessTrailingMathSpacing } from '../../input/input-canonicalization';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 import { buildExtraneousSolutionsDetailSection } from '../candidate/extraneous';
 import {
   eliminateBivariateResultantNodes,
@@ -38,6 +39,7 @@ import type {
 } from './system-types';
 import { profileEquationResult } from '../../display/printer';
 import { createEquationResultOutcome } from '../solve-result/producer';
+import { tryDirectSquareSubstitution } from './direct-square-substitution';
 
 const ce = new ComputeEngine();
 
@@ -411,6 +413,12 @@ export function solvePolynomialSystem2x2(
       }],
     });
   }
+  const directSquare = tryDirectSquareSubstitution({
+    zeroNodes: [leftZero.zeroNode, rightZero.zeroNode],
+  });
+  if (directSquare) {
+    return directSquare;
+  }
   const bivariateOptions = buildBivariateOptions(options);
   const xProjection = eliminateBivariateResultantNodes(leftZero.zeroNode, rightZero.zeroNode, 'x', 'y', bivariateOptions);
   if (xProjection.kind === 'stop') {
@@ -424,7 +432,20 @@ export function solvePolynomialSystem2x2(
     return errorOutcome(xRoots.reason);
   }
   if (xRoots.roots.length === 0) {
-    return errorOutcome('no-real-roots');
+    return profileEquationResult(createEquationResultOutcome({
+      kind: 'success',
+      title: 'Polynomial 2x2',
+      exactLatex: '\\varnothing',
+      answerRows: { label: 'Answer', rows: [{ latex: '\\varnothing', label: 'No real solution pairs' }] },
+      ...proseSolveSummary('The projected polynomial has no real roots.'),
+      detailSections: [{
+        title: 'Resultant Projection',
+        lineKind: 'math',
+        lines: [`${xProjection.projectedLatex}=0`],
+      }],
+      warnings: [],
+      resultOrigin: 'rule-based-symbolic',
+    }));
   }
 
   const validationZeroNodes = parseValidationZeroNodes(

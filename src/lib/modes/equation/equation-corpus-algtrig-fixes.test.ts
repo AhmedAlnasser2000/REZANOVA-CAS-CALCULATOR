@@ -119,9 +119,9 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     expect(productUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\pi n\\right\\}');
     expect(productZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi n}{2}\\right\\}');
     expect(squareDifference.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
-    expect(affineAngle.exactLatex).toBe('x\\in\\left\\{\\pi+2\\pi n\\right\\}');
-    expect(doubledCosZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
-    expect(doubledTanUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{8}+\\frac{\\pi n}{2}\\right\\}');
+    expect(affineAngle.exactLatex).toBe('x=\\pi+2\\pi n');
+    expect(doubledCosZero.exactLatex).toBe('x=\\frac{\\pi}{4}+\\frac{\\pi n}{2}');
+    expect(doubledTanUnit.exactLatex).toBe('x=\\frac{\\pi}{8}+\\frac{\\pi n}{2}');
   });
 
   it('normalizes scan3 special-angle and quadratic trig output without decimals', () => {
@@ -137,7 +137,7 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     expect(sineRadical.exactLatex).toContain('\\frac{\\pi}{4}');
     expect(sineRadical.exactLatex).toContain('\\frac{3\\pi}{4}');
     expect(collectOutcomeText(sineRadical)).not.toContain('\\arcsin');
-    expect(tangentRadical.exactLatex).toContain('-\\frac{\\pi}{3}');
+    expect(tangentRadical.exactLatex).toContain('\\frac{2\\pi}{3}');
     expect(collectOutcomeText(tangentRadical)).not.toContain('\\arctan');
     expect(nonSpecialSine.exactLatex).toContain('\\arcsin(\\frac{1}{3})');
     expect(nonSpecialTangent.exactLatex).toContain('\\arctan(\\frac{1}{2})');
@@ -150,6 +150,7 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
       expect(text).not.toContain('\\operatorname{atan2}');
     }
     expect(sineSquare.exactLatex).toContain('\\frac{\\pi}{4}');
+    expect(sineSquare.exactLatex).toBe('x=\\frac{\\pi}{4}+\\frac{\\pi n}{2}');
     expect(tangentSquare.exactLatex).toContain('\\frac{\\pi}{3}');
     expect(mixedZero.exactLatex).toContain('\\frac{3\\pi}{4}');
     expect(doubleAngleComposition.exactLatex).toContain('\\frac{\\pi}{6}');

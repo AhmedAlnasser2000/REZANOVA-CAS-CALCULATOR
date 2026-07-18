@@ -228,6 +228,9 @@ function matchCarrier(node: unknown, target: string, requireTarget = true): Carr
   if (operator === 'Power' && operands.length === 2) {
     const [baseNode, exponentNode] = operands;
     if (hasTarget(baseNode, target)) {
+      if (!hasTarget(exponentNode, target) && numericFromNode(exponentNode) !== null) {
+        return { kind: 'none' };
+      }
       return {
         kind: 'blocked',
         reason: 'target-in-unsupported-operation',

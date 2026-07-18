@@ -46,7 +46,26 @@ describe('canonicalizeMathInput', () => {
     if (!result.ok) {
       throw new Error('Expected a canonicalization result');
     }
-    expect(result.canonicalLatex).toBe('2\\operatorname{abs}(x-1)+3=11');
+    expect(result.canonicalLatex).toBe('2\\left|x-1\\right|+3=11');
+  });
+
+  it('normalizes textbook numeric-base log paste without claiming arbitrary identifiers are logs', () => {
+    const baseNine = canonicalizeMathInput('log_9(x)=2', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+    const commandBaseNine = canonicalizeMathInput('\\log_9(x)=2', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+    const identifier = canonicalizeMathInput('catalog_9(x)=2', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+
+    expect(baseNine.ok && baseNine.canonicalLatex).toBe('\\log_{9}(x)=2');
+    expect(commandBaseNine.ok && commandBaseNine.canonicalLatex).toBe('\\log_{9}(x)=2');
+    expect(identifier.ok && identifier.canonicalLatex).toBe('catalog_9(x)=2');
   });
 
   it('canonicalizes derivative shortcuts only in guided derivative contexts', () => {

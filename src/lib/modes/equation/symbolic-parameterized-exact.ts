@@ -9,7 +9,7 @@ import { resolveEquationSolveTarget } from '../../equation/equation-target';
 import {
   createEquationFiniteRootSuccessOutcome,
   createEquationResultOutcome,
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
 } from '../../equation/equation-solve-result';
 import { matchTrigEquationRewriteForSolve } from '../../trigonometry/rewrite-solve';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
@@ -121,6 +121,10 @@ function isPureQuadraticPolynomialEquation(equationLatex: string, target: string
   return Math.max(1, ...exponents) === 2;
 }
 
+function hasMultipleLogarithmCalls(equationLatex: string) {
+  return (equationLatex.match(/(?:\\(?:ln|log)\b|\b(?:ln|log)(?=\s*(?:_|\()))/gu) ?? []).length > 1;
+}
+
 function tryParameterizedTrigRewriteSolve(
   equationLatex: string,
   target: string,
@@ -189,7 +193,7 @@ function attachParameterizedSelectedTargetOutcome(input: {
     resultOrigin: 'symbolic' as const,
     ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
   };
-  const supplementalValues = equationMathValuesFromOwnedLeaves({
+  const supplementalValues = equationMathValuesWithOwnedReadback({
     outcome: producerInput,
     routeId: input.mathJsonRouteId,
     leaves: input.result.mathJsonLeaves ?? [],
@@ -302,24 +306,29 @@ export function trySelectedTargetParameterizedExactSolve(input: {
     }
   }
 
-  const expLog = solveParameterizedExpLogEquation(
-    parameterizedEquationLatex,
-    selectedTarget,
-    {
-      ...parameterizedOptions,
-      formulaHandoff: { domain: 'real' },
-    },
-  );
-  if (expLog.kind === 'success') {
-    return attachParameterizedSelectedTargetOutcome({
-      result: expLog,
+  // Sum and difference log algebra is owned by the guarded substitution
+  // route. The single-carrier exp/log handoff may isolate one call too early
+  // and turn exact textbook identities into decimal exponents.
+  if (!hasMultipleLogarithmCalls(parameterizedEquationLatex)) {
+    const expLog = solveParameterizedExpLogEquation(
+      parameterizedEquationLatex,
       selectedTarget,
-      equationLatex: input.equationLatex,
-      plannerResolvedLatex: input.plannerResolvedLatex,
-      plannerResolvedMathJson: input.plannerResolvedMathJson,
-      plannerBadges: input.plannerBadges,
-      mathJsonRouteId: 'equation.trig-exp-log',
-    });
+      {
+        ...parameterizedOptions,
+        formulaHandoff: { domain: 'real' },
+      },
+    );
+    if (expLog.kind === 'success') {
+      return attachParameterizedSelectedTargetOutcome({
+        result: expLog,
+        selectedTarget,
+        equationLatex: input.equationLatex,
+        plannerResolvedLatex: input.plannerResolvedLatex,
+        plannerResolvedMathJson: input.plannerResolvedMathJson,
+        plannerBadges: input.plannerBadges,
+        mathJsonRouteId: 'equation.trig-exp-log',
+      });
+    }
   }
 
   const trigRewrite = tryParameterizedTrigRewriteSolve(

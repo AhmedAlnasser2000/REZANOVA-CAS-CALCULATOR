@@ -526,6 +526,20 @@ function normalizeIntegralSpacing(source: string) {
   return source.replace(/\\int(?=[A-Za-z0-9\\(])/g, '\\int ');
 }
 
+/** Convert the textbook paste forms log_9(x) and \\log_9(x) before token parsing. */
+export function normalizeNumericLogBaseSyntax(source: string, changes?: CanonicalizationChange[]) {
+  return source.replace(
+    /(^|[^A-Za-z\\])(?:\\log|log)_\{?(\d+)\}?(?=\s*(?:\\left\s*)?\()/gu,
+    (match, prefix: string, base: string) => {
+      const normalized = `${prefix}\\log_{${base}}`;
+      if (normalized !== match) {
+        changes?.push({ kind: 'function-token', before: match, after: normalized });
+      }
+      return normalized;
+    },
+  );
+}
+
 export function normalizeRelationOperatorLatex(latex: string) {
   return latex
     .replace(/\\leq(?:slant)?(?![A-Za-z])/g, '\\le')
@@ -547,7 +561,8 @@ export function normalizeLiveInputOperatorLatex(
 ) {
   const changes: CanonicalizationChange[] = [];
   const specialFunctionContext = isSpecialFunctionContext(context);
-  const splitFunctionNormalized = normalizeSplitFunctionTokens(latex, changes, {
+  const numericLogBaseNormalized = normalizeNumericLogBaseSyntax(latex, changes);
+  const splitFunctionNormalized = normalizeSplitFunctionTokens(numericLogBaseNormalized, changes, {
     enableSpecialFunctions: specialFunctionContext,
   });
   const derivativeShortcutNormalized = isDerivativeShortcutContext(context)
@@ -627,7 +642,7 @@ function canonicalFunctionLatex(tokenLower: string, canonicalBody: string) {
   return tokenLower === 'sqrt'
     ? `\\sqrt{${canonicalBody}}`
     : tokenLower === 'abs'
-      ? `${canonicalCommandFor(tokenLower)}(${canonicalBody})`
+      ? `\\left|${canonicalBody}\\right|`
       : `${canonicalCommandFor(tokenLower)}(${canonicalBody})`;
 }
 
@@ -868,7 +883,8 @@ export function canonicalizeMathInput(
   const specialFunctionContext = isSpecialFunctionContext(context);
   const integralBoundsNormalized = normalizeEmptyIntegralBounds(trimmed, changes);
   const integralSpacingNormalized = normalizeIntegralSpacing(integralBoundsNormalized);
-  const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes, {
+  const numericLogBaseNormalized = normalizeNumericLogBaseSyntax(integralSpacingNormalized, changes);
+  const splitFunctionsNormalized = normalizeSplitFunctionTokens(numericLogBaseNormalized, changes, {
     enableSpecialFunctions: specialFunctionContext,
   });
   const derivativeShortcutNormalized = isDerivativeShortcutContext(context)

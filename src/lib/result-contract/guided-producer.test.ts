@@ -20,13 +20,16 @@ describe('guided-domain canonical result producers', () => {
     if (result.outcome.kind === 'prompt') throw new Error('Expected Trigonometry result.');
     expect(requireCanonicalResultAuthority(result.outcome, 'Trigonometry test').canonicalResult)
       .toBeDefined();
-    if (result.outcome.canonicalResult?.version !== 1) {
-      throw new Error('Expected the Trigonometry equation route to remain V1.');
+    expect(result.outcome.canonicalResult?.version).toBe(2);
+    if (result.outcome.canonicalResult?.version !== 2) {
+      throw new Error('Expected the Trigonometry equation route to use Canonical Result V2.');
     }
-    expect(result.outcome.canonicalResult?.branchReadback?.target.mathJson).toBe('x');
-    expect(result.outcome.canonicalResult?.branchReadback?.branches
+    expect(result.outcome.canonicalResult.branchReadback?.target.mathJson).toBe('x');
+    expect(result.outcome.canonicalResult.branchReadback?.branches
       .every((branch) => branch.mathJson !== undefined)).toBe(true);
-    expect(result.outcome.canonicalResult?.supplements?.[0]?.mathJson)
+    expect(result.outcome.canonicalResult.answerRows?.rows
+      .every((row) => row.math.mathJson !== undefined)).toBe(true);
+    expect(result.outcome.canonicalResult.supplements?.[0]?.math.mathJson)
       .toEqual(['Element', 'n', 'Integers']);
     expect(JSON.stringify(result.outcome.canonicalResult)).not.toContain('actions');
   });

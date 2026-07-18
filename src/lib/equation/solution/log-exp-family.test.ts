@@ -38,4 +38,14 @@ describe('Equation log/exp structured families', () => {
     expect(rendered.exactLatex).toBe('z=2\\pi i k');
     expect(rendered.branchReadback?.branchesLatex).toEqual(['2\\pi i k']);
   });
+
+  it('moves a trailing integer branch constraint into a validity fact', () => {
+    const rendered = renderLogExpFamily(createComplexLogExpFamily({
+      targetLatex: 'z',
+      exactLatex: String.raw`z=\frac{3}{2}+\frac{2\pi i k}{\ln(9)},\ k\in\mathbb{Z}`,
+    }));
+
+    expect(rendered.exactLatex).toBe(String.raw`z=\frac{3}{2}+\frac{2\pi i k}{\ln(9)}`);
+    expect(rendered.parameterLatex).toBe(String.raw`k\in\mathbb{Z}`);
+  });
 });

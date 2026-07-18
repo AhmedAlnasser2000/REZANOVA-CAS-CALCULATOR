@@ -370,8 +370,11 @@ describe('Canonical Result V2 contract', () => {
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
       'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
-      'equation.domain-boundary': ['typedLabeledSupplement'],
+      'equation.linear': ['nativeSystem'],
+      'equation.polynomial': ['directPolynomialSystem'],
+      'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
       'equation.rational-radical': ['typedLabeledSupplement'],
+      'trigonometry.equation': ['equationSolve'],
       'trigonometry.right-triangle': ['rightTriangle'],
     });
     expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({
@@ -412,8 +415,16 @@ describe('Canonical Result V2 contract', () => {
               'indefiniteIntegral:error': 2,
               'indefiniteIntegral:special-function': 4,
             }
-        : routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
-          ? { typedLabeledSupplement: 2 }
+        : routeId === 'equation.domain-boundary'
+          ? { typedLabeledSupplement: 2, directLocus: 2 }
+          : routeId === 'equation.linear'
+          ? { nativeSystem: 2 }
+          : routeId === 'equation.polynomial'
+            ? { directPolynomialSystem: 2 }
+        : routeId === 'equation.rational-radical'
+            ? { typedLabeledSupplement: 2 }
+        : routeId === 'trigonometry.equation'
+          ? { equationSolve: 2 }
         : routeId === 'trigonometry.right-triangle'
           ? { rightTriangle: 2 }
         : routeId === 'vector.angle'

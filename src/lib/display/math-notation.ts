@@ -3,4 +3,5 @@ export {
   getDisplayLatex,
   latexToPlainText,
   latexToVisibleText,
+  normalizeAbsoluteValueDisplayLatex,
 } from './notation/math-notation';

@@ -11,6 +11,7 @@ import type { WorkspaceInstance } from './workspace-instances';
 import type {
   CanonicalRuntimeOutcome,
   EquationScreen,
+  EquationSystemCell,
   HistoryEntry,
   ModeId,
   Settings,
@@ -103,8 +104,8 @@ export type ActiveEquationRuntimeState = {
   cubicCoefficients: number[];
   quarticCoefficients: number[];
   polynomialSystem2Latex: readonly [string, string];
-  system2: number[][];
-  system3: number[][];
+  system2: EquationSystemCell[][];
+  system3: EquationSystemCell[][];
   equationNumericSolvePanel: ReturnType<typeof defaultEquationNumericSolvePanelState>;
   equationComplexRegionPanel: ReturnType<typeof defaultEquationComplexRegionPanelState>;
   settings: Pick<

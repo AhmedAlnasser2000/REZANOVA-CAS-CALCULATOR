@@ -2,11 +2,8 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   complexSolutionsToApproxText,
   complexSolutionsToLatex,
-  formatApproxNumber,
-  formatNumber,
 } from '../../display/format';
 import { runExpressionAction } from '../../engine/math-engine';
-import { solveLinearSystem } from '../../linear-algebra/matrix';
 import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-factor-solve';
 import { solvePolynomialRoots } from '../../algebra/polynomial-roots';
 import { buildRuntimeOutcome } from '../../kernel/runtime-envelope';
@@ -15,41 +12,23 @@ import {
   normalizedPolynomialCoefficients,
   POLYNOMIAL_VIEW_META,
 } from '../equation-ui-model';
-import type { AngleUnit, ResultProducerDraft, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
+import type {
+  AngleUnit,
+  ResultProducerDraft,
+  EquationDomainIntent,
+  EquationSystemCell,
+  OutputStyle,
+  PolynomialEquationView,
+} from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 import { tryEquationMathValuesFromOwnedPayload } from '../../equation/solve-result/math-values';
+import { solveGuidedLinearSystem } from './guided-linear-system';
 
 const ce = new ComputeEngine();
 
-export function solveSystem(source: number[][], size: 2 | 3): ResultProducerDraft {
-  const coefficients = source.map((row) => row.slice(0, size));
-  const constants = source.map((row) => row[size]);
-  const solution = solveLinearSystem(coefficients, constants);
-
-  if (!solution) {
-    return createEquationResultOutcome({
-      kind: 'error',
-      title: `${size}x${size}`,
-      error: 'The linear system does not have a unique solution.',
-      warnings: [],
-    });
-  }
-
-  const exactLatex = solution
-    .map((value, index) => `${['x', 'y', 'z'][index]}=${formatNumber(value, 4)}`)
-    .join(',\\;');
-  const approxText = solution
-    .map((value, index) => `${['x', 'y', 'z'][index]} ~= ${formatApproxNumber(value)}`)
-    .join(', ');
-
-  return createEquationResultOutcome({
-    kind: 'success',
-    title: `${size}x${size}`,
-    exactLatex,
-    approxText,
-    warnings: [],
-  });
+export function solveSystem(source: EquationSystemCell[][], size: 2 | 3): ResultProducerDraft {
+  return solveGuidedLinearSystem(source, size);
 }
 
 export function solvePolynomial(

@@ -57,6 +57,7 @@ export * from './math-payload-types';
 export * from './linear-algebra-types';
 export * from './solver-types';
 export type {
+  EquationSystemCell,
   EquationReplaySeed,
   EquationReplayTarget,
 } from './equation-replay-types';

@@ -269,6 +269,27 @@ export const OWNER_ASSEMBLY_REGISTRATIONS = [
     functions: ['buildEquationStageResultCarrier'],
   },
   {
+    id: 'equation-guided-linear-system-owner-assembly-v1',
+    owner: 'equation-result-contract',
+    rationale: 'The guided Equation linear-system helpers assemble exact rows, rank evidence, and determinant conditions immediately before the Equation canonical adapter.',
+    matchers: exact('src/lib/modes/equation/guided-linear-system.ts'),
+    functions: ['systemOutcome', 'solveNumericSystem', 'solveSymbolicSystem'],
+  },
+  {
+    id: 'equation-direct-locus-owner-assembly-v1',
+    owner: 'equation-result-contract',
+    rationale: 'Direct Equation locus helpers assemble bounded locus rows and parameter evidence immediately before the Equation canonical adapter.',
+    matchers: exact('src/lib/modes/equation/complex-direct-locus.ts'),
+    functions: ['directLocusOutcome', 'lineOutcome', 'pointOutcome', 'circleOutcome', 'emptyLocusOutcome', 'rayOutcome'],
+  },
+  {
+    id: 'equation-direct-polynomial-system-owner-assembly-v1',
+    owner: 'equation-result-contract',
+    rationale: 'Direct Polynomial 2x2 substitution helpers assemble exact solution rows and no-real evidence immediately before the Equation canonical adapter.',
+    matchers: exact('src/lib/equation/polynomial/direct-square-substitution.ts'),
+    functions: ['directPolynomialOutcome', 'outcomeForNoReal', 'tryDirectSquareSubstitution'],
+  },
+  {
     id: 'equation-polynomial-mathjson-assembly-v1',
     owner: 'equation-result-contract',
     rationale: 'The bounded polynomial stage assembles accepted or rejected candidate evidence before its unconditional final canonical adapter.',

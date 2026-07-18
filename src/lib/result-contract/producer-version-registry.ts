@@ -107,8 +107,11 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
   {
     'calculus.derivatives': ['derivativePoint'],
     'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
-    'equation.domain-boundary': ['typedLabeledSupplement'],
+    'equation.linear': ['nativeSystem'],
+    'equation.polynomial': ['directPolynomialSystem'],
+    'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
     'equation.rational-radical': ['typedLabeledSupplement'],
+    'trigonometry.equation': ['equationSolve'],
     'trigonometry.right-triangle': ['rightTriangle'],
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );

@@ -59,6 +59,7 @@ import {
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
+import { tryDirectComplexLocusOutcome } from './complex-direct-locus';
 import {
   isDeferredComplexWrapperBoundary,
   withDeferredComplexWrapperBoundary,
@@ -243,6 +244,19 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           target: selectedTarget,
         });
         if (locusPolicy.hasLocusDeferredCarrier) {
+          const directLocus = tryDirectComplexLocusOutcome({
+            equationLatex: parameterizedEquationLatex,
+            target: selectedTarget,
+          });
+          if (directLocus) {
+            return attachEquationRuntimeEnvelope(
+              directLocus,
+              equationLatex,
+              planner.resolvedLatex,
+              planner.badges,
+              classifyEquationRuntimeAdvisories({ outcome: directLocus }),
+            );
+          }
           const boundaryOutcome = unsupportedComplexLocusOutcome(locusPolicy, {
             equationLatex,
             target: selectedTarget,

@@ -29,7 +29,7 @@ import type {
   GuardedSolveRunner,
 } from './types';
 import { createEquationResultOutcome } from '../solve-result/producer';
-import { equationMathValuesFromOwnedLeaves } from '../solve-result/math-values';
+import { equationMathValuesWithOwnedReadback } from '../solve-result/owned-readback-math';
 import {
   buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
@@ -51,21 +51,31 @@ function attachCarrierAlgebraMetadata(
 function rangeGuardOutcome(
   range: Extract<RangeImpossibilityResult, { kind: 'impossible' }>,
 ) {
-  const outcome = errorOutcome(
-    'Solve',
-    range.error,
-    [],
-    [],
-    ['Range Guard'],
-    {
-      solveSummaryParts: range.summaryParts,
+  const outcome = createEquationResultOutcome({
+    kind: 'success',
+    title: 'Solve',
+    exactLatex: '\\varnothing',
+    answerRows: {
+      label: 'No real solution',
+      rows: [{ latex: '\\varnothing' }],
     },
-  );
+    resultOrigin: 'symbolic',
+    solveBadges: ['Range Guard'],
+    solveSummaryParts: range.summaryParts,
+    warnings: [range.error],
+  });
   return buildEquationStageResultCarrier(createEquationResultOutcome(outcome, {
-    mathValues: equationMathValuesFromOwnedLeaves({
+    mathValues: equationMathValuesWithOwnedReadback({
       outcome,
       routeId: 'equation.domain-boundary',
-      leaves: range.mathJsonLeaves ?? [],
+      leaves: [
+        {
+          canonicalLatex: '\\varnothing',
+          mathJson: 'EmptySet',
+          source: 'equation-range-guard-empty-solution-set',
+        },
+        ...(range.mathJsonLeaves ?? []),
+      ],
     }),
   }));
 }
@@ -268,7 +278,12 @@ function runGuardedEquationSolveInternal(
   }
   trail.add(stateKey);
 
-  const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
+  const validationRangeImpossibility = detectRealRangeImpossibility(
+    preparedRequest.validationLatex ?? preparedRequest.resolvedLatex,
+  );
+  const rangeImpossibility = validationRangeImpossibility.kind === 'impossible'
+    ? validationRangeImpossibility
+    : detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
     return attachCarrierAlgebraMetadata(
@@ -363,7 +378,12 @@ async function runGuardedEquationSolveInternalAsync(
   }
   trail.add(stateKey);
 
-  const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
+  const validationRangeImpossibility = detectRealRangeImpossibility(
+    preparedRequest.validationLatex ?? preparedRequest.resolvedLatex,
+  );
+  const rangeImpossibility = validationRangeImpossibility.kind === 'impossible'
+    ? validationRangeImpossibility
+    : detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
     return attachCarrierAlgebraMetadata(

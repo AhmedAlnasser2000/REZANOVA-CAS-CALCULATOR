@@ -148,11 +148,13 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison', 'Why It Cannot Diagonalize',
   'Power Factors', 'Power via Diagonalization',
+  'Locus Meaning',
 ]);
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
   'Solve Note',
   'Row Reduction Steps', 'Factorization Row Steps', 'QR Column Steps', 'RREF Evidence',
+  'Locus Evidence', 'Region Sampling', 'Residual Sampling', 'Sampled Candidates', 'Locus Diagnostics',
 ]);
 
 function answerRowsBlockFromOutcome(

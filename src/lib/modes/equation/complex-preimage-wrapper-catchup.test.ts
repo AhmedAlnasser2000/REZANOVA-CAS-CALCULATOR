@@ -57,7 +57,8 @@ describe('Equation Complex preimage wrapper catchup', () => {
     for (const result of [affine, square, cis]) {
       expectDetail(result, 'Parameterized Exp/Log Solve');
       expectDetail(result, 'Complex Preimage Route');
-      expect(result.exactLatex).toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactLatex).not.toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactSupplementLatex).toContain(String.raw`k\in\mathbb{Z}`);
       expectNoRealFormulaSections(result);
     }
   });
@@ -100,7 +101,8 @@ describe('Equation Complex preimage wrapper catchup', () => {
     for (const result of [sine, cosine, tangent]) {
       expectDetail(result, 'Parameterized Trig Solve');
       expectDetail(result, 'Complex Preimage Route');
-      expect(result.exactLatex).toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactLatex).not.toContain(String.raw`k\in\mathbb{Z}`);
+      expect(result.exactSupplementLatex).toContain(String.raw`k\in\mathbb{Z}`);
       expect(result.exactSupplementLatex ?? []).not.toContain('-1\\le');
       expect(JSON.stringify(result)).not.toContain('-1\\le');
       expectNoRealFormulaSections(result);

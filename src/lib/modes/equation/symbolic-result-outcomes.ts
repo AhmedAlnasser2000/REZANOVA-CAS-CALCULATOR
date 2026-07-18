@@ -8,7 +8,7 @@ import {
 } from '../../equation/roots/representation';
 import {
   createEquationResultOutcome,
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
 } from '../../equation/equation-solve-result';
 import { solutionsToLatex } from '../../display/format';
 
@@ -25,7 +25,7 @@ export function createSelectedTargetIsolationOutcome(
     resultOrigin: 'symbolic' as const,
   };
   return createEquationResultOutcome(input, {
-    mathValues: equationMathValuesFromOwnedLeaves({
+    mathValues: equationMathValuesWithOwnedReadback({
       outcome: input,
       routeId: 'equation.answer-mode',
       leaves: isolated.mathJsonLeaves ?? [],

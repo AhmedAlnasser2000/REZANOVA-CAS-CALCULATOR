@@ -43,10 +43,10 @@ import {
 } from '../solve-result/producer';
 import { tryProvenCanonicalMathValue } from '../../result-contract';
 import {
-  equationMathValuesFromOwnedLeaves,
+  equationMathValuesWithOwnedReadback,
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
-} from '../solve-result/math-values';
+} from '../solve-result/owned-readback-math';
 
 const ce = new ComputeEngine();
 const NUMERIC_MATCH_TOLERANCE = 1e-6;
@@ -347,7 +347,7 @@ function attachAlgebraMetadata(
     );
   }
   return createEquationResultOutcome(producerInput, {
-    mathValues: equationMathValuesFromOwnedLeaves({
+    mathValues: equationMathValuesWithOwnedReadback({
       outcome: producerInput,
       routeId,
       leaves: nativeLeaves,
@@ -509,7 +509,7 @@ function validateDirectSymbolicOutcome(
       ),
     };
     return createEquationResultOutcome(producerInput, {
-      mathValues: equationMathValuesFromOwnedLeaves({
+      mathValues: equationMathValuesWithOwnedReadback({
         outcome: producerInput,
         routeId: inferEquationMathJsonRoute(producerInput),
         leaves: candidateLeaves,
@@ -571,7 +571,7 @@ function validateDirectSymbolicOutcome(
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     detailSections: appendExtraneousSolutionsDetailSection(undefined, extraneousEvidence),
   };
-  const candidateMathValues = equationMathValuesFromOwnedLeaves({
+  const candidateMathValues = equationMathValuesWithOwnedReadback({
     outcome: producerInput,
     routeId: inferEquationMathJsonRoute(producerInput),
     leaves: candidateLeaves,

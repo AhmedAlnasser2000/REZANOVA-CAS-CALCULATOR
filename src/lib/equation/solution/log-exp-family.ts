@@ -33,7 +33,17 @@ export type LogExpFamilyRender = {
   exactLatex: string;
   branchReadback?: DisplayBranchReadback;
   branchesLatex: string[];
+  parameterLatex?: string;
 };
+
+function splitTrailingIntegerParameter(exactLatex: string) {
+  const match = exactLatex.match(/,\\?\s*([a-z](?:,[a-z])*)\\in\\mathbb\{Z\}\s*$/u);
+  if (!match) return { exactLatex };
+  return {
+    exactLatex: exactLatex.slice(0, match.index).trim(),
+    parameterLatex: `${match[1]}\\in\\mathbb{Z}`,
+  };
+}
 
 export function createRealLogExpFamily(input: {
   targetLatex: string;
@@ -70,10 +80,12 @@ export function createComplexLogExpFamily(input: {
 
 export function renderLogExpFamily(family: LogExpFamily): LogExpFamilyRender {
   if (family.kind === 'complex-branch') {
+    const split = splitTrailingIntegerParameter(family.exactLatex);
     return {
-      exactLatex: family.exactLatex,
+      exactLatex: split.exactLatex,
       branchReadback: family.branchReadback,
       branchesLatex: family.branchReadback?.branchesLatex ?? [],
+      ...(split.parameterLatex ? { parameterLatex: split.parameterLatex } : {}),
     };
   }
 

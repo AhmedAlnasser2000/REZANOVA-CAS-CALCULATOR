@@ -59,6 +59,20 @@ function runAttempt<T>(
   return run();
 }
 
+function separateTrailingIntegerCondition<T extends {
+  exactLatex: string;
+  exactSupplementLatex?: string[];
+}>(result: T): T {
+  const match = result.exactLatex.match(/^(.*),\\\s*([a-z](?:,[a-z])*)\\in\\mathbb\{Z\}\s*$/u);
+  if (!match) return result;
+  const condition = `${match[2]}\\in\\mathbb{Z}`;
+  return {
+    ...result,
+    exactLatex: match[1].trim(),
+    exactSupplementLatex: [...new Set([...(result.exactSupplementLatex ?? []), condition])],
+  };
+}
+
 function attachSuccess(
   input: ComplexPreimageWrapperRouteInput,
   family: EquationSelectedTargetRouteFamily,
@@ -72,13 +86,14 @@ function attachSuccess(
   if (input.routePlan) {
     recordSelectedTargetFamilySuccess(input.searchTrace, 'top-level', family);
   }
+  const normalized = separateTrailingIntegerCondition(result);
   const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
-    exactLatex: result.exactLatex,
-    branchReadback: result.branchReadback,
-    exactSupplementLatex: result.exactSupplementLatex,
-    detailSections: result.detailSections,
+    exactLatex: normalized.exactLatex,
+    branchReadback: normalized.branchReadback,
+    exactSupplementLatex: normalized.exactSupplementLatex,
+    detailSections: normalized.detailSections,
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'complex',

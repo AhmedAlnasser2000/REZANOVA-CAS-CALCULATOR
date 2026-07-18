@@ -1,6 +1,7 @@
 import type {
   EquationReplaySeed,
   EquationReplayTarget,
+  EquationSystemCell,
   HistoryEntry,
   PolynomialEquationView,
 } from '../../types/calculator';
@@ -119,7 +120,7 @@ export function inferSimultaneousReplayScreen(resultLatex?: string) {
   return hasZ ? 'linear3' : 'linear2';
 }
 
-function copySystem(system: readonly (readonly number[])[]) {
+function copySystem(system: readonly (readonly EquationSystemCell[])[]) {
   return system.map((row) => [...row]);
 }
 

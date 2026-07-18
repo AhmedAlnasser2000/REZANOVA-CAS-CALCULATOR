@@ -14,6 +14,7 @@ import {
   type ComplexValue,
 } from '../../numeric/complex';
 import type { ComplexSolveRegion, DisplayDetailSection } from '../../../types/calculator';
+import { mixedDetailSection, mathPart, textPart } from '../../display/result-detail-lines';
 import { containsTarget, isArrayNode } from './math-json';
 import { normalizeComplexLocusFunctionSyntax, type ComplexLocusPolicyReport } from './locus-policy';
 import type { MathJson } from './types';
@@ -499,28 +500,23 @@ export function buildComplexLocusEvidenceSections(input: {
   const target = input.target ?? 'z';
   const equationNode = input.equationLatex ? parseEquationNode(input.equationLatex) : null;
   const meaningLines = directLocusMeaningLines(equationNode, target);
-  const sections: DisplayDetailSection[] = [{
-    title: 'Complex Locus Evidence',
-    lineKind: 'text',
-    lines: [
-      `Realified target: ${target}=x+iy.`,
-      'Evidence scope: locus-deferred.',
-      'Analytic contour/root-count solving is skipped for absolute-value, conjugate, real-part, and imaginary-part carriers.',
-      'These cases usually describe curves or point sets, not a finite root list.',
-      'This route records bounded evidence only; it does not emit a curve, region, or solution-set readback yet.',
-    ],
-  }];
+  const sections: DisplayDetailSection[] = [];
   if (meaningLines.length > 0) {
-    sections.push({
-      title: 'Complex Locus Meaning',
-      lineKind: 'text',
-      lines: meaningLines,
-    });
+    sections.push(mixedDetailSection(
+      'Locus Meaning',
+      meaningLines.map((line) => [textPart(line)]),
+    ));
   }
+
+  sections.push(mixedDetailSection('Locus Evidence', [
+    [textPart('Realified target: '), mathPart(`${target}=x+iy`), textPart('.')],
+    [textPart('Evidence scope: recognized locus; no general curve readback is claimed.')],
+    [textPart('Analytic contour/root-count solving is skipped for absolute-value, conjugate, real-part, and imaginary-part carriers.')],
+  ]));
 
   if (!input.complexRegion) {
     sections.push({
-      title: 'Complex Locus Region',
+      title: 'Region Sampling',
       lineKind: 'text',
       lines: ['No Complex Region bounds were supplied, so bounded locus sampling was not run.'],
     });
@@ -530,7 +526,7 @@ export function buildComplexLocusEvidenceSections(input: {
   const region = numericRegionFromRequest(input.complexRegion);
   if (!region) {
     sections.push({
-      title: 'Complex Locus Region',
+      title: 'Region Sampling',
       lineKind: 'text',
       lines: ['Complex Region bounds were supplied but were not finite ordered bounds, so bounded locus sampling was skipped.'],
     });
@@ -541,7 +537,7 @@ export function buildComplexLocusEvidenceSections(input: {
   const direct = analyzeDirectLocus({ equationNode, target, region });
   if (!equationNode) {
     sections.push({
-      title: 'Complex Locus Region',
+      title: 'Region Sampling',
       lineKind: 'text',
       lines: [
         ...regionLines(region, gridSize),
@@ -549,7 +545,7 @@ export function buildComplexLocusEvidenceSections(input: {
       ],
     });
     sections.push({
-      title: 'Complex Locus Diagnostics',
+      title: 'Locus Diagnostics',
       lineKind: 'text',
       lines: [
         ...input.report.detailLines,
@@ -567,7 +563,7 @@ export function buildComplexLocusEvidenceSections(input: {
     probes: direct.probes,
   });
   sections.push({
-    title: 'Complex Locus Region',
+    title: 'Region Sampling',
     lineKind: 'text',
     lines: [
       ...regionLines(region, sample.cellsPerAxis),
@@ -577,7 +573,7 @@ export function buildComplexLocusEvidenceSections(input: {
     ],
   });
   sections.push({
-    title: 'Complex Locus Residual Band',
+    title: 'Residual Sampling',
     lineKind: 'text',
     lines: sample.residualMin === null || sample.residualMax === null
       ? ['Residual band across sampled cell centers/probes: unavailable because no finite evaluations completed.']
@@ -587,12 +583,12 @@ export function buildComplexLocusEvidenceSections(input: {
       ],
   });
   sections.push({
-    title: 'Complex Locus Candidates',
+    title: 'Sampled Candidates',
     lineKind: 'text',
     lines: candidateLines(sample.candidates),
   });
   sections.push({
-    title: 'Complex Locus Diagnostics',
+    title: 'Locus Diagnostics',
     lineKind: 'text',
     lines: [
       ...(direct.lines.length > 0 ? direct.lines : input.report.detailLines),

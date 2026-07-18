@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEquationFiniteRootSuccessOutcome } from './finite-root-producer';
+import { createEquationFiniteRootSuccessOutcome } from './index';
 import { requireNativeEquationResult } from './native-result';
 
 describe('Equation native result parity', () => {
@@ -43,6 +43,31 @@ describe('Equation native result parity', () => {
     };
     expect(requireNativeEquationResult(enriched)).toMatchObject({
       canonicalResult: native.canonicalResult,
+    });
+  });
+
+  it('renders finite root branches as answer rows instead of a set readback', () => {
+    const native = createEquationFiniteRootSuccessOutcome({
+      title: 'Solve',
+      exactLatex: 'x\\in\\{-1,7\\}',
+      primaryMath: {
+        canonicalLatex: 'x\\in\\{-1,7\\}',
+        mathJson: ['Element', 'x', ['Set', -1, 7]],
+      },
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\in',
+        branchesLatex: ['-1', '7'],
+      },
+      warnings: [],
+      resultOrigin: 'symbolic',
+      mathJsonRouteId: 'equation.linear',
+      mathJsonSource: 'native-result-test:finite-rows',
+    });
+
+    expect(native.answerRows).toEqual({
+      label: 'Exact roots',
+      rows: [{ latex: 'x=-1' }, { latex: 'x=7' }],
     });
   });
 });

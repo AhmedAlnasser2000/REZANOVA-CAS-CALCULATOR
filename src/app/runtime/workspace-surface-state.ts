@@ -66,6 +66,7 @@ import type {
   TriangleHeronState,
   VariableSubstitutionSnapshot,
   EquationScreen,
+  EquationSystemCell,
   CanonicalRuntimeOutcome,
 } from '../../types/calculator';
 import type {
@@ -112,8 +113,8 @@ export type EquationSurfaceState = {
   cubicCoefficients: number[];
   quarticCoefficients: number[];
   polynomialSystem2Latex: readonly [string, string];
-  system2: number[][];
-  system3: number[][];
+  system2: EquationSystemCell[][];
+  system3: EquationSystemCell[][];
 };
 
 export type CalculusMenuSelectionState = {

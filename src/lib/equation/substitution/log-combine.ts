@@ -137,7 +137,7 @@ function singleLogEquationLatex(call: LogCall, isolatedValueLatex: string) {
 }
 
 function matchLogCall(node: unknown): LogCallMatch {
-  const normalized = normalizeAst(node);
+  const normalized = node;
   if (isNodeArray(normalized) && normalized.length === 2 && normalized[0] === 'Ln') {
     return {
       kind: 'matched',
@@ -204,7 +204,7 @@ function matchLogCall(node: unknown): LogCallMatch {
 }
 
 function parseSignedLogTerm(node: unknown): ParsedLogSide {
-  const normalized = normalizeAst(node);
+  const normalized = node;
 
   const direct = matchLogCall(normalized);
   if (direct.kind === 'blocked') {
@@ -269,7 +269,7 @@ function parseSignedLogTerm(node: unknown): ParsedLogSide {
 }
 
 function parseLogLinearSide(node: unknown): ParsedLogSide {
-  const normalized = normalizeAst(node);
+  const normalized = node;
   const direct = parseSignedLogTerm(normalized);
   if (direct.kind !== 'none') {
     return direct;
@@ -287,20 +287,21 @@ function parseLogLinearSide(node: unknown): ParsedLogSide {
   let constant = 0;
   const terms: SignedLogTerm[] = [];
   for (const child of flattenAdd(normalized)) {
-    const childNumeric = numericFromNode(child);
-    if (childNumeric !== undefined) {
-      constant += childNumeric;
-      continue;
-    }
-
     const parsed = parseSignedLogTerm(child);
     if (parsed.kind === 'blocked') {
       return parsed;
     }
-    if (parsed.kind !== 'linear') {
+    if (parsed.kind === 'linear') {
+      terms.push(...parsed.terms);
+      constant += parsed.constant;
+      continue;
+    }
+
+    const childNumeric = numericFromNode(child);
+    if (childNumeric === undefined) {
       return { kind: 'none' };
     }
-    terms.push(...parsed.terms);
+    constant += childNumeric;
   }
 
   return { kind: 'linear', terms, constant };
@@ -364,7 +365,7 @@ function matchBinaryAggregate(node: unknown): BinaryLogAggregate {
     right,
     argumentLatex,
     family,
-    carrierLatex: boxLatex(normalizeAst(node)),
+    carrierLatex: boxLatex(node),
   };
 }
 
@@ -393,6 +394,75 @@ function mergeDomainConstraints(calls: LogCall[]) {
     kind: 'positive' as const,
     expressionLatex: call.innerLatex,
   }));
+}
+
+/**
+ * Handles the textbook layouts where same-base logs are split across the
+ * equality sign, for example ln(3)-ln(3-3x)=ln(4). These belong to the
+ * exact product/quotient law before an inverse-isolation route can evaluate
+ * one log numerically.
+ */
+function trySameBaseEquationProductSolve(equationAst: unknown): SubstitutionSolveResult {
+  if (!isNodeArray(equationAst) || equationAst[0] !== 'Equal' || equationAst.length !== 3) {
+    return { kind: 'none' };
+  }
+
+  const left = parseLogLinearSide(equationAst[1]);
+  const right = parseLogLinearSide(equationAst[2]);
+  if (left.kind === 'blocked') return { kind: 'blocked', error: left.error };
+  if (right.kind === 'blocked') return { kind: 'blocked', error: right.error };
+  if (left.kind !== 'linear' || right.kind !== 'linear') {
+    return { kind: 'none' };
+  }
+
+  const terms = combineLikeTerms([
+    ...left.terms,
+    ...right.terms.map((term) => ({ ...term, coefficient: -term.coefficient })),
+  ]);
+  if (terms.length < 2 || terms.length > 3 || !terms.every((term) => Math.abs(Math.abs(term.coefficient) - 1) <= EPSILON)) {
+    return { kind: 'none' };
+  }
+  const anchor = terms[0].call;
+  if (!terms.every((term) => sameLogBase(anchor, term.call))) {
+    return { kind: 'none' };
+  }
+
+  const positive = terms.filter((term) => term.coefficient > 0).map((term) => term.call);
+  const negative = terms.filter((term) => term.coefficient < 0).map((term) => term.call);
+  const constant = right.constant - left.constant;
+  let nextEquationLatex: string | null = null;
+
+  if (Math.abs(constant) <= EPSILON && positive.length === 1 && negative.length === 2) {
+    nextEquationLatex = `${positive[0].innerLatex}=\\left(${negative[0].innerLatex}\\right)\\left(${negative[1].innerLatex}\\right)`;
+  } else if (Math.abs(constant) <= EPSILON && positive.length === 2 && negative.length === 1) {
+    nextEquationLatex = `\\left(${positive[0].innerLatex}\\right)\\left(${positive[1].innerLatex}\\right)=${negative[0].innerLatex}`;
+  } else if (positive.length === 2 && negative.length === 0) {
+    nextEquationLatex = `\\left(${positive[0].innerLatex}\\right)\\left(${positive[1].innerLatex}\\right)=${sameBaseTargetLatex(anchor, formatBranchValue(constant))}`;
+  } else if (positive.length === 1 && negative.length === 1) {
+    nextEquationLatex = `${positive[0].innerLatex}=\\left(${negative[0].innerLatex}\\right)${sameBaseTargetLatex(anchor, formatBranchValue(constant))}`;
+  }
+
+  if (!nextEquationLatex) {
+    return { kind: 'none' };
+  }
+  const branchSet = createBranchSet({
+    equations: [nextEquationLatex],
+    constraints: mergeDomainConstraints(terms.map((term) => term.call)),
+    provenance: 'substitution-log-combine',
+  });
+  return {
+    kind: 'branches',
+    equations: branchSet.equations,
+    solveBadges: ['Symbolic Substitution', 'Log Combine', 'Candidate Checked'],
+    ...proseSolveSummary(`Combined same-base logarithms into ${toInlineSummaryMath(nextEquationLatex)}`),
+    domainConstraints: branchSet.constraints,
+    diagnostics: {
+      family: 'log-same-base',
+      carrierKind: anchor.kind,
+      branchCount: 1,
+      filteredBranchCount: 0,
+    },
+  };
 }
 
 function trySameBaseAggregateSolve(
@@ -602,6 +672,11 @@ function tryRecognizedMixedBaseGuidance(
 function matchLogCombineSolve(equationAst: unknown): SubstitutionSolveResult {
   if (!isNodeArray(equationAst) || equationAst[0] !== 'Equal' || equationAst.length !== 3) {
     return { kind: 'none' };
+  }
+
+  const wholeEquation = trySameBaseEquationProductSolve(equationAst);
+  if (wholeEquation.kind !== 'none') {
+    return wholeEquation;
   }
 
   const sameBaseLeft = trySameBaseAggregateSolve(equationAst[1], equationAst[2]);

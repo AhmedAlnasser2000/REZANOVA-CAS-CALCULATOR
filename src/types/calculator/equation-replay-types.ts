@@ -4,6 +4,10 @@ import type {
   NumericSolveInterval,
 } from './solver-types';
 
+// Historic Equation system records stored numbers. New MathLive cells preserve
+// their authored scalar LaTex while replaying those numeric records unchanged.
+export type EquationSystemCell = string | number;
+
 export type EquationReplayTarget =
   | {
       screen: 'symbolic';
@@ -20,7 +24,7 @@ export type EquationReplayTarget =
   | {
       screen: 'linear2' | 'linear3';
       equationLatex: string;
-      system?: number[][];
+      system?: EquationSystemCell[][];
     }
   | {
       screen: 'polynomialSystem2';
@@ -44,7 +48,7 @@ export type EquationReplaySeed =
   | {
       screen: 'linear2' | 'linear3';
       equationLatex: string;
-      system: number[][];
+      system: EquationSystemCell[][];
     }
   | {
       screen: 'polynomialSystem2';

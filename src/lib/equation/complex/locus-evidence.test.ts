@@ -33,7 +33,7 @@ describe('Complex locus evidence', () => {
   it('records bounded circle evidence without presenting a solution set', () => {
     const text = evidenceText(String.raw`\left|z-1\right|=2`);
 
-    expect(text).toContain('Complex Locus Region');
+    expect(text).toContain('Region Sampling');
     expect(text).toContain('Sampled cells: 64.');
     expect(text).toContain('Residual band across sampled cell centers/probes');
     expect(text).toContain('Candidate finite points from bounded sampling/probes');
@@ -58,7 +58,7 @@ describe('Complex locus evidence', () => {
     const realPart = evidenceTextWithoutRegion('Re(z)=1');
     const circle = evidenceTextWithoutRegion('abs(z-1)=2');
 
-    expect(realPart).toContain('Complex Locus Meaning');
+    expect(realPart).toContain('Locus Meaning');
     expect(realPart).toContain('vertical line z=x+iy with x=1');
     expect(realPart).toContain('No Complex Region bounds were supplied');
     expect(circle).toContain('circle-like locus centered at 1');

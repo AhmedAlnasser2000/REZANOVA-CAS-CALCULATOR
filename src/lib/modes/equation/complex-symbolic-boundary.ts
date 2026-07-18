@@ -3,6 +3,7 @@ import { diagnoseComplexLocusPolicyForLatex } from '../../equation/complex/locus
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type { ComplexSolveRegion, ResultProducerDraft, PlannerBadge } from '../../../types/calculator';
 import { tryComplexAbsBoundaryNoSolution } from './complex-abs-boundary';
+import { tryDirectComplexLocusOutcome } from './complex-direct-locus';
 import {
   attachEquationRuntimeEnvelope,
   unsupportedComplexLocusOutcome,
@@ -17,6 +18,20 @@ export function tryComplexSymbolicBoundaryOutcome(input: {
   plannerResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
 }): ResultProducerDraft | undefined {
+  const directLocus = tryDirectComplexLocusOutcome({
+    equationLatex: input.parameterizedEquationLatex,
+    target: input.solveTarget,
+  });
+  if (directLocus) {
+    return attachEquationRuntimeEnvelope(
+      directLocus,
+      input.equationLatex,
+      input.plannerResolvedLatex,
+      input.plannerBadges,
+      classifyEquationRuntimeAdvisories({ outcome: directLocus }),
+    );
+  }
+
   const complexAbsBoundary = tryComplexAbsBoundaryNoSolution({
     equationLatex: input.parameterizedEquationLatex,
     target: input.solveTarget,

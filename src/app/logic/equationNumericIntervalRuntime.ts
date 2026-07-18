@@ -16,6 +16,7 @@ import type {
   CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
+  EquationSystemCell,
   ModeId,
   NumericSolveInterval,
   OutputStyle,
@@ -54,8 +55,8 @@ type EquationNumericIntervalRuntimeDeps = {
   cubicCoefficients: number[];
   quarticCoefficients: number[];
   polynomialSystem2Latex: readonly [string, string];
-  system2: number[][];
-  system3: number[][];
+  system2: EquationSystemCell[][];
+  system3: EquationSystemCell[][];
   equationNumericSolvePanel: EquationNumericSolvePanelState;
   currentMode: ModeId;
   ansLatex: string;
