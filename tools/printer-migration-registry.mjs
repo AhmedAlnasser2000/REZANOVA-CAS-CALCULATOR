@@ -230,13 +230,36 @@ export const PROSE_PROPERTY_NAMES = new Set([
 
 export const MIGRATION_MARKER_NAMES = new Set([
   'answerMathJson',
+  'antiderivativeExpression',
+  'antiderivativeNode',
   'primaryMath',
   'primaryMathJson',
   'resultMathJson',
 ]);
 
+export const MIGRATION_FUNCTION_CONTEXTS = [
+  {
+    file: 'src/lib/equation/guarded/orchestrator.ts',
+    context: 'rangeGuardOutcome',
+  },
+  {
+    file: 'src/lib/equation/solution/log-exp-family.ts',
+    context: 'splitTrailingIntegerParameter',
+  },
+  {
+    file: 'src/lib/modes/equation/complex-preimage-wrapper-route.ts',
+    context: 'separateTrailingIntegerCondition',
+  },
+  {
+    file: 'src/lib/modes/equation/outcomes.ts',
+    context: 'moveTrailingComplexIntegerCondition',
+  },
+];
+
 export const MIGRATION_WRAPPER_NAMES = new Set([
   'canonicalDirectSymbolicOutcome',
+  'directLocusOutcome',
+  'directPolynomialOutcome',
   'profileCalculusResult',
   'profileEquationResult',
   'profileGeometryResult',
@@ -248,4 +271,6 @@ export const MIGRATION_WRAPPER_NAMES = new Set([
   'profileSymbolicLimitsResult',
   'profileTableResult',
   'profileTrigonometryResult',
+  'responseWithEvidence',
+  'systemOutcome',
 ]);

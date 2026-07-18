@@ -305,7 +305,7 @@ export function runMatrixChangeOfBasis(input: MatrixChangeOfBasisInput): MatrixR
       math(primaryLatex, equationMathJson(conversionNode, changeNode), 'matrix.change-basis.native-conversion-detail'),
       math(`[v]_{${input.sourceLabel}}`, ['At', ['List', 'v'], sourceOperand], 'matrix.change-basis.native-source-coordinate'),
       math(`[v]_{${input.targetLabel}}`, ['At', ['List', 'v'], targetOperand], 'matrix.change-basis.native-target-coordinate'),
-      math(conversionLabel, `\'P_${input.targetLabel}\\leftarrow${input.sourceLabel}\'`, 'matrix.change-basis.native-conversion-symbol'),
+      math(conversionLabel, `'P_${input.targetLabel}\\leftarrow${input.sourceLabel}'`, 'matrix.change-basis.native-conversion-symbol'),
       math(`[v]_{${input.sourceLabel}}`, ['At', ['List', 'v'], sourceOperand], 'matrix.change-basis.native-source-coordinate-repeat'),
     ],
   });

@@ -6,6 +6,7 @@ import {
   baseRefFromGitHubEvent,
   readBaselineAtGitRef,
   readEnforcementBaseline,
+  readProducerVersionPolicyAtGitRef,
   validateCurrentRepository,
 } from './canonical-result-v2-enforcement-core.mjs';
 
@@ -24,7 +25,13 @@ if (process.argv.includes('--github-event')) {
 
 const baseline = readEnforcementBaseline(root);
 const baseBaseline = baseRef ? readBaselineAtGitRef(root, baseRef) : undefined;
-const result = validateCurrentRepository(root, baseline, baseBaseline);
+const basePolicy = baseRef ? readProducerVersionPolicyAtGitRef(root, baseRef) : undefined;
+const result = validateCurrentRepository(
+  root,
+  baseline,
+  baseBaseline,
+  basePolicy?.explicitV2DefaultRouteIds,
+);
 if (!result.ok) {
   process.stderr.write(`${result.errors.join('\n')}\n`);
   process.exitCode = 1;

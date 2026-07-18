@@ -73,10 +73,11 @@ async function runCanary(page: Page, canary: CanaryCase) {
   if (driver.kind === 'statistics') {
     await openLauncherApp(page, 'Data', 'Statistics');
     await page.getByRole('tab', { name: 'Data & Summary' }).click();
+    await page.getByRole('radio', { name: 'Expression' }).click();
     const tool = driver.path.at(-1);
-    if (tool) {
-      await page.getByRole('combobox', { name: 'Statistics tool' })
-        .selectOption({ label: tool });
+    const toolSelect = page.getByRole('combobox', { name: 'Statistics tool' });
+    if (tool && await toolSelect.count() > 0) {
+      await toolSelect.selectOption({ label: tool });
     }
     await setMathFieldLatex(page, driver.inputLatex);
     await page.getByTestId('soft-action-evaluate').click();

@@ -70,7 +70,11 @@ export function LinearAlgebraScalarCell({
   const fieldRef = useRef<MathfieldElement | null>(null);
   const draftRef = useRef(value);
   const validationKeyRef = useRef(validationKey);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedbackState, setFeedbackState] = useState<{
+    message: string | null;
+    sourceValue: string;
+  }>({ message: null, sourceValue: value });
+  const feedback = feedbackState.sourceValue === value ? feedbackState.message : null;
 
   useLayoutEffect(() => {
     const field = fieldRef.current;
@@ -80,12 +84,12 @@ export function LinearAlgebraScalarCell({
     field.mathVirtualKeyboardPolicy = 'manual';
     const commit = () => {
       const error = onCommit(draftRef.current);
-      setFeedback(error);
+      setFeedbackState({ message: error, sourceValue: value });
       return error;
     };
     const handleInput = () => {
       draftRef.current = field.getValue('latex');
-      setFeedback(null);
+      setFeedbackState({ message: null, sourceValue: value });
     };
     const handleBlur = () => commit();
     const handleFocus = () => onFocus?.(field);
@@ -132,13 +136,12 @@ export function LinearAlgebraScalarCell({
       field.removeEventListener('focus', handleFocus);
       field.removeEventListener('keydown', handleKeydown);
     };
-  }, [onCommit, onFocus]);
+  }, [onCommit, onFocus, value]);
 
   useEffect(() => {
     const field = fieldRef.current;
     draftRef.current = value;
     if (field && field.getValue('latex') !== value) field.setValue(value);
-    setFeedback(null);
   }, [value]);
 
   useEffect(() => {
@@ -146,8 +149,8 @@ export function LinearAlgebraScalarCell({
     validationKeyRef.current = validationKey;
     if (previousKey === validationKey) return;
     const error = onCommit(draftRef.current);
-    setFeedback(error);
-  }, [onCommit, validationKey]);
+    setFeedbackState({ message: error, sourceValue: value });
+  }, [onCommit, validationKey, value]);
 
   const showResolved = Boolean(resolvedLatex && resolvedLatex !== value);
   const cellIndex = rowIndex * 100 + columnIndex;

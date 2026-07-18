@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "STATISTICS-INFERENCE1 adds standard-error and degrees-of-freedom evidence to the one-sample mean confidence interval.",
+  "acceptedReason": "CI-REGRESSION-REPAIR1 accepts the already-shipped canonical answer rows, typed supplements, exact readback, and presentation changes across 46 golden cases.",
   "caseCount": 46,
   "workspaceCounts": {
     "calculate": 23,
@@ -15,7 +15,7 @@
   },
   "successfulWorkspaceCounts": {
     "calculate": 21,
-    "equation": 5,
+    "equation": 6,
     "calculus": 2,
     "trigonometry": 2,
     "geometry": 2,
@@ -163,11 +163,6 @@
           "value": "\\arctan(x)+C"
         },
         {
-          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
-          "kind": "detail-math-part",
-          "value": "C"
-        },
-        {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{x^2+1}\\, \\mathrm{d}x"
@@ -183,17 +178,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
+          "value": "\\frac{1}{2}\\ln|x-1|-\\frac{1}{2}\\ln|x+1|+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
-        },
-        {
-          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
-          "kind": "detail-math-part",
-          "value": "C"
+          "value": "\\frac{1}{2}\\ln|x-1|-\\frac{1}{2}\\ln|x+1|+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
@@ -219,11 +209,6 @@
           "value": "-\\frac{1}{x-1}+C"
         },
         {
-          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
-          "kind": "detail-math-part",
-          "value": "C"
-        },
-        {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{(x-1)^2}\\, \\mathrm{d}x"
@@ -239,17 +224,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
+          "value": "\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
-        },
-        {
-          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
-          "kind": "detail-math-part",
-          "value": "C"
+          "value": "\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
@@ -267,17 +247,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
+          "value": "(x^2+1)\\cdot \\ln(x^2+1)-(x^2+1)+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
-        },
-        {
-          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
-          "kind": "detail-math-part",
-          "value": "C"
+          "value": "(x^2+1)\\cdot \\ln(x^2+1)-(x^2+1)+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
@@ -644,6 +619,11 @@
           "value": "x=3"
         },
         {
+          "path": "canonicalResult.supplements[0].canonicalLatex",
+          "kind": "supplement",
+          "value": "\\text{Conditions: } x+1\\ge0,\\;x-1\\ge0"
+        },
+        {
           "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "0"
@@ -696,9 +676,19 @@
     {
       "id": "equation-range-impossibility-stop",
       "workspace": "equation",
-      "outcomeKind": "error",
+      "outcomeKind": "success",
       "title": "Solve",
       "fragments": [
+        {
+          "path": "canonicalResult.primaryMath.canonicalLatex",
+          "kind": "primary-answer",
+          "value": "\\varnothing"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "\\varnothing"
+        },
         {
           "path": "canonicalResult.summaries.solve[0][1].math.canonicalLatex",
           "kind": "solve-summary-math-part",
@@ -895,7 +885,17 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
+          "value": "x\\in\\left\\{30+360n,\\ 150+360n\\right\\}"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "x=30+360n"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "x=150+360n"
         },
         {
           "path": "canonicalResult.branchReadback.target.canonicalLatex",
@@ -905,12 +905,12 @@
         {
           "path": "canonicalResult.branchReadback.branches[0].canonicalLatex",
           "kind": "branch",
-          "value": "\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
+          "value": "30+360n"
         },
         {
           "path": "canonicalResult.branchReadback.branches[1].canonicalLatex",
           "kind": "branch",
-          "value": "180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
+          "value": "150+360n"
         },
         {
           "path": "canonicalResult.supplements[0].canonicalLatex",
@@ -977,6 +977,21 @@
           "value": "y_{\\mathrm{fit}}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
         },
         {
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "y_{\\mathrm{fit}}=3x-1"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "m=3,\\ b=-1"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[2].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "r=1,\\ r^2=1,\\ n=2"
+        },
+        {
           "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "0"
@@ -993,6 +1008,21 @@
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065"
+        },
+        {
+          "path": "canonicalResult.answerRows.rows[2].math.canonicalLatex",
+          "kind": "answer-row",
+          "value": "12.172935\\le\\mu\\le19.827065"
         }
       ]
     },

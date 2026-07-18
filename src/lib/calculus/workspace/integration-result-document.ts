@@ -270,7 +270,8 @@ export function createCalculusIndefiniteIntegralOutcomeV4(input: {
     ...(outcome.approxText ? { approximations: { primary: outcome.approxText } } : {}),
     ...(metadata ? { metadata } : {}),
   });
-  const { actions: _actions, ...draftWithoutActions } = outcome;
+  const { actions, ...draftWithoutActions } = outcome;
+  void actions;
   return {
     ...draftWithoutActions,
     canonicalResult,

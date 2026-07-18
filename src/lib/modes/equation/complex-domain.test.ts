@@ -603,7 +603,7 @@ describe('Equation mode complex domain', () => {
     expect(JSON.stringify(result)).not.toContain('RootOf');
   });
 
-  it('keeps generated square-root formula wrappers deferred in Complex exact mode', () => {
+  it('keeps square-root wrappers deferred while preserving recognized absolute-value loci', () => {
     const rootResult = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -620,12 +620,14 @@ describe('Equation mode complex domain', () => {
     });
 
     expect(rootResult.kind).toBe('error');
-    expect(absResult.kind).toBe('error');
-    if (rootResult.kind !== 'error' || absResult.kind !== 'error') {
-      throw new Error('Expected Complex wrapper formula boundary to stay unsupported');
+    expect(absResult.kind).toBe('success');
+    if (rootResult.kind !== 'error' || absResult.kind !== 'success') {
+      throw new Error('Expected only the square-root formula wrapper to stay unsupported');
     }
     expect(rootResult.error).toContain('generated branch is outside');
-    expect(absResult.error).toMatch(/guarded complex preimage|generated branch is outside/u);
+    expect(absResult.answerRows?.label).toBe('Recognized locus');
+    expect(absResult.detailSections?.some((section) =>
+      section.lines.some((line) => line.includes('no general curve readback is claimed')))).toBe(true);
     for (const result of [rootResult, absResult]) {
       expect(JSON.stringify(result)).not.toContain('RootOf');
       expect(JSON.stringify(result)).not.toContain('PrincipalRoot');

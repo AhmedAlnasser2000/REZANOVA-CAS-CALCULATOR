@@ -363,7 +363,6 @@ export function finalizeGeneratedExpLogSolve({
   target,
   parameterNames,
   generatedEquationLatex,
-  generatedEquationMathJson: _generatedEquationMathJson,
   domainFacts = [],
   carrierLabel,
   searchTrace,

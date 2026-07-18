@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "CANONICAL-RESULT-V2-CLOSEOUT0 classifies V2 producer MathJSON evidence and normalized presentation, lowers printer compatibility to zero, and registers the existing Notebook evidence placeholder as authored content.",
-  "registryDigest": "5150b95b1f3f8bf87f74",
+  "acceptedReason": "CI-REGRESSION-REPAIR1 recognizes producer-owned antiderivative AST evidence, reviewed evidence wrappers, and four file-scoped Equation normalization contexts while retaining zero compatibility fallbacks.",
+  "registryDigest": "4c8b74c88a55ba440d54",
   "resultProperties": [
     "answerLatex",
     "exactLatex",
@@ -26,12 +26,12 @@
   "registrationFloors": {},
   "categoryCounts": {
     "canonical-printer": 5,
-    "downstream-presentation": 21,
-    "input-syntax": 879,
-    "presentation-math": 3169,
-    "prose-only": 4291,
-    "reference-content": 2567,
-    "result-path": 529
+    "downstream-presentation": 23,
+    "input-syntax": 909,
+    "presentation-math": 3504,
+    "prose-only": 4788,
+    "reference-content": 2608,
+    "result-path": 607
   },
   "compatibilityAssignments": []
 }

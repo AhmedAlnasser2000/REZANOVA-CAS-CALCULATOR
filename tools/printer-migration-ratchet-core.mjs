@@ -5,6 +5,7 @@ import ts from 'typescript';
 import {
   FALLBACK_REGISTRATIONS,
   INPUT_LATEX_PROPERTY_NAMES,
+  MIGRATION_FUNCTION_CONTEXTS,
   MIGRATION_MARKER_NAMES,
   MIGRATION_WRAPPER_NAMES,
   NON_PRODUCER_RESULT_REGISTRATIONS,
@@ -152,7 +153,11 @@ function resolvedExpressionText(expression, checker, seen = new Set()) {
   return normalizeSourceText(current.getText(current.getSourceFile()));
 }
 
-function hasMigrationMarker(node) {
+function hasMigrationMarker(node, file) {
+  const context = functionContext(node);
+  if (MIGRATION_FUNCTION_CONTEXTS.some((entry) =>
+    entry.file === file && entry.context === context)) return true;
+
   if (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) {
     const objectLiteral = ts.isObjectLiteralExpression(node.parent) ? node.parent : undefined;
     if (objectLiteral?.properties.some((property) => {
@@ -211,6 +216,9 @@ function registryDigest() {
     fallback: FALLBACK_REGISTRATIONS,
     nonProducer: NON_PRODUCER_RESULT_REGISTRATIONS,
     builders: RESULT_BUILDER_SPECS,
+    migrationFunctionContexts: MIGRATION_FUNCTION_CONTEXTS,
+    migrationMarkers: [...MIGRATION_MARKER_NAMES].sort(),
+    migrationWrappers: [...MIGRATION_WRAPPER_NAMES].sort(),
     resultProperties: RESULT_PROPERTY_NAMES,
   }));
 }
@@ -276,7 +284,7 @@ function buildCandidate({ file, node, expression, property, sourceKind, sourceFi
     context: functionContext(node),
     origin: expressionOrigin(expression, checker),
     expressionText: resolvedExpressionText(expression, checker),
-    migrated: hasMigrationMarker(node),
+    migrated: hasMigrationMarker(node, file),
     node,
   };
 }

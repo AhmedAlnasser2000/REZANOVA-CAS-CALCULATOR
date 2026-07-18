@@ -76,11 +76,19 @@ describe('printer migration ratchet', () => {
         };
         export const third = { resultLatex: '6', resultMathJson: 6 };
         export const fourth = { exactLatex: 'x=t', primaryMathJson: ['Equal', 'x', 't'] };
+        export const fifth = {
+          exactLatex: '\\frac{1}{2}x^2',
+          antiderivativeExpression: { kind: 'product', factors: [] },
+        };
+        export const sixth = {
+          exactLatex: '\\ln(x)',
+          antiderivativeNode: ['Ln', 'x'],
+        };
       `,
     });
     const report = scanPrinterMigrationRepository({ rootDir });
 
-    assert.equal(report.summary.migratedDualWriteCount, 4);
+    assert.equal(report.summary.migratedDualWriteCount, 6);
     assert.equal(report.summary.compatibilityFallbackCount, 0);
   });
 
@@ -95,6 +103,50 @@ describe('printer migration ratchet', () => {
 
     assert.equal(report.summary.migratedDualWriteCount, 1);
     assert.equal(report.summary.compatibilityFallbackCount, 0);
+  });
+
+  it('recognizes reviewed typed-evidence wrappers around authored result paths', () => {
+    const rootDir = fixture({
+      'src/lib/equation/sample.ts': `
+        const systemOutcome = (value, primaryMathJson, leaves) => value;
+        export const result = systemOutcome(
+          { exactLatex: 'x=1' },
+          ['Equal', 'x', 1],
+          [{ canonicalLatex: 'x=1', mathJson: ['Equal', 'x', 1] }],
+        );
+      `,
+      'src/lib/linear-algebra/sample.ts': `
+        const responseWithEvidence = (value, evidence) => value;
+        export const result = responseWithEvidence(
+          { resultLatex: '\\lambda=1' },
+          { primary: { canonicalLatex: '\\lambda=1', mathJson: ['Equal', 'lambda', 1] } },
+        );
+      `,
+    });
+    const report = scanPrinterMigrationRepository({ rootDir });
+
+    assert.equal(report.summary.migratedDualWriteCount, 2);
+    assert.equal(report.summary.compatibilityFallbackCount, 0);
+  });
+
+  it('recognizes only the reviewed file-scoped typed normalization contexts', () => {
+    const rootDir = fixture({
+      'src/lib/equation/solution/log-exp-family.ts': `
+        function splitTrailingIntegerParameter() {
+          return { exactLatex: 'x=1' };
+        }
+      `,
+      'src/lib/equation/unreviewed.ts': `
+        function splitTrailingIntegerParameter() {
+          return { exactLatex: 'x=2' };
+        }
+      `,
+    });
+    const report = scanPrinterMigrationRepository({ rootDir });
+
+    assert.equal(report.summary.migratedDualWriteCount, 1);
+    assert.equal(report.summary.compatibilityFallbackCount, 1);
+    assert.equal(report.compatibilityAssignments[0].file, 'src/lib/equation/unreviewed.ts');
   });
 
   it('rejects result serialization outside every narrow registration', () => {
@@ -173,5 +225,20 @@ describe('printer migration ratchet', () => {
       () => buildPrinterMigrationBaseline(initial, ''),
       /non-empty reason/u,
     );
+  });
+
+  it('pins the reviewed proof markers and wrappers in the registry digest', () => {
+    const rootDir = fixture({
+      'src/lib/modes/calculate/sample.ts': `
+        export const result = { exactLatex: '4', answerMathJson: 4 };
+      `,
+    });
+    const report = scanPrinterMigrationRepository({ rootDir });
+    const baseline = buildPrinterMigrationBaseline(report, 'Reviewed proof vocabulary');
+
+    assert.equal(validatePrinterMigrationReport(report, {
+      ...baseline,
+      registryDigest: 'stale-proof-vocabulary',
+    }).ok, false);
   });
 });

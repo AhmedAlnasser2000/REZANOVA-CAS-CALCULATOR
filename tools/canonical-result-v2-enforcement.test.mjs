@@ -8,6 +8,7 @@ import {
   ENFORCEMENT_BASELINE_PATH,
   compareEnforcementBaselines,
   readBaselineAtGitRef,
+  readProducerVersionPolicyAtGitRef,
   sha256,
   validateCurrentRepository,
 } from './canonical-result-v2-enforcement-core.mjs';
@@ -109,4 +110,37 @@ test('reads the immutable base baseline from a synthetic Git repository', () => 
   execFileSync('git', ['commit', '-m', 'base'], { cwd: root, stdio: 'ignore' });
   const ref = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   assert.deepEqual(readBaselineAtGitRef(root, ref), baseline);
+});
+
+test('validates an immutable base baseline against its historical V2 defaults', () => {
+  const { root, baseline } = fixtureRoot();
+  const historical = structuredClone(baseline);
+  historical.files[0].routeIds = historical.files[0].routeIds.filter((routeId) => routeId !== ROUTE);
+  writeFileSync(
+    path.join(root, ENFORCEMENT_BASELINE_PATH),
+    JSON.stringify(historical, null, 2),
+  );
+  const registryPath = path.join(root, 'src/lib/result-contract/producer-version-registry.ts');
+  writeFileSync(
+    registryPath,
+    readFileSync(registryPath, 'utf8').replace(
+      'CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = ([]);',
+      `CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (['${ROUTE}']);`,
+    ),
+  );
+  execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: root });
+  execFileSync('git', ['config', 'user.name', 'Test'], { cwd: root });
+  execFileSync('git', ['add', '.'], { cwd: root });
+  execFileSync('git', ['commit', '-m', 'base with migrated route'], { cwd: root, stdio: 'ignore' });
+  const ref = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  const basePolicy = readProducerVersionPolicyAtGitRef(root, ref);
+
+  assert.deepEqual(basePolicy?.explicitV2DefaultRouteIds, [ROUTE]);
+  assert.deepEqual(validateCurrentRepository(
+    root,
+    historical,
+    readBaselineAtGitRef(root, ref),
+    basePolicy?.explicitV2DefaultRouteIds,
+  ).errors, []);
 });

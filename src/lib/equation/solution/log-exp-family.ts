@@ -36,7 +36,10 @@ export type LogExpFamilyRender = {
   parameterLatex?: string;
 };
 
-function splitTrailingIntegerParameter(exactLatex: string) {
+function splitTrailingIntegerParameter(exactLatex: string): {
+  exactLatex: string;
+  parameterLatex?: string;
+} {
   const match = exactLatex.match(/,\\?\s*([a-z](?:,[a-z])*)\\in\\mathbb\{Z\}\s*$/u);
   if (!match) return { exactLatex };
   return {

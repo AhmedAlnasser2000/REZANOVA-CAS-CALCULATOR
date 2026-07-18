@@ -131,6 +131,8 @@ export function createVectorAngleResultOutcomeV3(
       : options.mathValue(canonicalLatex, path),
   });
   const { version: _version, primary: _primary, ...surface } = inherited;
+  void _version;
+  void _primary;
   const canonicalResult = buildCanonicalResultDocumentV3({
     ...surface,
     primary: {
@@ -141,5 +143,6 @@ export function createVectorAngleResultOutcomeV3(
     },
   } as CanonicalResultProducerInputV3);
   const { actions: _actions, ...producerDraft } = input;
+  void _actions;
   return attachCanonicalResultV3ToProducerDraft(canonicalResult, producerDraft);
 }

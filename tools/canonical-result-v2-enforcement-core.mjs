@@ -49,8 +49,7 @@ function quotedValues(source) {
   return [...source.matchAll(/'([^']+)'/gu)].map((match) => match[1]);
 }
 
-export function readProducerVersionPolicy(root) {
-  const source = readFileSync(path.join(root, PRODUCER_VERSION_REGISTRY_PATH), 'utf8');
+function producerVersionPolicyFromSource(source) {
   const frozenRouteIds = quotedValues(exportedLiteralBlock(
     source,
     'FROZEN_V1_PRODUCER_ROUTE_IDS',
@@ -64,6 +63,11 @@ export function readProducerVersionPolicy(root) {
     frozenRouteIds,
     explicitV2DefaultRouteIds,
   };
+}
+
+export function readProducerVersionPolicy(root) {
+  const source = readFileSync(path.join(root, PRODUCER_VERSION_REGISTRY_PATH), 'utf8');
+  return producerVersionPolicyFromSource(source);
 }
 
 export function readMathJsonRouteIds(root) {
@@ -192,7 +196,12 @@ export function compareEnforcementBaselines(current, base, v2DefaultRouteIds) {
   return errors;
 }
 
-export function validateCurrentRepository(root, baseline, baseBaseline) {
+export function validateCurrentRepository(
+  root,
+  baseline,
+  baseBaseline,
+  baseV2DefaultRouteIds = [],
+) {
   const policy = readProducerVersionPolicy(root);
   const errors = [...validateBaselineShape(baseline, policy.explicitV2DefaultRouteIds)];
   const routeIds = readMathJsonRouteIds(root);
@@ -229,7 +238,10 @@ export function validateCurrentRepository(root, baseline, baseBaseline) {
     errors.push(`Unfrozen production source uses a V1 producer builder: ${repoPath}.`);
   }
   if (baseBaseline) {
-    errors.push(...validateBaselineShape(baseBaseline).map((error) => `Base baseline: ${error}`));
+    errors.push(...validateBaselineShape(
+      baseBaseline,
+      baseV2DefaultRouteIds,
+    ).map((error) => `Base baseline: ${error}`));
     errors.push(...compareEnforcementBaselines(
       baseline,
       baseBaseline,
@@ -239,7 +251,7 @@ export function validateCurrentRepository(root, baseline, baseBaseline) {
   return { ok: errors.length === 0, errors };
 }
 
-export function readBaselineAtGitRef(root, ref) {
+function readTextFileAtGitRef(root, ref, repoPath) {
   execFileSync(
     'git',
     ['cat-file', '-e', `${ref}^{commit}`],
@@ -248,10 +260,10 @@ export function readBaselineAtGitRef(root, ref) {
   try {
     const value = execFileSync(
       'git',
-      ['show', `${ref}:${ENFORCEMENT_BASELINE_PATH}`],
+      ['show', `${ref}:${repoPath}`],
       { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
     );
-    return JSON.parse(value);
+    return value;
   } catch (error) {
     const stderr = String(error?.stderr ?? '');
     if (stderr.includes('does not exist in')) return undefined;
@@ -259,6 +271,16 @@ export function readBaselineAtGitRef(root, ref) {
     if (stderr.includes('path ')) return undefined;
     throw error;
   }
+}
+
+export function readBaselineAtGitRef(root, ref) {
+  const value = readTextFileAtGitRef(root, ref, ENFORCEMENT_BASELINE_PATH);
+  return value === undefined ? undefined : JSON.parse(value);
+}
+
+export function readProducerVersionPolicyAtGitRef(root, ref) {
+  const source = readTextFileAtGitRef(root, ref, PRODUCER_VERSION_REGISTRY_PATH);
+  return source === undefined ? undefined : producerVersionPolicyFromSource(source);
 }
 
 export function baseRefFromGitHubEvent(event) {

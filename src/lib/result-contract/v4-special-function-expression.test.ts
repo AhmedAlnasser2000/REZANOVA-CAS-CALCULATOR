@@ -15,6 +15,24 @@ import type {
 } from '../../types/calculator';
 import type { CanonicalResultProducerInputV4 } from './producer-v4';
 
+type MutableNamedFunctionFixture = {
+  primary: {
+    expression: {
+      terms: Array<{
+        factors: Array<{
+          arguments: unknown[];
+          name: string;
+          value: CanonicalMathValueV2;
+        }>;
+      }>;
+    };
+  };
+};
+
+type MutableExpressionFixture = {
+  primary: { expression: unknown };
+};
+
 function standard(canonicalLatex: string, mathJson: unknown) {
   return requireProvenCanonicalMathValueV2({
     canonicalLatex,
@@ -141,21 +159,21 @@ describe('CanonicalResultDocumentV4 special-function expression', () => {
   });
 
   it('rejects unknown functions, wrong arity, and V4 expressions without a special call', () => {
-    const invalidName = structuredClone(document()) as unknown as Record<string, any>;
+    const invalidName = structuredClone(document()) as unknown as MutableNamedFunctionFixture;
     invalidName.primary.expression.terms[0].factors[1].name = 'Gamma';
     expect(validateCanonicalResultDocumentV4(invalidName)).toMatchObject({
       ok: false,
       failure: { path: expect.stringContaining('.name') },
     });
 
-    const wrongArity = structuredClone(document()) as unknown as Record<string, any>;
+    const wrongArity = structuredClone(document()) as unknown as MutableNamedFunctionFixture;
     wrongArity.primary.expression.terms[0].factors[1].arguments.pop();
     expect(validateCanonicalResultDocumentV4(wrongArity)).toMatchObject({
       ok: false,
       failure: { path: expect.stringContaining('.arguments') },
     });
 
-    const ordinaryOnly = structuredClone(document()) as unknown as Record<string, any>;
+    const ordinaryOnly = structuredClone(document()) as unknown as MutableExpressionFixture;
     ordinaryOnly.primary.expression = {
       kind: 'standard-math',
       value: standard('x', 'x'),
@@ -167,7 +185,7 @@ describe('CanonicalResultDocumentV4 special-function expression', () => {
   });
 
   it('rejects non-standard MathJSON hidden inside an ordinary V4 leaf', () => {
-    const invalid = structuredClone(document()) as unknown as Record<string, any>;
+    const invalid = structuredClone(document()) as unknown as MutableNamedFunctionFixture;
     invalid.primary.expression.terms[0].factors[0].value = {
       canonicalLatex: String.raw`\operatorname{EllipticF}(x,m)`,
       mathJson: ['EllipticF', 'x', 'm'],
