@@ -1,6 +1,9 @@
 import type { OoeTraceEvent } from '../../ooe/bridge-schema/ooe-bridge';
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
-import { buildOoeJobCommitContext } from '../../ooe/job-launch/job-contract';
+import {
+  buildOoeInputRevisionId,
+  buildOoeJobCommitContext,
+} from '../../ooe/job-launch/job-contract';
 import {
   runOoeRuntimeJob,
 } from '../../ooe/runtime-control/runtime-coordinator';
@@ -86,6 +89,15 @@ export function buildGraphSampleOoeSnapshot(
     revisions: { ...request.revisions },
     quality: request.quality,
   };
+}
+
+export function buildGraphSampleInputRevisionId(
+  request: GraphSampleRequestV1,
+) {
+  return buildOoeInputRevisionId(
+    OOE_GRAPH_SAMPLE_CAPABILITY_ID,
+    buildGraphSampleOoeSnapshot(request),
+  );
 }
 
 export function prepareGraphSampleOoePilot(): Promise<GraphSampleOoePilotStatus> {

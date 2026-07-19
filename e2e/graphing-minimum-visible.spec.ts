@@ -1,0 +1,144 @@
+import { expect, test, type Page } from '@playwright/test';
+
+async function openGraph(page: Page) {
+  await page.getByTestId('workspace-tab-add-menu').click();
+  await page.getByRole('menuitem', { name: 'New Graph' }).click();
+  await expect(page.getByTestId('graph-page')).toBeVisible();
+}
+
+async function enterExpression(page: Page, latex: string) {
+  const field = page.locator('math-field').last();
+  await field.evaluate((element, value) => {
+    const mathField = element as HTMLElement & { setValue: (source: string) => void };
+    mathField.setValue(value);
+    mathField.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertText',
+    }));
+  }, latex);
+}
+
+test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
+  test('keeps focus in a trailing row when its first character promotes it', async ({ page }) => {
+    await page.goto('/');
+    await openGraph(page);
+
+    const blankField = page.locator('math-field').last();
+    await blankField.evaluate((element) => {
+      const field = element as HTMLElement & { insert: (source: string) => void };
+      field.focus();
+      field.insert('s');
+    });
+
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(1);
+    await expect(page.getByTestId('graph-expression-blank-row')).toHaveCount(1);
+    await expect(page.locator('math-field').first()).toBeFocused();
+    await page.locator('math-field').first().evaluate((element) => {
+      (element as HTMLElement & { insert: (source: string) => void }).insert('in(x)');
+    });
+    await expect.poll(() => page.locator('math-field').first().evaluate((element) => (
+      (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex')
+    ))).toBe('sin(x)');
+  });
+
+  test('plots real bare expressions and keeps the visible surface truthful', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'x^2-4');
+    await enterExpression(page, '\\sin(x)');
+    await enterExpression(page, '\\frac{1}{x}');
+
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(3);
+    await expect(page.getByTestId('graph-expression-blank-row')).toHaveCount(1);
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(3);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
+    await expect(page.getByRole('button', { name: /Analyze/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Export/i })).toHaveCount(0);
+    await expect(page.getByText('Complex', { exact: true })).toHaveCount(0);
+
+    const reciprocalPath = page.getByTestId('graph-scene-paths').locator('path').nth(2);
+    await expect.poll(async () => (
+      (await reciprocalPath.getAttribute('d'))?.match(/M/gu)?.length ?? 0
+    )).toBeGreaterThan(1);
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-1280x800.png'),
+      fullPage: true,
+    });
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('coalesces pan and zoom, supports rail collapse, and preserves independent tabs', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, '\\sqrt{x}');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    await page.evaluate(() => window.getSelection()?.removeAllRanges());
+    await page.mouse.move(bounds.x + bounds.width * 0.55, bounds.y + bounds.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width * 0.68, bounds.y + bounds.height * 0.58, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(() => page.evaluate(() => {
+      const selection = window.getSelection();
+      if (!selection) return false;
+      for (let index = 0; index < selection.rangeCount; index += 1) {
+        if (!selection.getRangeAt(index).collapsed) return true;
+      }
+      return selection.toString().length > 0;
+    })).toBe(false);
+    await expect(viewport).toHaveAttribute('data-scene-pending', 'true');
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    await page.mouse.move(bounds.x + bounds.width * 0.6, bounds.y + bounds.height * 0.45);
+    await page.mouse.wheel(0, -420);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Collapse expression rail' }).click();
+    await expect(page.locator('.graph-expression-rail')).toBeHidden();
+    await page.getByRole('button', { name: 'Expand expression rail' }).click();
+    await expect(page.locator('.graph-expression-rail')).toBeVisible();
+
+    await openGraph(page);
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(0);
+    await page.locator(
+      '[data-testid="workspace-tab"][data-workspace-kind="graphing"] [role="tab"]',
+    ).first().click();
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(1);
+    await expect.poll(() => page.locator('math-field').first().evaluate((element) => (
+      (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex')
+    ))).toBe('\\sqrt{x}');
+  });
+
+  test('honors typing grace and reduced motion without flashing stale geometry', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, 'x');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    const field = page.locator('math-field').first();
+    await field.evaluate((element) => {
+      const mathField = element as HTMLElement & { setValue: (source: string) => void };
+      mathField.setValue('\\frac{1}{');
+      mathField.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    });
+    await expect(page.getByTestId('graph-viewport')).toHaveAttribute('data-scene-pending', 'true');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+    await expect(page.getByText('Keep typing to finish the expression.')).toBeVisible();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(0);
+  });
+});

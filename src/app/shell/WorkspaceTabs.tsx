@@ -36,6 +36,7 @@ import type {
   WorkspaceTabActionPolicy,
 } from '../runtime/workspace-surfaces';
 import {
+  GRAPHING_PAGE_WORKSPACE_KIND,
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
   NOTEBOOK_PAGE_WORKSPACE_KIND,
@@ -62,6 +63,7 @@ type WorkspaceTabsProps = {
   onCloseOtherTabs: (tabId: WorkspaceInstanceId) => void;
   onCloseTab: (tabId: WorkspaceInstanceId) => void;
   onCreateBlankTab: () => void;
+  onCreateGraphPageTab: () => void;
   onCreateNotebookPageTab: () => void;
   onDuplicateTab: (tabId: WorkspaceInstanceId) => void;
   onFocusTab: (tabId: WorkspaceInstanceId) => void;
@@ -102,6 +104,9 @@ function workspaceTabIcon(tab: WorkspaceTabItem): LucideIcon {
   if (tab.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND) {
     return NotebookTabs;
   }
+  if (tab.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
+    return LineChart;
+  }
 
   switch (tab.workspaceKind) {
     case 'calculus':
@@ -137,6 +142,7 @@ export function WorkspaceTabs({
   onCloseOtherTabs,
   onCloseTab,
   onCreateBlankTab,
+  onCreateGraphPageTab,
   onCreateNotebookPageTab,
   onDuplicateTab,
   onFocusTab,
@@ -185,6 +191,11 @@ export function WorkspaceTabs({
   function createNotebookFromMenu() {
     setCreateMenuOpen(false);
     onCreateNotebookPageTab();
+  }
+
+  function createGraphFromMenu() {
+    setCreateMenuOpen(false);
+    onCreateGraphPageTab();
   }
 
   function submitRename(event: FormEvent<HTMLFormElement>) {
@@ -356,6 +367,9 @@ export function WorkspaceTabs({
           <strong>{tabText.createMenuTitle}</strong>
           <button type="button" role="menuitem" onClick={createBlankTabFromMenu}>
             {tabText.newCalculateTab}
+          </button>
+          <button type="button" role="menuitem" onClick={createGraphFromMenu}>
+            {tabText.newGraphPage}
           </button>
           <button
             type="button"

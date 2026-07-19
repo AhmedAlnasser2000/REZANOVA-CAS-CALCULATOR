@@ -2771,7 +2771,7 @@ export default function App() {
           onOpenNotebookMathInTool={openNotebookMathInTool}
           onPatchSettings={patchSettings} onReplayHistoryEntry={replayHistoryEntry}
           onReplayHistoryEntryInNewTab={replayHistoryEntryInNewTab} onResetCalculatorMemory={resetCalculatorMemory}
-          onUpdateNotebookSurfaceState={workspaceInstancesRuntime.updateInstanceSurfaceState}
+          onUpdateGraphSurfaceState={workspaceInstancesRuntime.updateInstanceSurfaceState} onUpdateNotebookSurfaceState={workspaceInstancesRuntime.updateInstanceSurfaceState}
           onResetHistory={resetHistory} onStopPendingHistoryTicket={stopPendingHistoryTicket}
           pendingHistory={pendingHistoryTickets} settings={settings}
           renderCalculatorSurface={() => (

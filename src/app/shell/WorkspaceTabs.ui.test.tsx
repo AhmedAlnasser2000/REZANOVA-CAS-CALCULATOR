@@ -41,6 +41,7 @@ function renderTabs(tabs: WorkspaceTabItem[]) {
     onCloseOtherTabs: vi.fn(),
     onCloseTab: vi.fn(),
     onCreateBlankTab: vi.fn(),
+    onCreateGraphPageTab: vi.fn(),
     onCreateNotebookPageTab: vi.fn(),
     onDuplicateTab: vi.fn(),
     onFocusTab: vi.fn(),
@@ -83,15 +84,17 @@ describe('WorkspaceTabs', () => {
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
   });
 
-  it('opens Guide, Notebook, Settings, and History pages from the adjacent plus menu', () => {
+  it('opens Graph, Guide, Notebook, Settings, and History pages from the adjacent plus menu', () => {
     const handlers = renderTabs([
       tab({ id: 'workspace.calculate.1', isActive: true }),
     ]);
 
     fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     expect(screen.getByTestId('workspace-tab-create-menu')).toHaveTextContent('New workspace');
-    expect(screen.queryByRole('menuitem', { name: /Graph/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Graph' }));
+    expect(handlers.onCreateGraphPageTab).toHaveBeenCalledTimes(1);
 
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Open Guide Page' }));
     expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('guide-page');
 

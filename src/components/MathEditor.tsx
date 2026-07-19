@@ -30,6 +30,7 @@ type MathEditorProps = {
   onChange: (latex: string) => void;
   onSubmit?: () => void;
   onFocus?: (field: MathfieldElement) => void;
+  onBlur?: () => void;
   className?: string;
   dataTestId?: string;
   readOnly?: boolean;
@@ -106,6 +107,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       onChange,
       onSubmit,
       onFocus,
+      onBlur,
       className,
       dataTestId,
       readOnly = false,
@@ -151,6 +153,8 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         configureVirtualKeyboard(keyboardLayouts);
         onFocus?.(field);
       };
+
+      const handleBlur = () => onBlur?.();
 
       const handleKeydown = (event: KeyboardEvent) => {
         if (shouldHandlePlainEnter(event)) {
@@ -200,16 +204,18 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
       field.addEventListener('input', handleInput);
       field.addEventListener('focus', handleFocus);
+      field.addEventListener('blur', handleBlur);
       field.addEventListener('keydown', handleKeydown);
       field.addEventListener('paste', handlePaste);
 
       return () => {
         field.removeEventListener('input', handleInput);
         field.removeEventListener('focus', handleFocus);
+        field.removeEventListener('blur', handleBlur);
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [keyboardLayouts, modeId, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint]);
+    }, [keyboardLayouts, modeId, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint]);
 
     useEffect(() => {
       const field = elementRef.current;

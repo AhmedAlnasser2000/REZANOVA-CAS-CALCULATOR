@@ -1,6 +1,14 @@
-import type { CSSProperties, ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
-import type { WorkspaceInstance } from '../runtime/workspace-instances';
+import {
+  workspaceInstanceRuntimeContext,
+  type WorkspaceInstance,
+} from '../runtime/workspace-instances';
 import { formulaViewerArtifactFromSurfaceState } from '../runtime/formula-viewer-artifacts';
 import { resolveWorkspaceSurfaceDescriptor } from '../runtime/workspace-surfaces';
 import type {
@@ -11,6 +19,7 @@ import type {
   SettingsPatch,
 } from '../../types/calculator';
 import {
+  GRAPHING_PAGE_WORKSPACE_KIND,
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
   NOTEBOOK_PAGE_WORKSPACE_KIND,
@@ -26,6 +35,12 @@ import type {
   NotebookSurfaceState,
   NotebookWorkspaceTarget,
 } from '../../lib/notebook';
+import {
+  isGraphWorkspaceSessionState,
+  type GraphWorkspaceSessionStateV1,
+} from '../graphing/graph-workspace-session';
+
+const GraphWorkspacePage = lazy(() => import('../graphing/GraphWorkspacePage'));
 
 type ActiveSurfaceHostProps = {
   activeInstance: WorkspaceInstance | null | undefined;
@@ -43,6 +58,7 @@ type ActiveSurfaceHostProps = {
   onResetCalculatorMemory: () => void;
   onResetHistory: () => void;
   onStopPendingHistoryTicket?: (ticket: PendingHistoryTicket) => void;
+  onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV1) => void;
   onUpdateNotebookSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   pendingHistory: PendingHistoryTicket[];
   renderCalculatorSurface: () => ReactNode;
@@ -67,6 +83,7 @@ export function ActiveSurfaceHost({
   onResetCalculatorMemory,
   onResetHistory,
   onStopPendingHistoryTicket,
+  onUpdateGraphSurfaceState,
   onUpdateNotebookSurfaceState,
   pendingHistory,
   renderCalculatorSurface,
@@ -170,6 +187,42 @@ export function ActiveSurfaceHost({
           preferences={settings.notebook}
           surfaceState={activeInstance.surfaceState}
         />
+      </section>
+    );
+  }
+
+  if (surfaceDescriptor.pageKind === GRAPHING_PAGE_WORKSPACE_KIND && activeInstance) {
+    const session = activeInstance.surfaceState;
+    const workspaceContext = workspaceInstanceRuntimeContext(activeInstance);
+    if (!isGraphWorkspaceSessionState(session) || !workspaceContext) {
+      return (
+        <section
+          className={`${pageSurfaceClassName} active-surface--graphing`}
+          data-surface-kind="graphing"
+          data-testid="active-surface-page"
+          style={pageSurfaceStyle}
+        >
+          <div className="graph-page-load-failure" role="alert">
+            Graphing could not validate this workspace session.
+          </div>
+        </section>
+      );
+    }
+    return (
+      <section
+        className={`${pageSurfaceClassName} active-surface--graphing`}
+        data-surface-kind="graphing"
+        data-testid="active-surface-page"
+        style={pageSurfaceStyle}
+      >
+        <Suspense fallback={<div className="graph-page-loading">Loading Graphing…</div>}>
+          <GraphWorkspacePage
+            key={activeInstance.id}
+            onUpdateSession={(state) => onUpdateGraphSurfaceState(activeInstance.id, state)}
+            session={session}
+            workspaceContext={workspaceContext}
+          />
+        </Suspense>
       </section>
     );
   }

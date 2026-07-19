@@ -70,6 +70,7 @@ export type ShellLanguageCatalog = {
     newCalculateTab: string;
     openCreateMenu: string;
     createMenuTitle: string;
+    newGraphPage: string;
     newNotebookPage: string;
     openGuidePage: string;
     openSettingsPage: string;

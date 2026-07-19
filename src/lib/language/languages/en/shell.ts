@@ -30,6 +30,7 @@ export const englishShell = {
     newCalculateTab: 'New Calculate tab',
     openCreateMenu: 'Open tab menu',
     createMenuTitle: 'New workspace',
+    newGraphPage: 'New Graph',
     newNotebookPage: 'New Notebook',
     openGuidePage: 'Open Guide Page',
     openSettingsPage: 'Open Settings Page',

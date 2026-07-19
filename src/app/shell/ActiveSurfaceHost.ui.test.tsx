@@ -110,6 +110,7 @@ function activeSurfaceHostProps() {
     onResetCalculatorMemory: vi.fn(),
     onResetHistory: vi.fn(),
     onStopPendingHistoryTicket: vi.fn(),
+    onUpdateGraphSurfaceState: vi.fn(),
     onUpdateNotebookSurfaceState: vi.fn(),
     pendingHistory: [],
     renderCalculatorSurface: () => (

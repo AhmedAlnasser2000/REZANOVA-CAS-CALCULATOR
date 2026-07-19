@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   isNotebookLibrarySurfaceState,
   NOTEBOOK_WORKSPACE_CLOSE_EVENT,
@@ -36,6 +36,7 @@ import {
   type WorkspaceSurfaceKind,
   type WorkspaceTabActionPolicy,
 } from './workspace-surfaces';
+import { subscribeToOoeEvents } from '../../lib/ooe/events/event-outbox';
 
 type WorkspaceInstancesRuntime = ReturnType<typeof useWorkspaceInstancesRuntime>;
 type WorkspaceDisplayStateHostRuntime = ReturnType<typeof useWorkspaceDisplayStateHostRuntime>;
@@ -110,11 +111,24 @@ export function useWorkspaceTabsRuntime({
   workspaceRuntimeHost,
   workspaceStateHost,
 }: UseWorkspaceTabsRuntimeOptions) {
-  const jobSummaries = useMemo(() =>
-    summarizeWorkspaceTabJobs({
-      pendingHistoryTickets,
-      workspaceInstances: workspaceInstances.workspaceInstances,
-    }), [pendingHistoryTickets, workspaceInstances.workspaceInstances]);
+  const [ooeJobRevision, setOoeJobRevision] = useState(0);
+
+  useEffect(() => subscribeToOoeEvents((event) => {
+    if (event.type === 'ooe.job.started'
+      || event.type === 'ooe.result.committed'
+      || event.type === 'ooe.result.staleDropped'
+      || event.type === 'ooe.result.skipped'
+      || event.type === 'ooe.job.cancelled'
+      || event.type === 'ooe.job.failed') {
+      setOoeJobRevision((revision) => revision + 1);
+    }
+  }), []);
+
+  const jobSummaries = summarizeWorkspaceTabJobs({
+    pendingHistoryTickets,
+    workspaceInstances: workspaceInstances.workspaceInstances,
+  });
+  void ooeJobRevision;
 
   const activeInstanceRef = useRef(workspaceInstances.activeInstance);
 
@@ -359,6 +373,17 @@ export function useWorkspaceTabsRuntime({
     workspaceStateHost,
   ]);
 
+  const createGraphPageTab = useCallback(() => {
+    workspaceDisplayHost.captureActiveDisplayState();
+    workspaceRuntimeHost.captureActiveRuntimeState();
+    workspaceStateHost.captureActiveSurfaceState();
+    workspaceStateHost.createBlankInstance(GRAPHING_PAGE_WORKSPACE_KIND);
+  }, [
+    workspaceDisplayHost,
+    workspaceRuntimeHost,
+    workspaceStateHost,
+  ]);
+
   const renameTab = useCallback((instanceId: WorkspaceInstanceId, title: string) => {
     const target = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
     if (!target || !resolveWorkspaceSurfaceDescriptor(target.workspaceKind).tabActionPolicy.canRename) {
@@ -431,6 +456,7 @@ export function useWorkspaceTabsRuntime({
     onCloseOtherTabs: closeOtherTabs,
     onCloseTab: closeTab,
     onCreateBlankTab: createTab,
+    onCreateGraphPageTab: createGraphPageTab,
     onDuplicateTab: duplicateTab,
     onFocusTab: focusTab,
     onCreateNotebookPageTab: createNotebookPageTab,
@@ -444,6 +470,7 @@ export function useWorkspaceTabsRuntime({
     closeOtherTabs,
     closeTab,
     createTab,
+    createGraphPageTab,
     duplicateTab,
     focusTab,
     createNotebookPageTab,
