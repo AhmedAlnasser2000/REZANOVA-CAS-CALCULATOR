@@ -292,6 +292,98 @@
 .graph-piecewise-invalid { grid-column: 2 / -1; color: #f2b76f; font-size: 0.68rem; }
 .graph-piecewise-add { min-height: 30px; border: 1px dashed var(--graph-line-strong); background: transparent; color: #b8ccc0; }
 
+.graph-parameter-symbol {
+  color: #edf7ef;
+  font-family: 'STIX Two Math', serif;
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+.graph-parameter-controls {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--graph-line);
+  border-radius: 8px;
+  background: #0a1719;
+}
+
+.graph-parameter-heading,
+.graph-parameter-slider-row,
+.graph-parameter-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graph-parameter-heading strong { color: #b987f5; }
+.graph-parameter-heading span { color: #82998e; font-size: 0.7rem; }
+.graph-parameter-heading output {
+  margin-left: auto;
+  color: #dce9e0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+}
+
+.graph-parameter-slider-row input[type='range'] {
+  min-width: 0;
+  flex: 1;
+  accent-color: #ae68f5;
+}
+
+.graph-parameter-play {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 50%;
+  background: #142326;
+  color: #dce9e0;
+}
+
+.graph-parameter-play:disabled { opacity: 0.36; }
+.graph-parameter-fields { align-items: flex-end; }
+.graph-parameter-fields label { min-width: 0; flex: 1; }
+.graph-parameter-fields label span {
+  display: block;
+  margin-bottom: 3px;
+  color: #82998e;
+  font-size: 0.64rem;
+}
+
+.graph-parameter-fields input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 5px;
+  border: 1px solid var(--graph-line);
+  border-radius: 5px;
+  background: #071214;
+  color: #dce9e0;
+  font: 0.68rem 'IBM Plex Mono', monospace;
+}
+
+.graph-parameter-discovery {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid rgba(174, 104, 245, 0.25);
+  border-radius: 7px;
+  background: rgba(174, 104, 245, 0.06);
+}
+
+.graph-parameter-discovery strong { color: #cbb4e5; font-size: 0.7rem; }
+.graph-parameter-discovery button {
+  min-height: 29px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 6px;
+  background: #142326;
+  color: #dce9e0;
+  font: inherit;
+}
+
 .graph-rail-note {
   display: grid;
   gap: 9px;

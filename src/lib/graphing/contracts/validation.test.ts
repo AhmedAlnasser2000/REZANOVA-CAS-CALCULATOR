@@ -23,7 +23,7 @@ describe('Graph v1 contract validators', () => {
     expect(validateGraphSource({ sourceKind: 'mathlive-latex', sourceLatex: '\\sin(x)', sourceRevision: 2 }).ok).toBe(true);
     expect(validateGraphRelation({ kind: 'explicit-y', rhs: expression, origin: 'bare-expression' }).ok).toBe(true);
     expect(validateGraphCondition({ kind: 'comparison', left: expression, operator: '<=', right: { mathJson: 1, freeSymbols: [] } }).ok).toBe(true);
-    expect(validateGraphParameter({ version: 1, parameterId: 'a', symbol: 'a', value: 1, minimum: -2, maximum: 2, step: 0.1 }).ok).toBe(true);
+    expect(validateGraphParameter({ version: 1, parameterId: 'a', symbol: 'a', origin: 'slider-created', value: 1, minimum: -2, maximum: 2, step: 0.1 }).ok).toBe(true);
     expect(validateGraphStopReason({ code: 'sampling-budget-exceeded', detailCode: 'maximum-samples' }).ok).toBe(true);
     expect(validateGraphViewport({ coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 }).ok).toBe(true);
     expect(validateGraphRevisionSet({ document: 1, viewport: 2, parameter: 3 }).ok).toBe(true);

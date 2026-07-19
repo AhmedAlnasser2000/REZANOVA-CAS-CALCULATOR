@@ -277,4 +277,46 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
   });
+
+  test('creates explicit graph-local parameters and keeps bindings while dependents are hidden', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'a x');
+    await page.getByRole('button', { name: 'Create slider for a' }).click();
+    const slider = page.getByRole('slider', { name: 'a slider' });
+    await expect(slider).toHaveValue('1');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+    const before = await page.getByTestId('graph-scene-paths').locator('path').getAttribute('d');
+    await slider.fill('2');
+    await slider.dispatchEvent('pointerup');
+    await expect(slider).toHaveValue('2');
+    await expect.poll(() => page.getByTestId('graph-scene-paths').locator('path').getAttribute('d'))
+      .not.toBe(before);
+
+    const dependentRow = page.getByTestId('graph-expression-row').first();
+    await dependentRow.getByRole('button', { name: 'Hide graph' }).click();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(0);
+    await expect(page.getByTestId('graph-parameter-a')).toBeVisible();
+    await dependentRow.getByRole('button', { name: 'Show graph' }).click();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-parameters-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
+  test('keeps manual parameter adjustment but disables autoplay under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, 'a x');
+    await page.getByRole('button', { name: 'Create slider for a' }).click();
+    await expect(page.getByRole('button', { name: 'Play a' })).toBeDisabled();
+    const slider = page.getByRole('slider', { name: 'a slider' });
+    await slider.fill('2');
+    await expect(slider).toHaveValue('2');
+  });
 });

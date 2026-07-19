@@ -1,5 +1,7 @@
 import {
   classifyGraphSource,
+  compileGraphExpression,
+  createGraphExpressionEvaluator,
   adaptGraphExpressionMathJson,
   parseGraphConditionMathJson,
   parseGraphLatexToStructuralMathJson,
@@ -32,7 +34,11 @@ function presentation(index: number): GraphItemPresentationV1 {
 }
 
 export function graphItemSource(item: GraphItemSpecV1) {
-  return 'source' in item ? item.source : null;
+  return 'source' in item
+    ? item.source
+    : item.kind === 'parameter'
+      ? item.parameter.source ?? null
+      : null;
 }
 
 export function graphItemSourceLatex(item: GraphItemSpecV1) {
@@ -216,6 +222,36 @@ export function buildVisibleGraphItem(input: {
     };
   }
 
+  if (classified.ok && classified.itemKind === 'parameter-definition') {
+    const compiled = compileGraphExpression({
+      planId: `${input.itemId}:parameter`,
+      sourceRevision: input.sourceRevision,
+      expression: classified.value,
+    });
+    const evaluated = compiled.ok
+      ? createGraphExpressionEvaluator(compiled.plan).evaluate({})
+      : null;
+    if (evaluated?.status === 'finite') {
+      return {
+        version: 1,
+        kind: 'parameter',
+        itemId: input.itemId,
+        parameter: {
+          version: 1,
+          parameterId: `${input.itemId}:parameter`,
+          symbol: classified.symbol,
+          origin: 'authored-definition',
+          source,
+          value: evaluated.value,
+          minimum: Math.min(-3, evaluated.value),
+          maximum: Math.max(3, evaluated.value),
+          step: 0.1,
+        },
+        visible,
+      };
+    }
+  }
+
   const parseStop = classified.ok
     ? unsupportedVisibleRouteStop(`future-${classified.itemKind}`)
     : classified.stopReason;
@@ -230,6 +266,49 @@ export function buildVisibleGraphItem(input: {
     visible,
     presentation: previousPresentation,
   };
+}
+
+export function createGraphParameterItem(input: {
+  itemId: string;
+  symbol: string;
+}): Extract<GraphItemSpecV1, { kind: 'parameter' }> {
+  return {
+    version: 1,
+    kind: 'parameter',
+    itemId: input.itemId,
+    parameter: {
+      version: 1,
+      parameterId: `${input.itemId}:parameter`,
+      symbol: input.symbol,
+      origin: 'slider-created',
+      value: 1,
+      minimum: -3,
+      maximum: 3,
+      step: 0.1,
+    },
+    visible: true,
+  };
+}
+
+export function updateGraphParameterItem(input: {
+  document: GraphDocumentV1;
+  itemId: string;
+  values: Partial<Pick<Extract<GraphItemSpecV1, { kind: 'parameter' }>['parameter'],
+    'value' | 'minimum' | 'maximum' | 'step' | 'animation'>>;
+}) {
+  const item = input.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'parameter' }> => (
+    candidate.itemId === input.itemId && candidate.kind === 'parameter'
+  ));
+  if (!item) return null;
+  const parameter = { ...item.parameter, ...input.values };
+  if (!Number.isFinite(parameter.value)
+    || !Number.isFinite(parameter.minimum)
+    || !Number.isFinite(parameter.maximum)
+    || !Number.isFinite(parameter.step)
+    || parameter.minimum > parameter.maximum
+    || parameter.step <= 0) return null;
+  parameter.value = Math.min(parameter.maximum, Math.max(parameter.minimum, parameter.value));
+  return replaceGraphDocumentItem(input.document, { ...item, parameter });
 }
 
 export function replaceGraphDocumentItem(
@@ -279,6 +358,9 @@ export function graphDraftMessage(stop: GraphStopReason) {
   }
   if (stop.detailCode?.startsWith('future-')) {
     return 'This relation is recognized, but its plotting route arrives in the next Graphing moves.';
+  }
+  if (stop.detailCode === 'dependent-parameter-definition') {
+    return 'Dependent parameter definitions are not supported yet. Use a finite numeric value.';
   }
   if (stop.code === 'expression-budget-exceeded') return 'This expression is over the safe Graphing budget.';
   if (stop.code === 'unsafe-expression') return 'This expression is not safe to evaluate in Graphing.';

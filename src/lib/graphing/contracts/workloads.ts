@@ -86,7 +86,7 @@ export const GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1: GraphDocumentV1 = {
       version: 1,
       kind: 'parameter',
       itemId: 'baseline-parameter-a',
-      parameter: { version: 1, parameterId: 'parameter-a', symbol: 'a', value: 1.2, minimum: -3, maximum: 3, step: 0.1 },
+      parameter: { version: 1, parameterId: 'parameter-a', symbol: 'a', origin: 'slider-created', value: 1.2, minimum: -3, maximum: 3, step: 0.1 },
       visible: false,
     },
     ...hiddenRelations,

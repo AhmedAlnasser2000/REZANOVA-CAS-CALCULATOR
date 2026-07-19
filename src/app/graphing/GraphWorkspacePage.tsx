@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -16,6 +17,8 @@ import {
   Focus,
   PanelLeftClose,
   PanelLeftOpen,
+  Pause,
+  Play,
   Redo2,
   Trash2,
   Undo2,
@@ -50,6 +53,12 @@ type GraphExpressionRowProps = {
   runtimeWarning?: string;
   onSubmit: () => void;
   onToggle?: () => void;
+  onUpdateParameter?: (values: Partial<Pick<
+    Extract<GraphItemSpecV1, { kind: 'parameter' }>['parameter'],
+    'value' | 'minimum' | 'maximum' | 'step' | 'animation'
+  >>) => boolean;
+  onSettleParameter?: () => void;
+  samplingBusy?: boolean;
   onEditPiecewiseBranch?: (input: {
     branchId: string;
     valueLatex: string;
@@ -57,6 +66,117 @@ type GraphExpressionRowProps = {
   }) => boolean;
   onMutatePiecewiseBranch?: (action: 'add' | 'remove' | 'up' | 'down', branchId?: string) => void;
 };
+
+function GraphParameterControls({
+  item,
+  onSettle,
+  onUpdate,
+  samplingBusy,
+}: {
+  item: Extract<GraphItemSpecV1, { kind: 'parameter' }>;
+  onSettle: () => void;
+  onUpdate: NonNullable<GraphExpressionRowProps['onUpdateParameter']>;
+  samplingBusy: boolean;
+}) {
+  const parameter = item.parameter;
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReducedMotion(query.matches);
+    sync();
+    query.addEventListener?.('change', sync);
+    return () => query.removeEventListener?.('change', sync);
+  }, []);
+  const playing = parameter.animation?.enabled === true && !reducedMotion;
+  useEffect(() => {
+    if (!playing) return undefined;
+    const timer = window.setInterval(() => {
+      if (samplingBusy) return;
+      const span = parameter.maximum - parameter.minimum;
+      if (!(span > 0)) return;
+      const candidate = parameter.value + parameter.step;
+      onUpdate({ value: candidate > parameter.maximum ? parameter.minimum : candidate });
+    }, 80);
+    return () => window.clearInterval(timer);
+  }, [onUpdate, parameter.maximum, parameter.minimum, parameter.step, parameter.value, playing, samplingBusy]);
+
+  const commitNumber = (
+    key: 'value' | 'minimum' | 'maximum' | 'step',
+    rawValue: string,
+  ) => {
+    const value = Number(rawValue);
+    if (Number.isFinite(value)) onUpdate({ [key]: value });
+    onSettle();
+  };
+
+  return (
+    <div className="graph-parameter-controls" data-testid={`graph-parameter-${parameter.symbol}`}>
+      <div className="graph-parameter-heading">
+        <strong>{parameter.symbol}</strong>
+        <span>{parameter.origin === 'authored-definition' ? 'Authored parameter' : 'Graph slider'}</span>
+        <output aria-label={`${parameter.symbol} value`}>{parameter.value.toFixed(2)}</output>
+      </div>
+      <div className="graph-parameter-slider-row">
+        <input
+          aria-label={`${parameter.symbol} slider`}
+          max={parameter.maximum}
+          min={parameter.minimum}
+          onChange={(event) => onUpdate({ value: event.currentTarget.valueAsNumber })}
+          onKeyUp={(event) => {
+            if (event.key === 'Enter') onSettle();
+          }}
+          onPointerUp={onSettle}
+          step={parameter.step}
+          type="range"
+          value={parameter.value}
+        />
+        <button
+          aria-label={playing ? `Pause ${parameter.symbol}` : `Play ${parameter.symbol}`}
+          className="graph-parameter-play"
+          disabled={reducedMotion}
+          onClick={() => {
+            onUpdate({
+              animation: {
+                direction: 'forward',
+                enabled: !playing,
+                periodMs: Math.max(80, Math.round((parameter.maximum - parameter.minimum) / parameter.step) * 80),
+              },
+            });
+            if (playing) onSettle();
+          }}
+          title={reducedMotion ? 'Animation is disabled by reduced motion.' : undefined}
+          type="button"
+        >
+          {playing ? <Pause aria-hidden="true" size={14} /> : <Play aria-hidden="true" size={14} />}
+        </button>
+      </div>
+      <div className="graph-parameter-fields">
+        {([
+          ['value', 'Value'],
+          ['minimum', 'Min'],
+          ['maximum', 'Max'],
+          ['step', 'Step'],
+        ] as const).map(([key, label]) => (
+          <label key={key}>
+            <span>{label}</span>
+            <input
+              aria-label={`${parameter.symbol} ${label.toLowerCase()}`}
+              defaultValue={parameter[key]}
+              key={`${key}:${parameter[key]}`}
+              onBlur={(event) => commitNumber(key, event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur();
+              }}
+              step={key === 'step' ? 'any' : parameter.step}
+              type="number"
+            />
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function GraphPiecewiseBranchEditor({
   branch,
@@ -116,17 +236,22 @@ function GraphExpressionRow({
   onDelete,
   onEditPiecewiseBranch,
   onMutatePiecewiseBranch,
+  onSettleParameter,
   onSubmit,
   onToggle,
+  onUpdateParameter,
   runtimeWarning,
+  samplingBusy = false,
 }: GraphExpressionRowProps) {
   const [piecewiseExpanded, setPiecewiseExpanded] = useState(false);
   const draftMessage = item?.kind === 'invalid-relation-draft'
     ? graphDraftMessage(item.parseStop)
     : '';
-  const colorToken = item && 'presentation' in item
-    ? item.presentation.colorToken
-    : 'graph-blue';
+  const colorToken = item?.kind === 'parameter'
+    ? 'graph-violet'
+    : item && 'presentation' in item
+      ? item.presentation.colorToken
+      : 'graph-blue';
   const hidden = item ? !item.visible : false;
 
   return (
@@ -137,16 +262,22 @@ function GraphExpressionRow({
       data-testid={item ? 'graph-expression-row' : 'graph-expression-blank-row'}
     >
       <span className="graph-expression-color" aria-hidden="true" />
-      <MathEditor
-        className="graph-expression-editor"
-        dataTestId={`graph-expression-editor-${itemId}`}
-        onBlur={onBlur}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        placeholder={item ? '' : 'Enter an expression…'}
-        shortcutProfile="graphing"
-        value={item ? graphItemSourceLatex(item) : ''}
-      />
+      {item?.kind === 'parameter' && item.parameter.origin === 'slider-created' ? (
+        <strong className="graph-parameter-symbol" aria-label={`Parameter ${item.parameter.symbol}`}>
+          {item.parameter.symbol}
+        </strong>
+      ) : (
+        <MathEditor
+          className="graph-expression-editor"
+          dataTestId={`graph-expression-editor-${itemId}`}
+          onBlur={onBlur}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          placeholder={item ? '' : 'Enter an expression…'}
+          shortcutProfile="graphing"
+          value={item ? graphItemSourceLatex(item) : ''}
+        />
+      )}
       {item ? (
         <div className="graph-expression-actions">
           {item.kind === 'piecewise' ? (
@@ -198,6 +329,14 @@ function GraphExpressionRow({
           ))}
           <button className="graph-piecewise-add" onClick={() => onMutatePiecewiseBranch('add')} type="button">+ Add branch</button>
         </div>
+      ) : null}
+      {item?.kind === 'parameter' && onUpdateParameter && onSettleParameter ? (
+        <GraphParameterControls
+          item={item}
+          onSettle={onSettleParameter}
+          onUpdate={onUpdateParameter}
+          samplingBusy={samplingBusy}
+        />
       ) : null}
     </div>
   );
@@ -356,18 +495,47 @@ export default function GraphWorkspacePage({
                   onMutatePiecewiseBranch={item?.kind === 'piecewise'
                     ? (action, branchId) => controller.mutatePiecewiseBranch({ itemId, action, branchId })
                     : undefined}
+                  onSettleParameter={item?.kind === 'parameter'
+                    ? () => {
+                        controller.endTypingTransaction();
+                        controller.flushSampling();
+                      }
+                    : undefined}
                   onSubmit={() => {
                     controller.endTypingTransaction();
                     controller.flushSampling();
                     focusNextRow(itemId);
                   }}
                   onToggle={item ? () => controller.toggleItem(itemId) : undefined}
+                  onUpdateParameter={item?.kind === 'parameter'
+                    ? (values) => controller.updateParameter(itemId, values)
+                    : undefined}
                   runtimeWarning={item ? runtimeWarnings.get(itemId) : undefined}
+                  samplingBusy={controller.status.kind === 'sampling' || controller.status.kind === 'editing'}
                 />
               );
             })}
           </div>
           <div className="graph-rail-note">
+            {controller.unresolvedSymbols.length > 0 ? (
+              <div className="graph-parameter-discovery" role="group" aria-label="Create graph sliders">
+                <strong>Unresolved parameters</strong>
+                {controller.unresolvedSymbols.map((symbol) => (
+                  <button
+                    key={symbol}
+                    onClick={() => controller.createParameters([symbol])}
+                    type="button"
+                  >
+                    Create slider for {symbol}
+                  </button>
+                ))}
+                {controller.unresolvedSymbols.length > 1 ? (
+                  <button onClick={() => controller.createParameters(controller.unresolvedSymbols)} type="button">
+                    Create all sliders
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <button
               className="graph-add-point-button"
               onClick={() => {

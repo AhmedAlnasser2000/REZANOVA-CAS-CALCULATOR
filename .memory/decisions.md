@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-19 - GRAPHING-PARAMETERS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Graph parameters are document-local structured items with explicit `authored-definition` or `slider-created` provenance. Finite scalar authored definitions compile into the numeric environment; unresolved symbols expose opt-in slider actions. Graphing never captures calculator Variables and never rewrites dependent relation source.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Parameter interaction permits one sampling preview in flight and retains only one latest queued revision. Pointer release requests settled refinement; autoplay advances only when sampling can consume the next value and is disabled under reduced motion, while manual adjustment remains available.
+
 ## 2026-07-19 - GRAPHING-PIECEWISE1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Direct cases entry and guided piecewise editing share `GraphPiecewiseSpecV1`. Guided value and condition fields become structured expression/condition IR independently; regenerated LaTeX is presentation/provenance only and never becomes downstream authority.

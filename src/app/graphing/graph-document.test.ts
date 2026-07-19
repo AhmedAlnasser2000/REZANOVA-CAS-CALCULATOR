@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { GraphDocumentV1 } from '../../lib/graphing';
 import {
   buildVisibleGraphItem,
+  createGraphParameterItem,
   mutateGraphPiecewiseBranches,
   replaceGraphDocumentItem,
   updateGraphPiecewiseBranch,
+  updateGraphParameterItem,
 } from './graph-document';
 
 const document: GraphDocumentV1 = {
@@ -95,6 +97,38 @@ describe('Move 8 Graph document editing', () => {
     expect(secondDocument.documentRevision).toBe(2);
     expect(firstDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x' } });
     expect(secondDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x^2' } });
+  });
+
+  it('keeps authored and slider-created parameter provenance distinct', () => {
+    const authored = buildVisibleGraphItem({
+      itemId: 'item.a',
+      sourceLatex: 'a=\\pi/2',
+      sourceRevision: 1,
+      index: 0,
+    });
+    expect(authored).toMatchObject({
+      kind: 'parameter',
+      parameter: {
+        symbol: 'a',
+        origin: 'authored-definition',
+        source: { sourceLatex: 'a=\\pi/2' },
+        value: Math.PI / 2,
+      },
+    });
+    const slider = createGraphParameterItem({ itemId: 'item.b', symbol: 'b' });
+    expect(slider.parameter).toMatchObject({
+      symbol: 'b', origin: 'slider-created', value: 1, minimum: -3, maximum: 3, step: 0.1,
+    });
+    const withSlider = replaceGraphDocumentItem(document, slider);
+    const updated = updateGraphParameterItem({
+      document: withSlider,
+      itemId: slider.itemId,
+      values: { value: 2, minimum: -4, maximum: 4, step: 0.25 },
+    });
+    expect(updated?.items[0]).toMatchObject({
+      kind: 'parameter',
+      parameter: { value: 2, minimum: -4, maximum: 4, step: 0.25 },
+    });
   });
 
   it('updates guided piecewise branches as structured IR without reparsing generated source', () => {

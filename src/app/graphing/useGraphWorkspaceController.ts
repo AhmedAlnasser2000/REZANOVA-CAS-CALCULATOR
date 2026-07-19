@@ -19,11 +19,14 @@ import {
 import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
 import {
   buildVisibleGraphItem,
+  createGraphParameterItem,
+  graphItemSource,
   graphItemSourceLatex,
   mutateGraphPiecewiseBranches,
   removeGraphDocumentItem,
   replaceGraphDocumentItem,
   toggleGraphDocumentItem,
+  updateGraphParameterItem,
   updateGraphPiecewiseBranch,
 } from './graph-document';
 
@@ -58,6 +61,47 @@ function classifiedItems(document: GraphDocumentV1) {
   return document.items.filter((item): item is Extract<GraphItemSpecV1, {
     kind: 'relation' | 'piecewise' | 'point-set';
   }> => item.kind === 'relation' || item.kind === 'piecewise' || item.kind === 'point-set');
+}
+
+function graphParameterEnvironment(document: GraphDocumentV1) {
+  return Object.fromEntries(document.items
+    .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
+    .map((item) => [item.parameter.symbol, item.parameter.value]));
+}
+
+function graphParameterEnvironmentChanged(left: GraphDocumentV1, right: GraphDocumentV1) {
+  const leftParameters = graphParameterEnvironment(left);
+  const rightParameters = graphParameterEnvironment(right);
+  const symbols = new Set([...Object.keys(leftParameters), ...Object.keys(rightParameters)]);
+  return [...symbols].some((symbol) => leftParameters[symbol] !== rightParameters[symbol]);
+}
+
+function unresolvedGraphSymbols(document: GraphDocumentV1) {
+  const declared = new Set(document.items
+    .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
+    .map((item) => item.parameter.symbol));
+  const reserved = new Set(['x', 'y', 'r', 'theta']);
+  for (const item of document.items) {
+    if (item.kind === 'relation' && item.relation.kind === 'parametric-curve') {
+      reserved.add(item.relation.parameterSymbol);
+    }
+  }
+  const symbols = new Set<string>();
+  const visit = (value: unknown) => {
+    if (!value || typeof value !== 'object') return;
+    if ('freeSymbols' in value && Array.isArray(value.freeSymbols)) {
+      value.freeSymbols.forEach((symbol) => {
+        if (typeof symbol === 'string' && !reserved.has(symbol) && !declared.has(symbol)) {
+          symbols.add(symbol);
+        }
+      });
+    }
+    Object.values(value).forEach(visit);
+  };
+  document.items.forEach((item) => {
+    if (item.kind === 'relation' || item.kind === 'piecewise') visit(item);
+  });
+  return [...symbols].sort();
 }
 
 function restoredDocument(current: GraphDocumentV1, snapshot: GraphDocumentV1) {
@@ -99,6 +143,12 @@ export function useGraphWorkspaceController({
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestSequenceRef = useRef(0);
   const activeInputRevisionRef = useRef<string | null>(null);
+  const previewInFlightRef = useRef(false);
+  const queuedPreviewRef = useRef<GraphWorkspaceSessionStateV1 | null>(null);
+  const launchSampleRef = useRef<(
+    quality: 'preview' | 'settled',
+    snapshot: GraphWorkspaceSessionStateV1,
+  ) => Promise<void>>(async () => undefined);
   const itemSequenceRef = useRef(2);
   const historyRef = useRef<GraphHistory>({ undo: [], redo: [], typingItemId: null });
   const scheduledRevisionsRef = useRef({
@@ -172,14 +222,20 @@ export function useGraphWorkspaceController({
     const item = buildVisibleGraphItem({
       itemId,
       sourceLatex,
-      sourceRevision: (previous && 'source' in previous ? previous.source.sourceRevision : 0) + 1,
+      sourceRevision: (previous ? graphItemSource(previous)?.sourceRevision ?? 0 : 0) + 1,
       index: previous
         ? current.document.items.findIndex((candidate) => candidate.itemId === itemId)
         : current.document.items.length,
       previous,
     });
     const document = replaceGraphDocumentItem(current.document, item);
-    const next = { ...current, document };
+    const next = {
+      ...current,
+      document,
+      surface: previous?.kind === 'parameter' || item.kind === 'parameter'
+        ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
+        : current.surface,
+    };
     if (!previous && itemId === blankItemId && sourceLatex.trim()) {
       setBlankItemId(nextItemId());
     }
@@ -202,6 +258,9 @@ export function useGraphWorkspaceController({
     const next = {
       ...current,
       document: removeGraphDocumentItem(current.document, itemId),
+      surface: item.kind === 'parameter'
+        ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
+        : current.surface,
     };
     activeInputRevisionRef.current = null;
     commitSession(next, true);
@@ -236,6 +295,49 @@ export function useGraphWorkspaceController({
       ...current,
       document: toggleGraphDocumentItem(current.document, itemId),
     }, true);
+  }, [commitSession, pushHistory]);
+
+  const createParameters = useCallback((symbols: readonly string[]) => {
+    const current = sessionRef.current;
+    const existing = new Set(current.document.items
+      .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
+      .map((item) => item.parameter.symbol));
+    const created = symbols.filter((symbol) => !existing.has(symbol)).map((symbol) => (
+      createGraphParameterItem({ itemId: nextItemId(), symbol })
+    ));
+    if (created.length === 0) return;
+    pushHistory(current.document, null);
+    activeInputRevisionRef.current = null;
+    commitSession({
+      ...current,
+      document: {
+        ...current.document,
+        documentRevision: current.document.documentRevision + 1,
+        items: [...current.document.items, ...created],
+      },
+      surface: {
+        ...current.surface,
+        parameterRevision: current.surface.parameterRevision + 1,
+      },
+    }, true);
+  }, [commitSession, nextItemId, pushHistory]);
+
+  const updateParameter = useCallback((itemId: string, values: Parameters<typeof updateGraphParameterItem>[0]['values']) => {
+    const current = sessionRef.current;
+    const document = updateGraphParameterItem({ document: current.document, itemId, values });
+    if (!document) return false;
+    pushHistory(current.document, itemId);
+    activeInputRevisionRef.current = null;
+    setStatus({ kind: 'editing', label: 'Updating graph…' });
+    commitSession({
+      ...current,
+      document,
+      surface: {
+        ...current.surface,
+        parameterRevision: current.surface.parameterRevision + 1,
+      },
+    });
+    return true;
   }, [commitSession, pushHistory]);
 
   const editPiecewiseBranch = useCallback((input: {
@@ -275,7 +377,13 @@ export function useGraphWorkspaceController({
     history.redo = [...history.redo, current.document];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
-    commitSession({ ...current, document: restoredDocument(current.document, snapshot) }, true);
+    commitSession({
+      ...current,
+      document: restoredDocument(current.document, snapshot),
+      surface: graphParameterEnvironmentChanged(current.document, snapshot)
+        ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
+        : current.surface,
+    }, true);
     publishHistoryAvailability();
   }, [commitSession, publishHistoryAvailability]);
 
@@ -288,7 +396,13 @@ export function useGraphWorkspaceController({
     history.undo = [...history.undo, current.document];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
-    commitSession({ ...current, document: restoredDocument(current.document, snapshot) }, true);
+    commitSession({
+      ...current,
+      document: restoredDocument(current.document, snapshot),
+      surface: graphParameterEnvironmentChanged(current.document, snapshot)
+        ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
+        : current.surface,
+    }, true);
     publishHistoryAvailability();
   }, [commitSession, publishHistoryAvailability]);
 
@@ -347,7 +461,7 @@ export function useGraphWorkspaceController({
     });
   }, [setViewport]);
 
-  const launchSample = useCallback(async (
+  const runSample = useCallback(async (
     quality: 'preview' | 'settled',
     snapshot: GraphWorkspaceSessionStateV1,
   ) => {
@@ -378,7 +492,7 @@ export function useGraphWorkspaceController({
         parameter: snapshot.surface.parameterRevision,
       },
       items,
-      parameterEnvironment: {},
+      parameterEnvironment: graphParameterEnvironment(snapshot.document),
       viewport: snapshot.surface.viewport,
       cssSize: { width, height },
       grid: snapshot.surface.grid,
@@ -403,6 +517,7 @@ export function useGraphWorkspaceController({
         && sequence === requestSequenceRef.current
         && latest.document.documentRevision === request.revisions.document
         && latest.surface.viewportRevision === request.revisions.viewport
+        && latest.surface.parameterRevision === request.revisions.parameter
         && envelope.ooe.commitAssessment.legality === 'commitAllowed'
         && envelope.payload.status !== 'cancelled';
       if (!current) {
@@ -453,6 +568,31 @@ export function useGraphWorkspaceController({
       }
     }
   }, [cssSize.height, cssSize.width, workspaceContext.workspaceInstanceId]);
+
+  const launchSample = useCallback(async (
+    quality: 'preview' | 'settled',
+    snapshot: GraphWorkspaceSessionStateV1,
+  ) => {
+    if (quality === 'preview' && previewInFlightRef.current) {
+      queuedPreviewRef.current = snapshot;
+      return;
+    }
+    if (quality === 'settled') queuedPreviewRef.current = null;
+    if (quality === 'preview') previewInFlightRef.current = true;
+    try {
+      await runSample(quality, snapshot);
+    } finally {
+      if (quality === 'preview') {
+        previewInFlightRef.current = false;
+        const queued = queuedPreviewRef.current;
+        queuedPreviewRef.current = null;
+        if (queued && mountedRef.current) {
+          void launchSampleRef.current('preview', queued);
+        }
+      }
+    }
+  }, [runSample]);
+  launchSampleRef.current = launchSample;
 
   const flushSampling = useCallback(() => {
     activeInputRevisionRef.current = null;
@@ -520,6 +660,7 @@ export function useGraphWorkspaceController({
     return () => {
       mountedRef.current = false;
       activeInputRevisionRef.current = null;
+      queuedPreviewRef.current = null;
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
       persistRef.current(sessionRef.current);
       if (resultRef.current) releaseGraphSampleResultBuffers(resultRef.current);
@@ -538,6 +679,7 @@ export function useGraphWorkspaceController({
     blurItem,
     canRedo: historyAvailability.canRedo,
     canUndo: historyAvailability.canUndo,
+    createParameters,
     editItem,
     editPiecewiseBranch,
     endTypingTransaction,
@@ -553,12 +695,15 @@ export function useGraphWorkspaceController({
     toggleItem,
     toggleRail,
     undo,
+    unresolvedSymbols: unresolvedGraphSymbols(session.document),
+    updateParameter,
     visibleDraftErrors,
   }), [
     addPointSet,
     autoFit,
     blankItemId,
     blurItem,
+    createParameters,
     editItem,
     editPiecewiseBranch,
     endTypingTransaction,
@@ -575,6 +720,7 @@ export function useGraphWorkspaceController({
     toggleItem,
     toggleRail,
     undo,
+    updateParameter,
     visibleDraftErrors,
   ]);
 }

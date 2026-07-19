@@ -150,6 +150,25 @@ describe('Graph MathLive source classifier', () => {
     });
   });
 
+  it('classifies finite scalar definitions as graph-local parameters', () => {
+    expect(classifyGraphSource(source('a=2'))).toMatchObject({
+      ok: true,
+      itemKind: 'parameter-definition',
+      symbol: 'a',
+      value: { mathJson: 2, freeSymbols: [] },
+    });
+    expect(classifyGraphSource(source('a=\\pi/2'))).toMatchObject({
+      ok: true,
+      itemKind: 'parameter-definition',
+      symbol: 'a',
+      value: { freeSymbols: [] },
+    });
+    expect(classifyGraphSource(source('a=b+1'))).toMatchObject({
+      ok: false,
+      stopReason: { code: 'unsupported-relation', detailCode: 'dependent-parameter-definition' },
+    });
+  });
+
   it('classifies direct and bare piecewise entry through one structured authority', () => {
     const explicit = classifyGraphSource(source(
       'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}',
@@ -194,7 +213,6 @@ describe('Graph MathLive source classifier', () => {
     ['\\sum_{n=1}^{10}n', 'unsafe-expression', 'Sum'],
     ['x\\ne y', 'unsupported-relation', 'unsupported-top-level-NotEqual'],
     ['x=y=1', 'unsupported-relation', 'equality-chain'],
-    ['a=2', 'unsupported-relation', 'scalar-equality'],
     ['0<x>-1', 'unsupported-relation', 'non-monotone-comparison-chain'],
   ])('rejects unsupported source %s without inventing authority', (latex, code, detailCode) => {
     expect(classifyGraphSource(source(latex))).toMatchObject({

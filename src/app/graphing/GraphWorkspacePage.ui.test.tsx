@@ -192,6 +192,67 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(2);
   });
 
+  it('creates graph-local sliders explicitly and samples dependents through one parameter environment', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'a x',
+    );
+    expect(await screen.findByRole('button', { name: 'Create slider for a' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Create slider for a' }));
+    const slider = await screen.findByRole('slider', { name: 'a slider' });
+    expect(slider).toHaveValue('1');
+    fireEvent.change(slider, { target: { value: '2' } });
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(
+      ([request]) => request.parameterEnvironment.a === 2 && request.revisions.parameter >= 2,
+    )).toBe(true));
+    expect(screen.queryByRole('button', { name: 'Create slider for a' })).not.toBeInTheDocument();
+  });
+
+  it('renders authored finite definitions as editable graph-local parameter rows', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'a=2',
+    );
+    expect(await screen.findByTestId('graph-parameter-a')).toBeInTheDocument();
+    expect(screen.getByText('Authored parameter')).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'a slider' })).toHaveValue('2');
+  });
+
+  it('advances parameter animation only after sampling becomes ready again', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'a x',
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Create slider for a' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Play a' }));
+    await waitFor(() => expect(
+      screen.getByTestId('graph-parameter-a').querySelector('output'),
+    ).not.toHaveTextContent('1.00'));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause a' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Play a' })).toBeEnabled());
+  });
+
   it('adds a guided Point Set item while retaining one trailing blank row', () => {
     render(
       <GraphWorkspacePage

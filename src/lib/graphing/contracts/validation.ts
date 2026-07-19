@@ -163,6 +163,8 @@ const parameterSchema: z.ZodType<GraphParameterSpecV1> = z.strictObject({
   version: z.literal(1),
   parameterId: idSchema,
   symbol: idSchema,
+  origin: z.enum(['authored-definition', 'slider-created']),
+  source: sourceSchema.optional(),
   value: finiteSchema,
   minimum: finiteSchema,
   maximum: finiteSchema,
@@ -176,6 +178,8 @@ const parameterSchema: z.ZodType<GraphParameterSpecV1> = z.strictObject({
   message: 'Parameter minimum must not exceed maximum.',
 }).refine((value) => value.value >= value.minimum && value.value <= value.maximum, {
   message: 'Parameter value must lie within its bounds.',
+}).refine((value) => value.origin !== 'authored-definition' || value.source !== undefined, {
+  message: 'Authored parameters require source provenance.',
 });
 
 const piecewiseSchema: z.ZodType<GraphPiecewiseSpecV1> = z.strictObject({

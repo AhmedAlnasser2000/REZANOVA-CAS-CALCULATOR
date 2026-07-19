@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved revised 20-move implementation program; Moves 1-12 complete, Move 13 next
+Status: approved revised 20-move implementation program; Moves 1-13 complete, Move 14 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -221,6 +221,8 @@ Status: verified for its approved commit.
 - Deletion: temporary branch-fragment-only representation.
 
 ## 13. `GRAPHING-PARAMETERS1`
+
+Status: complete in the verified Move 13 gate.
 
 - Terra: High
 - Gate type: ui

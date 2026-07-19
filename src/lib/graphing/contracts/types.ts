@@ -109,6 +109,8 @@ export type GraphParameterSpecV1 = {
   version: 1;
   parameterId: string;
   symbol: string;
+  origin: 'authored-definition' | 'slider-created';
+  source?: GraphSourceV1;
   value: number;
   minimum: number;
   maximum: number;

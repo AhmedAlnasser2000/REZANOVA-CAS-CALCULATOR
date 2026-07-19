@@ -1,5 +1,6 @@
 import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
 import type {
+  GraphExpressionIR,
   GraphPiecewiseSpecV1,
   GraphRelationIR,
   GraphStopReason,
@@ -15,6 +16,12 @@ export type GraphSourceClassificationV1 =
       ok: true;
       itemKind: 'piecewise';
       piecewise: GraphPiecewiseSpecV1;
+    }
+  | {
+      ok: true;
+      itemKind: 'parameter-definition';
+      symbol: string;
+      value: GraphExpressionIR;
     }
   | {
       ok: true;

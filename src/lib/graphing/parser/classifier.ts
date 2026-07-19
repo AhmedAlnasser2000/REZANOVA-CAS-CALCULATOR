@@ -336,6 +336,21 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   const right = adaptGraphExpressionMathJson(rightNode, `${path}.right`);
   if (!right.ok) return right;
 
+  if (target
+    && !ALL_COORDINATES.has(target)
+    && left.expression.freeSymbols.length === 1
+    && left.expression.freeSymbols[0] === target) {
+    if (right.expression.freeSymbols.length > 0) {
+      return graphParserFailure('unsupported-relation', 'dependent-parameter-definition', path);
+    }
+    return {
+      ok: true,
+      itemKind: 'parameter-definition',
+      symbol: target,
+      value: right.expression,
+    };
+  }
+
   if (target === 'y' && !right.expression.freeSymbols.includes('y')) {
     if (expressionUsesAny(right.expression, POLAR_COORDINATES)) {
       return graphParserFailure('coordinate-parameter-conflict', 'explicit-y-coordinate-conflict', path);
