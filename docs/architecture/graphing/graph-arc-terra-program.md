@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved 19-move implementation program; Moves 1-6 complete, Move 7 next
+Status: approved 19-move implementation program; Moves 1-7 complete, Move 8 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -123,6 +123,8 @@ Status: complete in the verified Move 6 gate.
 - Deletion: remove ad hoc sampler-output snapshots once the scene adapter owns conversion.
 
 ## 7. `GRAPHING-SAMPLE-OOE1`
+
+Status: complete in the verified Move 7 gate.
 
 - Terra: High
 - Gate type: backend

@@ -358,7 +358,7 @@ export type GraphSampleRequestV1 = {
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
-  revisions: GraphRevisionSetV1;
+  revisions: { scene: number } & GraphRevisionSetV1;
   items: GraphClassifiedItemSnapshotV1[];
   parameterEnvironment: Record<string, number>;
   viewport: GraphViewportV1;

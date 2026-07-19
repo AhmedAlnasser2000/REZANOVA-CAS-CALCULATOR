@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:graph-scene'],
   },
   {
+    id: 'graph-ooe',
+    label: 'Graphing application sampling host, cancellation, and latest-only OOE contracts',
+    argv: ['npm', 'run', 'test:graph-ooe'],
+  },
+  {
     id: 'graph-workspace-runtime',
     label: 'Graphing workspace identity, session, and lazy-runtime contracts',
     argv: ['npm', 'run', 'test:graph-workspace-runtime'],
@@ -165,6 +170,19 @@ export const SEAM_REGISTRY = [
     ),
     additionalCommandIds: ['graph-scene'],
     baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
+  {
+    id: 'graphing-sample-ooe',
+    label: 'Graphing application sampling host and OOE runtime shell',
+    matchers: [
+      ...prefix('src/lib/graphing/ooe/'),
+      ...exact(
+        'src/lib/graphing/sampling/request.ts',
+        'src/lib/graphing/sampling/request.test.ts',
+      ),
+    ],
+    additionalCommandIds: ['graph-ooe'],
+    baselineEvidenceIds: ['ooe-boundaries', 'compartment-boundaries', 'file-sizes'],
   },
   {
     id: 'graphing-workspace-runtime',

@@ -86,6 +86,7 @@ describe('OOE event outbox', () => {
   it('resolves OOE lifecycle facts to known compartment labels without guessing unknowns', () => {
     expect(OOE_EVENT_COMPARTMENT_OPTIONS.map((option) => option.compartmentId)).toEqual([
       'calculate',
+      'graphing',
       'equation',
       'calculus',
       'trigonometry',
@@ -122,6 +123,10 @@ describe('OOE event outbox', () => {
     expect(resolveOoeEventCompartment({ capabilityId: 'geometry.evaluate' })).toEqual({
       compartmentId: 'geometry',
       compartmentLabel: 'Geometry',
+    });
+    expect(resolveOoeEventCompartment({ capabilityId: 'graph.sample' })).toEqual({
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
     });
     expect(resolveOoeEventCompartment({ capabilityId: 'linearAlgebra.matrix' })).toEqual({
       compartmentId: 'linear-algebra',

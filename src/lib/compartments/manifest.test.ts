@@ -36,8 +36,8 @@ describe('compartment manifest', () => {
 
     expect(candidates).toEqual([
       'display',
-      'graphing',
       'calculate',
+      'graphing',
       'equation',
       'calculus',
       'trigonometry',
@@ -71,6 +71,7 @@ describe('compartment manifest', () => {
     expect(OOE_EVENT_COMPARTMENT_OPTIONS).toEqual(listOoeBackedCompartmentOptions());
     expect(OOE_EVENT_COMPARTMENT_OPTIONS.map((entry) => entry.compartmentId)).toEqual([
       'calculate',
+      'graphing',
       'equation',
       'calculus',
       'trigonometry',
@@ -88,6 +89,12 @@ describe('compartment manifest', () => {
     })).toEqual({
       compartmentId: 'calculate',
       compartmentLabel: 'Calculate',
+    });
+    expect(resolveOoeEventCompartment({
+      capabilityId: 'graph.sample',
+    })).toEqual({
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
     });
     expect(resolveOoeEventCompartment({
       capabilityId: 'linearAlgebra.vector',

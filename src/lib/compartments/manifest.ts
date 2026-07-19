@@ -236,7 +236,7 @@ export const COMPARTMENT_MANIFEST = [
     id: 'graphing',
     label: 'Graphing',
     diagnosticsLabel: 'Graphing',
-    stateSurface: 'future',
+    stateSurface: 'ooe',
     surfaceExposureCandidate: 'future-surface',
     ownedPaths: [
       'src/lib/graphing/',
@@ -244,16 +244,25 @@ export const COMPARTMENT_MANIFEST = [
     publicSeams: [
       'src/lib/graphing/index.ts',
       'src/lib/graphing/contracts/index.ts',
+      'src/lib/graphing/ooe/index.ts',
     ],
     privatePaths: [
       'src/lib/graphing/contracts/validation.ts',
       'src/lib/graphing/contracts/workloads.ts',
+      'src/lib/graphing/ooe/application-host.ts',
+      'src/lib/graphing/ooe/graph-sampling.worker.ts',
+      'src/lib/graphing/ooe/pilot.ts',
+      'src/lib/graphing/ooe/worker-contract.ts',
+      'src/lib/graphing/sampling/request.ts',
     ],
     dependencyPolicies: [
       'library-no-app-ui',
       'no-source-mirrors',
       'private-solver-boundary',
     ],
+    ooeFacts: {
+      exact: ['graph.sample'],
+    },
   },
   {
     id: 'equation',
@@ -680,6 +689,7 @@ export const COMPARTMENT_MANIFEST = [
 export type CompartmentId = typeof COMPARTMENT_MANIFEST[number]['id'];
 export type OoeBackedCompartmentId = Extract<
   CompartmentId,
+  | 'graphing'
   | 'calculate'
   | 'equation'
   | 'calculus'

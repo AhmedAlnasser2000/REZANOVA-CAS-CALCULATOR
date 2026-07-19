@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn list_command_helper_returns_builtin_descriptors() {
-        assert_eq!(list_builtin_plans_for_command().len(), 19);
+        assert_eq!(list_builtin_plans_for_command().len(), 20);
     }
 
     #[test]
@@ -125,6 +125,8 @@ mod tests {
             "expression-runtime",
             "geometry-runtime",
             "geometry-worker-runtime",
+            "graph-sampling-runtime",
+            "graph-sampling-worker-runtime",
             "matrix-runtime",
             "matrix-worker-runtime",
             "statistics-runtime",

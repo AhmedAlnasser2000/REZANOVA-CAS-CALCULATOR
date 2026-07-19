@@ -244,6 +244,13 @@ const revisionsSchema: z.ZodType<GraphRevisionSetV1> = z.strictObject({
   parameter: revisionSchema,
 });
 
+const sampleRequestRevisionsSchema = z.strictObject({
+  scene: revisionSchema,
+  document: revisionSchema,
+  viewport: revisionSchema,
+  parameter: revisionSchema,
+});
+
 const documentSchema = z.strictObject({
   version: z.literal(1),
   documentId: idSchema,
@@ -302,7 +309,7 @@ const samplingBudgetsSchema = z.strictObject({
 
 const sampleRequestSchema = z.strictObject({
   version: z.literal(1), requestId: idSchema, workspaceInstanceId: idSchema,
-  documentId: idSchema, revisions: revisionsSchema,
+  documentId: idSchema, revisions: sampleRequestRevisionsSchema,
   items: z.array(itemSchema)
     .max(GRAPH_DOCUMENT_MAX_ITEMS)
     .refine((items) => items.every((item) => ['relation', 'piecewise', 'point-set'].includes(item.kind))),

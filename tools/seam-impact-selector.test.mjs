@@ -92,6 +92,27 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects Graph contract and OOE ratchets for the sampling host', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/graphing/ooe/application-host.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'graphing-contracts',
+      'graphing-sample-ooe',
+    ]);
+    assert.deepEqual(plan.laneIds, ['graphing']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'graph-contracts',
+      'graph-ooe',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'file-sizes',
+    ]);
+  });
+
   it('selects the Graph workspace runtime ratchet for Graph app state', () => {
     const plan = buildExplicitPathPlan([
       'src/app/graphing/graph-workspace-session.ts',

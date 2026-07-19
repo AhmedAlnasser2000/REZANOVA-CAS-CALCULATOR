@@ -249,13 +249,124 @@ export function normalizeGraphSceneSnapshot(snapshot: SampledSceneSnapshotV1): S
 }
 
 export function hashGraphSceneSnapshot(snapshot: SampledSceneSnapshotV1) {
-  const serialized = serializeGraphSceneSnapshot(snapshot);
-  let hash = 0xcbf29ce484222325n;
-  for (const byte of new TextEncoder().encode(serialized)) {
-    hash ^= BigInt(byte);
-    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+  const encoder = new TextEncoder();
+  const encoded = new Uint8Array(256);
+  const numberView = new DataView(new ArrayBuffer(8));
+  let laneA = 0x811c9dc5;
+  let laneB = 0x9e3779b9;
+  let tokenCount = 0;
+  const appendWord = (word: number) => {
+    laneA = Math.imul(laneA ^ word, 0x01000193) >>> 0;
+    laneB = Math.imul(
+      laneB ^ ((word + 0x9e3779b9 + (tokenCount << 6) + (tokenCount >>> 2)) >>> 0),
+      0x85ebca6b,
+    ) >>> 0;
+    tokenCount = (tokenCount + 1) >>> 0;
+  };
+  const appendByte = (byte: number) => {
+    appendWord(byte | 0x100);
+  };
+  const append = (text: string) => {
+    let remaining = text;
+    while (remaining.length > 0) {
+      const result = encoder.encodeInto(remaining, encoded);
+      for (let index = 0; index < result.written; index += 1) {
+        appendByte(encoded[index]!);
+      }
+      remaining = remaining.slice(result.read);
+    }
+  };
+  const appendNumber = (value: number) => {
+    append('n');
+    numberView.setFloat64(0, Object.is(value, -0) ? 0 : value, true);
+    appendWord(numberView.getUint32(0, true));
+    appendWord(numberView.getUint32(4, true));
+  };
+  hashCanonicalSceneValue(orderedGraphSceneSnapshotView(snapshot), append, appendNumber);
+  laneA ^= laneA >>> 16;
+  laneA = Math.imul(laneA, 0x85ebca6b) >>> 0;
+  laneA ^= laneA >>> 13;
+  laneA = Math.imul(laneA, 0xc2b2ae35) >>> 0;
+  laneA = (laneA ^ (laneA >>> 16)) >>> 0;
+  laneB = (laneB ^ (laneB >>> 16)) >>> 0;
+  laneB = Math.imul(laneB, 0x27d4eb2d) >>> 0;
+  laneB = (laneB ^ (laneB >>> 15)) >>> 0;
+  return `graph64:${laneA.toString(16).padStart(8, '0')}${laneB.toString(16).padStart(8, '0')}`;
+}
+
+function hashCanonicalSceneValue(
+  value: unknown,
+  append: (text: string) => void,
+  appendNumber: (value: number) => void,
+): void {
+  if (Array.isArray(value) || (ArrayBuffer.isView(value) && !(value instanceof DataView))) {
+    const values = value as ArrayLike<unknown>;
+    append('[');
+    for (let index = 0; index < values.length; index += 1) {
+      if (index > 0) append(',');
+      hashCanonicalSceneValue(values[index], append, appendNumber);
+    }
+    append(']');
+    return;
   }
-  return `fnv1a64:${hash.toString(16).padStart(16, '0')}`;
+  if (value && typeof value === 'object') {
+    const object = value as Record<string, unknown>;
+    const keys = Object.keys(object)
+      .filter((key) => object[key] !== undefined)
+      .sort();
+    append('{');
+    keys.forEach((key, index) => {
+      if (index > 0) append(',');
+      append(JSON.stringify(key));
+      append(':');
+      hashCanonicalSceneValue(object[key], append, appendNumber);
+    });
+    append('}');
+    return;
+  }
+  if (typeof value === 'number') {
+    appendNumber(value);
+    return;
+  }
+  append(JSON.stringify(value) ?? 'null');
+}
+
+function orderedGraphSceneSnapshotView(snapshot: SampledSceneSnapshotV1) {
+  return {
+    ...snapshot,
+    paths: stableSort(snapshot.paths, (path) => path.pathId),
+    regions: stableSort(snapshot.regions, (region) => region.regionId).map((region) => ({
+      ...region,
+      boundaryPathIds: [...region.boundaryPathIds].sort(),
+    })),
+    pointBatches: stableSort(snapshot.pointBatches, (batch) => batch.pointBatchId),
+    labels: stableSort(snapshot.labels, (label) => label.labelId),
+    grid: {
+      ...snapshot.grid,
+      labels: stableSort(snapshot.grid.labels, (label) => label.labelId),
+    },
+  };
+}
+
+export function hashSampledSceneRuntime(
+  scene: SampledSceneRuntime,
+  viewport: SampledSceneSnapshotV1['viewport'],
+) {
+  return hashGraphSceneSnapshot({
+    version: 1,
+    revisions: {
+      scene: scene.sceneRevision,
+      document: scene.documentRevision,
+      viewport: scene.viewportRevision,
+      parameter: scene.parameterRevision,
+    },
+    viewport,
+    paths: scene.paths as unknown as SampledSceneSnapshotV1['paths'],
+    regions: scene.regions as unknown as SampledSceneSnapshotV1['regions'],
+    pointBatches: scene.pointBatches as unknown as SampledSceneSnapshotV1['pointBatches'],
+    labels: scene.labels,
+    grid: scene.grid,
+  });
 }
 
 function canonicalizeJson(value: unknown): unknown {
@@ -296,17 +407,14 @@ export function validateSampledSceneRuntime(input: unknown): GraphSceneValidatio
   const structure = validateSampledSceneRuntimeStructure(input);
   if (!structure.ok) return structure;
   const scene = structure.value;
-  const snapshot = snapshotSampledSceneRuntime(scene, {
+  const viewport = {
     coordinateSystem: scene.grid.kind === 'polar' ? 'polar' : scene.grid.kind === 'argand' ? 'argand' : 'cartesian',
     xMin: -1,
     xMax: 1,
     yMin: -1,
     yMax: 1,
-  });
-  const validation = validateSampledSceneSnapshot(snapshot);
-  return validation.ok
-    ? { ok: true, value: scene, hash: validation.hash }
-    : validation;
+  } as const;
+  return { ok: true, value: scene, hash: hashSampledSceneRuntime(scene, viewport) };
 }
 
 export function validateSampledSceneRuntimeStructure(
@@ -334,7 +442,10 @@ export function validateSampledSceneRuntimeStructure(
   return collectionIssue ?? { ok: true, value: scene };
 }
 
-export function validateGraphSampleResult(input: unknown): GraphSceneValidationResult<GraphSampleResultV1> {
+function validateGraphSampleResultEnvelope(
+  input: unknown,
+  verifySnapshotHash: boolean,
+): GraphSceneValidationResult<GraphSampleResultV1> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Graph sample result must be an object.');
   const result = input as GraphSampleResultV1;
   if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'evidence'])
@@ -342,10 +453,10 @@ export function validateGraphSampleResult(input: unknown): GraphSceneValidationR
   if (!['preview', 'settled'].includes(result.quality) || !['complete', 'budget-exhausted', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
   if (!result.revisions || Object.values(result.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Graph sample result revisions are invalid.');
   if (!validateGraphViewport(result.viewport).ok) return fail('invalid-scene', 'Graph sample result viewport is invalid.');
-  if (!result.snapshotHash.startsWith('fnv1a64:') || !Array.isArray(result.stopReasons)
+  if (!/^graph64:[0-9a-f]{16}$/u.test(result.snapshotHash) || !Array.isArray(result.stopReasons)
     || result.stopReasons.some((reason) => !validateGraphStopReason(reason).ok)) return fail('invalid-scene', 'Graph sample result evidence is invalid.');
   if (!result.evidence || Object.values(result.evidence).some((value) => !Number.isFinite(value) || value < 0)) return fail('invalid-scene', 'Graph sample result counters are invalid.');
-  const sceneValidation = validateSampledSceneRuntime(result.scene);
+  const sceneValidation = validateSampledSceneRuntimeStructure(result.scene);
   if (!sceneValidation.ok) return sceneValidation;
   if (result.revisions.scene !== result.scene.sceneRevision
     || result.revisions.document !== result.scene.documentRevision
@@ -361,9 +472,21 @@ export function validateGraphSampleResult(input: unknown): GraphSceneValidationR
     && !result.stopReasons.some((reason) => reason.code === 'sampling-cancelled')) {
     return fail('invalid-scene', 'Cancelled results require a sampling cancellation stop reason.');
   }
-  const snapshotHash = hashGraphSceneSnapshot(snapshotSampledSceneRuntime(result.scene, result.viewport));
-  if (result.snapshotHash !== snapshotHash) return fail('invalid-scene', 'Graph sample result snapshot hash does not match its scene.');
-  return { ok: true, value: result, hash: snapshotHash };
+  if (!verifySnapshotHash) {
+    return { ok: true, value: result, hash: result.snapshotHash };
+  }
+  const verifiedHash = hashSampledSceneRuntime(result.scene, result.viewport);
+  if (result.snapshotHash !== verifiedHash) return fail('invalid-scene', 'Graph sample result snapshot hash does not match its scene.');
+  return { ok: true, value: result, hash: verifiedHash };
+}
+
+export function validateGraphSampleResult(input: unknown) {
+  return validateGraphSampleResultEnvelope(input, true);
+}
+
+/** Use only at the receiving side of the Graph worker after that worker ran full hash validation. */
+export function validateTransferredGraphSampleResult(input: unknown) {
+  return validateGraphSampleResultEnvelope(input, false);
 }
 
 export function snapshotSampledSceneRuntime(scene: SampledSceneRuntime, viewport: SampledSceneSnapshotV1['viewport']): SampledSceneSnapshotV1 {

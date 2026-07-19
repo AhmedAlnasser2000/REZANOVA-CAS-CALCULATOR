@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { SampledSceneRuntime } from './types';
 import {
   hashGraphSceneSnapshot,
+  hashSampledSceneRuntime,
   normalizeGraphSceneSnapshot,
   snapshotSampledSceneRuntime,
   validateGraphSampleResult,
+  validateTransferredGraphSampleResult,
   validateSampledSceneRuntime,
   validateSampledSceneSnapshot,
 } from './scene';
@@ -48,7 +50,8 @@ describe('Graph scene contracts', () => {
     expect(normalizeGraphSceneSnapshot(reversed).paths.map((path) => path.pathId)).toEqual(['path-a', 'path-b']);
     expect(hashGraphSceneSnapshot(reversed)).toBe(hashGraphSceneSnapshot(snapshot));
     expect(hashGraphSceneSnapshot(reorderedKeys)).toBe(hashGraphSceneSnapshot(snapshot));
-    expect(hashGraphSceneSnapshot(snapshot)).toBe('fnv1a64:6e6d5b52b3a6bea4');
+    expect(hashGraphSceneSnapshot(snapshot)).toBe('graph64:01020b98b6247780');
+    expect(hashSampledSceneRuntime(runtime, snapshot.viewport)).toBe(hashGraphSceneSnapshot(snapshot));
     expect(validateSampledSceneSnapshot(reversed)).toMatchObject({ ok: true, hash: hashGraphSceneSnapshot(snapshot) });
     expect(JSON.stringify(snapshot)).not.toContain('Float64Array');
   });
@@ -93,6 +96,8 @@ describe('Graph scene contracts', () => {
       evidence: { sampleCount: 4, vertexCount: 4, elapsedMs: 12 },
     };
     expect(validateGraphSampleResult(result).ok).toBe(true);
+    expect(validateGraphSampleResult({ ...result, snapshotHash: 'graph64:0000000000000000' }).ok).toBe(false);
+    expect(validateTransferredGraphSampleResult(result).ok).toBe(true);
     expect(validateSampledSceneRuntime({ ...scene, paths: [{ ...scene.paths[0], coordinates: [0, 0] }] }).ok).toBe(false);
     expect(validateSampledSceneRuntime({ ...scene, renderer: { kind: 'svg' } }).ok).toBe(false);
     expect(validateGraphSampleResult({ ...result, rendererHandle: {} }).ok).toBe(false);

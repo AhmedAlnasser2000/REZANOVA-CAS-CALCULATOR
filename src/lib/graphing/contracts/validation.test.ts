@@ -75,7 +75,7 @@ describe('Graph v1 contract validators', () => {
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'document-1',
-      revisions: { document: 1, viewport: 2, parameter: 3 },
+      revisions: { scene: 4, document: 1, viewport: 2, parameter: 3 },
       items,
       parameterEnvironment: { a: 1.2 },
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },

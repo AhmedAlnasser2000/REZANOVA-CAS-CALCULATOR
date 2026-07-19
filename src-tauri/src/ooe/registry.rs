@@ -15,6 +15,7 @@ pub enum OoeBuiltinPlanCategory {
     Equation,
     Editor,
     Geometry,
+    Graphing,
     LinearAlgebra,
     Statistics,
     Table,
@@ -215,6 +216,16 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Graphing,
+        capability_id: "graph.sample",
+        host_id: "graph-sampling-worker-runtime",
+        entrypoint: "runGraphSamplingWorkerRuntime",
+        description: "Sample the active Graph document through the application-level isolated Graph worker runtime shell.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::LinearAlgebra,
         capability_id: "linearAlgebra.matrix",
         host_id: "matrix-worker-runtime",
@@ -337,6 +348,8 @@ mod tests {
         "editor-analysis-runtime",
         "geometry-runtime",
         "geometry-worker-runtime",
+        "graph-sampling-runtime",
+        "graph-sampling-worker-runtime",
         "matrix-runtime",
         "matrix-worker-runtime",
         "statistics-runtime",
@@ -382,6 +395,7 @@ mod tests {
                 "trigonometry.evaluate",
                 "statistics.evaluate",
                 "geometry.evaluate",
+                "graph.sample",
                 "linearAlgebra.matrix",
                 "linearAlgebra.vector",
             ]
@@ -507,6 +521,7 @@ mod tests {
                     | "trigonometry.evaluate"
                     | "statistics.evaluate"
                     | "geometry.evaluate"
+                    | "graph.sample"
                     | "linearAlgebra.matrix"
                     | "linearAlgebra.vector"
             ) {

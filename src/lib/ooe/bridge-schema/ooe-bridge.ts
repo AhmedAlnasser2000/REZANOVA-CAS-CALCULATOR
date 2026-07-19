@@ -85,6 +85,7 @@ export const ooeBuiltinPlanCategorySchema = z.enum([
   'equation',
   'editor',
   'geometry',
+  'graphing',
   'linearAlgebra',
   'statistics',
   'table',
