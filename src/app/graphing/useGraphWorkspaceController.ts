@@ -377,8 +377,16 @@ export function useGraphWorkspaceController({
       if (previous) releaseGraphSampleResultBuffers(previous);
       resultRef.current = envelope.payload;
       setSampleResult(envelope.payload);
+      const topologyInconclusive = envelope.payload.stopReasons.some(
+        (reason) => reason.code === 'region-topology-inconclusive',
+      );
       setStatus(envelope.payload.stopReasons.length > 0
-        ? { kind: 'warning', label: 'Some curves reached a safe plotting limit.' }
+        ? {
+            kind: 'warning',
+            label: topologyInconclusive
+              ? 'Uncertain region cells were omitted safely.'
+              : 'Some items reached a safe plotting limit.',
+          }
         : { kind: 'ready', label: quality === 'preview' ? 'Preview ready' : 'Ready' });
     } catch {
       if (mountedRef.current && sequence === requestSequenceRef.current) {

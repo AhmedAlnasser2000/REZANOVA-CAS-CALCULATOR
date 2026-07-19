@@ -145,6 +145,27 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByTestId('graph-scene-points').querySelectorAll('circle')).toHaveLength(2);
   });
 
+  it('sends implicit inequalities as structured relation authority', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'x^2+y^2\\le 9',
+    );
+
+    await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
+    expect(runGraphSampleWithOoe.mock.calls.at(-1)?.[0].items[0]).toMatchObject({
+      kind: 'relation',
+      relation: { kind: 'inequality', operator: '<=' },
+    });
+  });
+
   it('adds a guided Point Set item while retaining one trailing blank row', () => {
     render(
       <GraphWorkspacePage

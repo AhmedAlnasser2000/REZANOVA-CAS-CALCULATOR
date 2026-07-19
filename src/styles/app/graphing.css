@@ -333,6 +333,10 @@
   stroke-linejoin: round;
 }
 
+.graph-svg-regions path {
+  pointer-events: none;
+}
+
 .graph-svg-points circle {
   stroke: rgba(238, 247, 241, 0.9);
   stroke-width: 1.5;
@@ -381,7 +385,8 @@
   border: 0;
 }
 
-.graph-svg-viewport[data-scene-pending='true'] .graph-svg-paths {
+.graph-svg-viewport[data-scene-pending='true'] .graph-svg-paths,
+.graph-svg-viewport[data-scene-pending='true'] .graph-svg-regions {
   opacity: 0.46;
 }
 

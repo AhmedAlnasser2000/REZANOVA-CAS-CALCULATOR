@@ -10,12 +10,14 @@ import {
   assembleSampledScene,
   collectGraphSceneTransferables,
   type GraphPointBatchSceneInput,
+  type GraphRegionSceneInput,
   type GraphSampledPathSceneInput,
 } from '../scene';
 import { adaptGraphExpressionMathJson } from '../parser';
 import { createGraphExpressionEvaluator } from '../evaluator';
 import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
+import { sampleImplicitGraphRelation } from './implicit';
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -114,6 +116,7 @@ export async function runGraphSampleRequest(
   const isCancelled = control.isCancelled ?? (() => false);
   const startedAt = now();
   const paths: GraphSampledPathSceneInput[] = [];
+  const regions: GraphRegionSceneInput[] = [];
   const pointBatches: GraphPointBatchSceneInput[] = [];
   const stopReasons: GraphStopReason[] = [];
   let sampleCount = 0;
@@ -205,6 +208,87 @@ export async function runGraphSampleRequest(
       await control.yieldBetweenItems?.();
       continue;
     }
+    if (item.relation.kind === 'implicit-equality'
+      || item.relation.kind === 'inequality'
+      || item.relation.kind === 'chained-inequality') {
+      const remainingSamples = request.budgets.maximumSamples - sampleCount;
+      const remainingVertices = request.budgets.maximumVertices - vertexCount;
+      const remainingTimeMs = request.budgets.maximumTimeMs - (now() - startedAt);
+      if (remainingSamples <= 0 || remainingVertices <= 0 || remainingTimeMs <= 0) {
+        budgetExhausted = true;
+        stopReasons.push(budgetStop('request-budget-exhausted'));
+        break;
+      }
+      const sampled = sampleImplicitGraphRelation({
+        itemId: item.itemId,
+        sourceRevision: item.source.sourceRevision,
+        relation: item.relation,
+        viewport: request.viewport,
+        cssSize: request.cssSize,
+        parameterEnvironment: request.parameterEnvironment,
+        quality: request.quality,
+        budgets: {
+          maximumRecursionDepth: request.budgets.maximumRecursionDepth,
+          maximumSamples: remainingSamples,
+          maximumTimeMs: Math.max(1, Math.floor(Math.min(
+            remainingTimeMs,
+            control.maximumItemTimeMs ?? remainingTimeMs,
+          ))),
+          maximumVertices: remainingVertices,
+        },
+        cache: planCache,
+        control: { now, isCancelled },
+      });
+      sampleCount += sampled.stats.evaluatedSamples;
+      vertexCount += sampled.stats.emittedVertices;
+      sampled.stopReasons.forEach((reason) => {
+        stopReasons.push({ ...reason, path: item.itemId });
+      });
+      if (sampled.status === 'cancelled') cancelled = true;
+      if (sampled.status === 'budget-exhausted') budgetExhausted = true;
+      const boundaryPathIds: string[] = [];
+      for (const boundary of sampled.boundaries) {
+        const pathId = `${item.itemId}:${boundary.pathIdSuffix}`;
+        boundaryPathIds.push(pathId);
+        paths.push({
+          pathId,
+          sample: {
+            itemId: item.itemId,
+            status: sampled.status,
+            coordinates: boundary.coordinates,
+            segmentOffsets: boundary.segmentOffsets,
+            ...(sampled.status === 'cancelled'
+              ? { stopReason: cancelledStop('cooperative-implicit-cancellation') }
+              : sampled.status === 'budget-exhausted'
+                ? { stopReason: budgetStop('implicit-sampling-budget') }
+                : {}),
+            stats: {
+              evaluatedSamples: 0,
+              emittedVertices: boundary.coordinates.length / 2,
+              maximumDepthReached: 0,
+              elapsedMs: sampled.stats.elapsedMs,
+            },
+          },
+          style: {
+            ...item.presentation,
+            stroke: boundary.strict ? 'dashed' : 'solid',
+          },
+        });
+      }
+      if (sampled.region) {
+        regions.push({
+          regionId: `${item.itemId}:region:0`,
+          itemId: item.itemId,
+          vertices: sampled.region.vertices,
+          triangleIndices: sampled.region.triangleIndices,
+          boundaryPathIds,
+          style: item.presentation,
+        });
+      }
+      await control.yieldBetweenItems?.();
+      if (cancelled) break;
+      continue;
+    }
     const compiled = compileExplicitGraphRelation({
       itemId: item.itemId,
       sourceRevision: item.source.sourceRevision,
@@ -263,6 +347,7 @@ export async function runGraphSampleRequest(
     revisions: request.revisions,
     viewport: request.viewport,
     paths,
+    regions,
     pointBatches,
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);

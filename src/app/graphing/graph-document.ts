@@ -61,7 +61,11 @@ export function buildVisibleGraphItem(input: {
   const classified = classifyGraphSource(source);
   if (classified.ok
     && classified.itemKind === 'relation'
-    && (classified.relation.kind === 'explicit-y' || classified.relation.kind === 'explicit-x')) {
+    && (classified.relation.kind === 'explicit-y'
+      || classified.relation.kind === 'explicit-x'
+      || classified.relation.kind === 'implicit-equality'
+      || classified.relation.kind === 'inequality'
+      || classified.relation.kind === 'chained-inequality')) {
     return {
       version: 1,
       kind: 'relation',

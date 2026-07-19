@@ -51,6 +51,44 @@ const scene: SampledSceneRuntime = {
 };
 
 describe('GraphSvgViewport', () => {
+  it('renders region triangles beneath relation-correct boundary styling', () => {
+    const implicitScene: SampledSceneRuntime = {
+      ...scene,
+      paths: [{
+        ...scene.paths[0]!,
+        pathId: 'disk.boundary',
+        itemId: 'disk',
+        style: { ...scene.paths[0]!.style, stroke: 'dashed' },
+      }],
+      regions: [{
+        regionId: 'disk.region',
+        itemId: 'disk',
+        vertices: new Float64Array([-1, -1, 1, -1, 0, 1]),
+        triangleIndices: new Uint32Array([0, 1, 2]),
+        boundaryPathIds: ['disk.boundary'],
+        style: { ...scene.paths[0]!.style, colorToken: 'graph-green', fillOpacity: 0.22 },
+      }],
+      pointBatches: [],
+    };
+    render(
+      <GraphSvgViewport
+        itemRoutes={{}}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        scene={implicitScene}
+        viewport={viewport}
+      />,
+    );
+
+    const region = document.querySelector<SVGPathElement>('[data-region-id="disk.region"]');
+    const boundary = document.querySelector<SVGPathElement>('[data-path-id="disk.boundary"]');
+    expect(region).toHaveAttribute('fill', '#59dd88');
+    expect(region).toHaveAttribute('fill-opacity', '0.22');
+    expect(boundary).toHaveAttribute('stroke-dasharray', '8 6');
+    expect(region?.closest('g')?.nextElementSibling).toHaveClass('graph-svg-paths');
+  });
+
   it('keeps pointer movement imperative and commits the viewport only on release', () => {
     const onViewportChange = vi.fn();
     render(

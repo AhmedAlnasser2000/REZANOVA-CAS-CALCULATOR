@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type {
   GraphScenePathRuntime,
+  GraphSceneRegionRuntime,
   GraphViewportV1,
   SampledSceneRuntime,
 } from '../../lib/graphing';
@@ -71,6 +72,29 @@ function pathData(
       size,
     );
     output += `${segmentStarts.has(vertex) ? 'M' : 'L'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+  }
+  return output;
+}
+
+function regionData(
+  region: GraphSceneRegionRuntime,
+  viewport: GraphViewportV1,
+  size: ViewportSize,
+) {
+  let output = '';
+  for (let index = 0; index + 2 < region.triangleIndices.length; index += 3) {
+    const points = [0, 1, 2].map((offset) => {
+      const vertex = region.triangleIndices[index + offset]!;
+      return screenPoint(
+        region.vertices[vertex * 2]!,
+        region.vertices[vertex * 2 + 1]!,
+        viewport,
+        size,
+      );
+    });
+    output += `M${points[0]!.x.toFixed(2)} ${points[0]!.y.toFixed(2)}`
+      + `L${points[1]!.x.toFixed(2)} ${points[1]!.y.toFixed(2)}`
+      + `L${points[2]!.x.toFixed(2)} ${points[2]!.y.toFixed(2)}Z`;
   }
   return output;
 }
@@ -414,6 +438,16 @@ export function GraphSvgViewport({
     id: path.pathId,
     color: GRAPH_COLORS[path.style.colorToken] ?? '#5598ff',
     data: pathData(path, viewport, size),
+    dashed: path.style.stroke === 'dashed',
+    strokeWidth: path.style.strokeWidth === 'thin'
+      ? 1.5
+      : path.style.strokeWidth === 'strong' ? 3 : 2.25,
+  })) ?? [], [scene, size, viewport]);
+  const projectedRegions = useMemo(() => scene?.regions.map((region) => ({
+    id: region.regionId,
+    color: GRAPH_COLORS[region.style.colorToken] ?? '#5598ff',
+    data: regionData(region, viewport, size),
+    fillOpacity: region.style.fillOpacity,
   })) ?? [], [scene, size, viewport]);
   const projectedPointBatches = useMemo(() => scene?.pointBatches.map((batch) => ({
     id: batch.pointBatchId,
@@ -476,6 +510,18 @@ export function GraphSvgViewport({
               return <text key={`yt-${value}`} x={x} y={y}>{formatTick(value, yStep)}</text>;
             })}
           </g>
+          <g className="graph-svg-regions" data-testid="graph-scene-regions">
+            {projectedRegions.map((region) => (
+              <path
+                d={region.data}
+                data-region-id={region.id}
+                fill={region.color}
+                fillOpacity={region.fillOpacity}
+                key={region.id}
+                stroke="none"
+              />
+            ))}
+          </g>
           <g className="graph-svg-paths" data-testid="graph-scene-paths">
             {projectedPaths.map((path) => (
               <path
@@ -484,6 +530,8 @@ export function GraphSvgViewport({
                 fill="none"
                 key={path.id}
                 stroke={path.color}
+                strokeDasharray={path.dashed ? '8 6' : undefined}
+                style={{ strokeWidth: path.strokeWidth }}
                 vectorEffect="non-scaling-stroke"
               />
             ))}

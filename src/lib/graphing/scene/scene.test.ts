@@ -133,6 +133,48 @@ describe('Graph sampled-scene assembly', () => {
     expect(result.bundle.evidence.vertexCount).toBe(2);
   });
 
+  it('adopts region triangles separately from their boundary path', () => {
+    const boundary = {
+      itemId: 'item.disk',
+      status: 'complete' as const,
+      coordinates: new Float64Array([-1, 0, 0, 1, 1, 0, 0, -1, -1, 0]),
+      segmentOffsets: new Uint32Array([0]),
+      stats: {
+        evaluatedSamples: 25,
+        emittedVertices: 5,
+        maximumDepthReached: 0,
+        elapsedMs: 2,
+      },
+    };
+    const vertices = new Float64Array([-1, 0, 0, 1, 1, 0, 0, -1]);
+    const triangleIndices = new Uint32Array([0, 1, 2, 0, 2, 3]);
+    const result = assembleSampledScene({
+      revisions,
+      viewport,
+      paths: [{ pathId: 'path.disk', sample: boundary, style: style('green'), closed: true }],
+      regions: [{
+        regionId: 'region.disk',
+        itemId: 'item.disk',
+        vertices,
+        triangleIndices,
+        boundaryPathIds: ['path.disk'],
+        style: style('green'),
+      }],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.bundle.scene.regions[0]?.vertices).toBe(vertices);
+    expect(result.bundle.scene.regions[0]?.triangleIndices).toBe(triangleIndices);
+    expect(result.bundle.scene.regions[0]?.boundaryPathIds).toEqual(['path.disk']);
+    expect(result.bundle.transferList).toEqual([
+      boundary.coordinates.buffer,
+      boundary.segmentOffsets.buffer,
+      vertices.buffer,
+      triangleIndices.buffer,
+    ]);
+    expect(result.bundle.evidence.vertexCount).toBe(9);
+  });
+
   it('rejects duplicate IDs, malformed alignment, and incomplete status without evidence', () => {
     const sine = sampled('item.sine', ['Sin', 'x']);
     expect(assembleSampledScene({
@@ -173,6 +215,41 @@ describe('Graph sampled-scene assembly', () => {
         itemId: 'item.points',
         coordinates: new Float64Array([1, Number.NaN]),
         style: style('blue'),
+      }],
+    })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
+
+    const boundary = {
+      itemId: 'item.region',
+      status: 'complete' as const,
+      coordinates: new Float64Array([0, 0, 1, 0]),
+      segmentOffsets: new Uint32Array([0]),
+      stats: { evaluatedSamples: 2, emittedVertices: 2, maximumDepthReached: 0, elapsedMs: 1 },
+    };
+    expect(assembleSampledScene({
+      revisions,
+      viewport,
+      paths: [{ pathId: 'path.region', sample: boundary, style: style('green') }],
+      regions: [{
+        regionId: 'region.bad-index',
+        itemId: 'item.region',
+        vertices: new Float64Array([0, 0, 1, 0, 0, 1]),
+        triangleIndices: new Uint32Array([0, 1, 3]),
+        boundaryPathIds: ['path.region'],
+        style: style('green'),
+      }],
+    })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
+
+    expect(assembleSampledScene({
+      revisions,
+      viewport,
+      paths: [{ pathId: 'path.region', sample: boundary, style: style('green') }],
+      regions: [{
+        regionId: 'region.missing-boundary',
+        itemId: 'item.region',
+        vertices: new Float64Array([0, 0, 1, 0, 0, 1]),
+        triangleIndices: new Uint32Array([0, 1, 2]),
+        boundaryPathIds: ['path.unknown'],
+        style: style('green'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
   });

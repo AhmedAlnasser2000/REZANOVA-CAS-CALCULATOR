@@ -33,7 +33,7 @@ describe('Move 8 Graph document editing', () => {
     });
   });
 
-  it('opens explicit-x and point-set routes while future relations remain controlled drafts', () => {
+  it('opens explicit-x, point-set, and bounded implicit routes', () => {
     expect(buildVisibleGraphItem({
       itemId: 'item.1',
       sourceLatex: 'x=y^2',
@@ -58,8 +58,17 @@ describe('Move 8 Graph document editing', () => {
       sourceRevision: 1,
       index: 2,
     })).toMatchObject({
-      kind: 'invalid-relation-draft',
-      parseStop: { detailCode: 'future-implicit-equality' },
+      kind: 'relation',
+      relation: { kind: 'implicit-equality' },
+    });
+    expect(buildVisibleGraphItem({
+      itemId: 'item.4',
+      sourceLatex: '-1<x\\le 1',
+      sourceRevision: 1,
+      index: 3,
+    })).toMatchObject({
+      kind: 'relation',
+      relation: { kind: 'chained-inequality', operators: ['<', '<='] },
     });
   });
 

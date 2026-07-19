@@ -119,6 +119,79 @@ describe('Graph sample request runtime', () => {
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
+  it('assembles implicit boundaries and inequality regions as separate scene geometry', async () => {
+    const implicitRequest = request();
+    implicitRequest.quality = 'settled';
+    implicitRequest.items = [{
+      version: 1,
+      kind: 'relation',
+      itemId: 'disk-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: 'x^2+y^2\\le 9',
+        sourceRevision: 1,
+      },
+      relation: {
+        kind: 'inequality',
+        left: {
+          mathJson: ['Add', ['Power', 'x', 2], ['Power', 'y', 2]],
+          freeSymbols: ['x', 'y'],
+        },
+        operator: '<=',
+        right: { mathJson: 9, freeSymbols: [] },
+      },
+      visible: true,
+      presentation: implicitRequest.items[0]!.presentation,
+    }];
+    implicitRequest.budgets.maximumSamples = 20_000;
+    implicitRequest.budgets.maximumVertices = 20_000;
+    implicitRequest.budgets.maximumTimeMs = 500;
+    const execution = await runGraphSampleRequest(implicitRequest);
+
+    expect(execution.result.status).toBe('complete');
+    expect(execution.result.scene.paths).toHaveLength(1);
+    expect(execution.result.scene.paths[0]?.style.stroke).toBe('solid');
+    expect(execution.result.scene.regions).toHaveLength(1);
+    expect(execution.result.scene.regions[0]?.boundaryPathIds).toEqual([
+      execution.result.scene.paths[0]?.pathId,
+    ]);
+    expect(execution.result.scene.regions[0]?.triangleIndices.length).toBeGreaterThan(3);
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+  });
+
+  it('preserves strictness per chained boundary while clipping their intersection', async () => {
+    const chainRequest = request();
+    chainRequest.items = [{
+      version: 1,
+      kind: 'relation',
+      itemId: 'strip-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: '-1<x\\le 1',
+        sourceRevision: 1,
+      },
+      relation: {
+        kind: 'chained-inequality',
+        operands: [
+          { mathJson: -1, freeSymbols: [] },
+          { mathJson: 'x', freeSymbols: ['x'] },
+          { mathJson: 1, freeSymbols: [] },
+        ],
+        operators: ['<', '<='],
+      },
+      visible: true,
+      presentation: chainRequest.items[0]!.presentation,
+    }];
+    const execution = await runGraphSampleRequest(chainRequest);
+
+    expect(execution.result.scene.paths.map((path) => path.style.stroke)).toEqual([
+      'dashed',
+      'solid',
+    ]);
+    expect(execution.result.scene.regions).toHaveLength(1);
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+  });
+
   it('attributes bounded sampling stops to the affected Graph item', async () => {
     const bounded = request();
     bounded.budgets.maximumSamples = 20;

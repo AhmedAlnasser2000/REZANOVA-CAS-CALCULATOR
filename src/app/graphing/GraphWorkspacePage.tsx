@@ -41,6 +41,7 @@ type GraphExpressionRowProps = {
   onBlur: () => void;
   onChange: (latex: string) => void;
   onDelete?: () => void;
+  runtimeWarning?: string;
   onSubmit: () => void;
   onToggle?: () => void;
 };
@@ -54,6 +55,7 @@ function GraphExpressionRow({
   onDelete,
   onSubmit,
   onToggle,
+  runtimeWarning,
 }: GraphExpressionRowProps) {
   const draftMessage = item?.kind === 'invalid-relation-draft'
     ? graphDraftMessage(item.parseStop)
@@ -101,10 +103,10 @@ function GraphExpressionRow({
           </button>
         </div>
       ) : null}
-      {errorVisible && draftMessage ? (
+      {(errorVisible && draftMessage) || runtimeWarning ? (
         <p className="graph-expression-error" role="status">
           <AlertTriangle aria-hidden="true" size={14} />
-          <span>{draftMessage}</span>
+          <span>{runtimeWarning ?? draftMessage}</span>
         </p>
       ) : null}
     </div>
@@ -126,6 +128,24 @@ export default function GraphWorkspacePage({
   });
   const scene = controller.sampleResult?.scene ?? null;
   const visibleCount = controller.session.document.items.filter((item) => item.visible).length;
+  const runtimeWarnings = useMemo(() => {
+    const warnings = new Map<string, string>();
+    for (const reason of controller.sampleResult?.stopReasons ?? []) {
+      if (!reason.path || warnings.has(reason.path)) continue;
+      if (reason.code === 'region-topology-inconclusive') {
+        warnings.set(
+          reason.path,
+          'Uncertain cells were omitted rather than filling this region as complete.',
+        );
+      } else if (reason.code === 'sampling-budget-exceeded') {
+        warnings.set(
+          reason.path,
+          'This item reached its safe plotting budget; only bounded geometry is shown.',
+        );
+      }
+    }
+    return warnings;
+  }, [controller.sampleResult]);
   const itemRoutes = useMemo(() => {
     const routes: Record<string, GraphTraceRouteKind> = {};
     for (const item of controller.session.document.items) {
@@ -242,6 +262,7 @@ export default function GraphWorkspacePage({
                     focusNextRow(itemId);
                   }}
                   onToggle={item ? () => controller.toggleItem(itemId) : undefined}
+                  runtimeWarning={item ? runtimeWarnings.get(itemId) : undefined}
                 />
               );
             })}

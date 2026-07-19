@@ -187,4 +187,42 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
   });
+
+  test('renders bounded implicit contours and strict/inclusive regions honestly', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'x^2+y^2\\le 9');
+    await enterExpression(page, '-1<x<1');
+    await expect(page.getByTestId('graph-scene-regions').locator('path')).toHaveCount(2);
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(3);
+    await expect(page.getByTestId('graph-scene-paths').locator('path').first())
+      .not.toHaveAttribute('stroke-dasharray', '8 6');
+    await expect(page.getByTestId('graph-scene-paths').locator('path').nth(1))
+      .toHaveAttribute('stroke-dasharray', '8 6');
+    await expect(page.getByTestId('graph-scene-paths').locator('path').nth(2))
+      .toHaveAttribute('stroke-dasharray', '8 6');
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    await page.mouse.click(
+      bounds.x + 0.65 * bounds.width,
+      bounds.y + 0.5 * bounds.height,
+    );
+    await expect.poll(async () => {
+      const text = await page.locator('.graph-trace-callout').textContent();
+      const coordinates = text?.match(/^\(([-\d.]+), ([-\d.]+)\)$/u);
+      return coordinates
+        ? { x: Number(coordinates[1]), y: Number(coordinates[2]) }
+        : null;
+    }).toEqual({ x: expect.closeTo(3, 1), y: expect.closeTo(0, 1) });
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-implicit-regions-1440x940.png'),
+      fullPage: true,
+    });
+  });
 });
