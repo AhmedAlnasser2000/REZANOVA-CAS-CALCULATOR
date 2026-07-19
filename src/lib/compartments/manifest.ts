@@ -233,6 +233,29 @@ export const COMPARTMENT_MANIFEST = [
     },
   },
   {
+    id: 'graphing',
+    label: 'Graphing',
+    diagnosticsLabel: 'Graphing',
+    stateSurface: 'future',
+    surfaceExposureCandidate: 'future-surface',
+    ownedPaths: [
+      'src/lib/graphing/',
+    ],
+    publicSeams: [
+      'src/lib/graphing/index.ts',
+      'src/lib/graphing/contracts/index.ts',
+    ],
+    privatePaths: [
+      'src/lib/graphing/contracts/validation.ts',
+      'src/lib/graphing/contracts/workloads.ts',
+    ],
+    dependencyPolicies: [
+      'library-no-app-ui',
+      'no-source-mirrors',
+      'private-solver-boundary',
+    ],
+  },
+  {
     id: 'equation',
     label: 'Equation',
     diagnosticsLabel: 'Equation',

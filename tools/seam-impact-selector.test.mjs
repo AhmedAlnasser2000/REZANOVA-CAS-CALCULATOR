@@ -14,6 +14,24 @@ import {
 } from './seam-impact-selector-core.mjs';
 
 describe('seam impact selector', () => {
+  it('selects the Graph contract ratchet for Graph-owned source', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/graphing/contracts/validation.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'graphing-contracts',
+    ]);
+    assert.deepEqual(plan.laneIds, ['graphing']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'graph-contracts',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'compartment-boundaries',
+      'file-sizes',
+    ]);
+  });
+
   it('classifies seam paths and emits stable additive evidence', () => {
     const plan = buildExplicitPathPlan([
       'src/lib/ooe/runtime-control/runtime-coordinator.ts',

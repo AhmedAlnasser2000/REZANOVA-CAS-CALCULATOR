@@ -1,17 +1,17 @@
 # REZANOVA Graphing authority contract v1
 
-Status: approved architecture proposal, awaiting user review
+Status: approved architecture contract; implementation active through the pre-Three foundation arc
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
-Audited repository head: `9a7a87bc` (`CI-REGRESSION-REPAIR1 repair Linux CI gates`)
-Date: 2026-07-18
+Implementation baseline: `76c0c61b`, followed by `133afdf2` for Move 1
+Date: 2026-07-19
 
 ## Scope and outcome
 
-This contract defines the first production Graphing arc without implementing Graphing. Graphing is a full-width, non-singleton app-page workspace opened only from Workspace Tabs `+` -> `New Graph`. Every click creates an independent session document named `Untitled Graph`, `Untitled Graph 2`, and so on.
+This contract defines the first production Graphing arc. Graphing will be a full-width, non-singleton app-page workspace opened only from Workspace Tabs `+` -> `New Graph`. Every click creates an independent session document named `Untitled Graph`, `Untitled Graph 2`, and so on.
 
 Graphing is not a calculator `ModeId`, side surface, result card, launcher tile, History artifact, Notebook block, Surface Protocol capability, or detached experiment. The first arc has no cross-workspace Open, Send, or Plot action and no durable graph-project persistence.
 
-The live repository contains no production Graphing source tree, Graph workspace kind, Graph OOE capability, graph scene contract, or Three.js dependency. Existing files whose names contain `graph` are unrelated paragraph/geometry usages.
+Move 2 establishes the production Graph contract source tree, performance fixture, renderer-neutral scene authority, and boundary ratchets. It does not yet add a Graph workspace kind, Graph OOE capability, visible page, or Three.js dependency.
 
 ## Rebased repository authority map
 
@@ -369,6 +369,7 @@ type SampledSceneRuntime = {
   viewportRevision: number;
   parameterRevision: number;
   paths: Array<{
+    pathId: string;
     itemId: string;
     coordinates: Float64Array; // x0,y0,x1,y1,...
     segmentOffsets: Uint32Array;
@@ -377,13 +378,19 @@ type SampledSceneRuntime = {
     style: GraphItemPresentationV1;
   }>;
   regions: Array<{
+    regionId: string;
     itemId: string;
     vertices: Float64Array;
     triangleIndices: Uint32Array;
     boundaryPathIds: string[];
     style: GraphItemPresentationV1;
   }>;
-  points: Float64Array;
+  pointBatches: Array<{
+    pointBatchId: string;
+    itemId: string;
+    coordinates: Float64Array;
+    style: GraphItemPresentationV1;
+  }>;
   labels: GraphSceneLabelV1[];
   grid: GraphGridSceneV1;
 };
@@ -398,6 +405,7 @@ type SampledSceneSnapshotV1 = {
   };
   viewport: GraphViewportV1;
   paths: Array<{
+    pathId: string;
     itemId: string;
     coordinates: number[];
     segmentOffsets: number[];
@@ -406,10 +414,17 @@ type SampledSceneSnapshotV1 = {
     style: GraphItemPresentationV1;
   }>;
   regions: Array<{
+    regionId: string;
     itemId: string;
     vertices: number[];
     triangleIndices: number[];
     boundaryPathIds: string[];
+    style: GraphItemPresentationV1;
+  }>;
+  pointBatches: Array<{
+    pointBatchId: string;
+    itemId: string;
+    coordinates: number[];
     style: GraphItemPresentationV1;
   }>;
   labels: GraphSceneLabelV1[];
@@ -422,7 +437,7 @@ type GraphSceneLabelV1 = {
   role: 'axis' | 'tick' | 'relation' | 'feature' | 'trace';
   anchor: { x: number; y: number };
   priority: number;
-  math?: CanonicalMathValueV2;
+  mathJson?: SerializableMathJson;
   plainText?: string;
 };
 
@@ -435,7 +450,7 @@ type GraphGridSceneV1 = {
 };
 ```
 
-Runtime arrays are transferable performance data. The snapshot is bounded, deterministic, JSON-safe, sorted by stable IDs, finite-number validated, and suitable for golden tests and SVG export. Neither contains renderer-specific types or objects. Strict inequalities emit open/dashed boundary semantics; inclusive inequalities emit closed/solid semantics. Region triangles and boundary geometry are distinct.
+Runtime arrays are transferable performance data. Stable `pathId`, `regionId`, and `pointBatchId` values make region-boundary references and later hit-testing unambiguous without renderer authority. The snapshot is bounded, deterministic, JSON-safe, sorted by stable IDs, finite-number validated, and suitable for golden tests and SVG export. Neither contains renderer-specific types or objects. Strict inequalities emit open/dashed boundary semantics; inclusive inequalities emit closed/solid semantics. Region triangles and boundary geometry are distinct.
 
 Grid generation is scene-owned and screen-space aware: Cartesian ticks use `1, 2, 5 x 10^n`, hysteresis, minor subdivisions, and collision budgets. Polar grids use adaptive rings/spokes and one selected ring/ray for angle/radial labels. The Unit Circle is a separate optional teaching-layer scene item.
 
@@ -553,7 +568,7 @@ All three resolve to the `graphing` compartment. They use separate hosts because
 
 ### Request and result envelopes
 
-`GraphSampleRequestV1` contains version, document ID/revision, a clone-safe classified relation snapshot, parameter environment/revision, viewport/revision, CSS pixel dimensions, grid policy, quality (`preview` or `settled`), and explicit recursion/sample/time/vertex budgets. Its result contains all revision keys, completion/budget evidence, and `SampledSceneRuntime` transferables plus a deterministic snapshot hash.
+`GraphSampleRequestV1` contains version, request/workspace/document identity, a clone-safe classified relation snapshot, parameter environment and document/parameter/viewport revisions, viewport, CSS pixel dimensions, grid policy, quality (`preview` or `settled`), and explicit recursion/sample/time/vertex budgets. Its result repeats the identity and revision keys plus the viewport, completion/budget evidence, `SampledSceneRuntime` transferables, and a deterministic snapshot hash. The repeated viewport permits standalone result validation and hash verification without consulting mutable request state.
 
 `GraphAnalysisRequestV1` is defined above. The result contains matching document/parameter/request hashes and `GraphAnalysisEvidenceV1[]`. A viewport is included only for explicitly local numeric questions; exact analysis is otherwise viewport-independent.
 

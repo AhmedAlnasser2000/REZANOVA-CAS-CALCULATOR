@@ -36,6 +36,7 @@ describe('compartment manifest', () => {
 
     expect(candidates).toEqual([
       'display',
+      'graphing',
       'calculate',
       'equation',
       'calculus',

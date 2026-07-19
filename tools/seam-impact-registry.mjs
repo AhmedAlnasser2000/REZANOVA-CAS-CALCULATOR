@@ -1,5 +1,10 @@
 export const SEAM_COMMANDS = [
   {
+    id: 'graph-contracts',
+    label: 'Graphing contracts, performance budgets, and import boundaries',
+    argv: ['npm', 'run', 'test:graph-contracts'],
+  },
+  {
     id: 'workspace-runtime-contracts',
     label: 'Workspace runtime contract matrix',
     argv: ['npm', 'run', 'test:workspace-runtime-contracts'],
@@ -101,6 +106,19 @@ const sharedLinearAlgebraLaneMatchers = [
 ];
 
 export const SEAM_REGISTRY = [
+  {
+    id: 'graphing-contracts',
+    label: 'Graphing document, sampling, scene, and renderer-neutral contracts',
+    matchers: [
+      ...prefix('src/lib/graphing/'),
+      ...exact(
+        'tools/graphing-boundary-ratchet.mjs',
+        'tools/graphing-boundary-ratchet.test.mjs',
+      ),
+    ],
+    additionalCommandIds: ['graph-contracts'],
+    baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
   {
     id: 'app-shell-root',
     label: 'App shell composition root',
@@ -411,6 +429,7 @@ export const SEAM_REGISTRY = [
 ];
 
 export const LANE_REGISTRY = [
+  { id: 'graphing', matchers: prefix('src/lib/graphing/', 'src/app/graphing/', 'src/styles/app/graphing-', 'e2e/graphing-') },
   { id: 'calculate', matchers: prefix('src/lib/modes/calculate') },
   { id: 'equation', matchers: prefix('src/lib/equation/', 'src/lib/modes/equation') },
   { id: 'calculus', matchers: prefix('src/lib/calculus/', 'src/lib/symbolic-engine/', 'src/lib/modes/calculus') },

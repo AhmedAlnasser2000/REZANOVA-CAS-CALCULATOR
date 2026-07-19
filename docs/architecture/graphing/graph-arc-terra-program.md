@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: implementation proposal, awaiting user review
+Status: approved 19-move implementation program; Moves 1-2 complete, Move 3 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -10,12 +10,14 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Label each gate `ui` or `backend` and record evidence in its session dossier before commit.
 - Run focused affected tests, incremental TypeScript, `npm run test:memory-protocol`, `npm run test:file-sizes`, and `git diff --check`. Use the seam-impact selector and broader gates only when the touched seam requires them.
 - Any app-visible graph, label, region, error, evidence card, motion, or export preview requires Playwright inspection of the real app. Record viewport, inputs, expected result, screenshot path, and readability/overflow/context-loss findings.
-- No commit or push occurs without explicit user approval.
+- The user approved commits for Moves 1-13 on 2026-07-19. Each gate still commits only after its focused verification. Push remains separately approval-gated.
 - Every gate updates `.memory/current-state.md`, the daily journal, its session dossier, and `.memory/decisions.md` or `.memory/open-questions.md` when the gate locks or leaves a durable choice.
 - Delete scaffolding, compatibility bridges, duplicate contracts, provisional SVG-only branches, debug flags, abandoned workers, and temporary fixtures in the same gate that supersedes them. Do not retain a second runtime path “for safety.”
 - Stop whenever the parent architecture's stop conditions are reached.
 
-## 0. `APP-SHELL-UTILITY-OVERLAY-FIX1`
+## 1. `APP-SHELL-UTILITY-OVERLAY-FIX1`
+
+Status: complete in `133afdf2`.
 
 - Terra: Medium
 - Gate type: ui
@@ -30,15 +32,17 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: any need to change focus trapping, global modal policy, OOE diagnostics, or Graphing.
 - Deletion: remove obsolete dark-backdrop declaration if replaced; do not retain competing desktop rules.
 
-## 1. `GRAPHING-CONTRACT-FOUNDATION1`
+## 2. `GRAPHING-CONTRACT-PERFORMANCE-FOUNDATION1`
+
+Status: complete in the verified Move 2 gate.
 
 - Terra: High
 - Gate type: backend
-- Objective: implement exact versioned document, surface, relation, condition, parameter, analysis, scene, renderer, and stop-reason contracts with validators and golden fixtures; no visible page.
+- Objective: implement exact versioned document, source, relation, condition, piecewise, parameter, surface, viewport, revision, sampling, scene, renderer, stop-reason, and performance-budget contracts with validators and goldens; no visible page.
 - Allowed: new `src/lib/graphing/contracts/`, focused tests, `docs/architecture/graphing/`, compartment manifest/validator additions, Graph-specific test scripts and seam registration.
 - Forbidden: React page, app-page registration, workers, Three.js/package changes, History, Notebook, Surface Protocol, solver-private imports.
 - Dependencies: approved authority contract.
-- Contracts: all normative v1 types; clone/depth/node/finite-number/cap validators; source-LaTeX/provenance separation; scene snapshot determinism.
+- Contracts: all pre-Three normative v1 types; clone/depth/node/finite-number/cap validators; source-LaTeX/provenance separation; scene snapshot determinism; the 25-row/10-visible workload fixture; and Three/import/compartment/seam ratchets. Analysis and export remain documentation only.
 - Behavior: none.
 - Tests: round-trip validation, malformed/cyclic/oversize rejection, stable snapshot ordering/hash, renderer-type isolation, no `exactLatex` authority fields.
 - Playwright: not required; no visible change.
@@ -46,7 +50,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: standard MathJSON cannot represent a required input expression leaf or a renderer type leaks into contracts.
 - Deletion: remove any exploratory duplicate contracts before commit.
 
-## 2. `GRAPHING-WORKSPACE-RUNTIME1`
+## 3. `GRAPHING-WORKSPACE-RUNTIME1`
 
 - Terra: High
 - Gate type: backend
@@ -62,7 +66,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: implementation requires changing Guide/Settings/History/Notebook runtime identity.
 - Deletion: remove test-only mount hook when the public page entry lands.
 
-## 3. `GRAPHING-PARSER-IR1`
+## 4. `GRAPHING-PARSER-IR1`
 
 - Terra: High
 - Gate type: backend
@@ -78,23 +82,39 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: a universal AST or source-string relation classifier appears necessary.
 - Deletion: no compatibility parser or string-regex classifier may remain.
 
-## 4. `GRAPHING-EVALUATOR-SAMPLER1`
+## 5. `GRAPHING-EVALUATOR-SAMPLER1`
 
 - Terra: High
 - Gate type: backend
-- Objective: build the safe evaluator, screen-space adaptive explicit-y sampler, headless semantic renderer, and deterministic snapshot.
-- Allowed: Graph evaluator/sampling/scene/headless directories, public algebra domain-range facade, focused performance/semantic tests.
+- Objective: build the safe evaluator and cancellable screen-space adaptive sampler with preview/settled quality and hard budgets.
+- Allowed: Graph evaluator/sampling directories, public algebra domain-range facade, focused performance/semantic tests.
 - Forbidden: React, Three.js, workers/OOE, implicit regions, analysis claims, private solvers.
 - Dependencies: parser IR.
-- Contracts: evaluator allowlist and budgets; preview/settled sampling; segment-break reasons; scene runtime/snapshot; headless validation.
+- Contracts: evaluator allowlist and budgets; compile-once plans; preview/settled sampling; segment-break reasons; cooperative cancellation.
 - Behavior: none.
-- Tests: nonempty `sin(x)`, split `1/x`, real-domain `sqrt(x)`, high-frequency/steep/viewport-exit functions, no NaN in snapshots, deterministic hashes, cancellation checkpoints through injected control.
+- Tests: nonempty `sin(x)`, split `1/x`, real-domain `sqrt(x)`, high-frequency/steep/viewport-exit functions, cancellation checkpoints through injected control, and truthful bounded output on budget stops.
 - Playwright: none.
 - Broad gates: Graph semantic canary runner begins here; file-size/compartment.
 - Stop: false discontinuity bridges cannot be bounded without importing Equation-private runtime.
 - Deletion: remove naive fixed-step or angle-only prototype samplers.
 
-## 5. `GRAPHING-SAMPLE-OOE1`
+## 6. `GRAPHING-SCENE-HEADLESS1`
+
+- Terra: High
+- Gate type: backend
+- Objective: convert sampled output into transferable renderer-neutral scene buffers, deterministic bounded snapshots, and headless semantic evidence.
+- Allowed: Graph scene/headless directories and focused snapshot/semantic tests.
+- Forbidden: React, SVG UI, Three.js, workers/OOE, analysis, export implementations, private solvers.
+- Dependencies: evaluator/sampler.
+- Contracts: typed-array ownership, stable path/region/point IDs, finite coordinates, segment offsets, boundary references, stable ordering/hash, labels, and grid scene placeholders.
+- Behavior: none.
+- Tests: no NaN/Infinity, deterministic hashes, transferability, stable ordering, valid region/path references, malformed index rejection, and deterministic disposal ownership.
+- Playwright: none.
+- Broad gates: Graph contract/semantic ratchet, compartment, file size.
+- Stop: a renderer-specific type or duplicate scene representation becomes necessary.
+- Deletion: remove ad hoc sampler-output snapshots once the scene adapter owns conversion.
+
+## 7. `GRAPHING-SAMPLE-OOE1`
 
 - Terra: High
 - Gate type: backend
@@ -110,7 +130,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: hard cancellation would terminate unrelated Graph capabilities or jobs lack workspace identity.
 - Deletion: remove direct main-thread production sampling call paths; pure fallback remains only through the host contract.
 
-## 6. `GRAPHING-MINIMUM-VISIBLE1`
+## 8. `GRAPHING-MINIMUM-VISIBLE1`
 
 - Terra: High
 - Gate type: ui
@@ -126,7 +146,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: visible math labels require generated LaTeX authority or SVG needs its own scene model.
 - Deletion: test-only page route and any duplicate local sampling state.
 
-## 7. `GRAPHING-RELATION-ROUTES1`
+## 9. `GRAPHING-RELATION-ROUTES1`
 
 - Terra: High
 - Gate type: ui
@@ -141,7 +161,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: renderer hit data becomes mathematical authority.
 - Deletion: any x-as-universal trace assumption.
 
-## 8. `GRAPHING-IMPLICIT-REGIONS1`
+## 10. `GRAPHING-IMPLICIT-REGIONS1`
 
 - Terra: High
 - Gate type: ui
@@ -156,7 +176,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: requested topology cannot be represented honestly within bounded cells/validation.
 - Deletion: provisional directed-only special cases duplicated by the region engine.
 
-## 9. `GRAPHING-PIECEWISE1`
+## 11. `GRAPHING-PIECEWISE1`
 
 - Terra: High
 - Gate type: ui
@@ -171,7 +191,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: a branch condition exceeds the bounded `GraphConditionIR` contract.
 - Deletion: temporary branch-fragment-only representation.
 
-## 10. `GRAPHING-PARAMETERS1`
+## 12. `GRAPHING-PARAMETERS1`
 
 - Terra: High
 - Gate type: ui
@@ -186,7 +206,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: non-scalar/symbolic parameter values or external stored-value links are required.
 - Deletion: any per-item substituted-source cache.
 
-## 11. `GRAPHING-POLAR-GRID1`
+## 13. `GRAPHING-POLAR-GRID1`
 
 - Terra: High
 - Gate type: ui
@@ -201,7 +221,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: grid labels require renderer-specific layout authority.
 - Deletion: any SVG-only tick generator once the scene grid is authoritative.
 
-## 12. `GRAPHING-THREE-RENDERER1`
+## 14. `GRAPHING-THREE-RENDERER1`
 
 - Terra: High
 - Gate type: ui
@@ -216,7 +236,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: Three-specific types or coordinate transforms leak upstream, or parity cannot be shown.
 - Deletion: any provisional production SVG interaction branch superseded by the governor; retain the reference/export adapter.
 
-## 13. `GRAPHING-ANALYSIS-OOE1`
+## 15. `GRAPHING-ANALYSIS-OOE1`
 
 - Terra: High
 - Gate type: backend
@@ -232,7 +252,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: a feature cannot be represented without a new canonical-result contract or would require changing solver precedence.
 - Deletion: Equation-shaped compatibility evidence or string-only exact paths.
 
-## 14. `GRAPHING-ANALYZE-UX1`
+## 16. `GRAPHING-ANALYZE-UI1`
 
 - Terra: Medium
 - Gate type: ui
@@ -247,7 +267,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: motion reuse requires changing existing shell panel behavior.
 - Deletion: test-only analysis surfaces and duplicate label formatting.
 
-## 15. `GRAPHING-COMPLEX-VIEWS1`
+## 17. `GRAPHING-COMPLEX-VIEWS1`
 
 - Terra: High
 - Gate type: ui
@@ -262,7 +282,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: a requested expression has no honest real parameter or needs a broader complex semantic.
 - Deletion: any Re/Im rewriting workaround or single-axis Both prototype.
 
-## 16. `GRAPHING-PRESENT-EXPORT1`
+## 18. `GRAPHING-PRESENTATION-EXPORT1`
 
 - Terra: High
 - Gate type: ui
@@ -277,7 +297,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Stop: export requires Notebook/publication or durable Graph persistence changes.
 - Deletion: object URLs, isolated canvases, buffers, and temporary export workers after each job; no screenshot fallback.
 
-## 17. `GRAPHING-ARC-CLOSEOUT1`
+## 19. `GRAPHING-ARC-CLOSEOUT1`
 
 - Terra: High
 - Gate type: backend and ui closeout
@@ -294,4 +314,4 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 
 ## Intended visible progression
 
-The first visible release is Gate 6, not Three.js: a truthful SVG-backed graph with governed sampling. Relations widen before the production renderer, so Three.js consumes a mature renderer-neutral scene rather than defining it. Analyze follows evidence authority, and Complex follows a stable two-view governor. This order optimizes for correctness and reversibility while still giving the user a usable plotter early.
+The first visible release is Move 8, not Three.js: a truthful SVG-backed graph with governed sampling. Relations widen before the production renderer, so Three.js consumes a mature renderer-neutral scene rather than defining it. Analyze follows evidence authority, and Complex follows a stable two-view governor. This order optimizes for correctness and reversibility while still giving the user a usable plotter early.
