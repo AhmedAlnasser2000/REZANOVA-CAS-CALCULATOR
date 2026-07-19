@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   isNotebookLibrarySurfaceState,
   NOTEBOOK_WORKSPACE_CLOSE_EVENT,
@@ -14,6 +14,7 @@ import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
 import {
   NOTEBOOK_PAGE_WORKSPACE_KIND,
+  GRAPHING_PAGE_WORKSPACE_KIND,
   type SingletonAppPageWorkspaceKind,
 } from './app-page-workspaces';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
@@ -114,6 +115,31 @@ export function useWorkspaceTabsRuntime({
       pendingHistoryTickets,
       workspaceInstances: workspaceInstances.workspaceInstances,
     }), [pendingHistoryTickets, workspaceInstances.workspaceInstances]);
+
+  const activeInstanceRef = useRef(workspaceInstances.activeInstance);
+
+  useEffect(() => {
+    const previous = activeInstanceRef.current;
+    const current = workspaceInstances.activeInstance;
+    if (previous?.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+      && previous.id !== current?.id) {
+      requestWorkspaceTabJobCancellation(
+        previous.id,
+        'Graph workspace became inactive.',
+      );
+    }
+    activeInstanceRef.current = current;
+  }, [workspaceInstances.activeInstance]);
+
+  useEffect(() => () => {
+    const activeInstance = activeInstanceRef.current;
+    if (activeInstance?.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
+      requestWorkspaceTabJobCancellation(
+        activeInstance.id,
+        'Graph workspace runtime disposed.',
+      );
+    }
+  }, []);
 
   const tabs = useMemo<WorkspaceTabItem[]>(() =>
     workspaceInstances.workspaceInstances.map((instance) => {

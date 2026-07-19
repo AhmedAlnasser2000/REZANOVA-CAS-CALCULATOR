@@ -17,10 +17,16 @@ import {
 } from './formula-viewer-artifacts';
 import {
   appPageWorkspaceTitle,
+  GRAPHING_PAGE_WORKSPACE_KIND,
   isAppPageWorkspaceKind,
   type AppPageWorkspaceKind,
   type SingletonAppPageWorkspaceKind,
 } from './app-page-workspaces';
+import {
+  createGraphWorkspaceSessionState,
+  graphWorkspaceDefaultTitle,
+  renameGraphWorkspaceSessionState,
+} from '../graphing/graph-workspace-session';
 
 export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
 export type WorkspaceKind = ModeId | FormulaViewerWorkspaceKind | AppPageWorkspaceKind;
@@ -50,6 +56,7 @@ export type WorkspaceInstancesState = {
   activeInstanceId: WorkspaceInstanceId;
   instances: WorkspaceInstance[];
   nextOrder: number;
+  nextGraphSequence: number;
 };
 
 export type WorkspaceInstanceFactoryOptions = {
@@ -112,6 +119,14 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
     };
   }
 
+  if (workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
+    return {
+      compartmentId: 'graphing' as CompartmentId,
+      compartmentLabel: 'Graphing',
+      surfaceLabel: 'Graphing page',
+    };
+  }
+
   if (isAppPageWorkspaceKind(workspaceKind)) {
     return {
       compartmentId: 'app-shell' as CompartmentId,
@@ -147,7 +162,8 @@ export function workspaceInstanceRuntimeContext(
 ): WorkspaceInstanceRuntimeContext | null {
   if (
     isFormulaViewerWorkspaceKind(instance.workspaceKind)
-    || isAppPageWorkspaceKind(instance.workspaceKind)
+    || (isAppPageWorkspaceKind(instance.workspaceKind)
+      && instance.workspaceKind !== GRAPHING_PAGE_WORKSPACE_KIND)
   ) {
     return null;
   }
@@ -175,9 +191,10 @@ export function createWorkspaceInstance(
   const compartment = resolveWorkspaceInstanceCompartment(workspaceKind);
   const title = options.title?.trim() || defaultWorkspaceInstanceTitle(workspaceKind);
   const titleSource = options.titleSource ?? (options.title?.trim() ? 'custom' : 'default');
+  const id = idFactory(workspaceKind, order);
 
   return {
-    id: idFactory(workspaceKind, order),
+    id,
     workspaceKind,
     title,
     titleSource,
@@ -187,7 +204,9 @@ export function createWorkspaceInstance(
     updatedAt: timestamp,
     lastActivatedAt: timestamp,
     order,
-    surfaceState: null,
+    surfaceState: workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+      ? createGraphWorkspaceSessionState(id, title)
+      : null,
     displayState: null,
     runtimeState: null,
   };
@@ -201,6 +220,7 @@ export function createInitialWorkspaceInstancesState(
     activeInstanceId: instance.id,
     instances: [instance],
     nextOrder: 2,
+    nextGraphSequence: 1,
   };
 }
 
@@ -265,11 +285,21 @@ export function createBlankWorkspaceInstance(
   workspaceKind: WorkspaceKind = DEFAULT_WORKSPACE_KIND,
   options: WorkspaceInstanceFactoryOptions = {},
 ): WorkspaceInstancesState {
-  const instance = createWorkspaceInstance(workspaceKind, state.nextOrder, options);
+  const isGraphing = workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND;
+  const instance = createWorkspaceInstance(workspaceKind, state.nextOrder, {
+    ...options,
+    ...(isGraphing && !('title' in options)
+      ? {
+          title: graphWorkspaceDefaultTitle(state.nextGraphSequence),
+          titleSource: 'default' as const,
+        }
+      : {}),
+  });
   return {
     activeInstanceId: instance.id,
     instances: [...state.instances, instance],
     nextOrder: state.nextOrder + 1,
+    nextGraphSequence: state.nextGraphSequence + (isGraphing ? 1 : 0),
   };
 }
 
@@ -278,6 +308,9 @@ export function focusLatestWorkspaceKindOrCreate(
   workspaceKind: WorkspaceKind,
   options: WorkspaceInstanceFactoryOptions = {},
 ): WorkspaceInstancesState {
+  if (workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
+    return createBlankWorkspaceInstance(state, workspaceKind, options);
+  }
   const existing = latestInstanceByKind(state.instances, workspaceKind);
   if (!existing) {
     return createBlankWorkspaceInstance(state, workspaceKind, options);
@@ -312,6 +345,7 @@ export function openFormulaViewerWorkspaceInstance(
     activeInstanceId: instance.id,
     instances: [...state.instances, instance],
     nextOrder: state.nextOrder + 1,
+    nextGraphSequence: state.nextGraphSequence,
   };
 }
 
@@ -330,6 +364,10 @@ export function retargetActiveWorkspaceInstanceKind(
 ): WorkspaceInstancesState {
   const activeInstance = getActiveWorkspaceInstance(state);
   if (!activeInstance) {
+    return state;
+  }
+  if (activeInstance.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+    || workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
     return state;
   }
 
@@ -375,6 +413,12 @@ export function renameWorkspaceInstance(
             ...instance,
             title: trimmedTitle || defaultWorkspaceInstanceTitle(instance.workspaceKind),
             titleSource: trimmedTitle ? 'custom' : 'default',
+            surfaceState: instance.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+              ? renameGraphWorkspaceSessionState(
+                  instance.surfaceState,
+                  trimmedTitle || defaultWorkspaceInstanceTitle(instance.workspaceKind),
+                ) as WorkspaceInstanceStateSlot
+              : instance.surfaceState,
             updatedAt: timestamp,
           }
         : instance),
@@ -387,7 +431,7 @@ export function duplicateWorkspaceInstance(
   options: DuplicateWorkspaceInstanceOptions = {},
 ): WorkspaceInstancesState {
   const source = state.instances.find((instance) => instance.id === instanceId);
-  if (!source) {
+  if (!source || source.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
     return state;
   }
 
@@ -412,6 +456,7 @@ export function duplicateWorkspaceInstance(
     activeInstanceId: duplicate.id,
     instances: [...state.instances, duplicate],
     nextOrder: state.nextOrder + 1,
+    nextGraphSequence: state.nextGraphSequence,
   };
 }
 
@@ -420,6 +465,10 @@ export function clearWorkspaceInstanceState(
   instanceId: WorkspaceInstanceId,
   options: Pick<WorkspaceInstanceFactoryOptions, 'now'> = {},
 ): WorkspaceInstancesState {
+  const target = state.instances.find((instance) => instance.id === instanceId);
+  if (target?.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
+    return state;
+  }
   const timestamp = (options.now ?? defaultNow)();
   return {
     ...state,

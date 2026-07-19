@@ -26,6 +26,8 @@ import {
   type FormulaViewerArtifact,
 } from './formula-viewer-artifacts';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
+import { GRAPHING_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
+import { isGraphWorkspaceSessionState } from '../graphing/graph-workspace-session';
 
 function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions> {
   let timestamp = 1000;
@@ -73,6 +75,7 @@ describe('workspace instance model', () => {
     expect(state.activeInstanceId).toBe('calculate.1');
     expect(state.instances).toHaveLength(1);
     expect(state.nextOrder).toBe(2);
+    expect(state.nextGraphSequence).toBe(1);
     expect(activeInstance).toMatchObject({
       workspaceKind: 'calculate',
       title: 'Calculate',
@@ -229,6 +232,75 @@ describe('workspace instance model', () => {
     expect(state.instances.filter((instance) => instance.workspaceKind === 'guide-page'))
       .toHaveLength(1);
     expect(state.activeInstanceId).toBe('guide-page.4');
+  });
+
+  it('creates independent Graph pages with monotonic titles, session state, and runtime context', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+
+    state = createBlankWorkspaceInstance(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
+    const firstGraphId = state.activeInstanceId;
+    state = createBlankWorkspaceInstance(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
+    const secondGraphId = state.activeInstanceId;
+    const firstGraph = state.instances.find((instance) => instance.id === firstGraphId);
+    const secondGraph = state.instances.find((instance) => instance.id === secondGraphId);
+
+    expect(firstGraph).toMatchObject({
+      id: 'graphing.2',
+      workspaceKind: 'graphing',
+      title: 'Untitled Graph',
+      titleSource: 'default',
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
+      surfaceLabel: 'Graphing page',
+    });
+    expect(secondGraph).toMatchObject({
+      id: 'graphing.3',
+      workspaceKind: 'graphing',
+      title: 'Untitled Graph 2',
+    });
+    expect(isGraphWorkspaceSessionState(firstGraph?.surfaceState)).toBe(true);
+    expect(isGraphWorkspaceSessionState(secondGraph?.surfaceState)).toBe(true);
+    expect(firstGraph?.surfaceState).not.toBe(secondGraph?.surfaceState);
+    expect(workspaceInstanceRuntimeContext(secondGraph!)).toMatchObject({
+      workspaceInstanceId: 'graphing.3',
+      workspaceInstanceLabel: 'Untitled Graph 2',
+      workspaceKind: 'graphing',
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
+    });
+
+    state = renameWorkspaceInstance(state, firstGraphId, 'Quadratic study', options);
+    const renamed = state.instances.find((instance) => instance.id === firstGraphId);
+    expect(renamed).toMatchObject({ title: 'Quadratic study', titleSource: 'custom' });
+    if (!isGraphWorkspaceSessionState(renamed?.surfaceState)) {
+      throw new Error('Expected renamed Graph session state.');
+    }
+    expect(renamed.surfaceState.document).toMatchObject({
+      title: 'Quadratic study',
+      documentRevision: 1,
+    });
+    expect((secondGraph?.surfaceState as { document?: { title?: string } }).document?.title)
+      .toBe('Untitled Graph 2');
+
+    state = closeWorkspaceInstance(state, firstGraphId, options);
+    state = createBlankWorkspaceInstance(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
+    expect(getActiveWorkspaceInstance(state)?.title).toBe('Untitled Graph 3');
+  });
+
+  it('keeps Graph creation non-singleton and blocks retarget, duplicate, and clear shortcuts', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+    state = focusLatestWorkspaceKindOrCreate(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
+    state = focusLatestWorkspaceKindOrCreate(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
+    expect(state.instances.filter((instance) => instance.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND)).toHaveLength(2);
+
+    const graphId = state.activeInstanceId;
+    const graphState = getActiveWorkspaceInstance(state)?.surfaceState;
+    expect(duplicateWorkspaceInstance(state, graphId, options)).toBe(state);
+    expect(clearWorkspaceInstanceState(state, graphId, options)).toBe(state);
+    expect(retargetActiveWorkspaceInstanceKind(state, 'calculate', options)).toBe(state);
+    expect(getActiveWorkspaceInstance(state)?.surfaceState).toBe(graphState);
   });
 
   it('renames with trimmed titles and falls back to the default label', () => {

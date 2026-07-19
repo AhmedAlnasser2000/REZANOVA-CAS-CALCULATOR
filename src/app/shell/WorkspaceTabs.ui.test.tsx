@@ -90,6 +90,7 @@ describe('WorkspaceTabs', () => {
 
     fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     expect(screen.getByTestId('workspace-tab-create-menu')).toHaveTextContent('New workspace');
+    expect(screen.queryByRole('menuitem', { name: /Graph/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Open Guide Page' }));
     expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('guide-page');

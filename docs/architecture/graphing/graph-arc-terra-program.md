@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved 19-move implementation program; Moves 1-2 complete, Move 3 next
+Status: approved 19-move implementation program; Moves 1-3 complete, Move 4 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -52,6 +52,8 @@ Status: complete in the verified Move 2 gate.
 
 ## 3. `GRAPHING-WORKSPACE-RUNTIME1`
 
+Status: complete in the verified Move 3 gate.
+
 - Terra: High
 - Gate type: backend
 - Objective: add the honest non-singleton `graphing` app-page identity and Graph-only runtime-context exception without exposing `New Graph` yet.
@@ -61,7 +63,7 @@ Status: complete in the verified Move 2 gate.
 - Contracts: `GRAPHING_PAGE_WORKSPACE_KIND`; `workspaceInstanceRuntimeContext()` returns context for Graphing only; compartment `graphing`; tab policy allows close/rename/stop, with duplicate/clear deferred until exact document semantics exist.
 - Behavior: no user-visible menu entry.
 - Tests: independent IDs/titles (`Untitled Graph`, numbered successors), state isolation, Graph runtime context, existing app pages still null, close requests active-job cancellation.
-- Playwright: test-only page mount at wide/narrow sizes, no production entry.
+- Playwright: not required; this gate deliberately has no page mount or production entry. The first real visual acceptance begins when Move 8 exposes the production page.
 - Broad gates: workspace/app runtime, OOE boundaries, compartment boundaries, canary baseline, UI.
 - Stop: implementation requires changing Guide/Settings/History/Notebook runtime identity.
 - Deletion: remove test-only mount hook when the public page entry lands.

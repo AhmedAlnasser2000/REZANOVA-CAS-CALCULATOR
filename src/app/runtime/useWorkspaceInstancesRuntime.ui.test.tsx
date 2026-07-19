@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   useWorkspaceInstancesRuntime,
@@ -8,6 +8,10 @@ import type {
   WorkspaceInstanceFactoryOptions,
   WorkspaceKind,
 } from './workspace-instances';
+import {
+  getGraphWorkspaceModuleLoadState,
+  resetGraphWorkspaceModuleLoaderForTest,
+} from './graph-workspace-module-loader';
 
 function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions> {
   let timestamp = 2000;
@@ -18,6 +22,25 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
 }
 
 describe('useWorkspaceInstancesRuntime', () => {
+  it('loads the Graph runtime chunk only after a Graph instance becomes active', async () => {
+    resetGraphWorkspaceModuleLoaderForTest();
+    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    expect(getGraphWorkspaceModuleLoadState()).toBe('idle');
+
+    act(() => {
+      hook.result.current.createBlankInstance('graphing');
+    });
+
+    await waitFor(() => {
+      expect(getGraphWorkspaceModuleLoadState()).toBe('loaded');
+    });
+    expect(hook.result.current.activeRuntimeContext).toMatchObject({
+      workspaceInstanceId: 'graphing.2',
+      workspaceKind: 'graphing',
+      compartmentId: 'graphing',
+    });
+  });
+
   it('starts with a single active Calculate instance', () => {
     const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
 

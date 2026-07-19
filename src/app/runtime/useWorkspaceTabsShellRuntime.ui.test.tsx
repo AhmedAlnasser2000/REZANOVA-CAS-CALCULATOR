@@ -54,6 +54,7 @@ import {
 } from './formula-viewer-artifacts';
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
+  GRAPHING_PAGE_WORKSPACE_KIND,
   NOTEBOOK_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
 } from './app-page-workspaces';
@@ -499,6 +500,40 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
       commitDecision: 'committed',
       workspaceInstanceOpen: true,
     });
+  });
+
+  it('cancels active Graph work when its tab becomes inactive', () => {
+    const { hook } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.workspaceInstances.createBlankInstance(
+        GRAPHING_PAGE_WORKSPACE_KIND,
+      );
+    });
+    expect(hook.result.current.workspaceInstances.activeRuntimeContext).toMatchObject({
+      workspaceInstanceId: 'graphing.2',
+      workspaceKind: 'graphing',
+      compartmentId: 'graphing',
+    });
+    startJobForActiveInstance(
+      hook.result.current.workspaceInstances.activeRuntimeContext,
+    );
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onFocusTab('calculate.1');
+    });
+
+    expect(hook.result.current.workspaceInstances.activeInstance?.id).toBe('calculate.1');
+    expect(listActiveOoeJobs()).toMatchObject([
+      {
+        workspaceInstanceId: 'graphing.2',
+        status: 'cancelRequested',
+        cancellationRequest: {
+          reason: 'Graph workspace became inactive.',
+          requestedBy: 'user',
+        },
+      },
+    ]);
   });
 
   it('still cancels jobs for explicit close and Stop tab actions', () => {

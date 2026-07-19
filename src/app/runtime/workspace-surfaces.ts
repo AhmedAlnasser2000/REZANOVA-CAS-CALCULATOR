@@ -3,6 +3,7 @@ import {
   type FormulaViewerWorkspaceKind,
 } from './formula-viewer-artifacts';
 import {
+  GRAPHING_PAGE_WORKSPACE_KIND,
   isAppPageWorkspaceKind,
   type SingletonAppPageWorkspaceKind,
   type AppPageWorkspaceKind,
@@ -66,6 +67,15 @@ export const APP_PAGE_TAB_ACTION_POLICY: WorkspaceTabActionPolicy = {
   canStopJobs: false,
 };
 
+export const GRAPH_PAGE_TAB_ACTION_POLICY: WorkspaceTabActionPolicy = {
+  canClearState: false,
+  canClose: true,
+  canCloseOthers: true,
+  canDuplicate: false,
+  canRename: true,
+  canStopJobs: true,
+};
+
 export const SINGLETON_PAGE_SURFACE_POLICIES: readonly SingletonPageSurfacePolicy[] = [
   {
     pageKind: 'settings',
@@ -98,7 +108,9 @@ export function resolveWorkspaceSurfaceDescriptor(
       allowsQuickInspectors: false,
       pageKind: workspaceKind,
       surfaceKind: 'page',
-      tabActionPolicy: APP_PAGE_TAB_ACTION_POLICY,
+      tabActionPolicy: workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+        ? GRAPH_PAGE_TAB_ACTION_POLICY
+        : APP_PAGE_TAB_ACTION_POLICY,
     };
   }
 

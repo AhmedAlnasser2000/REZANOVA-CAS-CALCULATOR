@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -33,6 +34,8 @@ import {
   type WorkspaceInstanceStateSlotUpdater,
   type WorkspaceKind,
 } from './workspace-instances';
+import { GRAPHING_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
+import { loadGraphWorkspaceRuntimeForInstance } from './graph-workspace-module-loader';
 
 export function useWorkspaceInstancesRuntime(
   options: WorkspaceInstanceFactoryOptions = {},
@@ -155,6 +158,15 @@ export function useWorkspaceInstancesRuntime(
   const activeRuntimeContext = activeInstance
     ? workspaceInstanceRuntimeContext(activeInstance)
     : null;
+
+  useEffect(() => {
+    if (activeInstance?.workspaceKind !== GRAPHING_PAGE_WORKSPACE_KIND) {
+      return;
+    }
+    void loadGraphWorkspaceRuntimeForInstance(activeInstance).catch(() => {
+      // A visible Graph error boundary is introduced with the page in Move 8.
+    });
+  }, [activeInstance]);
 
   const isWorkspaceInstanceOpen = useCallback((
     instanceId: WorkspaceInstanceId,

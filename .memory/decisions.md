@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-19 - GRAPHING-WORKSPACE-RUNTIME1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Graph workspace identity is non-singleton and session-owned. Each instance receives an independent Graph document/view slot, a monotonic default title, and the narrow Graph runtime context; ordinary app pages remain runtime-null. Graph cannot be reached by same-tab retarget, duplicate, or generic clear shortcuts before exact document semantics land.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] The Graph app runtime loads only after a Graph tab becomes active and is emitted as a separate production chunk. Switching away or disposing the tab shell requests cancellation for Graph-owned jobs; inactive tabs retain document/view state but do not gain visible render or sampling work in this gate. `New Graph` remains hidden until Move 8.
+
 ## 2026-07-19 - GRAPHING-CONTRACT-PERFORMANCE-FOUNDATION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Graph authoring retains MathLive LaTeX only as source/provenance. Bounded standard MathJSON inside discriminated `GraphRelationIR` and `GraphConditionIR` is the sole downstream mathematical authority; Graph contracts forbid `exactLatex` authority and private solver/runtime imports.

@@ -87,4 +87,22 @@ describe('workspace surface descriptors', () => {
       },
     });
   });
+
+  it('classifies Graphing as a non-singleton governed page with only truthful actions', () => {
+    expect(SINGLETON_PAGE_SURFACE_POLICIES.map((policy) => policy.pageKind))
+      .not.toContain('graphing');
+    expect(resolveWorkspaceSurfaceDescriptor('graphing')).toEqual({
+      allowsQuickInspectors: false,
+      pageKind: 'graphing',
+      surfaceKind: 'page',
+      tabActionPolicy: {
+        canClearState: false,
+        canClose: true,
+        canCloseOthers: true,
+        canDuplicate: false,
+        canRename: true,
+        canStopJobs: true,
+      },
+    });
+  });
 });

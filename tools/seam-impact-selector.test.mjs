@@ -32,6 +32,26 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects the Graph workspace runtime ratchet for Graph app state', () => {
+    const plan = buildExplicitPathPlan([
+      'src/app/graphing/graph-workspace-session.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'graphing-workspace-runtime',
+    ]);
+    assert.deepEqual(plan.laneIds, ['graphing']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'graph-workspace-runtime',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'ui-tests',
+      'file-sizes',
+    ]);
+  });
+
   it('classifies seam paths and emits stable additive evidence', () => {
     const plan = buildExplicitPathPlan([
       'src/lib/ooe/runtime-control/runtime-coordinator.ts',

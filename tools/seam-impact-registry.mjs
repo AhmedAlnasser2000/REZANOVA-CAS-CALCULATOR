@@ -5,6 +5,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:graph-contracts'],
   },
   {
+    id: 'graph-workspace-runtime',
+    label: 'Graphing workspace identity, session, and lazy-runtime contracts',
+    argv: ['npm', 'run', 'test:graph-workspace-runtime'],
+  },
+  {
     id: 'workspace-runtime-contracts',
     label: 'Workspace runtime contract matrix',
     argv: ['npm', 'run', 'test:workspace-runtime-contracts'],
@@ -118,6 +123,34 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: ['graph-contracts'],
     baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
+  {
+    id: 'graphing-workspace-runtime',
+    label: 'Graphing workspace identity, session state, and lazy runtime',
+    matchers: [
+      ...prefix('src/app/graphing/'),
+      ...exact(
+        'src/app/runtime/app-page-workspaces.ts',
+        'src/app/runtime/graph-workspace-module-loader.ts',
+        'src/app/runtime/graph-workspace-module-loader.test.ts',
+        'src/app/runtime/useWorkspaceInstancesRuntime.ts',
+        'src/app/runtime/useWorkspaceInstancesRuntime.ui.test.tsx',
+        'src/app/runtime/useWorkspaceTabsRuntime.ts',
+        'src/app/runtime/useWorkspaceTabsShellRuntime.ui.test.tsx',
+        'src/app/runtime/workspace-instances.ts',
+        'src/app/runtime/workspace-instances.test.ts',
+        'src/app/runtime/workspace-surfaces.ts',
+        'src/app/runtime/workspace-surfaces.test.ts',
+        'src/app/shell/WorkspaceTabs.ui.test.tsx',
+      ),
+    ],
+    additionalCommandIds: ['graph-workspace-runtime'],
+    baselineEvidenceIds: [
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'ui-tests',
+      'file-sizes',
+    ],
   },
   {
     id: 'app-shell-root',
