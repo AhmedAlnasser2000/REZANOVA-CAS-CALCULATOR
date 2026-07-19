@@ -77,3 +77,18 @@ Closed during the July 3 memory cleanup:
 - Closed the V2 shape question. The approved contract uses clean typed V2 primaries, requests, supplements, Table cells, and Matrix row-operation parts, with mandatory producer-proven standard MathJSON only for genuine math leaves.
 - Closed the dual-version transition question. V1 remains immutable and visible, V2 becomes a current visible History version, future versions remain opaque, and all semantic consumers converge on one normalized presentation/semantics authority.
 - Closed the V2 residual-closeout question. All 23 reviewed V1 residual leaves now have typed V2 semantics or typed non-value reasons, the executable exemption registry is empty, and no residual-only compatibility mechanism remains necessary.
+
+## 2026-07-18 - App Shell Utility Overlay Policy
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the compact utility-overlay policy question. Settings, History, Variables, and the left Menu Inspector retain overlay geometry and click-outside dismissal when outboard room is unavailable, but their click-catcher is visually transparent rather than dimming or resizing the calculator document. OOE diagnostics remains outside this policy.

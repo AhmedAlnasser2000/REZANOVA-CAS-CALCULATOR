@@ -169,8 +169,8 @@
 
 .side-surface-host {
   --side-surface-motion-distance: 18px;
-  --side-surface-motion-enter-duration: 220ms;
-  --side-surface-motion-exit-duration: 170ms;
+  --side-surface-motion-enter-duration: 180ms;
+  --side-surface-motion-exit-duration: 140ms;
   --side-surface-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
   position: absolute;
   top: var(--app-chrome-clearance, 94px);
@@ -296,6 +296,7 @@
 }
 
 .side-surface-overlay-backdrop[data-motion-enabled='true'] {
+  background: transparent;
   opacity: 1;
   transition: opacity 160ms ease-out;
 }

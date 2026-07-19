@@ -347,14 +347,27 @@ test('Settings smoke uses the outboard inspector on wide layouts and keeps shell
   await expect(shell).toHaveAttribute('style', /--ui-scale: 1.3/);
 });
 
-test('Settings smoke uses an overlay sheet on narrow layouts', async ({ page }) => {
+test('Settings smoke uses a transparent, responsive overlay sheet on narrow layouts', async ({ page }) => {
   await page.setViewportSize({ width: 1100, height: 900 });
   await page.reload();
   await expect(page.getByTestId('main-editor')).toBeVisible();
 
   await openSettingsPanel(page);
-  await expect(page.getByTestId('settings-panel')).toHaveAttribute('data-settings-presentation', 'overlay');
-  await expect(page.getByTestId('side-surface-overlay-backdrop')).toBeVisible();
+  const panel = page.getByTestId('settings-panel');
+  const host = page.getByTestId('side-surface-host');
+  const backdrop = page.getByTestId('side-surface-overlay-backdrop');
+  await expect(panel).toHaveAttribute('data-settings-presentation', 'overlay');
+  await expect(backdrop).toBeVisible();
+  await expect.poll(() => backdrop.evaluate((element) => getComputedStyle(element).backgroundColor))
+    .toBe('rgba(0, 0, 0, 0)');
+  await expect.poll(() => panel.evaluate((element) => getComputedStyle(element).transitionDuration))
+    .toContain('0.18s');
+
+  await backdrop.click();
+  await expect(host).toHaveAttribute('data-motion-phase', 'exiting');
+  await expect.poll(() => panel.evaluate((element) => getComputedStyle(element).transitionDuration))
+    .toContain('0.14s');
+  await expect(host).toBeHidden();
 });
 
 test('Settings smoke keeps quick toggles in sync and stays mutually exclusive with history', async ({ page }) => {
