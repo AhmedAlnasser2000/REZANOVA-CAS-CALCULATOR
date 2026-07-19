@@ -254,8 +254,79 @@ describe('Graph sample request runtime', () => {
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
+  it('samples polar and parametric relations with relation parameters retained for tracing', async () => {
+    const routed = request();
+    routed.items = [{
+      version: 1,
+      kind: 'relation',
+      itemId: 'polar-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: 'r=2\\cos(2\\theta)',
+        sourceRevision: 1,
+      },
+      relation: {
+        kind: 'polar-radius',
+        angleSymbol: 'theta',
+        radius: {
+          mathJson: ['Multiply', 2, ['Cos', ['Multiply', 2, 'theta']]],
+          freeSymbols: ['theta'],
+        },
+      },
+      visible: true,
+      presentation: routed.items[0]!.presentation,
+    }, {
+      version: 1,
+      kind: 'relation',
+      itemId: 'parametric-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: '(\\cos(t),\\sin(t))',
+        sourceRevision: 1,
+      },
+      relation: {
+        kind: 'parametric-curve',
+        parameterSymbol: 't',
+        x: { mathJson: ['Cos', 't'], freeSymbols: ['t'] },
+        y: { mathJson: ['Sin', 't'], freeSymbols: ['t'] },
+      },
+      visible: true,
+      presentation: { ...routed.items[0]!.presentation, colorToken: 'graph-green' },
+    }];
+    routed.budgets.maximumSamples = 8_000;
+    routed.budgets.maximumVertices = 8_000;
+    const execution = await runGraphSampleRequest(routed);
+
+    expect(execution.result.status).toBe('complete');
+    expect(execution.result.scene.paths).toHaveLength(2);
+    expect(execution.result.scene.paths.every((path) => (
+      path.parameterValues?.length === path.coordinates.length / 2
+    ))).toBe(true);
+    expect(execution.result.scene.paths.find((path) => path.itemId === 'polar-1')
+      ?.parameterValues?.[0]).toBeCloseTo(0);
+  });
+
+  it('keeps Unit Circle as an independent teaching overlay and makes grid data scene-authoritative', async () => {
+    const teaching = request();
+    teaching.items = [];
+    teaching.grid = {
+      kind: 'polar', major: true, minor: true,
+      axisNumbers: true, angleLabels: true, unitCircle: true,
+    };
+    const execution = await runGraphSampleRequest(teaching);
+
+    expect(execution.result.scene.grid.kind).toBe('polar');
+    expect(execution.result.scene.grid.majorLines.length).toBeGreaterThan(0);
+    expect(execution.result.scene.paths).toHaveLength(1);
+    expect(execution.result.scene.paths[0]).toMatchObject({
+      itemId: 'graph-overlay.unit-circle',
+      closed: true,
+    });
+  });
+
   it('attributes bounded sampling stops to the affected Graph item', async () => {
     const bounded = request();
+    bounded.quality = 'settled';
     bounded.budgets.maximumSamples = 20;
     bounded.budgets.maximumVertices = 8;
     const execution = await runGraphSampleRequest(bounded);
@@ -264,6 +335,19 @@ describe('Graph sample request runtime', () => {
     expect(execution.result.stopReasons).toContainEqual(expect.objectContaining({
       code: 'sampling-budget-exceeded',
       path: 'curve-1',
+    }));
+  });
+
+  it('keeps ordinary preview refinement exhaustion internal when coarse geometry is complete', async () => {
+    const bounded = request();
+    bounded.budgets.maximumSamples = 20;
+    bounded.budgets.maximumVertices = 8;
+    const execution = await runGraphSampleRequest(bounded);
+
+    expect(execution.result.scene.paths.length).toBeGreaterThan(0);
+    expect(execution.result.status).toBe('complete');
+    expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
+      code: 'sampling-budget-exceeded',
     }));
   });
 

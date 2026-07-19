@@ -120,6 +120,7 @@ const relationSchema: z.ZodType<GraphRelationIR> = z.discriminatedUnion('kind', 
     kind: z.literal('polar-radius'),
     radius: expressionSchema,
     angleSymbol: z.literal('theta'),
+    domain: conditionSchema.optional(),
   }),
   z.strictObject({
     kind: z.literal('parametric-curve'),
@@ -324,6 +325,7 @@ const sampleRequestSchema = z.strictObject({
     height: z.number().int().positive().max(16_384),
   }),
   grid: gridPolicySchema,
+  gridHysteresisKey: z.string().max(160).optional(),
   quality: z.enum(['preview', 'settled']),
   budgets: samplingBudgetsSchema,
 }) as unknown as z.ZodType<GraphSampleRequestV1>;

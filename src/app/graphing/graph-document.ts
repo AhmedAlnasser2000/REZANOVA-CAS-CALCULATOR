@@ -186,7 +186,9 @@ export function buildVisibleGraphItem(input: {
       || classified.relation.kind === 'explicit-x'
       || classified.relation.kind === 'implicit-equality'
       || classified.relation.kind === 'inequality'
-      || classified.relation.kind === 'chained-inequality')) {
+      || classified.relation.kind === 'chained-inequality'
+      || classified.relation.kind === 'polar-radius'
+      || classified.relation.kind === 'parametric-curve')) {
     return {
       version: 1,
       kind: 'relation',

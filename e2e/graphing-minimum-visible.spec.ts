@@ -47,6 +47,44 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     ))).toBe('\\infty');
   });
 
+  test('keeps nested MathLive group and text selection readable', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, '\\log(\\sin x)');
+
+    const field = page.locator('math-field').first();
+    await field.focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(() => field.evaluate((element) => (
+      Boolean(element.shadowRoot?.querySelector('.ML__contains-highlight'))
+    ))).toBe(true);
+    await expect.poll(() => field.evaluate((element) => {
+      const nested = element.shadowRoot?.querySelector<HTMLElement>('.ML__contains-highlight');
+      if (!nested) return null;
+      const style = getComputedStyle(nested);
+      return { background: style.backgroundColor, color: style.color };
+    })).toEqual({
+      background: 'rgba(85, 152, 255, 0.16)',
+      color: 'rgb(239, 247, 240)',
+    });
+    await expect.poll(() => field.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        selectionBackground: style.getPropertyValue('--selection-background-color').trim(),
+        selectionColor: style.getPropertyValue('--selection-color').trim(),
+      };
+    })).toEqual({
+      selectionBackground: 'rgba(85, 152, 255, .38)',
+      selectionColor: '#f7fbef',
+    });
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-mathlive-selection-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
   test('plots real bare expressions and keeps the visible surface truthful', async ({ page }, testInfo) => {
     const consoleErrors: string[] = [];
     page.on('console', (message) => {
@@ -318,5 +356,42 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     const slider = page.getByRole('slider', { name: 'a slider' });
     await slider.fill('2');
     await expect(slider).toHaveValue('2');
+  });
+
+  test('plots polar and parametric domains with an explicit adaptive-grid choice', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'r=2\\cos(2\\theta)\\{0\\le\\theta\\le\\pi\\}');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Switch to Polar grid' })).toBeVisible();
+    await expect(page.getByTestId('graph-scene-grid-labels')).not.toContainText('pi/');
+
+    await page.getByRole('button', { name: 'Switch to Polar grid' }).click();
+    await expect(page.getByTestId('graph-scene-grid').locator('line')).not.toHaveCount(0);
+    await expect(page.getByTestId('graph-scene-grid-labels')).toContainText('pi/');
+
+    await enterExpression(page, '(\\cos(u),\\sin(u))\\{-1\\le u\\le1\\}');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    await page.getByRole('button', { name: 'Grid & Axes' }).click();
+    await page.getByRole('checkbox', { name: 'Unit Circle overlay' }).check();
+    await expect(page.getByTestId('graph-scene-paths').locator('[data-path-id="graph-overlay.unit-circle:path"]'))
+      .toHaveCount(1);
+
+    const viewport = page.getByTestId('graph-viewport');
+    await viewport.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.graph-trace-callout')).toContainText('theta=');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.graph-trace-callout')).toContainText('theta=');
+    await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-polar-grid-1440x940.png'),
+      fullPage: true,
+    });
   });
 });

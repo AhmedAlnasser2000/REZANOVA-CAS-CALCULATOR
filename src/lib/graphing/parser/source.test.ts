@@ -116,6 +116,14 @@ describe('Graph MathLive source classifier', () => {
       ok: false,
       stopReason: { code: 'coordinate-parameter-conflict' },
     });
+    expect(relation('r=2\\cos(2\\theta)\\{0\\le\\theta\\le\\pi\\}')).toMatchObject({
+      kind: 'polar-radius',
+      domain: {
+        kind: 'chain',
+        operators: ['<=', '<='],
+        operands: [{ mathJson: 0 }, { mathJson: 'theta' }, { mathJson: 'Pi' }],
+      },
+    });
   });
 
   it('classifies shorthand and explicitly declared parametric curves', () => {
@@ -130,6 +138,14 @@ describe('Graph MathLive source classifier', () => {
       parameterSymbol: 'u',
       x: { mathJson: ['Cos', 'u'] },
       y: { mathJson: ['Sin', 'u'] },
+    });
+    expect(relation('(\\cos(t),\\sin(t))\\{-1\\le t\\le1\\}')).toMatchObject({
+      kind: 'parametric-curve',
+      parameterSymbol: 't',
+      domain: {
+        kind: 'chain',
+        operators: ['<=', '<='],
+      },
     });
   });
 

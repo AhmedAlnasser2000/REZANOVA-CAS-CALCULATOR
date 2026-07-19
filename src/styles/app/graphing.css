@@ -53,6 +53,7 @@
 }
 
 .graph-workbench {
+  position: relative;
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -61,6 +62,86 @@
   gap: 12px;
   padding: 12px;
   background: #081315;
+}
+
+.graph-grid-panel {
+  position: absolute;
+  z-index: 5;
+  top: 76px;
+  left: calc(12px + var(--graph-rail-width) + 12px);
+  width: 286px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 10px;
+  background: rgba(12, 27, 29, 0.97);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.38);
+}
+
+.graph-grid-panel-heading,
+.graph-grid-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.graph-grid-panel-heading button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #a9bab0;
+}
+
+.graph-grid-panel-label {
+  color: #789087;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.graph-grid-kind {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.graph-grid-kind button {
+  min-height: 34px;
+  border: 1px solid var(--graph-line);
+  border-radius: 7px;
+  background: #132225;
+  color: #bacbc1;
+}
+
+.graph-grid-kind button[aria-pressed='true'] {
+  border-color: rgba(98, 230, 144, 0.45);
+  background: rgba(98, 230, 144, 0.13);
+  color: #e7f3e9;
+}
+
+.graph-grid-toggle {
+  min-height: 30px;
+  color: #b5c6bc;
+  font-size: 0.78rem;
+}
+
+.graph-grid-toggle input { accent-color: var(--graph-green); }
+
+.graph-polar-grid-suggestion {
+  position: absolute;
+  z-index: 3;
+  right: 12px;
+  bottom: 12px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(98, 230, 144, 0.4);
+  border-radius: 8px;
+  background: rgba(13, 35, 29, 0.94);
+  color: #cfe9d6;
 }
 
 .graph-workbench.is-rail-collapsed {
@@ -200,7 +281,10 @@
   color: #eff7f0;
   font-size: calc(1.06rem * var(--math-scale, 1));
   --caret-color: var(--graph-green);
-  --selection-background-color: rgba(85, 152, 255, 0.28);
+  --selection-color: #f7fbef;
+  --selection-background-color: rgba(85, 152, 255, 0.38);
+  --contains-highlight-color: #eff7f0;
+  --contains-highlight-background-color: rgba(85, 152, 255, 0.16);
 }
 
 .graph-expression-editor:focus-visible {
@@ -461,6 +545,15 @@
   stroke: rgba(169, 198, 187, 0.11);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
+}
+
+.graph-svg-grid line[data-grid-line='minor'] {
+  stroke: rgba(169, 198, 187, 0.055);
+}
+
+.graph-svg-grid line[data-axis='true'] {
+  stroke: rgba(235, 244, 238, 0.68);
+  stroke-width: 1.2;
 }
 
 .graph-svg-axes line {

@@ -111,6 +111,7 @@ export function hitTestGraphScene(input: {
 
   for (let pathIndex = 0; pathIndex < input.scene.paths.length; pathIndex += 1) {
     const path = input.scene.paths[pathIndex];
+    if (path.itemId.startsWith('graph-overlay.')) continue;
     if (input.itemId && path.itemId !== input.itemId) continue;
     const segmentStarts = new Set(path.segmentOffsets);
     for (let vertexIndex = 1; vertexIndex * 2 + 1 < path.coordinates.length; vertexIndex += 1) {
@@ -258,7 +259,8 @@ export function firstGraphTraceTarget(
       distancePixels: 0,
     });
   }
-  return targetAtPathVertex(scene, viewport, size, 0, 0);
+  const pathIndex = scene.paths.findIndex((path) => !path.itemId.startsWith('graph-overlay.'));
+  return targetAtPathVertex(scene, viewport, size, pathIndex, 0);
 }
 
 export function stepGraphTraceTarget(input: {

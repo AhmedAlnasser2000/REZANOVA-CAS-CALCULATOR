@@ -41,19 +41,18 @@ const relationRow = (
 });
 
 const visibleRelations: Array<[string, GraphRelationIR]> = [
-  ['y=\\sin(x)', { kind: 'explicit-y', rhs: expression(['Sin', 'x'], ['x']), origin: 'authored-relation' }],
+  ['y=a\\sin(x)', { kind: 'explicit-y', rhs: expression(['Multiply', 'a', ['Sin', 'x']], ['a', 'x']), origin: 'authored-relation' }],
   ['y=1/x', { kind: 'explicit-y', rhs: expression(['Divide', 1, 'x'], ['x']), origin: 'authored-relation' }],
   ['y=\\sqrt{x}', { kind: 'explicit-y', rhs: expression(['Sqrt', 'x'], ['x']), origin: 'authored-relation' }],
-  ['x=y^2', { kind: 'explicit-x', rhs: expression(['Power', 'y', 2], ['y']) }],
+  ['x=y^6', { kind: 'explicit-x', rhs: expression(['Power', 'y', 6], ['y']) }],
   ['x^2+y^2=9', { kind: 'implicit-equality', left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), right: expression(9) }],
+  ['y<x', { kind: 'inequality', left: expression('y', ['y']), operator: '<', right: expression('x', ['x']) }],
   ['x^2+y^2<=16', { kind: 'inequality', left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), operator: '<=', right: expression(16) }],
-  ['y=a\\sin(x)', { kind: 'explicit-y', rhs: expression(['Multiply', 'a', ['Sin', 'x']], ['a', 'x']), origin: 'authored-relation' }],
   ['r=2\\cos(2\\theta)', { kind: 'polar-radius', radius: expression(['Multiply', 2, ['Cos', ['Multiply', 2, 'theta']]], ['theta']), angleSymbol: 'theta' }],
   ['(\\cos(t),\\sin(t))', { kind: 'parametric-curve', parameterSymbol: 't', x: expression(['Cos', 't'], ['t']), y: expression(['Sin', 't'], ['t']) }],
-  ['-2<x<3', { kind: 'chained-inequality', operands: [expression(-2), expression('x', ['x']), expression(3)], operators: ['<', '<'] }],
 ];
 
-const hiddenRelations = Array.from({ length: 13 }, (_, offset) => relationRow(
+const hiddenRelations = Array.from({ length: 14 }, (_, offset) => relationRow(
   offset + visibleRelations.length + 1,
   `y=x+${offset + 1}`,
   { kind: 'explicit-y', rhs: expression(['Add', 'x', offset + 1], ['x']), origin: 'authored-relation' },
@@ -79,7 +78,7 @@ export const GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1: GraphDocumentV1 = {
           { branchId: 'nonnegative', relation: { kind: 'explicit-y', rhs: expression(['Sqrt', 'x'], ['x']), origin: 'authored-relation' }, condition: { kind: 'comparison', left: expression('x', ['x']), operator: '>=', right: expression(0) } },
         ],
       },
-      visible: false,
+      visible: true,
       presentation: presentation('graph-piecewise'),
     },
     {
@@ -98,6 +97,6 @@ export const GRAPH_PRE_THREE_BASELINE_EXPECTATIONS = {
   visibleGeometryItems: 10,
   requiredVisibleKinds: [
     'explicit-y', 'explicit-x', 'implicit-equality', 'inequality',
-    'chained-inequality', 'polar-radius', 'parametric-curve',
+    'piecewise', 'polar-radius', 'parametric-curve',
   ],
 } as const;

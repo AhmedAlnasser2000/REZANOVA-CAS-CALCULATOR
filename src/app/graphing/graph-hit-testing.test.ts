@@ -73,4 +73,23 @@ describe('Graph scene hit testing and tracing', () => {
       kind: 'point', pointIndex: 1, world: { x: -2, y: -3 },
     });
   });
+
+  it('keeps teaching overlays outside pointer and keyboard trace authority', () => {
+    const overlay = {
+      ...scene.paths[0],
+      pathId: 'graph-overlay.unit-circle:path',
+      itemId: 'graph-overlay.unit-circle',
+    };
+    const withoutPoints = { ...scene, paths: [overlay, ...scene.paths], pointBatches: [] };
+    expect(firstGraphTraceTarget(withoutPoints, viewport, size)).toMatchObject({
+      itemId: 'explicit-y',
+      parameterValue: -5,
+    });
+    expect(hitTestGraphScene({
+      scene: withoutPoints,
+      viewport,
+      size,
+      screen: { x: 250, y: 750 },
+    })).toMatchObject({ itemId: 'explicit-y' });
+  });
 });

@@ -64,6 +64,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
 
   private size: Size = { width: 1, height: 1 };
   private svg: SVGSVGElement | null = null;
+  private grid: SVGGElement | null = null;
+  private gridLabels: SVGGElement | null = null;
   private regions: SVGGElement | null = null;
   private paths: SVGGElement | null = null;
   private points: SVGGElement | null = null;
@@ -73,6 +75,12 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     const svg = svgElement('svg');
     svg.classList.add('graph-svg-canvas', 'graph-svg-geometry-canvas');
     svg.setAttribute('aria-hidden', 'true');
+    const grid = svgElement('g');
+    grid.classList.add('graph-svg-grid');
+    grid.dataset.testid = 'graph-scene-grid';
+    const gridLabels = svgElement('g');
+    gridLabels.classList.add('graph-svg-ticks');
+    gridLabels.dataset.testid = 'graph-scene-grid-labels';
     const regions = svgElement('g');
     regions.classList.add('graph-svg-regions');
     regions.dataset.testid = 'graph-scene-regions';
@@ -82,9 +90,11 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     const points = svgElement('g');
     points.classList.add('graph-svg-points');
     points.dataset.testid = 'graph-scene-points';
-    svg.append(regions, paths, points);
+    svg.append(grid, gridLabels, regions, paths, points);
     target.replaceChildren(svg);
     this.svg = svg;
+    this.grid = grid;
+    this.gridLabels = gridLabels;
     this.regions = regions;
     this.paths = paths;
     this.points = points;
@@ -98,7 +108,49 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   }
 
   render({ scene, viewport }: GraphRenderFrameV1) {
-    if (!this.regions || !this.paths || !this.points) return;
+    if (!this.grid || !this.gridLabels || !this.regions || !this.paths || !this.points) return;
+    const gridFragment = document.createDocumentFragment();
+    const appendLines = (values: readonly number[], kind: 'major' | 'minor') => {
+      for (let index = 0; index + 3 < values.length; index += 4) {
+        const start = project(values[index]!, values[index + 1]!, viewport, this.size);
+        const end = project(values[index + 2]!, values[index + 3]!, viewport, this.size);
+        const element = svgElement('line');
+        element.setAttribute('x1', String(start.x));
+        element.setAttribute('y1', String(start.y));
+        element.setAttribute('x2', String(end.x));
+        element.setAttribute('y2', String(end.y));
+        element.dataset.gridLine = kind;
+        if (scene.grid.kind === 'cartesian'
+          && ((values[index] === 0 && values[index + 2] === 0)
+            || (values[index + 1] === 0 && values[index + 3] === 0))) {
+          element.dataset.axis = 'true';
+        }
+        gridFragment.append(element);
+      }
+    };
+    appendLines(scene.grid.minorLines, 'minor');
+    appendLines(scene.grid.majorLines, 'major');
+    const labelFragment = document.createDocumentFragment();
+    for (const label of scene.grid.labels) {
+      if (!label.plainText) continue;
+      const anchor = project(label.anchor.x, label.anchor.y, viewport, this.size);
+      const element = svgElement('text');
+      element.dataset.labelId = label.labelId;
+      element.setAttribute('x', String(anchor.x));
+      element.setAttribute('y', String(anchor.y));
+      if (label.labelId.startsWith('grid:x:')) element.setAttribute('dy', '18');
+      if (label.labelId.startsWith('grid:y:')) {
+        element.setAttribute('dx', '-8');
+        element.setAttribute('dy', '4');
+        element.setAttribute('text-anchor', 'end');
+      }
+      if (label.labelId.startsWith('grid:r:')) {
+        element.setAttribute('dx', '5');
+        element.setAttribute('dy', '-5');
+      }
+      element.textContent = label.plainText;
+      labelFragment.append(element);
+    }
     const regionFragment = document.createDocumentFragment();
     for (const region of scene.regions) {
       const element = svgElement('path');
@@ -137,6 +189,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
         pointFragment.append(element);
       }
     }
+    this.grid.replaceChildren(gridFragment);
+    this.gridLabels.replaceChildren(labelFragment);
     this.regions.replaceChildren(regionFragment);
     this.paths.replaceChildren(pathFragment);
     this.points.replaceChildren(pointFragment);
@@ -150,6 +204,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   handleContextRestored() {}
 
   clear() {
+    this.grid?.replaceChildren();
+    this.gridLabels?.replaceChildren();
     this.regions?.replaceChildren();
     this.paths?.replaceChildren();
     this.points?.replaceChildren();
@@ -158,6 +214,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   dispose() {
     this.svg?.remove();
     this.svg = null;
+    this.grid = null;
+    this.gridLabels = null;
     this.regions = null;
     this.paths = null;
     this.points = null;

@@ -105,6 +105,37 @@ function relationForTarget(
   return validatedRelation({ kind: 'polar-radius', radius: rhs, angleSymbol: 'theta' });
 }
 
+function splitDomainRestriction(input: unknown) {
+  if (graphNodeOperator(input) !== 'InvisibleOperator') return null;
+  const operands = graphNodeOperands(input);
+  if (operands.length < 2) return null;
+  const conditionSet = graphSetOperands(operands.at(-1));
+  if (!conditionSet || conditionSet.length !== 1) return null;
+  const expressionOperands = operands.slice(0, -1);
+  return {
+    expressionNode: expressionOperands.length === 1
+      ? expressionOperands[0]
+      : ['InvisibleOperator', ...expressionOperands],
+    conditionNode: conditionSet[0],
+  };
+}
+
+function attachPolarDomain(
+  relation: GraphRelationIR,
+  conditionNode: unknown,
+  path: string,
+): { ok: true; relation: GraphRelationIR } | GraphParserFailure {
+  if (relation.kind !== 'polar-radius') {
+    return graphParserFailure('unsupported-relation', 'domain-restriction-route', path);
+  }
+  const condition = parseGraphConditionMathJson(conditionNode, `${path}.domain`);
+  if (!condition.ok) return condition;
+  if (!conditionAllowedForTarget('r', condition.condition)) {
+    return graphParserFailure('coordinate-parameter-conflict', 'polar-domain-coordinate-conflict', path);
+  }
+  return validatedRelation({ ...relation, domain: condition.condition });
+}
+
 function conditionAllowedForTarget(
   target: 'x' | 'y' | 'r',
   condition: GraphConditionIR,
@@ -205,6 +236,7 @@ function buildParametricRelation(
   parameterSymbol: string,
   coordinateNodes: readonly unknown[],
   path: string,
+  conditionNode?: unknown,
 ): GraphSourceClassificationV1 {
   if (coordinateNodes.length !== 2 || ALL_COORDINATES.has(parameterSymbol)) {
     return graphParserFailure('unsupported-relation', 'parametric-shape', path);
@@ -216,11 +248,19 @@ function buildParametricRelation(
   if (expressionsUseAny([x.expression, y.expression], ALL_COORDINATES)) {
     return graphParserFailure('coordinate-parameter-conflict', 'parametric-coordinate-conflict', path);
   }
+  const condition = conditionNode === undefined
+    ? null
+    : parseGraphConditionMathJson(conditionNode, `${path}.domain`);
+  if (condition && !condition.ok) return condition;
+  if (condition && expressionsUseAny(conditionExpressions(condition.condition), ALL_COORDINATES)) {
+    return graphParserFailure('coordinate-parameter-conflict', 'parametric-domain-coordinate-conflict', path);
+  }
   const relation = validatedRelation({
     kind: 'parametric-curve',
     parameterSymbol,
     x: x.expression,
     y: y.expression,
+    ...(condition ? { domain: condition.condition } : {}),
   });
   return relation.ok
     ? { ok: true, itemKind: 'relation', relation: relation.relation }
@@ -252,7 +292,11 @@ function classifyPointCoordinates(
   return { ok: true, itemKind: 'point-set', points };
 }
 
-function classifyTuple(input: unknown, path: string): GraphSourceClassificationV1 {
+function classifyTuple(
+  input: unknown,
+  path: string,
+  conditionNode?: unknown,
+): GraphSourceClassificationV1 {
   const tuple = graphTupleOperands(input);
   if (!tuple || tuple.length !== 2) {
     return graphParserFailure('unsupported-relation', 'tuple-arity', path);
@@ -271,7 +315,10 @@ function classifyTuple(input: unknown, path: string): GraphSourceClassificationV
     return graphParserFailure('invalid-parameter', 'ambiguous-parametric-symbol', path);
   }
   if (shorthandParameters.length === 1) {
-    return buildParametricRelation(shorthandParameters[0], tuple, path);
+    return buildParametricRelation(shorthandParameters[0], tuple, path, conditionNode);
+  }
+  if (conditionNode !== undefined) {
+    return graphParserFailure('unsupported-relation', 'point-domain-restriction', path);
   }
   return classifyPointCoordinates([tuple], path);
 }
@@ -315,7 +362,9 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   if (operands.length !== 2) {
     return graphParserFailure('unsupported-relation', 'equality-chain', path);
   }
-  const [leftNode, rightNode] = operands;
+  const [leftNode, authoredRightNode] = operands;
+  const restrictedRight = splitDomainRestriction(authoredRightNode);
+  const rightNode = restrictedRight?.expressionNode ?? authoredRightNode;
   if (COMPARISON_OPERATORS.has(graphNodeOperator(leftNode) ?? '')
     || COMPARISON_OPERATORS.has(graphNodeOperator(rightNode) ?? '')) {
     return graphParserFailure('unsupported-relation', 'equality-chain', path);
@@ -323,7 +372,12 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   const parametric = explicitParametricSignature(leftNode);
   const rightTuple = graphTupleOperands(rightNode);
   if (parametric && rightTuple) {
-    return buildParametricRelation(parametric.parameterSymbol, rightTuple, path);
+    return buildParametricRelation(
+      parametric.parameterSymbol,
+      rightTuple,
+      path,
+      restrictedRight?.conditionNode,
+    );
   }
 
   const target = graphSymbolName(leftNode);
@@ -369,7 +423,16 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   }
   if (target === 'r') {
     const relation = relationForTarget('r', right.expression, 'authored-relation', path);
-    return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+    if (!relation.ok) return relation;
+    const restricted = restrictedRight
+      ? attachPolarDomain(relation.relation, restrictedRight.conditionNode, path)
+      : relation;
+    return restricted.ok
+      ? { ok: true, itemKind: 'relation', relation: restricted.relation }
+      : restricted;
+  }
+  if (restrictedRight) {
+    return graphParserFailure('unsupported-relation', 'domain-restriction-route', path);
   }
   return classifyImplicitEquality(left.expression, right.expression, path);
 }
@@ -440,6 +503,12 @@ export function classifyGraphMathJson(input: unknown): GraphSourceClassification
   }
   if (operator === 'Error') {
     return graphParserFailure('unsupported-relation', 'incomplete-or-invalid-source');
+  }
+  const restricted = splitDomainRestriction(node);
+  if (restricted) {
+    return graphTupleOperands(restricted.expressionNode)
+      ? classifyTuple(restricted.expressionNode, '$.tuple', restricted.conditionNode)
+      : graphParserFailure('unsupported-relation', 'domain-restriction-route');
   }
   if (operator === 'Which') return classifyPiecewise(node, 'y', 'bare-expression', '$.piecewise');
   if (graphTupleOperands(node)) return classifyTuple(node, '$.tuple');

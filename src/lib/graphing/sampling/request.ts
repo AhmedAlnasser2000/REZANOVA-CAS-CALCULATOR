@@ -19,6 +19,8 @@ import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
 import { sampleImplicitGraphRelation } from './implicit';
 import { sampleGraphPiecewise } from './piecewise';
+import { buildGraphGridScene } from './grid';
+import { sampleParametricGraphRelation } from './parametric';
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -82,6 +84,12 @@ function assembleEmptyScene(request: GraphSampleRequestV1) {
     revisions: request.revisions,
     viewport: request.viewport,
     paths: [],
+    grid: buildGraphGridScene({
+      viewport: request.viewport,
+      cssSize: request.cssSize,
+      policy: request.grid,
+      previousHysteresisKey: request.gridHysteresisKey,
+    }),
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
   return assembled.bundle.scene;
@@ -131,6 +139,43 @@ export async function runGraphSampleRequest(
     maximumTimeMs: Math.max(4, Math.floor(request.budgets.maximumTimeMs / visibleItemCount)),
     maximumVertices: Math.max(16, Math.floor(request.budgets.maximumVertices / visibleItemCount)),
   };
+
+  if (request.grid.unitCircle) {
+    const coordinates: number[] = [];
+    const parameterValues: number[] = [];
+    for (let index = 0; index <= 96; index += 1) {
+      const angle = index / 96 * Math.PI * 2;
+      coordinates.push(Math.cos(angle), Math.sin(angle));
+      parameterValues.push(angle);
+    }
+    paths.push({
+      pathId: 'graph-overlay.unit-circle:path',
+      sample: {
+        itemId: 'graph-overlay.unit-circle',
+        status: 'complete',
+        coordinates: new Float64Array(coordinates),
+        independentValues: new Float64Array(parameterValues),
+        segmentOffsets: new Uint32Array([0]),
+        stats: {
+          evaluatedSamples: parameterValues.length,
+          emittedVertices: parameterValues.length,
+          maximumDepthReached: 0,
+          elapsedMs: 0,
+        },
+      },
+      closed: true,
+      style: {
+        version: 1,
+        colorToken: 'graph-violet',
+        stroke: 'dashed',
+        strokeWidth: 'thin',
+        fillOpacity: 0,
+        label: 'never',
+      },
+    });
+    sampleCount += parameterValues.length;
+    vertexCount += parameterValues.length;
+  }
 
   for (const item of request.items) {
     if (!item.visible) continue;
@@ -314,6 +359,38 @@ export async function runGraphSampleRequest(
       if (cancelled) break;
       continue;
     }
+    if (item.relation.kind === 'polar-radius' || item.relation.kind === 'parametric-curve') {
+      const sampled = sampleParametricGraphRelation({
+        itemId: item.itemId,
+        sourceRevision: item.source.sourceRevision,
+        relation: item.relation,
+        presentation: item.presentation,
+        viewport: request.viewport,
+        cssSize: request.cssSize,
+        parameterEnvironment: request.parameterEnvironment,
+        quality: request.quality,
+        budgets: {
+          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
+          maximumSamples: fairBudgets.maximumSamples,
+          maximumTimeMs: Math.max(1, Math.floor(Math.min(
+            fairBudgets.maximumTimeMs,
+            control.maximumItemTimeMs ?? fairBudgets.maximumTimeMs,
+          ))),
+          maximumVertices: fairBudgets.maximumVertices,
+        },
+        cache: planCache,
+        control: { now, isCancelled },
+      });
+      if (sampled.path) paths.push(sampled.path);
+      sampleCount += sampled.sampleCount;
+      vertexCount += sampled.vertexCount;
+      if (sampled.stopReason) stopReasons.push({ ...sampled.stopReason, path: item.itemId });
+      if (sampled.status === 'cancelled') cancelled = true;
+      if (sampled.status === 'budget-exhausted') budgetExhausted = true;
+      await control.yieldBetweenItems?.();
+      if (cancelled) break;
+      continue;
+    }
     const compiled = compileExplicitGraphRelation({
       itemId: item.itemId,
       sourceRevision: item.source.sourceRevision,
@@ -366,17 +443,27 @@ export async function runGraphSampleRequest(
     paths,
     regions,
     pointBatches,
+    grid: buildGraphGridScene({
+      viewport: request.viewport,
+      cssSize: request.cssSize,
+      policy: request.grid,
+      previousHysteresisKey: request.gridHysteresisKey,
+    }),
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
+  const previewRefinementExhausted = request.quality === 'preview' && budgetExhausted;
+  const resultStopReasons = previewRefinementExhausted
+    ? stopReasons.filter((reason) => reason.code !== 'sampling-budget-exceeded')
+    : stopReasons;
   const status = cancelled
     ? 'cancelled'
-    : budgetExhausted
+    : budgetExhausted && !previewRefinementExhausted
       ? 'budget-exhausted'
       : 'complete';
   const result = graphResult(request, {
     scene: assembled.bundle.scene,
     status,
-    stopReasons,
+    stopReasons: resultStopReasons,
     sampleCount,
     vertexCount,
     elapsedMs: Math.max(0, now() - startedAt),

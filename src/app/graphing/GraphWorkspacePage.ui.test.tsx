@@ -166,6 +166,44 @@ describe('GraphWorkspacePage', () => {
     });
   });
 
+  it('plots polar and parametric authority while offering an explicit polar-grid switch', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'r=2\\cos(2\\theta)',
+    );
+    expect(await screen.findByRole('button', { name: 'Switch to Polar grid' })).toBeVisible();
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(
+      ([request]) => request.items[0]?.kind === 'relation'
+        && request.items[0].relation.kind === 'polar-radius',
+    )).toBe(true), { timeout: 2_500 });
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Polar grid' }));
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(
+      ([request]) => request.grid.kind === 'polar'
+        && request.items[0]?.kind === 'relation'
+        && request.items[0].relation.kind === 'polar-radius',
+    )).toBe(true), { timeout: 2_500 });
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.2'),
+      '(\\cos(t),\\sin(t))',
+    );
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.at(-1)?.[0].items[1])
+      .toMatchObject({ relation: { kind: 'parametric-curve', parameterSymbol: 't' } }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Grid & Axes' }));
+    expect(screen.getByRole('region', { name: 'Grid and axes settings' })).toBeVisible();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Unit Circle overlay' }));
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(
+      ([request]) => request.grid.kind === 'polar' && request.grid.unitCircle,
+    )).toBe(true));
+  });
+
   it('opens guided piecewise branches while retaining structured direct-entry authority', async () => {
     render(
       <GraphWorkspacePage

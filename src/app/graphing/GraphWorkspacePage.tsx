@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Focus,
+  Grid3X3,
   PanelLeftClose,
   PanelLeftOpen,
   Pause,
@@ -22,6 +23,7 @@ import {
   Redo2,
   Trash2,
   Undo2,
+  X,
 } from 'lucide-react';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { MathEditor } from '../../components/MathEditor';
@@ -348,6 +350,7 @@ export default function GraphWorkspacePage({
   workspaceContext,
 }: GraphWorkspacePageProps) {
   const [viewportSize, setViewportSize] = useState({ width: 960, height: 600 });
+  const [gridPanelOpen, setGridPanelOpen] = useState(false);
   const promotedItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
     cssSize: viewportSize,
@@ -387,12 +390,23 @@ export default function GraphWorkspacePage({
         continue;
       }
       if (item.kind === 'relation'
-        && (item.relation.kind === 'explicit-y' || item.relation.kind === 'explicit-x')) {
+        && (item.relation.kind === 'explicit-y'
+          || item.relation.kind === 'explicit-x')) {
         routes[item.itemId] = item.relation.kind;
+      } else if (item.kind === 'relation' && item.relation.kind === 'polar-radius') {
+        routes[item.itemId] = { kind: 'polar-radius', parameterSymbol: 'theta' };
+      } else if (item.kind === 'relation' && item.relation.kind === 'parametric-curve') {
+        routes[item.itemId] = {
+          kind: 'parametric-curve',
+          parameterSymbol: item.relation.parameterSymbol,
+        };
       }
     }
     return routes;
   }, [controller.session.document.items]);
+  const hasPolarRelation = controller.session.document.items.some((item) => (
+    item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
+  ));
 
   const focusNextRow = useCallback((itemId: string) => {
     requestAnimationFrame(() => {
@@ -465,8 +479,61 @@ export default function GraphWorkspacePage({
             <Focus aria-hidden="true" size={17} />
             <span>Auto-Fit</span>
           </button>
+          <button
+            aria-expanded={gridPanelOpen}
+            className="graph-toolbar-button"
+            onClick={() => setGridPanelOpen((open) => !open)}
+            type="button"
+          >
+            <Grid3X3 aria-hidden="true" size={17} />
+            <span>Grid &amp; Axes</span>
+          </button>
           <span className="graph-toolbar-context">Real · SVG reference</span>
         </div>
+
+        {gridPanelOpen ? (
+          <section aria-label="Grid and axes settings" className="graph-grid-panel">
+            <div className="graph-grid-panel-heading">
+              <strong>Grid &amp; Axes</strong>
+              <button aria-label="Close grid settings" onClick={() => setGridPanelOpen(false)} type="button">
+                <X aria-hidden="true" size={15} />
+              </button>
+            </div>
+            <span className="graph-grid-panel-label">Grid type</span>
+            <div className="graph-grid-kind" role="group" aria-label="Grid type">
+              {(['cartesian', 'polar', 'none'] as const).map((kind) => (
+                <button
+                  aria-pressed={controller.session.surface.grid.kind === kind}
+                  key={kind}
+                  onClick={() => controller.updateGrid({
+                    kind,
+                    angleLabels: kind === 'polar',
+                  })}
+                  type="button"
+                >
+                  {kind[0].toUpperCase() + kind.slice(1)}
+                </button>
+              ))}
+            </div>
+            {([
+              ['major', 'Major grid'],
+              ['minor', 'Minor grid'],
+              ['axisNumbers', 'Axis numbers'],
+              ['angleLabels', 'Angle values'],
+              ['unitCircle', 'Unit Circle overlay'],
+            ] as const).map(([key, label]) => (
+              <label className="graph-grid-toggle" key={key}>
+                <span>{label}</span>
+                <input
+                  checked={controller.session.surface.grid[key]}
+                  disabled={key === 'angleLabels' && controller.session.surface.grid.kind !== 'polar'}
+                  onChange={(event) => controller.updateGrid({ [key]: event.currentTarget.checked })}
+                  type="checkbox"
+                />
+              </label>
+            ))}
+          </section>
+        ) : null}
 
         <aside className="graph-expression-rail" aria-label="Expressions">
           <div className="graph-expression-list">
@@ -563,6 +630,15 @@ export default function GraphWorkspacePage({
           />
           {controller.isScenePending ? (
             <span className="graph-pending-badge">Updating</span>
+          ) : null}
+          {hasPolarRelation && controller.session.surface.grid.kind !== 'polar' ? (
+            <button
+              className="graph-polar-grid-suggestion"
+              onClick={() => controller.updateGrid({ kind: 'polar', angleLabels: true })}
+              type="button"
+            >
+              Switch to Polar grid
+            </button>
           ) : null}
         </section>
       </main>

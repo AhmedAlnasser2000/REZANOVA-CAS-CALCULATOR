@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -21,7 +20,12 @@ import {
   type GraphTraceTarget,
 } from './graph-hit-testing';
 
-export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set';
+export type GraphTraceRouteKind =
+  | 'explicit-y'
+  | 'explicit-x'
+  | 'point-set'
+  | { kind: 'polar-radius'; parameterSymbol: 'theta' }
+  | { kind: 'parametric-curve'; parameterSymbol: string };
 
 type GraphSvgViewportProps = {
   pending: boolean;
@@ -35,41 +39,6 @@ type GraphSvgViewportProps = {
 type ViewportSize = { width: number; height: number };
 
 const WHEEL_SETTLE_MS = 80;
-
-function screenPoint(
-  x: number,
-  y: number,
-  viewport: GraphViewportV1,
-  size: ViewportSize,
-) {
-  return {
-    x: (x - viewport.xMin) / (viewport.xMax - viewport.xMin) * size.width,
-    y: (viewport.yMax - y) / (viewport.yMax - viewport.yMin) * size.height,
-  };
-}
-
-function comfortableStep(span: number) {
-  const raw = span / 10;
-  const magnitude = 10 ** Math.floor(Math.log10(raw));
-  const normalized = raw / magnitude;
-  const multiplier = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
-  return multiplier * magnitude;
-}
-
-function tickValues(minimum: number, maximum: number, step: number) {
-  const first = Math.ceil(minimum / step) * step;
-  const values: number[] = [];
-  for (let value = first; value <= maximum + step * 1e-6 && values.length < 40; value += step) {
-    values.push(Math.abs(value) < step * 1e-9 ? 0 : value);
-  }
-  return values;
-}
-
-function formatTick(value: number, step: number) {
-  if (value === 0) return '0';
-  const decimals = Math.max(0, Math.min(4, -Math.floor(Math.log10(step))));
-  return value.toFixed(decimals).replace(/\.0+$/u, '');
-}
 
 function formatTraceNumber(value: number) {
   const rounded = Math.abs(value) < 1e-10 ? 0 : Number(value.toPrecision(6));
@@ -184,7 +153,13 @@ export function GraphSvgViewport({
     label.hidden = false;
     label.style.transform = `translate3d(${labelX}px, ${labelY}px, 0)`;
     const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)})`;
-    label.textContent = text;
+    const route = itemRoutesRef.current[target.itemId];
+    const parameterText = target.parameterValue === undefined
+      ? ''
+      : typeof route === 'object'
+        ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}`
+          : '';
+    label.textContent = text + parameterText;
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`);
   }, [clearTrace]);
 
@@ -263,7 +238,7 @@ export function GraphSvgViewport({
         const xSpan = (base.xMax - base.xMin) / wheel.scale;
         const ySpan = (base.yMax - base.yMin) / wheel.scale;
         onViewportChange({
-          coordinateSystem: 'cartesian',
+          coordinateSystem: base.coordinateSystem,
           xMin: xCenter - xRatio * xSpan,
           xMax: xCenter + (1 - xRatio) * xSpan,
           yMin: yCenter - (1 - yRatio) * ySpan,
@@ -376,7 +351,7 @@ export function GraphSvgViewport({
     const xShift = -pointer.dx / Math.max(1, size.width) * (pointer.viewport.xMax - pointer.viewport.xMin);
     const yShift = pointer.dy / Math.max(1, size.height) * (pointer.viewport.yMax - pointer.viewport.yMin);
     onViewportChange({
-      coordinateSystem: 'cartesian',
+      coordinateSystem: pointer.viewport.coordinateSystem,
       xMin: pointer.viewport.xMin + xShift,
       xMax: pointer.viewport.xMax + xShift,
       yMin: pointer.viewport.yMin + yShift,
@@ -409,18 +384,11 @@ export function GraphSvgViewport({
     }), true);
   };
 
-  const xStep = comfortableStep(viewport.xMax - viewport.xMin);
-  const yStep = comfortableStep(viewport.yMax - viewport.yMin);
-  const xTicks = useMemo(
-    () => tickValues(viewport.xMin, viewport.xMax, xStep),
-    [viewport.xMax, viewport.xMin, xStep],
+  const hasGraphGeometry = scene !== null && (
+    scene.paths.some((path) => !path.itemId.startsWith('graph-overlay.'))
+    || scene.regions.length > 0
+    || scene.pointBatches.length > 0
   );
-  const yTicks = useMemo(
-    () => tickValues(viewport.yMin, viewport.yMax, yStep),
-    [viewport.yMax, viewport.yMin, yStep],
-  );
-  const xAxis = screenPoint(0, 0, viewport, size).y;
-  const yAxis = screenPoint(0, 0, viewport, size).x;
 
   return (
     <div
@@ -428,7 +396,7 @@ export function GraphSvgViewport({
       data-scene-pending={pending ? 'true' : 'false'}
       data-testid="graph-viewport"
       aria-describedby="graph-trace-instructions"
-      aria-label="Interactive Cartesian graph. Press Enter to start keyboard tracing."
+      aria-label={`Interactive ${scene?.grid.kind ?? 'Cartesian'} graph. Press Enter to start keyboard tracing.`}
       role="region"
       onKeyDown={handleKeyDown}
       onPointerCancel={finishPointer}
@@ -439,41 +407,6 @@ export function GraphSvgViewport({
       tabIndex={0}
     >
       <div className="graph-svg-gesture-layer" ref={gestureLayerRef}>
-        <svg
-          aria-label="Interactive Cartesian graph"
-          className="graph-svg-canvas"
-          role="img"
-          viewBox={`0 0 ${size.width} ${size.height}`}
-        >
-          <g className="graph-svg-grid" aria-hidden="true">
-            {xTicks.map((value) => {
-              const x = screenPoint(value, 0, viewport, size).x;
-              return <line key={`x-${value}`} x1={x} x2={x} y1={0} y2={size.height} />;
-            })}
-            {yTicks.map((value) => {
-              const y = screenPoint(0, value, viewport, size).y;
-              return <line key={`y-${value}`} x1={0} x2={size.width} y1={y} y2={y} />;
-            })}
-          </g>
-          <g className="graph-svg-axes" aria-hidden="true">
-            {xAxis >= 0 && xAxis <= size.height ? <line x1={0} x2={size.width} y1={xAxis} y2={xAxis} /> : null}
-            {yAxis >= 0 && yAxis <= size.width ? <line x1={yAxis} x2={yAxis} y1={0} y2={size.height} /> : null}
-          </g>
-          <g className="graph-svg-ticks" aria-hidden="true">
-            {xTicks.filter((value) => value !== 0).map((value) => {
-              const point = screenPoint(value, 0, viewport, size);
-              const x = Math.max(18, Math.min(size.width - 18, point.x));
-              const y = Math.max(18, Math.min(size.height - 8, xAxis + 20));
-              return <text key={`xt-${value}`} x={x} y={y}>{formatTick(value, xStep)}</text>;
-            })}
-            {yTicks.filter((value) => value !== 0).map((value) => {
-              const point = screenPoint(0, value, viewport, size);
-              const x = Math.max(18, Math.min(size.width - 18, yAxis - 10));
-              const y = Math.max(14, Math.min(size.height - 8, point.y + 4));
-              return <text key={`yt-${value}`} x={x} y={y}>{formatTick(value, yStep)}</text>;
-            })}
-          </g>
-        </svg>
         <div className="graph-svg-geometry-host" ref={geometryHostRef} />
       </div>
       <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
@@ -481,7 +414,7 @@ export function GraphSvgViewport({
       <span className="graph-trace-instructions" id="graph-trace-instructions">
         Click a curve or point to trace it. Use arrow keys to move along the selected item and Escape to stop.
       </span>
-      {scene === null ? (
+      {!hasGraphGeometry ? (
         <div className="graph-viewport-empty" aria-hidden="true">
           <span>Enter an x-based expression to begin</span>
           <small>Try x² − 4 or sin(x)</small>

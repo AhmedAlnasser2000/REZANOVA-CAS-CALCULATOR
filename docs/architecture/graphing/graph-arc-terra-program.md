@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved revised 20-move implementation program; Moves 1-13 complete, Move 14 next
+Status: approved revised 20-move implementation program; Moves 1-13 complete, Move 14 implementation verified with checkpoint blockers recorded; Move 15 blocked
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -238,6 +238,8 @@ Status: complete in the verified Move 13 gate.
 - Deletion: any per-item substituted-source cache.
 
 ## 14. `GRAPHING-POLAR-GRID1`
+
+Status: implementation verified; pre-Three checkpoint remains blocked by the existing eager-main bundle ratchet and unavailable packaged-GUI visual smoke in the Snap VS Code environment.
 
 - Terra: High
 - Gate type: ui

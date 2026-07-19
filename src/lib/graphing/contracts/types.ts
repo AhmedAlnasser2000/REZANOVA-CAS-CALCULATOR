@@ -60,7 +60,12 @@ export type GraphRelationIR =
       operands: GraphExpressionIR[];
       operators: GraphInequalityComparator[];
     }
-  | { kind: 'polar-radius'; radius: GraphExpressionIR; angleSymbol: 'theta' }
+  | {
+      kind: 'polar-radius';
+      radius: GraphExpressionIR;
+      angleSymbol: 'theta';
+      domain?: GraphConditionIR;
+    }
   | {
       kind: 'parametric-curve';
       parameterSymbol: string;
@@ -374,6 +379,7 @@ export type GraphSampleRequestV1 = {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   grid: GraphGridPolicyV1;
+  gridHysteresisKey?: string;
   quality: 'preview' | 'settled';
   budgets: GraphSamplingBudgetsV1;
 };

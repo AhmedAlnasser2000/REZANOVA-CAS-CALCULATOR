@@ -145,6 +145,7 @@ export function useGraphWorkspaceController({
   const activeInputRevisionRef = useRef<string | null>(null);
   const previewInFlightRef = useRef(false);
   const queuedPreviewRef = useRef<GraphWorkspaceSessionStateV1 | null>(null);
+  const queuedSettledRef = useRef<GraphWorkspaceSessionStateV1 | null>(null);
   const launchSampleRef = useRef<(
     quality: 'preview' | 'settled',
     snapshot: GraphWorkspaceSessionStateV1,
@@ -431,6 +432,23 @@ export function useGraphWorkspaceController({
     }, true);
   }, [commitSession]);
 
+  const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV1['surface']['grid']>) => {
+    const current = sessionRef.current;
+    const grid = { ...current.surface.grid, ...values };
+    commitSession({
+      ...current,
+      surface: {
+        ...current.surface,
+        grid,
+        viewport: {
+          ...current.surface.viewport,
+          coordinateSystem: grid.kind === 'polar' ? 'polar' : 'cartesian',
+        },
+        viewportRevision: current.surface.viewportRevision + 1,
+      },
+    }, true);
+  }, [commitSession]);
+
   const autoFit = useCallback(() => {
     const scene = resultRef.current?.scene;
     if (!scene || scene.paths.length === 0) {
@@ -468,16 +486,6 @@ export function useGraphWorkspaceController({
     const width = Math.max(1, Math.round(cssSize.width));
     const height = Math.max(1, Math.round(cssSize.height));
     const items = classifiedItems(snapshot.document);
-    const visibleItems = items.filter((item) => item.visible);
-    if (visibleItems.length === 0) {
-      const previous = resultRef.current;
-      if (previous) releaseGraphSampleResultBuffers(previous);
-      resultRef.current = null;
-      setSampleResult(null);
-      setStatus({ kind: 'ready', label: 'Ready' });
-      return;
-    }
-
     requestSequenceRef.current += 1;
     const sequence = requestSequenceRef.current;
     const request: GraphSampleRequestV1 = {
@@ -496,6 +504,9 @@ export function useGraphWorkspaceController({
       viewport: snapshot.surface.viewport,
       cssSize: { width, height },
       grid: snapshot.surface.grid,
+      ...(resultRef.current?.scene.grid.hysteresisKey
+        ? { gridHysteresisKey: resultRef.current.scene.grid.hysteresisKey }
+        : {}),
       quality,
       budgets: quality === 'preview'
         ? { maximumRecursionDepth: 10, maximumSamples: 4_000, maximumTimeMs: 80, maximumVertices: 4_000 }
@@ -577,6 +588,11 @@ export function useGraphWorkspaceController({
       queuedPreviewRef.current = snapshot;
       return;
     }
+    if (quality === 'settled' && previewInFlightRef.current) {
+      queuedPreviewRef.current = null;
+      queuedSettledRef.current = snapshot;
+      return;
+    }
     if (quality === 'settled') queuedPreviewRef.current = null;
     if (quality === 'preview') previewInFlightRef.current = true;
     try {
@@ -585,8 +601,12 @@ export function useGraphWorkspaceController({
       if (quality === 'preview') {
         previewInFlightRef.current = false;
         const queued = queuedPreviewRef.current;
+        const settled = queuedSettledRef.current;
         queuedPreviewRef.current = null;
-        if (queued && mountedRef.current) {
+        queuedSettledRef.current = null;
+        if (settled && mountedRef.current) {
+          void launchSampleRef.current('settled', settled);
+        } else if (queued && mountedRef.current) {
           void launchSampleRef.current('preview', queued);
         }
       }
@@ -661,6 +681,7 @@ export function useGraphWorkspaceController({
       mountedRef.current = false;
       activeInputRevisionRef.current = null;
       queuedPreviewRef.current = null;
+      queuedSettledRef.current = null;
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
       persistRef.current(sessionRef.current);
       if (resultRef.current) releaseGraphSampleResultBuffers(resultRef.current);
@@ -696,6 +717,7 @@ export function useGraphWorkspaceController({
     toggleRail,
     undo,
     unresolvedSymbols: unresolvedGraphSymbols(session.document),
+    updateGrid,
     updateParameter,
     visibleDraftErrors,
   }), [
@@ -720,6 +742,7 @@ export function useGraphWorkspaceController({
     toggleItem,
     toggleRail,
     undo,
+    updateGrid,
     updateParameter,
     visibleDraftErrors,
   ]);
