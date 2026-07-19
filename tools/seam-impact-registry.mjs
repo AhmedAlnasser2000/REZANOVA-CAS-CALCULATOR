@@ -5,6 +5,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:graph-contracts'],
   },
   {
+    id: 'graph-parser',
+    label: 'Graphing MathLive, MathJSON, and relation-classifier contracts',
+    argv: ['npm', 'run', 'test:graph-parser'],
+  },
+  {
     id: 'graph-workspace-runtime',
     label: 'Graphing workspace identity, session, and lazy-runtime contracts',
     argv: ['npm', 'run', 'test:graph-workspace-runtime'],
@@ -122,6 +127,13 @@ export const SEAM_REGISTRY = [
       ),
     ],
     additionalCommandIds: ['graph-contracts'],
+    baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
+  {
+    id: 'graphing-parser',
+    label: 'Graphing bounded MathJSON adapter and relation classifier',
+    matchers: prefix('src/lib/graphing/parser/'),
+    additionalCommandIds: ['graph-parser'],
     baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
   },
   {

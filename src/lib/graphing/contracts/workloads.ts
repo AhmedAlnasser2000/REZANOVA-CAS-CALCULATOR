@@ -41,15 +41,15 @@ const relationRow = (
 });
 
 const visibleRelations: Array<[string, GraphRelationIR]> = [
-  ['y=sin(x)', { kind: 'explicit-y', rhs: expression(['Sin', 'x'], ['x']), origin: 'authored-relation' }],
+  ['y=\\sin(x)', { kind: 'explicit-y', rhs: expression(['Sin', 'x'], ['x']), origin: 'authored-relation' }],
   ['y=1/x', { kind: 'explicit-y', rhs: expression(['Divide', 1, 'x'], ['x']), origin: 'authored-relation' }],
-  ['y=sqrt(x)', { kind: 'explicit-y', rhs: expression(['Sqrt', 'x'], ['x']), origin: 'authored-relation' }],
+  ['y=\\sqrt{x}', { kind: 'explicit-y', rhs: expression(['Sqrt', 'x'], ['x']), origin: 'authored-relation' }],
   ['x=y^2', { kind: 'explicit-x', rhs: expression(['Power', 'y', 2], ['y']) }],
   ['x^2+y^2=9', { kind: 'implicit-equality', left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), right: expression(9) }],
   ['x^2+y^2<=16', { kind: 'inequality', left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), operator: '<=', right: expression(16) }],
-  ['y=a sin(x)', { kind: 'explicit-y', rhs: expression(['Multiply', 'a', ['Sin', 'x']], ['a', 'x']), origin: 'authored-relation' }],
-  ['r=2cos(2theta)', { kind: 'polar-radius', radius: expression(['Multiply', 2, ['Cos', ['Multiply', 2, 'theta']]], ['theta']), angleSymbol: 'theta' }],
-  ['(cos(t),sin(t))', { kind: 'parametric-curve', parameterSymbol: 't', x: expression(['Cos', 't'], ['t']), y: expression(['Sin', 't'], ['t']) }],
+  ['y=a\\sin(x)', { kind: 'explicit-y', rhs: expression(['Multiply', 'a', ['Sin', 'x']], ['a', 'x']), origin: 'authored-relation' }],
+  ['r=2\\cos(2\\theta)', { kind: 'polar-radius', radius: expression(['Multiply', 2, ['Cos', ['Multiply', 2, 'theta']]], ['theta']), angleSymbol: 'theta' }],
+  ['(\\cos(t),\\sin(t))', { kind: 'parametric-curve', parameterSymbol: 't', x: expression(['Cos', 't'], ['t']), y: expression(['Sin', 't'], ['t']) }],
   ['-2<x<3', { kind: 'chained-inequality', operands: [expression(-2), expression('x', ['x']), expression(3)], operators: ['<', '<'] }],
 ];
 
@@ -71,7 +71,7 @@ export const GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1: GraphDocumentV1 = {
       version: 1,
       kind: 'piecewise',
       itemId: 'baseline-piecewise-01',
-      source: source('f(x)={x^2,x<0;sqrt(x),x>=0}'),
+      source: source('y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}'),
       piecewise: {
         version: 1,
         branches: [

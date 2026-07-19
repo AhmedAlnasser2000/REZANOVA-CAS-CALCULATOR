@@ -32,6 +32,26 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects Graph contract and parser ratchets for relation classification', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/graphing/parser/classifier.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'graphing-contracts',
+      'graphing-parser',
+    ]);
+    assert.deepEqual(plan.laneIds, ['graphing']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'graph-contracts',
+      'graph-parser',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'compartment-boundaries',
+      'file-sizes',
+    ]);
+  });
+
   it('selects the Graph workspace runtime ratchet for Graph app state', () => {
     const plan = buildExplicitPathPlan([
       'src/app/graphing/graph-workspace-session.ts',

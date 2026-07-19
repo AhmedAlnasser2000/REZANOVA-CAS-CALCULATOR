@@ -43,4 +43,15 @@ describe('Graphing boundary ratchet', () => {
     const rootDir = rootWith('src/lib/graphing/contracts/document.ts', "export const exactLatex = 'x';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir }), /forbidden exactLatex authority/u);
   });
+
+  it('keeps authored LaTeX out of structured relation classification', () => {
+    const rootDir = rootWith(
+      'src/lib/graphing/parser/classifier.ts',
+      "export const classify = (sourceLatex) => sourceLatex.includes('=');\n",
+    );
+    assert.throws(
+      () => validateGraphingBoundaries({ rootDir }),
+      /reads authored LaTeX inside the structured classifier/u,
+    );
+  });
 });

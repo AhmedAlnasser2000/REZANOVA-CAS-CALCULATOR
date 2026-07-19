@@ -2,7 +2,7 @@
 
 Status: approved architecture contract; implementation active through the pre-Three foundation arc
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
-Implementation baseline: `76c0c61b`, followed by `133afdf2` for Move 1
+Implementation baseline: `76c0c61b`; Moves 1-3 are `133afdf2`, `e13e49d1`, and `110c3936`
 Date: 2026-07-19
 
 ## Scope and outcome
@@ -11,7 +11,7 @@ This contract defines the first production Graphing arc. Graphing will be a full
 
 Graphing is not a calculator `ModeId`, side surface, result card, launcher tile, History artifact, Notebook block, Surface Protocol capability, or detached experiment. The first arc has no cross-workspace Open, Send, or Plot action and no durable graph-project persistence.
 
-Move 2 establishes the production Graph contract source tree, performance fixture, renderer-neutral scene authority, and boundary ratchets. It does not yet add a Graph workspace kind, Graph OOE capability, visible page, or Three.js dependency.
+Moves 2-4 establish the production Graph contracts/performance fixture, hidden non-singleton workspace runtime, and bounded MathLive-to-standard-MathJSON relation classifier. The public `New Graph` entry, Graph OOE capability, visible page, sampler, renderer, and Three.js dependency remain absent.
 
 ## Rebased repository authority map
 

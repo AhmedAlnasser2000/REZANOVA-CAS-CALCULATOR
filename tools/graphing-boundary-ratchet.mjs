@@ -6,6 +6,10 @@ const GRAPH_ROOT = 'src/lib/graphing';
 const PUBLIC_CONTRACT_ROOT = `${GRAPH_ROOT}/contracts`;
 const THREE_ROOT = `${GRAPH_ROOT}/renderers/three`;
 const OOE_ROOT = `${GRAPH_ROOT}/ooe`;
+const STRUCTURED_CLASSIFIER_FILES = new Set([
+  `${GRAPH_ROOT}/parser/classifier.ts`,
+  `${GRAPH_ROOT}/parser/conditions.ts`,
+]);
 const FORBIDDEN_SOLVER_ROOTS = [
   'src/lib/calculus/',
   'src/lib/equation/',
@@ -54,6 +58,9 @@ export function validateGraphingBoundaries({ rootDir = process.cwd(), files } = 
     const text = readFileSync(path.join(rootDir, repoPath), 'utf8');
     if (/\bexactLatex\b/u.test(text)) {
       failures.push(`${repoPath} declares forbidden exactLatex authority.`);
+    }
+    if (STRUCTURED_CLASSIFIER_FILES.has(repoPath) && /\bsourceLatex\b/u.test(text)) {
+      failures.push(`${repoPath} reads authored LaTeX inside the structured classifier.`);
     }
     for (const specifier of importsFrom(text)) {
       const resolved = resolveImport(repoPath, specifier);
