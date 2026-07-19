@@ -195,9 +195,10 @@ function validateSceneCollections(scene: GraphSceneCollections) {
   const pointBatchIds = new Set<string>();
   for (const [index, batch] of scene.pointBatches.entries()) {
     const base = `$.pointBatches[${index}]`;
-    if (!hasOnlyKeys(batch, ['pointBatchId', 'itemId', 'coordinates', 'style'])
+    if (!hasOnlyKeys(batch, ['pointBatchId', 'itemId', 'coordinates', 'marker', 'style'])
       || !batch.pointBatchId || batch.pointBatchId.length > MAX_SCENE_ID_LENGTH
       || !batch.itemId || batch.itemId.length > MAX_SCENE_ID_LENGTH
+      || (batch.marker !== undefined && !['filled', 'open'].includes(batch.marker))
       || pointBatchIds.has(batch.pointBatchId) || !validPresentation(batch.style)) return fail('invalid-scene', 'Point batch identity or style is invalid.', base);
     pointBatchIds.add(batch.pointBatchId);
     const numbers = validateNumbers(batch.coordinates, `${base}.coordinates`, true);

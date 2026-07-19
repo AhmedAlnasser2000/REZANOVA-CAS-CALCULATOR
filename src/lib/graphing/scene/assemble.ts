@@ -176,6 +176,7 @@ export function assembleSampledScene(
       pointBatchId: entry.pointBatchId,
       itemId: entry.itemId,
       coordinates: entry.coordinates,
+      ...(entry.marker ? { marker: entry.marker } : {}),
       style: entry.style,
     })),
     labels: [...(input.labels ?? [])].sort((left, right) => left.labelId.localeCompare(right.labelId)),

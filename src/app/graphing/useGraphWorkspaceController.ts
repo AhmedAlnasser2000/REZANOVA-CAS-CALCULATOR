@@ -20,9 +20,11 @@ import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
 import {
   buildVisibleGraphItem,
   graphItemSourceLatex,
+  mutateGraphPiecewiseBranches,
   removeGraphDocumentItem,
   replaceGraphDocumentItem,
   toggleGraphDocumentItem,
+  updateGraphPiecewiseBranch,
 } from './graph-document';
 
 const PREVIEW_DELAY_MS = 80;
@@ -236,6 +238,34 @@ export function useGraphWorkspaceController({
     }, true);
   }, [commitSession, pushHistory]);
 
+  const editPiecewiseBranch = useCallback((input: {
+    itemId: string;
+    branchId: string;
+    valueLatex: string;
+    conditionLatex: string;
+  }) => {
+    const current = sessionRef.current;
+    const document = updateGraphPiecewiseBranch({ document: current.document, ...input });
+    if (!document) return false;
+    pushHistory(current.document, null);
+    activeInputRevisionRef.current = null;
+    commitSession({ ...current, document }, true);
+    return true;
+  }, [commitSession, pushHistory]);
+
+  const mutatePiecewiseBranch = useCallback((input: {
+    itemId: string;
+    action: 'add' | 'remove' | 'up' | 'down';
+    branchId?: string;
+  }) => {
+    const current = sessionRef.current;
+    const document = mutateGraphPiecewiseBranches({ document: current.document, ...input });
+    if (!document) return;
+    pushHistory(current.document, null);
+    activeInputRevisionRef.current = null;
+    commitSession({ ...current, document }, true);
+  }, [commitSession, pushHistory]);
+
   const undo = useCallback(() => {
     const history = historyRef.current;
     const snapshot = history.undo.at(-1);
@@ -404,12 +434,17 @@ export function useGraphWorkspaceController({
       const topologyInconclusive = envelope.payload.stopReasons.some(
         (reason) => reason.code === 'region-topology-inconclusive',
       );
+      const piecewiseConditionIssue = envelope.payload.stopReasons.some(
+        (reason) => reason.detailCode?.startsWith('piecewise-'),
+      );
       setStatus(envelope.payload.stopReasons.length > 0 && quality === 'settled'
         ? {
             kind: 'warning',
             label: topologyInconclusive
               ? 'Uncertain region cells were omitted safely.'
-              : 'Some items reached a safe plotting limit.',
+              : piecewiseConditionIssue
+                ? 'Review the piecewise branch conditions.'
+                : 'Some items reached a safe plotting limit.',
           }
         : { kind: 'ready', label: quality === 'preview' ? 'Preview ready' : 'Ready' });
     } catch {
@@ -504,9 +539,11 @@ export function useGraphWorkspaceController({
     canRedo: historyAvailability.canRedo,
     canUndo: historyAvailability.canUndo,
     editItem,
+    editPiecewiseBranch,
     endTypingTransaction,
     flushSampling,
     isScenePending,
+    mutatePiecewiseBranch,
     redo,
     removeItem,
     sampleResult,
@@ -523,10 +560,12 @@ export function useGraphWorkspaceController({
     blankItemId,
     blurItem,
     editItem,
+    editPiecewiseBranch,
     endTypingTransaction,
     flushSampling,
     historyAvailability,
     isScenePending,
+    mutatePiecewiseBranch,
     redo,
     removeItem,
     sampleResult,

@@ -623,6 +623,8 @@ Required semantic canaries:
 9. Polar angle labels occur on the budgeted selected ring, not every ring.
 10. Context loss disposes Three resources and shows the current SVG scene without changing the document.
 
+Piecewise execution consumes the existing structured branch relations and `GraphConditionIR` directly. Guided edits parse each value and condition field independently into structured leaves; the reconstructed cases LaTeX is presentation/provenance only and is never reparsed as authority. Every true branch renders, otherwise covers only unmatched input, overlapping branches remain visible with an ambiguity warning, and semantic open/filled endpoint markers cross the renderer-neutral scene.
+
 ## Protected paths and non-goals
 
 Unless a later dedicated prerequisite is approved, Graph milestones must not modify History persistence/replay/tickets, Notebook document/schema/page/publication, Surface Protocol, calculator Variables, existing solver route precedence, canonical-result types/version policy, shared printer authority, app-shell panel-motion behavior, unrelated OOE capability IDs/hosts, release packaging, remote/cloud compute, plugins, or public SDK contracts.

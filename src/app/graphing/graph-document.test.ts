@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { GraphDocumentV1 } from '../../lib/graphing';
 import {
   buildVisibleGraphItem,
+  mutateGraphPiecewiseBranches,
   replaceGraphDocumentItem,
+  updateGraphPiecewiseBranch,
 } from './graph-document';
 
 const document: GraphDocumentV1 = {
@@ -93,5 +95,39 @@ describe('Move 8 Graph document editing', () => {
     expect(secondDocument.documentRevision).toBe(2);
     expect(firstDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x' } });
     expect(secondDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x^2' } });
+  });
+
+  it('updates guided piecewise branches as structured IR without reparsing generated source', () => {
+    const item = buildVisibleGraphItem({
+      itemId: 'item.piecewise',
+      sourceLatex: 'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}',
+      sourceRevision: 1,
+      index: 0,
+    });
+    expect(item.kind).toBe('piecewise');
+    const initial = replaceGraphDocumentItem(document, item);
+    const updated = updateGraphPiecewiseBranch({
+      document: initial,
+      itemId: item.itemId,
+      branchId: 'branch.1',
+      valueLatex: 'x^3',
+      conditionLatex: 'x\\le-1',
+    });
+    expect(updated?.items[0]).toMatchObject({ kind: 'piecewise' });
+    expect(updated?.items[0]?.kind === 'piecewise' && updated.items[0].piecewise.branches[0])
+      .toMatchObject({
+        branchId: 'branch.1',
+        relation: { kind: 'explicit-y', rhs: { mathJson: ['Power', 'x', 3] } },
+        condition: { kind: 'comparison', operator: '<=' },
+    });
+    const added = updated && mutateGraphPiecewiseBranches({
+      document: updated,
+      itemId: item.itemId,
+      action: 'add',
+    });
+    expect(added?.items[0]).toMatchObject({
+      kind: 'piecewise',
+      piecewise: { branches: [{ branchId: 'branch.1' }, { branchId: 'branch.2' }, {}] },
+    });
   });
 });

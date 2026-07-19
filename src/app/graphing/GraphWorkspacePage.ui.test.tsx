@@ -166,6 +166,32 @@ describe('GraphWorkspacePage', () => {
     });
   });
 
+  it('opens guided piecewise branches while retaining structured direct-entry authority', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.1'),
+      'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}',
+    );
+    await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
+    expect(runGraphSampleWithOoe.mock.calls.at(-1)?.[0].items[0]).toMatchObject({
+      kind: 'piecewise',
+      piecewise: { branches: [{ condition: { kind: 'comparison' } }, { condition: { kind: 'comparison' } }] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
+    expect(screen.getByText('Piecewise branches')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add branch' }));
+    expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo graph edit' }));
+    expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(2);
+  });
+
   it('adds a guided Point Set item while retaining one trailing blank row', () => {
     render(
       <GraphWorkspacePage

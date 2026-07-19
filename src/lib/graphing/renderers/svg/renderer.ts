@@ -130,7 +130,10 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
         element.setAttribute('cx', String(point.x));
         element.setAttribute('cy', String(point.y));
         element.setAttribute('r', '5');
-        element.setAttribute('fill', GRAPH_COLORS[batch.style.colorToken] ?? '#5598ff');
+        const color = GRAPH_COLORS[batch.style.colorToken] ?? '#5598ff';
+        element.setAttribute('fill', batch.marker === 'open' ? '#071517' : color);
+        element.setAttribute('stroke', color);
+        element.setAttribute('stroke-width', '2');
         pointFragment.append(element);
       }
     }

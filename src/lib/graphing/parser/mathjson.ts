@@ -208,3 +208,11 @@ export function parseGraphLatexToStructuralMathJson(sourceLatex: string) {
     return graphParserFailure('unsupported-relation', 'latex-parse-failed');
   }
 }
+
+export function serializeGraphMathJsonToLatex(mathJson: SerializableMathJson) {
+  try {
+    return graphParserEngine.box(mathJson, { form: 'structural' }).toLatex();
+  } catch {
+    return '';
+  }
+}

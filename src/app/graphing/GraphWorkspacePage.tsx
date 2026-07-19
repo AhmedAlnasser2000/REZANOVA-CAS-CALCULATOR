@@ -6,7 +6,11 @@ import {
   useState,
 } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
   Eye,
   EyeOff,
   Focus,
@@ -22,8 +26,10 @@ import type { GraphItemSpecV1 } from '../../lib/graphing';
 import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
+  graphConditionLatex,
   graphItemSourceLatex,
   graphDraftMessage,
+  graphPiecewiseBranchValueLatex,
 } from './graph-document';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
@@ -44,7 +50,62 @@ type GraphExpressionRowProps = {
   runtimeWarning?: string;
   onSubmit: () => void;
   onToggle?: () => void;
+  onEditPiecewiseBranch?: (input: {
+    branchId: string;
+    valueLatex: string;
+    conditionLatex: string;
+  }) => boolean;
+  onMutatePiecewiseBranch?: (action: 'add' | 'remove' | 'up' | 'down', branchId?: string) => void;
 };
+
+function GraphPiecewiseBranchEditor({
+  branch,
+  index,
+  onCommit,
+  onMutate,
+}: {
+  branch: Extract<GraphItemSpecV1, { kind: 'piecewise' }>['piecewise']['branches'][number];
+  index: number;
+  onCommit: GraphExpressionRowProps['onEditPiecewiseBranch'];
+  onMutate: NonNullable<GraphExpressionRowProps['onMutatePiecewiseBranch']>;
+}) {
+  const [conditionLatex, setConditionLatex] = useState(() => graphConditionLatex(branch.condition));
+  const [valueLatex, setValueLatex] = useState(() => graphPiecewiseBranchValueLatex(branch));
+  const [invalid, setInvalid] = useState(false);
+  const commit = () => setInvalid(!(onCommit?.({ branchId: branch.branchId, valueLatex, conditionLatex }) ?? false));
+  return (
+    <div className="graph-piecewise-branch" data-branch-id={branch.branchId}>
+      <span className="graph-piecewise-branch-index">{index + 1}</span>
+      <MathEditor
+        className="graph-piecewise-field"
+        dataTestId={`graph-piecewise-value-${branch.branchId}`}
+        onBlur={commit}
+        onChange={setValueLatex}
+        onSubmit={commit}
+        placeholder="value"
+        shortcutProfile="graphing"
+        value={valueLatex}
+      />
+      <span className="graph-piecewise-if">if</span>
+      <MathEditor
+        className="graph-piecewise-field"
+        dataTestId={`graph-piecewise-condition-${branch.branchId}`}
+        onBlur={commit}
+        onChange={setConditionLatex}
+        onSubmit={commit}
+        placeholder="condition"
+        shortcutProfile="graphing"
+        value={conditionLatex}
+      />
+      <div className="graph-piecewise-branch-actions">
+        <button aria-label={`Move branch ${index + 1} up`} className="graph-mini-button" onClick={() => onMutate('up', branch.branchId)} type="button"><ArrowUp size={13} /></button>
+        <button aria-label={`Move branch ${index + 1} down`} className="graph-mini-button" onClick={() => onMutate('down', branch.branchId)} type="button"><ArrowDown size={13} /></button>
+        <button aria-label={`Remove branch ${index + 1}`} className="graph-mini-button" onClick={() => onMutate('remove', branch.branchId)} type="button"><Trash2 size={13} /></button>
+      </div>
+      {invalid ? <span className="graph-piecewise-invalid">Finish a valid value and condition.</span> : null}
+    </div>
+  );
+}
 
 function GraphExpressionRow({
   errorVisible,
@@ -53,10 +114,13 @@ function GraphExpressionRow({
   onBlur,
   onChange,
   onDelete,
+  onEditPiecewiseBranch,
+  onMutatePiecewiseBranch,
   onSubmit,
   onToggle,
   runtimeWarning,
 }: GraphExpressionRowProps) {
+  const [piecewiseExpanded, setPiecewiseExpanded] = useState(false);
   const draftMessage = item?.kind === 'invalid-relation-draft'
     ? graphDraftMessage(item.parseStop)
     : '';
@@ -85,6 +149,17 @@ function GraphExpressionRow({
       />
       {item ? (
         <div className="graph-expression-actions">
+          {item.kind === 'piecewise' ? (
+            <button
+              aria-expanded={piecewiseExpanded}
+              aria-label={piecewiseExpanded ? 'Collapse piecewise branches' : 'Expand piecewise branches'}
+              className="graph-icon-button"
+              onClick={() => setPiecewiseExpanded((expanded) => !expanded)}
+              type="button"
+            >
+              {piecewiseExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+          ) : null}
           <button
             aria-label={hidden ? 'Show graph' : 'Hide graph'}
             className="graph-icon-button"
@@ -108,6 +183,21 @@ function GraphExpressionRow({
           <AlertTriangle aria-hidden="true" size={14} />
           <span>{runtimeWarning ?? draftMessage}</span>
         </p>
+      ) : null}
+      {item?.kind === 'piecewise' && piecewiseExpanded && onMutatePiecewiseBranch ? (
+        <div className="graph-piecewise-editor">
+          <strong>Piecewise branches</strong>
+          {item.piecewise.branches.map((branch, index) => (
+            <GraphPiecewiseBranchEditor
+              branch={branch}
+              index={index}
+              key={branch.branchId}
+              onCommit={onEditPiecewiseBranch}
+              onMutate={onMutatePiecewiseBranch}
+            />
+          ))}
+          <button className="graph-piecewise-add" onClick={() => onMutatePiecewiseBranch('add')} type="button">+ Add branch</button>
+        </div>
       ) : null}
     </div>
   );
@@ -142,6 +232,10 @@ export default function GraphWorkspacePage({
           reason.path,
           'This item reached its safe plotting budget; only bounded geometry is shown.',
         );
+      } else if (reason.detailCode === 'piecewise-overlap') {
+        warnings.set(reason.path, 'Piecewise branches overlap; all matching branches are drawn.');
+      } else if (reason.detailCode?.startsWith('piecewise-impossible:')) {
+        warnings.set(reason.path, 'One piecewise branch has an impossible condition in this view.');
       }
     }
     return warnings;
@@ -256,6 +350,12 @@ export default function GraphWorkspacePage({
                     controller.editItem(itemId, latex);
                   }}
                   onDelete={item ? () => controller.removeItem(itemId) : undefined}
+                  onEditPiecewiseBranch={item?.kind === 'piecewise'
+                    ? (input) => controller.editPiecewiseBranch({ itemId, ...input })
+                    : undefined}
+                  onMutatePiecewiseBranch={item?.kind === 'piecewise'
+                    ? (action, branchId) => controller.mutatePiecewiseBranch({ itemId, action, branchId })
+                    : undefined}
                   onSubmit={() => {
                     controller.endTypingTransaction();
                     controller.flushSampling();

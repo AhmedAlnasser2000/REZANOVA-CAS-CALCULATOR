@@ -192,6 +192,68 @@ describe('Graph sample request runtime', () => {
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
+  it('samples every matching piecewise branch and emits semantic endpoints', async () => {
+    const piecewiseRequest = request();
+    piecewiseRequest.quality = 'settled';
+    piecewiseRequest.items = [{
+      version: 1,
+      kind: 'piecewise',
+      itemId: 'piecewise-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: 'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}',
+        sourceRevision: 1,
+      },
+      piecewise: {
+        version: 1,
+        branches: [{
+          branchId: 'negative',
+          relation: {
+            kind: 'explicit-y',
+            origin: 'authored-relation',
+            rhs: { mathJson: ['Power', 'x', 2], freeSymbols: ['x'] },
+          },
+          condition: {
+            kind: 'comparison',
+            left: { mathJson: 'x', freeSymbols: ['x'] },
+            operator: '<',
+            right: { mathJson: 0, freeSymbols: [] },
+          },
+        }, {
+          branchId: 'nonnegative',
+          relation: {
+            kind: 'explicit-y',
+            origin: 'authored-relation',
+            rhs: { mathJson: ['Sqrt', 'x'], freeSymbols: ['x'] },
+          },
+          condition: {
+            kind: 'comparison',
+            left: { mathJson: 'x', freeSymbols: ['x'] },
+            operator: '>=',
+            right: { mathJson: 0, freeSymbols: [] },
+          },
+        }],
+      },
+      visible: true,
+      presentation: piecewiseRequest.items[0]!.presentation,
+    }];
+    const execution = await runGraphSampleRequest(piecewiseRequest);
+
+    expect(execution.result.status).toBe('complete');
+    expect(execution.result.scene.paths.map((path) => path.pathId)).toEqual([
+      'piecewise-1:branch:negative',
+      'piecewise-1:branch:nonnegative',
+    ]);
+    expect(execution.result.scene.pointBatches.map((batch) => batch.marker).sort()).toEqual([
+      'filled',
+      'open',
+    ]);
+    expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
+      detailCode: 'piecewise-overlap',
+    }));
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+  });
+
   it('attributes bounded sampling stops to the affected Graph item', async () => {
     const bounded = request();
     bounded.budgets.maximumSamples = 20;

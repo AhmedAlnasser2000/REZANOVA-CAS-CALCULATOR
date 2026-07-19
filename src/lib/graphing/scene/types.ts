@@ -35,6 +35,7 @@ export type GraphPointBatchSceneInput = {
   pointBatchId: string;
   itemId: string;
   coordinates: Float64Array;
+  marker?: 'filled' | 'open';
   style: GraphItemPresentationV1;
 };
 

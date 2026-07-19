@@ -226,6 +226,26 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     });
   });
 
+  test('renders structured piecewise branches with guided controls and endpoint semantics', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    await expect(page.getByTestId('graph-scene-points').locator('circle').first())
+      .toHaveAttribute('fill', '#071517');
+    await page.getByRole('button', { name: 'Expand piecewise branches' }).click();
+    await expect(page.getByText('Piecewise branches')).toBeVisible();
+    await expect(page.getByRole('button', { name: '+ Add branch' })).toBeVisible();
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-piecewise-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
   test('keeps high-degree and directed routes complete through rapid interaction', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 940 });
     await page.goto('/');

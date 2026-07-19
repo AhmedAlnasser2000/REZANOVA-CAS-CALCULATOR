@@ -18,6 +18,7 @@ import { createGraphExpressionEvaluator } from '../evaluator';
 import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
 import { sampleImplicitGraphRelation } from './implicit';
+import { sampleGraphPiecewise } from './piecewise';
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -206,13 +207,38 @@ export async function runGraphSampleRequest(
       if (cancelled || budgetExhausted) break;
       continue;
     }
-    if (item.kind !== 'relation') {
-      stopReasons.push({
-        code: 'unsupported-relation',
-        path: item.itemId,
-        detailCode: `sample-item-${item.kind}`,
+    if (item.kind === 'piecewise') {
+      const sampled = sampleGraphPiecewise({
+        itemId: item.itemId,
+        sourceRevision: item.source.sourceRevision,
+        piecewise: item.piecewise,
+        presentation: item.presentation,
+        viewport: request.viewport,
+        cssSize: request.cssSize,
+        parameterEnvironment: request.parameterEnvironment,
+        quality: request.quality,
+        budgets: {
+          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
+          maximumSamples: fairBudgets.maximumSamples,
+          maximumTimeMs: Math.max(1, Math.floor(Math.min(
+            fairBudgets.maximumTimeMs,
+            control.maximumItemTimeMs ?? fairBudgets.maximumTimeMs,
+          ))),
+          maximumVertices: fairBudgets.maximumVertices,
+        },
+        cache: planCache,
+        control: { now, isCancelled },
       });
+      paths.push(...sampled.paths);
+      pointBatches.push(...sampled.endpointBatches);
+      sampleCount += sampled.stats.evaluatedSamples;
+      vertexCount += sampled.stats.emittedVertices
+        + sampled.endpointBatches.reduce((count, batch) => count + batch.coordinates.length / 2, 0);
+      sampled.stopReasons.forEach((reason) => stopReasons.push({ ...reason, path: item.itemId }));
+      if (sampled.status === 'cancelled') cancelled = true;
+      if (sampled.status === 'budget-exhausted') budgetExhausted = true;
       await control.yieldBetweenItems?.();
+      if (cancelled) break;
       continue;
     }
     if (item.relation.kind === 'implicit-equality'

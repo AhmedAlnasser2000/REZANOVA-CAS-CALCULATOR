@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved revised 20-move implementation program; Moves 1-10 complete, corrective Move 11 next
+Status: approved revised 20-move implementation program; Moves 1-12 complete, Move 13 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -188,6 +188,8 @@ Status: complete in the verified Move 7 gate.
 
 ## 11. `GRAPHING-INTERACTION-SAMPLING-CORRECTION1`
 
+Status: complete in `c9871ecd`.
+
 - Terra: High
 - Gate type: ui
 - Objective: correct visible interaction and sampling failures before adding more relation families: common high-degree explicit curves must not exhaust on offscreen spans, directed inequalities must use compact geometry, and pan/zoom must transform one complete scene without sampling work during the gesture.
@@ -202,6 +204,8 @@ Status: complete in the verified Move 7 gate.
 - Deletion: remove React-owned geometry serialization and stale-scene dimming superseded by the imperative SVG adapter.
 
 ## 12. `GRAPHING-PIECEWISE1`
+
+Status: verified for its approved commit.
 
 - Terra: High
 - Gate type: ui

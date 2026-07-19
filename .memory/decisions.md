@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-19 - GRAPHING-PIECEWISE1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Direct cases entry and guided piecewise editing share `GraphPiecewiseSpecV1`. Guided value and condition fields become structured expression/condition IR independently; regenerated LaTeX is presentation/provenance only and never becomes downstream authority.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Piecewise rendering has no hidden first-match semantics. Every matching branch renders, otherwise covers only unmatched input, conflicting overlap remains visible and ambiguous, impossible conditions warn, and endpoint inclusion is an explicit renderer-neutral scene marker.
+
 ## 2026-07-19 - GRAPHING-INTERACTION-SAMPLING-CORRECTION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] The Graphing program has 20 moves: the interaction/sampling correction is Move 11, Piecewise/Parameters/Polar-Grid are Moves 12-14, and Three.js cannot begin before Move 15. SVG remains the reference/fallback renderer.
