@@ -66,7 +66,7 @@ describe('Graph headless semantic validator', () => {
     expect(reverse.ok).toBe(true);
     if (!forward.ok || !reverse.ok) return;
     expect(forward.evidence.snapshotHash).toBe(reverse.evidence.snapshotHash);
-    expect(forward.evidence.snapshotHash).toBe('graph64:1820060b56e5f8b1');
+    expect(forward.evidence.snapshotHash).toBe('graph64:ab3feb3184dc773a');
     expect(forward.evidence).toMatchObject({
       pathCount: 2,
       regionCount: 0,

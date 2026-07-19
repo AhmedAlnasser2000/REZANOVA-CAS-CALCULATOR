@@ -27,6 +27,7 @@ import {
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
+const VIEWPORT_SETTLED_DELAY_MS = 120;
 const INVALID_GRACE_MS = 200;
 const SESSION_PERSIST_DELAY_MS = 240;
 const MAX_UNDO_STEPS = 80;
@@ -98,6 +99,11 @@ export function useGraphWorkspaceController({
   const activeInputRevisionRef = useRef<string | null>(null);
   const itemSequenceRef = useRef(2);
   const historyRef = useRef<GraphHistory>({ undo: [], redo: [], typingItemId: null });
+  const scheduledRevisionsRef = useRef({
+    document: initialSession.document.documentRevision,
+    parameter: initialSession.surface.parameterRevision,
+    viewport: initialSession.surface.viewportRevision,
+  });
 
   const publishHistoryAvailability = useCallback(() => {
     setHistoryAvailability({
@@ -373,6 +379,24 @@ export function useGraphWorkspaceController({
         if (envelope.ooe.releasedBufferBytes === 0) releaseGraphSampleResultBuffers(envelope.payload);
         return;
       }
+      if (envelope.payload.status === 'budget-exhausted') {
+        releaseGraphSampleResultBuffers(envelope.payload);
+        if (quality === 'preview') {
+          setStatus({ kind: 'sampling', label: 'Refining curves…' });
+          return;
+        }
+        const previous = resultRef.current;
+        const mathematicsChanged = !previous
+          || previous.revisions.document !== request.revisions.document
+          || previous.revisions.parameter !== request.revisions.parameter;
+        if (mathematicsChanged && previous) {
+          releaseGraphSampleResultBuffers(previous);
+          resultRef.current = null;
+          setSampleResult(null);
+        }
+        setStatus({ kind: 'warning', label: 'This view could not be completed safely.' });
+        return;
+      }
       const previous = resultRef.current;
       if (previous) releaseGraphSampleResultBuffers(previous);
       resultRef.current = envelope.payload;
@@ -380,7 +404,7 @@ export function useGraphWorkspaceController({
       const topologyInconclusive = envelope.payload.stopReasons.some(
         (reason) => reason.code === 'region-topology-inconclusive',
       );
-      setStatus(envelope.payload.stopReasons.length > 0
+      setStatus(envelope.payload.stopReasons.length > 0 && quality === 'settled'
         ? {
             kind: 'warning',
             label: topologyInconclusive
@@ -408,6 +432,15 @@ export function useGraphWorkspaceController({
   useEffect(() => {
     activeInputRevisionRef.current = null;
     const snapshot = sessionRef.current;
+    const previousRevisions = scheduledRevisionsRef.current;
+    const viewportOnly = previousRevisions.document === samplingDocumentRevision
+      && previousRevisions.parameter === samplingParameterRevision
+      && previousRevisions.viewport !== samplingViewportRevision;
+    scheduledRevisionsRef.current = {
+      document: samplingDocumentRevision,
+      parameter: samplingParameterRevision,
+      viewport: samplingViewportRevision,
+    };
     const invalidIds = snapshot.document.items
       .filter((item) => item.kind === 'invalid-relation-draft')
       .map((item) => item.itemId);
@@ -421,8 +454,14 @@ export function useGraphWorkspaceController({
       : null;
 
     if (invalidIds.length === 0) {
-      previewTimer = setTimeout(() => void launchSample('preview', snapshot), PREVIEW_DELAY_MS);
-      settledTimer = setTimeout(() => void launchSample('settled', snapshot), SETTLED_DELAY_MS);
+      previewTimer = setTimeout(
+        () => void launchSample('preview', snapshot),
+        viewportOnly ? 0 : PREVIEW_DELAY_MS,
+      );
+      settledTimer = setTimeout(
+        () => void launchSample('settled', snapshot),
+        viewportOnly ? VIEWPORT_SETTLED_DELAY_MS : SETTLED_DELAY_MS,
+      );
     }
     return () => {
       if (previewTimer) clearTimeout(previewTimer);

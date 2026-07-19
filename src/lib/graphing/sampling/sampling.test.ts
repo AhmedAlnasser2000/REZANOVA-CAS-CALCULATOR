@@ -84,8 +84,8 @@ describe('Graph explicit screen-space sampler', () => {
     const result = sample(explicitY(['Sin', 'x']));
     expect(result.status).toBe('complete');
     expect(result.segmentOffsets).toEqual(new Uint32Array([0]));
-    expect(result.independentValues[0]).toBe(-10);
-    expect(result.independentValues.at(-1)).toBe(10);
+    expect(result.independentValues[0]).toBeLessThan(-10);
+    expect(result.independentValues.at(-1)).toBeGreaterThan(10);
     expectBoundedPath(result);
   });
 
@@ -142,6 +142,22 @@ describe('Graph explicit screen-space sampler', () => {
     expect(result.coordinates[vertex * 2]).toBeCloseTo(result.independentValues[vertex] ** 2);
     expect(result.coordinates[vertex * 2 + 1]).toBe(result.independentValues[vertex]);
     expectBoundedPath(result);
+  });
+
+  it('does not exhaust refinement on high-degree offscreen polynomial spans', () => {
+    const fifthPower = sample(explicitY(['Power', 'x', 5]));
+    expect(fifthPower.status).toBe('complete');
+    expect(fifthPower.coordinates.length).toBeGreaterThan(4);
+    expect(fifthPower.stats.evaluatedSamples).toBeLessThan(1_000);
+
+    const explicitX: GraphRelationIR = {
+      kind: 'explicit-x',
+      rhs: expression(['Power', 'y', 6], ['y']),
+    };
+    const sixthPower = sample(explicitX, { plan: compile(explicitX) });
+    expect(sixthPower.status).toBe('complete');
+    expect(sixthPower.coordinates.length).toBeGreaterThan(4);
+    expect(sixthPower.stats.evaluatedSamples).toBeLessThan(1_000);
   });
 
   it('cancels cooperatively and never exceeds sample or vertex budgets', () => {

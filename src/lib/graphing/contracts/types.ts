@@ -321,6 +321,13 @@ export type GraphRenderPolicy = {
   pixelRatioCap: number;
 };
 
+export type GraphRenderFrameV1 = {
+  version: 1;
+  scene: SampledSceneRuntime;
+  viewport: GraphViewportV1;
+  policy: GraphRenderPolicy;
+};
+
 export type GraphHitResult = {
   itemId: string;
   sceneRevision: number;
@@ -335,7 +342,7 @@ export interface InteractiveGraphRenderer {
   readonly capabilities: GraphRendererCapabilities;
   mount(target: HTMLElement): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
-  render(scene: SampledSceneRuntime, policy: GraphRenderPolicy): void;
+  render(frame: GraphRenderFrameV1): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;

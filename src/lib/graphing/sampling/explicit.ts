@@ -50,6 +50,18 @@ function worldToScreen(
   };
 }
 
+function metricScreenPoint(
+  point: SamplePoint,
+  viewport: GraphViewportV1,
+  cssSize: { width: number; height: number },
+) {
+  const projected = worldToScreen(point, viewport, cssSize);
+  return {
+    x: Math.max(-cssSize.width * 2, Math.min(cssSize.width * 3, projected.x)),
+    y: Math.max(-cssSize.height * 2, Math.min(cssSize.height * 3, projected.y)),
+  };
+}
+
 function distance(left: { x: number; y: number }, right: { x: number; y: number }) {
   return Math.hypot(right.x - left.x, right.y - left.y);
 }
@@ -113,12 +125,16 @@ export function sampleExplicitGraphRelation(
   let maximumDepthReached = 0;
   let stop: ReturnType<typeof samplingStop> | null = null;
 
-  const independentMinimum = input.plan.relationKind === 'explicit-y'
+  const visibleIndependentMinimum = input.plan.relationKind === 'explicit-y'
     ? input.viewport.xMin
     : input.viewport.yMin;
-  const independentMaximum = input.plan.relationKind === 'explicit-y'
+  const visibleIndependentMaximum = input.plan.relationKind === 'explicit-y'
     ? input.viewport.xMax
     : input.viewport.yMax;
+  const independentSpan = visibleIndependentMaximum - visibleIndependentMinimum;
+  const overscan = independentSpan * (input.quality === 'preview' ? 0.12 : 0.2);
+  const independentMinimum = visibleIndependentMinimum - overscan;
+  const independentMaximum = visibleIndependentMaximum + overscan;
   const dependent = dependentBounds(input.viewport, input.plan.relationKind);
   const dependentSpan = dependent.maximum - dependent.minimum;
   const extendedMinimum = dependent.minimum - dependentSpan * 4;
@@ -179,9 +195,9 @@ export function sampleExplicitGraphRelation(
     let suspectedDiscontinuity = finiteTransition || !middle.finite;
 
     if (left.finite && middle.finite && right.finite) {
-      const leftScreen = worldToScreen(left, input.viewport, input.cssSize);
-      const middleScreen = worldToScreen(middle, input.viewport, input.cssSize);
-      const rightScreen = worldToScreen(right, input.viewport, input.cssSize);
+      const leftScreen = metricScreenPoint(left, input.viewport, input.cssSize);
+      const middleScreen = metricScreenPoint(middle, input.viewport, input.cssSize);
+      const rightScreen = metricScreenPoint(right, input.viewport, input.cssSize);
       const chordMiddle = {
         x: (leftScreen.x + rightScreen.x) / 2,
         y: (leftScreen.y + rightScreen.y) / 2,
@@ -199,12 +215,17 @@ export function sampleExplicitGraphRelation(
       const middleSide = outsideSide(middleDependent, dependent.minimum, dependent.maximum);
       const rightSide = outsideSide(rightDependent, dependent.minimum, dependent.maximum);
       const viewportReentry = leftSide === rightSide && leftSide !== 0 && middleSide !== leftSide;
+      const whollyOffscreenSameSide = leftSide !== 0
+        && leftSide === middleSide
+        && middleSide === rightSide;
       const largeJump = Math.abs(rightDependent - leftDependent) > dependentSpan * 4;
       suspectedDiscontinuity = largeJump
         && midpointDeviation > Math.max(input.cssSize.width, input.cssSize.height) * 0.35;
-      shouldRefine = midpointDeviation > policy.midpointTolerancePixels
+      shouldRefine = (!whollyOffscreenSameSide && (
+        midpointDeviation > policy.midpointTolerancePixels
         || maximumSegment > policy.maximumSegmentPixels
         || angle > policy.turnToleranceRadians
+      ))
         || viewportReentry
         || suspectedDiscontinuity;
     }

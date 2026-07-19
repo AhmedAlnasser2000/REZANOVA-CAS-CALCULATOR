@@ -11,6 +11,7 @@ import {
   type GraphExpressionEvaluator,
 } from '../evaluator';
 import type { GraphSamplerControl } from './types';
+import { sampleDirectedInequality } from './directed';
 
 type ImplicitRelation = Extract<GraphRelationIR, {
   kind: 'implicit-equality' | 'inequality' | 'chained-inequality';
@@ -126,6 +127,12 @@ function chooseGrid(input: GraphImplicitSamplingInput, clauseCount: number) {
     columns = Math.max(2, Math.floor(columns * scale));
     rows = Math.max(2, Math.floor(rows * scale));
   }
+  const maximumCellsFromVertices = Math.max(4, Math.floor(input.budgets.maximumVertices / 28));
+  if (columns * rows > maximumCellsFromVertices) {
+    const scale = Math.sqrt(maximumCellsFromVertices / (columns * rows));
+    columns = Math.max(2, Math.floor(columns * scale));
+    rows = Math.max(2, Math.floor(rows * scale));
+  }
   return { columns, rows };
 }
 
@@ -222,6 +229,8 @@ function strictComparator(operator: CompiledClause['operator']) {
 export function sampleImplicitGraphRelation(
   input: GraphImplicitSamplingInput,
 ): GraphSampledImplicitRelation {
+  const directed = sampleDirectedInequality(input);
+  if (directed) return directed;
   const now = input.control?.now ?? (() => performance.now());
   const isCancelled = input.control?.isCancelled ?? (() => false);
   const startedAt = now();
@@ -317,6 +326,21 @@ export function sampleImplicitGraphRelation(
         values.forEach((value, clause) => { centerValues[centerOffset(row, column, clause)] = value; });
       }
     }
+  }
+
+  if (status !== 'complete') {
+    return {
+      itemId: input.itemId,
+      status,
+      boundaries: [],
+      stopReasons,
+      stats: {
+        evaluatedSamples,
+        emittedVertices: 0,
+        maximumDepthReached: 0,
+        elapsedMs: Math.max(0, now() - startedAt),
+      },
+    };
   }
 
   const boundaryCoordinates = compiled.clauses.map(() => [] as number[]);

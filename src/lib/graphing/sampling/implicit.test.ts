@@ -73,6 +73,22 @@ describe('Graph implicit contour and region sampler', () => {
     expect(strict.region?.triangleIndices.length).toBeGreaterThan(9);
   });
 
+  it('uses compact directed geometry for coordinate-isolated inequalities', () => {
+    const result = sample({
+      kind: 'inequality',
+      left: expression('y', ['y']),
+      operator: '<',
+      right: expression('x', ['x']),
+    });
+    expect(result.status).toBe('complete');
+    expect(result.stopReasons).toEqual([]);
+    expect(result.boundaries).toHaveLength(1);
+    expect(result.boundaries[0]?.strict).toBe(true);
+    expect(result.region).toBeDefined();
+    expect(result.region!.vertices.length).toBeLessThan(1_000);
+    expect(result.region!.triangleIndices.length).toBeLessThan(1_000);
+  });
+
   it('clips supported chained intersections instead of filling either clause alone', () => {
     const result = sample({
       kind: 'chained-inequality',

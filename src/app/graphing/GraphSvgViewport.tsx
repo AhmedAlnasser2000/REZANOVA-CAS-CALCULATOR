@@ -8,11 +8,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import type {
-  GraphScenePathRuntime,
-  GraphSceneRegionRuntime,
-  GraphViewportV1,
-  SampledSceneRuntime,
+import {
+  GraphSvgReferenceRenderer,
+  type GraphViewportV1,
+  type SampledSceneRuntime,
 } from '../../lib/graphing';
 import {
   firstGraphTraceTarget,
@@ -35,15 +34,7 @@ type GraphSvgViewportProps = {
 
 type ViewportSize = { width: number; height: number };
 
-const WHEEL_SETTLE_MS = 180;
-
-const GRAPH_COLORS: Record<string, string> = {
-  'graph-blue': '#5598ff',
-  'graph-green': '#59dd88',
-  'graph-violet': '#ae68f5',
-  'graph-orange': '#ff9b4c',
-  'graph-cyan': '#52d4d8',
-};
+const WHEEL_SETTLE_MS = 80;
 
 function screenPoint(
   x: number,
@@ -55,48 +46,6 @@ function screenPoint(
     x: (x - viewport.xMin) / (viewport.xMax - viewport.xMin) * size.width,
     y: (viewport.yMax - y) / (viewport.yMax - viewport.yMin) * size.height,
   };
-}
-
-function pathData(
-  path: GraphScenePathRuntime,
-  viewport: GraphViewportV1,
-  size: ViewportSize,
-) {
-  const segmentStarts = new Set(path.segmentOffsets);
-  let output = '';
-  for (let vertex = 0; vertex * 2 + 1 < path.coordinates.length; vertex += 1) {
-    const point = screenPoint(
-      path.coordinates[vertex * 2],
-      path.coordinates[vertex * 2 + 1],
-      viewport,
-      size,
-    );
-    output += `${segmentStarts.has(vertex) ? 'M' : 'L'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
-  }
-  return output;
-}
-
-function regionData(
-  region: GraphSceneRegionRuntime,
-  viewport: GraphViewportV1,
-  size: ViewportSize,
-) {
-  let output = '';
-  for (let index = 0; index + 2 < region.triangleIndices.length; index += 3) {
-    const points = [0, 1, 2].map((offset) => {
-      const vertex = region.triangleIndices[index + offset]!;
-      return screenPoint(
-        region.vertices[vertex * 2]!,
-        region.vertices[vertex * 2 + 1]!,
-        viewport,
-        size,
-      );
-    });
-    output += `M${points[0]!.x.toFixed(2)} ${points[0]!.y.toFixed(2)}`
-      + `L${points[1]!.x.toFixed(2)} ${points[1]!.y.toFixed(2)}`
-      + `L${points[2]!.x.toFixed(2)} ${points[2]!.y.toFixed(2)}Z`;
-  }
-  return output;
 }
 
 function comfortableStep(span: number) {
@@ -137,6 +86,8 @@ export function GraphSvgViewport({
 }: GraphSvgViewportProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const gestureLayerRef = useRef<HTMLDivElement | null>(null);
+  const geometryHostRef = useRef<HTMLDivElement | null>(null);
+  const rendererRef = useRef<GraphSvgReferenceRenderer | null>(null);
   const traceMarkerRef = useRef<HTMLDivElement | null>(null);
   const traceLabelRef = useRef<HTMLDivElement | null>(null);
   const traceRef = useRef<GraphTraceTarget | null>(null);
@@ -163,6 +114,40 @@ export function GraphSvgViewport({
   const frameRef = useRef<number | null>(null);
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [size, setSize] = useState<ViewportSize>({ width: 960, height: 600 });
+
+  useLayoutEffect(() => {
+    const target = geometryHostRef.current;
+    if (!target) return;
+    const renderer = new GraphSvgReferenceRenderer();
+    renderer.mount(target);
+    rendererRef.current = renderer;
+    return () => {
+      renderer.dispose();
+      rendererRef.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    renderer.resize(size.width, size.height, window.devicePixelRatio || 1);
+    if (scene) {
+      renderer.render({
+        version: 1,
+        scene,
+        viewport,
+        policy: {
+          quality: pending ? 'interactive-preview' : 'settled',
+          reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+          maximumVertices: renderer.capabilities.maximumVertices,
+          maximumLabels: 250,
+          pixelRatioCap: 2,
+        },
+      });
+    } else {
+      renderer.clear();
+    }
+  }, [pending, scene, size, viewport]);
 
   useLayoutEffect(() => {
     viewportRef.current = viewport;
@@ -434,28 +419,6 @@ export function GraphSvgViewport({
     () => tickValues(viewport.yMin, viewport.yMax, yStep),
     [viewport.yMax, viewport.yMin, yStep],
   );
-  const projectedPaths = useMemo(() => scene?.paths.map((path) => ({
-    id: path.pathId,
-    color: GRAPH_COLORS[path.style.colorToken] ?? '#5598ff',
-    data: pathData(path, viewport, size),
-    dashed: path.style.stroke === 'dashed',
-    strokeWidth: path.style.strokeWidth === 'thin'
-      ? 1.5
-      : path.style.strokeWidth === 'strong' ? 3 : 2.25,
-  })) ?? [], [scene, size, viewport]);
-  const projectedRegions = useMemo(() => scene?.regions.map((region) => ({
-    id: region.regionId,
-    color: GRAPH_COLORS[region.style.colorToken] ?? '#5598ff',
-    data: regionData(region, viewport, size),
-    fillOpacity: region.style.fillOpacity,
-  })) ?? [], [scene, size, viewport]);
-  const projectedPointBatches = useMemo(() => scene?.pointBatches.map((batch) => ({
-    id: batch.pointBatchId,
-    color: GRAPH_COLORS[batch.style.colorToken] ?? '#5598ff',
-    points: Array.from({ length: batch.coordinates.length / 2 }, (_, index) => (
-      screenPoint(batch.coordinates[index * 2], batch.coordinates[index * 2 + 1], viewport, size)
-    )),
-  })) ?? [], [scene, size, viewport]);
   const xAxis = screenPoint(0, 0, viewport, size).y;
   const yAxis = screenPoint(0, 0, viewport, size).x;
 
@@ -510,46 +473,8 @@ export function GraphSvgViewport({
               return <text key={`yt-${value}`} x={x} y={y}>{formatTick(value, yStep)}</text>;
             })}
           </g>
-          <g className="graph-svg-regions" data-testid="graph-scene-regions">
-            {projectedRegions.map((region) => (
-              <path
-                d={region.data}
-                data-region-id={region.id}
-                fill={region.color}
-                fillOpacity={region.fillOpacity}
-                key={region.id}
-                stroke="none"
-              />
-            ))}
-          </g>
-          <g className="graph-svg-paths" data-testid="graph-scene-paths">
-            {projectedPaths.map((path) => (
-              <path
-                d={path.data}
-                data-path-id={path.id}
-                fill="none"
-                key={path.id}
-                stroke={path.color}
-                strokeDasharray={path.dashed ? '8 6' : undefined}
-                style={{ strokeWidth: path.strokeWidth }}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-          </g>
-          <g className="graph-svg-points" data-testid="graph-scene-points">
-            {projectedPointBatches.flatMap((batch) => batch.points.map((point, index) => (
-              <circle
-                cx={point.x}
-                cy={point.y}
-                data-point-batch-id={batch.id}
-                data-point-index={index}
-                fill={batch.color}
-                key={`${batch.id}:${index}`}
-                r={5}
-              />
-            )))}
-          </g>
         </svg>
+        <div className="graph-svg-geometry-host" ref={geometryHostRef} />
       </div>
       <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
       <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />

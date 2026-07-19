@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved 19-move implementation program; Moves 1-7 complete, Move 8 next
+Status: approved revised 20-move implementation program; Moves 1-10 complete, corrective Move 11 next
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -10,7 +10,7 @@ Rule: one named milestone is one reviewed, verified commit unless the user expli
 - Label each gate `ui` or `backend` and record evidence in its session dossier before commit.
 - Run focused affected tests, incremental TypeScript, `npm run test:memory-protocol`, `npm run test:file-sizes`, and `git diff --check`. Use the seam-impact selector and broader gates only when the touched seam requires them.
 - Any app-visible graph, label, region, error, evidence card, motion, or export preview requires Playwright inspection of the real app. Record viewport, inputs, expected result, screenshot path, and readability/overflow/context-loss findings.
-- The user approved commits for Moves 1-13 on 2026-07-19. Each gate still commits only after its focused verification. Push remains separately approval-gated.
+- The user approved commits for revised Moves 11-14 on 2026-07-19. Each gate still commits only after its focused verification. Push remains separately approval-gated.
 - Every gate updates `.memory/current-state.md`, the daily journal, its session dossier, and `.memory/decisions.md` or `.memory/open-questions.md` when the gate locks or leaves a durable choice.
 - Delete scaffolding, compatibility bridges, duplicate contracts, provisional SVG-only branches, debug flags, abandoned workers, and temporary fixtures in the same gate that supersedes them. Do not retain a second runtime path “for safety.”
 - Stop whenever the parent architecture's stop conditions are reached.
@@ -186,7 +186,22 @@ Status: complete in the verified Move 7 gate.
 - Stop: requested topology cannot be represented honestly within bounded cells/validation.
 - Deletion: provisional directed-only special cases duplicated by the region engine.
 
-## 11. `GRAPHING-PIECEWISE1`
+## 11. `GRAPHING-INTERACTION-SAMPLING-CORRECTION1`
+
+- Terra: High
+- Gate type: ui
+- Objective: correct visible interaction and sampling failures before adding more relation families: common high-degree explicit curves must not exhaust on offscreen spans, directed inequalities must use compact geometry, and pan/zoom must transform one complete scene without sampling work during the gesture.
+- Allowed: Graph explicit/implicit/directed samplers, request scheduling, SVG reference adapter, viewport controller/styles, Graph performance fixtures/tests/e2e, Graph contracts needed by the renderer frame.
+- Forbidden: Canvas, Three.js, solver-private imports, user-facing quality controls, OOE capability changes, analysis, unrelated workspaces.
+- Dependencies: implicit regions and the renderer-neutral scene contract.
+- Contracts: `GraphRenderFrameV1`; fair per-visible-item work allocation; complete-pass geometry; latest-only preview/settled commit; authored source and `GraphRelationIR` remain unchanged.
+- Behavior: the active complete scene transforms once per animation frame; wheel settles at 80ms; viewport preview launches after settlement; revision-old math stays non-traceable and is never presented as current after a settled mathematical failure.
+- Tests/evidence: `x^5`, `x^6`, `x=y^5`, `x=y^6`, `y<x`, implicit disk, discontinuity, rapid pan/wheel, native-selection suppression, compact SVG data, stale drop, reduced motion.
+- Broad gates: Graph semantic/UI/browser canaries, sample OOE probe, scene snapshots, renderer boundary.
+- Stop: correction requires a renderer-owned scene, unrestricted symbolic interval proving, or an app-wide event/scheduler rewrite.
+- Deletion: remove React-owned geometry serialization and stale-scene dimming superseded by the imperative SVG adapter.
+
+## 12. `GRAPHING-PIECEWISE1`
 
 - Terra: High
 - Gate type: ui
@@ -201,7 +216,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: a branch condition exceeds the bounded `GraphConditionIR` contract.
 - Deletion: temporary branch-fragment-only representation.
 
-## 12. `GRAPHING-PARAMETERS1`
+## 13. `GRAPHING-PARAMETERS1`
 
 - Terra: High
 - Gate type: ui
@@ -216,7 +231,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: non-scalar/symbolic parameter values or external stored-value links are required.
 - Deletion: any per-item substituted-source cache.
 
-## 13. `GRAPHING-POLAR-GRID1`
+## 14. `GRAPHING-POLAR-GRID1`
 
 - Terra: High
 - Gate type: ui
@@ -231,7 +246,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: grid labels require renderer-specific layout authority.
 - Deletion: any SVG-only tick generator once the scene grid is authoritative.
 
-## 14. `GRAPHING-THREE-RENDERER1`
+## 15. `GRAPHING-THREE-RENDERER1`
 
 - Terra: High
 - Gate type: ui
@@ -246,7 +261,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: Three-specific types or coordinate transforms leak upstream, or parity cannot be shown.
 - Deletion: any provisional production SVG interaction branch superseded by the governor; retain the reference/export adapter.
 
-## 15. `GRAPHING-ANALYSIS-OOE1`
+## 16. `GRAPHING-ANALYSIS-OOE1`
 
 - Terra: High
 - Gate type: backend
@@ -262,7 +277,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: a feature cannot be represented without a new canonical-result contract or would require changing solver precedence.
 - Deletion: Equation-shaped compatibility evidence or string-only exact paths.
 
-## 16. `GRAPHING-ANALYZE-UI1`
+## 17. `GRAPHING-ANALYZE-UI1`
 
 - Terra: Medium
 - Gate type: ui
@@ -277,7 +292,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: motion reuse requires changing existing shell panel behavior.
 - Deletion: test-only analysis surfaces and duplicate label formatting.
 
-## 17. `GRAPHING-COMPLEX-VIEWS1`
+## 18. `GRAPHING-COMPLEX-VIEWS1`
 
 - Terra: High
 - Gate type: ui
@@ -292,7 +307,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: a requested expression has no honest real parameter or needs a broader complex semantic.
 - Deletion: any Re/Im rewriting workaround or single-axis Both prototype.
 
-## 18. `GRAPHING-PRESENTATION-EXPORT1`
+## 19. `GRAPHING-PRESENTATION-EXPORT1`
 
 - Terra: High
 - Gate type: ui
@@ -307,7 +322,7 @@ Status: complete in the verified Move 7 gate.
 - Stop: export requires Notebook/publication or durable Graph persistence changes.
 - Deletion: object URLs, isolated canvases, buffers, and temporary export workers after each job; no screenshot fallback.
 
-## 19. `GRAPHING-ARC-CLOSEOUT1`
+## 20. `GRAPHING-ARC-CLOSEOUT1`
 
 - Terra: High
 - Gate type: backend and ui closeout

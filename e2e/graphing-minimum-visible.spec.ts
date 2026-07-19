@@ -225,4 +225,36 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
   });
+
+  test('keeps high-degree and directed routes complete through rapid interaction', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'x^5');
+    await enterExpression(page, 'x=y^6');
+    await enterExpression(page, 'y<x');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(3);
+    await expect(page.getByTestId('graph-scene-regions').locator('path')).toHaveCount(1);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await expect(page.getByText(/safe plotting limit/iu)).toHaveCount(0);
+
+    const regionData = await page.getByTestId('graph-scene-regions').locator('path').getAttribute('d');
+    expect(regionData?.length ?? Number.POSITIVE_INFINITY).toBeLessThan(20_000);
+
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    await page.mouse.move(bounds.x + bounds.width * 0.5, bounds.y + bounds.height * 0.5);
+    for (let burst = 0; burst < 8; burst += 1) await page.mouse.wheel(0, burst % 2 ? 180 : -220);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(3);
+    await expect(page.getByTestId('graph-scene-regions').locator('path')).toHaveCount(1);
+    await expect(page.getByTestId('graph-viewport')).not.toHaveCSS('user-select', 'auto');
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-interaction-sampling-correction-1440x940.png'),
+      fullPage: true,
+    });
+  });
 });

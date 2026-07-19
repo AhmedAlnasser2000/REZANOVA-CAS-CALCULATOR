@@ -479,7 +479,12 @@ interface InteractiveGraphRenderer {
   readonly capabilities: GraphRendererCapabilities;
   mount(target: HTMLElement): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
-  render(scene: SampledSceneRuntime, policy: GraphRenderPolicy): void;
+  render(frame: {
+    version: 1;
+    scene: SampledSceneRuntime;
+    viewport: GraphViewportV1;
+    policy: GraphRenderPolicy;
+  }): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;
@@ -549,6 +554,10 @@ The headless adapter validates scene semantics and snapshots. SVG is the determi
 ## Sampling contract
 
 The sampler works in screen space and preserves explicit discontinuity breaks. Each interval/cell considers midpoint deviation, pixel segment length, finite/non-finite transitions, viewport-relative jumps, curvature/turn angle, known domain-boundary proximity, viewport exit/re-entry, recursion depth, sample count, and elapsed budget. Any refinement reason can split; no angle-only policy is sufficient.
+
+Sampling work is fair per visible item. Each route first produces a complete coarse viewport pass, then spends remaining slices on refinement; ordinary slice completion is internal evidence, not a user-facing mathematical restriction. Coordinate-isolated inequalities use their structured directed route and compact clipped fill rather than a generic full-cell mesh. Generic implicit refinements replace the scene only after a complete resolution pass, so row-major partial regions never appear.
+
+Pan and zoom transform the last complete overscanned scene once per animation frame and launch no sampling job during the gesture. Settlement commits the viewport and launches one latest-only preview followed by settled refinement. Revision-old geometry is non-traceable; a failed viewport refinement may retain the transformed scene as pending, while failed changed document/parameter mathematics clears outdated geometry rather than presenting it as current.
 
 Known domain facts pre-split or exclude intervals but never disable numeric guards. A non-finite transition opens a segment and requires re-entry validation. No line may bridge a suspected discontinuity merely because both endpoints are finite. Results report budget exhaustion and suspected/inconclusive regions rather than hiding missing geometry.
 

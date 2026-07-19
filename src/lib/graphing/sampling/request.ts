@@ -123,6 +123,13 @@ export async function runGraphSampleRequest(
   let vertexCount = 0;
   let cancelled = false;
   let budgetExhausted = false;
+  const visibleItemCount = Math.max(1, request.items.filter((item) => item.visible).length);
+  const fairBudgets = {
+    maximumRecursionDepth: request.budgets.maximumRecursionDepth,
+    maximumSamples: Math.max(16, Math.floor(request.budgets.maximumSamples / visibleItemCount)),
+    maximumTimeMs: Math.max(4, Math.floor(request.budgets.maximumTimeMs / visibleItemCount)),
+    maximumVertices: Math.max(16, Math.floor(request.budgets.maximumVertices / visibleItemCount)),
+  };
 
   for (const item of request.items) {
     if (!item.visible) continue;
@@ -211,14 +218,6 @@ export async function runGraphSampleRequest(
     if (item.relation.kind === 'implicit-equality'
       || item.relation.kind === 'inequality'
       || item.relation.kind === 'chained-inequality') {
-      const remainingSamples = request.budgets.maximumSamples - sampleCount;
-      const remainingVertices = request.budgets.maximumVertices - vertexCount;
-      const remainingTimeMs = request.budgets.maximumTimeMs - (now() - startedAt);
-      if (remainingSamples <= 0 || remainingVertices <= 0 || remainingTimeMs <= 0) {
-        budgetExhausted = true;
-        stopReasons.push(budgetStop('request-budget-exhausted'));
-        break;
-      }
       const sampled = sampleImplicitGraphRelation({
         itemId: item.itemId,
         sourceRevision: item.source.sourceRevision,
@@ -228,13 +227,13 @@ export async function runGraphSampleRequest(
         parameterEnvironment: request.parameterEnvironment,
         quality: request.quality,
         budgets: {
-          maximumRecursionDepth: request.budgets.maximumRecursionDepth,
-          maximumSamples: remainingSamples,
+          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
+          maximumSamples: fairBudgets.maximumSamples,
           maximumTimeMs: Math.max(1, Math.floor(Math.min(
-            remainingTimeMs,
-            control.maximumItemTimeMs ?? remainingTimeMs,
+            fairBudgets.maximumTimeMs,
+            control.maximumItemTimeMs ?? fairBudgets.maximumTimeMs,
           ))),
-          maximumVertices: remainingVertices,
+          maximumVertices: fairBudgets.maximumVertices,
         },
         cache: planCache,
         control: { now, isCancelled },
@@ -300,14 +299,6 @@ export async function runGraphSampleRequest(
       await control.yieldBetweenItems?.();
       continue;
     }
-    const remainingSamples = request.budgets.maximumSamples - sampleCount;
-    const remainingVertices = request.budgets.maximumVertices - vertexCount;
-    const remainingTimeMs = request.budgets.maximumTimeMs - (now() - startedAt);
-    if (remainingSamples <= 0 || remainingVertices <= 0 || remainingTimeMs <= 0) {
-      budgetExhausted = true;
-      stopReasons.push(budgetStop('request-budget-exhausted'));
-      break;
-    }
     const sampled = sampleExplicitGraphRelation({
       plan: compiled.plan,
       viewport: request.viewport,
@@ -315,13 +306,13 @@ export async function runGraphSampleRequest(
       parameterEnvironment: request.parameterEnvironment,
       quality: request.quality,
       budgets: {
-        maximumRecursionDepth: request.budgets.maximumRecursionDepth,
-        maximumSamples: remainingSamples,
+        maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
+        maximumSamples: fairBudgets.maximumSamples,
         maximumTimeMs: Math.max(1, Math.floor(Math.min(
-          remainingTimeMs,
-          control.maximumItemTimeMs ?? remainingTimeMs,
+          fairBudgets.maximumTimeMs,
+          control.maximumItemTimeMs ?? fairBudgets.maximumTimeMs,
         ))),
-        maximumVertices: remainingVertices,
+        maximumVertices: fairBudgets.maximumVertices,
       },
       control: { now, isCancelled },
     });

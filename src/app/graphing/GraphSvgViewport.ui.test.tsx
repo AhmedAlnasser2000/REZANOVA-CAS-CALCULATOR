@@ -147,9 +147,9 @@ describe('GraphSvgViewport', () => {
     const host = screen.getByTestId('graph-viewport');
     act(() => {
       fireEvent.wheel(host, { clientX: 200, clientY: 160, deltaY: -120 });
-      vi.advanceTimersByTime(120);
+      vi.advanceTimersByTime(40);
       fireEvent.wheel(host, { clientX: 200, clientY: 160, deltaY: -120 });
-      vi.advanceTimersByTime(179);
+      vi.advanceTimersByTime(79);
     });
     expect(onViewportChange).not.toHaveBeenCalled();
 
