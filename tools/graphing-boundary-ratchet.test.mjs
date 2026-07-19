@@ -54,4 +54,24 @@ describe('Graphing boundary ratchet', () => {
       /reads authored LaTeX inside the structured classifier/u,
     );
   });
+
+  it('keeps evaluator and sampling downstream of structured relation authority', () => {
+    const sourceRoot = rootWith(
+      'src/lib/graphing/sampling/explicit.ts',
+      "export const sample = (sourceLatex) => sourceLatex;\n",
+    );
+    assert.throws(
+      () => validateGraphingBoundaries({ rootDir: sourceRoot }),
+      /reads authored LaTeX after GraphRelationIR/u,
+    );
+
+    const parserRoot = rootWith(
+      'src/lib/graphing/evaluator/compile.ts',
+      "import { ComputeEngine } from '@cortex-js/compute-engine';\n",
+    );
+    assert.throws(
+      () => validateGraphingBoundaries({ rootDir: parserRoot }),
+      /reparses authoring source after GraphRelationIR/u,
+    );
+  });
 });

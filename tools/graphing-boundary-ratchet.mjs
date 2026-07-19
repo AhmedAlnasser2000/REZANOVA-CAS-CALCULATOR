@@ -6,6 +6,10 @@ const GRAPH_ROOT = 'src/lib/graphing';
 const PUBLIC_CONTRACT_ROOT = `${GRAPH_ROOT}/contracts`;
 const THREE_ROOT = `${GRAPH_ROOT}/renderers/three`;
 const OOE_ROOT = `${GRAPH_ROOT}/ooe`;
+const STRUCTURED_RUNTIME_ROOTS = [
+  `${GRAPH_ROOT}/evaluator/`,
+  `${GRAPH_ROOT}/sampling/`,
+];
 const STRUCTURED_CLASSIFIER_FILES = new Set([
   `${GRAPH_ROOT}/parser/classifier.ts`,
   `${GRAPH_ROOT}/parser/conditions.ts`,
@@ -62,8 +66,16 @@ export function validateGraphingBoundaries({ rootDir = process.cwd(), files } = 
     if (STRUCTURED_CLASSIFIER_FILES.has(repoPath) && /\bsourceLatex\b/u.test(text)) {
       failures.push(`${repoPath} reads authored LaTeX inside the structured classifier.`);
     }
+    if (STRUCTURED_RUNTIME_ROOTS.some((root) => repoPath.startsWith(root))
+      && /\bsourceLatex\b/u.test(text)) {
+      failures.push(`${repoPath} reads authored LaTeX after GraphRelationIR classification.`);
+    }
     for (const specifier of importsFrom(text)) {
       const resolved = resolveImport(repoPath, specifier);
+      if (STRUCTURED_RUNTIME_ROOTS.some((root) => repoPath.startsWith(root))
+        && (specifier === 'mathlive' || specifier === '@cortex-js/compute-engine')) {
+        failures.push(`${repoPath} reparses authoring source after GraphRelationIR classification.`);
+      }
       if ((specifier === 'three' || specifier.startsWith('three/')) && !repoPath.startsWith(`${THREE_ROOT}/`)) {
         failures.push(`${repoPath} imports Three.js outside ${THREE_ROOT}/.`);
       }

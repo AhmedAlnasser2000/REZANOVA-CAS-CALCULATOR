@@ -10,6 +10,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:graph-parser'],
   },
   {
+    id: 'graph-sampling',
+    label: 'Graphing allowlisted evaluator and adaptive sampling contracts',
+    argv: ['npm', 'run', 'test:graph-sampling'],
+  },
+  {
     id: 'graph-workspace-runtime',
     label: 'Graphing workspace identity, session, and lazy-runtime contracts',
     argv: ['npm', 'run', 'test:graph-workspace-runtime'],
@@ -134,6 +139,16 @@ export const SEAM_REGISTRY = [
     label: 'Graphing bounded MathJSON adapter and relation classifier',
     matchers: prefix('src/lib/graphing/parser/'),
     additionalCommandIds: ['graph-parser'],
+    baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
+  {
+    id: 'graphing-sampling',
+    label: 'Graphing evaluator and bounded adaptive sampler',
+    matchers: prefix(
+      'src/lib/graphing/evaluator/',
+      'src/lib/graphing/sampling/',
+    ),
+    additionalCommandIds: ['graph-sampling'],
     baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
   },
   {
