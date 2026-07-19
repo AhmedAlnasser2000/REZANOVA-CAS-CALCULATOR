@@ -65,6 +65,14 @@ describe('Graph scene contracts', () => {
     const badTriangle = runtimeScene();
     badTriangle.regions[0]!.triangleIndices[2] = 9;
     expect(validateSampledSceneRuntime(badTriangle)).toMatchObject({ ok: false, failure: { reason: 'invalid-index' } });
+
+    const singletonSegment = runtimeScene();
+    singletonSegment.paths[0]!.segmentOffsets = new Uint32Array([0, 1]);
+    expect(validateSampledSceneRuntime(singletonSegment)).toMatchObject({ ok: false, failure: { reason: 'invalid-index' } });
+
+    const missingZero = runtimeScene();
+    missingZero.paths[0]!.segmentOffsets = new Uint32Array([1]);
+    expect(validateSampledSceneRuntime(missingZero)).toMatchObject({ ok: false, failure: { reason: 'invalid-index' } });
   });
 
   it('validates the revision-carrying sample result without accepting plain arrays', () => {

@@ -72,6 +72,26 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects Graph contract and scene ratchets for headless evidence', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/graphing/headless/inspect.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'graphing-contracts',
+      'graphing-scene-headless',
+    ]);
+    assert.deepEqual(plan.laneIds, ['graphing']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'graph-contracts',
+      'graph-scene',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'compartment-boundaries',
+      'file-sizes',
+    ]);
+  });
+
   it('selects the Graph workspace runtime ratchet for Graph app state', () => {
     const plan = buildExplicitPathPlan([
       'src/app/graphing/graph-workspace-session.ts',

@@ -15,6 +15,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:graph-sampling'],
   },
   {
+    id: 'graph-scene',
+    label: 'Graphing runtime scene assembly and headless semantic evidence',
+    argv: ['npm', 'run', 'test:graph-scene'],
+  },
+  {
     id: 'graph-workspace-runtime',
     label: 'Graphing workspace identity, session, and lazy-runtime contracts',
     argv: ['npm', 'run', 'test:graph-workspace-runtime'],
@@ -149,6 +154,16 @@ export const SEAM_REGISTRY = [
       'src/lib/graphing/sampling/',
     ),
     additionalCommandIds: ['graph-sampling'],
+    baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
+  },
+  {
+    id: 'graphing-scene-headless',
+    label: 'Graphing renderer-neutral scene and headless validation',
+    matchers: prefix(
+      'src/lib/graphing/scene/',
+      'src/lib/graphing/headless/',
+    ),
+    additionalCommandIds: ['graph-scene'],
     baselineEvidenceIds: ['compartment-boundaries', 'file-sizes'],
   },
   {

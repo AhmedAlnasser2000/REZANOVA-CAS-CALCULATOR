@@ -8,7 +8,9 @@ const THREE_ROOT = `${GRAPH_ROOT}/renderers/three`;
 const OOE_ROOT = `${GRAPH_ROOT}/ooe`;
 const STRUCTURED_RUNTIME_ROOTS = [
   `${GRAPH_ROOT}/evaluator/`,
+  `${GRAPH_ROOT}/headless/`,
   `${GRAPH_ROOT}/sampling/`,
+  `${GRAPH_ROOT}/scene/`,
 ];
 const STRUCTURED_CLASSIFIER_FILES = new Set([
   `${GRAPH_ROOT}/parser/classifier.ts`,

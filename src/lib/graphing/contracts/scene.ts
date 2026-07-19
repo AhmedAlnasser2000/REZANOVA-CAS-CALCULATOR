@@ -14,6 +14,9 @@ const MAX_SCENE_REGIONS = 256;
 const MAX_SCENE_POINT_BATCHES = 256;
 const MAX_SCENE_LABELS = 1_000;
 const MAX_SCENE_NUMBERS = 4_000_000;
+const MAX_SCENE_ID_LENGTH = 160;
+const MAX_SCENE_LABEL_TEXT_LENGTH = 500;
+const MAX_SCENE_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 
 export type GraphSceneValidationFailure = {
   reason: 'invalid-scene' | 'non-finite-number' | 'scene-budget-exceeded' | 'invalid-index';
@@ -23,6 +26,10 @@ export type GraphSceneValidationFailure = {
 
 export type GraphSceneValidationResult<T> =
   | { ok: true; value: T; hash: string }
+  | { ok: false; failure: GraphSceneValidationFailure };
+
+export type GraphSceneStructureValidationResult<T> =
+  | { ok: true; value: T }
   | { ok: false; failure: GraphSceneValidationFailure };
 
 function fail(reason: GraphSceneValidationFailure['reason'], message: string, path?: string) {
@@ -40,6 +47,7 @@ function validPresentation(value: GraphItemPresentationV1) {
     && hasOnlyKeys(value, ['version', 'colorToken', 'stroke', 'strokeWidth', 'fillOpacity', 'label'])
     && value.version === 1
     && value.colorToken.length > 0
+    && value.colorToken.length <= MAX_SCENE_ID_LENGTH
     && ['solid', 'dashed'].includes(value.stroke)
     && ['thin', 'normal', 'strong'].includes(value.strokeWidth)
     && Number.isFinite(value.fillOpacity)
@@ -60,7 +68,9 @@ function validateNumbers(values: ArrayLike<number>, path: string, even = false) 
 function validateLabel(label: GraphSceneLabelV1, path: string) {
   if (!hasOnlyKeys(label, ['labelId', 'itemId', 'role', 'anchor', 'priority', 'mathJson', 'plainText'])
     || !hasOnlyKeys(label.anchor, ['x', 'y'])
-    || !label.labelId || !['axis', 'tick', 'relation', 'feature', 'trace'].includes(label.role)) {
+    || !label.labelId || label.labelId.length > MAX_SCENE_ID_LENGTH
+    || (label.itemId !== undefined && (!label.itemId || label.itemId.length > MAX_SCENE_ID_LENGTH))
+    || !['axis', 'tick', 'relation', 'feature', 'trace'].includes(label.role)) {
     return fail('invalid-scene', 'Scene label identity or role is invalid.', path);
   }
   if (!Number.isFinite(label.anchor.x) || !Number.isFinite(label.anchor.y) || !Number.isFinite(label.priority)) {
@@ -68,6 +78,9 @@ function validateLabel(label: GraphSceneLabelV1, path: string) {
   }
   if (label.mathJson === undefined && label.plainText === undefined) {
     return fail('invalid-scene', 'Scene labels require MathJSON or plain text.', path);
+  }
+  if (label.plainText !== undefined && label.plainText.length > MAX_SCENE_LABEL_TEXT_LENGTH) {
+    return fail('scene-budget-exceeded', 'Scene label text exceeds its budget.', `${path}.plainText`);
   }
   if (label.mathJson !== undefined && !validateSerializableMathJson(label.mathJson).ok) {
     return fail('invalid-scene', 'Scene label MathJSON is invalid.', `${path}.mathJson`);
@@ -77,7 +90,8 @@ function validateLabel(label: GraphSceneLabelV1, path: string) {
 
 function validateGrid(grid: GraphGridSceneV1, path: string) {
   if (!hasOnlyKeys(grid, ['kind', 'majorLines', 'minorLines', 'labels', 'hysteresisKey'])
-    || !['cartesian', 'polar', 'argand', 'none'].includes(grid.kind) || !grid.hysteresisKey) {
+    || !['cartesian', 'polar', 'argand', 'none'].includes(grid.kind)
+    || !grid.hysteresisKey || grid.hysteresisKey.length > MAX_SCENE_ID_LENGTH) {
     return fail('invalid-scene', 'Scene grid identity is invalid.', path);
   }
   return validateNumbers(grid.majorLines, `${path}.majorLines`)
@@ -89,6 +103,120 @@ function validateGrid(grid: GraphGridSceneV1, path: string) {
 
 function stableSort<T>(values: T[], key: (value: T) => string) {
   return [...values].sort((left, right) => key(left).localeCompare(key(right)));
+}
+
+type GraphSceneCollections = Pick<
+  SampledSceneSnapshotV1 | SampledSceneRuntime,
+  'paths' | 'regions' | 'pointBatches' | 'labels' | 'grid'
+>;
+
+function sceneNumberCount(scene: GraphSceneCollections) {
+  return scene.paths.reduce((count, path) => count
+    + path.coordinates.length
+    + path.segmentOffsets.length
+    + (path.parameterValues?.length ?? 0), 0)
+    + scene.regions.reduce((count, region) => count
+      + region.vertices.length
+      + region.triangleIndices.length, 0)
+    + scene.pointBatches.reduce((count, batch) => count + batch.coordinates.length, 0)
+    + (Array.isArray(scene.grid?.majorLines) ? scene.grid.majorLines.length : 0)
+    + (Array.isArray(scene.grid?.minorLines) ? scene.grid.minorLines.length : 0);
+}
+
+function validateSegmentOffsets(
+  offsets: ArrayLike<number>,
+  vertexCount: number,
+  path: string,
+) {
+  if (vertexCount === 0) {
+    return offsets.length === 0
+      ? null
+      : fail('invalid-index', 'Empty paths cannot declare segment offsets.', path);
+  }
+  if (offsets.length === 0 || offsets[0] !== 0) {
+    return fail('invalid-index', 'Non-empty paths must begin with segment offset zero.', path);
+  }
+  for (let index = 0; index < offsets.length; index += 1) {
+    const offset = offsets[index];
+    if (!Number.isInteger(offset) || offset < 0 || offset >= vertexCount) {
+      return fail('invalid-index', 'Path segment offset is invalid.', `${path}[${index}]`);
+    }
+    if (index > 0 && offset <= offsets[index - 1]) {
+      return fail('invalid-index', 'Path segment offsets must be strictly increasing.', `${path}[${index}]`);
+    }
+    const end = offsets[index + 1] ?? vertexCount;
+    if (end - offset < 2) {
+      return fail('invalid-index', 'Every path segment requires at least two vertices.', `${path}[${index}]`);
+    }
+  }
+  return null;
+}
+
+function validateSceneCollections(scene: GraphSceneCollections) {
+  if (!Array.isArray(scene.paths) || scene.paths.length > MAX_SCENE_PATHS) return fail('scene-budget-exceeded', 'Scene path budget exceeded.', '$.paths');
+  if (!Array.isArray(scene.regions) || scene.regions.length > MAX_SCENE_REGIONS) return fail('scene-budget-exceeded', 'Scene region budget exceeded.', '$.regions');
+  if (!Array.isArray(scene.pointBatches) || scene.pointBatches.length > MAX_SCENE_POINT_BATCHES) return fail('scene-budget-exceeded', 'Scene point-batch budget exceeded.', '$.pointBatches');
+  if (!Array.isArray(scene.labels) || scene.labels.length > MAX_SCENE_LABELS) return fail('scene-budget-exceeded', 'Scene label budget exceeded.', '$.labels');
+  if (sceneNumberCount(scene) > MAX_SCENE_NUMBERS) return fail('scene-budget-exceeded', 'Scene exceeds the total numeric budget.');
+  const pathIds = new Set<string>();
+  for (const [index, path] of scene.paths.entries()) {
+    const base = `$.paths[${index}]`;
+    if (!hasOnlyKeys(path, ['pathId', 'itemId', 'coordinates', 'segmentOffsets', 'parameterValues', 'closed', 'style'])
+      || !path.pathId || path.pathId.length > MAX_SCENE_ID_LENGTH
+      || !path.itemId || path.itemId.length > MAX_SCENE_ID_LENGTH
+      || pathIds.has(path.pathId) || !validPresentation(path.style)) return fail('invalid-scene', 'Scene path identity or style is invalid.', base);
+    pathIds.add(path.pathId);
+    const numbers = validateNumbers(path.coordinates, `${base}.coordinates`, true)
+      ?? validateNumbers(path.segmentOffsets, `${base}.segmentOffsets`)
+      ?? (path.parameterValues ? validateNumbers(path.parameterValues, `${base}.parameterValues`) : null);
+    if (numbers) return numbers;
+    if (path.parameterValues && path.parameterValues.length !== path.coordinates.length / 2) return fail('invalid-scene', 'Path parameter values must align with vertices.', `${base}.parameterValues`);
+    const segmentIssue = validateSegmentOffsets(
+      path.segmentOffsets,
+      path.coordinates.length / 2,
+      `${base}.segmentOffsets`,
+    );
+    if (segmentIssue) return segmentIssue;
+  }
+  const regionIds = new Set<string>();
+  for (const [index, region] of scene.regions.entries()) {
+    const base = `$.regions[${index}]`;
+    if (!hasOnlyKeys(region, ['regionId', 'itemId', 'vertices', 'triangleIndices', 'boundaryPathIds', 'style'])
+      || !region.regionId || region.regionId.length > MAX_SCENE_ID_LENGTH
+      || !region.itemId || region.itemId.length > MAX_SCENE_ID_LENGTH
+      || regionIds.has(region.regionId) || !validPresentation(region.style)) return fail('invalid-scene', 'Scene region identity or style is invalid.', base);
+    regionIds.add(region.regionId);
+    const numbers = validateNumbers(region.vertices, `${base}.vertices`, true)
+      ?? validateNumbers(region.triangleIndices, `${base}.triangleIndices`);
+    if (numbers) return numbers;
+    if (region.triangleIndices.length % 3 !== 0 || region.triangleIndices.some((value) => !Number.isInteger(value) || value >= region.vertices.length / 2)) return fail('invalid-index', 'Region triangle index is invalid.', `${base}.triangleIndices`);
+    if (region.boundaryPathIds.some((pathId) => !pathIds.has(pathId))) return fail('invalid-index', 'Region references a missing boundary path.', `${base}.boundaryPathIds`);
+  }
+  const pointBatchIds = new Set<string>();
+  for (const [index, batch] of scene.pointBatches.entries()) {
+    const base = `$.pointBatches[${index}]`;
+    if (!hasOnlyKeys(batch, ['pointBatchId', 'itemId', 'coordinates', 'style'])
+      || !batch.pointBatchId || batch.pointBatchId.length > MAX_SCENE_ID_LENGTH
+      || !batch.itemId || batch.itemId.length > MAX_SCENE_ID_LENGTH
+      || pointBatchIds.has(batch.pointBatchId) || !validPresentation(batch.style)) return fail('invalid-scene', 'Point batch identity or style is invalid.', base);
+    pointBatchIds.add(batch.pointBatchId);
+    const numbers = validateNumbers(batch.coordinates, `${base}.coordinates`, true);
+    if (numbers) return numbers;
+  }
+  for (const [index, label] of scene.labels.entries()) {
+    const issue = validateLabel(label, `$.labels[${index}]`);
+    if (issue) return issue;
+  }
+  const gridIssue = validateGrid(scene.grid, '$.grid');
+  if (gridIssue) return gridIssue;
+  const labelIds = new Set<string>();
+  for (const label of [...scene.labels, ...scene.grid.labels]) {
+    if (labelIds.has(label.labelId)) {
+      return fail('invalid-scene', 'Scene label IDs must be globally unique.', '$.labels');
+    }
+    labelIds.add(label.labelId);
+  }
+  return null;
 }
 
 export function normalizeGraphSceneSnapshot(snapshot: SampledSceneSnapshotV1): SampledSceneSnapshotV1 {
@@ -154,55 +282,36 @@ export function validateSampledSceneSnapshot(input: unknown): GraphSceneValidati
     || !hasOnlyKeys(scene.revisions, ['scene', 'document', 'viewport', 'parameter'])
     || Object.values(scene.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Scene snapshot version or revisions are invalid.');
   if (!validateGraphViewport(scene.viewport).ok) return fail('invalid-scene', 'Scene viewport is invalid.', '$.viewport');
-  if (!Array.isArray(scene.paths) || scene.paths.length > MAX_SCENE_PATHS) return fail('scene-budget-exceeded', 'Scene path budget exceeded.', '$.paths');
-  if (!Array.isArray(scene.regions) || scene.regions.length > MAX_SCENE_REGIONS) return fail('scene-budget-exceeded', 'Scene region budget exceeded.', '$.regions');
-  if (!Array.isArray(scene.pointBatches) || scene.pointBatches.length > MAX_SCENE_POINT_BATCHES) return fail('scene-budget-exceeded', 'Scene point-batch budget exceeded.', '$.pointBatches');
-  if (!Array.isArray(scene.labels) || scene.labels.length > MAX_SCENE_LABELS) return fail('scene-budget-exceeded', 'Scene label budget exceeded.', '$.labels');
-  const pathIds = new Set<string>();
-  for (const [index, path] of scene.paths.entries()) {
-    const base = `$.paths[${index}]`;
-    if (!hasOnlyKeys(path, ['pathId', 'itemId', 'coordinates', 'segmentOffsets', 'parameterValues', 'closed', 'style'])
-      || !path.pathId || !path.itemId || pathIds.has(path.pathId) || !validPresentation(path.style)) return fail('invalid-scene', 'Scene path identity or style is invalid.', base);
-    pathIds.add(path.pathId);
-    const numbers = validateNumbers(path.coordinates, `${base}.coordinates`, true)
-      ?? validateNumbers(path.segmentOffsets, `${base}.segmentOffsets`)
-      ?? (path.parameterValues ? validateNumbers(path.parameterValues, `${base}.parameterValues`) : null);
-    if (numbers) return numbers;
-    if (path.parameterValues && path.parameterValues.length !== path.coordinates.length / 2) return fail('invalid-scene', 'Path parameter values must align with vertices.', `${base}.parameterValues`);
-    if (path.segmentOffsets.some((offset) => !Number.isInteger(offset) || offset > path.coordinates.length / 2)) return fail('invalid-index', 'Path segment offset is invalid.', `${base}.segmentOffsets`);
-  }
-  const regionIds = new Set<string>();
-  for (const [index, region] of scene.regions.entries()) {
-    const base = `$.regions[${index}]`;
-    if (!hasOnlyKeys(region, ['regionId', 'itemId', 'vertices', 'triangleIndices', 'boundaryPathIds', 'style'])
-      || !region.regionId || !region.itemId || regionIds.has(region.regionId) || !validPresentation(region.style)) return fail('invalid-scene', 'Scene region identity or style is invalid.', base);
-    regionIds.add(region.regionId);
-    const numbers = validateNumbers(region.vertices, `${base}.vertices`, true)
-      ?? validateNumbers(region.triangleIndices, `${base}.triangleIndices`);
-    if (numbers) return numbers;
-    if (region.triangleIndices.length % 3 !== 0 || region.triangleIndices.some((value) => !Number.isInteger(value) || value >= region.vertices.length / 2)) return fail('invalid-index', 'Region triangle index is invalid.', `${base}.triangleIndices`);
-    if (region.boundaryPathIds.some((pathId) => !pathIds.has(pathId))) return fail('invalid-index', 'Region references a missing boundary path.', `${base}.boundaryPathIds`);
-  }
-  const pointBatchIds = new Set<string>();
-  for (const [index, batch] of scene.pointBatches.entries()) {
-    const base = `$.pointBatches[${index}]`;
-    if (!hasOnlyKeys(batch, ['pointBatchId', 'itemId', 'coordinates', 'style'])
-      || !batch.pointBatchId || !batch.itemId || pointBatchIds.has(batch.pointBatchId) || !validPresentation(batch.style)) return fail('invalid-scene', 'Point batch identity or style is invalid.', base);
-    pointBatchIds.add(batch.pointBatchId);
-    const numbers = validateNumbers(batch.coordinates, `${base}.coordinates`, true);
-    if (numbers) return numbers;
-  }
-  for (const [index, label] of scene.labels.entries()) {
-    const issue = validateLabel(label, `$.labels[${index}]`);
-    if (issue) return issue;
-  }
-  const gridIssue = validateGrid(scene.grid, '$.grid');
-  if (gridIssue) return gridIssue;
+  const collectionIssue = validateSceneCollections(scene);
+  if (collectionIssue) return collectionIssue;
   const normalized = normalizeGraphSceneSnapshot(scene);
+  if (new TextEncoder().encode(serializeGraphSceneSnapshot(normalized)).byteLength
+    > MAX_SCENE_SNAPSHOT_BYTES) {
+    return fail('scene-budget-exceeded', 'Serialized scene snapshot exceeds its byte budget.');
+  }
   return { ok: true, value: normalized, hash: hashGraphSceneSnapshot(normalized) };
 }
 
 export function validateSampledSceneRuntime(input: unknown): GraphSceneValidationResult<SampledSceneRuntime> {
+  const structure = validateSampledSceneRuntimeStructure(input);
+  if (!structure.ok) return structure;
+  const scene = structure.value;
+  const snapshot = snapshotSampledSceneRuntime(scene, {
+    coordinateSystem: scene.grid.kind === 'polar' ? 'polar' : scene.grid.kind === 'argand' ? 'argand' : 'cartesian',
+    xMin: -1,
+    xMax: 1,
+    yMin: -1,
+    yMax: 1,
+  });
+  const validation = validateSampledSceneSnapshot(snapshot);
+  return validation.ok
+    ? { ok: true, value: scene, hash: validation.hash }
+    : validation;
+}
+
+export function validateSampledSceneRuntimeStructure(
+  input: unknown,
+): GraphSceneStructureValidationResult<SampledSceneRuntime> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Runtime scene must be an object.');
   const scene = input as SampledSceneRuntime;
   if (!hasOnlyKeys(scene, ['sceneRevision', 'documentRevision', 'viewportRevision', 'parameterRevision', 'paths', 'regions', 'pointBatches', 'labels', 'grid'])) return fail('invalid-scene', 'Runtime scene contains unsupported state.');
@@ -221,17 +330,8 @@ export function validateSampledSceneRuntime(input: unknown): GraphSceneValidatio
   if (scene.pointBatches.some((batch) => !(batch.coordinates instanceof Float64Array))) {
     return fail('invalid-scene', 'Runtime point batches require transferable typed arrays.', '$.pointBatches');
   }
-  const snapshot = snapshotSampledSceneRuntime(scene, {
-    coordinateSystem: scene.grid.kind === 'polar' ? 'polar' : scene.grid.kind === 'argand' ? 'argand' : 'cartesian',
-    xMin: -1,
-    xMax: 1,
-    yMin: -1,
-    yMax: 1,
-  });
-  const validation = validateSampledSceneSnapshot(snapshot);
-  return validation.ok
-    ? { ok: true, value: scene, hash: validation.hash }
-    : validation;
+  const collectionIssue = validateSceneCollections(scene);
+  return collectionIssue ?? { ok: true, value: scene };
 }
 
 export function validateGraphSampleResult(input: unknown): GraphSceneValidationResult<GraphSampleResultV1> {

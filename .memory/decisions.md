@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-19 - GRAPHING-SCENE-HEADLESS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Scene assembly adopts sampler-created typed arrays without copying, gives every view unique `ArrayBuffer` ownership, and emits an exact transfer list. Stable path and label ordering occurs before the scene crosses a host boundary; malformed identities, offsets, indices, non-finite numbers, and aliased ownership fail closed.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Runtime scene assembly and structural validation never materialize JSON snapshots or calculate snapshot hashes. Bounded normalized snapshots and deterministic hashes are produced only by the explicit headless evidence path for tests, recovery evidence, and later export—not during interactive geometry assembly.
+
 ## 2026-07-19 - GRAPHING-EVALUATOR-SAMPLER1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Graph evaluation compiles validated `GraphExpressionIR` once per source revision into a frozen postfix plan and reuses a bounded plan cache plus one scratch stack per evaluator. Sampling receives only structured relation authority and parameter values; it never reparses authored LaTeX or imports a private solver.
