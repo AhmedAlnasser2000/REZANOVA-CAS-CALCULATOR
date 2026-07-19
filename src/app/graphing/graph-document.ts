@@ -34,7 +34,7 @@ export function graphItemSourceLatex(item: GraphItemSpecV1) {
   return graphItemSource(item)?.sourceLatex ?? '';
 }
 
-function unsupportedMoveEightStop(detailCode: string): GraphStopReason {
+function unsupportedVisibleRouteStop(detailCode: string): GraphStopReason {
   return {
     code: 'unsupported-relation',
     detailCode,
@@ -42,7 +42,7 @@ function unsupportedMoveEightStop(detailCode: string): GraphStopReason {
   };
 }
 
-export function buildMoveEightGraphItem(input: {
+export function buildVisibleGraphItem(input: {
   itemId: string;
   sourceLatex: string;
   sourceRevision: number;
@@ -61,7 +61,7 @@ export function buildMoveEightGraphItem(input: {
   const classified = classifyGraphSource(source);
   if (classified.ok
     && classified.itemKind === 'relation'
-    && classified.relation.kind === 'explicit-y') {
+    && (classified.relation.kind === 'explicit-y' || classified.relation.kind === 'explicit-x')) {
     return {
       version: 1,
       kind: 'relation',
@@ -73,8 +73,20 @@ export function buildMoveEightGraphItem(input: {
     };
   }
 
+  if (classified.ok && classified.itemKind === 'point-set') {
+    return {
+      version: 1,
+      kind: 'point-set',
+      itemId: input.itemId,
+      source,
+      points: classified.points,
+      visible,
+      presentation: previousPresentation,
+    };
+  }
+
   const parseStop = classified.ok
-    ? unsupportedMoveEightStop(`move-8-${classified.itemKind}`)
+    ? unsupportedVisibleRouteStop(`future-${classified.itemKind}`)
     : classified.stopReason;
   return {
     version: 1,
@@ -82,7 +94,7 @@ export function buildMoveEightGraphItem(input: {
     itemId: input.itemId,
     source,
     parseStop: classified.ok && classified.itemKind === 'relation'
-      ? unsupportedMoveEightStop(`move-8-${classified.relation.kind}`)
+      ? unsupportedVisibleRouteStop(`future-${classified.relation.kind}`)
       : parseStop,
     visible,
     presentation: previousPresentation,
@@ -128,13 +140,13 @@ export function toggleGraphDocumentItem(
   } satisfies GraphDocumentV1;
 }
 
-export function moveEightGraphDraftMessage(stop: GraphStopReason) {
+export function graphDraftMessage(stop: GraphStopReason) {
   if (stop.detailCode === 'empty-source') return '';
   if (stop.detailCode === 'incomplete-or-invalid-source') return 'Keep typing to finish the expression.';
   if (stop.code === 'ambiguous-bare-expression') {
     return 'Use an x-based expression, or write an explicit relation such as y = …';
   }
-  if (stop.detailCode?.startsWith('move-8-')) {
+  if (stop.detailCode?.startsWith('future-')) {
     return 'This relation is recognized, but its plotting route arrives in the next Graphing moves.';
   }
   if (stop.code === 'expression-budget-exceeded') return 'This expression is over the safe Graphing budget.';

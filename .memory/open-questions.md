@@ -1,5 +1,7 @@
 # Open Questions
 
+- 2026-07-19: The Move 9 Graph page remains a separate 68.18 kB raw / 23.06 kB gzip production chunk, but the repository-wide bundle ratchet is already red because the eager main graph is about 7.0 MiB raw / 2.0 MiB gzip and the largest app entry is about 3.3 MiB against the existing 900 kB cap. Before the Move 13 pre-Three checkpoint, identify and split the accumulated eager imports; do not raise the ratchet baseline to hide the regression.
+
 - 2026-07-12: `x^{\frac{1}{2}}` currently normalizes to `\sqrt{x}` under roots, powers, and auto because Compute Engine canonicalization loses the source half-power before the familiar-root preference branch. Decide in a dedicated printer-output milestone whether powers mode should retain the half-power; `HISTORY-STRUCTURED-RESULT2` preserves current formatting and does not change it.
 
 - 2026-07-03: Before implementing Guide notebook import/export, decide the first package shape, author/attribution metadata, tamper/provenance policy, answer/hint visibility model, and stable computation/evidence snapshot vocabulary.

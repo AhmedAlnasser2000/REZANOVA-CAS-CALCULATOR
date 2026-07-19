@@ -29,6 +29,7 @@ import {
 } from './workspace-instances';
 import {
   requestWorkspaceTabJobCancellation,
+  subscribeToWorkspaceTabJobChanges,
   summarizeWorkspaceTabJobs,
 } from './workspaceTabJobs';
 import {
@@ -36,7 +37,6 @@ import {
   type WorkspaceSurfaceKind,
   type WorkspaceTabActionPolicy,
 } from './workspace-surfaces';
-import { subscribeToOoeEvents } from '../../lib/ooe/events/event-outbox';
 
 type WorkspaceInstancesRuntime = ReturnType<typeof useWorkspaceInstancesRuntime>;
 type WorkspaceDisplayStateHostRuntime = ReturnType<typeof useWorkspaceDisplayStateHostRuntime>;
@@ -113,15 +113,8 @@ export function useWorkspaceTabsRuntime({
 }: UseWorkspaceTabsRuntimeOptions) {
   const [ooeJobRevision, setOoeJobRevision] = useState(0);
 
-  useEffect(() => subscribeToOoeEvents((event) => {
-    if (event.type === 'ooe.job.started'
-      || event.type === 'ooe.result.committed'
-      || event.type === 'ooe.result.staleDropped'
-      || event.type === 'ooe.result.skipped'
-      || event.type === 'ooe.job.cancelled'
-      || event.type === 'ooe.job.failed') {
-      setOoeJobRevision((revision) => revision + 1);
-    }
+  useEffect(() => subscribeToWorkspaceTabJobChanges(() => {
+    setOoeJobRevision((revision) => revision + 1);
   }), []);
 
   const jobSummaries = summarizeWorkspaceTabJobs({

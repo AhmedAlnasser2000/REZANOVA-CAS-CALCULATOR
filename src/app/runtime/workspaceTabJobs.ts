@@ -6,6 +6,7 @@ import type {
 import {
   listActiveOoeJobs,
   requestOoeJobCancellation,
+  subscribeToOoeActiveJobChanges,
 } from '../../lib/ooe/job-launch/active-job-registry';
 
 export type WorkspaceTabJobSummary = {
@@ -15,6 +16,8 @@ export type WorkspaceTabJobSummary = {
 };
 
 export type WorkspaceTabJobSummaryById = Record<WorkspaceInstanceId, WorkspaceTabJobSummary>;
+
+export const subscribeToWorkspaceTabJobChanges = subscribeToOoeActiveJobChanges;
 
 function emptySummary(): WorkspaceTabJobSummary {
   return {

@@ -93,6 +93,32 @@ describe('Graph sample request runtime', () => {
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
+  it('evaluates structured point sets into transferable scene batches', async () => {
+    const pointRequest = request();
+    pointRequest.items = [{
+      version: 1,
+      kind: 'point-set',
+      itemId: 'points-1',
+      source: {
+        sourceKind: 'mathlive-latex',
+        sourceLatex: '\\{(a,2),(3,4)\\}',
+        sourceRevision: 1,
+      },
+      points: [{ x: 'a', y: 2 }, { x: 3, y: 4 }],
+      visible: true,
+      presentation: pointRequest.items[0]!.presentation,
+    }];
+    pointRequest.parameterEnvironment = { a: 5 };
+    const execution = await runGraphSampleRequest(pointRequest);
+
+    expect(execution.result.status).toBe('complete');
+    expect(execution.result.scene.paths).toEqual([]);
+    expect([...execution.result.scene.pointBatches[0]!.coordinates]).toEqual([5, 2, 3, 4]);
+    expect(execution.result.evidence).toMatchObject({ sampleCount: 4, vertexCount: 2 });
+    expect(execution.transferList).toHaveLength(1);
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+  });
+
   it('attributes bounded sampling stops to the affected Graph item', async () => {
     const bounded = request();
     bounded.budgets.maximumSamples = 20;

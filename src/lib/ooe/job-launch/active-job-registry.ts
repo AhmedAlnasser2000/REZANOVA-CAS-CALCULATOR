@@ -67,10 +67,24 @@ type MarkOoeJobCancelledOptions = RequestOoeJobCancellationOptions & {
   traceEvents?: readonly OoeTraceEvent[];
 };
 
+type OoeActiveJobListener = () => void;
+
 const activeJobs = new Map<string, OoeActiveJobRecord>();
 const recentJobs: OoeActiveJobRecord[] = [];
+const activeJobListeners = new Set<OoeActiveJobListener>();
 let nextSequence = 1;
 let recentJobLimit = DEFAULT_OOE_RECENT_JOB_LIMIT;
+
+function notifyActiveJobListeners() {
+  for (const listener of activeJobListeners) listener();
+}
+
+export function subscribeToOoeActiveJobChanges(listener: OoeActiveJobListener) {
+  activeJobListeners.add(listener);
+  return () => {
+    activeJobListeners.delete(listener);
+  };
+}
 
 function now() {
   return Date.now();
@@ -154,6 +168,7 @@ export function startOoeJob(input: StartOoeJobInput): OoeActiveJobRecord {
     traceEvents: input.traceEvents ? [...input.traceEvents] : [],
   };
   activeJobs.set(record.registryId, record);
+  notifyActiveJobListeners();
   return cloneRecord(record);
 }
 
@@ -170,6 +185,7 @@ export function requestOoeJobCancellation(
     activeRecord.cancellationRequest = buildCancellationRequest(options);
   }
   activeRecord.status = 'cancelRequested';
+  notifyActiveJobListeners();
 
   return cloneRecord(activeRecord);
 }
@@ -199,6 +215,7 @@ export function completeOoeJob(
   };
   activeJobs.delete(record.registryId);
   pushRecentJob(completed);
+  notifyActiveJobListeners();
   return cloneRecord(completed);
 }
 
@@ -215,6 +232,7 @@ export function failOoeJob(
   };
   activeJobs.delete(record.registryId);
   pushRecentJob(failed);
+  notifyActiveJobListeners();
   return cloneRecord(failed);
 }
 
@@ -238,6 +256,7 @@ export function markOoeJobCancelled(
   };
   activeJobs.delete(registryId);
   pushRecentJob(cancelled);
+  notifyActiveJobListeners();
   return cloneRecord(cancelled);
 }
 
@@ -270,4 +289,5 @@ export function clearOoeJobRegistry(options?: { recentJobLimit?: number }) {
   recentJobs.length = 0;
   nextSequence = 1;
   recentJobLimit = options?.recentJobLimit ?? DEFAULT_OOE_RECENT_JOB_LIMIT;
+  notifyActiveJobListeners();
 }

@@ -37,6 +37,7 @@ type MathEditorProps = {
   placeholder?: string;
   keyboardLayouts?: readonly VirtualKeyboardLayout[];
   modeId?: ModeId;
+  shortcutProfile?: 'default' | 'graphing';
   screenHint?: string;
   onPasteCanonicalize?: (text: string) => string | null | undefined;
 };
@@ -114,6 +115,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       placeholder,
       keyboardLayouts,
       modeId,
+      shortcutProfile,
       screenHint,
       onPasteCanonicalize,
     },
@@ -135,6 +137,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       field.smartSuperscript = false;
       field.inlineShortcuts = buildInlineShortcutOverrides(field.inlineShortcuts, {
         modeId,
+        profile: shortcutProfile,
         screenHint,
       });
       field.placeholder = placeholder ?? '';
@@ -215,7 +218,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [keyboardLayouts, modeId, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint]);
+    }, [keyboardLayouts, modeId, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint, shortcutProfile]);
 
     useEffect(() => {
       const field = elementRef.current;

@@ -19,26 +19,32 @@ async function enterExpression(page: Page, latex: string) {
 }
 
 test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
-  test('keeps focus in a trailing row when its first character promotes it', async ({ page }) => {
+  test('keeps one uninterrupted MathLive session when a trailing row is promoted', async ({ page }) => {
     await page.goto('/');
     await openGraph(page);
 
     const blankField = page.locator('math-field').last();
     await blankField.evaluate((element) => {
-      const field = element as HTMLElement & { insert: (source: string) => void };
-      field.focus();
-      field.insert('s');
+      element.dataset.promotionProbe = 'same-editor';
     });
+    await blankField.evaluate((element) => element.focus());
+    await blankField.pressSequentially('sin(x)', { delay: 8 });
 
     await expect(page.getByTestId('graph-expression-row')).toHaveCount(1);
     await expect(page.getByTestId('graph-expression-blank-row')).toHaveCount(1);
     await expect(page.locator('math-field').first()).toBeFocused();
-    await page.locator('math-field').first().evaluate((element) => {
-      (element as HTMLElement & { insert: (source: string) => void }).insert('in(x)');
-    });
+    await expect(page.locator('math-field').first()).toHaveAttribute('data-promotion-probe', 'same-editor');
     await expect.poll(() => page.locator('math-field').first().evaluate((element) => (
       (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex')
-    ))).toBe('sin(x)');
+    ))).toMatch(/\\sin/u);
+
+    const nextBlank = page.locator('math-field').last();
+    await nextBlank.evaluate((element) => element.focus());
+    await nextBlank.pressSequentially('infinity', { delay: 8 });
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(2);
+    await expect.poll(() => page.locator('math-field').nth(1).evaluate((element) => (
+      (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex')
+    ))).toBe('\\infty');
   });
 
   test('plots real bare expressions and keeps the visible surface truthful', async ({ page }, testInfo) => {
@@ -140,5 +146,45 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
     await expect(page.getByText('Keep typing to finish the expression.')).toBeVisible();
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(0);
+  });
+
+  test('renders explicit-x and point-set routes with relation-correct tracing', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'x=y^2');
+    await enterExpression(page, '\\{(1,2),(3,4)\\}');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    const screen = (x: number, y: number) => ({
+      x: bounds.x + (x + 10) / 20 * bounds.width,
+      y: bounds.y + (6 - y) / 12 * bounds.height,
+    });
+
+    const firstPoint = screen(1, 2);
+    await page.mouse.click(firstPoint.x, firstPoint.y);
+    await expect(page.locator('.graph-trace-callout')).toContainText('(1, 2)');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.graph-trace-callout')).toContainText('(3, 4)');
+
+    await page.keyboard.press('Escape');
+    const curvePoint = screen(4, 2);
+    await page.mouse.click(curvePoint.x, curvePoint.y);
+    const yThree = screen(4, 3);
+    await page.mouse.move(yThree.x, yThree.y);
+    await expect.poll(() => page.locator('.graph-trace-callout').textContent()).toMatch(
+      /^\(9(?:\.\d+)?, 3(?:\.\d+)?\)$/u,
+    );
+    await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-relation-routes-1440x940.png'),
+      fullPage: true,
+    });
   });
 });

@@ -1,6 +1,7 @@
 import {
   useCallback,
-  useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -22,9 +23,9 @@ import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
   graphItemSourceLatex,
-  moveEightGraphDraftMessage,
+  graphDraftMessage,
 } from './graph-document';
-import { GraphSvgViewport } from './GraphSvgViewport';
+import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 
 type GraphWorkspacePageProps = {
@@ -55,7 +56,7 @@ function GraphExpressionRow({
   onToggle,
 }: GraphExpressionRowProps) {
   const draftMessage = item?.kind === 'invalid-relation-draft'
-    ? moveEightGraphDraftMessage(item.parseStop)
+    ? graphDraftMessage(item.parseStop)
     : '';
   const colorToken = item && 'presentation' in item
     ? item.presentation.colorToken
@@ -77,6 +78,7 @@ function GraphExpressionRow({
         onChange={onChange}
         onSubmit={onSubmit}
         placeholder={item ? '' : 'Enter an expression…'}
+        shortcutProfile="graphing"
         value={item ? graphItemSourceLatex(item) : ''}
       />
       {item ? (
@@ -115,7 +117,7 @@ export default function GraphWorkspacePage({
   workspaceContext,
 }: GraphWorkspacePageProps) {
   const [viewportSize, setViewportSize] = useState({ width: 960, height: 600 });
-  const promotedFocusItemIdRef = useRef<string | null>(null);
+  const promotedItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
     cssSize: viewportSize,
     initialSession,
@@ -124,6 +126,20 @@ export default function GraphWorkspacePage({
   });
   const scene = controller.sampleResult?.scene ?? null;
   const visibleCount = controller.session.document.items.filter((item) => item.visible).length;
+  const itemRoutes = useMemo(() => {
+    const routes: Record<string, GraphTraceRouteKind> = {};
+    for (const item of controller.session.document.items) {
+      if (item.kind === 'point-set') {
+        routes[item.itemId] = 'point-set';
+        continue;
+      }
+      if (item.kind === 'relation'
+        && (item.relation.kind === 'explicit-y' || item.relation.kind === 'explicit-x')) {
+        routes[item.itemId] = item.relation.kind;
+      }
+    }
+    return routes;
+  }, [controller.session.document.items]);
 
   const focusNextRow = useCallback((itemId: string) => {
     requestAnimationFrame(() => {
@@ -134,16 +150,17 @@ export default function GraphWorkspacePage({
     });
   }, []);
 
-  useEffect(() => {
-    const itemId = promotedFocusItemIdRef.current;
+  useLayoutEffect(() => {
+    const itemId = promotedItemIdRef.current;
     if (!itemId) return;
-    promotedFocusItemIdRef.current = null;
-    const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(
-        `[data-graph-item-id="${itemId}"] math-field`,
-      )?.focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
+    const field = document.querySelector<HTMLElement>(
+      `[data-graph-item-id="${itemId}"] math-field`,
+    );
+    if (!field?.isConnected) return;
+    if (document.activeElement !== field) {
+      field.focus();
+    }
+    promotedItemIdRef.current = null;
   }, [controller.blankItemId]);
 
   return (
@@ -200,45 +217,49 @@ export default function GraphWorkspacePage({
 
         <aside className="graph-expression-rail" aria-label="Expressions">
           <div className="graph-expression-list">
-            {controller.session.document.items.map((item) => (
-              <GraphExpressionRow
-                errorVisible={controller.visibleDraftErrors.has(item.itemId)}
-                item={item}
-                itemId={item.itemId}
-                key={item.itemId}
-                onBlur={() => {
-                  controller.blurItem(item.itemId);
-                  controller.flushSampling();
-                }}
-                onChange={(latex) => controller.editItem(item.itemId, latex)}
-                onDelete={() => controller.removeItem(item.itemId)}
-                onSubmit={() => {
-                  controller.endTypingTransaction();
-                  controller.flushSampling();
-                  focusNextRow(item.itemId);
-                }}
-                onToggle={() => controller.toggleItem(item.itemId)}
-              />
-            ))}
-            <GraphExpressionRow
-              errorVisible={false}
-              item={null}
-              itemId={controller.blankItemId}
-              key={controller.blankItemId}
-              onBlur={() => controller.flushSampling()}
-              onChange={(latex) => {
-                if (latex.trim()) promotedFocusItemIdRef.current = controller.blankItemId;
-                controller.editItem(controller.blankItemId, latex);
-              }}
-              onSubmit={() => {
-                controller.endTypingTransaction();
-                controller.flushSampling();
-                focusNextRow(controller.blankItemId);
-              }}
-            />
+            {[...controller.session.document.items, null].map((item) => {
+              const itemId = item?.itemId ?? controller.blankItemId;
+              return (
+                <GraphExpressionRow
+                  errorVisible={item
+                    ? controller.visibleDraftErrors.has(item.itemId)
+                    : false}
+                  item={item}
+                  itemId={itemId}
+                  key={itemId}
+                  onBlur={() => {
+                    if (item) controller.blurItem(itemId);
+                    controller.flushSampling();
+                  }}
+                  onChange={(latex) => {
+                    if (!item && latex.trim()) promotedItemIdRef.current = itemId;
+                    controller.editItem(itemId, latex);
+                  }}
+                  onDelete={item ? () => controller.removeItem(itemId) : undefined}
+                  onSubmit={() => {
+                    controller.endTypingTransaction();
+                    controller.flushSampling();
+                    focusNextRow(itemId);
+                  }}
+                  onToggle={item ? () => controller.toggleItem(itemId) : undefined}
+                />
+              );
+            })}
           </div>
           <div className="graph-rail-note">
-            Bare x-based expressions plot directly. You do not need to type y =.
+            <button
+              className="graph-add-point-button"
+              onClick={() => {
+                const itemId = controller.addPointSet();
+                requestAnimationFrame(() => document.querySelector<HTMLElement>(
+                  `[data-graph-item-id="${itemId}"] math-field`,
+                )?.focus({ preventScroll: true }));
+              }}
+              type="button"
+            >
+              + Point Set
+            </button>
+            <span>Bare x-based expressions plot directly. You do not need to type y =.</span>
           </div>
         </aside>
 
@@ -246,6 +267,7 @@ export default function GraphWorkspacePage({
           <GraphSvgViewport
             onSizeChange={setViewportSize}
             onViewportChange={controller.setViewport}
+            itemRoutes={itemRoutes}
             pending={controller.isScenePending}
             scene={scene}
             viewport={controller.session.surface.viewport}
@@ -262,7 +284,7 @@ export default function GraphWorkspacePage({
           {controller.status.label}
         </span>
         <span>{visibleCount} visible {visibleCount === 1 ? 'item' : 'items'}</span>
-        <span>Scroll to zoom · drag to pan</span>
+        <span>Click to trace · scroll to zoom · drag to pan</span>
       </footer>
     </article>
   );

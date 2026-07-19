@@ -22,7 +22,7 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
       documentRevision: request.revisions.document,
       viewportRevision: request.revisions.viewport,
       parameterRevision: request.revisions.parameter,
-      paths: request.items.filter((item) => item.visible).map((item) => ({
+      paths: request.items.filter((item) => item.visible && item.kind === 'relation').map((item) => ({
         pathId: `${item.itemId}.path`,
         itemId: item.itemId,
         coordinates: new Float64Array([-2, -2, 0, 0, 2, 2]),
@@ -32,7 +32,12 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
         style: item.presentation,
       })),
       regions: [],
-      pointBatches: [],
+      pointBatches: request.items.filter((item) => item.visible && item.kind === 'point-set').map((item) => ({
+        pointBatchId: `${item.itemId}.points`,
+        itemId: item.itemId,
+        coordinates: new Float64Array([1, 2, 3, 4]),
+        style: item.presentation,
+      })),
       labels: [],
       grid: { kind: 'none' as const, majorLines: [], minorLines: [], labels: [], hysteresisKey: 'none' },
     },
@@ -97,6 +102,63 @@ describe('GraphWorkspacePage', () => {
       relation: { kind: 'explicit-y', origin: 'bare-expression' },
     });
     await waitFor(() => expect(screen.getByTestId('graph-scene-paths').querySelector('path')).not.toBeNull());
+  });
+
+  it('preserves the exact MathLive element when the first character promotes its row', () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+
+    const blankField = screen.getByTestId('graph-expression-editor-graphing.2.item.1');
+    blankField.focus();
+    setMathFieldValue(blankField, 's');
+
+    expect(screen.getByTestId('graph-expression-editor-graphing.2.item.1')).toBe(blankField);
+    expect(screen.getAllByTestId('graph-expression-row')).toHaveLength(1);
+    expect(screen.getAllByTestId('graph-expression-blank-row')).toHaveLength(1);
+  });
+
+  it('renders explicit-x relations and finite point sets through distinct scene routes', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'x=y^2');
+    setMathFieldValue(
+      screen.getByTestId('graph-expression-editor-graphing.2.item.2'),
+      '\\{(1,2),(3,4)\\}',
+    );
+
+    await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
+    const request = runGraphSampleWithOoe.mock.calls.at(-1)?.[0];
+    expect(request?.items.map((item) => item.kind)).toEqual(['relation', 'point-set']);
+    expect(request?.items[0]).toMatchObject({ relation: { kind: 'explicit-x' } });
+    await waitFor(() => expect(screen.getByTestId('graph-scene-paths').querySelectorAll('path')).toHaveLength(1));
+    expect(screen.getByTestId('graph-scene-points').querySelectorAll('circle')).toHaveLength(2);
+  });
+
+  it('adds a guided Point Set item while retaining one trailing blank row', () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Point Set' }));
+
+    expect(screen.getAllByTestId('graph-expression-row')).toHaveLength(1);
+    expect(screen.getAllByTestId('graph-expression-blank-row')).toHaveLength(1);
+    expect(screen.getByTestId('graph-expression-editor-graphing.2.item.1')).toBeInTheDocument();
   });
 
   it('assigns a stable distinguishing palette to successive expression rows', async () => {

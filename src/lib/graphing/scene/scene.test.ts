@@ -113,6 +113,26 @@ describe('Graph sampled-scene assembly', () => {
     });
   });
 
+  it('adopts stable point-batch arrays with independent transfer ownership', () => {
+    const coordinates = new Float64Array([3, 4, -1, 2]);
+    const result = assembleSampledScene({
+      revisions,
+      viewport,
+      paths: [],
+      pointBatches: [{
+        pointBatchId: 'points.b',
+        itemId: 'item.points',
+        coordinates,
+        style: style('violet'),
+      }],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.bundle.scene.pointBatches[0]?.coordinates).toBe(coordinates);
+    expect(result.bundle.transferList).toEqual([coordinates.buffer]);
+    expect(result.bundle.evidence.vertexCount).toBe(2);
+  });
+
   it('rejects duplicate IDs, malformed alignment, and incomplete status without evidence', () => {
     const sine = sampled('item.sine', ['Sin', 'x']);
     expect(assembleSampledScene({
@@ -140,6 +160,18 @@ describe('Graph sampled-scene assembly', () => {
       paths: [{
         pathId: 'missing-stop',
         sample: { ...sine, status: 'cancelled', stopReason: undefined },
+        style: style('blue'),
+      }],
+    })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
+
+    expect(assembleSampledScene({
+      revisions,
+      viewport,
+      paths: [],
+      pointBatches: [{
+        pointBatchId: 'bad-points',
+        itemId: 'item.points',
+        coordinates: new Float64Array([1, Number.NaN]),
         style: style('blue'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });

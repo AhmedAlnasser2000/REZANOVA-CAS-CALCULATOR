@@ -7,6 +7,7 @@ import {
 
 type InlineShortcutContext = {
   modeId?: ModeId;
+  profile?: 'default' | 'graphing';
   screenHint?: string;
 };
 
@@ -21,14 +22,29 @@ function isLimitShortcutContext(context?: InlineShortcutContext) {
     && LIMIT_SHORTCUT_SCREENS.has(context.screenHint ?? '');
 }
 
-function limitSafeExistingShortcuts(existing: InlineShortcutDefinitions | undefined) {
+function withoutAmbiguousWordShortcuts(
+  existing: InlineShortcutDefinitions | undefined,
+  excluded: ReadonlySet<string>,
+) {
   if (!existing) {
     return {};
   }
 
   return Object.fromEntries(
-    Object.entries(existing).filter(([shortcut]) => shortcut !== 'in'),
+    Object.entries(existing).filter(([shortcut]) => !excluded.has(shortcut)),
   );
+}
+
+const SET_MEMBERSHIP_WORD_SHORTCUTS = new Set(['in', '!in']);
+
+function safeExistingShortcuts(
+  existing: InlineShortcutDefinitions | undefined,
+  context?: InlineShortcutContext,
+) {
+  if (isLimitShortcutContext(context) || context?.profile === 'graphing') {
+    return withoutAmbiguousWordShortcuts(existing, SET_MEMBERSHIP_WORD_SHORTCUTS);
+  }
+  return existing ?? {};
 }
 
 function limitInlineShortcuts() {
@@ -46,7 +62,7 @@ export function buildInlineShortcutOverrides(
   const limitContext = isLimitShortcutContext(context);
 
   return {
-    ...(limitContext ? limitSafeExistingShortcuts(existing) : (existing ?? {})),
+    ...safeExistingShortcuts(existing, context),
     sin: '\\sin',
     cos: '\\cos',
     tan: '\\tan',

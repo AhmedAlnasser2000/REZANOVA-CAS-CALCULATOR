@@ -66,6 +66,25 @@ describe('MathEditor inline shortcuts', () => {
     expect(limitShortcuts.infinty).toBe('\\infty');
     expect(limitShortcuts.infty).toBe('\\infty');
   });
+
+  it('keeps graphing function and infinity words intact until their full shortcut is typed', () => {
+    const shortcuts = buildInlineShortcutOverrides({
+      in: '\\in',
+      '!in': '\\notin',
+      infinity: '\\infty',
+      infty: '\\infty',
+      foo: 'bar',
+    }, {
+      profile: 'graphing',
+    });
+
+    expect(shortcuts.in).toBeUndefined();
+    expect(shortcuts['!in']).toBeUndefined();
+    expect(shortcuts.sin).toBe('\\sin');
+    expect(shortcuts.infinity).toBe('\\infty');
+    expect(shortcuts.infty).toBe('\\infty');
+    expect(shortcuts.foo).toBe('bar');
+  });
 });
 
 describe('MathEditor cursor keyflow', () => {

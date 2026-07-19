@@ -11,6 +11,7 @@ import { collectGraphSceneTransferables } from './transfer';
 import type {
   GraphSceneAssemblyInput,
   GraphSceneAssemblyResult,
+  GraphPointBatchSceneInput,
   GraphSampledPathSceneInput,
 } from './types';
 
@@ -55,6 +56,21 @@ function validateSampleInput(entry: GraphSampledPathSceneInput, index: number) {
   return null;
 }
 
+function validatePointBatchInput(entry: GraphPointBatchSceneInput, index: number) {
+  const base = `$.pointBatches[${index}]`;
+  if (!entry.pointBatchId || entry.pointBatchId.length > 160
+    || !entry.itemId || entry.itemId.length > 160) {
+    return failure('invalid-scene', 'Point-batch identity is invalid.', base);
+  }
+  if (!(entry.coordinates instanceof Float64Array)
+    || entry.coordinates.length === 0
+    || entry.coordinates.length % 2 !== 0
+    || entry.coordinates.some((value) => !Number.isFinite(value))) {
+    return failure('invalid-scene', 'Point batches require finite owned coordinate pairs.', `${base}.coordinates`);
+  }
+  return null;
+}
+
 const emptyGrid = () => ({
   kind: 'none' as const,
   majorLines: [],
@@ -78,7 +94,18 @@ export function assembleSampledScene(
     }
     pathIds.add(entry.pathId);
   }
+  const pointBatchIds = new Set<string>();
+  for (const [index, entry] of (input.pointBatches ?? []).entries()) {
+    const issue = validatePointBatchInput(entry, index);
+    if (issue) return issue;
+    if (pointBatchIds.has(entry.pointBatchId)) {
+      return failure('invalid-scene', 'Scene point-batch IDs must be unique.', `$.pointBatches[${index}].pointBatchId`);
+    }
+    pointBatchIds.add(entry.pointBatchId);
+  }
   const orderedPaths = [...input.paths].sort((left, right) => left.pathId.localeCompare(right.pathId));
+  const orderedPointBatches = [...(input.pointBatches ?? [])]
+    .sort((left, right) => left.pointBatchId.localeCompare(right.pointBatchId));
   const scene: SampledSceneRuntime = {
     sceneRevision: input.revisions.scene,
     documentRevision: input.revisions.document,
@@ -94,7 +121,12 @@ export function assembleSampledScene(
       style: entry.style,
     })),
     regions: [],
-    pointBatches: [],
+    pointBatches: orderedPointBatches.map((entry) => ({
+      pointBatchId: entry.pointBatchId,
+      itemId: entry.itemId,
+      coordinates: entry.coordinates,
+      style: entry.style,
+    })),
     labels: [...(input.labels ?? [])].sort((left, right) => left.labelId.localeCompare(right.labelId)),
     grid: input.grid ? {
       ...input.grid,
@@ -124,6 +156,9 @@ export function assembleSampledScene(
         ),
         vertexCount: scene.paths.reduce(
           (count, path) => count + path.coordinates.length / 2,
+          0,
+        ) + scene.pointBatches.reduce(
+          (count, batch) => count + batch.coordinates.length / 2,
           0,
         ),
         elapsedMs: orderedPaths.reduce(

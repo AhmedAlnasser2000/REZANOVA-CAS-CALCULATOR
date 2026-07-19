@@ -240,12 +240,30 @@
 }
 
 .graph-rail-note {
+  display: grid;
+  gap: 9px;
   padding: 11px 14px;
   border-top: 1px solid var(--graph-line);
   background: #0a1719;
   color: #82998e;
   font-size: 0.75rem;
   line-height: 1.45;
+}
+
+.graph-add-point-button {
+  min-height: 34px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 7px;
+  background: #142326;
+  color: #dce9e0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.graph-add-point-button:hover,
+.graph-add-point-button:focus-visible {
+  border-color: rgba(98, 230, 144, 0.48);
+  background: #1a302b;
 }
 
 .graph-viewport-panel {
@@ -313,6 +331,54 @@
   stroke-width: 2.25;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.graph-svg-points circle {
+  stroke: rgba(238, 247, 241, 0.9);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.graph-trace-marker,
+.graph-trace-callout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.graph-trace-marker {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f4fbf6;
+  border-radius: 50%;
+  background: #5598ff;
+  box-shadow: 0 0 0 3px rgba(85, 152, 255, 0.24);
+}
+
+.graph-trace-callout {
+  min-width: 112px;
+  padding: 6px 9px;
+  border: 1px solid rgba(85, 152, 255, 0.7);
+  border-radius: 7px;
+  background: rgba(8, 20, 22, 0.94);
+  color: #eef7f1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.graph-trace-instructions {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .graph-svg-viewport[data-scene-pending='true'] .graph-svg-paths {

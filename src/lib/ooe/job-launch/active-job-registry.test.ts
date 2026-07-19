@@ -11,6 +11,7 @@ import {
   requestLatestOoeCapabilityCancellation,
   requestOoeJobCancellation,
   startOoeJob,
+  subscribeToOoeActiveJobChanges,
 } from './active-job-registry';
 import {
   buildOoeJobCommitContext,
@@ -71,6 +72,30 @@ describe('active OOE job registry', () => {
         status: 'completed',
       },
     ]);
+  });
+
+  it('publishes active-job changes through an unsubscribe-safe registry seam', () => {
+    let revisions = 0;
+    const unsubscribe = subscribeToOoeActiveJobChanges(() => {
+      revisions += 1;
+    });
+    const jobContext = context();
+    const started = startOoeJob({
+      job: jobContext.job,
+      routeLabel: 'expression.evaluate',
+    });
+    completeOoeJob(started, {
+      commitAssessment: jobContext.commitAssessment,
+      traceEvents: [],
+    });
+    expect(revisions).toBe(2);
+
+    unsubscribe();
+    startOoeJob({
+      job: context({ latex: 'after unsubscribe' }).job,
+      routeLabel: 'expression.evaluate',
+    });
+    expect(revisions).toBe(2);
   });
 
   it('keeps a bounded recent lifecycle buffer', () => {

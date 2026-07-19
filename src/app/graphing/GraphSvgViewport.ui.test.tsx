@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { GraphViewportV1 } from '../../lib/graphing';
+import type { GraphViewportV1, SampledSceneRuntime } from '../../lib/graphing';
 import { GraphSvgViewport } from './GraphSvgViewport';
 
 const viewport: GraphViewportV1 = {
@@ -11,11 +11,51 @@ const viewport: GraphViewportV1 = {
   yMax: 6,
 };
 
+const scene: SampledSceneRuntime = {
+  sceneRevision: 4,
+  documentRevision: 2,
+  viewportRevision: 1,
+  parameterRevision: 0,
+  paths: [{
+    pathId: 'explicit-x.path',
+    itemId: 'explicit-x',
+    coordinates: new Float64Array([0, 0, 1, 1, 4, 2]),
+    segmentOffsets: new Uint32Array([0]),
+    parameterValues: new Float64Array([0, 1, 2]),
+    closed: false,
+    style: {
+      version: 1,
+      colorToken: 'graph-blue',
+      stroke: 'solid',
+      strokeWidth: 'normal',
+      fillOpacity: 0,
+      label: 'auto',
+    },
+  }],
+  regions: [],
+  pointBatches: [{
+    pointBatchId: 'points.batch',
+    itemId: 'points',
+    coordinates: new Float64Array([1, 2, 3, 4]),
+    style: {
+      version: 1,
+      colorToken: 'graph-green',
+      stroke: 'solid',
+      strokeWidth: 'normal',
+      fillOpacity: 0,
+      label: 'auto',
+    },
+  }],
+  labels: [],
+  grid: { kind: 'none', majorLines: [], minorLines: [], labels: [], hysteresisKey: 'none' },
+};
+
 describe('GraphSvgViewport', () => {
   it('keeps pointer movement imperative and commits the viewport only on release', () => {
     const onViewportChange = vi.fn();
     render(
       <GraphSvgViewport
+        itemRoutes={{}}
         onSizeChange={vi.fn()}
         onViewportChange={onViewportChange}
         pending={false}
@@ -57,6 +97,7 @@ describe('GraphSvgViewport', () => {
     const onViewportChange = vi.fn();
     render(
       <GraphSvgViewport
+        itemRoutes={{}}
         onSizeChange={vi.fn()}
         onViewportChange={onViewportChange}
         pending={false}
@@ -78,5 +119,36 @@ describe('GraphSvgViewport', () => {
     expect(onViewportChange).toHaveBeenCalledTimes(1);
     expect(host).not.toHaveAttribute('data-interacting');
     vi.useRealTimers();
+  });
+
+  it('hit-tests points and provides keyboard trace stepping without viewport commits', () => {
+    const onViewportChange = vi.fn();
+    render(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={onViewportChange}
+        pending={false}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+
+    const host = screen.getByTestId('graph-viewport');
+    Object.defineProperty(host, 'setPointerCapture', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    fireEvent.pointerDown(host, { button: 0, clientX: 528, clientY: 200, pointerId: 9 });
+    fireEvent.pointerUp(host, { clientX: 528, clientY: 200, pointerId: 9 });
+    expect(screen.getByRole('status')).toHaveTextContent('(1, 2)');
+    expect(onViewportChange).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(host, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toHaveTextContent('(3, 4)');
+    fireEvent.keyDown(host, { key: 'Escape' });
+    expect(document.querySelector('.graph-trace-callout')).not.toBeVisible();
+    fireEvent.keyDown(host, { key: 'Enter' });
+    expect(screen.getByRole('status')).toHaveTextContent('(1, 2)');
   });
 });

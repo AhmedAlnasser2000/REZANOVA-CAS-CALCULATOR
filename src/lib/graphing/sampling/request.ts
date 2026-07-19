@@ -9,8 +9,11 @@ import { GraphExpressionPlanCache } from '../evaluator';
 import {
   assembleSampledScene,
   collectGraphSceneTransferables,
+  type GraphPointBatchSceneInput,
   type GraphSampledPathSceneInput,
 } from '../scene';
+import { adaptGraphExpressionMathJson } from '../parser';
+import { createGraphExpressionEvaluator } from '../evaluator';
 import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
 
@@ -111,6 +114,7 @@ export async function runGraphSampleRequest(
   const isCancelled = control.isCancelled ?? (() => false);
   const startedAt = now();
   const paths: GraphSampledPathSceneInput[] = [];
+  const pointBatches: GraphPointBatchSceneInput[] = [];
   const stopReasons: GraphStopReason[] = [];
   let sampleCount = 0;
   let vertexCount = 0;
@@ -123,6 +127,74 @@ export async function runGraphSampleRequest(
       cancelled = true;
       stopReasons.push(cancelledStop('cooperative-request-cancellation'));
       break;
+    }
+    if (item.kind === 'point-set') {
+      const coordinates: number[] = [];
+      for (let pointIndex = 0; pointIndex < item.points.length; pointIndex += 1) {
+        if (isCancelled()) {
+          cancelled = true;
+          stopReasons.push(cancelledStop('cooperative-point-cancellation'));
+          break;
+        }
+        if (sampleCount + 2 > request.budgets.maximumSamples
+          || vertexCount + 1 > request.budgets.maximumVertices
+          || now() - startedAt >= request.budgets.maximumTimeMs) {
+          budgetExhausted = true;
+          stopReasons.push({ ...budgetStop('point-set-budget-exhausted'), path: item.itemId });
+          break;
+        }
+        const point = item.points[pointIndex];
+        const values: number[] = [];
+        for (const [coordinate, mathJson] of [['x', point.x], ['y', point.y]] as const) {
+          sampleCount += 1;
+          const adapted = adaptGraphExpressionMathJson(
+            mathJson,
+            `$.items.${item.itemId}.points[${pointIndex}].${coordinate}`,
+          );
+          if (!adapted.ok) {
+            stopReasons.push({ ...adapted.stopReason, path: item.itemId });
+            values.length = 0;
+            break;
+          }
+          const compiled = planCache.getOrCompile({
+            planId: `${item.itemId}:point:${pointIndex}:${coordinate}`,
+            sourceRevision: item.source.sourceRevision,
+            expression: adapted.expression,
+          });
+          if (!compiled.ok) {
+            stopReasons.push({ ...compiled.stopReason, path: item.itemId });
+            values.length = 0;
+            break;
+          }
+          const evaluated = createGraphExpressionEvaluator(compiled.plan)
+            .evaluate(request.parameterEnvironment);
+          if (evaluated.status !== 'finite') {
+            stopReasons.push({
+              code: evaluated.reason === 'missing-symbol' ? 'invalid-parameter' : 'unsafe-expression',
+              detailCode: `point-${coordinate}-${evaluated.reason}`,
+              path: item.itemId,
+            });
+            values.length = 0;
+            break;
+          }
+          values.push(evaluated.value);
+        }
+        if (values.length === 2) {
+          coordinates.push(values[0], values[1]);
+          vertexCount += 1;
+        }
+      }
+      if (coordinates.length > 0) {
+        pointBatches.push({
+          pointBatchId: `${item.itemId}:points:0`,
+          itemId: item.itemId,
+          coordinates: new Float64Array(coordinates),
+          style: item.presentation,
+        });
+      }
+      await control.yieldBetweenItems?.();
+      if (cancelled || budgetExhausted) break;
+      continue;
     }
     if (item.kind !== 'relation') {
       stopReasons.push({
@@ -191,6 +263,7 @@ export async function runGraphSampleRequest(
     revisions: request.revisions,
     viewport: request.viewport,
     paths,
+    pointBatches,
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
   const status = cancelled

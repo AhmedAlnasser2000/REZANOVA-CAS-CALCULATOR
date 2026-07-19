@@ -18,7 +18,7 @@ import {
 } from '../../lib/graphing';
 import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
 import {
-  buildMoveEightGraphItem,
+  buildVisibleGraphItem,
   graphItemSourceLatex,
   removeGraphDocumentItem,
   replaceGraphDocumentItem,
@@ -161,7 +161,7 @@ export function useGraphWorkspaceController({
     const current = sessionRef.current;
     const previous = current.document.items.find((item) => item.itemId === itemId);
     pushHistory(current.document, itemId);
-    const item = buildMoveEightGraphItem({
+    const item = buildVisibleGraphItem({
       itemId,
       sourceLatex,
       sourceRevision: (previous && 'source' in previous ? previous.source.sourceRevision : 0) + 1,
@@ -212,6 +212,13 @@ export function useGraphWorkspaceController({
     }
     persistSoon(current, true);
   }, [commitSession, endTypingTransaction, persistSoon]);
+
+  const addPointSet = useCallback(() => {
+    const itemId = blankItemId;
+    editItem(itemId, '\\{(0,0)\\}');
+    endTypingTransaction();
+    return itemId;
+  }, [blankItemId, editItem, endTypingTransaction]);
 
   const toggleItem = useCallback((itemId: string) => {
     const current = sessionRef.current;
@@ -443,6 +450,7 @@ export function useGraphWorkspaceController({
   );
 
   return useMemo(() => ({
+    addPointSet,
     autoFit,
     blankItemId,
     blurItem,
@@ -463,6 +471,7 @@ export function useGraphWorkspaceController({
     undo,
     visibleDraftErrors,
   }), [
+    addPointSet,
     autoFit,
     blankItemId,
     blurItem,

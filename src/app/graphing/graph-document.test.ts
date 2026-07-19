@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphDocumentV1 } from '../../lib/graphing';
 import {
-  buildMoveEightGraphItem,
+  buildVisibleGraphItem,
   replaceGraphDocumentItem,
 } from './graph-document';
 
@@ -15,7 +15,7 @@ const document: GraphDocumentV1 = {
 
 describe('Move 8 Graph document editing', () => {
   it('keeps MathLive source as provenance while explicit-y IR owns plotting', () => {
-    const item = buildMoveEightGraphItem({
+    const item = buildVisibleGraphItem({
       itemId: 'item.1',
       sourceLatex: '\\sin(x)',
       sourceRevision: 1,
@@ -33,27 +33,45 @@ describe('Move 8 Graph document editing', () => {
     });
   });
 
-  it('keeps recognized future routes as controlled drafts in the minimum visible gate', () => {
-    expect(buildMoveEightGraphItem({
+  it('opens explicit-x and point-set routes while future relations remain controlled drafts', () => {
+    expect(buildVisibleGraphItem({
       itemId: 'item.1',
       sourceLatex: 'x=y^2',
       sourceRevision: 1,
       index: 0,
     })).toMatchObject({
+      kind: 'relation',
+      relation: { kind: 'explicit-x' },
+    });
+    expect(buildVisibleGraphItem({
+      itemId: 'item.2',
+      sourceLatex: '\\{(1,2),(3,4)\\}',
+      sourceRevision: 1,
+      index: 1,
+    })).toMatchObject({
+      kind: 'point-set',
+      points: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
+    });
+    expect(buildVisibleGraphItem({
+      itemId: 'item.3',
+      sourceLatex: 'x^2+y^2=9',
+      sourceRevision: 1,
+      index: 2,
+    })).toMatchObject({
       kind: 'invalid-relation-draft',
-      parseStop: { detailCode: 'move-8-explicit-x' },
+      parseStop: { detailCode: 'future-implicit-equality' },
     });
   });
 
   it('increments document and source revisions without mutating prior snapshots', () => {
-    const first = buildMoveEightGraphItem({
+    const first = buildVisibleGraphItem({
       itemId: 'item.1',
       sourceLatex: 'x',
       sourceRevision: 1,
       index: 0,
     });
     const firstDocument = replaceGraphDocumentItem(document, first);
-    const second = buildMoveEightGraphItem({
+    const second = buildVisibleGraphItem({
       itemId: 'item.1',
       sourceLatex: 'x^2',
       sourceRevision: 2,

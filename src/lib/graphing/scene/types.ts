@@ -17,10 +17,18 @@ export type GraphSampledPathSceneInput = {
   closed?: boolean;
 };
 
+export type GraphPointBatchSceneInput = {
+  pointBatchId: string;
+  itemId: string;
+  coordinates: Float64Array;
+  style: GraphItemPresentationV1;
+};
+
 export type GraphSceneAssemblyInput = {
   revisions: { scene: number } & GraphRevisionSetV1;
   viewport: GraphViewportV1;
   paths: GraphSampledPathSceneInput[];
+  pointBatches?: GraphPointBatchSceneInput[];
   labels?: GraphSceneLabelV1[];
   grid?: GraphGridSceneV1;
 };

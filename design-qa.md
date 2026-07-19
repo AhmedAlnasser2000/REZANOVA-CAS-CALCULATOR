@@ -54,7 +54,7 @@
 - P2: Parent runtime-context identity changes restarted settled sampling after OOE tab-status events. Fixed by retaining the context in a ref and keying sampling to primitive workspace identity.
 - P2: MathLive accessory chrome, edge tick clipping, and stale tab-running status reduced fidelity. Fixed before production evidence.
 - P2: Successive expressions initially reused blue. Fixed with stable new-row palette indexing and a focused regression test.
-- P1: The first character promoted a blank row while the newly mounted trailing MathLive row stole focus. Fixed by restoring focus to the promoted row after the new blank mounts; production Playwright verifies continued input remains in that row.
+- P1: The first character promoted a blank row while the newly mounted trailing MathLive row stole focus. The Move 8 delayed-focus correction covered separated test input but did not preserve an uninterrupted real typing session. Move 9 fixes the root cause by reconciling authored and blank rows in one flat keyed collection, preserving the exact MathLive DOM element and restoring focus synchronously only if it was genuinely lost.
 - P1: Plot dragging could trigger a full blue native-selection wash. Fixed by cancelling pointer selection/drag behavior across the viewport and its descendants; production pan verification confirms no non-collapsed selection remains.
 - P2: The 90ms wheel timer repeatedly committed viewport revisions during normal scroll bursts, while an SVG-group transform did not guarantee compositor promotion. Fixed with a 180ms coalescing window and one HTML compositor layer around the SVG canvas.
 - No open P0, P1, or P2 finding remains for the Move 8 surface.
@@ -62,3 +62,12 @@
 ## Final result
 
 passed
+
+## GRAPHING-RELATION-ROUTES1 follow-up
+
+- Production screenshot: `test-results/graphing-minimum-visible-G-27e42-th-relation-correct-tracing-chromium/graphing-relation-routes-1440x940.png`.
+- Checked at 1440x940: `x=y^2`, a two-point set, matching item/geometry colors, direct point hit testing, explicit-x y-directed trace at `(9, 3)`, keyboard stepping, and the special `+ Point Set` affordance.
+- The first capture exposed the screen-reader trace instruction as visible viewport text. A Graph-local visually-hidden rule resolved it; the recapture is clean with no plot obstruction.
+- Real MathLive sequential typing verifies `sin(x)` remains one uninterrupted promoted-row edit and `infinity` becomes `\infty`; Graphing removes only the ambiguous `in` and `!in` word shortcuts and retains explicit command entry for set membership.
+- Pointer trace motion remains imperative and scene-local. It neither commits a viewport nor sends pointer events through OOE.
+- Result: passed with no open P0, P1, or P2 finding for Move 9.
