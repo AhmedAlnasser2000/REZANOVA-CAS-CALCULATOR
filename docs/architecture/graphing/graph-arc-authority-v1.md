@@ -2,7 +2,7 @@
 
 Status: approved architecture contract; implementation active through the 30-move Graphing program
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
-Implementation baseline: `76c0c61b`; implementation is complete through the verified Move 7 gate
+Implementation baseline: `76c0c61b`; implementation is complete through the verified Move 22 gate
 Date: 2026-07-19
 
 ## Scope and outcome
@@ -11,7 +11,7 @@ This contract defines the first production Graphing arc. Graphing will be a full
 
 Graphing is not a calculator `ModeId`, side surface, result card, launcher tile, History artifact, Notebook block, Surface Protocol capability, or detached experiment. The first arc has no cross-workspace Open, Send, or Plot action and no durable graph-project persistence.
 
-Moves 2-7 establish production Graph contracts/performance fixtures, the hidden non-singleton workspace runtime, bounded MathLive-to-standard-MathJSON relation classification, the allowlisted evaluator/sampler, transferable scene/headless evidence, and the Graph-owned `graph.sample` worker shell. The public `New Graph` entry, visible page, SVG renderer, and Three.js dependency remain absent.
+Moves 1-22 now establish the public non-singleton Graph workspace, structured real-relation authority, governed adaptive sampling, renderer-neutral scene and appearance contracts, deterministic SVG reference view, and a private on-demand Three WebGL2 view. Three is dynamically loaded only after a pane enters 3D; current curves stay on `z=0`; strict session V4/surface V3 migration preserves independent real/complex camera state; WebGL2 loss or absence immediately retains the precise SVG scene. Analysis, real-surface mathematics, complex mappings, Riemann sheets/surfaces, and export remain sequenced in Moves 23-30.
 
 ## Rebased repository authority map
 

@@ -3,9 +3,11 @@ import {
   type GraphDocumentV2,
   type GraphSurfaceStateV1,
   type GraphSurfaceStateV2,
+  type GraphSurfaceStateV3,
+  type GraphPaneViewStateV1,
 } from '../../lib/graphing/contracts/types';
 
-export const GRAPH_WORKSPACE_SESSION_VERSION = 3 as const;
+export const GRAPH_WORKSPACE_SESSION_VERSION = 4 as const;
 
 export type GraphPiecewiseAuthoringDraftV1 = {
   version: 1;
@@ -39,11 +41,38 @@ export type GraphWorkspaceSessionStateV2 = {
 };
 
 export type GraphWorkspaceSessionStateV3 = {
-  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  version: 3;
   document: GraphDocumentV2;
   surface: GraphSurfaceStateV2;
   authoring?: GraphWorkspaceAuthoringStateV1;
 };
+
+export type GraphWorkspaceSessionStateV4 = {
+  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  document: GraphDocumentV2;
+  surface: GraphSurfaceStateV3;
+  authoring?: GraphWorkspaceAuthoringStateV1;
+};
+
+export function createDefaultGraphPaneViewState(): GraphPaneViewStateV1 {
+  return {
+    version: 1,
+    dimension: '2d',
+    camera3d: {
+      version: 1,
+      projection: 'perspective',
+      orientation: 'isometric',
+      position: { x: 8, y: -10, z: 8 },
+      target: { x: 0, y: 0, z: 0 },
+      up: { x: 0, y: 0, z: 1 },
+      perspectiveFovDegrees: 45,
+      orthographicScale: 12,
+    },
+    verticalExaggeration: 1,
+    wireframe: false,
+    flythroughEnabled: false,
+  };
+}
 
 export function graphWorkspaceDefaultTitle(sequence: number) {
   return sequence <= 1 ? 'Untitled Graph' : `Untitled Graph ${sequence}`;
@@ -52,7 +81,7 @@ export function graphWorkspaceDefaultTitle(sequence: number) {
 export function createGraphWorkspaceSessionState(
   workspaceInstanceId: string,
   title: string,
-): GraphWorkspaceSessionStateV3 {
+): GraphWorkspaceSessionStateV4 {
   return {
     version: GRAPH_WORKSPACE_SESSION_VERSION,
     document: {
@@ -65,7 +94,7 @@ export function createGraphWorkspaceSessionState(
     },
     authoring: { piecewiseDrafts: [] },
     surface: {
-      version: 2,
+      version: 3,
       viewport: {
         coordinateSystem: 'cartesian',
         xMin: -10,
@@ -92,6 +121,10 @@ export function createGraphWorkspaceSessionState(
         theme: 'technical',
         colorVisionMode: 'standard',
       },
+      panes: {
+        real: createDefaultGraphPaneViewState(),
+        complex: createDefaultGraphPaneViewState(),
+      },
     },
   };
 }
@@ -101,9 +134,9 @@ export function renameGraphWorkspaceSessionState(
   title: string,
 ) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  const session = value as Partial<GraphWorkspaceSessionStateV3>;
+  const session = value as Partial<GraphWorkspaceSessionStateV4>;
   if (
-    session.version !== 3
+    session.version !== 4
     || !session.document
     || session.document.version !== 2
     || session.document.title === title
@@ -115,5 +148,5 @@ export function renameGraphWorkspaceSessionState(
       title,
       contentRevision: session.document.contentRevision + 1,
     },
-  } as GraphWorkspaceSessionStateV3;
+  } as GraphWorkspaceSessionStateV4;
 }

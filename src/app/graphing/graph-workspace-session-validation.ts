@@ -3,30 +3,49 @@ import {
   validateGraphDocumentV1,
   validateGraphSurfaceState,
   validateGraphSurfaceStateV1,
+  validateGraphSurfaceStateV2,
 } from '../../lib/graphing/contracts/validation';
 import type { GraphDocumentV2 } from '../../lib/graphing/contracts/types';
-import type {
-  GraphWorkspaceSessionStateV1,
-  GraphWorkspaceSessionStateV2,
-  GraphWorkspaceSessionStateV3,
+import {
+  createDefaultGraphPaneViewState,
+  type GraphWorkspaceSessionStateV4,
+  type GraphWorkspaceSessionStateV1,
+  type GraphWorkspaceSessionStateV2,
+  type GraphWorkspaceSessionStateV3,
 } from './graph-workspace-session';
 
 export function migrateGraphWorkspaceSessionState(
   value: unknown,
-): GraphWorkspaceSessionStateV3 | null {
+): GraphWorkspaceSessionStateV4 | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const candidate = value as Partial<GraphWorkspaceSessionStateV1 | GraphWorkspaceSessionStateV2 | GraphWorkspaceSessionStateV3>;
+  const candidate = value as Partial<GraphWorkspaceSessionStateV1 | GraphWorkspaceSessionStateV2
+    | GraphWorkspaceSessionStateV3 | GraphWorkspaceSessionStateV4>;
   const authoring = candidate.authoring;
   if (authoring !== undefined && !Array.isArray(authoring.piecewiseDrafts)) return null;
-  if (candidate.version === 3) {
+  if (candidate.version === 4) {
     const surface = validateGraphSurfaceState(candidate.surface);
     if (!surface.ok) return null;
     const document = validateGraphDocument(candidate.document);
     if (!document.ok) return null;
     return {
-      version: 3,
+      version: 4,
       document: document.validated.value,
       surface: surface.validated.value,
+      ...(authoring ? { authoring } : {}),
+    };
+  }
+  if (candidate.version === 3) {
+    const surface = validateGraphSurfaceStateV2(candidate.surface);
+    const document = validateGraphDocument(candidate.document);
+    if (!surface.ok || !document.ok) return null;
+    return {
+      version: 4,
+      document: document.validated.value,
+      surface: {
+        ...surface.validated.value,
+        version: 3,
+        panes: { real: createDefaultGraphPaneViewState(), complex: createDefaultGraphPaneViewState() },
+      },
       ...(authoring ? { authoring } : {}),
     };
   }
@@ -50,12 +69,13 @@ export function migrateGraphWorkspaceSessionState(
     };
   } else return null;
   return {
-    version: 3,
+    version: 4,
     document: migrated,
     surface: {
       ...legacySurface.validated.value,
-      version: 2,
+      version: 3,
       appearance: { theme: 'technical', colorVisionMode: 'standard' },
+      panes: { real: createDefaultGraphPaneViewState(), complex: createDefaultGraphPaneViewState() },
     },
     ...(authoring ? { authoring } : {}),
   };
@@ -63,8 +83,8 @@ export function migrateGraphWorkspaceSessionState(
 
 export function isGraphWorkspaceSessionState(
   value: unknown,
-): value is GraphWorkspaceSessionStateV3 {
+): value is GraphWorkspaceSessionStateV4 {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value)
-    && (value as { version?: unknown }).version === 3
+    && (value as { version?: unknown }).version === 4
     && migrateGraphWorkspaceSessionState(value));
 }

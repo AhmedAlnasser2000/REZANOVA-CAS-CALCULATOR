@@ -96,7 +96,7 @@ describe('Graph v1 contract validators', () => {
 
   it('keeps surface state clone-safe and independent from document truth', () => {
     const surface = {
-      version: 2,
+      version: 3,
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },
       viewportRevision: 2,
       parameterRevision: 3,
@@ -107,6 +107,26 @@ describe('Graph v1 contract validators', () => {
       selectedItemId: null,
       presentationMode: false,
       appearance: { theme: 'technical', colorVisionMode: 'standard' },
+      panes: {
+        real: {
+          version: 1, dimension: '2d', verticalExaggeration: 1, wireframe: false,
+          flythroughEnabled: false,
+          camera3d: {
+            version: 1, projection: 'perspective', orientation: 'isometric',
+            position: { x: 8, y: -10, z: 8 }, target: { x: 0, y: 0, z: 0 },
+            up: { x: 0, y: 0, z: 1 }, perspectiveFovDegrees: 45, orthographicScale: 12,
+          },
+        },
+        complex: {
+          version: 1, dimension: '2d', verticalExaggeration: 1, wireframe: false,
+          flythroughEnabled: false,
+          camera3d: {
+            version: 1, projection: 'perspective', orientation: 'isometric',
+            position: { x: 8, y: -10, z: 8 }, target: { x: 0, y: 0, z: 0 },
+            up: { x: 0, y: 0, z: 1 }, perspectiveFovDegrees: 45, orthographicScale: 12,
+          },
+        },
+      },
     };
     expect(validateGraphSurfaceState(surface).ok).toBe(true);
     expect(validateGraphSurfaceState({ ...surface, workerHandle: {} }).ok).toBe(false);

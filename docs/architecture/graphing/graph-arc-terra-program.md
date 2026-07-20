@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-20 complete; Move 21 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-22 complete; Move 23 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -310,11 +310,15 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 
 ## 21. `GRAPHING-APPEARANCE-STYLING1`
 
+Status: complete in `8fafd717`.
+
 - Terra: High; gate type: ui.
 - Objective: restore the compact rendered-cases piecewise resting row and add renderer-neutral Technical/Paper/Aurora/Luminous themes plus per-item color, opacity, width, dash, region opacity, soft halo, label, and semantic-marker commands through `setPresentation()` without resampling.
 - Paper changes only the Graph canvas; Luminous remains restrained. Theme and style state is tab-local, undoable, versioned, and preserves custom item overrides without incrementing mathematics revisions.
 
 ## 22. `GRAPHING-THREE-RENDERER1`
+
+Status: implementation and verification complete; commit pending at write time.
 
 - Terra: High; gate type: ui.
 - Objective: pin audited `three@0.185.1`, widen renderer-neutral scene/camera contracts, and add the private on-demand WebGL2 adapter plus a permanent per-pane 2D/3D switch.

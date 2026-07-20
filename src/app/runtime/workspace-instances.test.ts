@@ -278,7 +278,8 @@ describe('workspace instance model', () => {
     }
     expect(renamed.surfaceState.document).toMatchObject({
       title: 'Quadratic study',
-      documentRevision: 1,
+      contentRevision: 1,
+      mathematicsRevision: 0,
     });
     expect((secondGraph?.surfaceState as { document?: { title?: string } }).document?.title)
       .toBe('Untitled Graph 2');

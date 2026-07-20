@@ -274,6 +274,36 @@ export type GraphSurfaceStateV2 = Omit<GraphSurfaceStateV1, 'version'> & {
   };
 };
 
+export type GraphVector3V1 = { x: number; y: number; z: number };
+
+export type GraphCameraStateV1 = {
+  version: 1;
+  projection: 'perspective' | 'orthographic';
+  orientation: 'free' | 'top' | 'front' | 'right' | 'isometric';
+  position: GraphVector3V1;
+  target: GraphVector3V1;
+  up: GraphVector3V1;
+  perspectiveFovDegrees: number;
+  orthographicScale: number;
+};
+
+export type GraphPaneViewStateV1 = {
+  version: 1;
+  dimension: '2d' | '3d';
+  camera3d: GraphCameraStateV1;
+  verticalExaggeration: number;
+  wireframe: boolean;
+  flythroughEnabled: boolean;
+};
+
+export type GraphSurfaceStateV3 = Omit<GraphSurfaceStateV2, 'version'> & {
+  version: 3;
+  panes: {
+    real: GraphPaneViewStateV1;
+    complex: GraphPaneViewStateV1;
+  };
+};
+
 export type GraphRevisionSetV1 = {
   document: number;
   viewport: number;
@@ -408,6 +438,31 @@ export type GraphRendererSceneFrameV1 = {
   policy: GraphRenderPolicy;
 };
 
+export type GraphSurfaceMeshRuntimeV1 = {
+  meshId: string;
+  itemId: string;
+  positions: Float64Array;
+  triangleIndices: Uint32Array;
+  normals: Float32Array;
+  contourCoordinates: Float64Array;
+  contourOffsets: Uint32Array;
+  truncated: boolean;
+};
+
+export type GraphSpatialSceneRuntimeV1 = {
+  version: 1;
+  planarScene: SampledSceneRuntimeV2;
+  surfaceMeshes: GraphSurfaceMeshRuntimeV1[];
+};
+
+export type GraphRendererCameraFrameV1 = {
+  version: 1;
+  camera: GraphCameraStateV1;
+  verticalExaggeration: number;
+  wireframe: boolean;
+  selectedItemId: string | null;
+};
+
 export type GraphRendererPresentationFrameV1 = {
   version: 1;
   contentRevision: number;
@@ -432,7 +487,7 @@ export type GraphHitResult = {
   pathIndex?: number;
   pointIndex?: number;
   parameterValue?: number;
-  world: { x: number; y: number };
+  world: { x: number; y: number; z?: number };
   distancePixels: number;
 };
 
@@ -447,6 +502,18 @@ export interface InteractiveGraphRenderer {
   handleContextRestored(): void;
   dispose(): void;
 }
+
+export interface InteractiveGraph3dRenderer extends InteractiveGraphRenderer {
+  setCamera(frame: GraphRendererCameraFrameV1): void;
+  getItemCenter(itemId: string): GraphVector3V1 | null;
+  screenToPlane(clientX: number, clientY: number, z?: number): GraphVector3V1 | null;
+  showPivot(pivot: GraphVector3V1): void;
+}
+
+export type GraphRendererLifecycleCallbacksV1 = {
+  onContextLost: () => void;
+  onContextRestored: () => void;
+};
 
 /** Internal sampler guardrails. These are derived from the live view, never authored by users. */
 export type GraphSamplingLimitsV2 = {

@@ -7,7 +7,21 @@ import GraphWorkspacePage from './GraphWorkspacePage';
 import '../../styles/app/shell.css';
 import '../../styles/app/graphing.css';
 
-const { runGraphSampleWithOoe } = vi.hoisted(() => ({
+const { createGraphThreeRenderer, runGraphSampleWithOoe, threeRenderer } = vi.hoisted(() => {
+  const threeRenderer = {
+    capabilities: {
+      rendererId: 'three-webgl', interactive: true, hitTesting: true, regionFill: true,
+      polarGrid: false, contextRecovery: true, maximumVertices: 350_000,
+    },
+    mount: vi.fn(), resize: vi.fn(), setView: vi.fn(), setScene: vi.fn(),
+    setPresentation: vi.fn(), setCamera: vi.fn(), clear: vi.fn(), dispose: vi.fn(),
+    getItemCenter: vi.fn(() => null), hitTest: vi.fn(() => null),
+    screenToPlane: vi.fn(() => ({ x: 0, y: 0, z: 0 })), showPivot: vi.fn(),
+    handleContextRestored: vi.fn(),
+  };
+  return {
+  createGraphThreeRenderer: vi.fn(async () => threeRenderer),
+  threeRenderer,
   runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV4) => ({
   payload: {
     version: 4 as const,
@@ -56,13 +70,15 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
     releasedBufferBytes: 0,
   },
   })),
-}));
+  };
+});
 
 vi.mock('../../lib/graphing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/graphing')>()),
   buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV4) => (
     `input.graph.sample.${request.revisions.scene}`
   )),
+  createGraphThreeRenderer,
   releaseGraphSampleResultBuffers: vi.fn(() => 0),
   runGraphSampleWithOoe,
 }));
@@ -84,6 +100,8 @@ function setMathFieldValue(field: HTMLElement, value: string) {
 describe('GraphWorkspacePage', () => {
   beforeEach(() => {
     runGraphSampleWithOoe.mockClear();
+    createGraphThreeRenderer.mockClear();
+    threeRenderer.dispose.mockClear();
   });
 
   it('creates focused Notes, reorders them, and never samples content-only edits', async () => {
@@ -621,5 +639,38 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByTestId('graph-page')).toHaveAttribute('data-graph-theme', 'paper');
     await new Promise((resolve) => setTimeout(resolve, 220));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
+  });
+
+  it('keeps the 2D/3D switch visible and persists 3D view state without resampling', async () => {
+    const onUpdateSession = vi.fn();
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={onUpdateSession}
+        session={createGraphWorkspaceSessionState('graphing.2', '3D Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    runGraphSampleWithOoe.mockClear();
+
+    expect(screen.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: '3D' }));
+    await waitFor(() => expect(screen.getByTestId('graph-three-viewport')).toHaveAttribute('data-ready', 'true'));
+    expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Real · Three interactive')).toBeVisible();
+    expect(onUpdateSession.mock.calls.at(-1)?.[0]).toMatchObject({
+      version: 4,
+      document: { mathematicsRevision: 0 },
+      surface: { version: 3, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '2D' }));
+    expect(screen.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('graph-viewport')).toBeVisible();
+    expect(threeRenderer.dispose).toHaveBeenCalledOnce();
   });
 });

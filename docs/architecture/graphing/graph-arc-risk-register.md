@@ -27,3 +27,9 @@ Parent gate: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
 | Duplicate authority | document, surface, worker, and renderer each retain conflicting revisions | document/viewport/parameter revisions are explicit and results must match all applicable keys | reducer/job/commit property tests |
 
 No risk is mitigated by screenshots, string manipulation, a second command bus, a universal AST, or retaining parallel legacy implementations.
+
+## Verified through Move 22
+
+- Renderer contamination is ratcheted: production source and a negative fixture prove Three imports are accepted only under the private adapter directory; the Graph page and app startup retain dynamic boundaries.
+- WebGL context loss is exercised in Chromium: the current SVG scene appears with a non-destructive notice, context restoration rebuilds from renderer-neutral state, and switching back to 2D removes the Three canvas and disposes its listener/resource ownership.
+- Camera and accessibility evidence covers named DOM controls, keyboard focus/reset, canonical snaps, projection, Unity-style pointer navigation, selected pivot behavior, non-passive wheel ownership, independent pane defaults, and view-only revision semantics.

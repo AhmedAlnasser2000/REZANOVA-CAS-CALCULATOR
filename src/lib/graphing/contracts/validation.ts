@@ -29,6 +29,7 @@ import type {
   GraphStopReason,
   GraphSurfaceStateV1,
   GraphSurfaceStateV2,
+  GraphSurfaceStateV3,
   GraphViewportV1,
   SampledSceneSnapshotV2,
 } from './types';
@@ -349,7 +350,7 @@ const surfaceV1Schema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
   presentationMode: z.boolean(),
 });
 
-const surfaceSchema: z.ZodType<GraphSurfaceStateV2> = z.strictObject({
+const surfaceV2Schema = z.strictObject({
   version: z.literal(2),
   viewport: viewportSchema,
   viewportRevision: revisionSchema,
@@ -375,7 +376,31 @@ const surfaceSchema: z.ZodType<GraphSurfaceStateV2> = z.strictObject({
     theme: z.enum(['technical', 'paper', 'aurora', 'luminous']),
     colorVisionMode: z.enum(['standard', 'color-vision-friendly']),
   }),
+}) satisfies z.ZodType<GraphSurfaceStateV2>;
+
+const vector3Schema = z.strictObject({ x: finiteSchema, y: finiteSchema, z: finiteSchema });
+const cameraSchema = z.strictObject({
+  version: z.literal(1),
+  projection: z.enum(['perspective', 'orthographic']),
+  orientation: z.enum(['free', 'top', 'front', 'right', 'isometric']),
+  position: vector3Schema,
+  target: vector3Schema,
+  up: vector3Schema,
+  perspectiveFovDegrees: finiteSchema.min(15).max(90),
+  orthographicScale: finiteSchema.positive().max(1_000_000),
 });
+const paneViewSchema = z.strictObject({
+  version: z.literal(1),
+  dimension: z.enum(['2d', '3d']),
+  camera3d: cameraSchema,
+  verticalExaggeration: finiteSchema.positive().max(100),
+  wireframe: z.boolean(),
+  flythroughEnabled: z.boolean(),
+});
+const surfaceSchema: z.ZodType<GraphSurfaceStateV3> = surfaceV2Schema.extend({
+  version: z.literal(3),
+  panes: z.strictObject({ real: paneViewSchema, complex: paneViewSchema }),
+}) as z.ZodType<GraphSurfaceStateV3>;
 
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({
   rendererId: z.enum(['headless', 'svg', 'three-webgl']),
@@ -512,6 +537,8 @@ export const validateGraphSurfaceState = (input: unknown) =>
   validateJsonContract(input, 'Graph surface state', surfaceSchema, standardLimits);
 export const validateGraphSurfaceStateV1 = (input: unknown) =>
   validateJsonContract(input, 'Graph V1 surface state', surfaceV1Schema, standardLimits);
+export const validateGraphSurfaceStateV2 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V2 surface state', surfaceV2Schema, standardLimits);
 export const validateGraphRevisionSet = (input: unknown) =>
   validateJsonContract(input, 'Graph revision set', revisionsSchema, standardLimits);
 export const validateGraphRendererCapabilities = (input: unknown) =>

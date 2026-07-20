@@ -7,3 +7,4 @@ export * from './presentation';
 export * from './sampling';
 export * from './scene';
 export * from './renderers/svg';
+export * from './renderers/three-loader';

@@ -1,4 +1,5 @@
 @import './graphing-appearance.css';
+@import './graphing-three.css';
 
 .active-surface--graphing {
   min-height: min(900px, calc(100vh - 150px));

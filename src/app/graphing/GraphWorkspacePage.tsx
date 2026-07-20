@@ -39,7 +39,7 @@ import {
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV3,
+  GraphWorkspaceSessionStateV4,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
@@ -47,14 +47,15 @@ import {
   graphItemSourceLatex,
   graphPiecewiseDraftBranchFeedback,
 } from './graph-document';
-import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
+import type { GraphTraceRouteKind } from './GraphSvgViewport';
+import { GraphViewportHost } from './GraphViewportHost';
 import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV3;
+  session: GraphWorkspaceSessionStateV4;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV3) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV4) => void;
 };
 
 type GraphRailEntry =
@@ -744,7 +745,8 @@ export default function GraphWorkspacePage({
           </button>
           <GraphThemeControls colorVisionMode={controller.session.surface.appearance.colorVisionMode}
             onChange={controller.updateAppearance} theme={controller.session.surface.appearance.theme} />
-          <span className="graph-toolbar-context">Real · SVG reference</span>
+          <span className="graph-toolbar-context">Real · {controller.session.surface.panes.real.dimension === '3d'
+            ? 'Three interactive' : 'SVG reference'}</span>
         </div>
 
         {gridPanelOpen ? (
@@ -934,16 +936,19 @@ export default function GraphWorkspacePage({
         </aside>
 
         <section className="graph-viewport-panel" aria-label="Graph viewport">
-          <GraphSvgViewport
+          <GraphViewportHost
             grid={controller.session.surface.grid}
+            onPaneViewChange={(values) => controller.updatePaneView('real', values)}
+            onSelectItem={controller.selectItem}
             onSizeChange={setViewportSize}
-            onTraceItemChange={controller.setActiveSamplingItem}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
+            paneView={controller.session.surface.panes.real}
             pending={controller.isScenePending || controller.suppressedPiecewiseItems.size > 0}
             presentation={presentation}
             scene={scene}
             sceneViewport={controller.sampleResult?.viewport ?? null}
+            selectedItemId={controller.session.surface.selectedItemId}
             viewport={controller.session.surface.viewport}
           />
           {controller.status.kind === 'sampling' || controller.suppressedPiecewiseItems.size > 0 ? (
@@ -968,7 +973,9 @@ export default function GraphWorkspacePage({
           {controller.status.label}
         </span>
         <span>{visibleCount} visible {visibleCount === 1 ? 'item' : 'items'}</span>
-        <span>Click to trace · move to sweep · scroll to zoom · drag to pan</span>
+        <span>{controller.session.surface.panes.real.dimension === '3d'
+          ? 'MMB pan · Alt+LMB orbit · wheel zoom · F focus · Home reset'
+          : 'Click to trace · move to sweep · scroll to zoom · drag to pan'}</span>
       </footer>
     </article>
   );

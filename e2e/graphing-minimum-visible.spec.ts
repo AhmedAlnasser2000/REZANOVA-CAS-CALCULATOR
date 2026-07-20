@@ -831,4 +831,84 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
   });
+
+  test('runs the private Three viewport with Unity controls and precise SVG recovery', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, 'x^2-4');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    await expect(page.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: '3D' }).click();
+    const viewport = page.getByTestId('graph-three-viewport');
+    await expect(viewport).toHaveAttribute('data-ready', 'true');
+    await expect(viewport.locator('canvas.graph-three-canvas')).toBeVisible();
+    await expect(viewport).toHaveAttribute('data-camera-projection', 'perspective');
+
+    await page.getByRole('button', { name: 'Top' }).click();
+    await expect(viewport).toHaveAttribute('data-camera-orientation', 'top');
+    await page.getByRole('combobox', { name: '3D projection' }).selectOption('orthographic');
+    await expect(viewport).toHaveAttribute('data-camera-projection', 'orthographic');
+    await page.getByRole('combobox', { name: 'Vertical exaggeration' }).selectOption('2');
+    await page.getByRole('button', { name: 'Wireframe' }).click();
+    await expect(page.getByRole('button', { name: 'Wireframe' })).toHaveAttribute('aria-pressed', 'true');
+
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Three viewport did not have layout bounds.');
+    const beforePan = await viewport.getAttribute('data-camera-position');
+    await page.mouse.move(bounds.x + bounds.width * 0.55, bounds.y + bounds.height * 0.55);
+    await page.mouse.down({ button: 'middle' });
+    await page.mouse.move(bounds.x + bounds.width * 0.62, bounds.y + bounds.height * 0.61, { steps: 5 });
+    await page.mouse.up({ button: 'middle' });
+    await expect(viewport).not.toHaveAttribute('data-camera-position', beforePan ?? '');
+
+    const beforeOrbit = await viewport.getAttribute('data-camera-position');
+    await page.keyboard.down('Alt');
+    await page.mouse.down({ button: 'left' });
+    await page.mouse.move(bounds.x + bounds.width * 0.69, bounds.y + bounds.height * 0.5, { steps: 5 });
+    await page.mouse.up({ button: 'left' });
+    await page.keyboard.up('Alt');
+    await expect(viewport).not.toHaveAttribute('data-camera-position', beforeOrbit ?? '');
+    await expect(viewport).toHaveAttribute('data-camera-orientation', 'free');
+
+    const beforeZoom = await viewport.getAttribute('data-camera-position');
+    await page.mouse.wheel(0, -260);
+    await expect(viewport).not.toHaveAttribute('data-camera-position', beforeZoom ?? '');
+    await viewport.focus();
+    await page.keyboard.press('Home');
+    await expect(viewport).toHaveAttribute('data-camera-orientation', 'isometric');
+
+    const canvas = viewport.locator('canvas.graph-three-canvas');
+    await canvas.evaluate((element) => {
+      element.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+    });
+    await expect(page.getByText('Precise 2D fallback')).toBeVisible();
+    await expect(page.getByText('WebGL2 context was lost. Your graph and camera are preserved.')).toBeVisible();
+    await expect(page.getByTestId('graph-viewport')).toBeVisible();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    await canvas.evaluate((element) => {
+      element.dispatchEvent(new Event('webglcontextrestored'));
+    });
+    await expect(page.getByText('Precise 2D fallback')).toHaveCount(0);
+    await expect(viewport).toBeVisible();
+
+    await page.getByRole('button', { name: '2D' }).click();
+    await expect(page.locator('canvas.graph-three-canvas')).toHaveCount(0);
+    await page.getByRole('button', { name: '3D' }).click();
+    await expect(page.getByTestId('graph-three-viewport')).toHaveAttribute('data-camera-orientation', 'isometric');
+    await expect(page.getByTestId('graph-three-viewport')).toHaveAttribute('data-camera-projection', 'orthographic');
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-move22-three-viewport-1440x940.png'),
+      fullPage: true,
+    });
+    expect(consoleErrors).toEqual([]);
+  });
 });

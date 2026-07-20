@@ -23,6 +23,14 @@ describe('Graphing boundary ratchet', () => {
     assert.throws(() => validateGraphingBoundaries({ rootDir }), /imports Three\.js outside/u);
   });
 
+  it('allows Three.js only inside the private adapter district', () => {
+    const rootDir = rootWith(
+      'src/lib/graphing/renderers/three/renderer.ts',
+      "import * as THREE from 'three';\nexport const scene = new THREE.Scene();\n",
+    );
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir }));
+  });
+
   it('rejects app UI and private solver ownership', () => {
     const appRoot = rootWith('src/lib/graphing/runtime.ts', "import { AppMain } from '../../AppMain';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir: appRoot }), /imports app UI state/u);
