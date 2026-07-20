@@ -17,6 +17,10 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           const normalizedId = id.replace(/\\/g, '/');
+          if (normalizedId.endsWith('/src/lib/guide/content/selectors.ts')) {
+            return 'feature-guide-content';
+          }
+
           if (!normalizedId.includes('/node_modules/')) {
             return undefined;
           }
@@ -37,6 +41,36 @@ export default defineConfig({
             return 'vendor-compute-engine';
           }
 
+          if (
+            normalizedId.includes('/node_modules/echarts/')
+            || normalizedId.includes('/node_modules/zrender/')
+          ) {
+            return 'vendor-statistics-charts';
+          }
+
+          if (
+            normalizedId.includes('/node_modules/@tiptap/')
+            || normalizedId.includes('/node_modules/@remirror/')
+            || normalizedId.includes('/node_modules/prosemirror-')
+          ) {
+            return 'vendor-notebook-editor';
+          }
+
+          if (
+            normalizedId.includes('/node_modules/docx/')
+            || normalizedId.includes('/node_modules/jszip/')
+          ) {
+            return 'vendor-document-export';
+          }
+
+          if (normalizedId.includes('/node_modules/@stdlib/')) {
+            return 'vendor-statistics-math';
+          }
+
+          if (normalizedId.includes('/node_modules/ml-matrix/')) {
+            return 'vendor-linear-algebra';
+          }
+
           if (normalizedId.includes('/node_modules/@tauri-apps/')) {
             return 'vendor-tauri';
           }
@@ -45,7 +79,10 @@ export default defineConfig({
             return 'vendor-zod';
           }
 
-          return 'vendor';
+          // Leave feature-local dependencies to Rollup. A catch-all vendor
+          // chunk makes one eager dependency pull unrelated lazy surfaces into
+          // the HTML entry's static closure.
+          return undefined;
         },
       },
     },

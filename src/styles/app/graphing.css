@@ -340,6 +340,15 @@
   opacity: 0.55;
 }
 
+.graph-expression-row.is-piecewise {
+  align-items: start;
+}
+
+.graph-expression-row.is-piecewise > .graph-expression-color,
+.graph-expression-row.is-piecewise > .graph-expression-actions {
+  margin-top: 13px;
+}
+
 .graph-expression-color {
   width: 15px;
   height: 15px;
@@ -359,6 +368,16 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+}
+
+.graph-piecewise-summary {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+.graph-piecewise-summary-editor {
+  min-height: 52px;
 }
 
 .graph-expression-editor-scroll.is-overflowing {
@@ -425,6 +444,16 @@
   border: 1px solid var(--graph-line);
   border-radius: 8px;
   background: #0a1719;
+}
+
+.graph-piecewise-expanded-editor {
+  grid-column: 2 / -1;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.graph-piecewise-expanded-editor > .graph-piecewise-editor {
+  grid-column: auto;
 }
 
 .graph-piecewise-editor > strong {

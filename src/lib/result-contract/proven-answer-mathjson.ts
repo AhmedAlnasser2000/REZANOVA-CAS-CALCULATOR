@@ -11,6 +11,8 @@ import {
 } from '../display/printer';
 import type { HistoryReplayWorkspace } from '../history-replay/fixture-contract';
 import type { MathJsonRouteId } from './mathjson-route-registry';
+import { findCustomMathJsonOperator } from './standard-mathjson-operators';
+export { findCustomMathJsonOperator } from './standard-mathjson-operators';
 
 declare const producerOwnedCandidateBrand: unique symbol;
 declare const provenAnswerMathJsonBrand: unique symbol;
@@ -93,7 +95,6 @@ export type ProvenStandardAnswerMathJsonResult =
   | { ok: false; failure: ProvenStandardAnswerMathJsonFailure };
 
 const PRIVATE_OPERATOR_PREFIXES = ['Calcwiz', 'Rezanova'] as const;
-const standardOperatorEngine = new ComputeEngine();
 
 function failure(
   reason: ProvenAnswerMathJsonFailure['reason'],
@@ -234,32 +235,6 @@ function renderFormalApplyNode(node: unknown): FormalApplyRender | undefined {
 function containsApplyOperator(node: unknown): boolean {
   if (!Array.isArray(node)) return false;
   return node[0] === 'Apply' || node.slice(1).some(containsApplyOperator);
-}
-
-export function findCustomMathJsonOperator(value: unknown): string | undefined {
-  const pending = [value];
-  while (pending.length > 0) {
-    const current = pending.pop();
-    if (Array.isArray(current)) {
-      const [operator, ...operands] = current;
-      if (
-        typeof operator === 'string'
-        && standardOperatorEngine.lookupDefinition(operator) === undefined
-      ) {
-        return operator;
-      }
-      pending.push(...operands);
-      continue;
-    }
-    if (current && typeof current === 'object') {
-      const record = current as Record<string, unknown>;
-      if (Array.isArray(record.fn)) pending.push(record.fn);
-      if (record.dict && typeof record.dict === 'object') {
-        pending.push(...Object.values(record.dict));
-      }
-    }
-  }
-  return undefined;
 }
 
 export function declareProducerOwnedAnswerMathJson(input: {

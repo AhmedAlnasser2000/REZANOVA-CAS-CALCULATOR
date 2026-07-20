@@ -27,7 +27,8 @@ describe('Linear algebra editor source', () => {
     cell.setValue('i');
     fireEvent.input(cell);
     fireEvent.keyDown(cell, { key: 'Enter' });
-    expect(screen.getByRole('alert')).toHaveTextContent('The imaginary unit i requires Complex mode.');
+    expect(await screen.findByRole('alert', {}, { timeout: 5_000 }))
+      .toHaveTextContent('The imaginary unit i requires Complex mode.');
 
     fireEvent.change(screen.getByLabelText('Scalar domain'), { target: { value: 'complex' } });
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());

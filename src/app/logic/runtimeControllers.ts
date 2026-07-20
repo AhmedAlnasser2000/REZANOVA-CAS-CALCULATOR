@@ -15,13 +15,12 @@ import type {
 } from '../../lib/modes/calculate';
 import {
   buildEquationOoeInputRevisionId,
+} from '../../lib/modes/equation/ooe-snapshot';
+import {
   EQUATION_USE_STORED_VALUES_ACTION,
-  prepareEquationStoredValueSolveConsent,
-  runEquationAlgebraTransform,
-  runEquationModeWithOoePilot,
   type EquationAlgebraAction,
-  type RunEquationModeRequest,
-} from '../../lib/modes/equation';
+} from '../../lib/modes/equation/transform-contract';
+import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import type {
   CalculateAction,
   CalculateRouteMeta,
@@ -48,10 +47,13 @@ import {
   type EquationNumericSolvePanelState,
 } from './equationNumericIntervalRuntime';
 import { equationReplaySeedFromRequest } from './equationHistorySeed';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import {
-  createCanonicalRuntimeError,
-} from '../../lib/result-contract';
-import { finalizeEquationCanonicalRuntimeOutcome } from '../../lib/equation/equation-solve-result';
+  finalizeEquationCanonicalRuntimeOutcome,
+  loadEquationAlgebraTransform,
+  prepareEquationStoredValueSolveConsent,
+  runEquationModeWithOoePilot,
+} from './equationRuntimeLoader';
 
 type TransitionFn = (callback: () => void) => void;
 
@@ -715,43 +717,46 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       const launchSnapshot = getLaunchEquationSnapshot();
       const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
       const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
-      try {
-        if (action === EQUATION_USE_STORED_VALUES_ACTION) {
-          const consent = prepareEquationStoredValueSolveConsent({
-            equationLatex: executionLatex,
-            equationSolveTarget: deps.equationSolveTarget,
-            storedVariables: deps.variableMemory,
-            variableSubstitutionSnapshot: replayedEquationSubstitutionSnapshot(committedInput),
-          });
-          if (consent.kind === 'error') {
-            deps.commitOutcome(
-              finalizeEquationCanonicalRuntimeOutcome(consent.outcome),
-              committedInput,
-              'equation',
-            );
+      void (async () => {
+        try {
+          if (action === EQUATION_USE_STORED_VALUES_ACTION) {
+            const consent = await prepareEquationStoredValueSolveConsent({
+              equationLatex: executionLatex,
+              equationSolveTarget: deps.equationSolveTarget,
+              storedVariables: deps.variableMemory,
+              variableSubstitutionSnapshot: replayedEquationSubstitutionSnapshot(committedInput),
+            });
+            if (consent.kind === 'error') {
+              deps.commitOutcome(
+                await finalizeEquationCanonicalRuntimeOutcome(consent.outcome),
+                committedInput,
+                'equation',
+              );
+              return;
+            }
+            runEquationAction({
+              variableSubstitutionSnapshot: [...consent.variableSubstitutionSnapshot],
+              useStoredValueSubstitution: true,
+            });
             return;
           }
-          runEquationAction({
-            variableSubstitutionSnapshot: [...consent.variableSubstitutionSnapshot],
-            useStoredValueSubstitution: true,
+
+          const runEquationAlgebraTransform = await loadEquationAlgebraTransform();
+          const outcome = runEquationAlgebraTransform({
+            action,
+            equationLatex: executionLatex,
+            angleUnit: deps.settings.angleUnit,
           });
-          return;
+
+          deps.commitOutcome(
+            await finalizeEquationCanonicalRuntimeOutcome(outcome),
+            committedInput,
+            'equation',
+          );
+        } catch (error: unknown) {
+          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
         }
-
-        const outcome = runEquationAlgebraTransform({
-          action,
-          equationLatex: executionLatex,
-          angleUnit: deps.settings.angleUnit,
-        });
-
-        deps.commitOutcome(
-          finalizeEquationCanonicalRuntimeOutcome(outcome),
-          committedInput,
-          'equation',
-        );
-      } catch (error: unknown) {
-        deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
-      }
+      })();
     });
   }
 

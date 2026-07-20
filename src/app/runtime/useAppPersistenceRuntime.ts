@@ -21,7 +21,7 @@ import {
   buildStoredVariableValue,
   removeStoredVariableValue,
   upsertStoredVariableValue,
-} from '../../lib/algebra/variable-memory';
+} from '../../lib/algebra/variable-memory/runtime-validation';
 import {
   type CalculatorMemorySnapshot,
   type HistoryEntry,

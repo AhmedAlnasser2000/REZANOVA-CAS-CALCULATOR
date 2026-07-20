@@ -27,7 +27,7 @@ import {
 } from './formula-viewer-artifacts';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
 import { GRAPHING_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
-import { isGraphWorkspaceSessionState } from '../graphing/graph-workspace-session';
+import { isGraphWorkspaceSessionState } from '../graphing/graph-workspace-session-validation';
 
 function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions> {
   let timestamp = 1000;

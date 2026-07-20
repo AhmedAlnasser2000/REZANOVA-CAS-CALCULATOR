@@ -1,4 +1,4 @@
-import type { NormalizedCanonicalResult } from '../../result-contract';
+import type { NormalizedCanonicalResult } from '../../result-contract/normalized-result';
 
 type CanonicalTrustEvidence = NonNullable<
   NonNullable<NormalizedCanonicalResult['semantics']['metadata']>['trustEvidence']

@@ -5,7 +5,7 @@ import type {
 import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
-} from '../result-contract';
+} from '../result-contract/consumer';
 
 export type MathematicalFragmentKind =
   | 'primary-answer'

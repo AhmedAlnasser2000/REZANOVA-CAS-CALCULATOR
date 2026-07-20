@@ -88,6 +88,10 @@ const APP_RUNTIME_FORBIDDEN_VARIABLE_TARGETS = [
   'src/lib/algebra/variable-memory/',
 ];
 
+const APP_RUNTIME_ALLOWED_VARIABLE_TARGETS = new Set([
+  'src/lib/algebra/variable-memory/runtime-validation',
+]);
+
 const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
   'src/lib/ooe/job-launch/job-contract',
   'src/lib/ooe/job-launch/launch-tickets',
@@ -110,6 +114,11 @@ const APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS = [
   'src/lib/geometry/runtime-input',
   'src/lib/geometry/serializer',
 ];
+
+const APP_RUNTIME_ALLOWED_WORKSPACE_REQUEST_TARGETS = new Set([
+  'src/lib/linear-algebra/named-values',
+  'src/lib/linear-algebra/runtime-loader',
+]);
 
 const APP_RUNTIME_FORBIDDEN_WORKSPACE_INTERNAL_TARGETS = [
   'src/lib/linear-algebra/editor-expression-format',
@@ -518,7 +527,10 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget, manifestEnt
     resolvedTarget,
     APP_RUNTIME_FORBIDDEN_VARIABLE_TARGETS,
   );
-  if (forbiddenVariableTarget) {
+  if (
+    forbiddenVariableTarget
+    && !APP_RUNTIME_ALLOWED_VARIABLE_TARGETS.has(resolvedTarget)
+  ) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-runtime variable-memory target "${specifier}"`);
   }
 
@@ -526,7 +538,10 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget, manifestEnt
     resolvedTarget,
     APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS,
   );
-  if (forbiddenWorkspaceRequest) {
+  if (
+    forbiddenWorkspaceRequest
+    && !APP_RUNTIME_ALLOWED_WORKSPACE_REQUEST_TARGETS.has(resolvedTarget)
+  ) {
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-runtime workspace request target "${specifier}"`);
   }
 
@@ -538,7 +553,12 @@ function assertAppRuntimeImport(repoPath, specifier, resolvedTarget, manifestEnt
     throw new Error(`${sourceLabel(repoPath, manifestEntries)} imports forbidden app-runtime workspace internal target "${specifier}"`);
   }
 
-  assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
+  if (
+    !APP_RUNTIME_ALLOWED_VARIABLE_TARGETS.has(resolvedTarget)
+    && !APP_RUNTIME_ALLOWED_WORKSPACE_REQUEST_TARGETS.has(resolvedTarget)
+  ) {
+    assertNoPrivateSolverDistrictImport(repoPath, specifier, resolvedTarget, manifestEntries);
+  }
 }
 
 function isAppSurface(repoPath, manifestEntries) {

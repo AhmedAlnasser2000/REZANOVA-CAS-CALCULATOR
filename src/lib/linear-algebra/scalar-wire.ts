@@ -8,6 +8,14 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import {
+  cloneLinearAlgebraScalarWire,
+} from './scalar-wire-value';
+export {
+  cloneLinearAlgebraScalarWire,
+  linearAlgebraScalarWireFromNumber,
+  linearAlgebraScalarWireToFiniteReal,
+} from './scalar-wire-value';
 import { normalizeExplicitNamedVariablesInLatex } from '../algebra/named-variable';
 import { parseStoredVariableValue } from '../algebra/variable-memory';
 import { validateSerializableMathJson } from '../display/printer';
@@ -351,12 +359,6 @@ export function linearAlgebraScalarWireFromMathJson(
   };
 }
 
-export function cloneLinearAlgebraScalarWire(
-  wire: LinearAlgebraScalarWireV1,
-): LinearAlgebraScalarWireV1 {
-  return structuredClone(wire);
-}
-
 export function parseLinearAlgebraScalarWire(
   latex: string,
   domain: LinearAlgebraScalarDomain,
@@ -401,27 +403,6 @@ export function linearAlgebraScalarWireIntegrityError(
     return 'Scalar exact complex metadata must match its MathJSON value.';
   }
   return null;
-}
-
-export function linearAlgebraScalarWireFromNumber(value: number): LinearAlgebraScalarWireV1 {
-  if (!Number.isFinite(value)) throw new RangeError('Linear Algebra scalar values must be finite.');
-  const parsed = parseLinearAlgebraScalarWire(`${value}`, 'real');
-  if (!parsed.ok) throw new Error(parsed.error);
-  return parsed.value;
-}
-
-export function linearAlgebraScalarWireToFiniteReal(
-  wire: LinearAlgebraScalarWireV1,
-): number | null {
-  if (wire.exactRational) {
-    return wire.exactRational.numerator / wire.exactRational.denominator;
-  }
-  try {
-    const value = ce.box(wire.mathJson).N().json;
-    return typeof value === 'number' && Number.isFinite(value) ? value : null;
-  } catch {
-    return null;
-  }
 }
 
 function uniqueSnapshots(entries: readonly VariableSubstitutionSnapshot[]) {

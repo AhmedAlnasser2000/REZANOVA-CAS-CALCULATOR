@@ -9,7 +9,7 @@ import {
   cloneLinearAlgebraScalarWire,
   linearAlgebraScalarWireFromNumber,
   linearAlgebraScalarWireToFiniteReal,
-} from './scalar-wire';
+} from './scalar-wire-value';
 
 export type {
   LinearAlgebraMatrixNamedValue,

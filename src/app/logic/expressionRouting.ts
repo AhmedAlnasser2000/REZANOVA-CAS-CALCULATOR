@@ -47,19 +47,25 @@ type PasteIntoEditorDeps = {
   focusTrigEditor: () => void;
   setClipboardNotice: (notice: string) => void;
   loadLatexIntoEditor: (latex: string) => void;
-  canonicalizePastedText?: (text: string, mode: ModeId) => string | null | undefined;
+  canonicalizePastedText?: (
+    text: string,
+    mode: ModeId,
+  ) => string | null | undefined | Promise<string | null | undefined>;
   screenHint?: string;
   readClipboard?: typeof readMathClipboard;
 };
 
-function canonicalizePastedMathText(
+async function canonicalizePastedMathText(
   text: string,
   mode: ModeId,
   screenHint?: string,
-  customCanonicalize?: (text: string, mode: ModeId) => string | null | undefined,
+  customCanonicalize?: (
+    text: string,
+    mode: ModeId,
+  ) => string | null | undefined | Promise<string | null | undefined>,
 ) {
   if (customCanonicalize) {
-    return customCanonicalize(text, mode) ?? text;
+    return await customCanonicalize(text, mode) ?? text;
   }
 
   const canonicalized = canonicalizeMathInput(text, {
@@ -159,7 +165,7 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
   try {
     const mathText = readResult.ok && readResult.source !== 'text'
       ? text
-      : canonicalizePastedMathText(
+      : await canonicalizePastedMathText(
           text,
           deps.currentMode,
           deps.screenHint,

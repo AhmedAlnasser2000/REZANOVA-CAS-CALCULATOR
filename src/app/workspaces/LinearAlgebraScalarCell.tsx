@@ -5,7 +5,7 @@ type LinearAlgebraScalarCellProps = {
   ariaLabel: string;
   columnIndex: number;
   groupId: string;
-  onCommit: (latex: string) => string | null;
+  onCommit: (latex: string) => string | null | Promise<string | null>;
   onFocus?: (field: MathfieldElement) => void;
   resolvedLatex?: string;
   rowIndex: number;
@@ -82,8 +82,8 @@ export function LinearAlgebraScalarCell({
     field.smartFence = true;
     field.smartSuperscript = false;
     field.mathVirtualKeyboardPolicy = 'manual';
-    const commit = () => {
-      const error = onCommit(draftRef.current);
+    const commit = async () => {
+      const error = await onCommit(draftRef.current);
       setFeedbackState({ message: error, sourceValue: value });
       return error;
     };
@@ -91,17 +91,17 @@ export function LinearAlgebraScalarCell({
       draftRef.current = field.getValue('latex');
       setFeedbackState({ message: null, sourceValue: value });
     };
-    const handleBlur = () => commit();
+    const handleBlur = () => void commit();
     const handleFocus = () => onFocus?.(field);
     const handleKeydown = (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         event.stopPropagation();
-        if (!commit()) {
-          focusRelativeCell(field, event.shiftKey ? -1 : 1);
-        }
+        void commit().then((error) => {
+          if (!error) focusRelativeCell(field, event.shiftKey ? -1 : 1);
+        });
       } else if (event.key === 'Tab') {
-        commit();
+        void commit();
       } else if (event.key === 'ArrowRight') {
         if (field.selectionIsCollapsed && field.position >= field.lastOffset) {
           event.preventDefault();
@@ -148,8 +148,9 @@ export function LinearAlgebraScalarCell({
     const previousKey = validationKeyRef.current;
     validationKeyRef.current = validationKey;
     if (previousKey === validationKey) return;
-    const error = onCommit(draftRef.current);
-    setFeedbackState({ message: error, sourceValue: value });
+    void Promise.resolve(onCommit(draftRef.current)).then((error) => {
+      setFeedbackState({ message: error, sourceValue: value });
+    });
   }, [onCommit, validationKey, value]);
 
   const showResolved = Boolean(resolvedLatex && resolvedLatex !== value);

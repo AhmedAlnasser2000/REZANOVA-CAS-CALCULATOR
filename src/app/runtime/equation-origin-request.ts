@@ -1,5 +1,5 @@
 import { equationInputLatexForScreen } from '../../lib/modes/equation-ui-model';
-import type { RunEquationModeRequest } from '../../lib/modes/equation';
+import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import type {
   ActiveEquationRuntimeState,

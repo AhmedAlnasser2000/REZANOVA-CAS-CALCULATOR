@@ -64,7 +64,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-import { retitleCanonicalRuntimeOutcome } from '../../lib/result-contract';
+import { retitleCanonicalRuntimeOutcome } from '../../lib/result-contract/runtime-outcome';
 
 type TransitionFn = (callback: () => void) => void;
 

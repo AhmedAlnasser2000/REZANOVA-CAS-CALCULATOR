@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   buildMatrixOoeInputRevisionId,
-  runMatrixModeWithOoePilot,
-  type RunMatrixModeRequest,
-} from '../../lib/modes/matrix';
-import {
   buildVectorOoeInputRevisionId,
+} from '../../lib/linear-algebra/runtime-revision';
+import type { RunMatrixModeRequest } from '../../lib/modes/matrix';
+import {
+  runMatrixModeWithOoePilot,
   runVectorModeWithOoePilot,
-  type RunVectorModeRequest,
-} from '../../lib/modes/vector';
+} from './linearAlgebraRuntimeLoader';
+import type { RunVectorModeRequest } from '../../lib/modes/vector';
 import {
   buildMatrixSoftActions,
   buildVectorSoftActions,
@@ -19,11 +19,6 @@ import {
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
 import {
-  activeMatrixValuePair,
-  activeVectorValuePair,
-  dispatchMatrixEditorLatex,
-  dispatchVectorEditorLatex,
-  type LinearAlgebraEquationHandoff,
   DEFAULT_MATRIX_LEFT_ID,
   DEFAULT_MATRIX_RIGHT_ID,
   DEFAULT_VECTOR_LEFT_ID,
@@ -35,7 +30,6 @@ import {
   matrixValueById,
   numericMatrixFromNamedValue,
   numericVectorFromNamedValue,
-  parseLinearAlgebraScalarWire,
   resizeMatrixNamedValue,
   resizeVectorNamedValue,
   nextMatrixValueName,
@@ -47,8 +41,13 @@ import {
   withVectorNamedValueScalarCell,
   cloneMatrixNamedValues,
   cloneVectorNamedValues,
-  clampLinearAlgebraEditingDimension,
-} from '../../lib/linear-algebra/runtime-request';
+} from '../../lib/linear-algebra/named-values';
+import {
+  activeMatrixValuePair,
+  activeVectorValuePair,
+} from '../../lib/linear-algebra/active-values';
+import { clampLinearAlgebraEditingDimension } from '../../lib/linear-algebra/dimension-contract';
+import type { LinearAlgebraEquationHandoff } from '../../lib/linear-algebra/runtime-request';
 import {
   DEFAULT_MATRIX_A,
   DEFAULT_MATRIX_B,
@@ -84,13 +83,15 @@ import type {
   VariableSubstitutionSnapshot,
   VectorOperation,
 } from '../../types/calculator';
+import { canonicalMathValue } from '../../lib/result-contract/producer';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import {
-  canonicalMathValue,
-  createCanonicalRuntimeError,
-} from '../../lib/result-contract';
-import { buildVectorActionRuntimeRequest } from './linearAlgebraVectorActionRequest';
-import { buildMatrixActionRuntimeRequest } from './linearAlgebraMatrixActionRequest';
-
+  buildMatrixActionRuntimeRequest,
+  buildVectorActionRuntimeRequest,
+  dispatchMatrixEditorLatex,
+  dispatchVectorEditorLatex,
+  parseLinearAlgebraScalarWire,
+} from './linearAlgebraRuntimeLoader';
 type CommitLinearAlgebraOutcome = (
   outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
@@ -274,7 +275,7 @@ export function useLinearAlgebraRuntime({
   function runMatrixRequest(
     launchedRequest: RunMatrixModeRequest,
     inputLatex: string,
-    visibleRequestForCommit: () => RunMatrixModeRequest,
+    visibleRequestForCommit: () => RunMatrixModeRequest | Promise<RunMatrixModeRequest>,
   ) {
     const launchedSnapshot = withMatrixValueSnapshot(launchedRequest);
     const inputRevisionId = buildMatrixOoeInputRevisionId(launchedSnapshot);
@@ -290,7 +291,7 @@ export function useLinearAlgebraRuntime({
     void runMatrixModeWithOoePilot(launchedSnapshot, {
       commitPolicy: 'alwaysCommit',
       ...ooeJobContextFromHistoryTicket(historyTicket),
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.ooe.completion?.kind === 'cancelled') {
         discardHistoryTicket?.(historyTicket?.id);
         setRuntimeStatusOverride?.('Matrix operation stopped');
@@ -302,7 +303,9 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const activeRevision = buildMatrixOoeInputRevisionId(withMatrixValueSnapshot(visibleRequestForCommit()));
+      const activeRevision = buildMatrixOoeInputRevisionId(
+        withMatrixValueSnapshot(await visibleRequestForCommit()),
+      );
       const visibleStillMatrix =
         (getCurrentMode?.() ?? 'matrix') === 'matrix'
         && activeRevision === inputRevisionId
@@ -332,8 +335,8 @@ export function useLinearAlgebraRuntime({
     });
   }
 
-  function runMatrixAction(operation: MatrixOperation) {
-    const launched = buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
+  async function runMatrixAction(operation: MatrixOperation) {
+    const launched = await buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
     if ('error' in launched) {
       commitMatrixEditorError(launched.inputLatex, launched.error);
       return;
@@ -341,17 +344,17 @@ export function useLinearAlgebraRuntime({
     runMatrixRequest(
       launched.request,
       launched.inputLatex,
-      () => {
-        const rebuilt = buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
+      async () => {
+        const rebuilt = await buildMatrixActionRuntimeRequest(operation, matrixStateRef.current);
         return 'error' in rebuilt ? launched.request : rebuilt.request;
       },
     );
   }
 
-  function runMatrixEditorAction() {
+  async function runMatrixEditorAction() {
     const inputLatex = matrixEditorLatex;
     const active = matrixStateRef.current;
-    const dispatched = dispatchMatrixEditorLatex({
+    const dispatched = await dispatchMatrixEditorLatex({
       latex: inputLatex,
       matrixA: active.matrixA,
       matrixB: active.matrixB,
@@ -379,7 +382,7 @@ export function useLinearAlgebraRuntime({
   function runVectorRequest(
     launchedRequest: RunVectorModeRequest,
     inputLatex: string,
-    visibleRequestForCommit: () => RunVectorModeRequest,
+    visibleRequestForCommit: () => RunVectorModeRequest | Promise<RunVectorModeRequest>,
   ) {
     const launchedSnapshot = withVectorValueSnapshot(launchedRequest);
     const inputRevisionId = buildVectorOoeInputRevisionId(launchedSnapshot);
@@ -395,7 +398,7 @@ export function useLinearAlgebraRuntime({
     void runVectorModeWithOoePilot(launchedSnapshot, {
       commitPolicy: 'alwaysCommit',
       ...ooeJobContextFromHistoryTicket(historyTicket),
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.ooe.completion?.kind === 'cancelled') {
         discardHistoryTicket?.(historyTicket?.id);
         setRuntimeStatusOverride?.('Vector operation stopped');
@@ -407,7 +410,9 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const activeRevision = buildVectorOoeInputRevisionId(withVectorValueSnapshot(visibleRequestForCommit()));
+      const activeRevision = buildVectorOoeInputRevisionId(
+        withVectorValueSnapshot(await visibleRequestForCommit()),
+      );
       const visibleStillVector =
         (getCurrentMode?.() ?? 'vector') === 'vector'
         && activeRevision === inputRevisionId
@@ -437,8 +442,8 @@ export function useLinearAlgebraRuntime({
     });
   }
 
-  function runVectorAction(operation: VectorOperation) {
-    const launched = buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
+  async function runVectorAction(operation: VectorOperation) {
+    const launched = await buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
     if ('error' in launched) {
       commitVectorEditorError(launched.inputLatex, launched.error);
       return;
@@ -446,17 +451,17 @@ export function useLinearAlgebraRuntime({
     runVectorRequest(
       launched.request,
       launched.inputLatex,
-      () => {
-        const rebuilt = buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
+      async () => {
+        const rebuilt = await buildVectorActionRuntimeRequest(operation, vectorStateRef.current);
         return 'error' in rebuilt ? launched.request : rebuilt.request;
       },
     );
   }
 
-  function runVectorEditorAction() {
+  async function runVectorEditorAction() {
     const inputLatex = vectorEditorLatex;
     const active = vectorStateRef.current;
-    const dispatched = dispatchVectorEditorLatex({
+    const dispatched = await dispatchVectorEditorLatex({
       latex: inputLatex,
       vectorA: active.vectorA,
       vectorB: active.vectorB,
@@ -480,9 +485,9 @@ export function useLinearAlgebraRuntime({
     runVectorRequest(dispatched.request, canonicalInputLatex, () => dispatched.request);
   }
 
-  function canonicalizeMatrixEditorPaste(text: string) {
+  async function canonicalizeMatrixEditorPaste(text: string) {
     const active = matrixStateRef.current;
-    const dispatched = dispatchMatrixEditorLatex({
+    const dispatched = await dispatchMatrixEditorLatex({
       latex: text,
       matrixA: active.matrixA,
       matrixB: active.matrixB,
@@ -499,9 +504,9 @@ export function useLinearAlgebraRuntime({
       : null;
   }
 
-  function canonicalizeVectorEditorPaste(text: string) {
+  async function canonicalizeVectorEditorPaste(text: string) {
     const active = vectorStateRef.current;
-    const dispatched = dispatchVectorEditorLatex({
+    const dispatched = await dispatchVectorEditorLatex({
       latex: text,
       vectorA: active.vectorA,
       vectorB: active.vectorB,
@@ -665,8 +670,8 @@ export function useLinearAlgebraRuntime({
     );
   }
 
-  function setMatrixValueCellLatex(id: string, row: number, column: number, latex: string) {
-    const parsed = parseLinearAlgebraScalarWire(latex, matrixDomain);
+  async function setMatrixValueCellLatex(id: string, row: number, column: number, latex: string) {
+    const parsed = await parseLinearAlgebraScalarWire(latex, matrixDomain);
     if (!parsed.ok) return parsed.error;
     setMatrixSubstitutionSnapshot(null);
     setMatrixValues((currentValues) => currentValues.map((currentValue) =>
@@ -676,8 +681,8 @@ export function useLinearAlgebraRuntime({
     return null;
   }
 
-  function setVectorValueCellLatex(id: string, index: number, latex: string) {
-    const parsed = parseLinearAlgebraScalarWire(latex, vectorDomain);
+  async function setVectorValueCellLatex(id: string, index: number, latex: string) {
+    const parsed = await parseLinearAlgebraScalarWire(latex, vectorDomain);
     if (!parsed.ok) return parsed.error;
     setVectorSubstitutionSnapshot(null);
     setVectorValues((currentValues) => currentValues.map((currentValue) =>

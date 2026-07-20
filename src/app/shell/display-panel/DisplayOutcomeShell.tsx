@@ -2,16 +2,15 @@
 import { useCallback } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
-import {
-  buildFormulaViewerArtifact,
-  type FormulaViewerArtifact,
-  type FormulaViewerSourceContext,
-} from '../../runtime/formula-viewer-artifacts';
+import type {
+  FormulaViewerArtifact,
+  FormulaViewerSourceContext,
+} from '../../runtime/formula-viewer-contract';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
 import { displaySolveSummaryPartsFromOutcome } from '../../../lib/display/result/display-read-model';
 import { solveSummaryDetailLines } from '../../../lib/display/result-detail-lines';
-import { resolveCanonicalResultForConsumer } from '../../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../../lib/result-contract/consumer';
 import { DetailLineContent } from './DetailLineContent';
 import { ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
 
@@ -132,7 +131,7 @@ export function DisplayOutcomeShell({
     && titleText.trim() === activeExpressionLatexText.trim();
   const showResultTitle = !suppressDuplicateEditorExpressionTitle;
   const showResultTitleRow = showResultTitle || displayResultBadges.length > 0;
-  const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
+  const openFormulaViewerFromBlock = useCallback(async (block: DisplayBlock) => {
     if (typeof onOpenFormulaViewer !== 'function') {
       return;
     }
@@ -143,6 +142,7 @@ export function DisplayOutcomeShell({
       resultTitle: displayPresentation?.title ?? equationResultTitle ?? 'Result',
       sourceExpressionLatex: activeExpressionLatexText,
     };
+    const { buildFormulaViewerArtifact } = await import('../../runtime/formula-viewer-artifacts');
     const artifact: FormulaViewerArtifact = buildFormulaViewerArtifact({
       block,
       displayBlocks: scheduledDisplayBlocks,

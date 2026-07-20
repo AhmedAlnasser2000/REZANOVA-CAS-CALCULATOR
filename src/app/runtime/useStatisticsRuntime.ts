@@ -56,7 +56,7 @@ import type {
   StatisticsWorkingSource,
 } from '../../types/calculator';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
-import { createCanonicalRuntimeError } from '../../lib/result-contract';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import { statisticsRequestFromSurfaceStateForScreen } from './statistics-origin-request';
 import {
   copyStatisticsSurfaceState,

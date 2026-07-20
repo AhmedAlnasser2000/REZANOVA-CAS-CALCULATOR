@@ -27,7 +27,7 @@ import {
   cloneVectorNamedValues,
   numericMatrixFromNamedValue,
   numericVectorFromNamedValue,
-} from '../../lib/linear-algebra/runtime-request';
+} from '../../lib/linear-algebra/named-values';
 
 type CommitLinearTableOutcome = (
   outcome: CanonicalRuntimeOutcome,

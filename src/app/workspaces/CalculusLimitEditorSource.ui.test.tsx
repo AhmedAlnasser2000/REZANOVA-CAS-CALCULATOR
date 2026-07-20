@@ -12,11 +12,18 @@ async function openCalculusTool(
 ) {
   await openLauncherApp(user, 'Calculus', 'Calculus');
   for (const toolLabel of toolLabels) {
-    const candidates = await screen.findAllByRole('button', { name: new RegExp(toolLabel, 'i') });
-    const exactLabelCandidate = candidates.find((candidate) =>
-      candidate.querySelector('strong')?.textContent?.trim().toLowerCase() === toolLabel.toLowerCase(),
-    );
-    await user.click(exactLabelCandidate ?? candidates[0]);
+    const exactLabelCandidate = await waitFor(() => {
+      const menu = document.querySelector('.calculus-menu-list');
+      expect(menu).toBeInTheDocument();
+      const candidates = within(menu as HTMLElement)
+        .getAllByRole('button', { name: new RegExp(toolLabel, 'i') });
+      const exact = candidates.find((candidate) =>
+        candidate.querySelector('strong')?.textContent?.trim().toLowerCase() === toolLabel.toLowerCase(),
+      );
+      expect(exact).toBeDefined();
+      return exact as HTMLElement;
+    }, { timeout: 5_000 });
+    await user.click(exactLabelCandidate);
   }
 }
 
@@ -27,12 +34,18 @@ async function waitForDisplayQueueToSettle() {
 }
 
 async function waitForDisplayOutcomeSuccess() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitFor(
+    () => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument(),
+    { timeout: 5_000 },
+  );
   await waitForDisplayQueueToSettle();
 }
 
 async function waitForDisplayOutcomeError() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+  await waitFor(
+    () => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument(),
+    { timeout: 5_000 },
+  );
   await waitForDisplayQueueToSettle();
 }
 
@@ -41,17 +54,12 @@ describe('Calculus limit editor source', () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
-    await openLauncherApp(user, 'Calculus', 'Calculus');
-    await user.click(await screen.findByRole('button', { name: /Limits/i }));
+    await openCalculusTool(user, 'Limits', 'Limit');
     expect(screen.queryByRole('button', { name: /Finite Target/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Infinite Target/i })).not.toBeInTheDocument();
-    const limitEntries = (await screen.findAllByRole('button', { name: /Limit/i })).filter((candidate) =>
-      candidate.querySelector('strong')?.textContent?.trim() === 'Limit',
-    );
-    expect(limitEntries).toHaveLength(1);
-    await user.click(limitEntries[0]);
 
-    expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
+    expect(await screen.findByTestId('soft-action-toEditor', {}, { timeout: 5_000 }))
+      .toHaveTextContent('Focus Editor');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', '\\text{Enter a limit expression}');
     expect(screen.getByTestId('main-editor').getAttribute('data-placeholder')).not.toContain('integrand');

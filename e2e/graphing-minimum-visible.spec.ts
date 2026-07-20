@@ -494,7 +494,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.graph-trace-callout')).toBeHidden();
     await page.getByRole('button', { name: 'Expand piecewise branches' }).click();
-    await expect(page.getByText('Piecewise branches')).toBeVisible();
+    await expect(page.getByText('Piecewise branches', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '+ Add branch' })).toBeVisible();
     await expect(page.locator('.graph-status')).toContainText('Ready');
     await page.screenshot({
@@ -629,10 +629,30 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
     await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    const piecewiseRow = page.locator('[data-testid="graph-expression-row"][data-piecewise-state]');
+    const piecewiseSummary = page.getByTestId('graph-piecewise-summary');
+    const expand = page.getByRole('button', { name: 'Expand piecewise branches' });
+    await expect(piecewiseSummary).toBeVisible();
+    await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'summary');
+    await expect(expand).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('button', { name: /Reorder item/u })).toHaveCount(0);
     await page.screenshot({
       path: testInfo.outputPath('graphing-piecewise-condition-evidence-1440x940.png'),
       fullPage: true,
     });
+    await expand.click();
+    await expect(page.getByText('Piecewise branches', { exact: true })).toBeVisible();
+    await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'expanded');
+    await expect.poll(() => piecewiseSummary.locator('math-field').evaluate(
+      (element) => Boolean((element as HTMLElement & { readOnly?: boolean }).readOnly),
+    )).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-piecewise-expanded-editor-1440x940.png'),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Collapse piecewise branches' }).click();
+    await expect(page.getByText('Piecewise branches', { exact: true })).toHaveCount(0);
+    await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'summary');
   });
 
   test('keeps high-degree and directed routes complete through rapid interaction', async ({ page }, testInfo) => {

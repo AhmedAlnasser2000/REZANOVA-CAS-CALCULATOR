@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { isNotebookLibrarySurfaceState } from '../../lib/notebook/document/surface-state';
 import {
-  isNotebookLibrarySurfaceState,
   NOTEBOOK_WORKSPACE_CLOSE_EVENT,
   NOTEBOOK_WORKSPACE_FOCUS_EVENT,
   NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT,
@@ -9,7 +9,7 @@ import {
   type NotebookWorkspaceFocusDetail,
   type NotebookWorkspaceOpenQueryDetail,
   type NotebookWorkspaceTitleDetail,
-} from '../../lib/notebook';
+} from '../../lib/notebook/persistence/workspace-events';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
 import {

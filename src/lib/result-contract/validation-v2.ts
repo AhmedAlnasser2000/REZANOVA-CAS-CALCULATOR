@@ -7,7 +7,7 @@ import {
   validateSerializableMathJson,
   type MathJsonValidationFailure,
 } from '../display/printer/math-json';
-import { findCustomMathJsonOperator } from './proven-answer-mathjson';
+import { findCustomMathJsonOperator } from './standard-mathjson-operators';
 import { inspectJsonCompatibleStructuredValue } from './structured-value';
 import {
   CANONICAL_RESULT_MAX_BYTES,

@@ -32,7 +32,11 @@ type VectorWorkspaceProps = {
   onRenameVectorValue: (id: string, name: string) => void;
   onResizeVectorValue: (id: string, length: number) => void;
   onSetActiveVectorValueIds: (leftId: string, rightId: string) => void;
-  onSetVectorCellLatex: (id: string, index: number, latex: string) => string | null;
+  onSetVectorCellLatex: (
+    id: string,
+    index: number,
+    latex: string,
+  ) => string | null | Promise<string | null>;
   onSetVectorDomain: (domain: LinearAlgebraScalarDomain) => void;
   onSetVectorSubstitutionMode: (mode: LinearAlgebraSubstitutionMode) => void;
 };

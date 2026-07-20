@@ -1,4 +1,3 @@
-import { analyzeVariablesFromLatex } from '../variable-core';
 import {
   isReservedNamedVariableName,
   parseExplicitNamedVariableSyntax,
@@ -120,26 +119,8 @@ export function validateStoredVariableName(name: string): ValidationResult<strin
     };
   }
 
-  const analysis = analyzeVariablesFromLatex(trimmed, {
-    allowSymbolicParameters: true,
-    storedVariables: [trimmed],
-  });
-
-  if (analysis.reservedIdentifiers.length > 0 && analysis.symbols.length === 0) {
-    return { ok: false, error: 'Reserved constants, units, and functions cannot be stored variables.' };
-  }
-
   if (!/^[A-Za-z]$/.test(trimmed)) {
     return { ok: false, error: 'Stored variables use one case-sensitive letter for now.' };
-  }
-
-  const symbol = analysis.symbols.find((entry) => entry.name === trimmed);
-  if (!symbol || symbol.identifierKind !== 'single-symbol-variable') {
-    return { ok: false, error: 'This identifier is not a supported stored variable name.' };
-  }
-
-  if (analysis.stops.length > 0) {
-    return { ok: false, error: 'This identifier is reserved or unsupported.' };
   }
 
   return { ok: true, value: trimmed };

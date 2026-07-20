@@ -78,7 +78,6 @@ import {
   getGeometrySoftActions,
 } from './lib/geometry/navigation';
 import { getCalculusProvenanceBadge } from './lib/calculus/workspace/ui';
-import { buildStarterLimitPiecewiseRequest } from './lib/calculus/limit-piecewise-row-editor';
 import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
@@ -92,12 +91,13 @@ import type { MathClipboardSurface } from './lib/clipboard';
 import { copyDisplayResultWithDeps } from './app/logic/displayClipboard';
 import { copyCanonicalMathWithDeps } from './app/logic/clipboardPipeline';
 import { pasteIntoEditorWithDeps } from './app/logic/expressionRouting';
-import { resolveCanonicalResultForConsumer } from './lib/result-contract';
+import { insertStarterLimitPiecewiseTemplate } from './app/logic/calculusPiecewiseTemplateLoader';
+import { resolveCanonicalResultForConsumer } from './lib/result-contract/consumer';
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
 import type { AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
-import { getEquationAlgebraActionLabel } from './lib/modes/equation';
+import { getEquationAlgebraActionLabel } from './lib/modes/equation/transform-contract';
 import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   LAUNCHER_SOFT_ACTIONS,
@@ -158,7 +158,7 @@ import {
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
 import { formatMathTextForDisplay, getDisplayLatex, latexToVisibleText } from './lib/display/math-notation';
-import type { NotebookWorkspaceTarget } from './lib/notebook';
+import type { NotebookWorkspaceTarget } from './lib/notebook/types';
 
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
@@ -2292,7 +2292,7 @@ export default function App() {
       moveCurrentEquationMenuSelection,
       openSelectedEquationMenuEntry,
       insertLatex,
-      insertLimitPiecewiseTemplate: () => setCalculusMainEditorLatex(buildStarterLimitPiecewiseRequest()),
+      insertLimitPiecewiseTemplate: () => insertStarterLimitPiecewiseTemplate(setCalculusMainEditorLatex, setEditorRuntimeStatusOverride),
       deleteBackward: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'deleteBackward'),
       moveToPreviousChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToPreviousChar'),
       moveToNextChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToNextChar'),

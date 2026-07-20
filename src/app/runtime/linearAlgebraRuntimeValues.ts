@@ -1,12 +1,12 @@
 import {
-  clampLinearAlgebraEditingDimension,
   matrixValueById,
   numericMatrixFromNamedValue,
   numericVectorFromNamedValue,
   vectorValueById,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
-} from '../../lib/linear-algebra/runtime-request';
+} from '../../lib/linear-algebra/named-values';
+import { clampLinearAlgebraEditingDimension } from '../../lib/linear-algebra/dimension-contract';
 import { cloneMatrix, cloneVector } from './linearAlgebraRuntimeDefaults';
 
 export function matrixValueForCompatibility(

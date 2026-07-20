@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   createGraphWorkspaceSessionState,
-  migrateGraphWorkspaceSessionState,
   renameGraphWorkspaceSessionState,
 } from './graph-workspace-session';
+import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
 describe('Graph workspace session V2', () => {
   it('migrates a validated V1 session without changing mathematical identity', () => {

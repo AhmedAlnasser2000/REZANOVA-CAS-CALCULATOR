@@ -13,7 +13,7 @@ import type {
   WorkspaceInstanceStateSlot,
 } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
-import { createCanonicalRuntimeError } from '../../lib/result-contract';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 
 type OoeCommitAssessment = Parameters<typeof isOoeCommitAllowed>[0];
 

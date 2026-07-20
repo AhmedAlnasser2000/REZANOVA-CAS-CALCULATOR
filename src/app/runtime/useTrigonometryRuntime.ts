@@ -51,7 +51,7 @@ import type {
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
-import { createCanonicalRuntimeError } from '../../lib/result-contract';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import {
   defaultTrigLeafForMenu,
   trigExecutionLatexForRuntime,

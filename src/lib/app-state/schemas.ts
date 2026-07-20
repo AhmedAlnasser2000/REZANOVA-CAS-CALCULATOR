@@ -18,7 +18,7 @@ import {
   NOTEBOOK_RETENTION_DAYS_OPTIONS,
 } from '../notebook/preferences';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
-import { validateCanonicalResultDocumentVersioned } from '../result-contract';
+import { validateCanonicalResultDocumentVersioned } from '../result-contract/validation-router';
 import {
   matrixReplaySeedSchema,
   vectorReplaySeedSchema,

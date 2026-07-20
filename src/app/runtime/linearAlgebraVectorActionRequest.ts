@@ -10,12 +10,14 @@ import type {
 } from '../../types/calculator';
 import type { RunVectorModeRequest } from '../../lib/modes/vector';
 import {
-  activeVectorValuePair,
   buildActiveScalarVectorRuntimeRequest,
   isScalarVectorNamedValue,
-  vectorActionLabel,
 } from '../../lib/linear-algebra/runtime-request';
-import { buildActiveVectorRequest } from './linearAlgebraActiveOperands';
+import {
+  activeVectorValuePair,
+  vectorActionLabel,
+} from '../../lib/linear-algebra/active-values';
+import { buildActiveVectorRuntimeRequest } from '../../lib/linear-algebra/runtime-request';
 
 export type VectorActionRuntimeState = {
   vectorValues: readonly LinearAlgebraVectorNamedValue[];
@@ -47,7 +49,7 @@ export function buildVectorActionRuntimeRequest(
     || isScalarVectorNamedValue(activeValues.left)
     || isScalarVectorNamedValue(activeValues.right);
   if (!usesScalarProducer) {
-    return buildActiveVectorRequest(
+    return buildActiveVectorRuntimeRequest(
       operation,
       state.vectorValues,
       state.activeVectorLeftId,

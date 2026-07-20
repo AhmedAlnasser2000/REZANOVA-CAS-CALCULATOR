@@ -1,7 +1,6 @@
 import { runVectorOperationWithEvidence } from '../linear-algebra/vector';
 import { linearAlgebraDecimalReadback } from '../linear-algebra/decimal-readback';
 import {
-  buildOoeInputRevisionId,
   type OoeJobContextOptions,
 } from '../ooe/job-launch/job-contract';
 import {
@@ -28,66 +27,20 @@ import {
 import type {
   ScalarVectorRequestV1,
   VersionedResultProducerDraft,
-  VectorOperation,
   VectorRequest,
 } from '../../types/calculator';
+import { vectorOperationLabel } from '../linear-algebra/operation-labels';
+import { buildVectorOoeSnapshot } from '../linear-algebra/runtime-revision';
+
+export { vectorOperationLabel } from '../linear-algebra/operation-labels';
+export {
+  buildVectorOoeInputRevisionId,
+  buildVectorOoeSnapshot,
+} from '../linear-algebra/runtime-revision';
 
 export type RunVectorModeRequest =
   | (VectorRequest & { vectorB: number[] })
   | (ScalarVectorRequestV1 & { vectorB: NonNullable<ScalarVectorRequestV1['vectorB']> });
-
-export function vectorOperationLabel(operation: VectorOperation) {
-  switch (operation) {
-    case 'dot':
-      return 'u·v';
-    case 'cross':
-      return 'u×v';
-    case 'normA':
-      return '‖u‖';
-    case 'normB':
-      return '‖v‖';
-    case 'angle':
-      return '∠(u,v)';
-    case 'add':
-      return 'u+v';
-    case 'subtract':
-      return 'u-v';
-    case 'projectionUofV':
-      return 'proj_u(v)';
-    case 'projectionVofU':
-      return 'proj_v(u)';
-    case 'orthogonalToU':
-      return 'orth_u(v)';
-    case 'orthogonalToV':
-      return 'orth_v(u)';
-    case 'unitA':
-      return 'unit(u)';
-    case 'unitB':
-      return 'unit(v)';
-    case 'orthogonalCheck':
-      return 'orthogonal(u,v)';
-    case 'gramSchmidtUV':
-      return 'gram(u,v)';
-    case 'parallel':
-      return 'parallel(u,v)';
-    case 'distance':
-      return 'distance(u,v)';
-    case 'parallelogramArea':
-      return 'parallelogramArea(u,v)';
-    case 'triangleArea':
-      return 'triangleArea(u,v)';
-    case 'volume':
-      return 'volume(u,v,w)';
-    case 'linearCombination':
-      return 'Vector combination';
-    case 'span':
-      return 'span(...)';
-    case 'independent':
-      return 'independent(...)';
-    default:
-      return 'Vector';
-  }
-}
 
 function vectorResultTitle(request: RunVectorModeRequest) {
   if (request.domain === 'complex') {
@@ -183,48 +136,6 @@ export function runVectorMode(request: RunVectorModeRequest): VersionedResultPro
       : createVectorResultOutcomeV2(outcome, { routeId, evidence, mathValue }),
     'Vector',
   );
-}
-
-export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
-  const vectorA = request.operandEncoding === 'scalar-v1'
-    ? request.vectorA.resolved
-    : request.vectorA;
-  const vectorB = request.operandEncoding === 'scalar-v1'
-    ? request.vectorB.resolved
-    : request.vectorB;
-  return {
-    kind: 'vector' as const,
-    request: {
-      operation: request.operation,
-      lengthA: vectorA.length,
-      lengthB: vectorB.length,
-      angleUnit: request.angleUnit,
-      approxDigits: request.approxDigits,
-      operandEncoding: request.operandEncoding,
-      vectorA: request.vectorA,
-      vectorB: request.vectorB,
-      exactVectorA: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorA,
-      exactVectorB: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorB,
-      editorExpressionLatex: request.editorExpressionLatex,
-      vectorOperandLatexA: request.vectorOperandLatexA,
-      vectorOperandLatexB: request.vectorOperandLatexB,
-      vectorOperands: request.vectorOperands,
-      exactVectorOperands: request.operandEncoding === 'scalar-v1' ? undefined : request.exactVectorOperands,
-      vectorOperandLatexList: request.vectorOperandLatexList,
-      vectorValues: request.vectorValues,
-      activeVectorLeftId: request.activeVectorLeftId,
-      activeVectorRightId: request.activeVectorRightId,
-      domain: request.domain,
-      substitutionMode: request.substitutionMode,
-      substitutionSnapshot: request.substitutionSnapshot,
-      protectedSubstitutionSnapshot: request.protectedSubstitutionSnapshot,
-      complexExactForm: request.complexExactForm,
-    },
-  };
-}
-
-export function buildVectorOoeInputRevisionId(request: RunVectorModeRequest) {
-  return buildOoeInputRevisionId('linearAlgebra.vector', buildVectorOoeSnapshot(request));
 }
 
 export async function runVectorModeWithOoePilot(

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect } from 'vitest';
 import AppMain from '../AppMain';
@@ -9,6 +9,9 @@ export async function renderAppMain() {
   const user = userEvent.setup();
   const utils = render(<AppMain />);
   await screen.findByTestId('main-editor');
+  await waitFor(() => {
+    expect(screen.getByTestId('display-status')).not.toHaveTextContent('Loading');
+  });
   return {
     user,
     ...utils,

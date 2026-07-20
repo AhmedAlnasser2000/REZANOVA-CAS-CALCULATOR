@@ -609,6 +609,8 @@ describe('compartment boundary validation', () => {
         "import { parseStatisticsDraft } from '../../lib/statistics/runtime-request';",
         "import { parseGeometryDraft } from '../../lib/geometry/runtime-request';",
         "import { dispatchMatrixEditorLatex } from '../../lib/linear-algebra/runtime-request';",
+        "import { matrixValueById } from '../../lib/linear-algebra/named-values';",
+        "import { dispatchMatrixEditorLatex } from '../../lib/linear-algebra/runtime-loader';",
         "import { getTrigRouteMeta } from '../../lib/trigonometry/navigation';",
         "import { defaultStatisticsDraftForScreen } from '../../lib/statistics/examples';",
         "import { runGeometryMode } from '../../lib/modes/geometry';",
@@ -630,10 +632,6 @@ describe('compartment boundary validation', () => {
       {
         repoPath: 'src/app/runtime/badLinearAlgebraDispatch.ts',
         text: "import { dispatchMatrixEditorLatex } from '../../lib/linear-algebra/editor-dispatch';\n",
-      },
-      {
-        repoPath: 'src/app/runtime/badLinearAlgebraNamedValues.ts',
-        text: "import { matrixValueById } from '../../lib/linear-algebra/named-values';\n",
       },
       {
         repoPath: 'src/app/runtime/badTrigParser.ts',
@@ -723,6 +721,7 @@ describe('compartment boundary validation', () => {
       [
         "import { bootApp } from '../../lib/app-state/persistence';",
         "import { buildVariableMemoryDetailSections } from '../../lib/algebra/variable-memory';",
+        "import { buildStoredVariableValue } from '../../lib/algebra/variable-memory/runtime-validation';",
         "import { buildVariableHints } from '../../lib/algebra/variable-hints';",
         "import { namedVariableEditorLatex } from '../../lib/algebra/named-variable';",
         "import type { HistoryEntry } from '../../types/calculator';",

@@ -74,7 +74,7 @@ import type {
   LinearAlgebraScalarDomain,
   LinearAlgebraSubstitutionMode,
   LinearAlgebraVectorNamedValue,
-} from '../../lib/linear-algebra/runtime-request';
+} from '../../types/calculator';
 import type {
   defaultEquationComplexRegionPanelState,
   defaultEquationNumericSolvePanelState,

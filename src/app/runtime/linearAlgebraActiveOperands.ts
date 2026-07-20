@@ -1,10 +1,8 @@
 import type { SoftAction } from '../../lib/navigation/menu';
 import {
-  buildActiveMatrixRuntimeRequest,
-  buildActiveVectorRuntimeRequest,
   matrixActionLabel,
   vectorActionLabel,
-} from '../../lib/linear-algebra/runtime-request';
+} from '../../lib/linear-algebra/active-values';
 
 export function buildMatrixSoftActions(leftName: string, rightName: string): SoftAction[] {
   return [
@@ -27,8 +25,3 @@ export function buildVectorSoftActions(leftName: string, rightName: string): Sof
     { id: 'subtract', label: vectorActionLabel('subtract', leftName, rightName), hotkey: 'F6' },
   ];
 }
-
-export {
-  buildActiveMatrixRuntimeRequest as buildActiveMatrixRequest,
-  buildActiveVectorRuntimeRequest as buildActiveVectorRequest,
-};

@@ -39,7 +39,9 @@ type MathEditorProps = {
   modeId?: ModeId;
   shortcutProfile?: 'default' | 'graphing';
   screenHint?: string;
-  onPasteCanonicalize?: (text: string) => string | null | undefined;
+  onPasteCanonicalize?: (
+    text: string,
+  ) => string | null | undefined | Promise<string | null | undefined>;
 };
 
 type MathEditorContainmentProps = {
@@ -188,7 +190,15 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         const hasCanonicalEnvelope = readResult.ok && readResult.source !== 'text';
         let nextLatex = text;
         if (!hasCanonicalEnvelope && onPasteCanonicalize) {
-          nextLatex = onPasteCanonicalize(text) ?? text;
+          const canonicalized = onPasteCanonicalize(text);
+          if (canonicalized instanceof Promise) {
+            event.preventDefault();
+            void canonicalized
+              .then((resolved) => field.insert(resolved ?? text))
+              .catch(() => field.insert(text));
+            return;
+          }
+          nextLatex = canonicalized ?? text;
         } else if (!hasCanonicalEnvelope && modeId) {
           const canonicalized = canonicalizeMathInput(text, {
             mode: modeId,

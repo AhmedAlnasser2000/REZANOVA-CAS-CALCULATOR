@@ -1,5 +1,5 @@
 import { writeMathClipboard } from '../../lib/clipboard';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
 import type { CanonicalRuntimeOutcome, ModeId } from '../../types/calculator';
 
 type DisplayClipboardDeps = {

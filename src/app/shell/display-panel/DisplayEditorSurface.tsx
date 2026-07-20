@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { lazy, Suspense } from 'react';
 import { MathEditor } from '../../../components/MathEditor';
 import { MathStatic } from '../../../components/MathStatic';
 import { SignedNumberDraftInput } from '../../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
-import { LimitPiecewiseRowEditor } from './LimitPiecewiseRowEditor';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import {
   derivativeVariableLatex,
@@ -21,14 +21,20 @@ import {
   parseNaturalLimitRequest,
   type NaturalLimitTarget,
 } from '../../../lib/calculus/limit-request';
-import {
-  limitPiecewiseReadbackBodyLatex,
-  parseLimitPiecewiseDraft,
-} from '../../../lib/calculus/limit-piecewise-row-editor';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
 
 type DisplayEditorSurfaceProps = Record<string, any>;
+
+const CalculusLimitEditorHost = lazy(async () => {
+  const module = await import('./CalculusLimitPiecewiseSurface');
+  return { default: module.CalculusLimitEditorHost };
+});
+
+const CalculusLimitReadbackBody = lazy(async () => {
+  const module = await import('./CalculusLimitPiecewiseSurface');
+  return { default: module.CalculusLimitReadbackBody };
+});
 
 function limitTargetReadbackLatex(target: NaturalLimitTarget) {
   if (target.kind === 'infinite') {
@@ -41,10 +47,6 @@ function limitTargetReadbackLatex(target: NaturalLimitTarget) {
     return `${target.normalizedTargetLatex}^{+}`;
   }
   return target.normalizedTargetLatex;
-}
-
-function limitReadbackBodyLatex(bodyLatex: string) {
-  return limitPiecewiseReadbackBodyLatex(bodyLatex);
 }
 
 export function DisplayEditorSurface({
@@ -228,9 +230,6 @@ export function DisplayEditorSurface({
   const calculusLimitRailRequest = calculusLimitRailActive
     ? parseNaturalLimitRequest(calculusMainEditorLatex)
     : null;
-  const calculusLimitPiecewiseDraft = calculusLimitRailActive
-    ? parseLimitPiecewiseDraft(calculusMainEditorLatex)
-    : null;
   const calculusLimitRailParsed = calculusLimitRailRequest?.ok ? calculusLimitRailRequest.request : null;
   const calculusLimitRailTarget = calculusLimitRailParsed
     ? limitTargetReadbackLatex(calculusLimitRailParsed.target)
@@ -240,9 +239,6 @@ export function DisplayEditorSurface({
     : '';
   const calculusLimitRailApproaches = calculusLimitRailParsed
     ? `${calculusLimitRailParsed.variableLatex}\\to ${calculusLimitRailTarget}`
-    : '';
-  const calculusLimitRailBody = calculusLimitRailParsed
-    ? limitReadbackBodyLatex(calculusLimitRailParsed.bodyLatex)
     : '';
   const setImplicitVariable = (
     field: 'independentVariable' | 'dependentVariable',
@@ -553,13 +549,37 @@ export function DisplayEditorSurface({
       ) : null}
       {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
-          {calculusLimitPiecewiseDraft ? (
-            <LimitPiecewiseRowEditor
-              ref={mainFieldRef}
-              requestLatex={calculusMainEditorLatex}
-              onChange={setCalculusMainEditorLatex}
-              onSubmit={onRunEditor}
-            />
+          {calculusLimitRailActive ? (
+            <Suspense
+              fallback={(
+                <MathEditor
+                  ref={mainFieldRef}
+                  dataTestId="main-editor"
+                  className="main-mathfield"
+                  value={calculusMainEditorLatex}
+                  modeId="calculus"
+                  screenHint={calculusScreen}
+                  onSubmit={onRunEditor}
+                  onChange={setCalculusMainEditorLatex}
+                  keyboardLayouts={calculusKeyboardLayouts}
+                  onFocus={(field) => {
+                    activeFieldRef.current = field;
+                  }}
+                  placeholder={calculusMainEditorPlaceholder}
+                />
+              )}
+            >
+              <CalculusLimitEditorHost
+                activeFieldRef={activeFieldRef}
+                keyboardLayouts={calculusKeyboardLayouts}
+                mainFieldRef={mainFieldRef}
+                onChange={setCalculusMainEditorLatex}
+                onSubmit={onRunEditor}
+                placeholder={calculusMainEditorPlaceholder}
+                requestLatex={calculusMainEditorLatex}
+                screenHint={calculusScreen}
+              />
+            </Suspense>
           ) : (
             <MathEditor
               ref={mainFieldRef}
@@ -649,11 +669,17 @@ export function DisplayEditorSurface({
                     </span>
                     <span className="calculus-limit-readback__cell">
                       <span className="calculus-limit-readback__label">Body</span>
-                      <MathStatic
-                        className="calculus-readback-math calculus-limit-readback__math"
-                        latex={calculusLimitRailBody}
-                        deferRender
-                      />
+                      <Suspense
+                        fallback={(
+                          <MathStatic
+                            className="calculus-readback-math calculus-limit-readback__math"
+                            latex={calculusLimitRailParsed.bodyLatex}
+                            deferRender
+                          />
+                        )}
+                      >
+                        <CalculusLimitReadbackBody bodyLatex={calculusLimitRailParsed.bodyLatex} />
+                      </Suspense>
                     </span>
                   </>
                 ) : (

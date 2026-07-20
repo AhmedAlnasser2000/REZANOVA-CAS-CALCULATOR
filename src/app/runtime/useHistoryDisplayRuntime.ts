@@ -64,7 +64,7 @@ import type {
   TrigScreen,
   WorkspaceInstanceRuntimeContext,
 } from '../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
 
 export type HistoryDisplayReplayVariableSubstitutions = WorkspaceDisplayReplayVariableSubstitutions;
 

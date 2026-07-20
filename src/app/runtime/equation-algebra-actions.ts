@@ -2,9 +2,8 @@ import { useCallback } from 'react';
 import type { AlgebraTransformAction } from '../../lib/algebra/algebra-transform-ui';
 import {
   EQUATION_USE_STORED_VALUES_ACTION,
-  shouldOfferEquationStoredValueConsent,
   type EquationAlgebraAction,
-} from '../../lib/modes/equation';
+} from '../../lib/modes/equation/transform-contract';
 import { useAsyncEditorAnalysis } from '../../lib/editor/use-async-editor-analysis';
 import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
 import type {
@@ -26,14 +25,26 @@ export function useEquationAlgebraActions({
   equationSolveTarget?: string | null;
 }) {
   const analyzeEquationTransforms = useCallback(async (source: string) => {
-    const { getEligibleEquationTransforms } = await import('../../lib/algebra/algebra-transform');
-    return getEligibleEquationTransforms(source);
-  }, []);
-  const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<AlgebraTransformAction[]>({
+    const [algebraRuntime, storedValueRuntime] = await Promise.all([
+      import('../../lib/algebra/algebra-transform'),
+      import('../../lib/modes/equation/stored-values'),
+    ]);
+    return {
+      transforms: algebraRuntime.getEligibleEquationTransforms(source),
+      offerStoredValues: storedValueRuntime.shouldOfferEquationStoredValueConsent({
+        equationLatex: source,
+        equationSolveTarget,
+      }),
+    };
+  }, [equationSolveTarget]);
+  const equationAlgebraTransformAnalysis = useAsyncEditorAnalysis<{
+    transforms: AlgebraTransformAction[];
+    offerStoredValues: boolean;
+  }>({
     source: currentMode === 'equation' && equationScreen === 'symbolic'
       ? equationLatex
       : '',
-    initialValue: [],
+    initialValue: { transforms: [], offerStoredValues: false },
     analyze: analyzeEquationTransforms,
     controlState: editorAnalysisControl,
     ooe: {
@@ -44,11 +55,8 @@ export function useEquationAlgebraActions({
   const equationAlgebraTransforms: EquationAlgebraAction[] =
     currentMode === 'equation' && equationScreen === 'symbolic'
       ? [
-          ...equationAlgebraTransformAnalysis.value,
-          ...(shouldOfferEquationStoredValueConsent({
-            equationLatex,
-            equationSolveTarget,
-          })
+          ...equationAlgebraTransformAnalysis.value.transforms,
+          ...(equationAlgebraTransformAnalysis.value.offerStoredValues
             ? [EQUATION_USE_STORED_VALUES_ACTION]
             : []),
         ]

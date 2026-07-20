@@ -31,7 +31,6 @@ import {
   clearCalculatorMemorySnapshot,
   clearHistoryEntries,
   deleteHistoryEntry,
-  isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
   loadLauncherCategories,
@@ -47,7 +46,6 @@ vi.mock('./tauri', () => ({
   clearCalculatorMemorySnapshot: vi.fn(),
   clearHistoryEntries: vi.fn(),
   deleteHistoryEntry: vi.fn(),
-  isDesktopRuntime: vi.fn(),
   loadCalculatorMemorySnapshot: vi.fn(),
   loadHistoryEntries: vi.fn(),
   loadLauncherCategories: vi.fn(),
@@ -62,7 +60,7 @@ describe('app-state persistence facade', () => {
     vi.clearAllMocks();
   });
 
-  it('delegates app bootstrap and persistence helpers to the Tauri/web-preview implementation', async () => {
+  it('delegates async persistence helpers while detecting the desktop host without eager loading', async () => {
     const snapshot: CalculatorMemorySnapshot = {
       ansLatex: '4',
       currentMode: 'calculate',
@@ -105,7 +103,6 @@ describe('app-state persistence facade', () => {
     vi.mocked(clearHistoryEntries).mockResolvedValue(undefined);
     vi.mocked(deleteHistoryEntry).mockResolvedValue(undefined);
     vi.mocked(clearCalculatorMemorySnapshot).mockResolvedValue(undefined);
-    vi.mocked(isDesktopRuntime).mockReturnValue(true);
 
     await expect(bootAppPersistence()).resolves.toMatchObject({
       currentMode: 'calculate',
@@ -130,7 +127,10 @@ describe('app-state persistence facade', () => {
     await expect(clearHistoryEntriesPersistence()).resolves.toBeUndefined();
     await expect(deleteHistoryEntryPersistence('history.1')).resolves.toBeUndefined();
     await expect(clearCalculatorMemorySnapshotPersistence()).resolves.toBeUndefined();
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} });
     expect(isDesktopRuntimePersistence()).toBe(true);
+    vi.stubGlobal('window', {});
+    expect(isDesktopRuntimePersistence()).toBe(false);
 
     expect(bootApp).toHaveBeenCalledTimes(1);
     expect(loadLauncherCategories).toHaveBeenCalledTimes(1);
@@ -144,6 +144,5 @@ describe('app-state persistence facade', () => {
     expect(clearHistoryEntries).toHaveBeenCalledTimes(1);
     expect(deleteHistoryEntry).toHaveBeenCalledWith('history.1');
     expect(clearCalculatorMemorySnapshot).toHaveBeenCalledTimes(1);
-    expect(isDesktopRuntime).toHaveBeenCalledTimes(1);
   });
 });

@@ -33,7 +33,12 @@ type MatrixWorkspaceProps = {
   onRenameMatrixValue: (id: string, name: string) => void;
   onResizeMatrixValue: (id: string, rows: number, columns: number) => void;
   onSetActiveMatrixValueIds: (leftId: string, rightId: string) => void;
-  onSetMatrixCellLatex: (id: string, row: number, column: number, latex: string) => string | null;
+  onSetMatrixCellLatex: (
+    id: string,
+    row: number,
+    column: number,
+    latex: string,
+  ) => string | null | Promise<string | null>;
   onSetMatrixDomain: (domain: LinearAlgebraScalarDomain) => void;
   onSetMatrixSubstitutionMode: (mode: LinearAlgebraSubstitutionMode) => void;
 };

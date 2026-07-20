@@ -1,7 +1,5 @@
-import {
-  migrateGraphWorkspaceSessionState,
-  type GraphWorkspaceSessionStateV2,
-} from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV2 } from './graph-workspace-session';
+import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
 export const GRAPH_WORKSPACE_RUNTIME_MODULE_ID = 'graphing-runtime-v1' as const;
 

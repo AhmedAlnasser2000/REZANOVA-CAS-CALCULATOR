@@ -49,18 +49,18 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell('matrix');
     const canonicalEigen = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
 
-    expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
+    await expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
       'eigen([[2,1],[1,2]])',
-    )).toBe(canonicalEigen);
-    expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
+    )).resolves.toBe(canonicalEigen);
+    await expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
       'eigen([[2,1],[bad]])',
-    )).toBeNull();
+    )).resolves.toBeNull();
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('eigen([[2,1],[1,2]])');
     });
-    act(() => {
-      hook.result.current.runMatrixEditorAction();
+    await act(async () => {
+      await hook.result.current.runMatrixEditorAction();
     });
 
     await waitFor(() => expect(hook.result.current.linearAlgebraRuntime.matrixEditorLatex).toBe(canonicalEigen));
@@ -85,21 +85,21 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     commitOutcome.mockClear();
     hook.rerender({ currentMode: 'vector' });
     const canonicalGram = '\\operatorname{gram}\\left(\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}1\\\\0\\end{bmatrix}\\right)';
-    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+    await expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
       'gram([1,1],[1,0])',
-    )).toBe(canonicalGram);
-    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+    )).resolves.toBe(canonicalGram);
+    await expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
       'gram([1,bad],[1,0])',
-    )).toBeNull();
-    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+    )).resolves.toBeNull();
+    await expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
       '2u-v/3',
-    )).toBe('2u-\\frac{v}{3}');
+    )).resolves.toBe('2u-\\frac{v}{3}');
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('gram([1,1],[1,0])');
     });
-    act(() => {
-      hook.result.current.runVectorEditorAction();
+    await act(async () => {
+      await hook.result.current.runVectorEditorAction();
     });
 
     await waitFor(() => expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe(canonicalGram));

@@ -1,4 +1,4 @@
-import type { RunEquationModeRequest } from '../../lib/modes/equation';
+import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import type { EquationReplaySeed, EquationSystemCell } from '../../types/calculator';
 
 function copySystem(system: readonly (readonly EquationSystemCell[])[]) {

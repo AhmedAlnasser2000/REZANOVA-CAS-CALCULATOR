@@ -14,7 +14,7 @@ import type {
 import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
-} from '../../lib/result-contract';
+} from '../../lib/result-contract/consumer';
 
 type SuccessfulCanonicalOutcome = Extract<CanonicalRuntimeOutcome, { kind: 'success' }>;
 

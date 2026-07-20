@@ -14,7 +14,7 @@ import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
   type CanonicalResultPresentationDetailPart,
-} from '../../result-contract';
+} from '../../result-contract/consumer';
 import { trustSummaryForCanonicalResult } from './display-trust-summary';
 
 export type DisplayResultReadModel = {

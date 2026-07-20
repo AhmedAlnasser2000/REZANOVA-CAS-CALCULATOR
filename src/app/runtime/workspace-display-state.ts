@@ -3,7 +3,7 @@ import type {
   ModeId,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
 
 export type WorkspaceDisplayReplayVariableSubstitutions = {
   mode: ModeId;

@@ -9,7 +9,7 @@ import {
   workspaceInstanceRuntimeContext,
   type WorkspaceInstance,
 } from '../runtime/workspace-instances';
-import { formulaViewerArtifactFromSurfaceState } from '../runtime/formula-viewer-artifacts';
+import { formulaViewerArtifactFromSurfaceState } from '../runtime/formula-viewer-contract';
 import { resolveWorkspaceSurfaceDescriptor } from '../runtime/workspace-surfaces';
 import type {
   HistoryEntry,
@@ -25,22 +25,37 @@ import {
   NOTEBOOK_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
 } from '../runtime/app-page-workspaces';
-import { FormulaViewerPage } from './FormulaViewerPage';
-import { GuidePage } from './GuidePage';
-import { HistoryPage } from './HistoryPage';
-import { NotebookPage } from './NotebookPage';
-import { SettingsPage } from './SettingsPage';
 import type { GuideWorkspaceProps } from '../workspaces/GuideWorkspace';
 import type {
   NotebookSurfaceState,
   NotebookWorkspaceTarget,
 } from '../../lib/notebook';
-import {
-  migrateGraphWorkspaceSessionState,
-  type GraphWorkspaceSessionStateV2,
-} from '../graphing/graph-workspace-session';
+import type { GraphWorkspaceSessionStateV2 } from '../graphing/graph-workspace-session';
 
-const GraphWorkspacePage = lazy(() => import('../graphing/GraphWorkspacePage'));
+const GraphWorkspacePageHost = lazy(() => import('../graphing/GraphWorkspacePageHost'));
+const FormulaViewerPage = lazy(() => import('./FormulaViewerPage').then((module) => ({
+  default: module.FormulaViewerPage,
+})));
+const GuidePage = lazy(() => import('./GuidePage').then((module) => ({
+  default: module.GuidePage,
+})));
+const HistoryPage = lazy(() => import('./HistoryPage').then((module) => ({
+  default: module.HistoryPage,
+})));
+const NotebookPage = lazy(() => import('./NotebookPage').then((module) => ({
+  default: module.NotebookPage,
+})));
+const SettingsPage = lazy(() => import('./SettingsPage').then((module) => ({
+  default: module.SettingsPage,
+})));
+
+function PageSurfaceSuspense({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <Suspense fallback={<div className="app-page-loading" role="status">Loading {label}…</div>}>
+      {children}
+    </Suspense>
+  );
+}
 
 type ActiveSurfaceHostProps = {
   activeInstance: WorkspaceInstance | null | undefined;
@@ -124,12 +139,14 @@ export function ActiveSurfaceHost({
         data-testid="active-surface-page"
         style={pageSurfaceStyle}
       >
-        <SettingsPage
-          settings={settings}
-          onPatch={onPatchSettings}
-          onClearHistory={onResetHistory}
-          onResetCalculatorMemory={onResetCalculatorMemory}
-        />
+        <PageSurfaceSuspense label="Settings">
+          <SettingsPage
+            settings={settings}
+            onPatch={onPatchSettings}
+            onClearHistory={onResetHistory}
+            onResetCalculatorMemory={onResetCalculatorMemory}
+          />
+        </PageSurfaceSuspense>
       </section>
     );
   }
@@ -142,19 +159,21 @@ export function ActiveSurfaceHost({
         data-testid="active-surface-page"
         style={pageSurfaceStyle}
       >
-        <HistoryPage
-          history={history}
-          historyNotationMode={settings.historyPageNotationMode}
-          pendingHistory={pendingHistory}
-          modeLabels={modeLabels}
-          onCopyResult={(latex) => onCopyResult(latex, 'history')}
-          onDelete={onDeleteHistoryEntry}
-          onDeleteSelected={onDeleteSelectedHistoryEntries}
-          onReplay={onReplayHistoryEntry}
-          onReplayInNewTab={onReplayHistoryEntryInNewTab}
-          onStopPending={onStopPendingHistoryTicket}
-          symbolicDisplayPrefs={symbolicDisplayPrefs}
-        />
+        <PageSurfaceSuspense label="History">
+          <HistoryPage
+            history={history}
+            historyNotationMode={settings.historyPageNotationMode}
+            pendingHistory={pendingHistory}
+            modeLabels={modeLabels}
+            onCopyResult={(latex) => onCopyResult(latex, 'history')}
+            onDelete={onDeleteHistoryEntry}
+            onDeleteSelected={onDeleteSelectedHistoryEntries}
+            onReplay={onReplayHistoryEntry}
+            onReplayInNewTab={onReplayHistoryEntryInNewTab}
+            onStopPending={onStopPendingHistoryTicket}
+            symbolicDisplayPrefs={symbolicDisplayPrefs}
+          />
+        </PageSurfaceSuspense>
       </section>
     );
   }
@@ -167,7 +186,7 @@ export function ActiveSurfaceHost({
         data-testid="active-surface-page"
         style={pageSurfaceStyle}
       >
-        <GuidePage guide={guide} />
+        <PageSurfaceSuspense label="Guide"><GuidePage guide={guide} /></PageSurfaceSuspense>
       </section>
     );
   }
@@ -180,21 +199,22 @@ export function ActiveSurfaceHost({
         data-testid="active-surface-page"
         style={pageSurfaceStyle}
       >
-        <NotebookPage
-          instanceId={activeInstance.id}
-          onOpenMathInTool={onOpenNotebookMathInTool}
-          onUpdateSurfaceState={onUpdateNotebookSurfaceState}
-          preferences={settings.notebook}
-          surfaceState={activeInstance.surfaceState}
-        />
+        <PageSurfaceSuspense label="Notebook">
+          <NotebookPage
+            instanceId={activeInstance.id}
+            onOpenMathInTool={onOpenNotebookMathInTool}
+            onUpdateSurfaceState={onUpdateNotebookSurfaceState}
+            preferences={settings.notebook}
+            surfaceState={activeInstance.surfaceState}
+          />
+        </PageSurfaceSuspense>
       </section>
     );
   }
 
   if (surfaceDescriptor.pageKind === GRAPHING_PAGE_WORKSPACE_KIND && activeInstance) {
-    const session = migrateGraphWorkspaceSessionState(activeInstance.surfaceState);
     const workspaceContext = workspaceInstanceRuntimeContext(activeInstance);
-    if (!session || !workspaceContext) {
+    if (!workspaceContext) {
       return (
         <section
           className={`${pageSurfaceClassName} active-surface--graphing`}
@@ -216,10 +236,10 @@ export function ActiveSurfaceHost({
         style={pageSurfaceStyle}
       >
         <Suspense fallback={<div className="graph-page-loading">Loading Graphing…</div>}>
-          <GraphWorkspacePage
+          <GraphWorkspacePageHost
             key={activeInstance.id}
             onUpdateSession={(state) => onUpdateGraphSurfaceState(activeInstance.id, state)}
-            session={session}
+            session={activeInstance.surfaceState}
             workspaceContext={workspaceContext}
           />
         </Suspense>
@@ -243,13 +263,15 @@ export function ActiveSurfaceHost({
       data-testid="active-surface-page"
       style={pageSurfaceStyle}
     >
-      <FormulaViewerPage
-        artifact={formulaViewerArtifact}
-        onBackToSource={sourceId ? () => onFocusTab(sourceId) : undefined}
-        onCopyResult={(latex) => onCopyResult(latex, 'formula-viewer')}
-        sourceAvailable={sourceAvailable}
-        symbolicDisplayPrefs={symbolicDisplayPrefs}
-      />
+      <PageSurfaceSuspense label="Formula Viewer">
+        <FormulaViewerPage
+          artifact={formulaViewerArtifact}
+          onBackToSource={sourceId ? () => onFocusTab(sourceId) : undefined}
+          onCopyResult={(latex) => onCopyResult(latex, 'formula-viewer')}
+          sourceAvailable={sourceAvailable}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
+        />
+      </PageSurfaceSuspense>
     </section>
   );
 }

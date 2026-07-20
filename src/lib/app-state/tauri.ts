@@ -17,7 +17,7 @@ import {
   type SettingsPatch,
   type StoredVariableValue,
 } from '../../types/calculator';
-import { validateCanonicalResultDocumentVersioned } from '../result-contract';
+import { validateCanonicalResultDocumentVersioned } from '../result-contract/validation-router';
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,

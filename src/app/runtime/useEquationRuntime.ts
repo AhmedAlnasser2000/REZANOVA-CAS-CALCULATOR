@@ -39,9 +39,9 @@ import {
   POLYNOMIAL_VIEW_META,
   equationInputLatexForScreen,
 } from '../../lib/modes/equation-ui-model';
-import type { RunEquationModeRequest } from '../../lib/modes/equation';
+import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
 import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import {
   createEquationRuntimeController,

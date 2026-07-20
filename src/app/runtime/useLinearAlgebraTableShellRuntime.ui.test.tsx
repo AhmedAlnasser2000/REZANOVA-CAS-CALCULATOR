@@ -553,16 +553,16 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     act(() => {
       hook.result.current.linearAlgebraRuntime.setVectorDomain('complex');
     });
-    act(() => {
+    await act(async () => {
       hook.result.current.linearAlgebraRuntime.resizeVectorValueById('vector-u', 2);
       hook.result.current.linearAlgebraRuntime.resizeVectorValueById('vector-v', 2);
-      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 0, '1');
-      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 1, 'i');
-      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 0, 'i');
-      hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 1, '1');
+      await hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 0, '1');
+      await hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-u', 1, 'i');
+      await hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 0, 'i');
+      await hook.result.current.linearAlgebraRuntime.setVectorValueCellLatex('vector-v', 1, '1');
     });
-    act(() => {
-      hook.result.current.runVectorAction('orthogonalCheck');
+    await act(async () => {
+      await hook.result.current.runVectorAction('orthogonalCheck');
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
@@ -838,17 +838,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
   });
 
-  it('offers explicit Equation handoff for unsupported Matrix equations', () => {
+  it('offers explicit Equation handoff for unsupported Matrix equations', async () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A=b');
     });
-    act(() => {
-      hook.result.current.runMatrixEditorAction();
+    await act(async () => {
+      await hook.result.current.runMatrixEditorAction();
     });
 
-    expect(commitOutcome).toHaveBeenCalledWith(
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'error',
         canonicalResult: expect.objectContaining({
@@ -864,7 +864,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       }),
       'A=b',
       'matrix',
-    );
+    ));
   });
 
   it('restores Table and Matrix history entries through the shell', () => {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { validateSerializableMathJson } from '../display/printer';
-import { findCustomMathJsonOperator } from '../result-contract/proven-answer-mathjson';
+import { findCustomMathJsonOperator } from '../result-contract/standard-mathjson-operators';
 import { linearAlgebraScalarWireIntegrityError } from '../linear-algebra/scalar-wire';
 
 const matrixOperationSchema = z.enum([

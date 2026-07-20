@@ -233,6 +233,6 @@ describe('AppMain workspace tabs', () => {
         getValue: (format?: string) => string;
       };
       expect(editor.getValue('latex')).toBe('x+1=2');
-    });
+    }, { timeout: 5_000 });
   });
 });

@@ -9,12 +9,14 @@ import type {
 } from '../../types/calculator';
 import type { RunMatrixModeRequest } from '../../lib/modes/matrix';
 import {
-  activeMatrixValuePair,
   buildActiveScalarMatrixRuntimeRequest,
   isScalarMatrixNamedValue,
-  matrixActionLabel,
 } from '../../lib/linear-algebra/runtime-request';
-import { buildActiveMatrixRequest } from './linearAlgebraActiveOperands';
+import {
+  activeMatrixValuePair,
+  matrixActionLabel,
+} from '../../lib/linear-algebra/active-values';
+import { buildActiveMatrixRuntimeRequest } from '../../lib/linear-algebra/runtime-request';
 
 export type MatrixActionRuntimeState = {
   matrixValues: readonly LinearAlgebraMatrixNamedValue[];
@@ -45,7 +47,7 @@ export function buildMatrixActionRuntimeRequest(
     || isScalarMatrixNamedValue(activeValues.left)
     || isScalarMatrixNamedValue(activeValues.right);
   if (!usesScalarProducer) {
-    return buildActiveMatrixRequest(
+    return buildActiveMatrixRuntimeRequest(
       operation,
       state.matrixValues,
       state.activeMatrixLeftId,

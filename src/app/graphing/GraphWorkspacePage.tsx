@@ -303,12 +303,16 @@ function GraphExpressionRow({
       ? item.presentation.colorToken
       : 'graph-blue';
   const hidden = item ? !item.visible : false;
+  const piecewiseEditorOpen = item?.kind === 'piecewise'
+    && Boolean(piecewiseDraft)
+    && !piecewiseCollapsed;
 
   return (
     <div
-      className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}`}
+      className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}${item?.kind === 'piecewise' ? ' is-piecewise' : ''}`}
       data-color-token={colorToken}
       data-graph-item-id={itemId}
+      data-piecewise-state={item?.kind === 'piecewise' ? (piecewiseEditorOpen ? 'expanded' : 'summary') : undefined}
       data-testid={item ? 'graph-expression-row' : 'graph-expression-blank-row'}
     >
       <span className="graph-expression-color" aria-hidden="true" />
@@ -318,12 +322,13 @@ function GraphExpressionRow({
         </strong>
       ) : (
         <div
-          className={`graph-expression-editor-scroll${editorOverflowing ? ' is-overflowing' : ''}`}
+          className={`graph-expression-editor-scroll${item?.kind === 'piecewise' ? ' graph-piecewise-summary' : ''}${editorOverflowing ? ' is-overflowing' : ''}`}
           data-overflowing={editorOverflowing ? 'true' : 'false'}
+          data-testid={item?.kind === 'piecewise' ? 'graph-piecewise-summary' : undefined}
           ref={editorScrollRef}
         >
           <MathEditor
-            className="graph-expression-editor"
+            className={`graph-expression-editor${item?.kind === 'piecewise' ? ' graph-piecewise-summary-editor' : ''}`}
             dataTestId={`graph-expression-editor-${itemId}`}
             onBlur={onBlur}
             onChange={(latex) => {
@@ -332,6 +337,7 @@ function GraphExpressionRow({
             }}
             onSubmit={onSubmit}
             placeholder={item ? '' : 'Enter an expression…'}
+            readOnly={piecewiseEditorOpen}
             shortcutProfile="graphing"
             value={item ? graphItemSourceLatex(item) : ''}
           />
@@ -341,8 +347,9 @@ function GraphExpressionRow({
         <div className="graph-expression-actions">
           {item.kind === 'piecewise' ? (
             <button
-              aria-expanded={Boolean(piecewiseDraft) && !piecewiseCollapsed}
-              aria-label={piecewiseDraft && !piecewiseCollapsed ? 'Collapse piecewise branches' : 'Expand piecewise branches'}
+              aria-controls={piecewiseEditorOpen ? `graph-piecewise-editor-${itemId}` : undefined}
+              aria-expanded={piecewiseEditorOpen}
+              aria-label={piecewiseEditorOpen ? 'Collapse piecewise branches' : 'Expand piecewise branches'}
               className="graph-icon-button"
               onClick={() => {
                 if (piecewiseDraft) setPiecewiseCollapsed((collapsed) => !collapsed);
@@ -350,7 +357,7 @@ function GraphExpressionRow({
               }}
               type="button"
             >
-              {piecewiseDraft && !piecewiseCollapsed ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {piecewiseEditorOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
           ) : null}
           <button
@@ -379,11 +386,13 @@ function GraphExpressionRow({
       ) : null}
       {item?.kind === 'piecewise' && piecewiseDraft && !piecewiseCollapsed && onChangePiecewiseDraft
         && onCommitPiecewiseDraft && onMutatePiecewiseDraft ? (
-          <GraphPiecewiseDraftRow draft={piecewiseDraft} embedded onChange={onChangePiecewiseDraft}
-            onCommit={onCommitPiecewiseDraft} onDelete={() => {
-              onCancelPiecewiseDraft?.();
-              setPiecewiseCollapsed(true);
-            }} onMutate={onMutatePiecewiseDraft} />
+          <div className="graph-piecewise-expanded-editor" id={`graph-piecewise-editor-${itemId}`}>
+            <GraphPiecewiseDraftRow draft={piecewiseDraft} embedded onChange={onChangePiecewiseDraft}
+              onCommit={onCommitPiecewiseDraft} onDelete={() => {
+                onCancelPiecewiseDraft?.();
+                setPiecewiseCollapsed(true);
+              }} onMutate={onMutatePiecewiseDraft} />
+          </div>
         ) : null}
       {item?.kind === 'parameter' && onUpdateParameter && onSettleParameter ? (
         <GraphParameterControls

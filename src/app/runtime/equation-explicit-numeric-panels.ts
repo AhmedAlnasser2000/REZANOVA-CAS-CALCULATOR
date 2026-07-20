@@ -6,7 +6,7 @@ import type {
   ModeId,
   PeriodicIntervalSuggestion,
 } from '../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
 
 type ComplexRegionPanelState = ReturnType<typeof defaultEquationComplexRegionPanelState>;
 

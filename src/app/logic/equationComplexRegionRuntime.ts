@@ -5,10 +5,7 @@ import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
-import {
-  runEquationModeWithOoePilot,
-  type RunEquationModeRequest,
-} from '../../lib/modes/equation';
+import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import type {
   AngleUnit,
   ComplexExactForm,
@@ -24,6 +21,7 @@ import type {
 } from '../../types/calculator';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { equationReplaySeedFromRequest } from './equationHistorySeed';
+import { runEquationModeWithOoePilot } from './equationRuntimeLoader';
 
 type TransitionFn = (callback: () => void) => void;
 type CommitOutcomeFn = (

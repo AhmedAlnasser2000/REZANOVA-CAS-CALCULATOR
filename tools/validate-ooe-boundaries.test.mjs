@@ -74,6 +74,22 @@ describe('OOE boundary validation', () => {
       tsFiles: 1,
       rustFiles: 0,
     });
+
+    writeFile(
+      rootDir,
+      'src/lib/ooe/diagnostics-buffer.ts',
+      "import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';\n",
+    );
+    writeFile(
+      rootDir,
+      'src/lib/result-contract/consumer.ts',
+      'export const resolveCanonicalResultForConsumer = () => undefined;\n',
+    );
+
+    assert.deepEqual(validateOoeBoundaries({ rootDir }), {
+      tsFiles: 1,
+      rustFiles: 0,
+    });
   });
 
   it('accepts TypeScript OOE pilots importing their narrow runtime allowlist', () => {

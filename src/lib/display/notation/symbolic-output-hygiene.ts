@@ -2,7 +2,7 @@ import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
-} from '../../result-contract';
+} from '../../result-contract/consumer';
 
 export const INTERNAL_SYMBOLIC_ERROR_LATEX =
   '\\text{Unsupported symbolic fragment. Re-run to refresh.}';

@@ -65,7 +65,7 @@ import {
 import type { CalculusSurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
-import { createCanonicalRuntimeError } from '../../lib/result-contract';
+import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type {
   CalculusScreen,

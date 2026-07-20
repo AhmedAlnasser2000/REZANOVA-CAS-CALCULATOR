@@ -138,7 +138,7 @@ describe('ActiveSurfaceHost', () => {
     expect(screen.queryByTestId('formula-viewer-page')).not.toBeInTheDocument();
   });
 
-  it('renders Formula Viewer as a page surface outside the calculator shell', () => {
+  it('renders Formula Viewer as a lazily loaded page surface outside the calculator shell', async () => {
     const onCopyResult = vi.fn();
     const onFocusTab = vi.fn();
     const source = createWorkspaceInstance('equation', 1, {
@@ -155,9 +155,9 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'formula-viewer');
-    expect(pageSurface).toContainElement(screen.getByTestId('formula-viewer-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('formula-viewer-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
@@ -167,7 +167,7 @@ describe('ActiveSurfaceHost', () => {
     expect(onFocusTab).toHaveBeenCalledWith('equation.1');
   });
 
-  it('renders Settings as a page surface outside the calculator shell', () => {
+  it('renders Settings as a lazily loaded page surface outside the calculator shell', async () => {
     render(
       <ActiveSurfaceHost
         {...activeSurfaceHostProps()}
@@ -175,13 +175,13 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'settings');
-    expect(pageSurface).toContainElement(screen.getByTestId('settings-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('settings-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 
-  it('applies page scale and high contrast to page surfaces without calculator context', () => {
+  it('applies page scale and high contrast to page surfaces without calculator context', async () => {
     render(
       <ActiveSurfaceHost
         {...activeSurfaceHostProps()}
@@ -196,7 +196,7 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveClass('is-high-contrast');
     expect(pageSurface.getAttribute('style') ?? '').toContain('--page-ui-scale: 1.45');
     expect(pageSurface.getAttribute('style') ?? '').toContain('--math-scale: 1.3');
@@ -204,7 +204,7 @@ describe('ActiveSurfaceHost', () => {
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 
-  it('renders History as a page surface outside the calculator shell', () => {
+  it('renders History as a lazily loaded page surface outside the calculator shell', async () => {
     const onCopyResult = vi.fn();
     render(
       <ActiveSurfaceHost
@@ -223,9 +223,9 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'history');
-    expect(pageSurface).toContainElement(screen.getByTestId('history-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('history-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('history-page-row'));
@@ -233,7 +233,7 @@ describe('ActiveSurfaceHost', () => {
     expect(onCopyResult).toHaveBeenCalledWith('x=1', 'history');
   });
 
-  it('renders Guide as a page surface outside the calculator shell', () => {
+  it('renders Guide as a lazily loaded page surface outside the calculator shell', async () => {
     render(
       <ActiveSurfaceHost
         {...activeSurfaceHostProps()}
@@ -241,14 +241,14 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'guide');
-    expect(pageSurface).toContainElement(screen.getByTestId('guide-page'));
-    expect(screen.getByTestId('guide-page-main')).toBeInTheDocument();
+    expect(pageSurface).toContainElement(await screen.findByTestId('guide-page'));
+    expect(await screen.findByTestId('guide-page-main')).toBeInTheDocument();
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 
-  it('renders Notebook document tabs as page surfaces outside the calculator shell', () => {
+  it('renders Notebook document tabs as lazily loaded page surfaces outside the calculator shell', async () => {
     const notebookInstance = createWorkspaceInstance('notebook', 5, {
       idFactory: (kind, order) => `${kind}.${order}`,
     });
@@ -260,9 +260,9 @@ describe('ActiveSurfaceHost', () => {
       />,
     );
 
-    const pageSurface = screen.getByTestId('active-surface-page');
+    const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'notebook');
-    expect(pageSurface).toContainElement(screen.getByTestId('notebook-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('notebook-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 });

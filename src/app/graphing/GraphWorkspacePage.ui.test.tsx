@@ -306,8 +306,26 @@ describe('GraphWorkspacePage', () => {
       kind: 'piecewise',
       piecewise: { branches: [{ condition: { kind: 'comparison' } }, { condition: { kind: 'comparison' } }] },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
+    const summary = screen.getByTestId('graph-piecewise-summary');
+    const summaryEditor = screen.getByTestId('graph-expression-editor-graphing.2.item.1');
+    const row = summary.closest('[data-testid="graph-expression-row"]');
+    const expand = screen.getByRole('button', { name: 'Expand piecewise branches' });
+    expect(summary).toBeVisible();
+    expect(row).toHaveAttribute('data-piecewise-state', 'summary');
+    expect(expand).toHaveAttribute('aria-expanded', 'false');
+    expect(summaryEditor).toHaveAttribute('tabindex', '0');
+    expect(screen.queryByRole('button', { name: /Reorder item/u })).not.toBeInTheDocument();
+    fireEvent.click(expand);
     expect(screen.getByText('Piecewise branches')).toBeInTheDocument();
+    expect(row).toHaveAttribute('data-piecewise-state', 'expanded');
+    expect(screen.getByRole('button', { name: 'Collapse piecewise branches' }))
+      .toHaveAttribute('aria-expanded', 'true');
+    expect(summaryEditor).toHaveAttribute('tabindex', '-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse piecewise branches' }));
+    expect(screen.queryByText('Piecewise branches')).not.toBeInTheDocument();
+    expect(row).toHaveAttribute('data-piecewise-state', 'summary');
+    expect(summaryEditor).toHaveAttribute('tabindex', '0');
+    fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
     expect(screen.queryByRole('button', { name: /Move branch/u })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Remove branch/u })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ Add branch' }));

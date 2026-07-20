@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import type {
   ModeId,
   StatisticsHistogramBinCount,
@@ -7,7 +8,12 @@ import type {
   StatisticsVisualizationPayloadV1,
 } from '../../types/calculator';
 import { KeypadPanel, type KeypadPanelProps } from './KeypadPanel';
-import { StatisticsVisualizationDock } from './statistics/StatisticsVisualizationDock';
+
+const StatisticsVisualizationDock = lazy(() =>
+  import('./statistics/StatisticsVisualizationDock').then((module) => ({
+    default: module.StatisticsVisualizationDock,
+  })),
+);
 
 type WorkspaceLowerPanelProps = KeypadPanelProps & {
   currentMode: ModeId;
@@ -44,20 +50,22 @@ export function WorkspaceLowerPanel({
   if (currentMode !== 'statistics') return <KeypadPanel {...keypadProps} />;
 
   return (
-    <StatisticsVisualizationDock
-      {...keypadProps}
-      section={statisticsSection}
-      inputMode={statisticsInputMode}
-      payload={statisticsVisualization}
-      selectedKind={statisticsVisualizationKind}
-      histogramBinCount={statisticsHistogramBinCount}
-      approxDigits={approxDigits}
-      stale={statisticsResultIsStale}
-      outcomeKind={statisticsOutcomeKind}
-      runtimeStatusLabel={runtimeStatusLabel}
-      resultRevision={statisticsResultRevision}
-      onSelectedKindChange={onStatisticsVisualizationKindChange}
-      onHistogramBinCountChange={onStatisticsHistogramBinCountChange}
-    />
+    <Suspense fallback={<KeypadPanel {...keypadProps} />}>
+      <StatisticsVisualizationDock
+        {...keypadProps}
+        section={statisticsSection}
+        inputMode={statisticsInputMode}
+        payload={statisticsVisualization}
+        selectedKind={statisticsVisualizationKind}
+        histogramBinCount={statisticsHistogramBinCount}
+        approxDigits={approxDigits}
+        stale={statisticsResultIsStale}
+        outcomeKind={statisticsOutcomeKind}
+        runtimeStatusLabel={runtimeStatusLabel}
+        resultRevision={statisticsResultRevision}
+        onSelectedKindChange={onStatisticsVisualizationKindChange}
+        onHistogramBinCountChange={onStatisticsHistogramBinCountChange}
+      />
+    </Suspense>
   );
 }

@@ -12,7 +12,7 @@ import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
   type CanonicalResultPresentationDetailPart,
-} from '../../result-contract';
+} from '../../result-contract/consumer';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
 
