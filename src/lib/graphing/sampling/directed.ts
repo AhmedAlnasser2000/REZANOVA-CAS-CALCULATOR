@@ -129,7 +129,8 @@ export function sampleDirectedInequality(
     cssSize: input.cssSize,
     parameterEnvironment: input.parameterEnvironment,
     quality: input.quality,
-    budgets: input.budgets,
+    limits: input.limits,
+    policy: input.policy,
     control: input.control,
   });
   const boundary = sampled.coordinates.length >= 4

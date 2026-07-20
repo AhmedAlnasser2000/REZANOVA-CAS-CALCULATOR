@@ -420,6 +420,13 @@ export default function GraphWorkspacePage({
   const visibleCount = controller.session.document.items.filter((item) => item.visible).length;
   const runtimeWarnings = useMemo(() => {
     const warnings = new Map<string, string>();
+    for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
+      if (evidence.achievedQuality === 'unresolved') {
+        warnings.set(evidence.itemId, 'Could not resolve this item in the current view.');
+      } else if (evidence.achievedQuality === 'reduced-detail') {
+        warnings.set(evidence.itemId, 'Reduced detail at this zoom.');
+      }
+    }
     for (const reason of controller.sampleResult?.stopReasons ?? []) {
       if (!reason.path || warnings.has(reason.path)) continue;
       if (reason.code === 'region-topology-inconclusive') {
@@ -428,10 +435,7 @@ export default function GraphWorkspacePage({
           'Uncertain cells were omitted rather than filling this region as complete.',
         );
       } else if (reason.code === 'sampling-budget-exceeded') {
-        warnings.set(
-          reason.path,
-          'This item reached its safe plotting budget; only bounded geometry is shown.',
-        );
+        if (!warnings.has(reason.path)) warnings.set(reason.path, 'Reduced detail at this zoom.');
       } else if (reason.detailCode === 'piecewise-overlap') {
         warnings.set(reason.path, 'Piecewise branches overlap; all matching branches are drawn.');
       } else if (reason.detailCode?.startsWith('piecewise-impossible:')) {
@@ -721,6 +725,7 @@ export default function GraphWorkspacePage({
           <GraphSvgViewport
             grid={controller.session.surface.grid}
             onSizeChange={setViewportSize}
+            onTraceItemChange={controller.setActiveSamplingItem}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
             pending={controller.isScenePending || controller.suppressedPiecewiseItems.size > 0}

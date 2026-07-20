@@ -6,7 +6,7 @@ import type {
 } from '../contracts';
 import {
   compileExplicitGraphRelation,
-  minimumSamplingBudgets,
+  minimumSamplingLimits,
   sampleExplicitGraphRelation,
 } from '../sampling';
 import { assembleSampledScene } from './assemble';
@@ -46,7 +46,7 @@ function sampled(itemId: string, mathJson: GraphExpressionIR['mathJson']) {
     cssSize: { width: 800, height: 600 },
     parameterEnvironment: {},
     quality: 'settled',
-    budgets: minimumSamplingBudgets(),
+    limits: minimumSamplingLimits(),
   });
 }
 

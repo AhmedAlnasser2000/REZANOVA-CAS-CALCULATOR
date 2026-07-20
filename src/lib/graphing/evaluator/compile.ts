@@ -7,6 +7,7 @@ import type {
   GraphEvaluationInstruction,
   GraphExpressionCompileInput,
   GraphExpressionCompileResult,
+  GraphPeriodicSamplingHintV1,
 } from './types';
 
 const GRAPH_EVALUATOR_MAX_INSTRUCTIONS = 512;
@@ -33,6 +34,65 @@ function numericObjectValue(value: unknown): number | null {
   if (typeof value.num !== 'string') return null;
   const numeric = Number(value.num);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function numericValue(value: SerializableMathJson): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  return numericObjectValue(value);
+}
+
+type AffineHint = GraphPeriodicSamplingHintV1['coefficient'] & { independentSymbol: string };
+
+function affineHints(node: SerializableMathJson): AffineHint[] {
+  const symbol = graphSymbolName(node);
+  if (symbol) return [{ kind: 'constant', value: 1, independentSymbol: symbol }];
+  const operator = graphNodeOperator(node);
+  const operands = graphNodeOperands(node) as SerializableMathJson[];
+  if (operator === 'Negate' && operands.length === 1) {
+    return affineHints(operands[0]!).map((hint) => hint.kind === 'constant'
+      ? { ...hint, value: -hint.value }
+      : hint);
+  }
+  if (operator === 'Add') {
+    const nonConstants = operands.filter((operand) => numericValue(operand) === null);
+    return nonConstants.length === 1 ? affineHints(nonConstants[0]!) : [];
+  }
+  if (operator !== 'Multiply' || operands.length !== 2) return [];
+  const leftNumber = numericValue(operands[0]!);
+  const rightNumber = numericValue(operands[1]!);
+  const leftSymbol = graphSymbolName(operands[0]!);
+  const rightSymbol = graphSymbolName(operands[1]!);
+  if (leftNumber !== null && rightSymbol) {
+    return [{ kind: 'constant', value: leftNumber, independentSymbol: rightSymbol }];
+  }
+  if (rightNumber !== null && leftSymbol) {
+    return [{ kind: 'constant', value: rightNumber, independentSymbol: leftSymbol }];
+  }
+  if (leftSymbol && rightSymbol) {
+    return [
+      { kind: 'symbol', symbol: leftSymbol, independentSymbol: rightSymbol },
+      { kind: 'symbol', symbol: rightSymbol, independentSymbol: leftSymbol },
+    ];
+  }
+  return [];
+}
+
+function periodicSamplingHints(node: SerializableMathJson) {
+  const hints: GraphPeriodicSamplingHintV1[] = [];
+  const visit = (value: SerializableMathJson) => {
+    const operator = graphNodeOperator(value);
+    const operands = graphNodeOperands(value) as SerializableMathJson[];
+    if ((operator === 'Sin' || operator === 'Cos' || operator === 'Tan') && operands[0]) {
+      for (const hint of affineHints(operands[0])) {
+        if (!hint.independentSymbol) continue;
+        const { independentSymbol, ...coefficient } = hint;
+        hints.push({ operator, independentSymbol, coefficient });
+      }
+    }
+    operands.forEach(visit);
+  };
+  visit(node);
+  return hints;
 }
 
 function appendExpressionInstructions(
@@ -119,6 +179,9 @@ export function compileGraphExpression(
     sourceRevision: input.sourceRevision,
     instructions: Object.freeze(instructions.map((instruction) => Object.freeze(instruction))),
     requiredSymbols: Object.freeze(actualSymbols),
+    samplingHints: Object.freeze({
+      periodic: Object.freeze(periodicSamplingHints(validation.validated.value.mathJson)),
+    }),
   });
   return { ok: true, plan };
 }

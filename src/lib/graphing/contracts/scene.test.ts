@@ -80,7 +80,7 @@ describe('Graph scene contracts', () => {
     const scene = runtimeScene();
     const viewport = { coordinateSystem: 'cartesian' as const, xMin: -2, xMax: 2, yMin: -2, yMax: 2 };
     const result = {
-      version: 2,
+      version: 3,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'graph-document-1',
@@ -91,7 +91,8 @@ describe('Graph scene contracts', () => {
       scene,
       snapshotHash: hashGraphSceneSnapshot(snapshotSampledSceneRuntime(scene, viewport)),
       stopReasons: [],
-      evidence: { sampleCount: 4, vertexCount: 4, elapsedMs: 12 },
+      itemEvidence: [],
+      evidence: { sampleCount: 4, vertexCount: 4, elapsedMs: 12, cacheBytes: 0, schedulerPasses: 1 },
     };
     expect(validateGraphSampleResult(result).ok).toBe(true);
     expect(validateGraphSampleResult({ ...result, snapshotHash: 'graph64:0000000000000000' }).ok).toBe(false);

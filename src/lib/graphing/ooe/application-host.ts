@@ -1,8 +1,8 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   validateTransferredGraphSampleResult,
-  type GraphSampleRequestV2,
-  type GraphSampleResultV2,
+  type GraphSampleRequestV3,
+  type GraphSampleResultV3,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
 import { collectGraphSceneTransferables } from '../scene';
@@ -16,6 +16,7 @@ import type {
   GraphSamplingWorkerLike,
   GraphSamplingWorkerOutboundMessage,
 } from './worker-contract';
+import { GraphSamplingRuntimeCache } from '../sampling/runtime-cache';
 
 export const GRAPH_SAMPLE_WORKER_HOST_ID = 'graph-sampling-worker-runtime' as const;
 export const GRAPH_SAMPLE_FALLBACK_HOST_ID = 'graph-sampling-runtime' as const;
@@ -75,8 +76,8 @@ function defaultWorker(): GraphSamplingWorkerLike {
 }
 
 function resultMatchesRequest(
-  result: GraphSampleResultV2,
-  request: GraphSampleRequestV2,
+  result: GraphSampleResultV3,
+  request: GraphSampleRequestV3,
 ) {
   return result.requestId === request.requestId
     && result.workspaceInstanceId === request.workspaceInstanceId
@@ -96,6 +97,8 @@ function resultMatchesRequest(
 export class GraphSamplingApplicationHost {
   readonly #options: GraphSamplingApplicationHostOptions;
   readonly #fallbackPlanCache = new GraphExpressionPlanCache(100);
+  readonly #fallbackSamplingCache = new GraphSamplingRuntimeCache();
+  readonly #fallbackDocumentRevisions = new Map<string, number>();
   #worker: GraphSamplingWorkerLike | null = null;
   #activeRun: ActiveRun | null = null;
   #requestSequence = 0;
@@ -114,7 +117,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async run(
-    request: GraphSampleRequestV2,
+    request: GraphSampleRequestV3,
     context: OoeRuntimeControlContext,
   ): Promise<GraphSamplingHostResult> {
     if (context.shouldCancel()) {
@@ -131,6 +134,11 @@ export class GraphSamplingApplicationHost {
         },
       };
     }
+    const previousFallbackRevision = this.#fallbackDocumentRevisions.get(request.workspaceInstanceId);
+    if (previousFallbackRevision !== undefined && previousFallbackRevision !== request.revisions.document) {
+      this.#fallbackSamplingCache.clearWorkspace(request.workspaceInstanceId);
+    }
+    this.#fallbackDocumentRevisions.set(request.workspaceInstanceId, request.revisions.document);
     this.#activeRun?.cancel('Superseded by the latest Graph sampling request.', false);
     const worker = this.#ensureWorker();
     if (!worker) {
@@ -147,6 +155,8 @@ export class GraphSamplingApplicationHost {
     this.#activeRun?.cancel(reason, true);
     this.#terminateWorker();
     this.#fallbackPlanCache.clear();
+    this.#fallbackSamplingCache.clear();
+    this.#fallbackDocumentRevisions.clear();
   }
 
   #ensureWorker() {
@@ -168,7 +178,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async #runFallback(
-    request: GraphSampleRequestV2,
+    request: GraphSampleRequestV3,
     context: OoeRuntimeControlContext,
     reason: string,
   ): Promise<GraphSamplingHostResult> {
@@ -186,7 +196,7 @@ export class GraphSamplingApplicationHost {
         yieldBetweenItems: async () => {
           await context.yieldIfBudgetExceeded('Graph sampling fallback yielded between items.');
         },
-      });
+      }, this.#fallbackSamplingCache);
     } finally {
       if (this.#activeRun?.cancel === cancel) this.#activeRun = null;
     }
@@ -216,7 +226,7 @@ export class GraphSamplingApplicationHost {
 
   #runWorker(
     worker: GraphSamplingWorkerLike,
-    request: GraphSampleRequestV2,
+    request: GraphSampleRequestV3,
     context: OoeRuntimeControlContext,
   ) {
     this.#requestSequence += 1;

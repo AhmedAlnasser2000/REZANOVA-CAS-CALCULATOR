@@ -1,9 +1,10 @@
-import type { GraphSamplingBudgetsV1, GraphViewportV1 } from '../contracts';
+import type { GraphSamplingLimitsV2, GraphViewportV1 } from '../contracts';
 import { createGraphExpressionEvaluator } from '../evaluator';
 import type {
   GraphExplicitSamplingInput,
   GraphSampledExplicitPath,
 } from './types';
+import { deriveGraphAdaptiveQualityPolicy } from './adaptive-policy';
 
 type SamplePoint = {
   independent: number;
@@ -13,31 +14,9 @@ type SamplePoint = {
   drawable: boolean;
 };
 
-type SamplingQualityPolicy = {
-  initialIntervals: number;
-  maximumSegmentPixels: number;
-  midpointTolerancePixels: number;
-  turnToleranceRadians: number;
-};
-
 type RefinementInterval = {
   left: SamplePoint;
   right: SamplePoint;
-};
-
-const QUALITY_POLICY: Record<'preview' | 'settled', SamplingQualityPolicy> = {
-  preview: {
-    initialIntervals: 12,
-    maximumSegmentPixels: 24,
-    midpointTolerancePixels: 1.2,
-    turnToleranceRadians: 0.25,
-  },
-  settled: {
-    initialIntervals: 24,
-    maximumSegmentPixels: 10,
-    midpointTolerancePixels: 0.35,
-    turnToleranceRadians: 0.1,
-  },
 };
 
 function defaultNow() {
@@ -119,7 +98,12 @@ function samplingStop(
 export function sampleExplicitGraphRelation(
   input: GraphExplicitSamplingInput,
 ): GraphSampledExplicitPath {
-  const policy = QUALITY_POLICY[input.quality];
+  const policy = input.policy ?? deriveGraphAdaptiveQualityPolicy({
+    quality: input.quality,
+    cssSize: input.cssSize,
+    movement: { panVelocityX: 0, panVelocityY: 0, zoomRatio: 1 },
+    route: 'explicit',
+  });
   const now = input.control?.now ?? defaultNow;
   const isCancelled = input.control?.isCancelled ?? (() => false);
   const startedAt = now();
@@ -128,6 +112,7 @@ export function sampleExplicitGraphRelation(
   const samples = new Map<number, SamplePoint>();
   const breakPairs = new Set<string>();
   let stop: ReturnType<typeof samplingStop> | null = null;
+  let displayFrequencyLimited = false;
 
   const visibleIndependentMinimum = input.plan.relationKind === 'explicit-y'
     ? input.viewport.xMin
@@ -136,9 +121,14 @@ export function sampleExplicitGraphRelation(
     ? input.viewport.xMax
     : input.viewport.yMax;
   const independentSpan = visibleIndependentMaximum - visibleIndependentMinimum;
-  const overscan = independentSpan * (input.quality === 'preview' ? 0.12 : 0.2);
-  const independentMinimum = visibleIndependentMinimum - overscan;
-  const independentMaximum = visibleIndependentMaximum + overscan;
+  const leadingMinimum = input.plan.relationKind === 'explicit-y'
+    ? policy.overscan.left
+    : policy.overscan.bottom;
+  const leadingMaximum = input.plan.relationKind === 'explicit-y'
+    ? policy.overscan.right
+    : policy.overscan.top;
+  const independentMinimum = visibleIndependentMinimum - independentSpan * leadingMinimum;
+  const independentMaximum = visibleIndependentMaximum + independentSpan * leadingMaximum;
   const dependent = dependentBounds(input.viewport, input.plan.relationKind);
   const dependentSpan = dependent.maximum - dependent.minimum;
   const extendedMinimum = dependent.minimum - dependentSpan * 4;
@@ -156,11 +146,11 @@ export function sampleExplicitGraphRelation(
       stop ??= samplingStop('cancelled', 'cooperative-cancellation');
       return null;
     }
-    if (samples.size >= input.budgets.maximumSamples) {
+    if (samples.size >= input.limits.maximumSamples) {
       stop ??= samplingStop('budget-exhausted', 'maximum-samples');
       return null;
     }
-    if (now() - startedAt >= input.budgets.maximumTimeMs) {
+    if (now() - startedAt >= input.limits.maximumTimeMs) {
       stop ??= samplingStop('budget-exhausted', 'maximum-time');
       return null;
     }
@@ -242,10 +232,6 @@ export function sampleExplicitGraphRelation(
       y: (leftScreen.y + rightScreen.y) / 2,
     };
     const midpointDeviation = distance(middleScreen, chordMiddle);
-    const maximumSegment = Math.max(
-      distance(leftScreen, middleScreen),
-      distance(middleScreen, rightScreen),
-    );
     const angle = turnAngle(leftScreen, middleScreen, rightScreen);
     const leftDependent = dependentValue(left, input.plan.relationKind);
     const middleDependent = dependentValue(middle, input.plan.relationKind);
@@ -262,7 +248,6 @@ export function sampleExplicitGraphRelation(
       && midpointDeviation > Math.max(input.cssSize.width, input.cssSize.height) * 0.35;
     shouldRefine = (!whollyOffscreenSameSide && (
       midpointDeviation > policy.midpointTolerancePixels
-      || maximumSegment > policy.maximumSegmentPixels
       || angle > policy.turnToleranceRadians
     ))
       || viewportReentry
@@ -335,8 +320,32 @@ export function sampleExplicitGraphRelation(
   if (input.cssSize.width <= 0 || input.cssSize.height <= 0) {
     stop = samplingStop('budget-exhausted', 'invalid-css-size');
   } else {
-    const maximumIntervals = Math.max(1, input.budgets.maximumSamples - 1);
-    const initialIntervals = Math.min(policy.initialIntervals, maximumIntervals);
+    const maximumIntervals = Math.max(1, input.limits.maximumSamples - 1);
+    const independentPixels = input.plan.relationKind === 'explicit-y'
+      ? input.cssSize.width
+      : input.cssSize.height;
+    const periodicIntervals = input.plan.expression.samplingHints.periodic.reduce((maximum, hint) => {
+      if (hint.independentSymbol !== input.plan.independentSymbol) return maximum;
+      const coefficient = hint.coefficient.kind === 'constant'
+        ? hint.coefficient.value
+        : input.parameterEnvironment[hint.coefficient.symbol];
+      if (!Number.isFinite(coefficient)) return maximum;
+      const period = hint.operator === 'Tan' ? Math.PI : Math.PI * 2;
+      const cycles = Math.abs(coefficient) * (independentMaximum - independentMinimum) / period;
+      return Math.max(maximum, Math.ceil(cycles * 6));
+    }, 0);
+    const displayIntervalLimit = Math.max(1, Math.ceil(independentPixels * 4));
+    displayFrequencyLimited = periodicIntervals > displayIntervalLimit;
+    const initialIntervals = Math.min(
+      Math.max(
+        1,
+        Math.ceil(independentPixels
+          * (1 + leadingMinimum + leadingMaximum)
+          / policy.seedSpacingPixels),
+        Math.min(periodicIntervals, displayIntervalLimit),
+      ),
+      maximumIntervals,
+    );
     const seedPoints: SamplePoint[] = [];
     for (let index = 0; index <= initialIntervals; index += 1) {
       const independent = index === initialIntervals
@@ -360,8 +369,8 @@ export function sampleExplicitGraphRelation(
   let pendingPoint: SamplePoint | null = null;
   let previous: SamplePoint | null = null;
   const maximumVertices = Math.min(
-    input.budgets.maximumVertices,
-    Math.floor(input.budgets.maximumSamples),
+    input.limits.maximumVertices,
+    Math.floor(input.limits.maximumSamples),
   );
 
   for (const point of ordered) {
@@ -402,6 +411,9 @@ export function sampleExplicitGraphRelation(
   }
 
   const elapsedMs = Math.max(0, now() - startedAt);
+  if (!stop && displayFrequencyLimited) {
+    stop = samplingStop('budget-exhausted', 'display-frequency-resolution');
+  }
   return {
     itemId: input.plan.itemId,
     relationKind: input.plan.relationKind,
@@ -419,9 +431,9 @@ export function sampleExplicitGraphRelation(
   };
 }
 
-export function minimumSamplingBudgets(
-  overrides: Partial<GraphSamplingBudgetsV1> = {},
-): GraphSamplingBudgetsV1 {
+export function minimumSamplingLimits(
+  overrides: Partial<GraphSamplingLimitsV2> = {},
+): GraphSamplingLimitsV2 {
   return {
     maximumSamples: overrides.maximumSamples ?? 8_192,
     maximumTimeMs: overrides.maximumTimeMs ?? 250,

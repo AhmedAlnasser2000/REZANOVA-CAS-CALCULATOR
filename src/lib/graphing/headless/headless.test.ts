@@ -6,7 +6,7 @@ import type {
 } from '../contracts';
 import {
   compileExplicitGraphRelation,
-  minimumSamplingBudgets,
+  minimumSamplingLimits,
   sampleExplicitGraphRelation,
 } from '../sampling';
 import { assembleSampledScene } from '../scene';
@@ -39,7 +39,7 @@ function sampled(itemId: string, mathJson: GraphExpressionIR['mathJson']) {
     cssSize: { width: 640, height: 480 },
     parameterEnvironment: {},
     quality: 'settled',
-    budgets: minimumSamplingBudgets(),
+    limits: minimumSamplingLimits(),
     control: { now: () => 0 },
   });
 }
@@ -66,7 +66,7 @@ describe('Graph headless semantic validator', () => {
     expect(reverse.ok).toBe(true);
     if (!forward.ok || !reverse.ok) return;
     expect(forward.evidence.snapshotHash).toBe(reverse.evidence.snapshotHash);
-    expect(forward.evidence.snapshotHash).toBe('graph64:d217e1d0a5ca12c5');
+    expect(forward.evidence.snapshotHash).toBe('graph64:01b636189614668f');
     expect(forward.evidence).toMatchObject({
       pathCount: 2,
       regionCount: 0,

@@ -1,8 +1,10 @@
+export * from './adaptive-policy';
 export * from './compile';
 export * from './explicit';
 export * from './implicit';
 export * from './grid';
 export * from './parametric';
 export * from './piecewise';
+export * from './runtime-cache';
 export * from './types';
 export { releaseGraphSampleResultBuffers } from './request';

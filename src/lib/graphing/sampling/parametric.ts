@@ -3,7 +3,8 @@ import type {
   GraphExpressionIR,
   GraphItemPresentationV1,
   GraphRelationIR,
-  GraphSamplingBudgetsV1,
+  GraphSamplingLimitsV2,
+  GraphSamplingQualityV3,
   GraphStopReason,
   GraphViewportV1,
 } from '../contracts';
@@ -14,6 +15,7 @@ import {
 } from '../evaluator';
 import type { GraphSampledPathSceneInput } from '../scene';
 import { compileGraphCondition } from './condition';
+import type { GraphAdaptiveQualityPolicyV1 } from './adaptive-policy';
 
 type ParametricRelation = Extract<GraphRelationIR, {
   kind: 'polar-radius' | 'parametric-curve';
@@ -177,8 +179,9 @@ export function sampleParametricGraphRelation(input: {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Readonly<Record<string, number>>;
-  quality: 'preview' | 'settled';
-  budgets: GraphSamplingBudgetsV1;
+  quality: GraphSamplingQualityV3;
+  limits: GraphSamplingLimitsV2;
+  policy?: GraphAdaptiveQualityPolicyV1;
   cache: GraphExpressionPlanCache;
   control: { now: () => number; isCancelled: () => boolean };
 }): {
@@ -188,6 +191,11 @@ export function sampleParametricGraphRelation(input: {
   sampleCount: number;
   vertexCount: number;
 } {
+  const qualityPolicy = input.policy ?? {
+    seedSpacingPixels: input.quality === 'preview' ? 32 : input.quality === 'settled' ? 16 : 12,
+    midpointTolerancePixels: input.quality === 'preview' ? 1.5 : input.quality === 'settled' ? 0.35 : 0.2,
+    turnToleranceRadians: input.quality === 'preview' ? Math.PI / 12 : input.quality === 'settled' ? Math.PI / 30 : Math.PI / 60,
+  };
   const compiled = compileEvaluators(input);
   if ('code' in compiled) {
     return { status: 'budget-exhausted', stopReason: compiled, sampleCount: 0, vertexCount: 0 };
@@ -227,8 +235,8 @@ export function sampleParametricGraphRelation(input: {
       stopped = 'cancelled';
       return null;
     }
-    if (points.size >= input.budgets.maximumSamples
-      || input.control.now() - startedAt >= input.budgets.maximumTimeMs) {
+    if (points.size >= input.limits.maximumSamples
+      || input.control.now() - startedAt >= input.limits.maximumTimeMs) {
       stopped = 'budget-exhausted';
       return null;
     }
@@ -247,7 +255,9 @@ export function sampleParametricGraphRelation(input: {
     points.set(parameter, point);
     return point;
   };
-  const initialIntervals = input.quality === 'preview' ? 48 : 96;
+  const initialIntervals = Math.max(24, Math.ceil(
+    Math.hypot(input.cssSize.width, input.cssSize.height) / qualityPolicy.seedSpacingPixels,
+  ));
   const pending: ParametricInterval[] = [];
   const convergeFiniteBoundary = (finiteEndpoint: Point, nonFiniteEndpoint: Point) => {
     let finite = finiteEndpoint;
@@ -313,12 +323,14 @@ export function sampleParametricGraphRelation(input: {
       const c = screen(interval.right, input.viewport, input.cssSize);
       const chord = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 };
       const deviation = Math.hypot(b.x - chord.x, b.y - chord.y);
-      const length = Math.max(
-        Math.hypot(b.x - a.x, b.y - a.y),
-        Math.hypot(c.x - b.x, c.y - b.y),
-      );
-      if (deviation > (input.quality === 'preview' ? 2.4 : 0.8)
-        || length > (input.quality === 'preview' ? 52 : 26)) {
+      const firstAngle = Math.atan2(b.y - a.y, b.x - a.x);
+      const secondAngle = Math.atan2(c.y - b.y, c.x - b.x);
+      const turn = Math.abs(Math.atan2(
+        Math.sin(secondAngle - firstAngle),
+        Math.cos(secondAngle - firstAngle),
+      ));
+      if (deviation > qualityPolicy.midpointTolerancePixels
+        || turn > qualityPolicy.turnToleranceRadians) {
         pending.push(
           { left: middle, right: interval.right },
           { left: interval.left, right: middle },

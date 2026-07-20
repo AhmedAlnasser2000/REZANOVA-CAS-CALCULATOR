@@ -69,6 +69,16 @@ describe('Graph allowlisted evaluator', () => {
       .toEqual({ status: 'non-finite', reason: 'missing-symbol', symbol: 'x' });
   });
 
+  it('records only structurally proven affine periodic sampling hints', () => {
+    expect(compile(['Log', ['Sin', ['Multiply', 'a', 'x']]], ['a', 'x']).samplingHints.periodic)
+      .toContainEqual({
+        operator: 'Sin',
+        independentSymbol: 'x',
+        coefficient: { kind: 'symbol', symbol: 'a' },
+      });
+    expect(compile(['Sin', ['Divide', 1, 'x']], ['x']).samplingHints.periodic).toEqual([]);
+  });
+
   it('fails closed when MathJSON and declared free symbols disagree', () => {
     expect(compileGraphExpression({
       planId: 'mismatch',

@@ -1,4 +1,4 @@
-import { validateGraphSampleResult, type GraphSampleRequestV2 } from '../contracts';
+import { validateGraphSampleResult, type GraphSampleRequestV3 } from '../contracts';
 import { runGraphSampleWithOoe, type GraphSampleOoeOptions } from './pilot';
 
 export type GraphSamplingRuntimeProbe = {
@@ -16,7 +16,7 @@ export type GraphSamplingRuntimeProbe = {
 };
 
 export async function probeGraphSamplingRuntime(
-  request: GraphSampleRequestV2,
+  request: GraphSampleRequestV3,
   options: GraphSampleOoeOptions = {},
 ): Promise<GraphSamplingRuntimeProbe> {
   const envelope = await runGraphSampleWithOoe(request, options);

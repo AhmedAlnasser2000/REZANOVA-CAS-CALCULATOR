@@ -1,9 +1,11 @@
 import type {
-  GraphSamplingBudgetsV1,
+  GraphSamplingLimitsV2,
+  GraphSamplingQualityV3,
   GraphStopReason,
   GraphViewportV1,
 } from '../contracts';
 import type { CompiledGraphExpressionPlan } from '../evaluator';
+import type { GraphAdaptiveQualityPolicyV1 } from './adaptive-policy';
 
 export type CompiledExplicitGraphRelationPlan = {
   itemId: string;
@@ -23,15 +25,16 @@ export type GraphExplicitSamplingInput = {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Readonly<Record<string, number>>;
-  quality: 'preview' | 'settled';
-  budgets: GraphSamplingBudgetsV1;
+  quality: GraphSamplingQualityV3;
+  limits: GraphSamplingLimitsV2;
+  policy?: GraphAdaptiveQualityPolicyV1;
   control?: GraphSamplerControl;
 };
 
 export type GraphSampledExplicitPath = {
   itemId: string;
   relationKind: 'explicit-y' | 'explicit-x';
-  quality: 'preview' | 'settled';
+  quality: GraphSamplingQualityV3;
   status: 'complete' | 'budget-exhausted' | 'cancelled';
   coordinates: Float64Array;
   independentValues: Float64Array;

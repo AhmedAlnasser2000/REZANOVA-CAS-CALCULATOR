@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 22-move implementation program; Moves 1-15 complete; Move 16 requires dedicated planning; Move 17 blocked
+Status: revised 22-move implementation program; Moves 1-16 complete; Move 17 is the next gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -270,13 +270,17 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: interaction needs renderer-owned mathematical truth, a worker per tab/event, or app-shell architecture changes.
 - Deletion: remove the combined `GraphRenderFrameV1`, worker-owned grid payload, group-wide SVG reconstruction, narrow click-only tracing, and permanent Point Set button.
 
-## 16. `GRAPHING-ADAPTIVE-VIEWPORT-SAMPLING1` (planning required)
+## 16. `GRAPHING-ADAPTIVE-VIEWPORT-SAMPLING1`
 
 - Terra: High
 - Gate type: backend and ui
-- Objective: replace the remaining fixed-density refinement constants with a viewport-, zoom-, scale-, route-, and visible-workload-aware quality policy so smooth curves remain smooth without sacrificing interaction latency or honest completion.
-- Boundary: this is a dedicated prerequisite milestone, not a tail extension of Move 15. Its exact policy, quality metric, fair-work allocation, and acceptance matrix require user discussion before implementation.
+- Objective: replace fixed per-item allowances with CSS-pixel viewport-derived preview, settled, and polish quality so ordinary supported graphs are governed by visible accuracy rather than arbitrary depth or equal quotas.
+- Contracts: `GraphSampleRequestV3` carries CSS size, revisions, quality, movement, priority, and parameter dependencies; per-item result evidence records achieved quality, estimated screen error, cache disposition, refinability, and truthful stop reason. V2 is removed after migration.
+- Policy: preview uses 32px probes, 1.5px midpoint error, and 15-degree turns; settled uses 16px, 0.35px, and 6 degrees; polish targets 0.2px and 3 degrees silently. Implicit levels use complete 32/12/6px grids, while directed regions retain compact clipped geometry.
+- Runtime: the retained application worker accepts one active and one latest request, reuses a bounded 16MiB active-tab cache across moderate view changes, clears it on mathematical revision or disposal, prioritizes the active/dependent group after all-item preview, and throttles polish between work slices.
+- User behavior: Ready means all visible items have complete current preview geometry. Settled/polish remain silent; physical-resolution or topology failures are per-item reduced-detail/unresolved evidence rather than generic plotting-limit warnings.
 - Dependencies: completed Move 15 renderer/view separation and the retained 25-row failure evidence.
+- Evidence: the canonical 25-row/10-visible workload passes first preview at 132.4ms, settled at 162.6ms, 4x-throttled p95 frame interval at 16.8ms, no task above 50ms, zero stale commits, and the 20-cycle lifecycle/heap gate. Focused visual evidence confirms smooth `log(sin(x))`, high-degree interaction, directed regions, and polar/parametric views at the required sizes.
 - Stop: a proposed policy creates a user-facing mathematical complexity cap, weakens discontinuity/domain safeguards, or hides genuinely incomplete settled geometry.
 
 ## 17. `GRAPHING-THREE-RENDERER1`

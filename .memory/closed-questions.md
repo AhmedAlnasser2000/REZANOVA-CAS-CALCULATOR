@@ -92,3 +92,18 @@ Closed during the July 3 memory cleanup:
 - attribution_basis: live
 
 - Closed the compact utility-overlay policy question. Settings, History, Variables, and the left Menu Inspector retain overlay geometry and click-outside dismissal when outboard room is unavailable, but their click-catcher is visually transparent rather than dimming or resizing the calculator document. OOE diagnostics remains outside this policy.
+
+## 2026-07-20 - Graph Adaptive Viewport Sampling
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the Move 16 quality-policy question. CSS-pixel preview/settled/polish stages, route-derived internal safety limits, complete all-item preview coverage, active/dependent later priority, bounded predictive overscan/cache reuse, and per-item truthful reduced-detail evidence replace equal caller-authored quotas. The fixed 25-row/10-visible checkpoint passes; Three.js remains the separate Move 17.

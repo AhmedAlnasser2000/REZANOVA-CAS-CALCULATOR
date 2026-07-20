@@ -1,7 +1,8 @@
 import type {
   GraphItemPresentationV1,
   GraphPiecewiseSpecV1,
-  GraphSamplingBudgetsV1,
+  GraphSamplingLimitsV2,
+  GraphSamplingQualityV3,
   GraphStopReason,
   GraphViewportV1,
 } from '../contracts';
@@ -11,6 +12,7 @@ import { compileExplicitGraphRelation } from './compile';
 import { compileGraphCondition, type CompiledGraphCondition } from './condition';
 import { sampleExplicitGraphRelation } from './explicit';
 import type { GraphSamplerControl } from './types';
+import type { GraphAdaptiveQualityPolicyV1 } from './adaptive-policy';
 
 type PiecewiseSample = {
   status: 'complete' | 'budget-exhausted' | 'cancelled';
@@ -117,8 +119,9 @@ export function sampleGraphPiecewise(input: {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Record<string, number>;
-  quality: 'preview' | 'settled';
-  budgets: GraphSamplingBudgetsV1;
+  quality: GraphSamplingQualityV3;
+  limits: GraphSamplingLimitsV2;
+  policy?: GraphAdaptiveQualityPolicyV1;
   cache: GraphExpressionPlanCache;
   control: GraphSamplerControl;
 }): PiecewiseSample {
@@ -145,13 +148,6 @@ export function sampleGraphPiecewise(input: {
       strict: conditionIsStrict(branch.condition),
     });
   }
-  const pieces = input.piecewise.branches.length + (input.piecewise.otherwise ? 1 : 0);
-  const perBranchBudgets: GraphSamplingBudgetsV1 = {
-    ...input.budgets,
-    maximumSamples: Math.max(16, Math.floor(input.budgets.maximumSamples / Math.max(1, pieces))),
-    maximumTimeMs: Math.max(2, Math.floor(input.budgets.maximumTimeMs / Math.max(1, pieces))),
-    maximumVertices: Math.max(16, Math.floor(input.budgets.maximumVertices / Math.max(1, pieces))),
-  };
   let status: PiecewiseSample['status'] = 'complete';
   let evaluatedSamples = 0;
   let emittedVertices = 0;
@@ -206,7 +202,8 @@ export function sampleGraphPiecewise(input: {
       cssSize: input.cssSize,
       parameterEnvironment: input.parameterEnvironment,
       quality: input.quality,
-      budgets: perBranchBudgets,
+      limits: input.limits,
+      policy: input.policy,
       control: input.control,
     });
     evaluatedSamples += sampled.stats.evaluatedSamples;

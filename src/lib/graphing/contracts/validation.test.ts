@@ -71,7 +71,7 @@ describe('Graph v1 contract validators', () => {
   it('validates clone-safe bounded sampling requests without renderer state', () => {
     const items = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items.filter((item) => item.kind === 'relation').slice(0, 3);
     const request = {
-      version: 2,
+      version: 3,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'document-1',
@@ -82,7 +82,8 @@ describe('Graph v1 contract validators', () => {
       cssSize: { width: 1440, height: 940 },
       overlays: { unitCircle: false },
       quality: 'preview',
-      budgets: { maximumSamples: 80_000, maximumTimeMs: 150, maximumVertices: 160_000 },
+      priority: { dependentItemIds: [] },
+      movement: { panVelocityX: 0, panVelocityY: 0, zoomRatio: 1 },
     };
     expect(validateGraphSampleRequest(request).ok).toBe(true);
     expect(validateGraphSampleRequest({ ...request, renderer: { kind: 'svg' } }).ok).toBe(false);

@@ -6,7 +6,7 @@ import type {
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
 import { compileExplicitGraphRelation } from './compile';
-import { minimumSamplingBudgets, sampleExplicitGraphRelation } from './explicit';
+import { minimumSamplingLimits, sampleExplicitGraphRelation } from './explicit';
 
 const VIEWPORT: GraphViewportV1 = {
   coordinateSystem: 'cartesian',
@@ -49,7 +49,7 @@ function sample(
     cssSize: { width: 1_000, height: 500 },
     parameterEnvironment: {},
     quality: 'settled',
-    budgets: minimumSamplingBudgets(),
+    limits: minimumSamplingLimits(),
     ...overrides,
   });
 }
@@ -79,6 +79,29 @@ function expectBoundedPath(result: ReturnType<typeof sampleExplicitGraphRelation
   }
 }
 
+function maximumMidpointErrorPixels(
+  result: ReturnType<typeof sampleExplicitGraphRelation>,
+  valueAt: (x: number) => number,
+  viewport: GraphViewportV1,
+  cssSize: { width: number; height: number },
+) {
+  let maximum = 0;
+  for (let segmentIndex = 0; segmentIndex < result.segmentOffsets.length; segmentIndex += 1) {
+    const start = result.segmentOffsets[segmentIndex]!;
+    const end = result.segmentOffsets[segmentIndex + 1] ?? result.independentValues.length;
+    for (let index = start; index + 1 < end; index += 1) {
+      const x1 = result.independentValues[index]!;
+      const x2 = result.independentValues[index + 1]!;
+      const midpoint = (x1 + x2) / 2;
+      const expected = valueAt(midpoint);
+      if (!Number.isFinite(expected) || expected < viewport.yMin || expected > viewport.yMax) continue;
+      const lineMiddle = (result.coordinates[index * 2 + 1]! + result.coordinates[(index + 1) * 2 + 1]!) / 2;
+      maximum = Math.max(maximum, Math.abs(expected - lineMiddle) / (viewport.yMax - viewport.yMin) * cssSize.height);
+    }
+  }
+  return maximum;
+}
+
 describe('Graph explicit screen-space sampler', () => {
   it('samples smooth functions into finite renderer-neutral typed arrays', () => {
     const result = sample(explicitY(['Sin', 'x']));
@@ -106,7 +129,7 @@ describe('Graph explicit screen-space sampler', () => {
     const result = sample(explicitY(['Log', ['Sin', 'x']]), {
       viewport: { ...VIEWPORT, xMin: -13, xMax: 17, yMin: -14, yMax: 2 },
       cssSize: { width: 1_200, height: 680 },
-      budgets: minimumSamplingBudgets({
+      limits: minimumSamplingLimits({
         maximumSamples: 5_000,
         maximumVertices: 5_000,
       }),
@@ -166,7 +189,7 @@ describe('Graph explicit screen-space sampler', () => {
     const result = sample(explicitY(['Log', ['Sin', 'x']]), {
       viewport: { ...VIEWPORT, xMin: -25, xMax: 25, yMin: -15, yMax: 15 },
       cssSize: { width: 1_600, height: 820 },
-      budgets: minimumSamplingBudgets({
+      limits: minimumSamplingLimits({
         maximumSamples: 12_000,
         maximumVertices: 12_000,
       }),
@@ -243,6 +266,23 @@ describe('Graph explicit screen-space sampler', () => {
     expect(sixthPower.stats.evaluatedSamples).toBeLessThan(1_000);
   });
 
+  it('meets settled screen-error targets and seeds proven high-frequency trigonometry', () => {
+    const viewport = { ...VIEWPORT, xMin: -2, xMax: 2, yMin: -5, yMax: 5 };
+    const cssSize = { width: 1_000, height: 500 };
+    const fifthPower = sample(explicitY(['Power', 'x', 5]), { viewport, cssSize });
+    expect(maximumMidpointErrorPixels(fifthPower, (x) => x ** 5, viewport, cssSize)).toBeLessThanOrEqual(0.36);
+
+    const highFrequency = sample(explicitY(['Sin', ['Multiply', 100, 'x']]), {
+      viewport: VIEWPORT,
+      cssSize,
+      quality: 'preview',
+      limits: minimumSamplingLimits({ maximumSamples: 40_000, maximumVertices: 40_000 }),
+    });
+    expect(highFrequency.status).toBe('complete');
+    expect(highFrequency.stats.evaluatedSamples).toBeGreaterThan(1_500);
+    expect(highFrequency.segmentOffsets).toEqual(new Uint32Array([0]));
+  });
+
   it('cancels cooperatively and never exceeds sample or vertex budgets', () => {
     let cancellationChecks = 0;
     const cancelled = sample(explicitY(['Sin', ['Multiply', 50, 'x']]), {
@@ -256,7 +296,7 @@ describe('Graph explicit screen-space sampler', () => {
     expectBoundedPath(cancelled);
 
     const bounded = sample(explicitY(['Sin', ['Multiply', 80, 'x']]), {
-      budgets: minimumSamplingBudgets({ maximumSamples: 40, maximumVertices: 12 }),
+      limits: minimumSamplingLimits({ maximumSamples: 40, maximumVertices: 12 }),
     });
     expect(bounded.status).toBe('budget-exhausted');
     expect(bounded.stats.evaluatedSamples).toBeLessThanOrEqual(40);
@@ -267,7 +307,7 @@ describe('Graph explicit screen-space sampler', () => {
   it('stops on a deterministic time budget and rejects unsupported relation routes', () => {
     let time = 0;
     const result = sample(explicitY(['Sin', 'x']), {
-      budgets: minimumSamplingBudgets({ maximumTimeMs: 4 }),
+      limits: minimumSamplingLimits({ maximumTimeMs: 4 }),
       control: { now: () => time++ },
     });
     expect(result.status).toBe('budget-exhausted');

@@ -12,8 +12,8 @@ import {
   runGraphSampleWithOoe,
   type GraphDocumentV1,
   type GraphItemSpecV1,
-  type GraphSampleRequestV2,
-  type GraphSampleResultV2,
+  type GraphSampleRequestV3,
+  type GraphSampleResultV3,
   type GraphViewportV1,
 } from '../../lib/graphing';
 import type {
@@ -36,6 +36,7 @@ import {
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
+const POLISH_DELAY_MS = 350;
 const VIEWPORT_SETTLED_DELAY_MS = 120;
 const INVALID_GRACE_MS = 200;
 const SESSION_PERSIST_DELAY_MS = 240;
@@ -71,6 +72,21 @@ function graphParameterEnvironment(document: GraphDocumentV1) {
   return Object.fromEntries(document.items
     .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
     .map((item) => [item.parameter.symbol, item.parameter.value]));
+}
+
+function graphItemFreeSymbols(item: GraphItemSpecV1) {
+  const symbols = new Set<string>();
+  const visit = (value: unknown) => {
+    if (!value || typeof value !== 'object') return;
+    if ('freeSymbols' in value && Array.isArray(value.freeSymbols)) {
+      value.freeSymbols.forEach((symbol) => {
+        if (typeof symbol === 'string') symbols.add(symbol);
+      });
+    }
+    Object.values(value).forEach((child) => Array.isArray(child) ? child.forEach(visit) : visit(child));
+  };
+  visit(item);
+  return symbols;
 }
 
 function graphParameterEnvironmentChanged(left: GraphDocumentV1, right: GraphDocumentV1) {
@@ -131,7 +147,7 @@ export function useGraphWorkspaceController({
   workspaceContext,
 }: UseGraphWorkspaceControllerInput) {
   const [session, setSession] = useState(initialSession);
-  const [sampleResult, setSampleResult] = useState<GraphSampleResultV2 | null>(null);
+  const [sampleResult, setSampleResult] = useState<GraphSampleResultV3 | null>(null);
   const [status, setStatus] = useState<GraphControllerStatus>({ kind: 'ready', label: 'Ready' });
   const [visibleDraftErrors, setVisibleDraftErrors] = useState<ReadonlySet<string>>(new Set());
   const [suppressedPiecewiseItems, setSuppressedPiecewiseItems] = useState<ReadonlySet<string>>(new Set());
@@ -142,18 +158,29 @@ export function useGraphWorkspaceController({
   });
   const sessionRef = useRef(session);
   const resultRef = useRef(sampleResult);
-  const retiredResultsRef = useRef<GraphSampleResultV2[]>([]);
+  const retiredResultsRef = useRef<GraphSampleResultV3[]>([]);
+  const activeSamplingItemIdRef = useRef<string | null>(null);
+  const setActiveSamplingItem = useCallback((itemId: string | null) => {
+    activeSamplingItemIdRef.current = itemId;
+  }, []);
+  const lastSampleViewRef = useRef({
+    viewport: initialSession.surface.viewport,
+    at: Date.now(),
+  });
+  const currentMovementRef = useRef({ panVelocityX: 0, panVelocityY: 0, zoomRatio: 1 });
   const workspaceContextRef = useRef(workspaceContext);
   const mountedRef = useRef(true);
   const persistRef = useRef(onPersistSession);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestSequenceRef = useRef(0);
   const activeInputRevisionRef = useRef<string | null>(null);
-  const previewInFlightRef = useRef(false);
-  const queuedPreviewRef = useRef<GraphWorkspaceSessionStateV1 | null>(null);
-  const queuedSettledRef = useRef<GraphWorkspaceSessionStateV1 | null>(null);
+  const samplingInFlightRef = useRef(false);
+  const queuedSampleRef = useRef<{
+    quality: 'preview' | 'settled' | 'polish';
+    snapshot: GraphWorkspaceSessionStateV1;
+  } | null>(null);
   const launchSampleRef = useRef<(
-    quality: 'preview' | 'settled',
+    quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV1,
   ) => Promise<void>>(async () => undefined);
   const itemSequenceRef = useRef(2);
@@ -224,6 +251,7 @@ export function useGraphWorkspaceController({
   }, [workspaceContext.workspaceInstanceId]);
 
   const editItem = useCallback((itemId: string, sourceLatex: string) => {
+    activeSamplingItemIdRef.current = itemId;
     const current = sessionRef.current;
     const previous = current.document.items.find((item) => item.itemId === itemId);
     pushHistory(current.document, itemId);
@@ -395,6 +423,7 @@ export function useGraphWorkspaceController({
   }, [commitSession, pushHistory]);
 
   const commitPiecewiseDraft = useCallback((itemId: string) => {
+    activeSamplingItemIdRef.current = itemId;
     const current = sessionRef.current;
     const drafts = current.authoring?.piecewiseDrafts ?? [];
     const draft = drafts.find((candidate) => candidate.itemId === itemId);
@@ -522,6 +551,7 @@ export function useGraphWorkspaceController({
   }, [commitSession, nextItemId, pushHistory]);
 
   const updateParameter = useCallback((itemId: string, values: Parameters<typeof updateGraphParameterItem>[0]['values']) => {
+    activeSamplingItemIdRef.current = itemId;
     const current = sessionRef.current;
     const document = updateGraphParameterItem({ document: current.document, itemId, values });
     if (!document) return false;
@@ -650,7 +680,7 @@ export function useGraphWorkspaceController({
   }, [setViewport]);
 
   const runSample = useCallback(async (
-    quality: 'preview' | 'settled',
+    quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV1,
   ) => {
     const width = Math.max(1, Math.round(cssSize.width));
@@ -658,8 +688,34 @@ export function useGraphWorkspaceController({
     const items = classifiedItems(snapshot.document);
     requestSequenceRef.current += 1;
     const sequence = requestSequenceRef.current;
-    const request: GraphSampleRequestV2 = {
-      version: 2,
+    const activeItemId = activeSamplingItemIdRef.current ?? undefined;
+    const activeItem = activeItemId
+      ? snapshot.document.items.find((item) => item.itemId === activeItemId)
+      : undefined;
+    const activeParameterSymbol = activeItem?.kind === 'parameter'
+      ? activeItem.parameter.symbol
+      : undefined;
+    const dependentItemIds = activeParameterSymbol
+      ? items.filter((item) => graphItemFreeSymbols(item).has(activeParameterSymbol)).map((item) => item.itemId)
+      : [];
+    if (quality === 'preview') {
+      const previous = lastSampleViewRef.current;
+      const elapsedSeconds = Math.max(0.016, (Date.now() - previous.at) / 1_000);
+      const previousViewport = previous.viewport;
+      const viewport = snapshot.surface.viewport;
+      const previousCenterX = (previousViewport.xMin + previousViewport.xMax) / 2;
+      const previousCenterY = (previousViewport.yMin + previousViewport.yMax) / 2;
+      const centerX = (viewport.xMin + viewport.xMax) / 2;
+      const centerY = (viewport.yMin + viewport.yMax) / 2;
+      currentMovementRef.current = {
+        panVelocityX: (centerX - previousCenterX) / (viewport.xMax - viewport.xMin) * width / elapsedSeconds,
+        panVelocityY: (centerY - previousCenterY) / (viewport.yMax - viewport.yMin) * height / elapsedSeconds,
+        zoomRatio: (viewport.xMax - viewport.xMin) / (previousViewport.xMax - previousViewport.xMin),
+      };
+      lastSampleViewRef.current = { viewport, at: Date.now() };
+    }
+    const request: GraphSampleRequestV3 = {
+      version: 3,
       requestId: `${workspaceContext.workspaceInstanceId}.sample.${sequence}`,
       workspaceInstanceId: workspaceContextRef.current.workspaceInstanceId,
       documentId: snapshot.document.documentId,
@@ -675,15 +731,13 @@ export function useGraphWorkspaceController({
       cssSize: { width, height },
       overlays: { unitCircle: snapshot.surface.grid.unitCircle },
       quality,
-      budgets: quality === 'preview'
-        ? { maximumSamples: 4_000, maximumTimeMs: 80, maximumVertices: 4_000 }
-        : { maximumSamples: 20_000, maximumTimeMs: 500, maximumVertices: 20_000 },
+      priority: { ...(activeItemId ? { activeItemId } : {}), dependentItemIds },
+      movement: currentMovementRef.current,
     };
     activeInputRevisionRef.current = buildGraphSampleInputRevisionId(request);
-    const statusTimer = setTimeout(() => setStatus({
-      kind: 'sampling',
-      label: quality === 'preview' ? 'Drawing preview…' : 'Refining curves…',
-    }), 120);
+    const statusTimer = quality === 'preview'
+      ? setTimeout(() => setStatus({ kind: 'sampling', label: 'Drawing preview…' }), 120)
+      : undefined;
     try {
       const envelope = await runGraphSampleWithOoe(request, {
         activeInputRevisionId: () => activeInputRevisionRef.current,
@@ -702,24 +756,6 @@ export function useGraphWorkspaceController({
         if (envelope.ooe.releasedBufferBytes === 0) releaseGraphSampleResultBuffers(envelope.payload);
         return;
       }
-      if (envelope.payload.status === 'budget-exhausted') {
-        releaseGraphSampleResultBuffers(envelope.payload);
-        if (quality === 'preview') {
-          setStatus({ kind: 'sampling', label: 'Refining curves…' });
-          return;
-        }
-        const previous = resultRef.current;
-        const mathematicsChanged = !previous
-          || previous.revisions.document !== request.revisions.document
-          || previous.revisions.parameter !== request.revisions.parameter;
-        if (mathematicsChanged && previous) {
-          retiredResultsRef.current.push(previous);
-          resultRef.current = null;
-          setSampleResult(null);
-        }
-        setStatus({ kind: 'warning', label: 'This view could not be completed safely.' });
-        return;
-      }
       const previous = resultRef.current;
       if (previous) retiredResultsRef.current.push(previous);
       resultRef.current = envelope.payload;
@@ -730,54 +766,47 @@ export function useGraphWorkspaceController({
       const piecewiseConditionIssue = envelope.payload.stopReasons.some(
         (reason) => reason.detailCode?.startsWith('piecewise-'),
       );
-      setStatus(envelope.payload.stopReasons.length > 0 && quality === 'settled'
+      const reducedItems = envelope.payload.itemEvidence.filter((item) => (
+        item.achievedQuality === 'reduced-detail' || item.achievedQuality === 'unresolved'
+      ));
+      setStatus((reducedItems.length > 0 || envelope.payload.stopReasons.length > 0) && quality !== 'preview'
         ? {
             kind: 'warning',
             label: topologyInconclusive
               ? 'Uncertain region cells were omitted safely.'
               : piecewiseConditionIssue
                 ? 'Review the piecewise branch conditions.'
-                : 'Some items reached a safe plotting limit.',
+                : reducedItems.some((item) => item.achievedQuality === 'unresolved')
+                  ? 'Some items could not be resolved in this view.'
+                  : 'Some items are shown with reduced detail at this zoom.',
           }
-        : { kind: 'ready', label: quality === 'preview' ? 'Preview ready' : 'Ready' });
+        : { kind: 'ready', label: 'Ready' });
     } catch {
       if (mountedRef.current && sequence === requestSequenceRef.current) {
         setStatus({ kind: 'error', label: 'Graph sampling stopped safely.' });
       }
     } finally {
-      clearTimeout(statusTimer);
+      if (statusTimer) clearTimeout(statusTimer);
     }
   }, [cssSize.height, cssSize.width, workspaceContext.workspaceInstanceId]);
 
   const launchSample = useCallback(async (
-    quality: 'preview' | 'settled',
+    quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV1,
   ) => {
-    if (quality === 'preview' && previewInFlightRef.current) {
-      queuedPreviewRef.current = snapshot;
+    if (samplingInFlightRef.current) {
+      queuedSampleRef.current = { quality, snapshot };
       return;
     }
-    if (quality === 'settled' && previewInFlightRef.current) {
-      queuedPreviewRef.current = null;
-      queuedSettledRef.current = snapshot;
-      return;
-    }
-    if (quality === 'settled') queuedPreviewRef.current = null;
-    if (quality === 'preview') previewInFlightRef.current = true;
+    samplingInFlightRef.current = true;
     try {
       await runSample(quality, snapshot);
     } finally {
-      if (quality === 'preview') {
-        previewInFlightRef.current = false;
-        const queued = queuedPreviewRef.current;
-        const settled = queuedSettledRef.current;
-        queuedPreviewRef.current = null;
-        queuedSettledRef.current = null;
-        if (settled && mountedRef.current) {
-          void launchSampleRef.current('settled', settled);
-        } else if (queued && mountedRef.current) {
-          void launchSampleRef.current('preview', queued);
-        }
+      samplingInFlightRef.current = false;
+      const queued = queuedSampleRef.current;
+      queuedSampleRef.current = null;
+      if (queued && mountedRef.current) {
+        void launchSampleRef.current(queued.quality, queued.snapshot);
       }
     }
   }, [runSample]);
@@ -785,7 +814,9 @@ export function useGraphWorkspaceController({
 
   const flushSampling = useCallback(() => {
     activeInputRevisionRef.current = null;
-    void launchSample('settled', sessionRef.current);
+    const snapshot = sessionRef.current;
+    void launchSample('preview', snapshot);
+    void launchSample('settled', snapshot);
     persistSoon(sessionRef.current, true);
   }, [launchSample, persistSoon]);
 
@@ -810,6 +841,7 @@ export function useGraphWorkspaceController({
       .map((item) => item.itemId);
     let previewTimer: ReturnType<typeof setTimeout> | null = null;
     let settledTimer: ReturnType<typeof setTimeout> | null = null;
+    let polishTimer: ReturnType<typeof setTimeout> | null = null;
     const invalidTimer = invalidIds.length > 0
       ? setTimeout(() => {
           setVisibleDraftErrors(new Set(invalidIds));
@@ -826,10 +858,15 @@ export function useGraphWorkspaceController({
         () => void launchSample('settled', snapshot),
         viewportOnly ? VIEWPORT_SETTLED_DELAY_MS : SETTLED_DELAY_MS,
       );
+      polishTimer = setTimeout(
+        () => void launchSample('polish', snapshot),
+        (viewportOnly ? VIEWPORT_SETTLED_DELAY_MS : SETTLED_DELAY_MS) + POLISH_DELAY_MS,
+      );
     }
     return () => {
       if (previewTimer) clearTimeout(previewTimer);
       if (settledTimer) clearTimeout(settledTimer);
+      if (polishTimer) clearTimeout(polishTimer);
       if (invalidTimer) clearTimeout(invalidTimer);
     };
   }, [
@@ -845,7 +882,7 @@ export function useGraphWorkspaceController({
 
   useEffect(() => {
     resultRef.current = sampleResult;
-    const retained: GraphSampleResultV2[] = [];
+    const retained: GraphSampleResultV3[] = [];
     retiredResultsRef.current.splice(0).forEach((result) => {
       if (result === sampleResult) retained.push(result);
       else releaseGraphSampleResultBuffers(result);
@@ -858,8 +895,7 @@ export function useGraphWorkspaceController({
     return () => {
       mountedRef.current = false;
       activeInputRevisionRef.current = null;
-      queuedPreviewRef.current = null;
-      queuedSettledRef.current = null;
+      queuedSampleRef.current = null;
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
       piecewiseGraceTimersRef.current.forEach((timer) => clearTimeout(timer));
       piecewiseGraceTimersRef.current.clear();
@@ -897,6 +933,7 @@ export function useGraphWorkspaceController({
     suppressedPiecewiseItems,
     sampleResult,
     session,
+    setActiveSamplingItem,
     setViewport,
     status,
     toggleItem,
@@ -928,6 +965,7 @@ export function useGraphWorkspaceController({
     suppressedPiecewiseItems,
     sampleResult,
     session,
+    setActiveSamplingItem,
     setViewport,
     status,
     toggleItem,

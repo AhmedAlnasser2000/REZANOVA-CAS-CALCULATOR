@@ -4,7 +4,7 @@ import type {
   GraphSceneLabelV1,
   SampledSceneRuntime,
   SampledSceneSnapshotV1,
-  GraphSampleResultV2,
+  GraphSampleResultV3,
 } from './types';
 import { validateGraphStopReason, validateGraphViewport } from './validation';
 
@@ -417,16 +417,25 @@ export function validateSampledSceneRuntimeStructure(
 function validateGraphSampleResultEnvelope(
   input: unknown,
   verifySnapshotHash: boolean,
-): GraphSceneValidationResult<GraphSampleResultV2> {
+): GraphSceneValidationResult<GraphSampleResultV3> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Graph sample result must be an object.');
-  const result = input as GraphSampleResultV2;
-  if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'evidence'])
-    || result.version !== 2 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
-  if (!['preview', 'settled'].includes(result.quality) || !['complete', 'budget-exhausted', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
+  const result = input as GraphSampleResultV3;
+  if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'itemEvidence', 'evidence'])
+    || result.version !== 3 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
+  if (!['preview', 'settled', 'polish'].includes(result.quality) || !['complete', 'partial', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
   if (!result.revisions || Object.values(result.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Graph sample result revisions are invalid.');
   if (!validateGraphViewport(result.viewport).ok) return fail('invalid-scene', 'Graph sample result viewport is invalid.');
   if (!/^graph64:[0-9a-f]{16}$/u.test(result.snapshotHash) || !Array.isArray(result.stopReasons)
     || result.stopReasons.some((reason) => !validateGraphStopReason(reason).ok)) return fail('invalid-scene', 'Graph sample result evidence is invalid.');
+  if (!Array.isArray(result.itemEvidence) || result.itemEvidence.some((item) => (
+    !item || typeof item !== 'object' || !item.itemId
+    || !['coarse', 'settled', 'polished', 'reduced-detail', 'unresolved'].includes(item.achievedQuality)
+    || !['miss', 'reused', 'extended'].includes(item.cache)
+    || !Number.isFinite(item.estimatedMaximumErrorPixels)
+    || item.estimatedMaximumErrorPixels < 0
+    || typeof item.refinable !== 'boolean'
+    || (item.stopReason !== undefined && !validateGraphStopReason(item.stopReason).ok)
+  ))) return fail('invalid-scene', 'Graph sample result item evidence is invalid.');
   if (!result.evidence || Object.values(result.evidence).some((value) => !Number.isFinite(value) || value < 0)) return fail('invalid-scene', 'Graph sample result counters are invalid.');
   const sceneValidation = validateSampledSceneRuntimeStructure(result.scene);
   if (!sceneValidation.ok) return sceneValidation;
@@ -436,9 +445,9 @@ function validateGraphSampleResultEnvelope(
     || result.revisions.parameter !== result.scene.parameterRevision) {
     return fail('invalid-scene', 'Graph sample result revisions do not match its scene.');
   }
-  if (result.status === 'budget-exhausted'
-    && !result.stopReasons.some((reason) => reason.code === 'sampling-budget-exceeded')) {
-    return fail('invalid-scene', 'Budget-exhausted results require a sampling budget stop reason.');
+  if (result.status === 'partial'
+    && !result.itemEvidence.some((item) => ['reduced-detail', 'unresolved'].includes(item.achievedQuality))) {
+    return fail('invalid-scene', 'Partial results require reduced-detail or unresolved item evidence.');
   }
   if (result.status === 'cancelled'
     && !result.stopReasons.some((reason) => reason.code === 'sampling-cancelled')) {

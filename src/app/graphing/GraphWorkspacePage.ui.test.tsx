@@ -1,15 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GraphSampleRequestV2 } from '../../lib/graphing';
+import type { GraphSampleRequestV3 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
 import GraphWorkspacePage from './GraphWorkspacePage';
 import '../../styles/app/shell.css';
 import '../../styles/app/graphing.css';
 
 const { runGraphSampleWithOoe } = vi.hoisted(() => ({
-  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV2) => ({
+  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV3) => ({
   payload: {
-    version: 2 as const,
+    version: 3 as const,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -42,7 +42,15 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
     },
     snapshotHash: 'graph64:test',
     stopReasons: [],
-    evidence: { sampleCount: 3, vertexCount: 3, elapsedMs: 1 },
+    itemEvidence: request.items.filter((item) => item.visible).map((item) => ({
+      itemId: item.itemId,
+      route: item.kind === 'relation' ? item.relation.kind : item.kind,
+      achievedQuality: request.quality === 'preview' ? 'coarse' as const : request.quality === 'settled' ? 'settled' as const : 'polished' as const,
+      estimatedMaximumErrorPixels: 0.2,
+      cache: 'miss' as const,
+      refinable: request.quality !== 'polish',
+    })),
+    evidence: { sampleCount: 3, vertexCount: 3, elapsedMs: 1, cacheBytes: 0, schedulerPasses: 1 },
   },
   ooe: {
     commitAssessment: { legality: 'commitAllowed' as const },
@@ -53,7 +61,7 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
 
 vi.mock('../../lib/graphing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/graphing')>()),
-  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV2) => (
+  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV3) => (
     `input.graph.sample.${request.revisions.scene}`
   )),
   releaseGraphSampleResultBuffers: vi.fn(() => 0),

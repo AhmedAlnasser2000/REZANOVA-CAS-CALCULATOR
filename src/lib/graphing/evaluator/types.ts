@@ -5,11 +5,20 @@ export type GraphEvaluationInstruction =
   | { kind: 'symbol'; symbol: string }
   | { kind: 'operator'; operator: string; arity: number };
 
+export type GraphPeriodicSamplingHintV1 = {
+  operator: 'Sin' | 'Cos' | 'Tan';
+  independentSymbol: string;
+  coefficient: { kind: 'constant'; value: number } | { kind: 'symbol'; symbol: string };
+};
+
 export type CompiledGraphExpressionPlan = {
   planId: string;
   sourceRevision: number;
   instructions: readonly GraphEvaluationInstruction[];
   requiredSymbols: readonly string[];
+  samplingHints: {
+    periodic: readonly GraphPeriodicSamplingHintV1[];
+  };
 };
 
 export type GraphExpressionCompileInput = {

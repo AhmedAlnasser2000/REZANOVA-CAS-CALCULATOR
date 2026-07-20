@@ -379,10 +379,34 @@ export interface InteractiveGraphRenderer {
   dispose(): void;
 }
 
-export type GraphSamplingBudgetsV1 = {
+/** Internal sampler guardrails. These are derived from the live view, never authored by users. */
+export type GraphSamplingLimitsV2 = {
   maximumSamples: number;
   maximumTimeMs: number;
   maximumVertices: number;
+};
+
+export type GraphSamplingQualityV3 = 'preview' | 'settled' | 'polish';
+
+export type GraphSamplingPriorityV1 = {
+  activeItemId?: string;
+  dependentItemIds: string[];
+};
+
+export type GraphSamplingMovementHintV1 = {
+  panVelocityX: number;
+  panVelocityY: number;
+  zoomRatio: number;
+};
+
+export type GraphSamplingItemEvidenceV1 = {
+  itemId: string;
+  route: GraphRelationIR['kind'] | 'piecewise' | 'point-set' | 'unit-circle';
+  achievedQuality: 'coarse' | 'settled' | 'polished' | 'reduced-detail' | 'unresolved';
+  estimatedMaximumErrorPixels: number;
+  cache: 'miss' | 'reused' | 'extended';
+  refinable: boolean;
+  stopReason?: GraphStopReason;
 };
 
 export type GraphClassifiedItemSnapshotV1 = Extract<
@@ -390,8 +414,8 @@ export type GraphClassifiedItemSnapshotV1 = Extract<
   { kind: 'relation' | 'piecewise' | 'point-set' }
 >;
 
-export type GraphSampleRequestV2 = {
-  version: 2;
+export type GraphSampleRequestV3 = {
+  version: 3;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
@@ -401,25 +425,29 @@ export type GraphSampleRequestV2 = {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   overlays: { unitCircle: boolean };
-  quality: 'preview' | 'settled';
-  budgets: GraphSamplingBudgetsV1;
+  quality: GraphSamplingQualityV3;
+  priority: GraphSamplingPriorityV1;
+  movement: GraphSamplingMovementHintV1;
 };
 
-export type GraphSampleResultV2 = {
-  version: 2;
+export type GraphSampleResultV3 = {
+  version: 3;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
   revisions: { scene: number } & GraphRevisionSetV1;
   viewport: GraphViewportV1;
-  quality: 'preview' | 'settled';
-  status: 'complete' | 'budget-exhausted' | 'cancelled';
+  quality: GraphSamplingQualityV3;
+  status: 'complete' | 'partial' | 'cancelled';
   scene: SampledSceneRuntime;
   snapshotHash: string;
   stopReasons: GraphStopReason[];
+  itemEvidence: GraphSamplingItemEvidenceV1[];
   evidence: {
     sampleCount: number;
     vertexCount: number;
     elapsedMs: number;
+    cacheBytes: number;
+    schedulerPasses: number;
   };
 };

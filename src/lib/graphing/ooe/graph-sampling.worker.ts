@@ -1,6 +1,7 @@
 import { GraphExpressionPlanCache } from '../evaluator';
 import { validateGraphSampleResult } from '../contracts';
 import { runGraphSampleRequest } from '../sampling/request';
+import { GraphSamplingRuntimeCache } from '../sampling/runtime-cache';
 import type {
   GraphSamplingWorkerInboundMessage,
   GraphSamplingWorkerOutboundMessage,
@@ -19,18 +20,25 @@ type GraphSamplingWorkerGlobalScope = {
 
 const workerSelf = self as unknown as GraphSamplingWorkerGlobalScope;
 const planCache = new GraphExpressionPlanCache(100);
+const samplingCache = new GraphSamplingRuntimeCache();
+const workspaceDocumentRevisions = new Map<string, number>();
 const cancelledRequests = new Set<string>();
 let activeRequestId: string | null = null;
 let queuedRun: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }> | null = null;
 
 function startRun(message: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }>) {
   const { requestId, request } = message;
+  const previousDocumentRevision = workspaceDocumentRevisions.get(request.workspaceInstanceId);
+  if (previousDocumentRevision !== undefined && previousDocumentRevision !== request.revisions.document) {
+    samplingCache.clearWorkspace(request.workspaceInstanceId);
+  }
+  workspaceDocumentRevisions.set(request.workspaceInstanceId, request.revisions.document);
   activeRequestId = requestId;
   workerSelf.postMessage({ kind: 'started', requestId });
   void runGraphSampleRequest(request, planCache, {
     isCancelled: () => cancelledRequests.has(requestId),
-    yieldBetweenItems: () => new Promise((resolve) => setTimeout(resolve, 0)),
-  })
+    yieldBetweenItems: () => new Promise((resolve) => setTimeout(resolve, request.quality === 'polish' ? 8 : 0)),
+  }, samplingCache)
     .then((execution) => {
       const validation = validateGraphSampleResult(execution.result);
       if (!validation.ok) {

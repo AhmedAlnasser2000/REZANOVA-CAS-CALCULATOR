@@ -1,7 +1,8 @@
 import type {
   GraphInequalityComparator,
   GraphRelationIR,
-  GraphSamplingBudgetsV1,
+  GraphSamplingLimitsV2,
+  GraphSamplingQualityV3,
   GraphStopReason,
   GraphViewportV1,
 } from '../contracts';
@@ -12,6 +13,7 @@ import {
 } from '../evaluator';
 import type { GraphSamplerControl } from './types';
 import { sampleDirectedInequality } from './directed';
+import type { GraphAdaptiveQualityPolicyV1 } from './adaptive-policy';
 
 type ImplicitRelation = Extract<GraphRelationIR, {
   kind: 'implicit-equality' | 'inequality' | 'chained-inequality';
@@ -59,8 +61,9 @@ export type GraphImplicitSamplingInput = {
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Readonly<Record<string, number>>;
-  quality: 'preview' | 'settled';
-  budgets: GraphSamplingBudgetsV1;
+  quality: GraphSamplingQualityV3;
+  limits: GraphSamplingLimitsV2;
+  policy?: GraphAdaptiveQualityPolicyV1;
   cache?: GraphExpressionPlanCache;
   control?: GraphSamplerControl;
 };
@@ -113,20 +116,18 @@ function normalizedDifference(operator: CompiledClause['operator'], left: number
 }
 
 function chooseGrid(input: GraphImplicitSamplingInput, clauseCount: number) {
-  const spacing = input.quality === 'preview' ? 24 : 14;
-  const maximumColumns = input.quality === 'preview' ? 96 : 160;
-  const maximumRows = input.quality === 'preview' ? 72 : 120;
-  let columns = Math.max(8, Math.min(maximumColumns, Math.ceil(input.cssSize.width / spacing)));
-  let rows = Math.max(8, Math.min(maximumRows, Math.ceil(input.cssSize.height / spacing)));
+  const spacing = input.policy?.implicitCellPixels ?? (input.quality === 'preview' ? 32 : input.quality === 'settled' ? 12 : 6);
+  let columns = Math.max(8, Math.ceil(input.cssSize.width / spacing));
+  let rows = Math.max(8, Math.ceil(input.cssSize.height / spacing));
   const evaluationsPerPoint = Math.max(2, clauseCount * 2);
   const estimated = ((columns + 1) * (rows + 1) + columns * rows) * evaluationsPerPoint;
-  const available = Math.max(1, Math.floor(input.budgets.maximumSamples * 0.94));
+  const available = Math.max(1, Math.floor(input.limits.maximumSamples * 0.94));
   if (estimated > available) {
     const scale = Math.sqrt(available / estimated);
     columns = Math.max(2, Math.floor(columns * scale));
     rows = Math.max(2, Math.floor(rows * scale));
   }
-  const maximumCellsFromVertices = Math.max(4, Math.floor(input.budgets.maximumVertices / 28));
+  const maximumCellsFromVertices = Math.max(4, Math.floor(input.limits.maximumVertices / 28));
   if (columns * rows > maximumCellsFromVertices) {
     const scale = Math.sqrt(maximumCellsFromVertices / (columns * rows));
     columns = Math.max(2, Math.floor(columns * scale));
@@ -265,8 +266,8 @@ export function sampleImplicitGraphRelation(
       stopReasons.push({ code: 'sampling-cancelled', detailCode: 'cooperative-implicit-cancellation' });
       return true;
     }
-    if (evaluatedSamples + 2 > input.budgets.maximumSamples
-      || now() - startedAt >= input.budgets.maximumTimeMs) {
+    if (evaluatedSamples + 2 > input.limits.maximumSamples
+      || now() - startedAt >= input.limits.maximumTimeMs) {
       status = 'budget-exhausted';
       stopReasons.push({ code: 'sampling-budget-exceeded', detailCode: 'implicit-grid-budget' });
       return true;
@@ -346,7 +347,7 @@ export function sampleImplicitGraphRelation(
   const regionVertices: number[] = [];
   const regionIndices: number[] = [];
   const canEmit = (count: number) => {
-    if (emittedVertices + count <= input.budgets.maximumVertices) return true;
+    if (emittedVertices + count <= input.limits.maximumVertices) return true;
     if (status === 'complete') {
       status = 'budget-exhausted';
       stopReasons.push({ code: 'sampling-budget-exceeded', detailCode: 'implicit-geometry-budget' });

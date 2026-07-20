@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateGraphSampleResult,
-  type GraphSampleRequestV2,
+  type GraphSampleRequestV3,
 } from '../contracts';
 import {
   releaseGraphSampleResultBuffers,
   runGraphSampleRequest,
 } from './request';
+import { GraphSamplingRuntimeCache } from './runtime-cache';
 
-function request(): GraphSampleRequestV2 {
+function request(): GraphSampleRequestV3 {
   return {
-    version: 2,
+    version: 3,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -50,11 +51,8 @@ function request(): GraphSampleRequestV2 {
     cssSize: { width: 1_000, height: 500 },
     overlays: { unitCircle: false },
     quality: 'preview',
-    budgets: {
-      maximumSamples: 8_192,
-      maximumTimeMs: 150,
-      maximumVertices: 16_384,
-    },
+    priority: { dependentItemIds: [] },
+    movement: { panVelocityX: 0, panVelocityY: 0, zoomRatio: 1 },
   };
 }
 
@@ -135,9 +133,6 @@ describe('Graph sample request runtime', () => {
       visible: true,
       presentation: implicitRequest.items[0]!.presentation,
     }];
-    implicitRequest.budgets.maximumSamples = 20_000;
-    implicitRequest.budgets.maximumVertices = 20_000;
-    implicitRequest.budgets.maximumTimeMs = 500;
     const execution = await runGraphSampleRequest(implicitRequest);
 
     expect(execution.result.status).toBe('complete');
@@ -285,8 +280,6 @@ describe('Graph sample request runtime', () => {
       visible: true,
       presentation: { ...routed.items[0]!.presentation, colorToken: 'graph-green' },
     }];
-    routed.budgets.maximumSamples = 8_000;
-    routed.budgets.maximumVertices = 8_000;
     const execution = await runGraphSampleRequest(routed);
 
     expect(execution.result.status).toBe('complete');
@@ -312,31 +305,67 @@ describe('Graph sample request runtime', () => {
     });
   });
 
-  it('attributes bounded sampling stops to the affected Graph item', async () => {
+  it('attributes display-resolution stops to only the affected Graph item', async () => {
     const bounded = request();
-    bounded.quality = 'settled';
-    bounded.budgets.maximumSamples = 20;
-    bounded.budgets.maximumVertices = 8;
+    const relation = bounded.items[0]!;
+    if (relation.kind !== 'relation') throw new Error('Expected relation fixture.');
+    relation.relation = {
+      kind: 'explicit-y',
+      origin: 'bare-expression',
+      rhs: { mathJson: ['Sin', ['Multiply', 1_000_000, 'x']], freeSymbols: ['x'] },
+    };
     const execution = await runGraphSampleRequest(bounded);
 
-    expect(execution.result.status).toBe('budget-exhausted');
-    expect(execution.result.stopReasons).toContainEqual(expect.objectContaining({
-      code: 'sampling-budget-exceeded',
-      path: 'curve-1',
+    expect(execution.result.status).toBe('partial');
+    expect(execution.result.itemEvidence).toContainEqual(expect.objectContaining({
+      itemId: 'curve-1',
+      achievedQuality: 'reduced-detail',
     }));
   });
 
-  it('keeps ordinary preview refinement exhaustion internal when coarse geometry is complete', async () => {
-    const bounded = request();
-    bounded.budgets.maximumSamples = 20;
-    bounded.budgets.maximumVertices = 8;
-    const execution = await runGraphSampleRequest(bounded);
+  it('keeps ordinary high-degree preview geometry complete without quota warnings', async () => {
+    const ordinary = request();
+    const relation = ordinary.items[0]!;
+    if (relation.kind !== 'relation') throw new Error('Expected relation fixture.');
+    relation.relation = {
+      kind: 'explicit-y',
+      origin: 'bare-expression',
+      rhs: { mathJson: ['Power', 'x', 6], freeSymbols: ['x'] },
+    };
+    const execution = await runGraphSampleRequest(ordinary);
 
     expect(execution.result.scene.paths.length).toBeGreaterThan(0);
     expect(execution.result.status).toBe('complete');
     expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
       code: 'sampling-budget-exceeded',
     }));
+  });
+
+  it('finishes the all-item coarse stage before prioritizing active settled refinement', async () => {
+    const staged = request();
+    const baseItem = staged.items[0]!;
+    if (baseItem.kind !== 'relation') throw new Error('Expected relation fixture.');
+    staged.items = [baseItem, {
+      ...structuredClone(baseItem),
+      itemId: 'curve-2',
+      source: { ...baseItem.source, sourceLatex: 'x^2', sourceRevision: 2 },
+      relation: {
+        kind: 'explicit-y',
+        origin: 'bare-expression',
+        rhs: { mathJson: ['Power', 'x', 2], freeSymbols: ['x'] },
+      },
+    }];
+    staged.priority = { activeItemId: 'curve-2', dependentItemIds: [] };
+
+    const coarse = await runGraphSampleRequest(staged);
+    expect(coarse.result.itemEvidence).toHaveLength(2);
+    expect(coarse.result.itemEvidence.every((item) => item.achievedQuality === 'coarse')).toBe(true);
+
+    staged.requestId = 'graph-request-settled';
+    staged.quality = 'settled';
+    const settled = await runGraphSampleRequest(staged);
+    expect(settled.result.itemEvidence.map((item) => item.itemId)).toEqual(['curve-2', 'curve-1']);
+    expect(settled.result.itemEvidence.every((item) => item.achievedQuality === 'settled')).toBe(true);
   });
 
   it('detaches every owned scene buffer when a result is dropped', async () => {
@@ -347,5 +376,50 @@ describe('Graph sample request runtime', () => {
     expect(releasedBytes).toBeGreaterThan(0);
     expect(coordinates.byteLength).toBe(0);
     expect(execution.transferList.every((buffer) => buffer.byteLength === 0)).toBe(true);
+  });
+
+  it('reuses active-tab geometry for a small pan and invalidates it for parameter changes', async () => {
+    const cache = new GraphSamplingRuntimeCache();
+    const first = request();
+    const firstExecution = await runGraphSampleRequest(first, undefined, {}, cache);
+    expect(firstExecution.result.evidence.cacheBytes).toBeGreaterThan(0);
+
+    const panned = request();
+    panned.requestId = 'graph-request-pan';
+    panned.revisions = { ...panned.revisions, scene: 5, viewport: 3 };
+    panned.viewport = { ...panned.viewport, xMin: -9, xMax: 11 };
+    const pannedExecution = await runGraphSampleRequest(panned, undefined, {}, cache);
+    expect(pannedExecution.result.itemEvidence[0]?.cache).toBe('reused');
+    expect(pannedExecution.result.evidence.sampleCount).toBe(0);
+
+    const moderateZoom = request();
+    moderateZoom.requestId = 'graph-request-moderate-zoom';
+    moderateZoom.revisions = { ...moderateZoom.revisions, scene: 6, viewport: 4 };
+    moderateZoom.viewport = { ...moderateZoom.viewport, xMin: -7, xMax: 7 };
+    const moderateZoomExecution = await runGraphSampleRequest(moderateZoom, undefined, {}, cache);
+    expect(moderateZoomExecution.result.itemEvidence[0]?.cache).toBe('reused');
+
+    const largeZoom = request();
+    largeZoom.requestId = 'graph-request-large-zoom';
+    largeZoom.revisions = { ...largeZoom.revisions, scene: 7, viewport: 5 };
+    largeZoom.viewport = { ...largeZoom.viewport, xMin: -2, xMax: 2 };
+    const largeZoomExecution = await runGraphSampleRequest(largeZoom, undefined, {}, cache);
+    expect(largeZoomExecution.result.itemEvidence[0]?.cache).toBe('miss');
+
+    const changedParameter = request();
+    changedParameter.requestId = 'graph-request-parameter';
+    changedParameter.parameterEnvironment = { a: 2 };
+    const changedExecution = await runGraphSampleRequest(changedParameter, undefined, {}, cache);
+    expect(changedExecution.result.itemEvidence[0]?.cache).toBe('miss');
+
+    cache.clearWorkspace(first.workspaceInstanceId);
+    expect(cache.bytes).toBe(0);
+  });
+
+  it('rejects cache entries larger than the configured active-tab ceiling', async () => {
+    const cache = new GraphSamplingRuntimeCache(64);
+    const execution = await runGraphSampleRequest(request(), undefined, {}, cache);
+    expect(execution.result.evidence.cacheBytes).toBeLessThanOrEqual(64);
+    expect(cache.bytes).toBe(0);
   });
 });

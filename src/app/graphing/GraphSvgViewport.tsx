@@ -32,6 +32,7 @@ type Props = {
   viewport: GraphViewportV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
   onSizeChange: (size: { width: number; height: number }) => void;
+  onTraceItemChange?: (itemId: string | null) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
 };
 type Size = { width: number; height: number };
@@ -69,7 +70,7 @@ function panViewport(base: GraphViewportV1, dx: number, dy: number, size: Size) 
 
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
-  itemRoutes, onSizeChange, onViewportChange, pending, scene, viewport, sceneViewport = viewport,
+  itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
@@ -165,10 +166,12 @@ export function GraphSvgViewport({
     traceLockRef.current = null;
     tracePointerRef.current = null;
     hideTrace();
-  }, [hideTrace]);
+    onTraceItemChange?.(null);
+  }, [hideTrace, onTraceItemChange]);
   const publishTrace = useCallback((target: GraphTraceTarget | null, announce = false) => {
     if (!target) { traceRef.current = null; hideTrace(); return; }
     traceRef.current = target;
+    if (announce) onTraceItemChange?.(target.itemId);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
     marker.hidden = false; marker.style.transform = `translate3d(${target.screen.x - 6}px,${target.screen.y - 6}px,0)`;
     marker.dataset.traceItemId = target.itemId;
@@ -180,7 +183,7 @@ export function GraphSvgViewport({
     const route = routesRef.current[target.itemId];
     label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
-  }, [hideTrace]);
+  }, [hideTrace, onTraceItemChange]);
 
   useEffect(() => {
     sceneRef.current = scene; routesRef.current = itemRoutes; pendingRef.current = pending;

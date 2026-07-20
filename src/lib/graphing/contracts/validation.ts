@@ -21,7 +21,7 @@ import type {
   GraphRenderPolicy,
   GraphRendererCapabilities,
   GraphRevisionSetV1,
-  GraphSampleRequestV2,
+  GraphSampleRequestV3,
   GraphSourceV1,
   GraphStopReason,
   GraphSurfaceStateV1,
@@ -305,14 +305,8 @@ const renderPolicySchema: z.ZodType<GraphRenderPolicy> = z.strictObject({
   pixelRatioCap: finiteSchema.positive().max(8),
 });
 
-const samplingBudgetsSchema = z.strictObject({
-  maximumSamples: z.number().int().min(1).max(2_000_000),
-  maximumTimeMs: z.number().int().min(1).max(10_000),
-  maximumVertices: z.number().int().min(1).max(4_000_000),
-});
-
 const sampleRequestSchema = z.strictObject({
-  version: z.literal(2), requestId: idSchema, workspaceInstanceId: idSchema,
+  version: z.literal(3), requestId: idSchema, workspaceInstanceId: idSchema,
   documentId: idSchema, revisions: sampleRequestRevisionsSchema,
   items: z.array(itemSchema)
     .max(GRAPH_DOCUMENT_MAX_ITEMS)
@@ -324,9 +318,17 @@ const sampleRequestSchema = z.strictObject({
     height: z.number().int().positive().max(16_384),
   }),
   overlays: z.strictObject({ unitCircle: z.boolean() }),
-  quality: z.enum(['preview', 'settled']),
-  budgets: samplingBudgetsSchema,
-}) as unknown as z.ZodType<GraphSampleRequestV2>;
+  quality: z.enum(['preview', 'settled', 'polish']),
+  priority: z.strictObject({
+    activeItemId: idSchema.optional(),
+    dependentItemIds: z.array(idSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+  }),
+  movement: z.strictObject({
+    panVelocityX: finiteSchema,
+    panVelocityY: finiteSchema,
+    zoomRatio: finiteSchema.positive().max(100),
+  }),
+}) as unknown as z.ZodType<GraphSampleRequestV3>;
 
 export type GraphContractValidationFailure = {
   reason: 'structure' | 'condition-depth' | 'condition-clause-limit';
