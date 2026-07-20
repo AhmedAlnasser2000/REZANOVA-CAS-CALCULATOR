@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 22-move implementation program; Moves 1-16 complete; Move 17 is the next gated milestone
+Status: revised 27-move implementation program; Moves 1-16 complete; Move 17 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -283,96 +283,68 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Evidence: the canonical 25-row/10-visible workload passes first preview at 132.4ms, settled at 162.6ms, 4x-throttled p95 frame interval at 16.8ms, no task above 50ms, zero stale commits, and the 20-cycle lifecycle/heap gate. Focused visual evidence confirms smooth `log(sin(x))`, high-degree interaction, directed regions, and polar/parametric views at the required sizes.
 - Stop: a proposed policy creates a user-facing mathematical complexity cap, weakens discontinuity/domain safeguards, or hides genuinely incomplete settled geometry.
 
-## 17. `GRAPHING-THREE-RENDERER1`
+## 17. `GRAPHING-IMPLICIT-CONTOUR-QUALITY1`
 
-- Terra: High
-- Gate type: ui
-- Objective: install Three.js and add the private production interactive adapter behind the established scene/governor contract.
-- Allowed: package lock/dependency, `src/lib/graphing/renderers/three/`, governor, import ratchet, renderer-focused e2e/performance tests.
-- Forbidden: Three imports/types outside private adapter, Graph document/math changes, Three-owned scene, performance claims without evidence.
-- Dependencies: proven headless snapshots/SVG across explicit, implicit, regions, piecewise, parameters, and polar grids.
-- Contracts: capability negotiation, buffer lifecycle, context loss/restoration, deterministic disposal, SVG fallback, quality/reduced-motion policy.
-- Behavior: interactive default becomes Three when supported; SVG remains fallback/reference/export.
-- Tests/evidence: import ratchet, adapter parity against snapshot/SVG, resize/DPR, resource disposal, repeated mount/unmount, forced context loss/restore, unsupported WebGL fallback, visual/performance budgets.
-- Broad gates: package/build, Graph renderer ratchet, UI/browser, file sizes, seam/CI alignment.
-- Stop: Three-specific types or coordinate transforms leak upstream, or parity cannot be shown.
-- Deletion: any provisional production SVG interaction branch superseded by the governor; retain the reference/export adapter.
+- Terra: High; gate type: backend and ui.
+- Objective: replace uniform marching-square fragments with adaptive boundary-cell refinement, safeguarded edge roots, an asymptotic saddle decider, shared vertices, and stitched polylines before any renderer change.
+- Evidence: screen-space shape oracles cover circles, translated circles, ellipses, hyperbolas, nonlinear contours, cusps, lemniscates, small loops, non-finite boundaries, and regions; Playwright confirms smooth closed contours in the SVG reference renderer.
+- Stop: partial implicit levels become visible, a generic user-facing recursion limit is introduced, or non-implicit routes regress.
 
-## 18. `GRAPHING-ANALYSIS-OOE1`
+## 18. `GRAPHING-NOTES1`
 
-- Terra: High
-- Gate type: backend
-- Objective: implement the Graph analysis evidence contract, V2 producer adapter, bounded orchestrator, and independent OOE analysis shell before exposing Analyze.
-- Allowed: Graph analysis/producer/OOE worker, reviewed public fact adapters, result-contract route registration, probes/tests.
-- Forbidden: Equation-private evidence imports, generated-LaTeX truth, canonical-result type widening, History, UI drawer.
-- Dependencies: mature relation/sampling routes; producer-proven MathJSON proof path.
-- Contracts: evidence levels/features, conditions, basis, `graph.analyze`, cache/revision policy, validated V2 result adapter.
-- Behavior: internal analysis available; no user-visible drawer yet.
-- Tests: exact root/intercept/extremum where proven, numeric validated intersection, hole vs pole vs asymptote distinction, conditional evidence, sampled/suspected/inconclusive/unsupported, V2 validation and printer parity, stale analysis.
-- Playwright: none unless a test-only evidence page is unavoidable; prefer contract tests.
-- Broad gates: result contract, V2 enforcement, display inversion, MathJSON coverage, printer migration, runtime probes, OOE/compartment.
-- Stop: a feature cannot be represented without a new canonical-result contract or would require changing solver precedence.
-- Deletion: Equation-shaped compatibility evidence or string-only exact paths.
+- Terra: High; gate type: backend and ui.
+- Objective: introduce Graph document/session V2, separate content and mathematics revisions, geometry-only sample/scene contracts plus renderer presentation frames, plain multiline Note rows, and persisted-row reordering.
+- Notes are rail-only, capped at 16,384 characters, undoable, reorderable, and excluded from sampling, tracing, analysis, and viewport export.
 
-## 19. `GRAPHING-ANALYZE-UI1`
+## 19. `GRAPHING-PIECEWISE-CONDITION-VALIDATION1`
 
-- Terra: Medium
-- Gate type: ui
-- Objective: expose the Graph-owned Analyze drawer, exact/numeric evidence distinction, selected annotations, and Features/Evidence/Style tabs using the approved motion precedent.
-- Allowed: Graph Analyze components/styles/state, shared generic motion primitive imports if already suitable, focused UI/e2e.
-- Forbidden: global `sideSurface` ownership, app-shell motion changes, modal backdrop, History result cards.
-- Dependencies: analysis OOE.
-- Contracts: drawer presence, request scheduling, annotation selection, canonical-printer labels.
-- Behavior: smooth Analyze open/close; first curve remains visible while slower analysis completes; evidence badges are honest.
-- Tests/evidence: enter/exit/reopen, non-interactive exit, reduced motion, stale selection, exact vs approximate labels, overflow/keyboard/focus return, no document dimming.
-- Broad gates: Graph/UI/browser plus result/display ratchets if label adapters change.
-- Stop: motion reuse requires changing existing shell panel behavior.
-- Deletion: test-only analysis surfaces and duplicate label formatting.
+- Terra: High; gate type: backend and ui.
+- Objective: replace fixed-point condition guesses with exact reducible interval partitions plus adaptive current-viewport evidence, shared by diagnostics and branch clipping.
+- All matching branches render; `otherwise` covers only unmatched domains; overlaps, gaps, impossible branches, inclusivity, and unresolved evidence remain explicit.
 
-## 20. `GRAPHING-COMPLEX-VIEWS1`
+## 20. `APP-SHELL-EAGER-SURFACE-LAZY-BOUNDARY1`
 
-- Terra: High
-- Gate type: ui
-- Objective: add bounded real-parameterized Argand trajectories and synchronized Real/Complex/Both layouts.
-- Allowed: Graph complex evaluator/sampler/view layout, scene/governor/UI tests.
-- Forbidden: implicit complex-domain coloring, complex input-plane scans, Riemann surfaces, 3D, silent imaginary discard.
-- Dependencies: renderer governor and parameter/trace contracts.
-- Contracts: GraphViewPolicyV1 exact interpretation, paired scene revisions/view synchronization, complex stop reasons.
-- Behavior: supported complex-valued expressions show Argand trajectories; Both shows synchronized real Cartesian and Argand panes.
-- Tests/evidence: unit-circle `e^(it)` trajectory, real-only and unsupported cases, view synchronization, trace parameter, resize, labels and accessibility.
-- Broad gates: semantic/UI/browser/renderer ratchets.
-- Stop: a requested expression has no honest real parameter or needs a broader complex semantic.
-- Deletion: any Re/Im rewriting workaround or single-axis Both prototype.
+- Terra: High; gate type: backend and ui.
+- Objective: split genuinely inactive Formula Viewer, Guide, History, Notebook, and Settings surfaces enough to pass the existing eager raw/gzip/largest-chunk ratchets without raising thresholds or hiding the app behind a fake import.
+- Graphing and Three must remain absent from non-Graph startup. Stop for a replan if this requires broad bootstrap reconstruction.
 
-## 21. `GRAPHING-PRESENTATION-EXPORT1`
+## 21. `GRAPHING-APPEARANCE-STYLING1`
 
-- Terra: High
-- Gate type: ui
-- Objective: add Graph-local Presentation Mode and governed deterministic SVG/PNG export.
-- Allowed: Graph presentation state, SVG/PNG exporters, export OOE host/client, file-save adapter, tests/e2e.
-- Forbidden: Notebook insertion, graph-project save/import, global Settings, canvas screenshot authority.
-- Dependencies: stable scene/governor; all visible scene item types.
-- Contracts: `graph.export`, explicit dimensions/pixel/byte/vertex/time budgets, visible-item/annotation policy, isolated export surface and cleanup.
-- Behavior: presentation collapses Graph chrome temporarily; SVG/PNG export reflects selected visible items and chosen styling.
-- Tests/evidence: deterministic SVG, PNG dimensions/transparency, hidden-item exclusion, budget failure, cancel/close, export while context lost, presentation restore, keyboard escape.
-- Broad gates: export runtime probe, OOE/compartment, Graph/UI/browser, package/Tauri only if an existing generic save seam truly requires it.
-- Stop: export requires Notebook/publication or durable Graph persistence changes.
-- Deletion: object URLs, isolated canvases, buffers, and temporary export workers after each job; no screenshot fallback.
+- Terra: High; gate type: ui.
+- Objective: add renderer-neutral Technical/Paper/Aurora/Luminous themes and per-curve color, width, dash, opacity, region opacity, soft halo, and marker controls through `setPresentation()` without sampling.
 
-## 22. `GRAPHING-ARC-CLOSEOUT1`
+## 22. `GRAPHING-THREE-RENDERER1`
 
-- Terra: High
-- Gate type: backend and ui closeout
-- Objective: prove the complete first-arc boundary, remove provisional routes, align ratchets/CI/freshness, and publish the manual acceptance record.
-- Allowed: Graph files, tests/fixtures/ratchets, docs/memory; only proven missing integration seams.
-- Forbidden: new feature scope, Notebook/History/Surface, persistence, 3D, remote compute.
-- Dependencies: all accepted production gates.
-- Contracts: final manifest/digests, no stale scaffolds or forbidden imports.
-- Behavior: no new feature; hardening and deletion only.
-- Tests/evidence: complete Graph semantic/runtime/browser canaries; targeted affected repo seams; full suites only if blast radius and policy justify a closeout-scale run. Manual matrix covers all locked product decisions at supported desktop widths/scales, reduced motion, WebGL loss, keyboard, export, tab close, and rapid revisions.
-- Broad gates: all Graph commands plus memory, file size, diff hygiene, seam/CI/freshness alignment; announce any full Vitest run and cap at four workers.
-- Stop: any known false mathematical claim, stale-commit flash, renderer leak, protected-system widening, missing visual evidence, or undeleted provisional path.
-- Deletion: every superseded prototype, test-only entry, debug switch, compatibility adapter, and duplicate scene/evaluator/formatter path.
+- Terra: High; gate type: ui.
+- Objective: pin audited `three@0.185.1` and add the automatic private WebGL2 adapter using an orthographic camera, CSS-pixel `Line2` lines, basic region geometry, on-demand rendering, deterministic disposal, and immediate SVG fallback on context loss.
+- Three types remain private; labels, callouts, accessibility, scene authority, and SVG reference/export ownership stay outside Three.
+
+## 23. `GRAPHING-ANALYSIS-OOE1`
+
+- Terra: High; gate type: backend.
+- Objective: add independent `graph.analyze` traffic control and validated V2 feature evidence for core curve/shape analysis without importing Equation-private internals.
+
+## 24. `GRAPHING-ANALYZE-UI1`
+
+- Terra: Medium; gate type: ui.
+- Objective: expose a non-dimming Analyze drawer with Features, Evidence, and Style tabs plus renderer-neutral proven/validated annotations and explicit recenter actions.
+
+## 25. `GRAPHING-COMPLEX-VIEWS1`
+
+- Terra: High; gate type: backend and ui.
+- Objective: add real-parameterized Argand trajectories, explicit Real/Complex/Both modes, accessible split view, synchronized path parameter, independent cameras, and bounded trajectory analysis.
+
+## 26. `GRAPHING-PRESENTATION-EXPORT1`
+
+- Terra: High; gate type: ui.
+- Objective: add Graph Presentation Mode and deterministic renderer-neutral SVG/PNG export with explicit viewport policy, visible-item selection, theme/style/grid/annotation options, transparent backgrounds, bounded PNG sizes, and native/browser Save As paths.
+- The live WebGL canvas is never export authority; editable Graph project persistence remains deferred.
+
+## 27. `GRAPHING-ARC-CLOSEOUT1`
+
+- Terra: High; gate type: backend and ui closeout.
+- Objective: run the complete Graph semantic/runtime/renderer/analysis/complex/export/browser evidence, the canonical performance workload, lifecycle and bundle gates, plus one packaged Linux Graph smoke.
+- Stop on any false mathematical claim, stale result, renderer leak, unverified visible output, or protected-system widening.
 
 ## Intended visible progression
 

@@ -429,6 +429,43 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     });
   });
 
+  test('renders smooth stitched implicit circles and nonlinear contours', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(page, 'x^2+y^2=9');
+    await enterExpression(page, '(x-3)^2+(y+2)^2=2.25');
+    await enterExpression(page, 'x^2+y^3=9');
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    const paths = page.getByTestId('graph-scene-paths').locator('path');
+    await expect(paths).toHaveCount(3);
+    const readPathShape = async () => Promise.all(
+      (await paths.all()).map(async (path) => {
+        const data = await path.getAttribute('d') ?? '';
+        return {
+          moves: data.match(/M/gu)?.length ?? 0,
+          lines: data.match(/L/gu)?.length ?? 0,
+        };
+      })
+    );
+    await expect.poll(readPathShape).toEqual([
+      { moves: 1, lines: expect.any(Number) },
+      { moves: 1, lines: expect.any(Number) },
+      { moves: expect.any(Number), lines: expect.any(Number) },
+    ]);
+    const pathShape = await readPathShape();
+    expect(pathShape[0]!.lines).toBeGreaterThan(40);
+    expect(pathShape[1]!.lines).toBeGreaterThan(30);
+    await expect(page.getByText(/safe plotting limit|Could not resolve this view/iu)).toHaveCount(0);
+
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-implicit-contour-quality-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
   test('renders structured piecewise branches with guided controls and endpoint semantics', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 940 });
     await page.goto('/');

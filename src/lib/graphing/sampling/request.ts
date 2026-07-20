@@ -491,7 +491,7 @@ export async function runGraphSampleRequest(
           implicitReason?.code === 'region-topology-inconclusive' ? 'budget-exhausted' : sampled.status,
           sampled.boundaries.length > 0 || sampled.region !== undefined,
         ),
-        estimatedMaximumErrorPixels: policy.implicitCellPixels,
+        estimatedMaximumErrorPixels: policy.midpointTolerancePixels,
         cache: 'miss',
         refinable: sampled.status !== 'cancelled' && request.quality !== 'polish',
         ...(implicitReason ? { stopReason: { ...implicitReason, path: item.itemId } } : {}),
