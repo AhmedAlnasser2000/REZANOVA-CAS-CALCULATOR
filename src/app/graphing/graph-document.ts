@@ -75,6 +75,66 @@ export function graphPiecewiseBranchValueLatex(
     : '';
 }
 
+export type GraphPiecewiseDraftBranchFeedback = {
+  value?: string;
+  condition?: string;
+};
+
+function graphConditionFreeSymbols(condition: GraphConditionIR) {
+  const symbols = new Set<string>();
+  const expression = (value: { freeSymbols: string[] } | undefined) => {
+    value?.freeSymbols.forEach((symbol) => symbols.add(symbol));
+  };
+  const visit = (value: GraphConditionIR) => {
+    if (value.kind === 'comparison') { expression(value.left); expression(value.right); }
+    else if (value.kind === 'chain') value.operands.forEach(expression);
+    else if (value.kind === 'and') value.clauses.forEach(visit);
+    else if (value.kind === 'interval-membership') {
+      expression(value.value); expression(value.minimum); expression(value.maximum);
+    }
+  };
+  visit(condition);
+  return symbols;
+}
+
+export function graphPiecewiseDraftBranchFeedback(input: {
+  target: 'x' | 'y';
+  valueLatex: string;
+  conditionLatex: string;
+}): GraphPiecewiseDraftBranchFeedback {
+  const feedback: GraphPiecewiseDraftBranchFeedback = {};
+  const independent = input.target === 'y' ? 'x' : 'y';
+  if (input.valueLatex.trim()) {
+    const parsed = parseGraphLatexToStructuralMathJson(input.valueLatex);
+    if (!parsed.ok) feedback.value = 'This branch value is incomplete or not recognized.';
+    else {
+      const value = adaptGraphExpressionMathJson(parsed.mathJson, '$.guided.value');
+      if (!value.ok) feedback.value = 'This branch value is not a supported real expression.';
+      else if (value.expression.freeSymbols.includes(input.target)) {
+        feedback.value = `A branch defining ${input.target} cannot use ${input.target} in its value.`;
+      }
+    }
+  }
+  if (input.conditionLatex.trim()) {
+    const parsed = parseGraphLatexToStructuralMathJson(input.conditionLatex);
+    if (!parsed.ok) {
+      feedback.condition = `Condition not recognized. Try a comparison such as ${independent} < 2.`;
+    } else {
+      const condition = parseGraphConditionMathJson(parsed.mathJson, '$.guided.condition');
+      if (!condition.ok) {
+        feedback.condition = condition.stopReason.detailCode === 'unsupported-condition-operator'
+          ? `A condition needs a comparison such as ${independent} < 2.`
+          : condition.stopReason.code === 'condition-budget-exceeded'
+            ? 'This condition is too complex for a piecewise branch.'
+            : `Condition not recognized. Try a comparison such as ${independent} < 2.`;
+      } else if (graphConditionFreeSymbols(condition.condition).has(input.target)) {
+        feedback.condition = `Use ${independent} for this branch condition; ${input.target} is being defined.`;
+      }
+    }
+  }
+  return feedback;
+}
+
 export function buildGraphPiecewiseItemFromAuthoringDraft(input: {
   itemId: string;
   sourceRevision: number;

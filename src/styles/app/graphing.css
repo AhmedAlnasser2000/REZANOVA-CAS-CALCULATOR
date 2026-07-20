@@ -482,6 +482,13 @@
 .graph-piecewise-field::part(menu-toggle) { display: none; }
 
 .graph-piecewise-branch-actions { display: flex; gap: 3px; }
+.graph-piecewise-branch-feedback {
+  grid-column: 2 / -1;
+  margin: 0;
+  color: #e6ad5f;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
 .graph-mini-button { width: 24px; height: 24px; padding: 0; }
 .graph-piecewise-invalid { grid-column: 2 / -1; color: #f2b76f; font-size: 0.68rem; }
 .graph-piecewise-add { min-height: 30px; border: 1px dashed var(--graph-line-strong); background: transparent; color: #b8ccc0; }

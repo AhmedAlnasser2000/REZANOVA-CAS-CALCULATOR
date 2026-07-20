@@ -34,7 +34,11 @@ import type {
   GraphWorkspaceSessionStateV2,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
-import { graphItemSourceLatex, graphDraftMessage } from './graph-document';
+import {
+  graphDraftMessage,
+  graphItemSourceLatex,
+  graphPiecewiseDraftBranchFeedback,
+} from './graph-document';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 
@@ -88,6 +92,18 @@ function GraphPiecewiseDraftRow({
   onMutate: (action: 'add' | 'remove' | 'up' | 'down', branchId?: string) => void;
   embedded?: boolean;
 }) {
+  const [feedback, setFeedback] = useState<Record<string, { value?: string; condition?: string }>>({});
+  useEffect(() => {
+    const timer = setTimeout(() => setFeedback(Object.fromEntries(draft.branches.map((branch) => [
+      branch.branchId,
+      graphPiecewiseDraftBranchFeedback({
+        target: draft.target,
+        valueLatex: branch.valueLatex,
+        conditionLatex: branch.conditionLatex,
+      }),
+    ]))), 200);
+    return () => clearTimeout(timer);
+  }, [draft.branches, draft.target]);
   const editor = <div className="graph-piecewise-editor">
       <div className="graph-piecewise-draft-heading"><strong>{draft.mode === 'replace' ? 'Piecewise branches' : 'Piecewise Function'}</strong>
         <button aria-label={draft.mode === 'replace' ? 'Cancel branch changes' : 'Delete piecewise draft'}
@@ -102,11 +118,14 @@ function GraphPiecewiseDraftRow({
         <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-condition-${branch.branchId}`}
           onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'conditionLatex', value)} onSubmit={onCommit} placeholder={index === 0 ? 'x < 0' : 'x ≥ 0'}
           shortcutProfile="graphing" value={branch.conditionLatex} />
-        <div className="graph-piecewise-branch-actions">
-          <button aria-label={`Move branch ${index + 1} up`} disabled={index === 0} onClick={() => onMutate('up', branch.branchId)} type="button"><ArrowUp size={13} /></button>
-          <button aria-label={`Move branch ${index + 1} down`} disabled={index === draft.branches.length - 1} onClick={() => onMutate('down', branch.branchId)} type="button"><ArrowDown size={13} /></button>
-          <button aria-label={`Remove branch ${index + 1}`} disabled={draft.branches.length <= 2} onClick={() => onMutate('remove', branch.branchId)} type="button"><Trash2 size={13} /></button>
-        </div>
+        {draft.branches.length > 2 ? <div className="graph-piecewise-branch-actions">
+          <button aria-label={`Remove branch ${index + 1}`} onClick={() => onMutate('remove', branch.branchId)} type="button"><Trash2 size={13} /></button>
+        </div> : null}
+        {feedback[branch.branchId]?.value || feedback[branch.branchId]?.condition ? (
+          <p className="graph-piecewise-branch-feedback" role="status">
+            {feedback[branch.branchId]?.value ?? feedback[branch.branchId]?.condition}
+          </p>
+        ) : null}
       </div>)}
       <button className="graph-piecewise-add" onClick={() => onMutate('add')} type="button">+ Add branch</button>
       {draft.mode === 'replace' ? <button className="graph-piecewise-apply" onClick={onCommit} type="button">Apply branch changes</button> : null}
@@ -533,6 +552,13 @@ export default function GraphWorkspacePage({
       } else if (evidence.achievedQuality === 'reduced-detail') {
         warnings.set(evidence.itemId, 'Reduced detail at this zoom.');
       }
+      if (!warnings.has(evidence.itemId)
+        && evidence.piecewiseCondition?.uncoveredGaps.length) {
+        const item = controller.session.document.items.find((candidate) => candidate.itemId === evidence.itemId);
+        if (item?.kind === 'piecewise' && !item.piecewise.otherwise) {
+          warnings.set(evidence.itemId, 'Piecewise branches leave gaps in the current view; gaps are allowed.');
+        }
+      }
     }
     for (const reason of controller.sampleResult?.stopReasons ?? []) {
       if (!reason.path || warnings.has(reason.path)) continue;
@@ -543,14 +569,19 @@ export default function GraphWorkspacePage({
         );
       } else if (reason.code === 'sampling-budget-exceeded') {
         if (!warnings.has(reason.path)) warnings.set(reason.path, 'Reduced detail at this zoom.');
-      } else if (reason.detailCode === 'piecewise-overlap') {
-        warnings.set(reason.path, 'Piecewise branches overlap; all matching branches are drawn.');
+      } else if (reason.detailCode?.startsWith('piecewise-overlap:')) {
+        const scope = reason.detailCode.includes(':global:') ? 'globally' : 'in the current view';
+        warnings.set(reason.path, `Piecewise branches overlap ${scope}; all matching branches are drawn.`);
       } else if (reason.detailCode?.startsWith('piecewise-impossible:')) {
-        warnings.set(reason.path, 'One piecewise branch has an impossible condition in this view.');
+        const scope = reason.detailCode.includes('impossible-global') ? 'for every input' : 'in the current view';
+        warnings.set(reason.path, `One piecewise branch cannot apply ${scope}.`);
+      } else if (reason.detailCode?.startsWith('piecewise-unresolved:')
+        || reason.detailCode === 'piecewise-boundary-unresolved') {
+        warnings.set(reason.path, 'A piecewise condition boundary could not be resolved in this view.');
       }
     }
     return warnings;
-  }, [controller.sampleResult]);
+  }, [controller.sampleResult, controller.session.document.items]);
   const itemRoutes = useMemo(() => {
     const routes: Record<string, GraphTraceRouteKind> = {};
     for (const item of controller.session.document.items) {
@@ -746,13 +777,14 @@ export default function GraphWorkspacePage({
                 </div>;
               }
               const { item, itemId } = entry;
-              const row = (
+              return (
                 <GraphExpressionRow
                   errorVisible={item
                     ? controller.visibleDraftErrors.has(item.itemId)
                     : false}
                   item={item}
                   itemId={itemId}
+                  key={itemId}
                   onBlur={() => {
                     if (item) controller.blurItem(itemId);
                     controller.flushSampling();
@@ -797,20 +829,6 @@ export default function GraphWorkspacePage({
                   piecewiseDraft={piecewiseDraftsByItem.get(itemId)}
                 />
               );
-              if (!item) return <div className="graph-persisted-row graph-blank-wrapper" key={itemId}>
-                <div aria-hidden="true" className="graph-row-order-placeholder" />
-                {row}
-              </div>;
-              const index = controller.session.document.items.findIndex((candidate) => candidate.itemId === itemId);
-              return <div className="graph-persisted-row" data-testid="graph-persisted-row" key={itemId}
-                onDragOver={(event) => event.preventDefault()} onDrop={(event) => {
-                  const dragged = event.dataTransfer.getData('text/x-graph-item-id');
-                  if (dragged) controller.reorderItem(dragged, index);
-                }}>
-                <GraphRowOrderControls index={index} itemCount={controller.session.document.items.length}
-                  itemId={itemId} onMove={controller.reorderItem} />
-                {row}
-              </div>;
             })}
           </div>
           <div className="graph-rail-note">

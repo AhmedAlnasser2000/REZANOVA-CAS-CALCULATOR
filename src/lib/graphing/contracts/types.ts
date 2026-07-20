@@ -428,6 +428,34 @@ export type GraphSamplingMovementHintV1 = {
   zoomRatio: number;
 };
 
+export type GraphPiecewiseConditionEvidenceV1 = {
+  version: 1;
+  independentSymbol: 'x' | 'y';
+  basis: 'exact-global' | 'adaptive-current-viewport' | 'mixed' | 'unresolved';
+  validatedInterval: { minimum: number; maximum: number; tolerancePixels: number };
+  branchApplicability: Array<{
+    branchId: string;
+    status: 'applicable-global' | 'applicable-current-viewport' | 'offscreen'
+      | 'impossible-global' | 'impossible-current-viewport' | 'unresolved';
+  }>;
+  overlapBranchPairs: Array<{
+    branchIds: [string, string];
+    scope: 'global' | 'current-viewport';
+  }>;
+  uncoveredGaps: Array<{
+    minimum: number;
+    maximum: number;
+    minimumInclusive: boolean;
+    maximumInclusive: boolean;
+  }>;
+  boundaries: Array<{
+    value: number;
+    includedBranchIds: string[];
+    excludedBranchIds: string[];
+  }>;
+  unresolvedBoundaryCount: number;
+};
+
 export type GraphSamplingItemEvidenceV1 = {
   itemId: string;
   route: GraphRelationIR['kind'] | 'piecewise' | 'point-set' | 'unit-circle';
@@ -436,6 +464,7 @@ export type GraphSamplingItemEvidenceV1 = {
   cache: 'miss' | 'reused' | 'extended';
   refinable: boolean;
   stopReason?: GraphStopReason;
+  piecewiseCondition?: GraphPiecewiseConditionEvidenceV1;
 };
 
 export type GraphClassifiedItemSnapshotV2 = {

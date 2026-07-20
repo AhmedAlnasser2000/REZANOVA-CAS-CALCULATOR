@@ -26,7 +26,7 @@
 - Split content and mathematics revisions so Notes and ordering cannot trigger sampling.
 - Migrated sampling to V4 and runtime scenes to geometry-only V2 contracts; presentation now reaches renderers independently.
 - Added plain multiline Notes with auto-growth, explicit 16,384-character feedback, undo/delete/reorder support, presentation read-only behavior, and no mathematical or viewport authority.
-- Added pointer drag, keyboard grab/move/drop, and explicit Move Up/Down controls for every persisted row while keeping the blank expression row last and unpersisted.
+- Added pointer drag, keyboard grab/move/drop, and explicit Move Up/Down controls for Notes while keeping mathematical rows compact and the blank expression row last and unpersisted. This wording reflects the user-directed rail correction landed with Move 19.
 
 ## Durable memory updated
 

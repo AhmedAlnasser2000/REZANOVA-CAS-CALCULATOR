@@ -283,6 +283,8 @@ export function useGraphWorkspaceController({
 
   const reorderItem = useCallback((itemId: string, destinationIndex: number) => {
     const current = sessionRef.current;
+    const item = current.document.items.find((candidate) => candidate.itemId === itemId);
+    if (!item || item.kind !== 'note') return;
     const nextDocument = reorderGraphDocumentItem(current.document, itemId, destinationIndex);
     if (nextDocument === current.document) return;
     pushHistory(current.document, null);

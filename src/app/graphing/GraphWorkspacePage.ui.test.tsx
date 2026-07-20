@@ -183,6 +183,7 @@ describe('GraphWorkspacePage', () => {
 
     expect(screen.getAllByTestId('graph-expression-row')).toHaveLength(1);
     expect(screen.getAllByTestId('graph-expression-blank-row')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /Reorder item/u })).not.toBeInTheDocument();
     await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
     const request = runGraphSampleWithOoe.mock.calls.at(-1)?.[0];
     expect(request?.items[0]).toMatchObject({
@@ -307,9 +308,11 @@ describe('GraphWorkspacePage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
     expect(screen.getByText('Piecewise branches')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: /Move branch/u })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remove branch/u })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ Add branch' }));
-    expect(screen.getAllByRole('button', { name: /Move branch .* up/u })).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: /Move branch/u })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Remove branch/u })).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: 'Remove branch 3' }));
     const firstValue = screen.getByTestId(/graph-piecewise-draft-value-.*branch\.1/u);
     setMathFieldValue(firstValue, 'x^3');
@@ -319,6 +322,24 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByTestId('graph-expression-editor-graphing.2.item.1')).toHaveAttribute(
       'data-value', expect.stringContaining('x^2'),
     );
+  });
+
+  it('explains an unrecognized piecewise condition and clears the guidance after correction', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Piecewise Function' }));
+    const condition = screen.getByTestId(/graph-piecewise-draft-condition-.*branch\.1/u);
+    setMathFieldValue(condition, 'x+1');
+    expect(await screen.findByText('A condition needs a comparison such as x < 2.')).toBeVisible();
+    setMathFieldValue(condition, 'x<0');
+    await waitFor(() => expect(screen.queryByText('A condition needs a comparison such as x < 2.'))
+      .not.toBeInTheDocument(), { timeout: 800 });
   });
 
   it('creates piecewise authority only after the Add Item draft is complete', async () => {

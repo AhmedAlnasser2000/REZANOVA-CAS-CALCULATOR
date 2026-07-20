@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 async function openGraph(page: Page) {
   await page.getByTestId('workspace-tab-add-menu').click();
@@ -598,6 +598,39 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.locator('.graph-status')).toContainText('Ready');
     await page.screenshot({
       path: testInfo.outputPath('graphing-notes-ordering-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
+  test('explains piecewise condition mistakes and renders refined gap endpoints consistently', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await page.getByRole('button', { name: '+ Add item' }).click();
+    await page.getByRole('menuitem', { name: 'Piecewise Function' }).click();
+    const values = page.locator('[data-testid^="graph-piecewise-draft-value-"]');
+    const conditions = page.locator('[data-testid^="graph-piecewise-draft-condition-"]');
+    const setField = async (field: Locator, latex: string) => field.evaluate((element, source) => {
+      const mathField = element as HTMLElement & { setValue: (value: string) => void };
+      mathField.setValue(source);
+      mathField.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    }, latex);
+    await setField(conditions.nth(0), 'x+1');
+    await expect(page.getByText('A condition needs a comparison such as x < 2.')).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-piecewise-specific-error-1440x940.png'),
+      fullPage: true,
+    });
+    await setField(values.nth(0), 'x');
+    await setField(conditions.nth(0), 'x<0');
+    await setField(values.nth(1), '-x');
+    await setField(conditions.nth(1), 'x>0');
+    await expect(page.getByTestId('graph-piecewise-authoring-draft')).toHaveCount(0);
+    await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-piecewise-condition-evidence-1440x940.png'),
       fullPage: true,
     });
   });

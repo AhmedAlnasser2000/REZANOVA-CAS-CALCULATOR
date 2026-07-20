@@ -5,6 +5,7 @@ export * from './implicit';
 export * from './grid';
 export * from './parametric';
 export * from './piecewise';
+export * from './piecewise-condition-evidence';
 export * from './runtime-cache';
 export * from './types';
 export { releaseGraphSampleResultBuffers } from './request';

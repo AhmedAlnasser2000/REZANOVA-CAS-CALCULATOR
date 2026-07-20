@@ -384,6 +384,7 @@ export async function runGraphSampleRequest(
         estimatedMaximumErrorPixels: errorTarget(request.quality),
         cache: 'miss',
         refinable: sampled.status !== 'cancelled' && request.quality !== 'polish',
+        piecewiseCondition: sampled.conditionEvidence,
         ...(piecewiseReason ? { stopReason: { ...piecewiseReason, path: item.itemId } } : {}),
       };
       itemEvidence.push(piecewiseEvidence);

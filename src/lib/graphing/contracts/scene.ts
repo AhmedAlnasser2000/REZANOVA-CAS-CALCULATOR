@@ -400,6 +400,29 @@ export function validateSampledSceneRuntimeStructure(
   return collectionIssue ?? { ok: true, value: scene };
 }
 
+function validPiecewiseConditionEvidence(input: unknown) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
+  const evidence = input as GraphSampleResultV4['itemEvidence'][number]['piecewiseCondition'];
+  if (!evidence || evidence.version !== 1
+    || !['x', 'y'].includes(evidence.independentSymbol)
+    || !['exact-global', 'adaptive-current-viewport', 'mixed', 'unresolved'].includes(evidence.basis)
+    || !Number.isFinite(evidence.validatedInterval?.minimum)
+    || !Number.isFinite(evidence.validatedInterval?.maximum)
+    || !Number.isFinite(evidence.validatedInterval?.tolerancePixels)
+    || evidence.validatedInterval.minimum >= evidence.validatedInterval.maximum
+    || evidence.validatedInterval.tolerancePixels < 0
+    || !Number.isSafeInteger(evidence.unresolvedBoundaryCount)
+    || evidence.unresolvedBoundaryCount < 0) return false;
+  return Array.isArray(evidence.branchApplicability)
+    && Array.isArray(evidence.overlapBranchPairs)
+    && Array.isArray(evidence.uncoveredGaps)
+    && Array.isArray(evidence.boundaries)
+    && evidence.uncoveredGaps.every((gap) => Number.isFinite(gap.minimum)
+      && Number.isFinite(gap.maximum) && gap.minimum <= gap.maximum)
+    && evidence.boundaries.every((boundary) => Number.isFinite(boundary.value)
+      && Array.isArray(boundary.includedBranchIds) && Array.isArray(boundary.excludedBranchIds));
+}
+
 function validateGraphSampleResultEnvelope(
   input: unknown,
   verifySnapshotHash: boolean,
@@ -421,6 +444,7 @@ function validateGraphSampleResultEnvelope(
     || item.estimatedMaximumErrorPixels < 0
     || typeof item.refinable !== 'boolean'
     || (item.stopReason !== undefined && !validateGraphStopReason(item.stopReason).ok)
+    || (item.piecewiseCondition !== undefined && !validPiecewiseConditionEvidence(item.piecewiseCondition))
   ))) return fail('invalid-scene', 'Graph sample result item evidence is invalid.');
   if (!result.evidence || Object.values(result.evidence).some((value) => !Number.isFinite(value) || value < 0)) return fail('invalid-scene', 'Graph sample result counters are invalid.');
   const sceneValidation = validateSampledSceneRuntimeStructure(result.scene);

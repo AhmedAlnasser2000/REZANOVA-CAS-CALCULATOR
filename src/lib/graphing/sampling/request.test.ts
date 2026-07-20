@@ -223,6 +223,17 @@ describe('Graph sample request runtime', () => {
       'filled',
       'open',
     ]);
+    expect(execution.result.scene.pointBatches.flatMap((batch) => [...batch.coordinates]))
+      .toEqual(expect.arrayContaining([0, 0]));
+    expect(execution.result.itemEvidence[0]?.piecewiseCondition).toMatchObject({
+      basis: 'exact-global',
+      branchApplicability: [
+        { branchId: 'negative', status: 'applicable-global' },
+        { branchId: 'nonnegative', status: 'applicable-global' },
+      ],
+      overlapBranchPairs: [],
+      uncoveredGaps: [],
+    });
     expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
       detailCode: 'piecewise-overlap',
     }));
