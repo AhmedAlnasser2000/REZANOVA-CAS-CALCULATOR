@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import type { GraphDocumentV1 } from '../../lib/graphing';
+import type { GraphDocumentV2 } from '../../lib/graphing';
 import {
   buildVisibleGraphItem,
+  createGraphNoteItem,
   createGraphParameterItem,
   mutateGraphPiecewiseBranches,
   replaceGraphDocumentItem,
+  replaceGraphDocumentNote,
   updateGraphPiecewiseBranch,
   updateGraphParameterItem,
 } from './graph-document';
 
-const document: GraphDocumentV1 = {
-  version: 1,
+const document: GraphDocumentV2 = {
+  version: 2,
   documentId: 'graph-document.test',
   title: 'Test graph',
-  documentRevision: 0,
+  contentRevision: 0,
+  mathematicsRevision: 0,
   items: [],
 };
 
@@ -93,10 +96,21 @@ describe('Move 8 Graph document editing', () => {
     });
     const secondDocument = replaceGraphDocumentItem(firstDocument, second);
 
-    expect(firstDocument.documentRevision).toBe(1);
-    expect(secondDocument.documentRevision).toBe(2);
+    expect(firstDocument.contentRevision).toBe(1);
+    expect(firstDocument.mathematicsRevision).toBe(1);
+    expect(secondDocument.contentRevision).toBe(2);
+    expect(secondDocument.mathematicsRevision).toBe(2);
     expect(firstDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x' } });
     expect(secondDocument.items[0]).toMatchObject({ source: { sourceLatex: 'x^2' } });
+  });
+
+  it('changes note content without changing mathematics authority', () => {
+    const created = replaceGraphDocumentNote(document, createGraphNoteItem('note.1'));
+    const updated = replaceGraphDocumentNote(created, {
+      version: 1, kind: 'note', itemId: 'note.1', text: 'Domain observations',
+    });
+    expect(updated).toMatchObject({ contentRevision: 2, mathematicsRevision: 0 });
+    expect(updated.items[0]).toMatchObject({ kind: 'note', text: 'Domain observations' });
   });
 
   it('keeps authored and slider-created parameter provenance distinct', () => {

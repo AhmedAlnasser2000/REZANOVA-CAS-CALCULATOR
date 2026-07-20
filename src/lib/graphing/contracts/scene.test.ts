@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SampledSceneRuntime } from './types';
+import type { SampledSceneRuntimeV2 } from './types';
 import {
   hashGraphSceneSnapshot,
   hashSampledSceneRuntime,
@@ -11,20 +11,18 @@ import {
   validateSampledSceneSnapshot,
 } from './scene';
 
-const style = { version: 1 as const, colorToken: 'graph-blue', stroke: 'solid' as const, strokeWidth: 'normal' as const, fillOpacity: 0.2, label: 'auto' as const };
-
-function runtimeScene(): SampledSceneRuntime {
+function runtimeScene(): SampledSceneRuntimeV2 {
   return {
     sceneRevision: 4,
-    documentRevision: 1,
+    mathematicsRevision: 1,
     viewportRevision: 2,
     parameterRevision: 3,
     paths: [
-      { pathId: 'path-b', itemId: 'curve-b', coordinates: new Float64Array([0, 0, 1, 1]), segmentOffsets: new Uint32Array([0]), closed: false, style },
-      { pathId: 'path-a', itemId: 'curve-a', coordinates: new Float64Array([-1, 1, 0, 0]), segmentOffsets: new Uint32Array([0]), parameterValues: new Float64Array([-1, 0]), closed: false, style },
+      { pathId: 'path-b', itemId: 'curve-b', coordinates: new Float64Array([0, 0, 1, 1]), segmentOffsets: new Uint32Array([0]), closed: false },
+      { pathId: 'path-a', itemId: 'curve-a', coordinates: new Float64Array([-1, 1, 0, 0]), segmentOffsets: new Uint32Array([0]), parameterValues: new Float64Array([-1, 0]), closed: false },
     ],
-    regions: [{ regionId: 'region-a', itemId: 'disk', vertices: new Float64Array([0, 0, 1, 0, 0, 1]), triangleIndices: new Uint32Array([0, 1, 2]), boundaryPathIds: ['path-a'], style }],
-    pointBatches: [{ pointBatchId: 'points-a', itemId: 'points', coordinates: new Float64Array([2, 3]), style }],
+    regions: [{ regionId: 'region-a', itemId: 'disk', vertices: new Float64Array([0, 0, 1, 0, 0, 1]), triangleIndices: new Uint32Array([0, 1, 2]), boundaryPathIds: ['path-a'] }],
+    pointBatches: [{ pointBatchId: 'points-a', itemId: 'points', coordinates: new Float64Array([2, 3]) }],
     labels: [{ labelId: 'label-b', itemId: 'curve-b', role: 'relation', anchor: { x: 1, y: 1 }, priority: 2, mathJson: ['Equal', 'y', 'x'] }],
   };
 }
@@ -80,11 +78,11 @@ describe('Graph scene contracts', () => {
     const scene = runtimeScene();
     const viewport = { coordinateSystem: 'cartesian' as const, xMin: -2, xMax: 2, yMin: -2, yMax: 2 };
     const result = {
-      version: 3,
+      version: 4,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'graph-document-1',
-      revisions: { scene: 4, document: 1, viewport: 2, parameter: 3 },
+      revisions: { scene: 4, mathematics: 1, viewport: 2, parameter: 3 },
       viewport,
       quality: 'preview',
       status: 'complete',

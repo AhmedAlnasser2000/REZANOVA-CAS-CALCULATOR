@@ -1,7 +1,6 @@
 import type {
   GraphConditionIR,
   GraphExpressionIR,
-  GraphItemPresentationV1,
   GraphRelationIR,
   GraphSamplingLimitsV2,
   GraphSamplingQualityV3,
@@ -175,7 +174,6 @@ export function sampleParametricGraphRelation(input: {
   itemId: string;
   sourceRevision: number;
   relation: ParametricRelation;
-  presentation: GraphItemPresentationV1;
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Readonly<Record<string, number>>;
@@ -385,7 +383,7 @@ export function sampleParametricGraphRelation(input: {
   };
   return {
     ...(coordinates.length >= 4 && segments.length > 0
-      ? { path: { pathId: input.itemId + ':path:0', sample, style: input.presentation } }
+      ? { path: { pathId: input.itemId + ':path:0', sample } }
       : {}),
     status,
     ...(stopReason ? { stopReason } : {}),

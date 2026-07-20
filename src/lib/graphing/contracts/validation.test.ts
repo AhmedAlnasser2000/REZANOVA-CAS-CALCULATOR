@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1,
+  GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2,
   validateGraphCondition,
   validateGraphDocument,
   validateGraphParameter,
@@ -19,20 +19,20 @@ const expression = { mathJson: ['Sin', 'x'], freeSymbols: ['x'] };
 
 describe('Graph v1 contract validators', () => {
   it('accepts the bounded baseline document and independent contract planes', () => {
-    expect(validateGraphDocument(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1).ok).toBe(true);
+    expect(validateGraphDocument(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2).ok).toBe(true);
     expect(validateGraphSource({ sourceKind: 'mathlive-latex', sourceLatex: '\\sin(x)', sourceRevision: 2 }).ok).toBe(true);
     expect(validateGraphRelation({ kind: 'explicit-y', rhs: expression, origin: 'bare-expression' }).ok).toBe(true);
     expect(validateGraphCondition({ kind: 'comparison', left: expression, operator: '<=', right: { mathJson: 1, freeSymbols: [] } }).ok).toBe(true);
     expect(validateGraphParameter({ version: 1, parameterId: 'a', symbol: 'a', origin: 'slider-created', value: 1, minimum: -2, maximum: 2, step: 0.1 }).ok).toBe(true);
     expect(validateGraphStopReason({ code: 'sampling-budget-exceeded', detailCode: 'maximum-samples' }).ok).toBe(true);
     expect(validateGraphViewport({ coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 }).ok).toBe(true);
-    expect(validateGraphRevisionSet({ document: 1, viewport: 2, parameter: 3 }).ok).toBe(true);
+    expect(validateGraphRevisionSet({ mathematics: 1, viewport: 2, parameter: 3 }).ok).toBe(true);
     expect(validateGraphRendererCapabilities({ rendererId: 'svg', interactive: true, hitTesting: true, regionFill: true, polarGrid: true, contextRecovery: false, maximumVertices: 100_000 }).ok).toBe(true);
     expect(validateGraphRenderPolicy({ quality: 'settled', reducedMotion: false, maximumVertices: 100_000, maximumLabels: 250, pixelRatioCap: 2 }).ok).toBe(true);
   });
 
   it('keeps authored source separate from downstream mathematical authority', () => {
-    const document = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1) as unknown as Record<string, unknown>;
+    const document = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2) as unknown as Record<string, unknown>;
     document.exactLatex = 'forbidden-authority';
     const validation = validateGraphDocument(document);
 
@@ -41,20 +41,20 @@ describe('Graph v1 contract validators', () => {
   });
 
   it('rejects cyclic, non-finite, oversized, duplicate, and invalid-bound documents', () => {
-    const cyclic = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1) as GraphDocumentV1 & { self?: unknown };
+    const cyclic = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2) as GraphDocumentV1 & { self?: unknown };
     cyclic.self = cyclic;
     expect(validateGraphDocument(cyclic)).toMatchObject({ ok: false, failure: { reason: 'cyclic-value' } });
 
-    const nonFinite = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1);
+    const nonFinite = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
     const parameter = nonFinite.items.find((item) => item.kind === 'parameter');
     if (parameter?.kind === 'parameter') parameter.parameter.value = Number.NaN;
     expect(validateGraphDocument(nonFinite)).toMatchObject({ ok: false, failure: { reason: 'non-finite-number' } });
 
-    const oversized = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1);
+    const oversized = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
     oversized.items = Array.from({ length: 101 }, (_, index) => ({ ...oversized.items[0]!, itemId: `row-${index}` }));
     expect(validateGraphDocument(oversized).ok).toBe(false);
 
-    const duplicate = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1);
+    const duplicate = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
     duplicate.items[1]!.itemId = duplicate.items[0]!.itemId;
     expect(validateGraphDocument(duplicate).ok).toBe(false);
 
@@ -69,13 +69,15 @@ describe('Graph v1 contract validators', () => {
   });
 
   it('validates clone-safe bounded sampling requests without renderer state', () => {
-    const items = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items.filter((item) => item.kind === 'relation').slice(0, 3);
+    const items = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2.items
+      .filter((item) => item.kind === 'relation').slice(0, 3)
+      .map(({ presentation: _presentation, ...item }) => item);
     const request = {
-      version: 3,
+      version: 4,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'document-1',
-      revisions: { scene: 4, document: 1, viewport: 2, parameter: 3 },
+      revisions: { scene: 4, mathematics: 1, viewport: 2, parameter: 3 },
       items,
       parameterEnvironment: { a: 1.2 },
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },
@@ -107,4 +109,4 @@ describe('Graph v1 contract validators', () => {
   });
 });
 
-type GraphDocumentV1 = typeof GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1;
+type GraphDocumentV1 = typeof GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2;

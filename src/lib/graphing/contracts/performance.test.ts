@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluateGraphPerformanceGate,
   GRAPH_PRE_THREE_BASELINE_EXPECTATIONS,
-  GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1,
+  GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2,
   GRAPH_PRE_THREE_PERFORMANCE_BUDGET_V1,
   nearestRankPercentile,
   validateGraphPerformanceBudget,
@@ -32,10 +32,12 @@ const passingEvidence = {
 
 describe('Graph pre-Three performance contract', () => {
   it('pins the approved workload composition and checkpoint budgets', () => {
-    const visibleGeometry = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items.filter((item) => item.kind !== 'parameter' && item.visible);
+    const visibleGeometry = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2.items.filter((item) => (
+      item.kind !== 'parameter' && item.kind !== 'note' && item.visible
+    ));
     const visibleKinds = new Set(visibleGeometry.flatMap((item) => item.kind === 'relation' ? [item.relation.kind] : [item.kind]));
 
-    expect(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items).toHaveLength(GRAPH_PRE_THREE_BASELINE_EXPECTATIONS.totalRows);
+    expect(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2.items).toHaveLength(GRAPH_PRE_THREE_BASELINE_EXPECTATIONS.totalRows);
     expect(visibleGeometry).toHaveLength(GRAPH_PRE_THREE_BASELINE_EXPECTATIONS.visibleGeometryItems);
     for (const kind of GRAPH_PRE_THREE_BASELINE_EXPECTATIONS.requiredVisibleKinds) expect(visibleKinds.has(kind)).toBe(true);
     expect(GRAPH_PRE_THREE_PERFORMANCE_BUDGET_V1.interaction.maximumP95FrameIntervalMs).toBe(24);

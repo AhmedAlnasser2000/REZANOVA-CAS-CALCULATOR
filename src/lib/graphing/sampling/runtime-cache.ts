@@ -1,5 +1,5 @@
 import type {
-  GraphClassifiedItemSnapshotV1,
+  GraphClassifiedItemSnapshotV2,
   GraphSamplingItemEvidenceV1,
   GraphSamplingQualityV3,
   GraphViewportV1,
@@ -79,7 +79,7 @@ export class GraphSamplingRuntimeCache {
 
   key(input: {
     workspaceInstanceId: string;
-    item: GraphClassifiedItemSnapshotV1;
+    item: GraphClassifiedItemSnapshotV2;
     parameterEnvironment: Readonly<Record<string, number>>;
   }) {
     return `${input.workspaceInstanceId}:${input.item.itemId}@${input.item.source.sourceRevision}:${parameterFingerprint(input.parameterEnvironment)}`;

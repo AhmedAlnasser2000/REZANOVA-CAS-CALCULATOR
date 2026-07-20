@@ -1,11 +1,11 @@
 import type {
   GraphSceneValidationFailure,
-  SampledSceneSnapshotV1,
+  SampledSceneSnapshotV2,
 } from '../contracts';
 import type { GraphSceneRuntimeBundle } from '../scene';
 
 export type GraphHeadlessSceneEvidence = {
-  snapshot: SampledSceneSnapshotV1;
+  snapshot: SampledSceneSnapshotV2;
   snapshotHash: string;
   pathCount: number;
   segmentCount: number;

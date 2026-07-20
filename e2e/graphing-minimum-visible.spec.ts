@@ -574,6 +574,34 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     });
   });
 
+  test('creates content-only Notes and reorders them without disturbing the trailing expression row', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    for (const text of ['First note\nExplains the construction.', 'Second note']) {
+      await page.getByRole('button', { name: '+ Add item' }).click();
+      await page.getByRole('menuitem', { name: 'Note' }).click();
+      const note = page.getByRole('textbox', { name: 'Graph note' }).last();
+      await expect(note).toBeFocused();
+      await note.fill(text);
+    }
+    await page.getByRole('button', { name: 'Reorder item 2' }).focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('textbox', { name: 'Graph note' }).first()).toHaveValue('Second note');
+    await expect(page.getByRole('textbox', { name: 'Graph note' }).nth(1))
+      .toHaveValue('First note\nExplains the construction.');
+    await expect(page.getByTestId('graph-expression-blank-row')).toHaveCount(1);
+    await expect(page.locator('.graph-expression-list > :last-child math-field')).toBeVisible();
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-notes-ordering-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
   test('keeps high-degree and directed routes complete through rapid interaction', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 940 });
     await page.goto('/');

@@ -1,15 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GraphSampleRequestV3 } from '../../lib/graphing';
+import type { GraphSampleRequestV4 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
+import { createGraphNoteItem, replaceGraphDocumentNote } from './graph-document';
 import GraphWorkspacePage from './GraphWorkspacePage';
 import '../../styles/app/shell.css';
 import '../../styles/app/graphing.css';
 
 const { runGraphSampleWithOoe } = vi.hoisted(() => ({
-  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV3) => ({
+  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV4) => ({
   payload: {
-    version: 3 as const,
+    version: 4 as const,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -19,7 +20,7 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
     status: 'complete' as const,
     scene: {
       sceneRevision: request.revisions.scene,
-      documentRevision: request.revisions.document,
+      mathematicsRevision: request.revisions.mathematics,
       viewportRevision: request.revisions.viewport,
       parameterRevision: request.revisions.parameter,
       paths: request.items.filter((item) => item.visible && (item.kind === 'relation' || item.kind === 'piecewise')).map((item) => ({
@@ -29,14 +30,12 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
         segmentOffsets: new Uint32Array([0]),
         parameterValues: new Float64Array([-2, 0, 2]),
         closed: false,
-        style: item.presentation,
       })),
       regions: [],
       pointBatches: request.items.filter((item) => item.visible && item.kind === 'point-set').map((item) => ({
         pointBatchId: `${item.itemId}.points`,
         itemId: item.itemId,
         coordinates: new Float64Array([1, 2, 3, 4]),
-        style: item.presentation,
       })),
       labels: [],
     },
@@ -61,7 +60,7 @@ const { runGraphSampleWithOoe } = vi.hoisted(() => ({
 
 vi.mock('../../lib/graphing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/graphing')>()),
-  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV3) => (
+  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV4) => (
     `input.graph.sample.${request.revisions.scene}`
   )),
   releaseGraphSampleResultBuffers: vi.fn(() => 0),
@@ -85,6 +84,88 @@ function setMathFieldValue(field: HTMLElement, value: string) {
 describe('GraphWorkspacePage', () => {
   beforeEach(() => {
     runGraphSampleWithOoe.mockClear();
+  });
+
+  it('creates focused Notes, reorders them, and never samples content-only edits', async () => {
+    const onUpdateSession = vi.fn();
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={onUpdateSession}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    runGraphSampleWithOoe.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Note' }));
+    const first = await screen.findByRole('textbox', { name: 'Graph note' });
+    await waitFor(() => expect(first).toHaveFocus());
+    fireEvent.change(first, { target: { value: 'First note' } });
+    await new Promise((resolve) => setTimeout(resolve, 260));
+    expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
+    expect(onUpdateSession.mock.calls.at(-1)?.[0].document).toMatchObject({
+      version: 2, mathematicsRevision: 0,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Note' }));
+    const notes = screen.getAllByRole('textbox', { name: 'Graph note' });
+    fireEvent.change(notes[1]!, { target: { value: 'Second note' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Move item 2 up' }));
+    expect(screen.getAllByRole('textbox', { name: 'Graph note' }).map((note) => (
+      (note as HTMLTextAreaElement).value
+    ))).toEqual(['Second note', 'First note']);
+
+    const firstHandle = screen.getByRole('button', { name: 'Reorder item 1' });
+    fireEvent.keyDown(firstHandle, { key: ' ' });
+    fireEvent.keyDown(firstHandle, { key: 'ArrowDown' });
+    fireEvent.keyDown(firstHandle, { key: ' ' });
+    expect(screen.getAllByRole('textbox', { name: 'Graph note' }).map((note) => (
+      (note as HTMLTextAreaElement).value
+    ))).toEqual(['First note', 'Second note']);
+
+    const transfer = new Map<string, string>();
+    const dataTransfer = {
+      effectAllowed: 'none',
+      getData: (type: string) => transfer.get(type) ?? '',
+      setData: (type: string, value: string) => transfer.set(type, value),
+    };
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Reorder item 2' }), { dataTransfer });
+    fireEvent.drop(screen.getAllByTestId('graph-persisted-row')[0]!, { dataTransfer });
+    expect(screen.getAllByRole('textbox', { name: 'Graph note' }).map((note) => (
+      (note as HTMLTextAreaElement).value
+    ))).toEqual(['Second note', 'First note']);
+
+    fireEvent.change(screen.getAllByRole('textbox', { name: 'Graph note' })[0]!, {
+      target: { value: 'x'.repeat(16_385) },
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('No text was removed');
+    expect((screen.getAllByRole('textbox', { name: 'Graph note' })[0] as HTMLTextAreaElement).value)
+      .toBe('Second note');
+  });
+
+  it('renders Notes read-only when the presentation rail is active', () => {
+    const base = createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph');
+    const note = { ...createGraphNoteItem('note.1'), text: 'Presentation note' };
+    const session = {
+      ...base,
+      document: replaceGraphDocumentNote(base.document, note),
+      surface: { ...base.surface, presentationMode: true },
+    };
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={session}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    const textarea = screen.getByRole('textbox', { name: 'Graph note' });
+    expect(textarea).toHaveAttribute('readonly');
+    expect(screen.queryByRole('button', { name: 'Delete note' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reorder item 1' })).not.toBeInTheDocument();
   });
 
   it('keeps one trailing blank row and plots a bare x expression without requiring y=', async () => {
@@ -407,8 +488,7 @@ describe('GraphWorkspacePage', () => {
     setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.2'), 'x^2');
 
     await waitFor(() => expect(runGraphSampleWithOoe).toHaveBeenCalled());
-    const request = runGraphSampleWithOoe.mock.calls.at(-1)?.[0];
-    expect(request?.items.map((item) => item.presentation.colorToken)).toEqual([
+    expect(screen.getAllByTestId('graph-expression-row').map((row) => row.dataset.colorToken)).toEqual([
       'graph-blue',
       'graph-green',
     ]);

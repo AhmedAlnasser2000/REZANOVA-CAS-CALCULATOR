@@ -20,7 +20,7 @@ import {
   type OoeRuntimeShellEvidence,
 } from '../../ooe/runtime-control/runtime-shell-contract';
 import type { WorkspaceInstanceRuntimeContext } from '../../../types/calculator/workspace-instance-types';
-import type { GraphSampleRequestV3, GraphSampleResultV3 } from '../contracts';
+import type { GraphSampleRequestV4, GraphSampleResultV4 } from '../contracts';
 import { releaseGraphSampleResultBuffers } from '../sampling/request';
 import {
   GRAPH_SAMPLE_FALLBACK_HOST_ID,
@@ -59,15 +59,15 @@ export type GraphSampleOoePilotMetadata = OoeRuntimeMetadata<
 };
 
 export type GraphSampleOoePilotRunResult = OoeRuntimeEnvelope<
-  GraphSampleResultV3,
+  GraphSampleResultV4,
   GraphSampleOoePilotMetadata
 >;
 
 export type GraphSampleOoeSnapshot = {
   workspaceInstanceId: string;
   documentId: string;
-  revisions: GraphSampleRequestV3['revisions'];
-  quality: GraphSampleRequestV3['quality'];
+  revisions: GraphSampleRequestV4['revisions'];
+  quality: GraphSampleRequestV4['quality'];
 };
 
 export function graphSamplePilotDefinition(): GraphSamplePilotDefinition {
@@ -81,7 +81,7 @@ export function graphSamplePilotDefinition(): GraphSamplePilotDefinition {
 }
 
 export function buildGraphSampleOoeSnapshot(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
 ): GraphSampleOoeSnapshot {
   return {
     workspaceInstanceId: request.workspaceInstanceId,
@@ -92,7 +92,7 @@ export function buildGraphSampleOoeSnapshot(
 }
 
 export function buildGraphSampleInputRevisionId(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
 ) {
   return buildOoeInputRevisionId(
     OOE_GRAPH_SAMPLE_CAPABILITY_ID,
@@ -105,12 +105,12 @@ export function prepareGraphSampleOoePilot(): Promise<GraphSampleOoePilotStatus>
 }
 
 function defaultWorkspaceContext(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
 ): WorkspaceInstanceRuntimeContext {
   return {
     workspaceInstanceId: request.workspaceInstanceId,
     workspaceInstanceLabel: 'Graph',
-    workspaceInstanceRevision: request.revisions.document,
+    workspaceInstanceRevision: request.revisions.mathematics,
     workspaceKind: 'graphing',
     compartmentId: 'graphing',
     compartmentLabel: 'Graphing',
@@ -197,7 +197,7 @@ function errorMessage(error: unknown) {
 }
 
 export async function runGraphSampleWithOoe(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
   options: GraphSampleOoeOptions = {},
 ): Promise<GraphSampleOoePilotRunResult> {
   const routeSnapshot = buildGraphSampleOoeSnapshot(request);

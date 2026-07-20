@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateGraphSampleResult,
-  type GraphSampleRequestV3,
+  type GraphSampleRequestV4,
 } from '../contracts';
 import {
   releaseGraphSampleResultBuffers,
@@ -9,13 +9,13 @@ import {
 } from './request';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
 
-function request(): GraphSampleRequestV3 {
+function request(): GraphSampleRequestV4 {
   return {
-    version: 3,
+    version: 4,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
-    revisions: { scene: 4, document: 1, viewport: 2, parameter: 3 },
+    revisions: { scene: 4, mathematics: 1, viewport: 2, parameter: 3 },
     items: [{
       version: 1,
       kind: 'relation',
@@ -31,14 +31,6 @@ function request(): GraphSampleRequestV3 {
         rhs: { mathJson: ['Sin', 'x'], freeSymbols: ['x'] },
       },
       visible: true,
-      presentation: {
-        version: 1,
-        colorToken: 'graph-blue',
-        stroke: 'solid',
-        strokeWidth: 'normal',
-        fillOpacity: 0.2,
-        label: 'auto',
-      },
     }],
     parameterEnvironment: {},
     viewport: {
@@ -96,7 +88,6 @@ describe('Graph sample request runtime', () => {
       },
       points: [{ x: 'a', y: 2 }, { x: 3, y: 4 }],
       visible: true,
-      presentation: pointRequest.items[0]!.presentation,
     }];
     pointRequest.parameterEnvironment = { a: 5 };
     const execution = await runGraphSampleRequest(pointRequest);
@@ -131,13 +122,12 @@ describe('Graph sample request runtime', () => {
         right: { mathJson: 9, freeSymbols: [] },
       },
       visible: true,
-      presentation: implicitRequest.items[0]!.presentation,
     }];
     const execution = await runGraphSampleRequest(implicitRequest);
 
     expect(execution.result.status).toBe('complete');
     expect(execution.result.scene.paths).toHaveLength(1);
-    expect(execution.result.scene.paths[0]?.style.stroke).toBe('solid');
+    expect(execution.result.scene.paths[0]?.strokeRole).toBeUndefined();
     expect(execution.result.scene.regions).toHaveLength(1);
     expect(execution.result.scene.regions[0]?.boundaryPathIds).toEqual([
       execution.result.scene.paths[0]?.pathId,
@@ -167,13 +157,12 @@ describe('Graph sample request runtime', () => {
         operators: ['<', '<='],
       },
       visible: true,
-      presentation: chainRequest.items[0]!.presentation,
     }];
     const execution = await runGraphSampleRequest(chainRequest);
 
-    expect(execution.result.scene.paths.map((path) => path.style.stroke)).toEqual([
-      'dashed',
-      'solid',
+    expect(execution.result.scene.paths.map((path) => path.strokeRole)).toEqual([
+      'strict-boundary',
+      undefined,
     ]);
     expect(execution.result.scene.regions).toHaveLength(1);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
@@ -222,7 +211,6 @@ describe('Graph sample request runtime', () => {
         }],
       },
       visible: true,
-      presentation: piecewiseRequest.items[0]!.presentation,
     }];
     const execution = await runGraphSampleRequest(piecewiseRequest);
 
@@ -261,7 +249,6 @@ describe('Graph sample request runtime', () => {
         },
       },
       visible: true,
-      presentation: routed.items[0]!.presentation,
     }, {
       version: 1,
       kind: 'relation',
@@ -278,7 +265,6 @@ describe('Graph sample request runtime', () => {
         y: { mathJson: ['Sin', 't'], freeSymbols: ['t'] },
       },
       visible: true,
-      presentation: { ...routed.items[0]!.presentation, colorToken: 'graph-green' },
     }];
     const execution = await runGraphSampleRequest(routed);
 

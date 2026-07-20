@@ -1,11 +1,10 @@
 import type {
-  GraphItemPresentationV1,
-  GraphRevisionSetV1,
+  GraphRevisionSetV2,
   GraphSceneLabelV1,
   GraphSceneValidationFailure,
   GraphStopReason,
   GraphViewportV1,
-  SampledSceneRuntime,
+  SampledSceneRuntimeV2,
 } from '../contracts';
 
 export type GraphPathSampleSceneInput = {
@@ -25,7 +24,7 @@ export type GraphPathSampleSceneInput = {
 export type GraphSampledPathSceneInput = {
   pathId: string;
   sample: GraphPathSampleSceneInput;
-  style: GraphItemPresentationV1;
+  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay';
   closed?: boolean;
 };
 
@@ -34,7 +33,6 @@ export type GraphPointBatchSceneInput = {
   itemId: string;
   coordinates: Float64Array;
   marker?: 'filled' | 'open';
-  style: GraphItemPresentationV1;
 };
 
 export type GraphRegionSceneInput = {
@@ -43,11 +41,10 @@ export type GraphRegionSceneInput = {
   vertices: Float64Array;
   triangleIndices: Uint32Array;
   boundaryPathIds: string[];
-  style: GraphItemPresentationV1;
 };
 
 export type GraphSceneAssemblyInput = {
-  revisions: { scene: number } & GraphRevisionSetV1;
+  revisions: { scene: number } & GraphRevisionSetV2;
   viewport: GraphViewportV1;
   paths: GraphSampledPathSceneInput[];
   regions?: GraphRegionSceneInput[];
@@ -56,7 +53,7 @@ export type GraphSceneAssemblyInput = {
 };
 
 export type GraphSceneRuntimeBundle = {
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   viewport: GraphViewportV1;
   transferList: ArrayBuffer[];
   stopReasons: GraphStopReason[];

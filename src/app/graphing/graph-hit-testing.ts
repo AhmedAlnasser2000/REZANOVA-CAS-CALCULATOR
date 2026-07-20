@@ -1,8 +1,8 @@
 import type {
   GraphHitResult,
-  GraphScenePathRuntime,
+  GraphScenePathRuntimeV2,
   GraphViewportV1,
-  SampledSceneRuntime,
+  SampledSceneRuntimeV2,
 } from '../../lib/graphing';
 
 export type GraphTraceTarget = GraphHitResult & {
@@ -49,7 +49,7 @@ function distance(leftX: number, leftY: number, rightX: number, rightY: number) 
 }
 
 function pathTarget(
-  path: GraphScenePathRuntime,
+  path: GraphScenePathRuntimeV2,
   pathIndex: number,
   vertexIndex: number,
   world: { x: number; y: number },
@@ -72,7 +72,7 @@ function pathTarget(
 }
 
 function pointTarget(input: {
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   pointBatchIndex: number;
   pointIndex: number;
   world: { x: number; y: number };
@@ -97,7 +97,7 @@ function cellKey(x: number, y: number, cellSize: number) {
 }
 
 export function buildGraphTraceIndex(
-  scene: SampledSceneRuntime,
+  scene: SampledSceneRuntimeV2,
   viewport: GraphViewportV1,
   size: ViewportSize,
 ): GraphTraceIndex {
@@ -147,7 +147,7 @@ export function buildGraphTraceIndex(
 
 export function hitTestGraphTraceIndex(input: {
   index: GraphTraceIndex;
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   screen: { x: number; y: number };
   maximumDistancePixels: number;
   itemId?: string;
@@ -192,7 +192,7 @@ export function hitTestGraphTraceIndex(input: {
 }
 
 export function hitTestGraphScene(input: {
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   viewport: GraphViewportV1;
   size: ViewportSize;
   screen: { x: number; y: number };
@@ -277,7 +277,7 @@ export function hitTestGraphScene(input: {
 }
 
 function targetAtPathVertex(
-  scene: SampledSceneRuntime,
+  scene: SampledSceneRuntimeV2,
   viewport: GraphViewportV1,
   size: ViewportSize,
   pathIndex: number,
@@ -303,7 +303,7 @@ function targetAtPathVertex(
 }
 
 export function traceGraphPathAtPointer(input: {
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   viewport: GraphViewportV1;
   size: ViewportSize;
   itemId: string;
@@ -374,7 +374,7 @@ export function traceGraphPathAtPointer(input: {
 }
 
 export function firstGraphTraceTarget(
-  scene: SampledSceneRuntime,
+  scene: SampledSceneRuntimeV2,
   viewport: GraphViewportV1,
   size: ViewportSize,
 ) {
@@ -395,7 +395,7 @@ export function firstGraphTraceTarget(
 }
 
 export function stepGraphTraceTarget(input: {
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   viewport: GraphViewportV1;
   size: ViewportSize;
   current: GraphTraceTarget;

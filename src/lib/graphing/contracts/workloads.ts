@@ -1,6 +1,7 @@
 import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
 import type {
   GraphDocumentV1,
+  GraphDocumentV2,
   GraphExpressionIR,
   GraphItemPresentationV1,
   GraphRelationIR,
@@ -90,6 +91,15 @@ export const GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1: GraphDocumentV1 = {
     },
     ...hiddenRelations,
   ],
+};
+
+export const GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2: GraphDocumentV2 = {
+  version: 2,
+  documentId: 'graph-performance-baseline-v2',
+  title: GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.title,
+  contentRevision: GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.documentRevision,
+  mathematicsRevision: GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.documentRevision,
+  items: GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items,
 };
 
 export const GRAPH_PRE_THREE_BASELINE_EXPECTATIONS = {

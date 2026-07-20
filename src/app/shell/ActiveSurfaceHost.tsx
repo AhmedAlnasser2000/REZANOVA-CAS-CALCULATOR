@@ -36,8 +36,8 @@ import type {
   NotebookWorkspaceTarget,
 } from '../../lib/notebook';
 import {
-  isGraphWorkspaceSessionState,
-  type GraphWorkspaceSessionStateV1,
+  migrateGraphWorkspaceSessionState,
+  type GraphWorkspaceSessionStateV2,
 } from '../graphing/graph-workspace-session';
 
 const GraphWorkspacePage = lazy(() => import('../graphing/GraphWorkspacePage'));
@@ -58,7 +58,7 @@ type ActiveSurfaceHostProps = {
   onResetCalculatorMemory: () => void;
   onResetHistory: () => void;
   onStopPendingHistoryTicket?: (ticket: PendingHistoryTicket) => void;
-  onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV1) => void;
+  onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV2) => void;
   onUpdateNotebookSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   pendingHistory: PendingHistoryTicket[];
   renderCalculatorSurface: () => ReactNode;
@@ -192,9 +192,9 @@ export function ActiveSurfaceHost({
   }
 
   if (surfaceDescriptor.pageKind === GRAPHING_PAGE_WORKSPACE_KIND && activeInstance) {
-    const session = activeInstance.surfaceState;
+    const session = migrateGraphWorkspaceSessionState(activeInstance.surfaceState);
     const workspaceContext = workspaceInstanceRuntimeContext(activeInstance);
-    if (!isGraphWorkspaceSessionState(session) || !workspaceContext) {
+    if (!session || !workspaceContext) {
       return (
         <section
           className={`${pageSurfaceClassName} active-surface--graphing`}

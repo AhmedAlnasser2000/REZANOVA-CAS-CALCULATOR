@@ -1,8 +1,8 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   validateTransferredGraphSampleResult,
-  type GraphSampleRequestV3,
-  type GraphSampleResultV3,
+  type GraphSampleRequestV4,
+  type GraphSampleResultV4,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
 import { collectGraphSceneTransferables } from '../scene';
@@ -76,15 +76,15 @@ function defaultWorker(): GraphSamplingWorkerLike {
 }
 
 function resultMatchesRequest(
-  result: GraphSampleResultV3,
-  request: GraphSampleRequestV3,
+  result: GraphSampleResultV4,
+  request: GraphSampleRequestV4,
 ) {
   return result.requestId === request.requestId
     && result.workspaceInstanceId === request.workspaceInstanceId
     && result.documentId === request.documentId
     && result.quality === request.quality
     && result.revisions.scene === request.revisions.scene
-    && result.revisions.document === request.revisions.document
+    && result.revisions.mathematics === request.revisions.mathematics
     && result.revisions.viewport === request.revisions.viewport
     && result.revisions.parameter === request.revisions.parameter
     && result.viewport.coordinateSystem === request.viewport.coordinateSystem
@@ -117,7 +117,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async run(
-    request: GraphSampleRequestV3,
+    request: GraphSampleRequestV4,
     context: OoeRuntimeControlContext,
   ): Promise<GraphSamplingHostResult> {
     if (context.shouldCancel()) {
@@ -135,10 +135,10 @@ export class GraphSamplingApplicationHost {
       };
     }
     const previousFallbackRevision = this.#fallbackDocumentRevisions.get(request.workspaceInstanceId);
-    if (previousFallbackRevision !== undefined && previousFallbackRevision !== request.revisions.document) {
+    if (previousFallbackRevision !== undefined && previousFallbackRevision !== request.revisions.mathematics) {
       this.#fallbackSamplingCache.clearWorkspace(request.workspaceInstanceId);
     }
-    this.#fallbackDocumentRevisions.set(request.workspaceInstanceId, request.revisions.document);
+    this.#fallbackDocumentRevisions.set(request.workspaceInstanceId, request.revisions.mathematics);
     this.#activeRun?.cancel('Superseded by the latest Graph sampling request.', false);
     const worker = this.#ensureWorker();
     if (!worker) {
@@ -178,7 +178,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async #runFallback(
-    request: GraphSampleRequestV3,
+    request: GraphSampleRequestV4,
     context: OoeRuntimeControlContext,
     reason: string,
   ): Promise<GraphSamplingHostResult> {
@@ -226,7 +226,7 @@ export class GraphSamplingApplicationHost {
 
   #runWorker(
     worker: GraphSamplingWorkerLike,
-    request: GraphSampleRequestV3,
+    request: GraphSampleRequestV4,
     context: OoeRuntimeControlContext,
   ) {
     this.#requestSequence += 1;

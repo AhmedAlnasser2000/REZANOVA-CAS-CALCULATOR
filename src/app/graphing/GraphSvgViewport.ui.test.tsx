@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { GraphViewportV1, SampledSceneRuntime } from '../../lib/graphing';
+import type { GraphViewportV1, SampledSceneRuntimeV2 } from '../../lib/graphing';
 import { GraphSvgViewport } from './GraphSvgViewport';
 
 const viewport: GraphViewportV1 = {
@@ -11,9 +11,9 @@ const viewport: GraphViewportV1 = {
   yMax: 6,
 };
 
-const scene: SampledSceneRuntime = {
+const scene: SampledSceneRuntimeV2 = {
   sceneRevision: 4,
-  documentRevision: 2,
+  mathematicsRevision: 2,
   viewportRevision: 1,
   parameterRevision: 0,
   paths: [{
@@ -23,41 +23,25 @@ const scene: SampledSceneRuntime = {
     segmentOffsets: new Uint32Array([0]),
     parameterValues: new Float64Array([0, 1, 2]),
     closed: false,
-    style: {
-      version: 1,
-      colorToken: 'graph-blue',
-      stroke: 'solid',
-      strokeWidth: 'normal',
-      fillOpacity: 0,
-      label: 'auto',
-    },
   }],
   regions: [],
   pointBatches: [{
     pointBatchId: 'points.batch',
     itemId: 'points',
     coordinates: new Float64Array([1, 2, 3, 4]),
-    style: {
-      version: 1,
-      colorToken: 'graph-green',
-      stroke: 'solid',
-      strokeWidth: 'normal',
-      fillOpacity: 0,
-      label: 'auto',
-    },
   }],
   labels: [],
 };
 
 describe('GraphSvgViewport', () => {
   it('renders region triangles beneath relation-correct boundary styling', () => {
-    const implicitScene: SampledSceneRuntime = {
+    const implicitScene: SampledSceneRuntimeV2 = {
       ...scene,
       paths: [{
         ...scene.paths[0]!,
         pathId: 'disk.boundary',
         itemId: 'disk',
-        style: { ...scene.paths[0]!.style, stroke: 'dashed' },
+        strokeRole: 'strict-boundary',
       }],
       regions: [{
         regionId: 'disk.region',
@@ -65,7 +49,6 @@ describe('GraphSvgViewport', () => {
         vertices: new Float64Array([-1, -1, 1, -1, 0, 1]),
         triangleIndices: new Uint32Array([0, 1, 2]),
         boundaryPathIds: ['disk.boundary'],
-        style: { ...scene.paths[0]!.style, colorToken: 'graph-green', fillOpacity: 0.22 },
       }],
       pointBatches: [],
     };
@@ -75,6 +58,10 @@ describe('GraphSvgViewport', () => {
         onSizeChange={vi.fn()}
         onViewportChange={vi.fn()}
         pending={false}
+        presentation={{ version: 1, contentRevision: 1, items: [{
+          itemId: 'disk', presentation: { version: 1, colorToken: 'graph-green', stroke: 'solid',
+            strokeWidth: 'normal', fillOpacity: 0.22, label: 'auto' },
+        }] }}
         scene={implicitScene}
         viewport={viewport}
       />,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SampledSceneRuntime } from '../../lib/graphing';
+import type { SampledSceneRuntimeV2 } from '../../lib/graphing';
 import {
   buildGraphTraceIndex,
   firstGraphTraceTarget,
@@ -9,19 +9,11 @@ import {
   traceGraphPathAtPointer,
 } from './graph-hit-testing';
 
-const style = {
-  version: 1 as const,
-  colorToken: 'graph-blue',
-  stroke: 'solid' as const,
-  strokeWidth: 'normal' as const,
-  fillOpacity: 0.18,
-  label: 'auto' as const,
-};
 const viewport = { coordinateSystem: 'cartesian' as const, xMin: -5, xMax: 5, yMin: -5, yMax: 5 };
 const size = { width: 1_000, height: 1_000 };
-const scene: SampledSceneRuntime = {
+const scene: SampledSceneRuntimeV2 = {
   sceneRevision: 7,
-  documentRevision: 1,
+  mathematicsRevision: 1,
   viewportRevision: 1,
   parameterRevision: 0,
   paths: [
@@ -29,18 +21,18 @@ const scene: SampledSceneRuntime = {
       pathId: 'explicit-y.path', itemId: 'explicit-y',
       coordinates: new Float64Array([-5, -5, 0, 0, 5, 5]),
       parameterValues: new Float64Array([-5, 0, 5]),
-      segmentOffsets: new Uint32Array([0]), closed: false, style,
+      segmentOffsets: new Uint32Array([0]), closed: false,
     },
     {
       pathId: 'explicit-x.path', itemId: 'explicit-x',
       coordinates: new Float64Array([4, -5, 0, 0, 4, 5]),
       parameterValues: new Float64Array([-5, 0, 5]),
-      segmentOffsets: new Uint32Array([0]), closed: false, style,
+      segmentOffsets: new Uint32Array([0]), closed: false,
     },
   ],
   pointBatches: [{
     pointBatchId: 'points.batch', itemId: 'points',
-    coordinates: new Float64Array([2, 3, -2, -3]), style,
+    coordinates: new Float64Array([2, 3, -2, -3]),
   }],
   regions: [], labels: [],
 };
@@ -67,7 +59,7 @@ describe('Graph scene hit testing and tracing', () => {
   });
 
   it('projects to the closest segment point and keeps a selected path authoritative', () => {
-    const overlapping: SampledSceneRuntime = {
+    const overlapping: SampledSceneRuntimeV2 = {
       ...scene,
       paths: [
         scene.paths[0]!,

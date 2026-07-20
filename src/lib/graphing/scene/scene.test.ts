@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
   GraphExpressionIR,
-  GraphItemPresentationV1,
   GraphRelationIR,
 } from '../contracts';
 import {
@@ -18,15 +17,6 @@ const viewport = {
   yMin: -5,
   yMax: 5,
 };
-
-const style = (colorToken: string): GraphItemPresentationV1 => ({
-  version: 1,
-  colorToken,
-  stroke: 'solid',
-  strokeWidth: 'normal',
-  fillOpacity: 0.18,
-  label: 'auto',
-});
 
 function expression(mathJson: GraphExpressionIR['mathJson']): GraphExpressionIR {
   return { mathJson, freeSymbols: ['x'] };
@@ -50,7 +40,7 @@ function sampled(itemId: string, mathJson: GraphExpressionIR['mathJson']) {
   });
 }
 
-const revisions = { scene: 4, document: 1, viewport: 2, parameter: 3 };
+const revisions = { scene: 4, mathematics: 1, viewport: 2, parameter: 3 };
 
 describe('Graph sampled-scene assembly', () => {
   it('adopts sampled arrays without copies and emits stable scene identity order', () => {
@@ -60,8 +50,8 @@ describe('Graph sampled-scene assembly', () => {
       revisions,
       viewport,
       paths: [
-        { pathId: 'path.sine', sample: sine, style: style('green') },
-        { pathId: 'path.parabola', sample: parabola, style: style('blue') },
+        { pathId: 'path.sine', sample: sine },
+        { pathId: 'path.parabola', sample: parabola },
       ],
       labels: [
         { labelId: 'label.z', itemId: 'item.sine', role: 'relation', anchor: { x: 0, y: 0 }, priority: 1, plainText: 'sin(x)' },
@@ -103,7 +93,7 @@ describe('Graph sampled-scene assembly', () => {
     const result = assembleSampledScene({
       revisions,
       viewport,
-      paths: [{ pathId: 'path.oscillatory', sample: bounded, style: style('violet') }],
+      paths: [{ pathId: 'path.oscillatory', sample: bounded }],
     });
     expect(result).toMatchObject({
       ok: true,
@@ -123,7 +113,6 @@ describe('Graph sampled-scene assembly', () => {
         pointBatchId: 'points.b',
         itemId: 'item.points',
         coordinates,
-        style: style('violet'),
       }],
     });
     expect(result.ok).toBe(true);
@@ -150,14 +139,13 @@ describe('Graph sampled-scene assembly', () => {
     const result = assembleSampledScene({
       revisions,
       viewport,
-      paths: [{ pathId: 'path.disk', sample: boundary, style: style('green'), closed: true }],
+      paths: [{ pathId: 'path.disk', sample: boundary, closed: true }],
       regions: [{
         regionId: 'region.disk',
         itemId: 'item.disk',
         vertices,
         triangleIndices,
         boundaryPathIds: ['path.disk'],
-        style: style('green'),
       }],
     });
     expect(result.ok).toBe(true);
@@ -180,8 +168,8 @@ describe('Graph sampled-scene assembly', () => {
       revisions,
       viewport,
       paths: [
-        { pathId: 'same', sample: sine, style: style('blue') },
-        { pathId: 'same', sample: sine, style: style('green') },
+        { pathId: 'same', sample: sine },
+        { pathId: 'same', sample: sine },
       ],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
 
@@ -191,7 +179,6 @@ describe('Graph sampled-scene assembly', () => {
       paths: [{
         pathId: 'misaligned',
         sample: { ...sine, independentValues: new Float64Array(1) },
-        style: style('blue'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
 
@@ -201,7 +188,6 @@ describe('Graph sampled-scene assembly', () => {
       paths: [{
         pathId: 'missing-stop',
         sample: { ...sine, status: 'cancelled', stopReason: undefined },
-        style: style('blue'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
 
@@ -213,7 +199,6 @@ describe('Graph sampled-scene assembly', () => {
         pointBatchId: 'bad-points',
         itemId: 'item.points',
         coordinates: new Float64Array([1, Number.NaN]),
-        style: style('blue'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
 
@@ -227,28 +212,26 @@ describe('Graph sampled-scene assembly', () => {
     expect(assembleSampledScene({
       revisions,
       viewport,
-      paths: [{ pathId: 'path.region', sample: boundary, style: style('green') }],
+      paths: [{ pathId: 'path.region', sample: boundary }],
       regions: [{
         regionId: 'region.bad-index',
         itemId: 'item.region',
         vertices: new Float64Array([0, 0, 1, 0, 0, 1]),
         triangleIndices: new Uint32Array([0, 1, 3]),
         boundaryPathIds: ['path.region'],
-        style: style('green'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
 
     expect(assembleSampledScene({
       revisions,
       viewport,
-      paths: [{ pathId: 'path.region', sample: boundary, style: style('green') }],
+      paths: [{ pathId: 'path.region', sample: boundary }],
       regions: [{
         regionId: 'region.missing-boundary',
         itemId: 'item.region',
         vertices: new Float64Array([0, 0, 1, 0, 0, 1]),
         triangleIndices: new Uint32Array([0, 1, 2]),
         boundaryPathIds: ['path.unknown'],
-        style: style('green'),
       }],
     })).toMatchObject({ ok: false, failure: { reason: 'invalid-scene' } });
   });

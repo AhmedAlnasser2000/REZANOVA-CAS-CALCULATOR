@@ -29,10 +29,10 @@ let queuedRun: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }> | nul
 function startRun(message: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }>) {
   const { requestId, request } = message;
   const previousDocumentRevision = workspaceDocumentRevisions.get(request.workspaceInstanceId);
-  if (previousDocumentRevision !== undefined && previousDocumentRevision !== request.revisions.document) {
+  if (previousDocumentRevision !== undefined && previousDocumentRevision !== request.revisions.mathematics) {
     samplingCache.clearWorkspace(request.workspaceInstanceId);
   }
-  workspaceDocumentRevisions.set(request.workspaceInstanceId, request.revisions.document);
+  workspaceDocumentRevisions.set(request.workspaceInstanceId, request.revisions.mathematics);
   activeRequestId = requestId;
   workerSelf.postMessage({ kind: 'started', requestId });
   void runGraphSampleRequest(request, planCache, {

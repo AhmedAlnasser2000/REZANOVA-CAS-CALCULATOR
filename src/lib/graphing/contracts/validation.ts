@@ -13,6 +13,7 @@ import type { SerializableMathJson } from '../../../types/calculator/math-payloa
 import type {
   GraphConditionIR,
   GraphDocumentV1,
+  GraphDocumentV2,
   GraphExpressionIR,
   GraphItemPresentationV1,
   GraphParameterSpecV1,
@@ -20,13 +21,13 @@ import type {
   GraphRelationIR,
   GraphRenderPolicy,
   GraphRendererCapabilities,
-  GraphRevisionSetV1,
-  GraphSampleRequestV3,
+  GraphRevisionSetV2,
+  GraphSampleRequestV4,
   GraphSourceV1,
   GraphStopReason,
   GraphSurfaceStateV1,
   GraphViewportV1,
-  SampledSceneSnapshotV1,
+  SampledSceneSnapshotV2,
 } from './types';
 
 export const GRAPH_DOCUMENT_MAX_ITEMS = 100;
@@ -35,6 +36,7 @@ export const GRAPH_PIECEWISE_MAX_BRANCHES = 32;
 export const GRAPH_CONDITION_MAX_CLAUSES = 64;
 export const GRAPH_CONDITION_MAX_DEPTH = 16;
 export const GRAPH_FREE_SYMBOL_MAX_COUNT = 64;
+export const GRAPH_NOTE_MAX_CHARACTERS = 16_384;
 
 const idSchema = z.string().trim().min(1).max(160);
 const revisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
@@ -227,6 +229,29 @@ const itemSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 
+const noteSchema = z.strictObject({
+  version: z.literal(1), kind: z.literal('note'), itemId: idSchema,
+  text: z.string().max(GRAPH_NOTE_MAX_CHARACTERS),
+});
+
+const itemV2Schema = z.union([itemSchema, noteSchema]);
+
+const samplingItemSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    version: z.literal(1), kind: z.literal('relation'), itemId: idSchema,
+    source: sourceSchema, relation: relationSchema, visible: z.boolean(),
+  }),
+  z.strictObject({
+    version: z.literal(1), kind: z.literal('piecewise'), itemId: idSchema,
+    source: sourceSchema, piecewise: piecewiseSchema, visible: z.boolean(),
+  }),
+  z.strictObject({
+    version: z.literal(1), kind: z.literal('point-set'), itemId: idSchema,
+    source: sourceSchema, points: z.array(pointSchema).max(GRAPH_POINT_SET_MAX_POINTS),
+    visible: z.boolean(),
+  }),
+]);
+
 const viewportSchema: z.ZodType<GraphViewportV1> = z.strictObject({
   coordinateSystem: z.enum(['cartesian', 'polar', 'argand']),
   xMin: finiteSchema,
@@ -243,20 +268,20 @@ const gridPolicySchema = z.strictObject({
   angleLabels: z.boolean(), unitCircle: z.boolean(),
 });
 
-const revisionsSchema: z.ZodType<GraphRevisionSetV1> = z.strictObject({
-  document: revisionSchema,
+const revisionsSchema: z.ZodType<GraphRevisionSetV2> = z.strictObject({
+  mathematics: revisionSchema,
   viewport: revisionSchema,
   parameter: revisionSchema,
 });
 
 const sampleRequestRevisionsSchema = z.strictObject({
   scene: revisionSchema,
-  document: revisionSchema,
+  mathematics: revisionSchema,
   viewport: revisionSchema,
   parameter: revisionSchema,
 });
 
-const documentSchema = z.strictObject({
+const documentV1Schema = z.strictObject({
   version: z.literal(1),
   documentId: idSchema,
   title: z.string().trim().min(1).max(240),
@@ -265,6 +290,17 @@ const documentSchema = z.strictObject({
 }).refine((value) => new Set(value.items.map((item) => item.itemId)).size === value.items.length, {
   message: 'Graph item IDs must be unique.',
 }) as z.ZodType<GraphDocumentV1>;
+
+const documentSchema = z.strictObject({
+  version: z.literal(2),
+  documentId: idSchema,
+  title: z.string().trim().min(1).max(240),
+  contentRevision: revisionSchema,
+  mathematicsRevision: revisionSchema,
+  items: z.array(itemV2Schema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+}).refine((value) => new Set(value.items.map((item) => item.itemId)).size === value.items.length, {
+  message: 'Graph item IDs must be unique.',
+}) as z.ZodType<GraphDocumentV2>;
 
 const surfaceSchema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
   version: z.literal(1),
@@ -306,11 +342,9 @@ const renderPolicySchema: z.ZodType<GraphRenderPolicy> = z.strictObject({
 });
 
 const sampleRequestSchema = z.strictObject({
-  version: z.literal(3), requestId: idSchema, workspaceInstanceId: idSchema,
+  version: z.literal(4), requestId: idSchema, workspaceInstanceId: idSchema,
   documentId: idSchema, revisions: sampleRequestRevisionsSchema,
-  items: z.array(itemSchema)
-    .max(GRAPH_DOCUMENT_MAX_ITEMS)
-    .refine((items) => items.every((item) => ['relation', 'piecewise', 'point-set'].includes(item.kind))),
+  items: z.array(samplingItemSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
   parameterEnvironment: z.record(idSchema, finiteSchema),
   viewport: viewportSchema,
   cssSize: z.strictObject({
@@ -328,7 +362,7 @@ const sampleRequestSchema = z.strictObject({
     panVelocityY: finiteSchema,
     zoomRatio: finiteSchema.positive().max(100),
   }),
-}) as unknown as z.ZodType<GraphSampleRequestV3>;
+}) as unknown as z.ZodType<GraphSampleRequestV4>;
 
 export type GraphContractValidationFailure = {
   reason: 'structure' | 'condition-depth' | 'condition-clause-limit';
@@ -405,6 +439,8 @@ const standardLimits = { maxNodes: 50_000, maxDepth: 96, maxBytes: 2_000_000 };
 
 export const validateGraphDocument = (input: unknown) =>
   validateJsonContract(input, 'Graph document', documentSchema, standardLimits);
+export const validateGraphDocumentV1 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V1 document', documentV1Schema, standardLimits);
 export const validateGraphSource = (input: unknown) =>
   validateJsonContract(input, 'Graph source', sourceSchema, standardLimits);
 export const validateGraphExpression = (input: unknown) =>
@@ -449,4 +485,4 @@ export const graphContractSchemas = {
   viewport: viewportSchema,
 };
 
-export type { SampledSceneSnapshotV1 };
+export type { SampledSceneSnapshotV2 };

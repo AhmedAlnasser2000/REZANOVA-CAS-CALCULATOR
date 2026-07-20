@@ -1,5 +1,4 @@
 import type {
-  GraphItemPresentationV1,
   GraphPiecewiseSpecV1,
   GraphSamplingLimitsV2,
   GraphSamplingQualityV3,
@@ -115,7 +114,6 @@ export function sampleGraphPiecewise(input: {
   itemId: string;
   sourceRevision: number;
   piecewise: GraphPiecewiseSpecV1;
-  presentation: GraphItemPresentationV1;
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Record<string, number>;
@@ -239,7 +237,6 @@ export function sampleGraphPiecewise(input: {
           segmentOffsets: filtered.segmentOffsets,
           stats: { ...sampled.stats, emittedVertices: filtered.coordinates.length / 2 },
         },
-        style: input.presentation,
       });
     }
     if (filtered.endpoints.length > 0) {
@@ -248,7 +245,6 @@ export function sampleGraphPiecewise(input: {
         itemId: input.itemId,
         coordinates: filtered.endpoints,
         marker: condition?.strict ? 'open' : 'filled',
-        style: input.presentation,
       });
     }
   }

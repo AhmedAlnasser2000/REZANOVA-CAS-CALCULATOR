@@ -15,7 +15,7 @@ import {
   getLatestOoeDiagnostics,
 } from '../../ooe/diagnostics/diagnostics-buffer';
 import { requestWorkspaceTabJobCancellation } from '../../../app/runtime/workspaceTabJobs';
-import type { GraphSampleRequestV3 } from '../contracts';
+import type { GraphSampleRequestV4 } from '../contracts';
 import { runGraphSampleRequest } from '../sampling/request';
 import { GraphSamplingApplicationHost } from './application-host';
 import {
@@ -41,13 +41,13 @@ vi.mock('../../ooe/bridge-schema/ooe-bridge', async (importOriginal) => {
   };
 });
 
-function request(overrides: Partial<GraphSampleRequestV3> = {}): GraphSampleRequestV3 {
+function request(overrides: Partial<GraphSampleRequestV4> = {}): GraphSampleRequestV4 {
   return {
-    version: 3,
+    version: 4,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
-    revisions: { scene: 4, document: 1, viewport: 2, parameter: 3 },
+    revisions: { scene: 4, mathematics: 1, viewport: 2, parameter: 3 },
     items: [{
       version: 1,
       kind: 'relation',
@@ -63,14 +63,6 @@ function request(overrides: Partial<GraphSampleRequestV3> = {}): GraphSampleRequ
         rhs: { mathJson: 'x', freeSymbols: ['x'] },
       },
       visible: true,
-      presentation: {
-        version: 1,
-        colorToken: 'graph-blue',
-        stroke: 'solid',
-        strokeWidth: 'normal',
-        fillOpacity: 0.2,
-        label: 'auto',
-      },
     }],
     parameterEnvironment: {},
     viewport: {

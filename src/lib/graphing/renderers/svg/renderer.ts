@@ -1,10 +1,12 @@
 import type {
   GraphHitResult,
+  GraphItemPresentationV1,
   GraphRendererCapabilities,
+  GraphRendererPresentationFrameV1,
   GraphRendererSceneFrameV1,
   GraphRendererViewFrameV1,
-  GraphScenePathRuntime,
-  GraphSceneRegionRuntime,
+  GraphScenePathRuntimeV2,
+  GraphSceneRegionRuntimeV2,
   GraphViewportV1,
   InteractiveGraphRenderer,
 } from '../../contracts';
@@ -32,7 +34,7 @@ function project(x: number, y: number, viewport: GraphViewportV1, size: Size) {
   };
 }
 
-function pathData(path: GraphScenePathRuntime, viewport: GraphViewportV1, size: Size) {
+function pathData(path: GraphScenePathRuntimeV2, viewport: GraphViewportV1, size: Size) {
   const starts = new Set(path.segmentOffsets);
   const parts: string[] = [];
   for (let vertex = 0; vertex * 2 + 1 < path.coordinates.length; vertex += 1) {
@@ -42,7 +44,7 @@ function pathData(path: GraphScenePathRuntime, viewport: GraphViewportV1, size: 
   return parts.join('');
 }
 
-function regionData(region: GraphSceneRegionRuntime, viewport: GraphViewportV1, size: Size) {
+function regionData(region: GraphSceneRegionRuntimeV2, viewport: GraphViewportV1, size: Size) {
   const parts: string[] = [];
   for (let index = 0; index + 2 < region.triangleIndices.length; index += 3) {
     const points = [0, 1, 2].map((offset) => {
@@ -95,6 +97,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   private points: SVGGElement | null = null;
   private view: GraphRendererViewFrameV1 | null = null;
   private scene: GraphRendererSceneFrameV1 | null = null;
+  private presentation = new Map<string, GraphItemPresentationV1>();
   private sceneProjectionSize: Size = { width: 1, height: 1 };
 
   mount(target: HTMLElement) {
@@ -181,29 +184,64 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     const { scene, sourceViewport, policy } = frame;
     syncKeyed<SVGPathElement>(this.regions, scene.regions.map((region) => ({ id: region.regionId, update: (node) => {
       node.dataset.regionId = region.regionId; node.setAttribute('d', regionData(region, sourceViewport, this.size));
-      node.setAttribute('fill', GRAPH_COLORS[region.style.colorToken] ?? '#5598ff');
-      node.setAttribute('fill-opacity', String(region.style.fillOpacity));
+      node.dataset.itemId = region.itemId;
     } })), 'path');
     syncKeyed<SVGPathElement>(this.paths, scene.paths.map((path) => ({ id: path.pathId, update: (node) => {
       node.dataset.pathId = path.pathId; node.setAttribute('d', pathData(path, sourceViewport, this.size));
-      node.setAttribute('fill', 'none'); node.setAttribute('stroke', GRAPH_COLORS[path.style.colorToken] ?? '#5598ff');
-      node.setAttribute('stroke-width', path.style.strokeWidth === 'thin' ? '1.5' : path.style.strokeWidth === 'strong' ? '3' : '2.25');
+      node.dataset.itemId = path.itemId;
+      node.dataset.strokeRole = path.strokeRole ?? 'default';
+      node.setAttribute('fill', 'none');
       node.setAttribute('vector-effect', 'non-scaling-stroke');
-      if (path.style.stroke === 'dashed') node.setAttribute('stroke-dasharray', '8 6'); else node.removeAttribute('stroke-dasharray');
     } })), 'path');
     const pointValues = scene.pointBatches.flatMap((batch) => Array.from({ length: batch.coordinates.length / 2 }, (_, index) => ({
       id: `${batch.pointBatchId}:${index}`,
       update: (node: SVGCircleElement) => {
         const point = project(batch.coordinates[index * 2]!, batch.coordinates[index * 2 + 1]!, sourceViewport, this.size);
         node.dataset.pointBatchId = batch.pointBatchId; node.dataset.pointIndex = String(index);
+        node.dataset.itemId = batch.itemId;
         node.setAttribute('cx', String(point.x)); node.setAttribute('cy', String(point.y)); node.setAttribute('r', '5');
-        const color = GRAPH_COLORS[batch.style.colorToken] ?? '#5598ff';
-        node.setAttribute('fill', batch.marker === 'open' ? '#071517' : color); node.setAttribute('stroke', color); node.setAttribute('stroke-width', '2');
+        node.dataset.marker = batch.marker ?? 'filled';
       },
     })));
     syncKeyed<SVGCircleElement>(this.points, pointValues, 'circle');
     this.svg?.setAttribute('data-scene-quality', policy.quality);
+    this.applyPresentation();
     this.updateGeometryTransform();
+  }
+
+  setPresentation(frame: GraphRendererPresentationFrameV1) {
+    this.presentation = new Map(frame.items.map((item) => [item.itemId, item.presentation]));
+    this.svg?.setAttribute('data-content-revision', String(frame.contentRevision));
+    this.applyPresentation();
+  }
+
+  private itemPresentation(itemId: string): GraphItemPresentationV1 {
+    return this.presentation.get(itemId) ?? {
+      version: 1,
+      colorToken: itemId === 'graph.overlay.unit-circle' ? 'graph-violet' : 'graph-blue',
+      stroke: 'solid', strokeWidth: 'normal', fillOpacity: 0.18, label: 'auto',
+    };
+  }
+
+  private applyPresentation() {
+    this.regions?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
+      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      setAttribute(node, 'fill', GRAPH_COLORS[style.colorToken] ?? '#5598ff');
+      setAttribute(node, 'fill-opacity', String(style.fillOpacity));
+    });
+    this.paths?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
+      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      setAttribute(node, 'stroke', GRAPH_COLORS[style.colorToken] ?? '#5598ff');
+      setAttribute(node, 'stroke-width', style.strokeWidth === 'thin' ? '1.5' : style.strokeWidth === 'strong' ? '3' : '2.25');
+      const dashed = style.stroke === 'dashed' || node.dataset.strokeRole === 'strict-boundary';
+      if (dashed) setAttribute(node, 'stroke-dasharray', '8 6'); else node.removeAttribute('stroke-dasharray');
+    });
+    this.points?.querySelectorAll<SVGCircleElement>('[data-item-id]').forEach((node) => {
+      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      const color = GRAPH_COLORS[style.colorToken] ?? '#5598ff';
+      setAttribute(node, 'fill', node.dataset.marker === 'open' ? '#071517' : color);
+      setAttribute(node, 'stroke', color); setAttribute(node, 'stroke-width', '2');
+    });
   }
 
   private updateGeometryTransform() {
@@ -225,5 +263,6 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.svg?.remove();
     this.svg = this.gridLines = this.gridCircles = this.labels = this.geometry = this.regions = this.paths = this.points = null;
     this.view = null; this.scene = null;
+    this.presentation.clear();
   }
 }

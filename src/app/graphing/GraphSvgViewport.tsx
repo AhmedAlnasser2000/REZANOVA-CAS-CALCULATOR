@@ -7,8 +7,9 @@ import {
   buildGraphGridScene,
   GraphSvgReferenceRenderer,
   type GraphGridPolicyV1,
+  type GraphRendererPresentationFrameV1,
   type GraphViewportV1,
-  type SampledSceneRuntime,
+  type SampledSceneRuntimeV2,
 } from '../../lib/graphing';
 import {
   buildGraphTraceIndex,
@@ -27,7 +28,8 @@ export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
 type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
-  scene: SampledSceneRuntime | null;
+  presentation?: GraphRendererPresentationFrameV1;
+  scene: SampledSceneRuntimeV2 | null;
   sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
@@ -70,7 +72,8 @@ function panViewport(base: GraphViewportV1, dx: number, dy: number, size: Size) 
 
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
-  itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending, scene, viewport, sceneViewport = viewport,
+  itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
+  presentation = { version: 1, contentRevision: 0, items: [] }, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
@@ -150,6 +153,10 @@ export function GraphSvgViewport({
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 } } : null);
   }, [scene, sceneViewport]);
+
+  useLayoutEffect(() => {
+    rendererRef.current?.setPresentation(presentation);
+  }, [presentation]);
 
   const hideTrace = useCallback(() => {
     if (traceMarkerRef.current) {

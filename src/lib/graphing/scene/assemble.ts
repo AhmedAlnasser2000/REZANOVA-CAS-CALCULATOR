@@ -5,7 +5,7 @@ import {
 import type {
   GraphSceneValidationFailure,
   GraphStopReason,
-  SampledSceneRuntime,
+  SampledSceneRuntimeV2,
 } from '../contracts';
 import { collectGraphSceneTransferables } from './transfer';
 import type {
@@ -142,9 +142,9 @@ export function assembleSampledScene(
     .sort((left, right) => left.regionId.localeCompare(right.regionId));
   const orderedPointBatches = [...(input.pointBatches ?? [])]
     .sort((left, right) => left.pointBatchId.localeCompare(right.pointBatchId));
-  const scene: SampledSceneRuntime = {
+  const scene: SampledSceneRuntimeV2 = {
     sceneRevision: input.revisions.scene,
-    documentRevision: input.revisions.document,
+    mathematicsRevision: input.revisions.mathematics,
     viewportRevision: input.revisions.viewport,
     parameterRevision: input.revisions.parameter,
     paths: orderedPaths.map((entry) => ({
@@ -154,7 +154,7 @@ export function assembleSampledScene(
       segmentOffsets: entry.sample.segmentOffsets,
       parameterValues: entry.sample.independentValues,
       closed: entry.closed ?? false,
-      style: entry.style,
+      ...(entry.strokeRole ? { strokeRole: entry.strokeRole } : {}),
     })),
     regions: orderedRegions.map((entry) => ({
       regionId: entry.regionId,
@@ -162,14 +162,12 @@ export function assembleSampledScene(
       vertices: entry.vertices,
       triangleIndices: entry.triangleIndices,
       boundaryPathIds: [...entry.boundaryPathIds],
-      style: entry.style,
     })),
     pointBatches: orderedPointBatches.map((entry) => ({
       pointBatchId: entry.pointBatchId,
       itemId: entry.itemId,
       coordinates: entry.coordinates,
       ...(entry.marker ? { marker: entry.marker } : {}),
-      style: entry.style,
     })),
     labels: [...(input.labels ?? [])].sort((left, right) => left.labelId.localeCompare(right.labelId)),
   };

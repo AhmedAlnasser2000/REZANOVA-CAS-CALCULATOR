@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1 } from '../contracts';
+import { GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2 } from '../contracts';
 import { classifyGraphSource } from './source';
 
 describe('Graph parser performance-workload alignment', () => {
   it('keeps every authored workload source parseable as its committed item class', () => {
-    for (const item of GRAPH_PRE_THREE_BASELINE_WORKLOAD_V1.items) {
-      if (item.kind === 'parameter') continue;
+    for (const item of GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2.items) {
+      if (item.kind === 'parameter' || item.kind === 'note') continue;
       const classified = classifyGraphSource(item.source);
       if (item.kind === 'invalid-relation-draft') {
         expect(classified, item.itemId).toMatchObject({ ok: false });

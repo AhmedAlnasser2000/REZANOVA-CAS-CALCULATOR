@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
   GraphExpressionIR,
-  GraphItemPresentationV1,
   GraphRelationIR,
 } from '../contracts';
 import {
@@ -19,15 +18,6 @@ const viewport = {
   yMin: -4,
   yMax: 4,
 };
-const style: GraphItemPresentationV1 = {
-  version: 1,
-  colorToken: 'graph-blue',
-  stroke: 'solid',
-  strokeWidth: 'normal',
-  fillOpacity: 0.18,
-  label: 'auto',
-};
-
 function sampled(itemId: string, mathJson: GraphExpressionIR['mathJson']) {
   const rhs: GraphExpressionIR = { mathJson, freeSymbols: ['x'] };
   const relation: GraphRelationIR = { kind: 'explicit-y', origin: 'bare-expression', rhs };
@@ -46,11 +36,11 @@ function sampled(itemId: string, mathJson: GraphExpressionIR['mathJson']) {
 
 function bundle(order: 'forward' | 'reverse' = 'forward') {
   const entries = [
-    { pathId: 'path.sin', sample: sampled('item.sin', ['Sin', 'x']), style },
-    { pathId: 'path.sqrt', sample: sampled('item.sqrt', ['Sqrt', 'x']), style },
+    { pathId: 'path.sin', sample: sampled('item.sin', ['Sin', 'x']) },
+    { pathId: 'path.sqrt', sample: sampled('item.sqrt', ['Sqrt', 'x']) },
   ];
   const assembled = assembleSampledScene({
-    revisions: { scene: 9, document: 4, viewport: 7, parameter: 2 },
+    revisions: { scene: 9, mathematics: 4, viewport: 7, parameter: 2 },
     viewport,
     paths: order === 'forward' ? entries : entries.reverse(),
   });
@@ -66,7 +56,7 @@ describe('Graph headless semantic validator', () => {
     expect(reverse.ok).toBe(true);
     if (!forward.ok || !reverse.ok) return;
     expect(forward.evidence.snapshotHash).toBe(reverse.evidence.snapshotHash);
-    expect(forward.evidence.snapshotHash).toBe('graph64:01b636189614668f');
+    expect(forward.evidence.snapshotHash).toBe('graph64:84d95e7f1bd74d34');
     expect(forward.evidence).toMatchObject({
       pathCount: 2,
       regionCount: 0,

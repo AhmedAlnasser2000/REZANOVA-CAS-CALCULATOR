@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Focus,
+  GripVertical,
   Grid3X3,
   PanelLeftClose,
   PanelLeftOpen,
@@ -27,10 +28,10 @@ import {
 } from 'lucide-react';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { MathEditor } from '../../components/MathEditor';
-import type { GraphItemSpecV1 } from '../../lib/graphing';
+import type { GraphItemSpecV1, GraphNoteItemV1 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV1,
+  GraphWorkspaceSessionStateV2,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import { graphItemSourceLatex, graphDraftMessage } from './graph-document';
@@ -38,13 +39,14 @@ import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV1;
+  session: GraphWorkspaceSessionStateV2;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV1) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV2) => void;
 };
 
 type GraphRailEntry =
   | { kind: 'expression'; item: GraphItemSpecV1 | null; itemId: string }
+  | { kind: 'note'; item: GraphNoteItemV1 }
   | { kind: 'piecewise-draft'; draft: GraphPiecewiseAuthoringDraftV1 };
 
 type GraphExpressionRowProps = {
@@ -376,6 +378,103 @@ function GraphExpressionRow({
   );
 }
 
+function GraphNoteRow({
+  focus,
+  item,
+  onChange,
+  onDelete,
+  readOnly,
+}: {
+  focus: boolean;
+  item: GraphNoteItemV1;
+  onChange: (text: string) => void;
+  onDelete: () => void;
+  readOnly: boolean;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [limitAttempted, setLimitAttempted] = useState(false);
+  const resize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = '0px';
+    textarea.style.height = `${Math.max(72, textarea.scrollHeight)}px`;
+  }, []);
+  useLayoutEffect(() => {
+    resize();
+    if (focus) textareaRef.current?.focus({ preventScroll: true });
+  }, [focus, item.text, resize]);
+  return (
+    <section className="graph-note-row" data-graph-item-id={item.itemId} data-testid="graph-note-row">
+      <textarea
+        aria-describedby={limitAttempted ? `${item.itemId}-note-limit` : undefined}
+        aria-label="Graph note"
+        onChange={(event) => {
+          const next = event.currentTarget.value;
+          if (next.length > 16_384) {
+            setLimitAttempted(true);
+            return;
+          }
+          setLimitAttempted(false);
+          onChange(next);
+          requestAnimationFrame(resize);
+        }}
+        placeholder="Write a note…"
+        readOnly={readOnly}
+        ref={textareaRef}
+        value={item.text}
+      />
+      {!readOnly ? <button aria-label="Delete note" className="graph-icon-button" onClick={onDelete} type="button">
+        <Trash2 aria-hidden="true" size={16} />
+      </button> : null}
+      <span className="graph-note-count">{item.text.length.toLocaleString()} / 16,384</span>
+      {limitAttempted ? <p className="graph-note-limit" id={`${item.itemId}-note-limit`} role="alert">
+        Notes can contain up to 16,384 characters. No text was removed.
+      </p> : null}
+    </section>
+  );
+}
+
+function GraphRowOrderControls({
+  index,
+  itemId,
+  itemCount,
+  onMove,
+}: {
+  index: number;
+  itemId: string;
+  itemCount: number;
+  onMove: (itemId: string, index: number) => void;
+}) {
+  const [grabbed, setGrabbed] = useState(false);
+  return <div className="graph-row-order-controls">
+    <button
+      aria-label={`Reorder item ${index + 1}`}
+      aria-pressed={grabbed}
+      className="graph-row-drag-handle"
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/x-graph-item-id', itemId);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault(); setGrabbed((value) => !value); return;
+        }
+        if (!grabbed) return;
+        if (event.key === 'Escape') { event.preventDefault(); setGrabbed(false); return; }
+        if (event.key === 'ArrowUp' && index > 0) { event.preventDefault(); onMove(itemId, index - 1); }
+        if (event.key === 'ArrowDown' && index < itemCount - 1) { event.preventDefault(); onMove(itemId, index + 1); }
+      }}
+      title="Drag to reorder. Press Space, then use arrow keys."
+      type="button"
+    ><GripVertical aria-hidden="true" size={16} /></button>
+    <button aria-label={`Move item ${index + 1} up`} disabled={index === 0}
+      onClick={() => onMove(itemId, index - 1)} type="button"><ArrowUp aria-hidden="true" size={12} /></button>
+    <button aria-label={`Move item ${index + 1} down`} disabled={index === itemCount - 1}
+      onClick={() => onMove(itemId, index + 1)} type="button"><ArrowDown aria-hidden="true" size={12} /></button>
+  </div>;
+}
+
 export default function GraphWorkspacePage({
   onUpdateSession,
   session: initialSession,
@@ -386,6 +485,7 @@ export default function GraphWorkspacePage({
   const [addItemOpen, setAddItemOpen] = useState(false);
   const promotedItemIdRef = useRef<string | null>(null);
   const piecewiseFocusItemIdRef = useRef<string | null>(null);
+  const noteFocusItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
     cssSize: viewportSize,
     initialSession,
@@ -397,9 +497,9 @@ export default function GraphWorkspacePage({
     piecewiseDrafts.filter((draft) => draft.mode === 'replace').map((draft) => [draft.itemId, draft]),
   ), [piecewiseDrafts]);
   const railEntries = useMemo<GraphRailEntry[]>(() => [
-    ...controller.session.document.items.map((item) => ({
-      kind: 'expression' as const, item, itemId: item.itemId,
-    })),
+    ...controller.session.document.items.map((item): GraphRailEntry => item.kind === 'note'
+      ? { kind: 'note', item }
+      : { kind: 'expression', item, itemId: item.itemId }),
     ...piecewiseDrafts.filter((draft) => draft.mode === 'create').map((draft) => ({
       kind: 'piecewise-draft' as const, draft,
     })),
@@ -417,7 +517,14 @@ export default function GraphWorkspacePage({
       labels: sampled.labels.filter((label) => visible(label.itemId)),
     };
   }, [controller.sampleResult, controller.suppressedPiecewiseItems]);
-  const visibleCount = controller.session.document.items.filter((item) => item.visible).length;
+  const visibleCount = controller.session.document.items.filter((item) => item.kind !== 'note' && item.visible).length;
+  const presentation = useMemo(() => ({
+    version: 1 as const,
+    contentRevision: controller.session.document.contentRevision,
+    items: controller.session.document.items.flatMap((item) => (
+      'presentation' in item ? [{ itemId: item.itemId, presentation: item.presentation }] : []
+    )),
+  }), [controller.session.document.contentRevision, controller.session.document.items]);
   const runtimeWarnings = useMemo(() => {
     const warnings = new Map<string, string>();
     for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
@@ -622,15 +729,30 @@ export default function GraphWorkspacePage({
                   onMutate={(action, branchId) => controller.mutatePiecewiseDraft({ itemId: draft.itemId, action, branchId })}
                 />;
               }
+              if (entry.kind === 'note') {
+                const index = controller.session.document.items.findIndex((item) => item.itemId === entry.item.itemId);
+                return <div className="graph-persisted-row" data-testid="graph-persisted-row"
+                  key={entry.item.itemId} onDragOver={(event) => event.preventDefault()} onDrop={(event) => {
+                    const dragged = event.dataTransfer.getData('text/x-graph-item-id');
+                    if (dragged) controller.reorderItem(dragged, index);
+                  }}>
+                  {!controller.session.surface.presentationMode ? <GraphRowOrderControls index={index}
+                    itemCount={controller.session.document.items.length} itemId={entry.item.itemId}
+                    onMove={controller.reorderItem} /> : <div aria-hidden="true" className="graph-row-order-placeholder" />}
+                  <GraphNoteRow focus={noteFocusItemIdRef.current === entry.item.itemId} item={entry.item}
+                    onChange={(text) => controller.updateNote(entry.item.itemId, text)}
+                    onDelete={() => controller.removeItem(entry.item.itemId)}
+                    readOnly={controller.session.surface.presentationMode} />
+                </div>;
+              }
               const { item, itemId } = entry;
-              return (
+              const row = (
                 <GraphExpressionRow
                   errorVisible={item
                     ? controller.visibleDraftErrors.has(item.itemId)
                     : false}
                   item={item}
                   itemId={itemId}
-                  key={itemId}
                   onBlur={() => {
                     if (item) controller.blurItem(itemId);
                     controller.flushSampling();
@@ -675,6 +797,20 @@ export default function GraphWorkspacePage({
                   piecewiseDraft={piecewiseDraftsByItem.get(itemId)}
                 />
               );
+              if (!item) return <div className="graph-persisted-row graph-blank-wrapper" key={itemId}>
+                <div aria-hidden="true" className="graph-row-order-placeholder" />
+                {row}
+              </div>;
+              const index = controller.session.document.items.findIndex((candidate) => candidate.itemId === itemId);
+              return <div className="graph-persisted-row" data-testid="graph-persisted-row" key={itemId}
+                onDragOver={(event) => event.preventDefault()} onDrop={(event) => {
+                  const dragged = event.dataTransfer.getData('text/x-graph-item-id');
+                  if (dragged) controller.reorderItem(dragged, index);
+                }}>
+                <GraphRowOrderControls index={index} itemCount={controller.session.document.items.length}
+                  itemId={itemId} onMove={controller.reorderItem} />
+                {row}
+              </div>;
             })}
           </div>
           <div className="graph-rail-note">
@@ -701,6 +837,14 @@ export default function GraphWorkspacePage({
               <button aria-expanded={addItemOpen} className="graph-add-point-button"
                 onClick={() => setAddItemOpen((open) => !open)} type="button">+ Add item</button>
               {addItemOpen ? <div className="graph-add-item-menu" role="menu">
+                <button onClick={() => {
+                  const itemId = controller.addNote();
+                  noteFocusItemIdRef.current = itemId;
+                  setAddItemOpen(false);
+                  requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>(
+                    `[data-graph-item-id="${itemId}"] textarea`,
+                  )?.focus({ preventScroll: true }));
+                }} role="menuitem" type="button">Note</button>
                 <button onClick={() => {
                   const itemId = controller.createPiecewiseDraft();
                   piecewiseFocusItemIdRef.current = itemId;
@@ -729,6 +873,7 @@ export default function GraphWorkspacePage({
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
             pending={controller.isScenePending || controller.suppressedPiecewiseItems.size > 0}
+            presentation={presentation}
             scene={scene}
             sceneViewport={controller.sampleResult?.viewport ?? null}
             viewport={controller.session.surface.viewport}

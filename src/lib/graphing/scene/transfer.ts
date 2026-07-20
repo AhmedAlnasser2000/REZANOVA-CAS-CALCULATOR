@@ -1,10 +1,10 @@
-import type { SampledSceneRuntime } from '../contracts';
+import type { SampledSceneRuntimeV2 } from '../contracts';
 
 export type GraphSceneTransferCollection =
   | { ok: true; transferList: ArrayBuffer[] }
   | { ok: false; message: string };
 
-function sceneViews(scene: SampledSceneRuntime): ArrayBufferView[] {
+function sceneViews(scene: SampledSceneRuntimeV2): ArrayBufferView[] {
   return [
     ...scene.paths.flatMap((path) => [
       path.coordinates,
@@ -17,7 +17,7 @@ function sceneViews(scene: SampledSceneRuntime): ArrayBufferView[] {
 }
 
 export function collectGraphSceneTransferables(
-  scene: SampledSceneRuntime,
+  scene: SampledSceneRuntimeV2,
 ): GraphSceneTransferCollection {
   const transferList: ArrayBuffer[] = [];
   const ownership = new Set<ArrayBuffer>();
@@ -34,6 +34,6 @@ export function collectGraphSceneTransferables(
   return { ok: true, transferList };
 }
 
-export function graphSceneTypedArrayBuffers(scene: SampledSceneRuntime) {
+export function graphSceneTypedArrayBuffers(scene: SampledSceneRuntimeV2) {
   return sceneViews(scene).map((view) => view.buffer);
 }

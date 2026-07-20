@@ -189,6 +189,24 @@ export type GraphDocumentV1 = {
   items: GraphItemSpecV1[];
 };
 
+export type GraphNoteItemV1 = {
+  version: 1;
+  kind: 'note';
+  itemId: string;
+  text: string;
+};
+
+export type GraphItemSpecV2 = GraphItemSpecV1 | GraphNoteItemV1;
+
+export type GraphDocumentV2 = {
+  version: 2;
+  documentId: string;
+  title: string;
+  contentRevision: number;
+  mathematicsRevision: number;
+  items: GraphItemSpecV2[];
+};
+
 export type GraphViewportV1 = {
   coordinateSystem: 'cartesian' | 'polar' | 'argand';
   xMin: number;
@@ -234,6 +252,12 @@ export type GraphRevisionSetV1 = {
   parameter: number;
 };
 
+export type GraphRevisionSetV2 = {
+  mathematics: number;
+  viewport: number;
+  parameter: number;
+};
+
 export type GraphSceneLabelV1 = {
   labelId: string;
   itemId?: string;
@@ -269,58 +293,56 @@ export type GraphGridSceneV2 = {
   hysteresisKey: string;
 };
 
-export type GraphScenePathRuntime = {
+export type GraphScenePathRuntimeV2 = {
   pathId: string;
   itemId: string;
   coordinates: Float64Array;
   segmentOffsets: Uint32Array;
   parameterValues?: Float64Array;
   closed: boolean;
-  style: GraphItemPresentationV1;
+  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay';
 };
 
-export type GraphSceneRegionRuntime = {
+export type GraphSceneRegionRuntimeV2 = {
   regionId: string;
   itemId: string;
   vertices: Float64Array;
   triangleIndices: Uint32Array;
   boundaryPathIds: string[];
-  style: GraphItemPresentationV1;
 };
 
-export type GraphScenePointBatchRuntime = {
+export type GraphScenePointBatchRuntimeV2 = {
   pointBatchId: string;
   itemId: string;
   coordinates: Float64Array;
   marker?: 'filled' | 'open';
-  style: GraphItemPresentationV1;
 };
 
-export type SampledSceneRuntime = {
+export type SampledSceneRuntimeV2 = {
   sceneRevision: number;
-  documentRevision: number;
+  mathematicsRevision: number;
   viewportRevision: number;
   parameterRevision: number;
-  paths: GraphScenePathRuntime[];
-  regions: GraphSceneRegionRuntime[];
-  pointBatches: GraphScenePointBatchRuntime[];
+  paths: GraphScenePathRuntimeV2[];
+  regions: GraphSceneRegionRuntimeV2[];
+  pointBatches: GraphScenePointBatchRuntimeV2[];
   labels: GraphSceneLabelV1[];
 };
 
-export type SampledSceneSnapshotV1 = {
-  version: 1;
-  revisions: { scene: number } & GraphRevisionSetV1;
+export type SampledSceneSnapshotV2 = {
+  version: 2;
+  revisions: { scene: number } & GraphRevisionSetV2;
   viewport: GraphViewportV1;
-  paths: Array<Omit<GraphScenePathRuntime, 'coordinates' | 'segmentOffsets' | 'parameterValues'> & {
+  paths: Array<Omit<GraphScenePathRuntimeV2, 'coordinates' | 'segmentOffsets' | 'parameterValues'> & {
     coordinates: number[];
     segmentOffsets: number[];
     parameterValues?: number[];
   }>;
-  regions: Array<Omit<GraphSceneRegionRuntime, 'vertices' | 'triangleIndices'> & {
+  regions: Array<Omit<GraphSceneRegionRuntimeV2, 'vertices' | 'triangleIndices'> & {
     vertices: number[];
     triangleIndices: number[];
   }>;
-  pointBatches: Array<Omit<GraphScenePointBatchRuntime, 'coordinates'> & {
+  pointBatches: Array<Omit<GraphScenePointBatchRuntimeV2, 'coordinates'> & {
     coordinates: number[];
   }>;
   labels: GraphSceneLabelV1[];
@@ -353,9 +375,15 @@ export type GraphRendererViewFrameV1 = {
 
 export type GraphRendererSceneFrameV1 = {
   version: 1;
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   sourceViewport: GraphViewportV1;
   policy: GraphRenderPolicy;
+};
+
+export type GraphRendererPresentationFrameV1 = {
+  version: 1;
+  contentRevision: number;
+  items: Array<{ itemId: string; presentation: GraphItemPresentationV1 }>;
 };
 
 export type GraphHitResult = {
@@ -374,6 +402,7 @@ export interface InteractiveGraphRenderer {
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
   setView(frame: GraphRendererViewFrameV1): void;
   setScene(frame: GraphRendererSceneFrameV1 | null): void;
+  setPresentation(frame: GraphRendererPresentationFrameV1): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;
@@ -409,18 +438,18 @@ export type GraphSamplingItemEvidenceV1 = {
   stopReason?: GraphStopReason;
 };
 
-export type GraphClassifiedItemSnapshotV1 = Extract<
-  GraphItemSpecV1,
-  { kind: 'relation' | 'piecewise' | 'point-set' }
->;
+export type GraphClassifiedItemSnapshotV2 = {
+  [Kind in Extract<GraphItemSpecV1['kind'], 'relation' | 'piecewise' | 'point-set'>]:
+    Omit<Extract<GraphItemSpecV1, { kind: Kind }>, 'presentation'>
+}[Extract<GraphItemSpecV1['kind'], 'relation' | 'piecewise' | 'point-set'>];
 
-export type GraphSampleRequestV3 = {
-  version: 3;
+export type GraphSampleRequestV4 = {
+  version: 4;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
-  revisions: { scene: number } & GraphRevisionSetV1;
-  items: GraphClassifiedItemSnapshotV1[];
+  revisions: { scene: number } & GraphRevisionSetV2;
+  items: GraphClassifiedItemSnapshotV2[];
   parameterEnvironment: Record<string, number>;
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
@@ -430,16 +459,16 @@ export type GraphSampleRequestV3 = {
   movement: GraphSamplingMovementHintV1;
 };
 
-export type GraphSampleResultV3 = {
-  version: 3;
+export type GraphSampleResultV4 = {
+  version: 4;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
-  revisions: { scene: number } & GraphRevisionSetV1;
+  revisions: { scene: number } & GraphRevisionSetV2;
   viewport: GraphViewportV1;
   quality: GraphSamplingQualityV3;
   status: 'complete' | 'partial' | 'cancelled';
-  scene: SampledSceneRuntime;
+  scene: SampledSceneRuntimeV2;
   snapshotHash: string;
   stopReasons: GraphStopReason[];
   itemEvidence: GraphSamplingItemEvidenceV1[];

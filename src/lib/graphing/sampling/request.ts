@@ -1,8 +1,8 @@
 import {
   hashSampledSceneRuntime,
   validateGraphSampleRequest,
-  type GraphSampleRequestV3,
-  type GraphSampleResultV3,
+  type GraphSampleRequestV4,
+  type GraphSampleResultV4,
   type GraphSamplingItemEvidenceV1,
   type GraphStopReason,
   type GraphViewportV1,
@@ -43,7 +43,7 @@ function effectiveMaximumItemTimeMs(policyMaximum: number, controlMaximum?: numb
 }
 
 export type GraphSampleExecution = {
-  result: GraphSampleResultV3;
+  result: GraphSampleResultV4;
   transferList: ArrayBuffer[];
 };
 
@@ -62,7 +62,7 @@ function budgetStop(detailCode: string): GraphStopReason {
 }
 
 function achievedQuality(
-  quality: GraphSampleRequestV3['quality'],
+  quality: GraphSampleRequestV4['quality'],
   status: 'complete' | 'budget-exhausted' | 'cancelled',
   hasGeometry: boolean,
 ): GraphSamplingItemEvidenceV1['achievedQuality'] {
@@ -72,15 +72,15 @@ function achievedQuality(
   return 'coarse';
 }
 
-function errorTarget(quality: GraphSampleRequestV3['quality']) {
+function errorTarget(quality: GraphSampleRequestV4['quality']) {
   return quality === 'preview' ? 1.5 : quality === 'settled' ? 0.35 : 0.2;
 }
 
 function graphResult(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
   input: {
-    scene: GraphSampleResultV3['scene'];
-    status: GraphSampleResultV3['status'];
+    scene: GraphSampleResultV4['scene'];
+    status: GraphSampleResultV4['status'];
     stopReasons: GraphStopReason[];
     sampleCount: number;
     vertexCount: number;
@@ -89,9 +89,9 @@ function graphResult(
     schedulerPasses: number;
     cacheBytes: number;
   },
-): GraphSampleResultV3 {
+): GraphSampleResultV4 {
   return {
-    version: 3,
+    version: 4,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -113,7 +113,7 @@ function graphResult(
   };
 }
 
-function assembleEmptyScene(request: GraphSampleRequestV3) {
+function assembleEmptyScene(request: GraphSampleRequestV4) {
   const assembled = assembleSampledScene({
     revisions: request.revisions,
     viewport: request.viewport,
@@ -124,7 +124,7 @@ function assembleEmptyScene(request: GraphSampleRequestV3) {
 }
 
 export function buildCancelledGraphSampleExecution(
-  request: GraphSampleRequestV3,
+  request: GraphSampleRequestV4,
   detailCode = 'host-cancellation',
 ): GraphSampleExecution {
   const scene = assembleEmptyScene(request);
@@ -145,7 +145,7 @@ export function buildCancelledGraphSampleExecution(
 }
 
 export async function runGraphSampleRequest(
-  input: GraphSampleRequestV3,
+  input: GraphSampleRequestV4,
   planCache = new GraphExpressionPlanCache(100),
   control: GraphSampleRequestControl = {},
   samplingCache = new GraphSamplingRuntimeCache(),
@@ -169,7 +169,7 @@ export async function runGraphSampleRequest(
   const cacheItem = (input: {
     key: string;
     viewport: GraphViewportV1;
-    quality: GraphSampleRequestV3['quality'];
+    quality: GraphSampleRequestV4['quality'];
     evidence: GraphSamplingItemEvidenceV1;
     pathStart: number;
     regionStart: number;
@@ -211,14 +211,7 @@ export async function runGraphSampleRequest(
         },
       },
       closed: true,
-      style: {
-        version: 1,
-        colorToken: 'graph-violet',
-        stroke: 'dashed',
-        strokeWidth: 'thin',
-        fillOpacity: 0,
-        label: 'never',
-      },
+      strokeRole: 'teaching-overlay',
     });
     sampleCount += parameterValues.length;
     vertexCount += parameterValues.length;
@@ -327,7 +320,6 @@ export async function runGraphSampleRequest(
           pointBatchId: `${item.itemId}:points:0`,
           itemId: item.itemId,
           coordinates: new Float64Array(coordinates),
-          style: item.presentation,
         });
       }
       const pointEvidence: GraphSamplingItemEvidenceV1 = {
@@ -364,7 +356,6 @@ export async function runGraphSampleRequest(
         itemId: item.itemId,
         sourceRevision: item.source.sourceRevision,
         piecewise: item.piecewise,
-        presentation: item.presentation,
         viewport: request.viewport,
         cssSize: request.cssSize,
         parameterEnvironment: request.parameterEnvironment,
@@ -463,10 +454,7 @@ export async function runGraphSampleRequest(
               elapsedMs: sampled.stats.elapsedMs,
             },
           },
-          style: {
-            ...item.presentation,
-            stroke: boundary.strict ? 'dashed' : 'solid',
-          },
+          ...(boundary.strict ? { strokeRole: 'strict-boundary' as const } : {}),
         });
       }
       if (sampled.region) {
@@ -476,7 +464,6 @@ export async function runGraphSampleRequest(
           vertices: sampled.region.vertices,
           triangleIndices: sampled.region.triangleIndices,
           boundaryPathIds,
-          style: item.presentation,
         });
       }
       const implicitReason = sampled.stopReasons.find((reason) => (
@@ -521,7 +508,6 @@ export async function runGraphSampleRequest(
         itemId: item.itemId,
         sourceRevision: item.source.sourceRevision,
         relation: item.relation,
-        presentation: item.presentation,
         viewport: request.viewport,
         cssSize: request.cssSize,
         parameterEnvironment: request.parameterEnvironment,
@@ -614,7 +600,6 @@ export async function runGraphSampleRequest(
       paths.push({
         pathId: `${item.itemId}:path:0`,
         sample: sampled,
-        style: item.presentation,
       });
     }
     const explicitEvidence: GraphSamplingItemEvidenceV1 = {
@@ -667,7 +652,7 @@ export async function runGraphSampleRequest(
   return { result, transferList: assembled.bundle.transferList };
 }
 
-export function releaseGraphSampleResultBuffers(result: GraphSampleResultV3) {
+export function releaseGraphSampleResultBuffers(result: GraphSampleResultV4) {
   const transfers = collectGraphSceneTransferables(result.scene);
   if (!transfers.ok || transfers.transferList.length === 0) return 0;
   const releasedBytes = transfers.transferList.reduce(
