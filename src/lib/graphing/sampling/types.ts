@@ -40,7 +40,6 @@ export type GraphSampledExplicitPath = {
   stats: {
     evaluatedSamples: number;
     emittedVertices: number;
-    maximumDepthReached: number;
     elapsedMs: number;
   };
 };

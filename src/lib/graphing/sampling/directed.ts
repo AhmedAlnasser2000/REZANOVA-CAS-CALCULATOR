@@ -120,7 +120,7 @@ export function sampleDirectedInequality(
       status: 'complete',
       boundaries: [],
       stopReasons: [compiled.stopReason],
-      stats: { evaluatedSamples: 0, emittedVertices: 0, maximumDepthReached: 0, elapsedMs: 0 },
+      stats: { evaluatedSamples: 0, emittedVertices: 0, elapsedMs: 0 },
     };
   }
   const sampled = sampleExplicitGraphRelation({

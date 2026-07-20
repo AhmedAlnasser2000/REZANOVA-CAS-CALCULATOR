@@ -244,10 +244,27 @@ export type GraphSceneLabelV1 = {
   plainText?: string;
 };
 
-export type GraphGridSceneV1 = {
+export type GraphGridLineV2 = {
+  lineId: string;
+  role: 'major' | 'minor' | 'axis' | 'spoke';
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+export type GraphGridCircleV2 = {
+  circleId: string;
+  role: 'major' | 'minor';
+  center: { x: number; y: number };
+  radius: number;
+};
+
+export type GraphGridSceneV2 = {
+  version: 2;
   kind: 'cartesian' | 'polar' | 'argand' | 'none';
-  majorLines: number[];
-  minorLines: number[];
+  lines: GraphGridLineV2[];
+  circles: GraphGridCircleV2[];
   labels: GraphSceneLabelV1[];
   hysteresisKey: string;
 };
@@ -288,7 +305,6 @@ export type SampledSceneRuntime = {
   regions: GraphSceneRegionRuntime[];
   pointBatches: GraphScenePointBatchRuntime[];
   labels: GraphSceneLabelV1[];
-  grid: GraphGridSceneV1;
 };
 
 export type SampledSceneSnapshotV1 = {
@@ -308,7 +324,6 @@ export type SampledSceneSnapshotV1 = {
     coordinates: number[];
   }>;
   labels: GraphSceneLabelV1[];
-  grid: GraphGridSceneV1;
 };
 
 export type GraphRendererCapabilities = {
@@ -329,10 +344,17 @@ export type GraphRenderPolicy = {
   pixelRatioCap: number;
 };
 
-export type GraphRenderFrameV1 = {
+export type GraphRendererViewFrameV1 = {
+  version: 1;
+  viewport: GraphViewportV1;
+  grid: GraphGridSceneV2;
+  policy: GraphRenderPolicy;
+};
+
+export type GraphRendererSceneFrameV1 = {
   version: 1;
   scene: SampledSceneRuntime;
-  viewport: GraphViewportV1;
+  sourceViewport: GraphViewportV1;
   policy: GraphRenderPolicy;
 };
 
@@ -350,14 +372,14 @@ export interface InteractiveGraphRenderer {
   readonly capabilities: GraphRendererCapabilities;
   mount(target: HTMLElement): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
-  render(frame: GraphRenderFrameV1): void;
+  setView(frame: GraphRendererViewFrameV1): void;
+  setScene(frame: GraphRendererSceneFrameV1 | null): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;
 }
 
 export type GraphSamplingBudgetsV1 = {
-  maximumRecursionDepth: number;
   maximumSamples: number;
   maximumTimeMs: number;
   maximumVertices: number;
@@ -368,8 +390,8 @@ export type GraphClassifiedItemSnapshotV1 = Extract<
   { kind: 'relation' | 'piecewise' | 'point-set' }
 >;
 
-export type GraphSampleRequestV1 = {
-  version: 1;
+export type GraphSampleRequestV2 = {
+  version: 2;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;
@@ -378,14 +400,13 @@ export type GraphSampleRequestV1 = {
   parameterEnvironment: Record<string, number>;
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
-  grid: GraphGridPolicyV1;
-  gridHysteresisKey?: string;
+  overlays: { unitCircle: boolean };
   quality: 'preview' | 'settled';
   budgets: GraphSamplingBudgetsV1;
 };
 
-export type GraphSampleResultV1 = {
-  version: 1;
+export type GraphSampleResultV2 = {
+  version: 2;
   requestId: string;
   workspaceInstanceId: string;
   documentId: string;

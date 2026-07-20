@@ -5,10 +5,24 @@ import type {
 
 export const GRAPH_WORKSPACE_SESSION_VERSION = 1 as const;
 
+export type GraphPiecewiseAuthoringDraftV1 = {
+  version: 1;
+  draftId: string;
+  itemId: string;
+  mode: 'create' | 'replace';
+  target: 'y' | 'x';
+  branches: Array<{
+    branchId: string;
+    valueLatex: string;
+    conditionLatex: string;
+  }>;
+};
+
 export type GraphWorkspaceSessionStateV1 = {
   version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
   document: GraphDocumentV1;
   surface: GraphSurfaceStateV1;
+  authoring?: { piecewiseDrafts: GraphPiecewiseAuthoringDraftV1[] };
 };
 
 export function graphWorkspaceDefaultTitle(sequence: number) {
@@ -28,6 +42,7 @@ export function createGraphWorkspaceSessionState(
       documentRevision: 0,
       items: [],
     },
+    authoring: { piecewiseDrafts: [] },
     surface: {
       version: 1,
       viewport: {
@@ -66,7 +81,8 @@ export function isGraphWorkspaceSessionState(
   return candidate.version === GRAPH_WORKSPACE_SESSION_VERSION
     && candidate.document?.version === 1
     && typeof candidate.document.documentId === 'string'
-    && candidate.surface?.version === 1;
+    && candidate.surface?.version === 1
+    && (candidate.authoring === undefined || Array.isArray(candidate.authoring.piecewiseDrafts));
 }
 
 export function renameGraphWorkspaceSessionState(

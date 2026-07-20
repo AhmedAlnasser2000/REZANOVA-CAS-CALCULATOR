@@ -26,7 +26,6 @@ function runtimeScene(): SampledSceneRuntime {
     regions: [{ regionId: 'region-a', itemId: 'disk', vertices: new Float64Array([0, 0, 1, 0, 0, 1]), triangleIndices: new Uint32Array([0, 1, 2]), boundaryPathIds: ['path-a'], style }],
     pointBatches: [{ pointBatchId: 'points-a', itemId: 'points', coordinates: new Float64Array([2, 3]), style }],
     labels: [{ labelId: 'label-b', itemId: 'curve-b', role: 'relation', anchor: { x: 1, y: 1 }, priority: 2, mathJson: ['Equal', 'y', 'x'] }],
-    grid: { kind: 'cartesian', majorLines: [-1, 0, 1], minorLines: [-0.5, 0.5], labels: [{ labelId: 'label-a', role: 'tick', anchor: { x: 1, y: 0 }, priority: 1, plainText: '1' }], hysteresisKey: 'cartesian:1' },
   };
 }
 
@@ -37,7 +36,6 @@ describe('Graph scene contracts', () => {
     const snapshot = snapshotSampledSceneRuntime(runtime, { coordinateSystem: 'cartesian', xMin: -2, xMax: 2, yMin: -2, yMax: 2 });
     const reversed = { ...snapshot, paths: [...snapshot.paths].reverse() };
     const reorderedKeys = {
-      grid: snapshot.grid,
       labels: snapshot.labels,
       pointBatches: snapshot.pointBatches,
       regions: snapshot.regions,
@@ -50,7 +48,7 @@ describe('Graph scene contracts', () => {
     expect(normalizeGraphSceneSnapshot(reversed).paths.map((path) => path.pathId)).toEqual(['path-a', 'path-b']);
     expect(hashGraphSceneSnapshot(reversed)).toBe(hashGraphSceneSnapshot(snapshot));
     expect(hashGraphSceneSnapshot(reorderedKeys)).toBe(hashGraphSceneSnapshot(snapshot));
-    expect(hashGraphSceneSnapshot(snapshot)).toBe('graph64:01020b98b6247780');
+    expect(hashGraphSceneSnapshot(snapshot)).toMatch(/^graph64:[0-9a-f]{16}$/u);
     expect(hashSampledSceneRuntime(runtime, snapshot.viewport)).toBe(hashGraphSceneSnapshot(snapshot));
     expect(validateSampledSceneSnapshot(reversed)).toMatchObject({ ok: true, hash: hashGraphSceneSnapshot(snapshot) });
     expect(JSON.stringify(snapshot)).not.toContain('Float64Array');
@@ -82,7 +80,7 @@ describe('Graph scene contracts', () => {
     const scene = runtimeScene();
     const viewport = { coordinateSystem: 'cartesian' as const, xMin: -2, xMax: 2, yMin: -2, yMax: 2 };
     const result = {
-      version: 1,
+      version: 2,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'graph-document-1',

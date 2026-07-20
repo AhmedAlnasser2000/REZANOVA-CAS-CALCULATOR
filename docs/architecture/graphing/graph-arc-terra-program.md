@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: approved revised 20-move implementation program; Moves 1-13 complete, Move 14 implementation verified with checkpoint blockers recorded; Move 15 blocked
+Status: revised 22-move implementation program; Moves 1-15 complete; Move 16 requires dedicated planning; Move 17 blocked
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -254,7 +254,32 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: grid labels require renderer-specific layout authority.
 - Deletion: any SVG-only tick generator once the scene grid is authoritative.
 
-## 15. `GRAPHING-THREE-RENDERER1`
+## 15. `GRAPHING-INSTANT-VIEWPORT-CORRECTION1`
+
+- Terra: High
+- Gate type: ui
+- Objective: make live camera interaction renderer-local and immediate, restore click-first tracing with selected-item sweeping, and expose the existing structured piecewise capability through `+ Add item` before introducing another renderer.
+- Allowed: Graph renderer/view contracts, SVG reference adapter, live grid generation, viewport/trace controller, Graph sampling V2 envelope, Graph worker supersession, session-owned piecewise authoring drafts, focused tests/e2e/performance evidence.
+- Forbidden: Three.js, Analyze, Complex/Both, Export, persistence, solver authority changes, unrelated workspaces, OOE diagnostics UI.
+- Dependencies: the complete Move 14 SVG/scene/sampling foundation and the focused Desmos/GeoGebra recon.
+- Contracts: `setView(GraphRendererViewFrameV1)` and `setScene(GraphRendererSceneFrameV1 | null)`; main-thread `GraphGridSceneV2`; geometry-only `GraphSampleRequestV2`/result; one retained Graph worker; screen-space trace index; `GraphPiecewiseAuthoringDraftV1` remains outside `GraphDocumentV1` until atomic validation.
+- Behavior: wheel/pan updates the local camera and responsive grid at most once per animation frame, commits React/session state once after settlement, launches no sampling during the gesture, then requests one preview plus one settled refinement. Hover alone does nothing; click acquires the nearest item, subsequent pointer movement sweeps that selected item, and empty click or Escape clears it. `+ Add item` exposes only Piecewise Function and Point Set.
+- Completion correction: explicit and parametric routes refine iteratively in screen space without a generic recursion-depth cutoff, retain the finite remainder after finite/non-finite boundary bracketing, and carry ordinary branches truthfully to the visible viewport edge. Long expression rows scroll horizontally only when they overflow while their action controls remain fixed.
+- Tests/evidence: realistic 12-event wheel cadence, rapid burst and pan, stable SVG node identity, one viewport commit, retained worker generation, polar origin-offscreen coverage, click acquisition and selected-item sweeping across relation routes, touch/keyboard/reduced-motion behavior, piecewise draft focus/retention/atomic promotion/undo/recovery.
+- Broad gates: Graph contracts/sampling/scene/OOE/UI/browser, incremental TypeScript, web bundle/lazy-load ratchets, memory/file-size/diff/seam evidence.
+- Stop: interaction needs renderer-owned mathematical truth, a worker per tab/event, or app-shell architecture changes.
+- Deletion: remove the combined `GraphRenderFrameV1`, worker-owned grid payload, group-wide SVG reconstruction, narrow click-only tracing, and permanent Point Set button.
+
+## 16. `GRAPHING-ADAPTIVE-VIEWPORT-SAMPLING1` (planning required)
+
+- Terra: High
+- Gate type: backend and ui
+- Objective: replace the remaining fixed-density refinement constants with a viewport-, zoom-, scale-, route-, and visible-workload-aware quality policy so smooth curves remain smooth without sacrificing interaction latency or honest completion.
+- Boundary: this is a dedicated prerequisite milestone, not a tail extension of Move 15. Its exact policy, quality metric, fair-work allocation, and acceptance matrix require user discussion before implementation.
+- Dependencies: completed Move 15 renderer/view separation and the retained 25-row failure evidence.
+- Stop: a proposed policy creates a user-facing mathematical complexity cap, weakens discontinuity/domain safeguards, or hides genuinely incomplete settled geometry.
+
+## 17. `GRAPHING-THREE-RENDERER1`
 
 - Terra: High
 - Gate type: ui
@@ -269,7 +294,7 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: Three-specific types or coordinate transforms leak upstream, or parity cannot be shown.
 - Deletion: any provisional production SVG interaction branch superseded by the governor; retain the reference/export adapter.
 
-## 16. `GRAPHING-ANALYSIS-OOE1`
+## 18. `GRAPHING-ANALYSIS-OOE1`
 
 - Terra: High
 - Gate type: backend
@@ -285,7 +310,7 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: a feature cannot be represented without a new canonical-result contract or would require changing solver precedence.
 - Deletion: Equation-shaped compatibility evidence or string-only exact paths.
 
-## 17. `GRAPHING-ANALYZE-UI1`
+## 19. `GRAPHING-ANALYZE-UI1`
 
 - Terra: Medium
 - Gate type: ui
@@ -300,7 +325,7 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: motion reuse requires changing existing shell panel behavior.
 - Deletion: test-only analysis surfaces and duplicate label formatting.
 
-## 18. `GRAPHING-COMPLEX-VIEWS1`
+## 20. `GRAPHING-COMPLEX-VIEWS1`
 
 - Terra: High
 - Gate type: ui
@@ -315,7 +340,7 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: a requested expression has no honest real parameter or needs a broader complex semantic.
 - Deletion: any Re/Im rewriting workaround or single-axis Both prototype.
 
-## 19. `GRAPHING-PRESENTATION-EXPORT1`
+## 21. `GRAPHING-PRESENTATION-EXPORT1`
 
 - Terra: High
 - Gate type: ui
@@ -330,7 +355,7 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 - Stop: export requires Notebook/publication or durable Graph persistence changes.
 - Deletion: object URLs, isolated canvases, buffers, and temporary export workers after each job; no screenshot fallback.
 
-## 20. `GRAPHING-ARC-CLOSEOUT1`
+## 22. `GRAPHING-ARC-CLOSEOUT1`
 
 - Terra: High
 - Gate type: backend and ui closeout

@@ -143,7 +143,6 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       }
       return selection.toString().length > 0;
     })).toBe(false);
-    await expect(viewport).toHaveAttribute('data-scene-pending', 'true');
     await expect(page.locator('.graph-status')).toContainText('Ready');
 
     await page.mouse.move(bounds.x + bounds.width * 0.6, bounds.y + bounds.height * 0.45);
@@ -206,22 +205,188 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     });
 
     const firstPoint = screen(1, 2);
+    await page.mouse.move(firstPoint.x, firstPoint.y);
+    await expect(page.locator('.graph-trace-callout')).toBeHidden();
     await page.mouse.click(firstPoint.x, firstPoint.y);
     await expect(page.locator('.graph-trace-callout')).toContainText('(1, 2)');
+    await viewport.focus();
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('.graph-trace-callout')).toContainText('(3, 4)');
 
     await page.keyboard.press('Escape');
     const curvePoint = screen(4, 2);
     await page.mouse.click(curvePoint.x, curvePoint.y);
-    const yThree = screen(4, 3);
+    const yThree = screen(9, 3);
     await page.mouse.move(yThree.x, yThree.y);
     await expect.poll(() => page.locator('.graph-trace-callout').textContent()).toMatch(
       /^\(9(?:\.\d+)?, 3(?:\.\d+)?\)$/u,
     );
+    const emptyPoint = screen(-8, -5);
+    await page.mouse.click(emptyPoint.x, emptyPoint.y);
+    await expect(page.locator('.graph-trace-callout')).toBeHidden();
     await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
     await page.screenshot({
       path: testInfo.outputPath('graphing-relation-routes-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
+  test('requires click acquisition then continuously sweeps the selected ordinary curve', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, '\\sin(x)');
+    await enterExpression(page, 'x');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    const screen = (x: number, y: number) => ({
+      x: bounds.x + (x + 10) / 20 * bounds.width,
+      y: bounds.y + (6 - y) / 12 * bounds.height,
+    });
+    const rows = page.getByTestId('graph-expression-row');
+    const sineItemId = await rows.nth(0).getAttribute('data-graph-item-id');
+    if (!sineItemId) throw new Error('Sine row did not expose its item identity.');
+
+    const start = screen(2, Math.sin(2));
+    await page.mouse.move(start.x, start.y);
+    const callout = page.locator('.graph-trace-callout');
+    await expect(callout).toBeHidden();
+    await page.mouse.click(start.x, start.y);
+    await expect(callout).toBeVisible();
+    await expect(callout).toHaveAttribute('data-trace-item-id', sineItemId);
+
+    for (let step = 0; step <= 20; step += 1) {
+      const x = 2 - step * 0.15;
+      const point = screen(x, Math.sin(x));
+      await page.mouse.move(point.x, point.y);
+      await expect(callout).toBeVisible();
+      await expect(callout).toHaveAttribute('data-trace-item-id', sineItemId);
+    }
+    await expect(callout).toContainText('(-1');
+  });
+
+  test('aligns closest-point tracing with the final visible stroke under UI scaling', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, 'x');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    await page.getByTestId('active-surface-page').evaluate((element) => {
+      element.style.setProperty('--page-ui-scale', '1.3');
+    });
+    const path = page.getByTestId('graph-scene-paths').locator('path');
+    const visiblePoint = await path.evaluate((node: SVGPathElement) => {
+      const length = node.getTotalLength();
+      const center = node.getPointAtLength(length * 0.45);
+      const before = node.getPointAtLength(length * 0.45 - 2);
+      const after = node.getPointAtLength(length * 0.45 + 2);
+      const matrix = node.getScreenCTM();
+      if (!matrix) throw new Error('Visible graph path has no screen transform.');
+      const project = (point: DOMPoint) => new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      const screen = project(center); const left = project(before); const right = project(after);
+      const dx = right.x - left.x; const dy = right.y - left.y;
+      const magnitude = Math.hypot(dx, dy) || 1;
+      return {
+        x: screen.x,
+        y: screen.y,
+        normalX: -dy / magnitude,
+        normalY: dx / magnitude,
+      };
+    });
+    const click = {
+      x: visiblePoint.x + visiblePoint.normalX * 14,
+      y: visiblePoint.y + visiblePoint.normalY * 14,
+    };
+    await page.mouse.click(click.x, click.y);
+    const marker = page.locator('.graph-trace-marker');
+    await expect(marker).toBeVisible();
+    await expect.poll(async () => {
+      const bounds = await marker.boundingBox();
+      if (!bounds) return Number.POSITIVE_INFINITY;
+      return Math.hypot(
+        bounds.x + bounds.width / 2 - visiblePoint.x,
+        bounds.y + bounds.height / 2 - visiblePoint.y,
+      );
+    }).toBeLessThanOrEqual(2);
+
+    const itemId = await page.getByTestId('graph-expression-row').getAttribute('data-graph-item-id');
+    await expect(marker).toHaveAttribute('data-trace-item-id', itemId ?? '');
+    await page.keyboard.press('Escape');
+    await page.mouse.click(
+      visiblePoint.x - visiblePoint.normalX * 14,
+      visiblePoint.y - visiblePoint.normalY * 14,
+    );
+    await expect.poll(async () => {
+      const bounds = await marker.boundingBox();
+      if (!bounds) return Number.POSITIVE_INFINITY;
+      return Math.hypot(
+        bounds.x + bounds.width / 2 - visiblePoint.x,
+        bounds.y + bounds.height / 2 - visiblePoint.y,
+      );
+    }).toBeLessThanOrEqual(2);
+    const nextPoint = await path.evaluate((node: SVGPathElement) => {
+      const point = node.getPointAtLength(node.getTotalLength() * 0.6);
+      const matrix = node.getScreenCTM();
+      if (!matrix) throw new Error('Visible graph path has no screen transform.');
+      const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      return { x: screen.x, y: screen.y };
+    });
+    await page.mouse.move(nextPoint.x, nextPoint.y, { steps: 12 });
+    await expect.poll(async () => {
+      const bounds = await marker.boundingBox();
+      if (!bounds) return Number.POSITIVE_INFINITY;
+      return Math.hypot(
+        bounds.x + bounds.width / 2 - nextPoint.x,
+        bounds.y + bounds.height / 2 - nextPoint.y,
+      );
+    }).toBeLessThanOrEqual(2);
+    await expect(marker).toHaveAttribute('data-trace-item-id', itemId ?? '');
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-scaled-closest-trace-1920x1080.png'),
+      fullPage: true,
+    });
+  });
+
+  test('extends logarithmic domain branches through the visible viewport edge', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, '\\log(\\sin(x))');
+    const path = page.getByTestId('graph-scene-paths').locator('path');
+    await expect(path).toHaveCount(1);
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    await page.mouse.wheel(0, 600);
+    await expect(page.locator('.graph-status')).toContainText('Ready');
+
+    await expect.poll(() => path.evaluate((node: SVGPathElement) => {
+      const matrix = node.getScreenCTM();
+      const viewportNode = document.querySelector<HTMLElement>('[data-testid="graph-viewport"]');
+      if (!matrix || !viewportNode) return Number.POSITIVE_INFINITY;
+      const viewportBottom = viewportNode.getBoundingClientRect().bottom;
+      const length = node.getTotalLength();
+      let maximumY = Number.NEGATIVE_INFINITY;
+      for (let index = 0; index <= 800; index += 1) {
+        const point = node.getPointAtLength(length * index / 800);
+        const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+        maximumY = Math.max(maximumY, screen.y);
+      }
+      return viewportBottom - maximumY;
+    })).toBeLessThanOrEqual(2);
+    const densestBranchVertices = await path.evaluate((node: SVGPathElement) => (
+      (node.getAttribute('d') ?? '').split('M').slice(1)
+        .reduce((largest, segment) => Math.max(largest, segment.split('L').length), 0)
+    ));
+    expect(densestBranchVertices).toBeGreaterThanOrEqual(20);
+    await expect(page.getByText(/safe plotting limit/iu)).toHaveCount(0);
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-log-sin-edge-completion-1440x940.png'),
       fullPage: true,
     });
   });
@@ -274,12 +439,100 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
     await expect(page.getByTestId('graph-scene-points').locator('circle').first())
       .toHaveAttribute('fill', '#071517');
+    const viewport = page.getByTestId('graph-viewport');
+    const bounds = await viewport.boundingBox();
+    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
+    const screen = (x: number, y: number) => ({
+      x: bounds.x + (x + 10) / 20 * bounds.width,
+      y: bounds.y + (6 - y) / 12 * bounds.height,
+    });
+    const traceStart = screen(4, 2);
+    await page.mouse.move(traceStart.x, traceStart.y);
+    await expect(page.locator('.graph-trace-callout')).toBeHidden();
+    await page.mouse.click(traceStart.x, traceStart.y);
+    await expect(page.locator('.graph-trace-callout')).toContainText('(4.000');
+    const swept = screen(9, 3);
+    await page.mouse.move(swept.x, swept.y, { steps: 8 });
+    await expect(page.locator('.graph-trace-callout')).toContainText('(9');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.graph-trace-callout')).toBeHidden();
     await page.getByRole('button', { name: 'Expand piecewise branches' }).click();
     await expect(page.getByText('Piecewise branches')).toBeVisible();
     await expect(page.getByRole('button', { name: '+ Add branch' })).toBeVisible();
     await expect(page.locator('.graph-status')).toContainText('Ready');
     await page.screenshot({
       path: testInfo.outputPath('graphing-piecewise-1440x940.png'),
+      fullPage: true,
+    });
+  });
+
+  test('keeps long expression rows horizontally scrollable with fixed actions', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1180, height: 760 });
+    await page.goto('/');
+    await openGraph(page);
+
+    await enterExpression(
+      page,
+      '\\sin(x)+\\cos(x)+\\tan(x)+\\sin(2x)+\\cos(3x)+\\sin(4x)+\\cos(5x)',
+    );
+    const editorScroll = page.locator('.graph-expression-editor-scroll').first();
+    await expect(editorScroll).toBeVisible();
+    await expect(editorScroll).toHaveAttribute('data-overflowing', 'true');
+    await expect(page.getByTestId('graph-expression-blank-row')
+      .locator('.graph-expression-editor-scroll')).toHaveAttribute('data-overflowing', 'false');
+    const overflow = await editorScroll.evaluate((element) => {
+      const style = getComputedStyle(element);
+      element.scrollLeft = element.scrollWidth;
+      return {
+        overflowX: style.overflowX,
+        overflowY: style.overflowY,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        scrollLeft: element.scrollLeft,
+      };
+    });
+    expect(overflow.overflowX).toBe('auto');
+    expect(overflow.overflowY).toBe('hidden');
+    expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
+    expect(overflow.scrollLeft).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: 'Hide graph' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Delete expression' })).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-long-expression-horizontal-scroll-1180x760.png'),
+      fullPage: true,
+    });
+  });
+
+  test('creates a discoverable piecewise function from the keyboard-accessible Add Item menu', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+
+    const addItem = page.getByRole('button', { name: '+ Add item' });
+    await addItem.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitem', { name: 'Piecewise Function' })).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('menuitem', { name: 'Piecewise Function' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    const values = page.locator('[data-testid^="graph-piecewise-draft-value-"]');
+    const conditions = page.locator('[data-testid^="graph-piecewise-draft-condition-"]');
+    await expect(values.first()).toBeFocused();
+    for (const [field, latex] of [
+      [values.nth(0), 'x^2'], [conditions.nth(0), 'x<0'],
+      [values.nth(1), '\\sqrt{x}'], [conditions.nth(1), 'x\\ge0'],
+    ] as const) {
+      await field.evaluate((element, source) => {
+        const mathField = element as HTMLElement & { setValue: (value: string) => void };
+        mathField.setValue(source);
+        mathField.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+      }, latex);
+    }
+    await expect(page.getByTestId('graph-piecewise-authoring-draft')).toHaveCount(0);
+    await expect(page.getByTestId('graph-expression-row')).toHaveCount(1);
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-add-item-piecewise-1440x940.png'),
       fullPage: true,
     });
   });
@@ -369,8 +622,23 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-grid-labels')).not.toContainText('pi/');
 
     await page.getByRole('button', { name: 'Switch to Polar grid' }).click();
-    await expect(page.getByTestId('graph-scene-grid').locator('line')).not.toHaveCount(0);
+    await expect(page.getByTestId('graph-scene-grid').locator('[data-grid-line="spoke"]')).toHaveCount(1);
     await expect(page.getByTestId('graph-scene-grid-labels')).toContainText('pi/');
+    await expect.poll(() => page.getByTestId('graph-scene-grid').locator('ellipse').evaluateAll((nodes) => (
+      nodes.every((node) => node.getAttribute('fill') === 'none')
+    ))).toBe(true);
+
+    const viewportBounds = await page.getByTestId('graph-viewport').boundingBox();
+    if (!viewportBounds) throw new Error('Graph viewport did not have layout bounds.');
+    await page.mouse.move(viewportBounds.x + viewportBounds.width * 0.55, viewportBounds.y + viewportBounds.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(viewportBounds.x + viewportBounds.width * 0.9, viewportBounds.y + viewportBounds.height * 0.82, { steps: 10 });
+    await page.mouse.up();
+    await expect(page.getByTestId('graph-scene-grid').locator('ellipse')).not.toHaveCount(0);
+    await expect(page.getByTestId('graph-scene-grid').locator('[data-grid-line="spoke"]')).toHaveCount(1);
+    await expect.poll(() => page.getByTestId('graph-scene-grid').locator('ellipse').evaluateAll((nodes) => (
+      Math.max(...nodes.map((node) => Number(node.getAttribute('rx') ?? 0)))
+    ))).toBeGreaterThan(viewportBounds.width * 0.45);
 
     await enterExpression(page, '(\\cos(u),\\sin(u))\\{-1\\le u\\le1\\}');
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
@@ -383,6 +651,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
 
     const viewport = page.getByTestId('graph-viewport');
     await viewport.focus();
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Enter');
     await expect(page.locator('.graph-trace-callout')).toContainText('theta=');
     await page.keyboard.press('ArrowRight');

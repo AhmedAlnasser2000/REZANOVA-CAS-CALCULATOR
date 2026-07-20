@@ -26,7 +26,6 @@ function sample(relation: Extract<GraphRelationIR, {
     parameterEnvironment: {},
     quality: 'settled',
     budgets: {
-      maximumRecursionDepth: 12,
       maximumSamples: 20_000,
       maximumTimeMs: 500,
       maximumVertices: 20_000,
@@ -122,7 +121,6 @@ describe('Graph implicit contour and region sampler', () => {
       right: expression(4, []),
     }, {
       budgets: {
-        maximumRecursionDepth: 4,
         maximumSamples: 60,
         maximumTimeMs: 500,
         maximumVertices: 24,

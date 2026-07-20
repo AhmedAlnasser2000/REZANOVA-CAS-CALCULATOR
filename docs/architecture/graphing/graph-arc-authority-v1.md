@@ -392,7 +392,6 @@ type SampledSceneRuntime = {
     style: GraphItemPresentationV1;
   }>;
   labels: GraphSceneLabelV1[];
-  grid: GraphGridSceneV1;
 };
 
 type SampledSceneSnapshotV1 = {
@@ -428,7 +427,6 @@ type SampledSceneSnapshotV1 = {
     style: GraphItemPresentationV1;
   }>;
   labels: GraphSceneLabelV1[];
-  grid: GraphGridSceneV1;
 };
 
 type GraphSceneLabelV1 = {
@@ -441,10 +439,11 @@ type GraphSceneLabelV1 = {
   plainText?: string;
 };
 
-type GraphGridSceneV1 = {
+type GraphGridSceneV2 = {
+  version: 2;
   kind: 'cartesian' | 'polar' | 'argand' | 'none';
-  majorLines: number[];
-  minorLines: number[];
+  lines: Array<{ lineId: string; role: 'major' | 'minor' | 'axis' | 'spoke'; x1: number; y1: number; x2: number; y2: number }>;
+  circles: Array<{ circleId: string; role: 'major' | 'minor'; center: { x: number; y: number }; radius: number }>;
   labels: GraphSceneLabelV1[];
   hysteresisKey: string;
 };
@@ -452,7 +451,7 @@ type GraphGridSceneV1 = {
 
 Runtime arrays are transferable performance data. Stable `pathId`, `regionId`, and `pointBatchId` values make region-boundary references and later hit-testing unambiguous without renderer authority. The snapshot is bounded, deterministic, JSON-safe, sorted by stable IDs, finite-number validated, and suitable for golden tests and SVG export. Neither contains renderer-specific types or objects. Strict inequalities emit open/dashed boundary semantics; inclusive inequalities emit closed/solid semantics. Region triangles and boundary geometry are distinct.
 
-Grid generation is scene-owned and screen-space aware: Cartesian ticks use `1, 2, 5 x 10^n`, hysteresis, minor subdivisions, and collision budgets. Polar grids use adaptive rings/spokes and one selected ring/ray for angle/radial labels. The Unit Circle is a separate optional teaching-layer scene item.
+Sampled geometry and its deterministic snapshot contain mathematical geometry only. `GraphGridSceneV2` is renderer-neutral but generated synchronously from the live camera on the main thread at most once per animation frame: Cartesian ticks use `1, 2, 5 x 10^n`, hysteresis, minor subdivisions, and collision budgets; polar grids use adaptive rings/spokes and restrained angle/radial labels even with the origin offscreen. Grid work never enters React, OOE, or the sampling worker. The Unit Circle remains a separate optional sampled teaching overlay.
 
 ### Renderer contracts
 
@@ -479,16 +478,26 @@ interface InteractiveGraphRenderer {
   readonly capabilities: GraphRendererCapabilities;
   mount(target: HTMLElement): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
-  render(frame: {
-    version: 1;
-    scene: SampledSceneRuntime;
-    viewport: GraphViewportV1;
-    policy: GraphRenderPolicy;
-  }): void;
+  setView(frame: GraphRendererViewFrameV1): void;
+  setScene(frame: GraphRendererSceneFrameV1 | null): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;
 }
+
+type GraphRendererViewFrameV1 = {
+  version: 1;
+  viewport: GraphViewportV1;
+  grid: GraphGridSceneV2;
+  policy: GraphRenderPolicy;
+};
+
+type GraphRendererSceneFrameV1 = {
+  version: 1;
+  scene: SampledSceneRuntime;
+  sourceViewport: GraphViewportV1;
+  policy: GraphRenderPolicy;
+};
 
 interface GraphSceneExporter {
   readonly format: 'svg' | 'png';
@@ -553,17 +562,17 @@ The headless adapter validates scene semantics and snapshots. SVG is the determi
 
 ## Sampling contract
 
-The sampler works in screen space and preserves explicit discontinuity breaks. Each interval/cell considers midpoint deviation, pixel segment length, finite/non-finite transitions, viewport-relative jumps, curvature/turn angle, known domain-boundary proximity, viewport exit/re-entry, recursion depth, sample count, and elapsed budget. Any refinement reason can split; no angle-only policy is sufficient.
+The sampler works in screen space and preserves explicit discontinuity breaks. Each interval/cell considers midpoint deviation, pixel segment length, finite/non-finite transitions, viewport-relative jumps, curvature/turn angle, known domain-boundary proximity, viewport exit/re-entry, numeric stagnation, sample count, and elapsed budget. Refinement is iterative rather than governed by a generic recursion-depth cutoff; any refinement reason can split, and no angle-only policy is sufficient.
 
 Sampling work is fair per visible item. Each route first produces a complete coarse viewport pass, then spends remaining slices on refinement; ordinary slice completion is internal evidence, not a user-facing mathematical restriction. Coordinate-isolated inequalities use their structured directed route and compact clipped fill rather than a generic full-cell mesh. Generic implicit refinements replace the scene only after a complete resolution pass, so row-major partial regions never appear.
 
-Graph-local parameters are document items. Finite scalar definitions such as `a=2` retain their authored source and compile once into a numeric parameter value; slider-created parameters record that distinct origin and begin at `1` over `-3..3` with step `0.1`. All dependent relations consume one parameter environment in `GraphSampleRequestV1`; Graphing never reads calculator Variables and never rewrites relation source. Slider input is latest-only with at most one preview request in flight, release requests settled refinement, and animation advances only after the current preview is consumed. Hidden dependent curves emit no geometry, while hidden parameter controls retain their document-local binding.
+Graph-local parameters are document items. Finite scalar definitions such as `a=2` retain their authored source and compile once into a numeric parameter value; slider-created parameters record that distinct origin and begin at `1` over `-3..3` with step `0.1`. All dependent relations consume one parameter environment in `GraphSampleRequestV2`; Graphing never reads calculator Variables and never rewrites relation source. Slider input is latest-only with at most one preview request in flight, release requests settled refinement, and animation advances only after the current preview is consumed. Hidden dependent curves emit no geometry, while hidden parameter controls retain their document-local binding.
 
-Pan and zoom transform the last complete overscanned scene once per animation frame and launch no sampling job during the gesture. Settlement commits the viewport and launches one latest-only preview followed by settled refinement. Revision-old geometry is non-traceable; a failed viewport refinement may retain the transformed scene as pending, while failed changed document/parameter mathematics clears outdated geometry rather than presenting it as current.
+The renderer has separate `setView(GraphRendererViewFrameV1)` and `setScene(GraphRendererSceneFrameV1 | null)` operations. Pan and zoom keep camera state in imperative refs, transform the last complete overscanned scene and regenerate the live grid once per animation frame, and launch no sampling job during the gesture. Settlement commits the viewport once after 180ms wheel quiet or pointer release, then launches one latest-only preview followed by settled refinement after 120ms idle. Pending/status changes never serialize geometry. Revision-old geometry is non-traceable; a failed viewport refinement may retain the transformed scene as visibly pending, while failed changed document/parameter mathematics clears outdated geometry rather than presenting it as current.
 
 Known domain facts pre-split or exclude intervals but never disable numeric guards. A non-finite transition opens a segment and requires re-entry validation. No line may bridge a suspected discontinuity merely because both endpoints are finite. Results report budget exhaustion and suspected/inconclusive regions rather than hiding missing geometry.
 
-Tracing reads the active scene plus safe local evaluator. Explicit-y traces by x, explicit-x by y, polar by theta, parametric by its parameter, and implicit contours by connected-branch arc position. Pointer movement never launches OOE. A settled trace may request exact analysis separately.
+Tracing uses a screen-space index built once per committed scene/view. Hover alone does not acquire a trace. A click near geometry selects the nearest item; subsequent pointer movement sweeps that item until an empty click, Escape, or a camera gesture clears it. Explicit-y traces by x, explicit-x by y, polar by theta, parametric by its parameter, point sets by point identity, and implicit/piecewise paths by indexed nearest position. Pointer movement updates the marker imperatively once per animation frame and never launches OOE or React work. Stale revisions remain non-traceable. A settled trace may request exact analysis separately.
 
 ## OOE contract
 
@@ -579,7 +588,7 @@ All three resolve to the `graphing` compartment. They use separate hosts because
 
 ### Request and result envelopes
 
-`GraphSampleRequestV1` contains version, request/workspace/document identity, a clone-safe classified relation snapshot, parameter environment and document/parameter/viewport revisions, viewport, CSS pixel dimensions, grid policy, quality (`preview` or `settled`), and explicit recursion/sample/time/vertex budgets. Its result repeats the identity and revision keys plus the viewport, completion/budget evidence, `SampledSceneRuntime` transferables, and a deterministic snapshot hash. The repeated viewport permits standalone result validation and hash verification without consulting mutable request state.
+`GraphSampleRequestV2` contains version, request/workspace/document identity, a clone-safe classified relation snapshot, parameter environment and document/parameter/viewport revisions, viewport, CSS pixel dimensions, optional Unit Circle overlay input, quality (`preview` or `settled`), and explicit sample/time/vertex emergency budgets. Grid policy and a generic recursion-depth cutoff are intentionally absent. Its result repeats the identity and revision keys plus the source viewport, completion/budget evidence, mathematical `SampledSceneRuntime` transferables, and a deterministic snapshot hash. The repeated viewport permits standalone result validation and hash verification without consulting mutable request state.
 
 `GraphAnalysisRequestV1` is defined above. The result contains matching document/parameter/request hashes and `GraphAnalysisEvidenceV1[]`. A viewport is included only for explicitly local numeric questions; exact analysis is otherwise viewport-independent.
 

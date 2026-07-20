@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GraphViewportV1, SampledSceneRuntime } from '../../lib/graphing';
 import { GraphSvgViewport } from './GraphSvgViewport';
@@ -47,7 +47,6 @@ const scene: SampledSceneRuntime = {
     },
   }],
   labels: [],
-  grid: { kind: 'none', majorLines: [], minorLines: [], labels: [], hysteresisKey: 'none' },
 };
 
 describe('GraphSvgViewport', () => {
@@ -97,12 +96,13 @@ describe('GraphSvgViewport', () => {
         onSizeChange={vi.fn()}
         onViewportChange={onViewportChange}
         pending={false}
-        scene={null}
+        scene={scene}
         viewport={viewport}
       />,
     );
 
     const host = screen.getByTestId('graph-viewport');
+    const path = document.querySelector('[data-path-id="explicit-x.path"]');
     Object.defineProperty(host, 'setPointerCapture', {
       configurable: true,
       value: vi.fn(),
@@ -118,6 +118,7 @@ describe('GraphSvgViewport', () => {
     }
 
     expect(onViewportChange).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-path-id="explicit-x.path"]')).toBe(path);
 
     fireEvent.pointerUp(host, { clientX: 140, clientY: 120, pointerId: 7 });
     expect(onViewportChange).toHaveBeenCalledTimes(1);
@@ -130,7 +131,7 @@ describe('GraphSvgViewport', () => {
     });
   });
 
-  it('coalesces a wheel burst into one settled viewport commit', () => {
+  it('coalesces a realistic wheel burst into one settled viewport commit', () => {
     vi.useFakeTimers();
     const onViewportChange = vi.fn();
     render(
@@ -146,10 +147,11 @@ describe('GraphSvgViewport', () => {
 
     const host = screen.getByTestId('graph-viewport');
     act(() => {
-      fireEvent.wheel(host, { clientX: 200, clientY: 160, deltaY: -120 });
-      vi.advanceTimersByTime(40);
-      fireEvent.wheel(host, { clientX: 200, clientY: 160, deltaY: -120 });
-      vi.advanceTimersByTime(79);
+      for (let index = 0; index < 12; index += 1) {
+        fireEvent.wheel(host, { clientX: 200, clientY: 160, deltaY: -24 });
+        if (index < 11) vi.advanceTimersByTime(95);
+      }
+      vi.advanceTimersByTime(179);
     });
     expect(onViewportChange).not.toHaveBeenCalled();
 
@@ -159,9 +161,95 @@ describe('GraphSvgViewport', () => {
     vi.useRealTimers();
   });
 
-  it('hit-tests points and provides keyboard trace stepping without viewport commits', () => {
-    const onViewportChange = vi.fn();
+  it('requires click acquisition and hides tracing while geometry is stale', async () => {
+    const { rerender } = render(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+    const host = screen.getByTestId('graph-viewport');
+    Object.defineProperty(host, 'setPointerCapture', { configurable: true, value: vi.fn() });
+    fireEvent.pointerMove(host, { clientX: 528, clientY: 200, pointerId: 4 });
+    expect(document.querySelector('.graph-trace-callout')).not.toBeVisible();
+    fireEvent.pointerDown(host, { button: 0, clientX: 548, clientY: 200, pointerId: 4 });
+    fireEvent.pointerUp(host, { clientX: 548, clientY: 200, pointerId: 4 });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('(1, 2)'));
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Trace point (1, 2)');
+    rerender(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+    expect(document.querySelector('.graph-trace-callout')).not.toBeVisible();
+    rerender(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+    expect(document.querySelector('.graph-trace-callout')).not.toBeVisible();
+  });
+
+  it('normalizes scaled client coordinates and acquires the closest point on the visible curve', async () => {
     render(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+    const host = screen.getByTestId('graph-viewport');
+    const canvas = document.querySelector<SVGSVGElement>('.graph-svg-canvas');
+    if (!canvas) throw new Error('Expected the SVG reference canvas.');
+    Object.defineProperty(host, 'setPointerCapture', { configurable: true, value: vi.fn() });
+    Object.defineProperty(canvas, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        bottom: 830, height: 780, left: 100, right: 1_348,
+        top: 50, width: 1_248, x: 100, y: 50, toJSON: () => ({}),
+      }),
+    });
+
+    const closestScreen = { x: 504, y: 275 };
+    const segmentLength = Math.hypot(48, -50);
+    const normal = { x: 50 / segmentLength, y: 48 / segmentLength };
+    const offsetScreen = {
+      x: closestScreen.x + normal.x * 12,
+      y: closestScreen.y + normal.y * 12,
+    };
+    const client = {
+      x: 100 + offsetScreen.x * 1.3,
+      y: 50 + offsetScreen.y * 1.3,
+    };
+    fireEvent.pointerDown(host, { button: 0, clientX: client.x, clientY: client.y, pointerId: 14 });
+    fireEvent.pointerUp(host, { clientX: client.x, clientY: client.y, pointerId: 14 });
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('(0.5, 0.5)'));
+    const marker = document.querySelector<HTMLElement>('.graph-trace-marker');
+    expect(marker).toHaveAttribute('data-trace-item-id', 'explicit-x');
+    expect(marker?.style.transform).toBe('translate3d(498px,269px,0)');
+  });
+
+  it('hit-tests points and preserves keyboard stepping across a scene refresh', async () => {
+    const onViewportChange = vi.fn();
+    const { rerender } = render(
       <GraphSvgViewport
         itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
         onSizeChange={vi.fn()}
@@ -180,13 +268,51 @@ describe('GraphSvgViewport', () => {
     fireEvent.pointerDown(host, { button: 0, clientX: 528, clientY: 200, pointerId: 9 });
     fireEvent.pointerUp(host, { clientX: 528, clientY: 200, pointerId: 9 });
     expect(screen.getByRole('status')).toHaveTextContent('(1, 2)');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Trace point (1, 2)');
     expect(onViewportChange).not.toHaveBeenCalled();
 
     fireEvent.keyDown(host, { key: 'ArrowRight' });
     expect(screen.getByRole('status')).toHaveTextContent('(3, 4)');
+    rerender(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={onViewportChange}
+        pending={false}
+        scene={{ ...scene }}
+        viewport={viewport}
+      />,
+    );
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('(3, 4)'));
     fireEvent.keyDown(host, { key: 'Escape' });
     expect(document.querySelector('.graph-trace-callout')).not.toBeVisible();
     fireEvent.keyDown(host, { key: 'Enter' });
+    expect(screen.getByRole('status')).toHaveTextContent('(1, 2)');
+  });
+
+  it('uses the wider touch target to lock a nearby point without changing drag behavior', () => {
+    render(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+    const host = screen.getByTestId('graph-viewport');
+    Object.defineProperty(host, 'setPointerCapture', { configurable: true, value: vi.fn() });
+    const touchEvent = (name: 'pointerdown' | 'pointerup') => {
+      const event = new MouseEvent(name, { bubbles: true, button: 0, clientX: 553, clientY: 200 });
+      Object.defineProperties(event, {
+        pointerId: { value: 12 },
+        pointerType: { value: 'touch' },
+      });
+      fireEvent(host, event);
+    };
+    touchEvent('pointerdown');
+    touchEvent('pointerup');
     expect(screen.getByRole('status')).toHaveTextContent('(1, 2)');
   });
 });

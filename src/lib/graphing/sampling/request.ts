@@ -1,8 +1,8 @@
 import {
   hashSampledSceneRuntime,
   validateGraphSampleRequest,
-  type GraphSampleRequestV1,
-  type GraphSampleResultV1,
+  type GraphSampleRequestV2,
+  type GraphSampleResultV2,
   type GraphStopReason,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
@@ -19,7 +19,6 @@ import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
 import { sampleImplicitGraphRelation } from './implicit';
 import { sampleGraphPiecewise } from './piecewise';
-import { buildGraphGridScene } from './grid';
 import { sampleParametricGraphRelation } from './parametric';
 
 export type GraphSampleRequestControl = {
@@ -30,7 +29,7 @@ export type GraphSampleRequestControl = {
 };
 
 export type GraphSampleExecution = {
-  result: GraphSampleResultV1;
+  result: GraphSampleResultV2;
   transferList: ArrayBuffer[];
 };
 
@@ -49,18 +48,18 @@ function budgetStop(detailCode: string): GraphStopReason {
 }
 
 function graphResult(
-  request: GraphSampleRequestV1,
+  request: GraphSampleRequestV2,
   input: {
-    scene: GraphSampleResultV1['scene'];
-    status: GraphSampleResultV1['status'];
+    scene: GraphSampleResultV2['scene'];
+    status: GraphSampleResultV2['status'];
     stopReasons: GraphStopReason[];
     sampleCount: number;
     vertexCount: number;
     elapsedMs: number;
   },
-): GraphSampleResultV1 {
+): GraphSampleResultV2 {
   return {
-    version: 1,
+    version: 2,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -79,24 +78,18 @@ function graphResult(
   };
 }
 
-function assembleEmptyScene(request: GraphSampleRequestV1) {
+function assembleEmptyScene(request: GraphSampleRequestV2) {
   const assembled = assembleSampledScene({
     revisions: request.revisions,
     viewport: request.viewport,
     paths: [],
-    grid: buildGraphGridScene({
-      viewport: request.viewport,
-      cssSize: request.cssSize,
-      policy: request.grid,
-      previousHysteresisKey: request.gridHysteresisKey,
-    }),
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
   return assembled.bundle.scene;
 }
 
 export function buildCancelledGraphSampleExecution(
-  request: GraphSampleRequestV1,
+  request: GraphSampleRequestV2,
   detailCode = 'host-cancellation',
 ): GraphSampleExecution {
   const scene = assembleEmptyScene(request);
@@ -114,7 +107,7 @@ export function buildCancelledGraphSampleExecution(
 }
 
 export async function runGraphSampleRequest(
-  input: GraphSampleRequestV1,
+  input: GraphSampleRequestV2,
   planCache = new GraphExpressionPlanCache(100),
   control: GraphSampleRequestControl = {},
 ): Promise<GraphSampleExecution> {
@@ -134,13 +127,12 @@ export async function runGraphSampleRequest(
   let budgetExhausted = false;
   const visibleItemCount = Math.max(1, request.items.filter((item) => item.visible).length);
   const fairBudgets = {
-    maximumRecursionDepth: request.budgets.maximumRecursionDepth,
     maximumSamples: Math.max(16, Math.floor(request.budgets.maximumSamples / visibleItemCount)),
     maximumTimeMs: Math.max(4, Math.floor(request.budgets.maximumTimeMs / visibleItemCount)),
     maximumVertices: Math.max(16, Math.floor(request.budgets.maximumVertices / visibleItemCount)),
   };
 
-  if (request.grid.unitCircle) {
+  if (request.overlays.unitCircle) {
     const coordinates: number[] = [];
     const parameterValues: number[] = [];
     for (let index = 0; index <= 96; index += 1) {
@@ -159,7 +151,6 @@ export async function runGraphSampleRequest(
         stats: {
           evaluatedSamples: parameterValues.length,
           emittedVertices: parameterValues.length,
-          maximumDepthReached: 0,
           elapsedMs: 0,
         },
       },
@@ -263,7 +254,6 @@ export async function runGraphSampleRequest(
         parameterEnvironment: request.parameterEnvironment,
         quality: request.quality,
         budgets: {
-          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
           maximumSamples: fairBudgets.maximumSamples,
           maximumTimeMs: Math.max(1, Math.floor(Math.min(
             fairBudgets.maximumTimeMs,
@@ -298,7 +288,6 @@ export async function runGraphSampleRequest(
         parameterEnvironment: request.parameterEnvironment,
         quality: request.quality,
         budgets: {
-          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
           maximumSamples: fairBudgets.maximumSamples,
           maximumTimeMs: Math.max(1, Math.floor(Math.min(
             fairBudgets.maximumTimeMs,
@@ -335,7 +324,6 @@ export async function runGraphSampleRequest(
             stats: {
               evaluatedSamples: 0,
               emittedVertices: boundary.coordinates.length / 2,
-              maximumDepthReached: 0,
               elapsedMs: sampled.stats.elapsedMs,
             },
           },
@@ -370,7 +358,6 @@ export async function runGraphSampleRequest(
         parameterEnvironment: request.parameterEnvironment,
         quality: request.quality,
         budgets: {
-          maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
           maximumSamples: fairBudgets.maximumSamples,
           maximumTimeMs: Math.max(1, Math.floor(Math.min(
             fairBudgets.maximumTimeMs,
@@ -409,7 +396,6 @@ export async function runGraphSampleRequest(
       parameterEnvironment: request.parameterEnvironment,
       quality: request.quality,
       budgets: {
-        maximumRecursionDepth: fairBudgets.maximumRecursionDepth,
         maximumSamples: fairBudgets.maximumSamples,
         maximumTimeMs: Math.max(1, Math.floor(Math.min(
           fairBudgets.maximumTimeMs,
@@ -443,12 +429,6 @@ export async function runGraphSampleRequest(
     paths,
     regions,
     pointBatches,
-    grid: buildGraphGridScene({
-      viewport: request.viewport,
-      cssSize: request.cssSize,
-      policy: request.grid,
-      previousHysteresisKey: request.gridHysteresisKey,
-    }),
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
   const previewRefinementExhausted = request.quality === 'preview' && budgetExhausted;
@@ -471,7 +451,7 @@ export async function runGraphSampleRequest(
   return { result, transferList: assembled.bundle.transferList };
 }
 
-export function releaseGraphSampleResultBuffers(result: GraphSampleResultV1) {
+export function releaseGraphSampleResultBuffers(result: GraphSampleResultV2) {
   const transfers = collectGraphSceneTransferables(result.scene);
   if (!transfers.ok || transfers.transferList.length === 0) return 0;
   const releasedBytes = transfers.transferList.reduce(

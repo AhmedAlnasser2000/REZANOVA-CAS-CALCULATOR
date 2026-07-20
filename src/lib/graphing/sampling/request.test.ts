@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateGraphSampleResult,
-  type GraphSampleRequestV1,
+  type GraphSampleRequestV2,
 } from '../contracts';
 import {
   releaseGraphSampleResultBuffers,
   runGraphSampleRequest,
 } from './request';
 
-function request(): GraphSampleRequestV1 {
+function request(): GraphSampleRequestV2 {
   return {
-    version: 1,
+    version: 2,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -48,17 +48,9 @@ function request(): GraphSampleRequestV1 {
       yMax: 5,
     },
     cssSize: { width: 1_000, height: 500 },
-    grid: {
-      kind: 'cartesian',
-      major: true,
-      minor: true,
-      axisNumbers: true,
-      angleLabels: false,
-      unitCircle: false,
-    },
+    overlays: { unitCircle: false },
     quality: 'preview',
     budgets: {
-      maximumRecursionDepth: 16,
       maximumSamples: 8_192,
       maximumTimeMs: 150,
       maximumVertices: 16_384,
@@ -306,17 +298,13 @@ describe('Graph sample request runtime', () => {
       ?.parameterValues?.[0]).toBeCloseTo(0);
   });
 
-  it('keeps Unit Circle as an independent teaching overlay and makes grid data scene-authoritative', async () => {
+  it('keeps Unit Circle independent while excluding viewport grid data from worker output', async () => {
     const teaching = request();
     teaching.items = [];
-    teaching.grid = {
-      kind: 'polar', major: true, minor: true,
-      axisNumbers: true, angleLabels: true, unitCircle: true,
-    };
+    teaching.overlays = { unitCircle: true };
     const execution = await runGraphSampleRequest(teaching);
 
-    expect(execution.result.scene.grid.kind).toBe('polar');
-    expect(execution.result.scene.grid.majorLines.length).toBeGreaterThan(0);
+    expect('grid' in execution.result.scene).toBe(false);
     expect(execution.result.scene.paths).toHaveLength(1);
     expect(execution.result.scene.paths[0]).toMatchObject({
       itemId: 'graph-overlay.unit-circle',

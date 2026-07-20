@@ -102,6 +102,89 @@ describe('Graph explicit screen-space sampler', () => {
     expectBoundedPath(result);
   });
 
+  it('extends logarithmic domain boundaries to the visible viewport edge', () => {
+    const result = sample(explicitY(['Log', ['Sin', 'x']]), {
+      viewport: { ...VIEWPORT, xMin: -13, xMax: 17, yMin: -14, yMax: 2 },
+      cssSize: { width: 1_200, height: 680 },
+      budgets: minimumSamplingBudgets({
+        maximumSamples: 5_000,
+        maximumVertices: 5_000,
+      }),
+    });
+    const centralSegment = [...result.segmentOffsets].map((start, index) => {
+      const end = result.segmentOffsets[index + 1] ?? result.independentValues.length;
+      return { start, end };
+    }).find(({ start, end }) => (
+      result.independentValues[start] >= 0
+      && result.independentValues[end - 1] <= Math.PI + 0.01
+    ));
+    expect(centralSegment).toBeDefined();
+    if (!centralSegment) throw new Error('Expected the central log(sin(x)) branch.');
+    const firstY = result.coordinates[centralSegment.start * 2 + 1];
+    const lastY = result.coordinates[(centralSegment.end - 1) * 2 + 1];
+    expect(firstY).toBeLessThanOrEqual(-14);
+    expect(lastY).toBeLessThanOrEqual(-14);
+    expect(result.status).toBe('complete');
+    expectBoundedPath(result);
+  });
+
+  it('converges domain and asymptote branches to viewport edges without a depth cutoff', () => {
+    const viewport = { ...VIEWPORT, xMin: -4, xMax: 4, yMin: -12, yMax: 12 };
+    const logarithm = sample(explicitY(['Log', 'x']), {
+      viewport,
+      cssSize: { width: 1_000, height: 700 },
+    });
+    expect(logarithm.status).toBe('complete');
+    expect(logarithm.coordinates[1]).toBeLessThanOrEqual(viewport.yMin);
+
+    const reciprocal = sample(explicitY(['Divide', 1, 'x']), {
+      viewport,
+      cssSize: { width: 1_000, height: 700 },
+    });
+    expect(reciprocal.status).toBe('complete');
+    expect(reciprocal.segmentOffsets.length).toBeGreaterThanOrEqual(2);
+    const reciprocalSegments = [...reciprocal.segmentOffsets].map((start, index) => {
+      const end = reciprocal.segmentOffsets[index + 1] ?? reciprocal.independentValues.length;
+      return [...reciprocal.coordinates.slice(start * 2, end * 2)]
+        .filter((_, coordinateIndex) => coordinateIndex % 2 === 1);
+    });
+    expect(reciprocalSegments.some((values) => Math.min(...values) <= viewport.yMin)).toBe(true);
+    expect(reciprocalSegments.some((values) => Math.max(...values) >= viewport.yMax)).toBe(true);
+
+    const tangent = sample(explicitY(['Tan', 'x']), {
+      viewport,
+      cssSize: { width: 1_000, height: 700 },
+    });
+    expect(tangent.status).toBe('complete');
+    expect(tangent.segmentOffsets.length).toBeGreaterThanOrEqual(3);
+    expectBoundedPath(logarithm);
+    expectBoundedPath(reciprocal);
+    expectBoundedPath(tangent);
+  });
+
+  it('keeps repeated logarithmic branches smooth in a wide settled view', () => {
+    const result = sample(explicitY(['Log', ['Sin', 'x']]), {
+      viewport: { ...VIEWPORT, xMin: -25, xMax: 25, yMin: -15, yMax: 15 },
+      cssSize: { width: 1_600, height: 820 },
+      budgets: minimumSamplingBudgets({
+        maximumSamples: 12_000,
+        maximumVertices: 12_000,
+      }),
+    });
+    const fullBranch = [...result.segmentOffsets].map((start, index) => {
+      const end = result.segmentOffsets[index + 1] ?? result.independentValues.length;
+      return { start, end };
+    }).find(({ start, end }) => (
+      result.independentValues[start] >= 0
+      && result.independentValues[end - 1] <= Math.PI + 0.01
+    ));
+    expect(fullBranch).toBeDefined();
+    if (!fullBranch) throw new Error('Expected a full log(sin(x)) branch.');
+    expect(fullBranch.end - fullBranch.start).toBeGreaterThanOrEqual(20);
+    expect(result.status).toBe('complete');
+    expectBoundedPath(result);
+  });
+
   it('keeps domain boundaries and viewport re-entry truthful', () => {
     const squareRoot = sample(explicitY(['Sqrt', 'x']));
     expect(Math.min(...squareRoot.independentValues)).toBeGreaterThanOrEqual(0);

@@ -37,9 +37,6 @@ export function inspectHeadlessGraphScene(
   if (!isStableOrder(input.scene.labels.map((label) => label.labelId))) {
     return invalid('Runtime scene labels are not in stable identity order.', '$.scene.labels');
   }
-  if (!isStableOrder(input.scene.grid.labels.map((label) => label.labelId))) {
-    return invalid('Runtime grid labels are not in stable identity order.', '$.scene.grid.labels');
-  }
   const ownedBuffers = graphSceneTypedArrayBuffers(input.scene);
   if (new Set(ownedBuffers).size !== ownedBuffers.length) {
     return invalid('Runtime scene typed arrays do not have unique buffer ownership.');
@@ -78,7 +75,7 @@ export function inspectHeadlessGraphScene(
         (count, batch) => count + batch.coordinates.length / 2,
         0,
       ),
-      labelCount: input.scene.labels.length + input.scene.grid.labels.length,
+      labelCount: input.scene.labels.length,
       transferableByteLength: input.transferList.reduce(
         (count, buffer) => count + buffer.byteLength,
         0,

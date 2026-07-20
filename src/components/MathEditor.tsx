@@ -245,6 +245,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       <math-field
         className={className}
         data-testid={dataTestId}
+        tabIndex={readOnly ? -1 : 0}
         ref={(node: MathfieldElement | null) => {
           elementRef.current = node;
         }}

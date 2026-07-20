@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { SampledSceneRuntime } from '../../lib/graphing';
 import {
+  buildGraphTraceIndex,
   firstGraphTraceTarget,
   hitTestGraphScene,
+  hitTestGraphTraceIndex,
   stepGraphTraceTarget,
   traceGraphPathAtPointer,
 } from './graph-hit-testing';
@@ -41,7 +43,6 @@ const scene: SampledSceneRuntime = {
     coordinates: new Float64Array([2, 3, -2, -3]), style,
   }],
   regions: [], labels: [],
-  grid: { kind: 'none', majorLines: [], minorLines: [], labels: [], hysteresisKey: 'none' },
 };
 
 describe('Graph scene hit testing and tracing', () => {
@@ -54,6 +55,46 @@ describe('Graph scene hit testing and tracing', () => {
     });
   });
 
+  it('indexes a point across neighboring cells for the full touch corridor', () => {
+    const index = buildGraphTraceIndex(scene, viewport, size);
+    expect(hitTestGraphTraceIndex({
+      index,
+      scene,
+      screen: { x: 725, y: 200 },
+      maximumDistancePixels: 28,
+      itemId: 'points',
+    })).toMatchObject({ kind: 'point', itemId: 'points', pointIndex: 0 });
+  });
+
+  it('projects to the closest segment point and keeps a selected path authoritative', () => {
+    const overlapping: SampledSceneRuntime = {
+      ...scene,
+      paths: [
+        scene.paths[0]!,
+        {
+          ...scene.paths[0]!,
+          pathId: 'crossing.path',
+          itemId: 'crossing',
+          coordinates: new Float64Array([-5, 5, 0, 0, 5, -5]),
+        },
+      ],
+      pointBatches: [],
+    };
+    const index = buildGraphTraceIndex(overlapping, viewport, size);
+    expect(hitTestGraphTraceIndex({
+      index,
+      scene: overlapping,
+      screen: { x: 625, y: 390 },
+      maximumDistancePixels: 30,
+      pathId: 'explicit-y.path',
+    })).toMatchObject({
+      itemId: 'explicit-y',
+      pathId: 'explicit-y.path',
+      world: { x: expect.closeTo(1.175, 10), y: expect.closeTo(1.175, 10) },
+      screen: { x: 617.5, y: 382.5 },
+    });
+  });
+
   it('traces explicit-y by x and explicit-x by y without sampling work', () => {
     expect(traceGraphPathAtPointer({
       scene, viewport, size, itemId: 'explicit-y', relationKind: 'explicit-y',
@@ -63,6 +104,10 @@ describe('Graph scene hit testing and tracing', () => {
       scene, viewport, size, itemId: 'explicit-x', relationKind: 'explicit-x',
       screen: { x: 20, y: 250 },
     })).toMatchObject({ world: { x: 2, y: 2.5 }, parameterValue: 2.5 });
+    expect(traceGraphPathAtPointer({
+      scene, viewport, size, itemId: 'explicit-y', relationKind: 'explicit-y',
+      screen: { x: 750, y: 400 }, maximumDistancePixels: 30,
+    })).toBeNull();
   });
 
   it('offers deterministic keyboard entry and stepping by point identity', () => {

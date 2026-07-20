@@ -104,14 +104,6 @@ function validatePointBatchInput(entry: GraphPointBatchSceneInput, index: number
   return null;
 }
 
-const emptyGrid = () => ({
-  kind: 'none' as const,
-  majorLines: [],
-  minorLines: [],
-  labels: [],
-  hysteresisKey: 'none:v1',
-});
-
 export function assembleSampledScene(
   input: GraphSceneAssemblyInput,
 ): GraphSceneAssemblyResult {
@@ -180,12 +172,6 @@ export function assembleSampledScene(
       style: entry.style,
     })),
     labels: [...(input.labels ?? [])].sort((left, right) => left.labelId.localeCompare(right.labelId)),
-    grid: input.grid ? {
-      ...input.grid,
-      majorLines: [...input.grid.majorLines],
-      minorLines: [...input.grid.minorLines],
-      labels: [...input.grid.labels].sort((left, right) => left.labelId.localeCompare(right.labelId)),
-    } : emptyGrid(),
   };
   const validation = validateSampledSceneRuntimeStructure(scene);
   if (!validation.ok) return { ok: false, failure: validation.failure };

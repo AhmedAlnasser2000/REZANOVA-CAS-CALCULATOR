@@ -21,7 +21,7 @@ import type {
   GraphRenderPolicy,
   GraphRendererCapabilities,
   GraphRevisionSetV1,
-  GraphSampleRequestV1,
+  GraphSampleRequestV2,
   GraphSourceV1,
   GraphStopReason,
   GraphSurfaceStateV1,
@@ -306,14 +306,13 @@ const renderPolicySchema: z.ZodType<GraphRenderPolicy> = z.strictObject({
 });
 
 const samplingBudgetsSchema = z.strictObject({
-  maximumRecursionDepth: z.number().int().min(1).max(32),
   maximumSamples: z.number().int().min(1).max(2_000_000),
   maximumTimeMs: z.number().int().min(1).max(10_000),
   maximumVertices: z.number().int().min(1).max(4_000_000),
 });
 
 const sampleRequestSchema = z.strictObject({
-  version: z.literal(1), requestId: idSchema, workspaceInstanceId: idSchema,
+  version: z.literal(2), requestId: idSchema, workspaceInstanceId: idSchema,
   documentId: idSchema, revisions: sampleRequestRevisionsSchema,
   items: z.array(itemSchema)
     .max(GRAPH_DOCUMENT_MAX_ITEMS)
@@ -324,11 +323,10 @@ const sampleRequestSchema = z.strictObject({
     width: z.number().int().positive().max(16_384),
     height: z.number().int().positive().max(16_384),
   }),
-  grid: gridPolicySchema,
-  gridHysteresisKey: z.string().max(160).optional(),
+  overlays: z.strictObject({ unitCircle: z.boolean() }),
   quality: z.enum(['preview', 'settled']),
   budgets: samplingBudgetsSchema,
-}) as unknown as z.ZodType<GraphSampleRequestV1>;
+}) as unknown as z.ZodType<GraphSampleRequestV2>;
 
 export type GraphContractValidationFailure = {
   reason: 'structure' | 'condition-depth' | 'condition-clause-limit';

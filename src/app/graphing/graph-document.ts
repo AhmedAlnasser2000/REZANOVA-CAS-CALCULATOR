@@ -73,6 +73,45 @@ export function graphPiecewiseBranchValueLatex(
     : '';
 }
 
+export function buildGraphPiecewiseItemFromAuthoringDraft(input: {
+  itemId: string;
+  sourceRevision: number;
+  index: number;
+  target: 'y' | 'x';
+  branches: Array<{ branchId: string; valueLatex: string; conditionLatex: string }>;
+  previous?: Extract<GraphItemSpecV1, { kind: 'piecewise' }>;
+}): Extract<GraphItemSpecV1, { kind: 'piecewise' }> | null {
+  const branches: Extract<GraphItemSpecV1, { kind: 'piecewise' }>['piecewise']['branches'] = [];
+  for (const branch of input.branches) {
+    if (!branch.valueLatex.trim() || !branch.conditionLatex.trim()) return null;
+    const parsedValue = parseGraphLatexToStructuralMathJson(branch.valueLatex);
+    const parsedCondition = parseGraphLatexToStructuralMathJson(branch.conditionLatex);
+    if (!parsedValue.ok || !parsedCondition.ok) return null;
+    const value = adaptGraphExpressionMathJson(parsedValue.mathJson, '$.guided.value');
+    const condition = parseGraphConditionMathJson(parsedCondition.mathJson, '$.guided.condition');
+    if (!value.ok || !condition.ok) return null;
+    branches.push({
+      branchId: branch.branchId,
+      relation: input.target === 'x'
+        ? { kind: 'explicit-x', rhs: value.expression }
+        : { kind: 'explicit-y', origin: 'authored-relation', rhs: value.expression },
+      condition: condition.condition,
+    });
+  }
+  if (branches.length < 2) return null;
+  const item: Extract<GraphItemSpecV1, { kind: 'piecewise' }> = {
+    version: 1,
+    kind: 'piecewise',
+    itemId: input.itemId,
+    source: { sourceKind: 'mathlive-latex', sourceLatex: '', sourceRevision: input.sourceRevision },
+    piecewise: { version: 1, branches },
+    visible: input.previous?.visible ?? true,
+    presentation: input.previous?.presentation ?? presentation(input.index),
+  };
+  item.source.sourceLatex = presentationPiecewiseLatex(item);
+  return item;
+}
+
 function presentationPiecewiseLatex(item: Extract<GraphItemSpecV1, { kind: 'piecewise' }>) {
   const target = item.piecewise.branches[0]?.relation.kind === 'explicit-x' ? 'x' : 'y';
   const rows = item.piecewise.branches.map((branch) => (

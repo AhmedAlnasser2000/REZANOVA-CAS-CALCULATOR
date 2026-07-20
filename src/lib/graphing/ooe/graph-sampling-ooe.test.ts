@@ -15,7 +15,7 @@ import {
   getLatestOoeDiagnostics,
 } from '../../ooe/diagnostics/diagnostics-buffer';
 import { requestWorkspaceTabJobCancellation } from '../../../app/runtime/workspaceTabJobs';
-import type { GraphSampleRequestV1 } from '../contracts';
+import type { GraphSampleRequestV2 } from '../contracts';
 import { runGraphSampleRequest } from '../sampling/request';
 import { GraphSamplingApplicationHost } from './application-host';
 import {
@@ -41,9 +41,9 @@ vi.mock('../../ooe/bridge-schema/ooe-bridge', async (importOriginal) => {
   };
 });
 
-function request(overrides: Partial<GraphSampleRequestV1> = {}): GraphSampleRequestV1 {
+function request(overrides: Partial<GraphSampleRequestV2> = {}): GraphSampleRequestV2 {
   return {
-    version: 1,
+    version: 2,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -81,17 +81,9 @@ function request(overrides: Partial<GraphSampleRequestV1> = {}): GraphSampleRequ
       yMax: 5,
     },
     cssSize: { width: 1_000, height: 500 },
-    grid: {
-      kind: 'cartesian',
-      major: true,
-      minor: true,
-      axisNumbers: true,
-      angleLabels: false,
-      unitCircle: false,
-    },
+    overlays: { unitCircle: false },
     quality: 'preview',
     budgets: {
-      maximumRecursionDepth: 16,
       maximumSamples: 8_192,
       maximumTimeMs: 150,
       maximumVertices: 16_384,
@@ -173,6 +165,7 @@ class FakeGraphWorker implements GraphSamplingWorkerLike {
   }
 
   postMessage(message: GraphSamplingWorkerInboundMessage) {
+    if (message.kind === 'cancel') return;
     if (this.behavior === 'silent') return;
     queueMicrotask(() => this.emit({ kind: 'started', requestId: message.requestId }));
     void runGraphSampleRequest(message.request).then((execution) => {
@@ -249,6 +242,25 @@ describe('Graph sampling OOE runtime', () => {
     });
     host.dispose();
     expect(worker.terminated).toBe(true);
+  });
+
+  it('supersedes ordinary work cooperatively without replacing the retained worker', async () => {
+    const worker = new FakeGraphWorker();
+    const host = new GraphSamplingApplicationHost({ createWorker: () => worker });
+    const context = {
+      registryId: 'test', shouldCancel: () => false, checkpoint: () => undefined,
+      yieldIfBudgetExceeded: async () => false,
+    };
+    const firstPromise = host.run(request(), context);
+    await waitForHostRequest(host);
+    const second = await host.run(request({ requestId: 'graph-request-latest' }), context);
+    const first = await firstPromise;
+
+    expect(first.hostExecution).toMatchObject({ kind: 'worker-cancelled', termination: 'cooperative' });
+    expect(second.hostExecution.kind).toBe('worker');
+    expect(worker.terminated).toBe(false);
+    expect(host.evidence.workerGenerationCount).toBe(1);
+    host.dispose();
   });
 
   it('keeps worker and cooperative fallback scene semantics identical', async () => {

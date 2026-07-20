@@ -20,10 +20,11 @@ describe('Graph renderer-neutral adaptive grid', () => {
       },
     });
     expect(grid.kind).toBe('cartesian');
-    expect(grid.majorLines.length % 4).toBe(0);
-    expect(grid.minorLines.length % 4).toBe(0);
+    expect(grid.version).toBe(2);
+    expect(grid.lines.some((line) => line.role === 'major')).toBe(true);
+    expect(grid.lines.some((line) => line.role === 'minor')).toBe(true);
     expect(grid.labels.length).toBeLessThanOrEqual(28);
-    expect(grid.majorLines.every(Number.isFinite)).toBe(true);
+    expect(grid.lines.every((line) => [line.x1, line.y1, line.x2, line.y2].every(Number.isFinite))).toBe(true);
     expect(grid.hysteresisKey).toMatch(/^cartesian:/u);
     const nearThreshold = buildGraphGridScene({
       viewport: { ...viewport, xMax: 10.2 },
@@ -47,7 +48,8 @@ describe('Graph renderer-neutral adaptive grid', () => {
       },
     });
     expect(grid.kind).toBe('polar');
-    expect(grid.majorLines.length).toBeGreaterThan(48);
+    expect(grid.circles.length).toBeGreaterThan(2);
+    expect(grid.lines.filter((line) => line.role === 'spoke').length).toBeGreaterThanOrEqual(8);
     expect(grid.labels.filter((label) => label.labelId.startsWith('grid:theta:')).length)
       .toBeLessThanOrEqual(12);
     expect(grid.labels.filter((label) => label.labelId.startsWith('grid:r:')).every(

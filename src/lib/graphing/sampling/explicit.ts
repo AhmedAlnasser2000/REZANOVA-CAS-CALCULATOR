@@ -20,18 +20,23 @@ type SamplingQualityPolicy = {
   turnToleranceRadians: number;
 };
 
+type RefinementInterval = {
+  left: SamplePoint;
+  right: SamplePoint;
+};
+
 const QUALITY_POLICY: Record<'preview' | 'settled', SamplingQualityPolicy> = {
   preview: {
     initialIntervals: 12,
-    maximumSegmentPixels: 56,
-    midpointTolerancePixels: 2.5,
-    turnToleranceRadians: 0.45,
+    maximumSegmentPixels: 24,
+    midpointTolerancePixels: 1.2,
+    turnToleranceRadians: 0.25,
   },
   settled: {
     initialIntervals: 24,
-    maximumSegmentPixels: 28,
-    midpointTolerancePixels: 0.8,
-    turnToleranceRadians: 0.2,
+    maximumSegmentPixels: 10,
+    midpointTolerancePixels: 0.35,
+    turnToleranceRadians: 0.1,
   },
 };
 
@@ -122,7 +127,6 @@ export function sampleExplicitGraphRelation(
   const environment: Record<string, number> = { ...input.parameterEnvironment };
   const samples = new Map<number, SamplePoint>();
   const breakPairs = new Set<string>();
-  let maximumDepthReached = 0;
   let stop: ReturnType<typeof samplingStop> | null = null;
 
   const visibleIndependentMinimum = input.plan.relationKind === 'explicit-y'
@@ -177,62 +181,98 @@ export function sampleExplicitGraphRelation(
     return point;
   };
 
-  const refine = (left: SamplePoint, right: SamplePoint, depth: number): void => {
-    maximumDepthReached = Math.max(maximumDepthReached, depth);
-    if (stop) {
-      markBreak(left, right);
-      return;
+  const convergeFiniteBoundaryToViewport = (
+    finiteEndpoint: SamplePoint,
+    nonFiniteEndpoint: SamplePoint,
+  ) => {
+    if (!finiteEndpoint.finite || nonFiniteEndpoint.finite) return null;
+    let finite = finiteEndpoint;
+    let nonFinite = nonFiniteEndpoint;
+    while (!stop) {
+      if (outsideSide(
+        dependentValue(finite, input.plan.relationKind),
+        dependent.minimum,
+        dependent.maximum,
+      ) !== 0) {
+        return { finite, nonFinite };
+      }
+      const independent = finite.independent
+        + (nonFinite.independent - finite.independent) / 2;
+      if (independent === finite.independent || independent === nonFinite.independent) {
+        return { finite, nonFinite };
+      }
+      const point = evaluateAt(independent);
+      if (!point) return { finite, nonFinite };
+      if (!point.finite) {
+        nonFinite = point;
+        continue;
+      }
+      finite = point;
     }
-    const middleValue = left.independent + (right.independent - left.independent) / 2;
-    if (middleValue === left.independent || middleValue === right.independent) return;
-    const middle = evaluateAt(middleValue);
-    if (!middle) {
-      markBreak(left, right);
-      return;
-    }
-    const finiteTransition = left.finite !== middle.finite || middle.finite !== right.finite;
-    let shouldRefine = finiteTransition;
-    let suspectedDiscontinuity = finiteTransition || !middle.finite;
+    return { finite, nonFinite };
+  };
 
-    if (left.finite && middle.finite && right.finite) {
-      const leftScreen = metricScreenPoint(left, input.viewport, input.cssSize);
-      const middleScreen = metricScreenPoint(middle, input.viewport, input.cssSize);
-      const rightScreen = metricScreenPoint(right, input.viewport, input.cssSize);
-      const chordMiddle = {
-        x: (leftScreen.x + rightScreen.x) / 2,
-        y: (leftScreen.y + rightScreen.y) / 2,
-      };
-      const midpointDeviation = distance(middleScreen, chordMiddle);
-      const maximumSegment = Math.max(
-        distance(leftScreen, middleScreen),
-        distance(middleScreen, rightScreen),
+  const convergeTransition = (left: SamplePoint, right: SamplePoint) => {
+    const boundary = convergeFiniteBoundaryToViewport(
+      left.finite ? left : right,
+      left.finite ? right : left,
+    );
+    if (boundary) markBreak(boundary.finite, boundary.nonFinite);
+    return boundary;
+  };
+
+  const pending: RefinementInterval[] = [];
+  const queueFiniteRemainder = (left: SamplePoint, right: SamplePoint) => {
+    if (!left.finite || !right.finite || left.independent === right.independent) return;
+    pending.push({ left, right });
+  };
+  const refineFiniteInterval = (
+    left: SamplePoint,
+    middle: SamplePoint,
+    right: SamplePoint,
+  ) => {
+    let shouldRefine = false;
+    let suspectedDiscontinuity = false;
+
+    const leftScreen = metricScreenPoint(left, input.viewport, input.cssSize);
+    const middleScreen = metricScreenPoint(middle, input.viewport, input.cssSize);
+    const rightScreen = metricScreenPoint(right, input.viewport, input.cssSize);
+    const chordMiddle = {
+      x: (leftScreen.x + rightScreen.x) / 2,
+      y: (leftScreen.y + rightScreen.y) / 2,
+    };
+    const midpointDeviation = distance(middleScreen, chordMiddle);
+    const maximumSegment = Math.max(
+      distance(leftScreen, middleScreen),
+      distance(middleScreen, rightScreen),
+    );
+    const angle = turnAngle(leftScreen, middleScreen, rightScreen);
+    const leftDependent = dependentValue(left, input.plan.relationKind);
+    const middleDependent = dependentValue(middle, input.plan.relationKind);
+    const rightDependent = dependentValue(right, input.plan.relationKind);
+    const leftSide = outsideSide(leftDependent, dependent.minimum, dependent.maximum);
+    const middleSide = outsideSide(middleDependent, dependent.minimum, dependent.maximum);
+    const rightSide = outsideSide(rightDependent, dependent.minimum, dependent.maximum);
+    const viewportReentry = leftSide === rightSide && leftSide !== 0 && middleSide !== leftSide;
+    const whollyOffscreenSameSide = leftSide !== 0
+      && leftSide === middleSide
+      && middleSide === rightSide;
+    const largeJump = Math.abs(rightDependent - leftDependent) > dependentSpan * 4;
+    suspectedDiscontinuity = largeJump
+      && midpointDeviation > Math.max(input.cssSize.width, input.cssSize.height) * 0.35;
+    shouldRefine = (!whollyOffscreenSameSide && (
+      midpointDeviation > policy.midpointTolerancePixels
+      || maximumSegment > policy.maximumSegmentPixels
+      || angle > policy.turnToleranceRadians
+    ))
+      || viewportReentry
+      || suspectedDiscontinuity;
+
+    if (shouldRefine) {
+      pending.push(
+        { left: middle, right },
+        { left, right: middle },
       );
-      const angle = turnAngle(leftScreen, middleScreen, rightScreen);
-      const leftDependent = dependentValue(left, input.plan.relationKind);
-      const middleDependent = dependentValue(middle, input.plan.relationKind);
-      const rightDependent = dependentValue(right, input.plan.relationKind);
-      const leftSide = outsideSide(leftDependent, dependent.minimum, dependent.maximum);
-      const middleSide = outsideSide(middleDependent, dependent.minimum, dependent.maximum);
-      const rightSide = outsideSide(rightDependent, dependent.minimum, dependent.maximum);
-      const viewportReentry = leftSide === rightSide && leftSide !== 0 && middleSide !== leftSide;
-      const whollyOffscreenSameSide = leftSide !== 0
-        && leftSide === middleSide
-        && middleSide === rightSide;
-      const largeJump = Math.abs(rightDependent - leftDependent) > dependentSpan * 4;
-      suspectedDiscontinuity = largeJump
-        && midpointDeviation > Math.max(input.cssSize.width, input.cssSize.height) * 0.35;
-      shouldRefine = (!whollyOffscreenSameSide && (
-        midpointDeviation > policy.midpointTolerancePixels
-        || maximumSegment > policy.maximumSegmentPixels
-        || angle > policy.turnToleranceRadians
-      ))
-        || viewportReentry
-        || suspectedDiscontinuity;
-    }
-
-    if (shouldRefine && depth < input.budgets.maximumRecursionDepth) {
-      refine(left, middle, depth + 1);
-      refine(middle, right, depth + 1);
       return;
     }
     if (suspectedDiscontinuity) {
@@ -246,6 +286,49 @@ export function sampleExplicitGraphRelation(
         : Number.POSITIVE_INFINITY;
       if (leftToMiddle >= middleToRight) markBreak(left, middle);
       else markBreak(middle, right);
+    }
+  };
+
+  const refineToScreenConvergence = () => {
+    while (pending.length > 0 && !stop) {
+      const interval = pending.pop()!;
+      if (interval.left.finite !== interval.right.finite) {
+        const boundary = convergeTransition(interval.left, interval.right);
+        if (boundary) {
+          if (interval.left.finite) queueFiniteRemainder(interval.left, boundary.finite);
+          else queueFiniteRemainder(boundary.finite, interval.right);
+        }
+        continue;
+      }
+      const middleValue = interval.left.independent
+        + (interval.right.independent - interval.left.independent) / 2;
+      if (middleValue === interval.left.independent || middleValue === interval.right.independent) {
+        if (interval.left.finite !== interval.right.finite) markBreak(interval.left, interval.right);
+        continue;
+      }
+      const middle = evaluateAt(middleValue);
+      if (!middle) {
+        markBreak(interval.left, interval.right);
+        continue;
+      }
+      if (!interval.left.finite && !middle.finite && !interval.right.finite) continue;
+      if (interval.left.finite !== middle.finite) {
+        const boundary = convergeTransition(interval.left, middle);
+        if (boundary) {
+          if (interval.left.finite) queueFiniteRemainder(interval.left, boundary.finite);
+          else queueFiniteRemainder(boundary.finite, middle);
+        }
+      }
+      if (middle.finite !== interval.right.finite) {
+        const boundary = convergeTransition(middle, interval.right);
+        if (boundary) {
+          if (middle.finite) queueFiniteRemainder(middle, boundary.finite);
+          else queueFiniteRemainder(boundary.finite, interval.right);
+        }
+      }
+      if (interval.left.finite && middle.finite && interval.right.finite) {
+        refineFiniteInterval(interval.left, middle, interval.right);
+      }
     }
   };
 
@@ -264,8 +347,9 @@ export function sampleExplicitGraphRelation(
       seedPoints.push(point);
     }
     for (let index = 0; index + 1 < seedPoints.length; index += 1) {
-      refine(seedPoints[index], seedPoints[index + 1], 0);
+      pending.push({ left: seedPoints[index], right: seedPoints[index + 1] });
     }
+    refineToScreenConvergence();
   }
 
   const ordered = [...samples.values()].sort((left, right) => left.independent - right.independent);
@@ -330,7 +414,6 @@ export function sampleExplicitGraphRelation(
     stats: {
       evaluatedSamples: samples.size,
       emittedVertices: coordinates.length / 2,
-      maximumDepthReached,
       elapsedMs,
     },
   };
@@ -340,7 +423,6 @@ export function minimumSamplingBudgets(
   overrides: Partial<GraphSamplingBudgetsV1> = {},
 ): GraphSamplingBudgetsV1 {
   return {
-    maximumRecursionDepth: overrides.maximumRecursionDepth ?? 12,
     maximumSamples: overrides.maximumSamples ?? 8_192,
     maximumTimeMs: overrides.maximumTimeMs ?? 250,
     maximumVertices: overrides.maximumVertices ?? 8_192,

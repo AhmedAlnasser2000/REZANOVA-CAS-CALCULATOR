@@ -142,7 +142,6 @@ describe('Graph sampled-scene assembly', () => {
       stats: {
         evaluatedSamples: 25,
         emittedVertices: 5,
-        maximumDepthReached: 0,
         elapsedMs: 2,
       },
     };
@@ -223,7 +222,7 @@ describe('Graph sampled-scene assembly', () => {
       status: 'complete' as const,
       coordinates: new Float64Array([0, 0, 1, 0]),
       segmentOffsets: new Uint32Array([0]),
-      stats: { evaluatedSamples: 2, emittedVertices: 2, maximumDepthReached: 0, elapsedMs: 1 },
+      stats: { evaluatedSamples: 2, emittedVertices: 2, elapsedMs: 1 },
     };
     expect(assembleSampledScene({
       revisions,

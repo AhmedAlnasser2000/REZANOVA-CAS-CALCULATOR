@@ -1,11 +1,10 @@
 import { validateSerializableMathJson } from '../../display/printer/math-json';
 import type {
-  GraphGridSceneV1,
   GraphItemPresentationV1,
   GraphSceneLabelV1,
   SampledSceneRuntime,
   SampledSceneSnapshotV1,
-  GraphSampleResultV1,
+  GraphSampleResultV2,
 } from './types';
 import { validateGraphStopReason, validateGraphViewport } from './validation';
 
@@ -88,26 +87,13 @@ function validateLabel(label: GraphSceneLabelV1, path: string) {
   return null;
 }
 
-function validateGrid(grid: GraphGridSceneV1, path: string) {
-  if (!hasOnlyKeys(grid, ['kind', 'majorLines', 'minorLines', 'labels', 'hysteresisKey'])
-    || !['cartesian', 'polar', 'argand', 'none'].includes(grid.kind)
-    || !grid.hysteresisKey || grid.hysteresisKey.length > MAX_SCENE_ID_LENGTH) {
-    return fail('invalid-scene', 'Scene grid identity is invalid.', path);
-  }
-  return validateNumbers(grid.majorLines, `${path}.majorLines`)
-    ?? validateNumbers(grid.minorLines, `${path}.minorLines`)
-    ?? (grid.labels.length > MAX_SCENE_LABELS
-      ? fail('scene-budget-exceeded', 'Scene grid label budget exceeded.', `${path}.labels`)
-      : grid.labels.map((label, index) => validateLabel(label, `${path}.labels[${index}]`)).find(Boolean) ?? null);
-}
-
 function stableSort<T>(values: T[], key: (value: T) => string) {
   return [...values].sort((left, right) => key(left).localeCompare(key(right)));
 }
 
 type GraphSceneCollections = Pick<
   SampledSceneSnapshotV1 | SampledSceneRuntime,
-  'paths' | 'regions' | 'pointBatches' | 'labels' | 'grid'
+  'paths' | 'regions' | 'pointBatches' | 'labels'
 >;
 
 function sceneNumberCount(scene: GraphSceneCollections) {
@@ -118,9 +104,7 @@ function sceneNumberCount(scene: GraphSceneCollections) {
     + scene.regions.reduce((count, region) => count
       + region.vertices.length
       + region.triangleIndices.length, 0)
-    + scene.pointBatches.reduce((count, batch) => count + batch.coordinates.length, 0)
-    + (Array.isArray(scene.grid?.majorLines) ? scene.grid.majorLines.length : 0)
-    + (Array.isArray(scene.grid?.minorLines) ? scene.grid.minorLines.length : 0);
+    + scene.pointBatches.reduce((count, batch) => count + batch.coordinates.length, 0);
 }
 
 function validateSegmentOffsets(
@@ -208,10 +192,8 @@ function validateSceneCollections(scene: GraphSceneCollections) {
     const issue = validateLabel(label, `$.labels[${index}]`);
     if (issue) return issue;
   }
-  const gridIssue = validateGrid(scene.grid, '$.grid');
-  if (gridIssue) return gridIssue;
   const labelIds = new Set<string>();
-  for (const label of [...scene.labels, ...scene.grid.labels]) {
+  for (const label of scene.labels) {
     if (labelIds.has(label.labelId)) {
       return fail('invalid-scene', 'Scene label IDs must be globally unique.', '$.labels');
     }
@@ -240,12 +222,6 @@ export function normalizeGraphSceneSnapshot(snapshot: SampledSceneSnapshotV1): S
       coordinates: [...batch.coordinates],
     })),
     labels: stableSort(snapshot.labels, (label) => label.labelId),
-    grid: {
-      ...snapshot.grid,
-      majorLines: [...snapshot.grid.majorLines],
-      minorLines: [...snapshot.grid.minorLines],
-      labels: stableSort(snapshot.grid.labels, (label) => label.labelId),
-    },
   };
 }
 
@@ -342,10 +318,6 @@ function orderedGraphSceneSnapshotView(snapshot: SampledSceneSnapshotV1) {
     })),
     pointBatches: stableSort(snapshot.pointBatches, (batch) => batch.pointBatchId),
     labels: stableSort(snapshot.labels, (label) => label.labelId),
-    grid: {
-      ...snapshot.grid,
-      labels: stableSort(snapshot.grid.labels, (label) => label.labelId),
-    },
   };
 }
 
@@ -366,7 +338,6 @@ export function hashSampledSceneRuntime(
     regions: scene.regions as unknown as SampledSceneSnapshotV1['regions'],
     pointBatches: scene.pointBatches as unknown as SampledSceneSnapshotV1['pointBatches'],
     labels: scene.labels,
-    grid: scene.grid,
   });
 }
 
@@ -389,7 +360,7 @@ export function serializeGraphSceneSnapshot(snapshot: SampledSceneSnapshotV1) {
 export function validateSampledSceneSnapshot(input: unknown): GraphSceneValidationResult<SampledSceneSnapshotV1> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Scene snapshot must be an object.');
   const scene = input as SampledSceneSnapshotV1;
-  if (!hasOnlyKeys(scene, ['version', 'revisions', 'viewport', 'paths', 'regions', 'pointBatches', 'labels', 'grid'])
+  if (!hasOnlyKeys(scene, ['version', 'revisions', 'viewport', 'paths', 'regions', 'pointBatches', 'labels'])
     || scene.version !== 1 || !scene.revisions
     || !hasOnlyKeys(scene.revisions, ['scene', 'document', 'viewport', 'parameter'])
     || Object.values(scene.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Scene snapshot version or revisions are invalid.');
@@ -409,7 +380,7 @@ export function validateSampledSceneRuntime(input: unknown): GraphSceneValidatio
   if (!structure.ok) return structure;
   const scene = structure.value;
   const viewport = {
-    coordinateSystem: scene.grid.kind === 'polar' ? 'polar' : scene.grid.kind === 'argand' ? 'argand' : 'cartesian',
+    coordinateSystem: 'cartesian',
     xMin: -1,
     xMax: 1,
     yMin: -1,
@@ -423,7 +394,7 @@ export function validateSampledSceneRuntimeStructure(
 ): GraphSceneStructureValidationResult<SampledSceneRuntime> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Runtime scene must be an object.');
   const scene = input as SampledSceneRuntime;
-  if (!hasOnlyKeys(scene, ['sceneRevision', 'documentRevision', 'viewportRevision', 'parameterRevision', 'paths', 'regions', 'pointBatches', 'labels', 'grid'])) return fail('invalid-scene', 'Runtime scene contains unsupported state.');
+  if (!hasOnlyKeys(scene, ['sceneRevision', 'documentRevision', 'viewportRevision', 'parameterRevision', 'paths', 'regions', 'pointBatches', 'labels'])) return fail('invalid-scene', 'Runtime scene contains unsupported state.');
   const revisions = [scene.sceneRevision, scene.documentRevision, scene.viewportRevision, scene.parameterRevision];
   if (revisions.some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Runtime scene revisions are invalid.');
   if (!Array.isArray(scene.paths) || !Array.isArray(scene.regions) || !Array.isArray(scene.pointBatches) || !Array.isArray(scene.labels)) return fail('invalid-scene', 'Runtime scene collections are invalid.');
@@ -446,11 +417,11 @@ export function validateSampledSceneRuntimeStructure(
 function validateGraphSampleResultEnvelope(
   input: unknown,
   verifySnapshotHash: boolean,
-): GraphSceneValidationResult<GraphSampleResultV1> {
+): GraphSceneValidationResult<GraphSampleResultV2> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Graph sample result must be an object.');
-  const result = input as GraphSampleResultV1;
+  const result = input as GraphSampleResultV2;
   if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'evidence'])
-    || result.version !== 1 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
+    || result.version !== 2 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
   if (!['preview', 'settled'].includes(result.quality) || !['complete', 'budget-exhausted', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
   if (!result.revisions || Object.values(result.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Graph sample result revisions are invalid.');
   if (!validateGraphViewport(result.viewport).ok) return fail('invalid-scene', 'Graph sample result viewport is invalid.');
@@ -509,6 +480,5 @@ export function snapshotSampledSceneRuntime(scene: SampledSceneRuntime, viewport
     regions: scene.regions.map((region) => ({ ...region, vertices: [...region.vertices], triangleIndices: [...region.triangleIndices] })),
     pointBatches: scene.pointBatches.map((batch) => ({ ...batch, coordinates: [...batch.coordinates] })),
     labels: scene.labels,
-    grid: scene.grid,
   });
 }

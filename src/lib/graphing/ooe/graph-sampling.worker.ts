@@ -19,17 +19,24 @@ type GraphSamplingWorkerGlobalScope = {
 
 const workerSelf = self as unknown as GraphSamplingWorkerGlobalScope;
 const planCache = new GraphExpressionPlanCache(100);
+const cancelledRequests = new Set<string>();
+let activeRequestId: string | null = null;
+let queuedRun: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }> | null = null;
 
-workerSelf.addEventListener('message', (event) => {
-  if (event.data.kind !== 'run') return;
-  const { requestId, request } = event.data;
+function startRun(message: Extract<GraphSamplingWorkerInboundMessage, { kind: 'run' }>) {
+  const { requestId, request } = message;
+  activeRequestId = requestId;
   workerSelf.postMessage({ kind: 'started', requestId });
-  void runGraphSampleRequest(request, planCache)
+  void runGraphSampleRequest(request, planCache, {
+    isCancelled: () => cancelledRequests.has(requestId),
+    yieldBetweenItems: () => new Promise((resolve) => setTimeout(resolve, 0)),
+  })
     .then((execution) => {
       const validation = validateGraphSampleResult(execution.result);
       if (!validation.ok) {
         throw new Error(`Graph sampling worker produced invalid output: ${validation.failure.message}`);
       }
+      cancelledRequests.delete(requestId);
       workerSelf.postMessage(
         { kind: 'completed', requestId, result: execution.result },
         execution.transferList,
@@ -41,7 +48,27 @@ workerSelf.addEventListener('message', (event) => {
         requestId,
         message: error instanceof Error ? error.message : String(error),
       });
+    })
+    .finally(() => {
+      cancelledRequests.delete(requestId);
+      if (activeRequestId === requestId) activeRequestId = null;
+      const next = queuedRun;
+      queuedRun = null;
+      if (next) startRun(next);
     });
+}
+
+workerSelf.addEventListener('message', (event) => {
+  if (event.data.kind === 'cancel') {
+    cancelledRequests.add(event.data.requestId);
+    if (queuedRun?.requestId === event.data.requestId) queuedRun = null;
+    return;
+  }
+  if (activeRequestId) {
+    queuedRun = event.data;
+    return;
+  }
+  startRun(event.data);
 });
 
 export {};

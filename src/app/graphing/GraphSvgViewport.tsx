@@ -1,425 +1,344 @@
 import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
+  useCallback, useEffect, useLayoutEffect, useRef, useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
+  buildGraphGridScene,
   GraphSvgReferenceRenderer,
+  type GraphGridPolicyV1,
   type GraphViewportV1,
   type SampledSceneRuntime,
 } from '../../lib/graphing';
 import {
+  buildGraphTraceIndex,
   firstGraphTraceTarget,
-  hitTestGraphScene,
+  hitTestGraphTraceIndex,
   stepGraphTraceTarget,
   traceGraphPathAtPointer,
+  type GraphTraceIndex,
   type GraphTraceTarget,
 } from './graph-hit-testing';
 
-export type GraphTraceRouteKind =
-  | 'explicit-y'
-  | 'explicit-x'
-  | 'point-set'
+export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | { kind: 'polar-radius'; parameterSymbol: 'theta' }
   | { kind: 'parametric-curve'; parameterSymbol: string };
 
-type GraphSvgViewportProps = {
+type Props = {
+  grid?: GraphGridPolicyV1;
   pending: boolean;
   scene: SampledSceneRuntime | null;
+  sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
   onSizeChange: (size: { width: number; height: number }) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
 };
-
-type ViewportSize = { width: number; height: number };
-
-const WHEEL_SETTLE_MS = 80;
+type Size = { width: number; height: number };
+type TraceLock = {
+  itemId: string;
+  kind: GraphTraceTarget['kind'];
+  pathId?: string;
+  pointBatchId?: string;
+};
+const WHEEL_SETTLE_MS = 180;
+const CLICK_DISTANCE = 24;
+const RETAIN_DISTANCE = 30;
 
 function formatTraceNumber(value: number) {
-  const rounded = Math.abs(value) < 1e-10 ? 0 : Number(value.toPrecision(6));
-  return String(rounded);
+  return String(Math.abs(value) < 1e-10 ? 0 : Number(value.toPrecision(6)));
+}
+
+function zoomViewport(base: GraphViewportV1, scale: number, x: number, y: number, size: Size) {
+  const xRatio = x / Math.max(1, size.width); const yRatio = y / Math.max(1, size.height);
+  const centerX = base.xMin + xRatio * (base.xMax - base.xMin);
+  const centerY = base.yMax - yRatio * (base.yMax - base.yMin);
+  const xSpan = (base.xMax - base.xMin) / scale; const ySpan = (base.yMax - base.yMin) / scale;
+  return { coordinateSystem: base.coordinateSystem,
+    xMin: centerX - xRatio * xSpan, xMax: centerX + (1 - xRatio) * xSpan,
+    yMin: centerY - (1 - yRatio) * ySpan, yMax: centerY + yRatio * ySpan };
+}
+
+function panViewport(base: GraphViewportV1, dx: number, dy: number, size: Size) {
+  const xShift = -dx / Math.max(1, size.width) * (base.xMax - base.xMin);
+  const yShift = dy / Math.max(1, size.height) * (base.yMax - base.yMin);
+  return { coordinateSystem: base.coordinateSystem,
+    xMin: base.xMin + xShift, xMax: base.xMax + xShift,
+    yMin: base.yMin + yShift, yMax: base.yMax + yShift };
 }
 
 export function GraphSvgViewport({
-  itemRoutes,
-  onSizeChange,
-  onViewportChange,
-  pending,
-  scene,
-  viewport,
-}: GraphSvgViewportProps) {
+  grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
+  itemRoutes, onSizeChange, onViewportChange, pending, scene, viewport, sceneViewport = viewport,
+}: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const gestureLayerRef = useRef<HTMLDivElement | null>(null);
-  const geometryHostRef = useRef<HTMLDivElement | null>(null);
+  const rendererHostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<GraphSvgReferenceRenderer | null>(null);
   const traceMarkerRef = useRef<HTMLDivElement | null>(null);
   const traceLabelRef = useRef<HTMLDivElement | null>(null);
   const traceRef = useRef<GraphTraceTarget | null>(null);
+  const traceLockRef = useRef<TraceLock | null>(null);
   const tracePointerRef = useRef<{ x: number; y: number } | null>(null);
+  const traceIndexRef = useRef<GraphTraceIndex | null>(null);
   const traceFrameRef = useRef<number | null>(null);
-  const sceneRef = useRef(scene);
-  const itemRoutesRef = useRef(itemRoutes);
-  const viewportRef = useRef(viewport);
-  const sizeRef = useRef<ViewportSize>({ width: 960, height: 600 });
-  const pointerRef = useRef<{
+  const viewFrameRef = useRef<number | null>(null);
+  const sceneRef = useRef(scene); const routesRef = useRef(itemRoutes);
+  const pendingRef = useRef(pending); const viewportRef = useRef(viewport);
+  const liveViewportRef = useRef(viewport); const gridRef = useRef(grid);
+  const sizeRef = useRef<Size>({ width: 960, height: 600 });
+  const gridHysteresisRef = useRef<string | undefined>(undefined);
+  const dragRef = useRef<{
     pointerId: number;
-    startX: number;
-    startY: number;
-    dx: number;
-    dy: number;
+    startClientX: number;
+    startClientY: number;
+    startScreenX: number;
+    startScreenY: number;
+    clientDx: number;
+    clientDy: number;
+    screenDx: number;
+    screenDy: number;
     viewport: GraphViewportV1;
+    pointerType: string;
   } | null>(null);
-  const wheelRef = useRef<{
-    scale: number;
-    x: number;
-    y: number;
-    viewport: GraphViewportV1;
-  } | null>(null);
-  const frameRef = useRef<number | null>(null);
+  const wheelRef = useRef<{ scale: number; x: number; y: number; viewport: GraphViewportV1 } | null>(null);
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [size, setSize] = useState<ViewportSize>({ width: 960, height: 600 });
+  const [size, setSize] = useState<Size>({ width: 960, height: 600 });
 
-  useLayoutEffect(() => {
-    const target = geometryHostRef.current;
-    if (!target) return;
-    const renderer = new GraphSvgReferenceRenderer();
-    renderer.mount(target);
-    rendererRef.current = renderer;
-    return () => {
-      renderer.dispose();
-      rendererRef.current = null;
+  const renderView = useCallback((liveViewport: GraphViewportV1) => {
+    liveViewportRef.current = liveViewport;
+    const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
+      policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
+    gridHysteresisRef.current = gridScene.hysteresisKey;
+    rendererRef.current?.setView({ version: 1, viewport: liveViewport, grid: gridScene,
+      policy: { quality: 'interactive-preview', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        maximumVertices: 250_000, maximumLabels: 250, pixelRatioCap: 2 } });
+  }, []);
+
+  const requestView = useCallback((next: GraphViewportV1) => {
+    liveViewportRef.current = next;
+    if (viewFrameRef.current !== null) return;
+    viewFrameRef.current = requestAnimationFrame(() => { viewFrameRef.current = null; renderView(liveViewportRef.current); });
+  }, [renderView]);
+
+  const clientToScreen = useCallback((clientX: number, clientY: number) => {
+    const projected = rendererRef.current?.clientToScreen(clientX, clientY);
+    if (projected) return projected;
+    const bounds = hostRef.current?.getBoundingClientRect();
+    if (!bounds || bounds.width <= 0 || bounds.height <= 0) return { x: clientX, y: clientY };
+    return {
+      x: (clientX - bounds.left) * sizeRef.current.width / bounds.width,
+      y: (clientY - bounds.top) * sizeRef.current.height / bounds.height,
     };
   }, []);
 
   useLayoutEffect(() => {
-    const renderer = rendererRef.current;
-    if (!renderer) return;
-    renderer.resize(size.width, size.height, window.devicePixelRatio || 1);
-    if (scene) {
-      renderer.render({
-        version: 1,
-        scene,
-        viewport,
-        policy: {
-          quality: pending ? 'interactive-preview' : 'settled',
-          reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-          maximumVertices: renderer.capabilities.maximumVertices,
-          maximumLabels: 250,
-          pixelRatioCap: 2,
-        },
-      });
-    } else {
-      renderer.clear();
-    }
-  }, [pending, scene, size, viewport]);
+    if (!rendererHostRef.current) return;
+    const renderer = new GraphSvgReferenceRenderer(); renderer.mount(rendererHostRef.current); rendererRef.current = renderer;
+    renderView(viewportRef.current);
+    return () => { renderer.dispose(); rendererRef.current = null; };
+  }, [renderView]);
 
   useLayoutEffect(() => {
-    viewportRef.current = viewport;
-    sceneRef.current = scene;
-    itemRoutesRef.current = itemRoutes;
-    const layer = gestureLayerRef.current;
-    if (layer && !pointerRef.current && !wheelRef.current) layer.style.transform = '';
-  }, [itemRoutes, scene, viewport]);
+    const renderer = rendererRef.current; if (!renderer) return;
+    renderer.resize(size.width, size.height, window.devicePixelRatio || 1); renderView(liveViewportRef.current);
+  }, [renderView, size]);
 
-  const clearTrace = useCallback(() => {
-    traceRef.current = null;
-    const marker = traceMarkerRef.current;
-    const label = traceLabelRef.current;
-    if (marker) marker.hidden = true;
-    if (label) {
-      label.hidden = true;
-      label.textContent = '';
+  useLayoutEffect(() => {
+    const renderer = rendererRef.current; if (!renderer) return;
+    renderer.setScene(scene && sceneViewport ? { version: 1, scene, sourceViewport: sceneViewport,
+      policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 } } : null);
+  }, [scene, sceneViewport]);
+
+  const hideTrace = useCallback(() => {
+    if (traceMarkerRef.current) {
+      traceMarkerRef.current.hidden = true;
+      delete traceMarkerRef.current.dataset.traceItemId;
+    }
+    if (traceLabelRef.current) {
+      traceLabelRef.current.hidden = true;
+      delete traceLabelRef.current.dataset.traceItemId;
     }
   }, []);
-
+  const clearTrace = useCallback(() => {
+    traceRef.current = null;
+    traceLockRef.current = null;
+    tracePointerRef.current = null;
+    hideTrace();
+  }, [hideTrace]);
   const publishTrace = useCallback((target: GraphTraceTarget | null, announce = false) => {
-    if (!target) {
-      clearTrace();
-      return;
-    }
+    if (!target) { traceRef.current = null; hideTrace(); return; }
     traceRef.current = target;
-    const marker = traceMarkerRef.current;
-    const label = traceLabelRef.current;
-    if (!marker || !label) return;
-    marker.hidden = false;
-    marker.style.transform = `translate3d(${target.screen.x - 6}px, ${target.screen.y - 6}px, 0)`;
-    const labelX = Math.max(8, Math.min(sizeRef.current.width - 150, target.screen.x + 12));
-    const labelY = Math.max(8, Math.min(sizeRef.current.height - 38, target.screen.y - 36));
-    label.hidden = false;
-    label.style.transform = `translate3d(${labelX}px, ${labelY}px, 0)`;
+    const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
+    marker.hidden = false; marker.style.transform = `translate3d(${target.screen.x - 6}px,${target.screen.y - 6}px,0)`;
+    marker.dataset.traceItemId = target.itemId;
+    const lx = Math.max(8, Math.min(sizeRef.current.width - 150, target.screen.x + 12));
+    const ly = Math.max(8, Math.min(sizeRef.current.height - 38, target.screen.y - 36));
+    label.hidden = false; label.style.transform = `translate3d(${lx}px,${ly}px,0)`;
+    label.dataset.traceItemId = target.itemId;
     const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)})`;
-    const route = itemRoutesRef.current[target.itemId];
-    const parameterText = target.parameterValue === undefined
-      ? ''
-      : typeof route === 'object'
-        ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}`
-          : '';
-    label.textContent = text + parameterText;
-    if (announce) label.setAttribute('aria-label', `Trace point ${text}`);
-  }, [clearTrace]);
+    const route = routesRef.current[target.itemId];
+    label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
+    if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
+  }, [hideTrace]);
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
+    sceneRef.current = scene; routesRef.current = itemRoutes; pendingRef.current = pending;
+    if (scene && !pending) {
+      traceIndexRef.current = buildGraphTraceIndex(scene, viewport, sizeRef.current);
+    } else { traceIndexRef.current = null; hideTrace(); }
+  }, [hideTrace, itemRoutes, pending, scene, size, viewport]);
+
+  useLayoutEffect(() => {
+    viewportRef.current = viewport; gridRef.current = grid;
+    if (!dragRef.current && !wheelRef.current) { liveViewportRef.current = viewport; renderView(viewport); }
+  }, [grid, renderView, viewport]);
+
+  useEffect(() => {
+    const host = hostRef.current; if (!host) return;
     const commitSize = (width: number, height: number) => {
-      const next = {
-        width: Math.max(1, Math.round(width || 960)),
-        height: Math.max(1, Math.round(height || 600)),
-      };
-      sizeRef.current = next;
-      setSize(next);
-      onSizeChange(next);
+      const next = { width: Math.max(1, Math.round(width || 960)), height: Math.max(1, Math.round(height || 600)) };
+      sizeRef.current = next; setSize(next); onSizeChange(next);
     };
     commitSize(host.clientWidth, host.clientHeight);
     if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) commitSize(entry.contentRect.width, entry.contentRect.height);
-    });
-    observer.observe(host);
-    return () => observer.disconnect();
+    const observer = new ResizeObserver(([entry]) => { if (entry) commitSize(entry.contentRect.width, entry.contentRect.height); });
+    observer.observe(host); return () => observer.disconnect();
   }, [onSizeChange]);
 
-  const requestTransformFrame = () => {
-    if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
-      const layer = gestureLayerRef.current;
-      if (!layer) return;
-      const pointer = pointerRef.current;
-      if (pointer) {
-        layer.style.transform = `translate3d(${pointer.dx}px, ${pointer.dy}px, 0)`;
-        return;
-      }
-      const wheel = wheelRef.current;
-      if (wheel) {
-        layer.style.transformOrigin = `${wheel.x}px ${wheel.y}px`;
-        layer.style.transform = `scale(${wheel.scale})`;
-      }
-    });
-  };
-
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    const preventNativeSelection = (event: Event) => event.preventDefault();
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      clearTrace();
-      host.dataset.interacting = 'true';
-      const bounds = host.getBoundingClientRect();
-      const x = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
-      const y = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
-      const current = wheelRef.current ?? {
-        scale: 1,
-        x,
-        y,
-        viewport: viewportRef.current,
-      };
-      current.scale = Math.max(0.35, Math.min(3.5, current.scale * Math.exp(-event.deltaY * 0.0015)));
-      wheelRef.current = current;
-      requestTransformFrame();
+    const host = hostRef.current; if (!host) return;
+    const prevent = (event: Event) => event.preventDefault();
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault(); clearTrace(); host.dataset.interacting = 'true';
+      const pointer = clientToScreen(event.clientX, event.clientY);
+      const x = Math.max(0, Math.min(sizeRef.current.width, pointer.x));
+      const y = Math.max(0, Math.min(sizeRef.current.height, pointer.y));
+      const state = wheelRef.current ?? { scale: 1, x, y, viewport: viewportRef.current };
+      state.scale = Math.max(0.25, Math.min(4, state.scale * Math.exp(-event.deltaY * 0.0015))); wheelRef.current = state;
+      requestView(zoomViewport(state.viewport, state.scale, state.x, state.y, sizeRef.current));
       if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
       wheelTimerRef.current = setTimeout(() => {
-        const wheel = wheelRef.current;
-        wheelRef.current = null;
-        if (!wheel) return;
-        const base = wheel.viewport;
-        const width = Math.max(1, sizeRef.current.width);
-        const height = Math.max(1, sizeRef.current.height);
-        const xRatio = wheel.x / width;
-        const yRatio = wheel.y / height;
-        const xCenter = base.xMin + xRatio * (base.xMax - base.xMin);
-        const yCenter = base.yMax - yRatio * (base.yMax - base.yMin);
-        const xSpan = (base.xMax - base.xMin) / wheel.scale;
-        const ySpan = (base.yMax - base.yMin) / wheel.scale;
-        onViewportChange({
-          coordinateSystem: base.coordinateSystem,
-          xMin: xCenter - xRatio * xSpan,
-          xMax: xCenter + (1 - xRatio) * xSpan,
-          yMin: yCenter - (1 - yRatio) * ySpan,
-          yMax: yCenter + yRatio * ySpan,
-        });
-        delete host.dataset.interacting;
+        const settled = liveViewportRef.current; wheelRef.current = null; delete host.dataset.interacting;
+        viewportRef.current = settled; onViewportChange(settled);
       }, WHEEL_SETTLE_MS);
     };
-    host.addEventListener('wheel', handleWheel, { passive: false });
-    host.addEventListener('dragstart', preventNativeSelection);
-    host.addEventListener('selectstart', preventNativeSelection);
-    return () => {
-      host.removeEventListener('wheel', handleWheel);
-      host.removeEventListener('dragstart', preventNativeSelection);
-      host.removeEventListener('selectstart', preventNativeSelection);
-    };
-  }, [clearTrace, onViewportChange]);
+    host.addEventListener('wheel', wheel, { passive: false }); host.addEventListener('dragstart', prevent); host.addEventListener('selectstart', prevent);
+    return () => { host.removeEventListener('wheel', wheel); host.removeEventListener('dragstart', prevent); host.removeEventListener('selectstart', prevent); };
+  }, [clearTrace, clientToScreen, onViewportChange, requestView]);
 
   useEffect(() => () => {
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    if (viewFrameRef.current !== null) cancelAnimationFrame(viewFrameRef.current);
     if (traceFrameRef.current !== null) cancelAnimationFrame(traceFrameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
   }, []);
 
-  useEffect(() => {
-    if (pending || !scene) clearTrace();
-  }, [clearTrace, pending, scene, viewport]);
-
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
-    event.preventDefault();
-    event.currentTarget.focus({ preventScroll: true });
+    event.preventDefault(); event.currentTarget.focus({ preventScroll: true }); event.currentTarget.setPointerCapture(event.pointerId);
     clearTrace();
-    event.currentTarget.dataset.interacting = 'true';
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointerRef.current = {
+    const screen = clientToScreen(event.clientX, event.clientY);
+    dragRef.current = {
       pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      dx: 0,
-      dy: 0,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startScreenX: screen.x,
+      startScreenY: screen.y,
+      clientDx: 0,
+      clientDy: 0,
+      screenDx: 0,
+      screenDy: 0,
       viewport: viewportRef.current,
+      pointerType: event.pointerType,
     };
   };
-
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const pointer = pointerRef.current;
-    if (pointer && pointer.pointerId === event.pointerId) {
-      pointer.dx = event.clientX - pointer.startX;
-      pointer.dy = event.clientY - pointer.startY;
-      requestTransformFrame();
+    const drag = dragRef.current;
+    if (drag?.pointerId === event.pointerId) {
+      const screen = clientToScreen(event.clientX, event.clientY);
+      drag.clientDx = event.clientX - drag.startClientX;
+      drag.clientDy = event.clientY - drag.startClientY;
+      drag.screenDx = screen.x - drag.startScreenX;
+      drag.screenDy = screen.y - drag.startScreenY;
+      if (Math.hypot(drag.clientDx, drag.clientDy) > 4) {
+        hideTrace(); event.currentTarget.dataset.interacting = 'true';
+        requestView(panViewport(drag.viewport, drag.screenDx, drag.screenDy, sizeRef.current));
+      }
       return;
     }
-    const currentTrace = traceRef.current;
+    const lock = traceLockRef.current;
     const currentScene = sceneRef.current;
-    const host = hostRef.current;
-    if (!currentTrace || !currentScene || pending || !host) return;
-    const bounds = host.getBoundingClientRect();
-    tracePointerRef.current = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    };
+    const index = traceIndexRef.current;
+    if (!lock || !currentScene || !index || pendingRef.current || wheelRef.current) return;
+    tracePointerRef.current = clientToScreen(event.clientX, event.clientY);
     if (traceFrameRef.current !== null) return;
     traceFrameRef.current = requestAnimationFrame(() => {
       traceFrameRef.current = null;
       const screen = tracePointerRef.current;
-      const active = traceRef.current;
-      const activeScene = sceneRef.current;
-      if (!screen || !active || !activeScene) return;
-      const route = itemRoutesRef.current[active.itemId];
+      if (!screen) return;
+      const route = routesRef.current[lock.itemId];
       const target = route === 'explicit-y' || route === 'explicit-x'
-        ? traceGraphPathAtPointer({
-            scene: activeScene,
-            viewport: viewportRef.current,
-            size: sizeRef.current,
-            itemId: active.itemId,
-            relationKind: route,
-            screen,
-          })
-        : hitTestGraphScene({
-            scene: activeScene,
-            viewport: viewportRef.current,
-            size: sizeRef.current,
-            screen,
-            itemId: active.itemId,
-            maximumDistancePixels: 24,
-          });
-      if (target) publishTrace(target);
+        ? traceGraphPathAtPointer({ scene: currentScene, viewport: viewportRef.current, size: sizeRef.current,
+            itemId: lock.itemId, pathId: lock.pathId, relationKind: route, screen })
+        : hitTestGraphTraceIndex({ index, scene: currentScene, screen,
+            maximumDistancePixels: RETAIN_DISTANCE, itemId: lock.itemId,
+            pathId: lock.pathId, pointBatchId: lock.pointBatchId });
+      publishTrace(target);
     });
   };
-
   const finishPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const pointer = pointerRef.current;
-    if (!pointer || pointer.pointerId !== event.pointerId) return;
-    pointerRef.current = null;
-    delete event.currentTarget.dataset.interacting;
-    if (Math.hypot(pointer.dx, pointer.dy) <= 4) {
-      const currentScene = sceneRef.current;
-      if (!pending && currentScene) {
-        const bounds = event.currentTarget.getBoundingClientRect();
-        publishTrace(hitTestGraphScene({
-          scene: currentScene,
-          viewport: viewportRef.current,
-          size: sizeRef.current,
-          screen: { x: event.clientX - bounds.left, y: event.clientY - bounds.top },
-        }), true);
-      }
-      return;
+    const drag = dragRef.current; if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null; delete event.currentTarget.dataset.interacting;
+    if (Math.hypot(drag.clientDx, drag.clientDy) > 4) { const settled = liveViewportRef.current; viewportRef.current = settled; onViewportChange(settled); return; }
+    const screen = clientToScreen(event.clientX, event.clientY);
+    const currentScene = sceneRef.current; const index = traceIndexRef.current;
+    const current = currentScene && index && !pendingRef.current
+      ? hitTestGraphTraceIndex({ index, scene: currentScene, screen,
+          maximumDistancePixels: drag.pointerType === 'touch' ? 28 : CLICK_DISTANCE })
+      : null;
+    if (current) {
+      traceLockRef.current = {
+        itemId: current.itemId,
+        kind: current.kind,
+        ...(current.pathId ? { pathId: current.pathId } : {}),
+        ...(current.pointBatchId ? { pointBatchId: current.pointBatchId } : {}),
+      };
+      publishTrace(current, true);
     }
-    const xShift = -pointer.dx / Math.max(1, size.width) * (pointer.viewport.xMax - pointer.viewport.xMin);
-    const yShift = pointer.dy / Math.max(1, size.height) * (pointer.viewport.yMax - pointer.viewport.yMin);
-    onViewportChange({
-      coordinateSystem: pointer.viewport.coordinateSystem,
-      xMin: pointer.viewport.xMin + xShift,
-      xMax: pointer.viewport.xMax + xShift,
-      yMin: pointer.viewport.yMin + yShift,
-      yMax: pointer.viewport.yMax + yShift,
-    });
+    else clearTrace();
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const currentScene = sceneRef.current;
-    if (!currentScene || pending) return;
-    if (event.key === 'Escape') {
-      clearTrace();
-      return;
-    }
+    const currentScene = sceneRef.current; if (!currentScene || pendingRef.current) return;
+    if (event.key === 'Escape') { clearTrace(); return; }
     if (event.key === 'Enter' && !traceRef.current) {
       event.preventDefault();
-      publishTrace(firstGraphTraceTarget(currentScene, viewportRef.current, sizeRef.current), true);
-      return;
+      const first = firstGraphTraceTarget(currentScene, viewportRef.current, sizeRef.current);
+      if (first) {
+        traceLockRef.current = {
+          itemId: first.itemId,
+          kind: first.kind,
+          ...(first.pathId ? { pathId: first.pathId } : {}),
+          ...(first.pointBatchId ? { pointBatchId: first.pointBatchId } : {}),
+        };
+      }
+      publishTrace(first, true); return;
     }
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)
-      || !traceRef.current) return;
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || !traceRef.current) return;
     event.preventDefault();
-    const delta = event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1;
-    publishTrace(stepGraphTraceTarget({
-      scene: currentScene,
-      viewport: viewportRef.current,
-      size: sizeRef.current,
-      current: traceRef.current,
-      delta,
-    }), true);
+    publishTrace(stepGraphTraceTarget({ scene: currentScene, viewport: viewportRef.current,
+      size: sizeRef.current, current: traceRef.current, delta: event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1 }), true);
   };
 
-  const hasGraphGeometry = scene !== null && (
-    scene.paths.some((path) => !path.itemId.startsWith('graph-overlay.'))
-    || scene.regions.length > 0
-    || scene.pointBatches.length > 0
-  );
-
-  return (
-    <div
-      className="graph-svg-viewport"
-      data-scene-pending={pending ? 'true' : 'false'}
-      data-testid="graph-viewport"
-      aria-describedby="graph-trace-instructions"
-      aria-label={`Interactive ${scene?.grid.kind ?? 'Cartesian'} graph. Press Enter to start keyboard tracing.`}
-      role="region"
-      onKeyDown={handleKeyDown}
-      onPointerCancel={finishPointer}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={finishPointer}
-      ref={hostRef}
-      tabIndex={0}
-    >
-      <div className="graph-svg-gesture-layer" ref={gestureLayerRef}>
-        <div className="graph-svg-geometry-host" ref={geometryHostRef} />
-      </div>
-      <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
-      <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />
-      <span className="graph-trace-instructions" id="graph-trace-instructions">
-        Click a curve or point to trace it. Use arrow keys to move along the selected item and Escape to stop.
-      </span>
-      {!hasGraphGeometry ? (
-        <div className="graph-viewport-empty" aria-hidden="true">
-          <span>Enter an x-based expression to begin</span>
-          <small>Try x² − 4 or sin(x)</small>
-        </div>
-      ) : null}
-    </div>
-  );
+  const hasGeometry = scene !== null && (scene.paths.some((path) => !path.itemId.startsWith('graph-overlay.')) || scene.regions.length > 0 || scene.pointBatches.length > 0);
+  return <div className="graph-svg-viewport" data-scene-pending={pending ? 'true' : 'false'} data-testid="graph-viewport"
+    aria-describedby="graph-trace-instructions" aria-label={`Interactive ${grid.kind} graph. Press Enter to start keyboard tracing.`}
+    role="region" onKeyDown={handleKeyDown} onPointerCancel={finishPointer} onPointerDown={handlePointerDown}
+    onPointerMove={handlePointerMove} onPointerUp={finishPointer} ref={hostRef} tabIndex={0}>
+    <div className="graph-svg-renderer-host" ref={rendererHostRef} />
+    <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
+    <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />
+    <span className="graph-trace-instructions" id="graph-trace-instructions">Click a curve or point to trace it. Move to sweep, use arrows to step, and Escape to clear.</span>
+    {!hasGeometry ? <div className="graph-viewport-empty" aria-hidden="true"><span>Enter an x-based expression to begin</span><small>Try x² − 4 or sin(x)</small></div> : null}
+  </div>;
 }

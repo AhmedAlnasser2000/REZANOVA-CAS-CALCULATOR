@@ -1,5 +1,4 @@
 import type {
-  GraphGridSceneV1,
   GraphItemPresentationV1,
   GraphRevisionSetV1,
   GraphSceneLabelV1,
@@ -19,7 +18,6 @@ export type GraphPathSampleSceneInput = {
   stats: {
     evaluatedSamples: number;
     emittedVertices: number;
-    maximumDepthReached: number;
     elapsedMs: number;
   };
 };
@@ -55,7 +53,6 @@ export type GraphSceneAssemblyInput = {
   regions?: GraphRegionSceneInput[];
   pointBatches?: GraphPointBatchSceneInput[];
   labels?: GraphSceneLabelV1[];
-  grid?: GraphGridSceneV1;
 };
 
 export type GraphSceneRuntimeBundle = {

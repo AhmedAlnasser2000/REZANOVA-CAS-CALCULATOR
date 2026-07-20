@@ -12,22 +12,26 @@ import {
   runGraphSampleWithOoe,
   type GraphDocumentV1,
   type GraphItemSpecV1,
-  type GraphSampleRequestV1,
-  type GraphSampleResultV1,
+  type GraphSampleRequestV2,
+  type GraphSampleResultV2,
   type GraphViewportV1,
 } from '../../lib/graphing';
-import type { GraphWorkspaceSessionStateV1 } from './graph-workspace-session';
+import type {
+  GraphPiecewiseAuthoringDraftV1,
+  GraphWorkspaceSessionStateV1,
+} from './graph-workspace-session';
 import {
+  buildGraphPiecewiseItemFromAuthoringDraft,
   buildVisibleGraphItem,
   createGraphParameterItem,
+  graphConditionLatex,
   graphItemSource,
   graphItemSourceLatex,
-  mutateGraphPiecewiseBranches,
+  graphPiecewiseBranchValueLatex,
   removeGraphDocumentItem,
   replaceGraphDocumentItem,
   toggleGraphDocumentItem,
   updateGraphParameterItem,
-  updateGraphPiecewiseBranch,
 } from './graph-document';
 
 const PREVIEW_DELAY_MS = 80;
@@ -127,9 +131,10 @@ export function useGraphWorkspaceController({
   workspaceContext,
 }: UseGraphWorkspaceControllerInput) {
   const [session, setSession] = useState(initialSession);
-  const [sampleResult, setSampleResult] = useState<GraphSampleResultV1 | null>(null);
+  const [sampleResult, setSampleResult] = useState<GraphSampleResultV2 | null>(null);
   const [status, setStatus] = useState<GraphControllerStatus>({ kind: 'ready', label: 'Ready' });
   const [visibleDraftErrors, setVisibleDraftErrors] = useState<ReadonlySet<string>>(new Set());
+  const [suppressedPiecewiseItems, setSuppressedPiecewiseItems] = useState<ReadonlySet<string>>(new Set());
   const [blankItemId, setBlankItemId] = useState(() => `${workspaceContext.workspaceInstanceId}.item.1`);
   const [historyAvailability, setHistoryAvailability] = useState({
     canRedo: false,
@@ -137,6 +142,7 @@ export function useGraphWorkspaceController({
   });
   const sessionRef = useRef(session);
   const resultRef = useRef(sampleResult);
+  const retiredResultsRef = useRef<GraphSampleResultV2[]>([]);
   const workspaceContextRef = useRef(workspaceContext);
   const mountedRef = useRef(true);
   const persistRef = useRef(onPersistSession);
@@ -157,6 +163,7 @@ export function useGraphWorkspaceController({
     parameter: initialSession.surface.parameterRevision,
     viewport: initialSession.surface.viewportRevision,
   });
+  const piecewiseGraceTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   const publishHistoryAvailability = useCallback(() => {
     setHistoryAvailability({
@@ -288,6 +295,197 @@ export function useGraphWorkspaceController({
     return itemId;
   }, [blankItemId, editItem, endTypingTransaction]);
 
+  const createPiecewiseDraft = useCallback(() => {
+    const current = sessionRef.current;
+    const itemId = blankItemId;
+    const draft: GraphPiecewiseAuthoringDraftV1 = {
+      version: 1,
+      draftId: `${itemId}.piecewise-draft`,
+      itemId,
+      mode: 'create',
+      target: 'y',
+      branches: [0, 1].map((index) => ({
+        branchId: `${itemId}.branch.${index + 1}`,
+        valueLatex: '',
+        conditionLatex: '',
+      })),
+    };
+    commitSession({
+      ...current,
+      authoring: { piecewiseDrafts: [...(current.authoring?.piecewiseDrafts ?? []), draft] },
+    }, true);
+    setBlankItemId(nextItemId());
+    return itemId;
+  }, [blankItemId, commitSession, nextItemId]);
+
+  const beginPiecewiseDraft = useCallback((itemId: string) => {
+    const current = sessionRef.current;
+    const existing = current.authoring?.piecewiseDrafts.find((draft) => draft.itemId === itemId);
+    if (existing) return existing.itemId;
+    const item = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
+      candidate.itemId === itemId && candidate.kind === 'piecewise'
+    ));
+    if (!item) return null;
+    const draft: GraphPiecewiseAuthoringDraftV1 = {
+      version: 1,
+      draftId: `${itemId}.piecewise-draft`,
+      itemId,
+      mode: 'replace',
+      target: item.piecewise.branches[0]?.relation.kind === 'explicit-x' ? 'x' : 'y',
+      branches: item.piecewise.branches.map((branch) => ({
+        branchId: branch.branchId,
+        valueLatex: graphPiecewiseBranchValueLatex(branch),
+        conditionLatex: graphConditionLatex(branch.condition),
+      })),
+    };
+    commitSession({
+      ...current,
+      authoring: { piecewiseDrafts: [...(current.authoring?.piecewiseDrafts ?? []), draft] },
+    }, true);
+    return itemId;
+  }, [commitSession]);
+
+  const updatePiecewiseDraft = useCallback((input: {
+    itemId: string;
+    branchId: string;
+    field: 'valueLatex' | 'conditionLatex';
+    value: string;
+  }) => {
+    const current = sessionRef.current;
+    const drafts = current.authoring?.piecewiseDrafts ?? [];
+    const draft = drafts.find((candidate) => candidate.itemId === input.itemId);
+    if (!draft) return false;
+    const nextDraft = {
+      ...draft,
+      branches: draft.branches.map((branch) => branch.branchId === input.branchId
+        ? { ...branch, [input.field]: input.value }
+        : branch),
+    };
+    const promoted = buildGraphPiecewiseItemFromAuthoringDraft({
+      itemId: draft.itemId,
+      sourceRevision: 1,
+      index: current.document.items.length,
+      target: draft.target,
+      branches: nextDraft.branches,
+    });
+    if (promoted && nextDraft.mode === 'create') {
+      pushHistory(current.document, null);
+      activeInputRevisionRef.current = null;
+      commitSession({
+        ...current,
+        document: replaceGraphDocumentItem(current.document, promoted),
+        authoring: { piecewiseDrafts: drafts.filter((candidate) => candidate.itemId !== input.itemId) },
+      }, true);
+      return true;
+    }
+    const graceTimer = piecewiseGraceTimersRef.current.get(input.itemId);
+    if (graceTimer) clearTimeout(graceTimer);
+    piecewiseGraceTimersRef.current.delete(input.itemId);
+    if (!promoted && nextDraft.mode === 'replace') {
+      piecewiseGraceTimersRef.current.set(input.itemId, setTimeout(() => {
+        setSuppressedPiecewiseItems((currentIds) => new Set(currentIds).add(input.itemId));
+        piecewiseGraceTimersRef.current.delete(input.itemId);
+      }, INVALID_GRACE_MS));
+    }
+    commitSession({
+      ...current,
+      authoring: { piecewiseDrafts: drafts.map((candidate) => candidate.itemId === input.itemId ? nextDraft : candidate) },
+    });
+    return false;
+  }, [commitSession, pushHistory]);
+
+  const commitPiecewiseDraft = useCallback((itemId: string) => {
+    const current = sessionRef.current;
+    const drafts = current.authoring?.piecewiseDrafts ?? [];
+    const draft = drafts.find((candidate) => candidate.itemId === itemId);
+    if (!draft) return false;
+    const previous = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
+      candidate.itemId === itemId && candidate.kind === 'piecewise'
+    ));
+    const promoted = buildGraphPiecewiseItemFromAuthoringDraft({
+      itemId,
+      sourceRevision: (previous?.source.sourceRevision ?? 0) + 1,
+      index: Math.max(0, current.document.items.findIndex((item) => item.itemId === itemId)),
+      target: draft.target,
+      branches: draft.branches,
+      ...(previous ? { previous } : {}),
+    });
+    if (!promoted) return false;
+    if (previous) pushHistory(current.document, null);
+    activeInputRevisionRef.current = null;
+    const graceTimer = piecewiseGraceTimersRef.current.get(itemId);
+    if (graceTimer) clearTimeout(graceTimer);
+    piecewiseGraceTimersRef.current.delete(itemId);
+    setSuppressedPiecewiseItems((currentIds) => {
+      if (!currentIds.has(itemId)) return currentIds;
+      const next = new Set(currentIds); next.delete(itemId); return next;
+    });
+    commitSession({
+      ...current,
+      document: replaceGraphDocumentItem(current.document, promoted),
+      authoring: { piecewiseDrafts: drafts.filter((candidate) => candidate.itemId !== itemId) },
+    }, true);
+    return true;
+  }, [commitSession, pushHistory]);
+
+  const removePiecewiseDraft = useCallback((itemId: string) => {
+    const current = sessionRef.current;
+    commitSession({ ...current, authoring: {
+      piecewiseDrafts: (current.authoring?.piecewiseDrafts ?? []).filter((draft) => draft.itemId !== itemId),
+    } }, true);
+    const graceTimer = piecewiseGraceTimersRef.current.get(itemId);
+    if (graceTimer) clearTimeout(graceTimer);
+    piecewiseGraceTimersRef.current.delete(itemId);
+    setSuppressedPiecewiseItems((currentIds) => {
+      if (!currentIds.has(itemId)) return currentIds;
+      const next = new Set(currentIds); next.delete(itemId); return next;
+    });
+  }, [commitSession]);
+
+  const mutatePiecewiseDraft = useCallback((input: {
+    itemId: string;
+    action: 'add' | 'remove' | 'up' | 'down';
+    branchId?: string;
+  }) => {
+    const current = sessionRef.current;
+    const drafts = current.authoring?.piecewiseDrafts ?? [];
+    const draft = drafts.find((candidate) => candidate.itemId === input.itemId);
+    if (!draft) return;
+    const branches = [...draft.branches];
+    const index = input.branchId ? branches.findIndex((branch) => branch.branchId === input.branchId) : -1;
+    if (input.action === 'add') branches.push({
+      branchId: `${draft.itemId}.branch.${branches.length + 1}.${Date.now()}`,
+      valueLatex: '', conditionLatex: '',
+    });
+    else if (input.action === 'remove' && index >= 0 && branches.length > 2) branches.splice(index, 1);
+    else if (input.action === 'up' && index > 0) [branches[index - 1], branches[index]] = [branches[index], branches[index - 1]];
+    else if (input.action === 'down' && index >= 0 && index < branches.length - 1) [branches[index], branches[index + 1]] = [branches[index + 1], branches[index]];
+    else return;
+    const graceTimer = piecewiseGraceTimersRef.current.get(input.itemId);
+    if (graceTimer) clearTimeout(graceTimer);
+    piecewiseGraceTimersRef.current.delete(input.itemId);
+    const previous = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
+      candidate.itemId === input.itemId && candidate.kind === 'piecewise'
+    ));
+    const remainsValid = buildGraphPiecewiseItemFromAuthoringDraft({
+      itemId: input.itemId,
+      sourceRevision: (previous?.source.sourceRevision ?? 0) + 1,
+      index: Math.max(0, current.document.items.findIndex((item) => item.itemId === input.itemId)),
+      target: draft.target,
+      branches,
+      ...(previous ? { previous } : {}),
+    }) !== null;
+    if (draft.mode === 'replace' && !remainsValid) {
+      piecewiseGraceTimersRef.current.set(input.itemId, setTimeout(() => {
+        setSuppressedPiecewiseItems((currentIds) => new Set(currentIds).add(input.itemId));
+        piecewiseGraceTimersRef.current.delete(input.itemId);
+      }, INVALID_GRACE_MS));
+    }
+    commitSession({ ...current, authoring: { piecewiseDrafts: drafts.map((candidate) => (
+      candidate.itemId === input.itemId ? { ...candidate, branches } : candidate
+    )) } });
+  }, [commitSession]);
+
   const toggleItem = useCallback((itemId: string) => {
     const current = sessionRef.current;
     pushHistory(current.document, null);
@@ -339,34 +537,6 @@ export function useGraphWorkspaceController({
       },
     });
     return true;
-  }, [commitSession, pushHistory]);
-
-  const editPiecewiseBranch = useCallback((input: {
-    itemId: string;
-    branchId: string;
-    valueLatex: string;
-    conditionLatex: string;
-  }) => {
-    const current = sessionRef.current;
-    const document = updateGraphPiecewiseBranch({ document: current.document, ...input });
-    if (!document) return false;
-    pushHistory(current.document, null);
-    activeInputRevisionRef.current = null;
-    commitSession({ ...current, document }, true);
-    return true;
-  }, [commitSession, pushHistory]);
-
-  const mutatePiecewiseBranch = useCallback((input: {
-    itemId: string;
-    action: 'add' | 'remove' | 'up' | 'down';
-    branchId?: string;
-  }) => {
-    const current = sessionRef.current;
-    const document = mutateGraphPiecewiseBranches({ document: current.document, ...input });
-    if (!document) return;
-    pushHistory(current.document, null);
-    activeInputRevisionRef.current = null;
-    commitSession({ ...current, document }, true);
   }, [commitSession, pushHistory]);
 
   const undo = useCallback(() => {
@@ -488,8 +658,8 @@ export function useGraphWorkspaceController({
     const items = classifiedItems(snapshot.document);
     requestSequenceRef.current += 1;
     const sequence = requestSequenceRef.current;
-    const request: GraphSampleRequestV1 = {
-      version: 1,
+    const request: GraphSampleRequestV2 = {
+      version: 2,
       requestId: `${workspaceContext.workspaceInstanceId}.sample.${sequence}`,
       workspaceInstanceId: workspaceContextRef.current.workspaceInstanceId,
       documentId: snapshot.document.documentId,
@@ -503,20 +673,17 @@ export function useGraphWorkspaceController({
       parameterEnvironment: graphParameterEnvironment(snapshot.document),
       viewport: snapshot.surface.viewport,
       cssSize: { width, height },
-      grid: snapshot.surface.grid,
-      ...(resultRef.current?.scene.grid.hysteresisKey
-        ? { gridHysteresisKey: resultRef.current.scene.grid.hysteresisKey }
-        : {}),
+      overlays: { unitCircle: snapshot.surface.grid.unitCircle },
       quality,
       budgets: quality === 'preview'
-        ? { maximumRecursionDepth: 10, maximumSamples: 4_000, maximumTimeMs: 80, maximumVertices: 4_000 }
-        : { maximumRecursionDepth: 14, maximumSamples: 20_000, maximumTimeMs: 500, maximumVertices: 20_000 },
+        ? { maximumSamples: 4_000, maximumTimeMs: 80, maximumVertices: 4_000 }
+        : { maximumSamples: 20_000, maximumTimeMs: 500, maximumVertices: 20_000 },
     };
     activeInputRevisionRef.current = buildGraphSampleInputRevisionId(request);
-    setStatus({
+    const statusTimer = setTimeout(() => setStatus({
       kind: 'sampling',
       label: quality === 'preview' ? 'Drawing preview…' : 'Refining curves…',
-    });
+    }), 120);
     try {
       const envelope = await runGraphSampleWithOoe(request, {
         activeInputRevisionId: () => activeInputRevisionRef.current,
@@ -546,7 +713,7 @@ export function useGraphWorkspaceController({
           || previous.revisions.document !== request.revisions.document
           || previous.revisions.parameter !== request.revisions.parameter;
         if (mathematicsChanged && previous) {
-          releaseGraphSampleResultBuffers(previous);
+          retiredResultsRef.current.push(previous);
           resultRef.current = null;
           setSampleResult(null);
         }
@@ -554,7 +721,7 @@ export function useGraphWorkspaceController({
         return;
       }
       const previous = resultRef.current;
-      if (previous) releaseGraphSampleResultBuffers(previous);
+      if (previous) retiredResultsRef.current.push(previous);
       resultRef.current = envelope.payload;
       setSampleResult(envelope.payload);
       const topologyInconclusive = envelope.payload.stopReasons.some(
@@ -577,6 +744,8 @@ export function useGraphWorkspaceController({
       if (mountedRef.current && sequence === requestSequenceRef.current) {
         setStatus({ kind: 'error', label: 'Graph sampling stopped safely.' });
       }
+    } finally {
+      clearTimeout(statusTimer);
     }
   }, [cssSize.height, cssSize.width, workspaceContext.workspaceInstanceId]);
 
@@ -672,8 +841,17 @@ export function useGraphWorkspaceController({
 
   useEffect(() => {
     sessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
     resultRef.current = sampleResult;
-  }, [sampleResult, session]);
+    const retained: GraphSampleResultV2[] = [];
+    retiredResultsRef.current.splice(0).forEach((result) => {
+      if (result === sampleResult) retained.push(result);
+      else releaseGraphSampleResultBuffers(result);
+    });
+    retiredResultsRef.current.push(...retained);
+  }, [sampleResult]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -683,7 +861,10 @@ export function useGraphWorkspaceController({
       queuedPreviewRef.current = null;
       queuedSettledRef.current = null;
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+      piecewiseGraceTimersRef.current.forEach((timer) => clearTimeout(timer));
+      piecewiseGraceTimersRef.current.clear();
       persistRef.current(sessionRef.current);
+      retiredResultsRef.current.splice(0).forEach(releaseGraphSampleResultBuffers);
       if (resultRef.current) releaseGraphSampleResultBuffers(resultRef.current);
     };
   }, []);
@@ -691,10 +872,14 @@ export function useGraphWorkspaceController({
   const isScenePending = sampleResult !== null && (
     sampleResult.revisions.document !== session.document.documentRevision
     || sampleResult.revisions.viewport !== session.surface.viewportRevision
+    || sampleResult.revisions.parameter !== session.surface.parameterRevision
   );
 
   return useMemo(() => ({
     addPointSet,
+    createPiecewiseDraft,
+    beginPiecewiseDraft,
+    commitPiecewiseDraft,
     autoFit,
     blankItemId,
     blurItem,
@@ -702,13 +887,14 @@ export function useGraphWorkspaceController({
     canUndo: historyAvailability.canUndo,
     createParameters,
     editItem,
-    editPiecewiseBranch,
     endTypingTransaction,
     flushSampling,
     isScenePending,
-    mutatePiecewiseBranch,
+    mutatePiecewiseDraft,
     redo,
     removeItem,
+    removePiecewiseDraft,
+    suppressedPiecewiseItems,
     sampleResult,
     session,
     setViewport,
@@ -719,22 +905,27 @@ export function useGraphWorkspaceController({
     unresolvedSymbols: unresolvedGraphSymbols(session.document),
     updateGrid,
     updateParameter,
+    updatePiecewiseDraft,
     visibleDraftErrors,
   }), [
     addPointSet,
+    createPiecewiseDraft,
+    beginPiecewiseDraft,
+    commitPiecewiseDraft,
     autoFit,
     blankItemId,
     blurItem,
     createParameters,
     editItem,
-    editPiecewiseBranch,
     endTypingTransaction,
     flushSampling,
     historyAvailability,
     isScenePending,
-    mutatePiecewiseBranch,
+    mutatePiecewiseDraft,
     redo,
     removeItem,
+    removePiecewiseDraft,
+    suppressedPiecewiseItems,
     sampleResult,
     session,
     setViewport,
@@ -744,6 +935,7 @@ export function useGraphWorkspaceController({
     undo,
     updateGrid,
     updateParameter,
+    updatePiecewiseDraft,
     visibleDraftErrors,
   ]);
 }

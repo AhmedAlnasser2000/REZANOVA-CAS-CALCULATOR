@@ -28,6 +28,11 @@ type Point = {
 
 type Domain = { minimum: number; maximum: number };
 
+type ParametricInterval = {
+  left: Point;
+  right: Point;
+};
+
 function evaluateConstant(
   expression: GraphExpressionIR,
   cache: GraphExpressionPlanCache,
@@ -109,6 +114,20 @@ function screen(point: Point, viewport: GraphViewportV1, size: { width: number; 
     x: (point.x - viewport.xMin) / (viewport.xMax - viewport.xMin) * size.width,
     y: (viewport.yMax - point.y) / (viewport.yMax - viewport.yMin) * size.height,
   };
+}
+
+function outsideViewport(point: Point, viewport: GraphViewportV1) {
+  return point.x < viewport.xMin
+    || point.x > viewport.xMax
+    || point.y < viewport.yMin
+    || point.y > viewport.yMax;
+}
+
+function sharedOutsideSide(points: Point[], viewport: GraphViewportV1) {
+  return points.every((point) => point.x < viewport.xMin)
+    || points.every((point) => point.x > viewport.xMax)
+    || points.every((point) => point.y < viewport.yMin)
+    || points.every((point) => point.y > viewport.yMax);
 }
 
 function compileEvaluators(input: {
@@ -229,29 +248,82 @@ export function sampleParametricGraphRelation(input: {
     return point;
   };
   const initialIntervals = input.quality === 'preview' ? 48 : 96;
-  const depthLimit = Math.min(input.budgets.maximumRecursionDepth, input.quality === 'preview' ? 4 : 7);
-  const refine = (left: Point, right: Point, depth: number) => {
-    if (stopped || depth >= depthLimit) return;
-    const middle = evaluate((left.parameter + right.parameter) / 2);
-    if (!middle) return;
-    if (!left.finite || !middle.finite || !right.finite) {
-      if (depth < depthLimit - 1) {
-        refine(left, middle, depth + 1);
-        refine(middle, right, depth + 1);
-      }
-      return;
+  const pending: ParametricInterval[] = [];
+  const convergeFiniteBoundary = (finiteEndpoint: Point, nonFiniteEndpoint: Point) => {
+    let finite = finiteEndpoint;
+    let nonFinite = nonFiniteEndpoint;
+    while (!stopped && !outsideViewport(finite, input.viewport)) {
+      const parameter = finite.parameter + (nonFinite.parameter - finite.parameter) / 2;
+      if (parameter === finite.parameter || parameter === nonFinite.parameter) return finite;
+      const point = evaluate(parameter);
+      if (!point) return finite;
+      if (point.finite) finite = point;
+      else nonFinite = point;
     }
-    const a = screen(left, input.viewport, input.cssSize);
-    const b = screen(middle, input.viewport, input.cssSize);
-    const c = screen(right, input.viewport, input.cssSize);
-    const chord = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 };
-    const deviation = Math.hypot(b.x - chord.x, b.y - chord.y);
-    const length = Math.max(Math.hypot(b.x - a.x, b.y - a.y), Math.hypot(c.x - b.x, c.y - b.y));
-    const shouldRefine = deviation > (input.quality === 'preview' ? 2.4 : 0.8)
-      || length > (input.quality === 'preview' ? 52 : 26);
-    if (shouldRefine) {
-      refine(left, middle, depth + 1);
-      refine(middle, right, depth + 1);
+    return finite;
+  };
+  const queueFiniteRemainder = (left: Point, right: Point) => {
+    if (!left.finite || !right.finite || left.parameter === right.parameter) return;
+    pending.push({ left, right });
+  };
+  const refineToScreenConvergence = () => {
+    while (pending.length > 0 && !stopped) {
+      const interval = pending.pop()!;
+      if (interval.left.finite !== interval.right.finite) {
+        const boundary = convergeFiniteBoundary(
+          interval.left.finite ? interval.left : interval.right,
+          interval.left.finite ? interval.right : interval.left,
+        );
+        if (boundary) {
+          if (interval.left.finite) queueFiniteRemainder(interval.left, boundary);
+          else queueFiniteRemainder(boundary, interval.right);
+        }
+        continue;
+      }
+      const parameter = interval.left.parameter
+        + (interval.right.parameter - interval.left.parameter) / 2;
+      if (parameter === interval.left.parameter || parameter === interval.right.parameter) continue;
+      const middle = evaluate(parameter);
+      if (!middle) return;
+      if (!interval.left.finite && !middle.finite && !interval.right.finite) continue;
+      if (interval.left.finite !== middle.finite) {
+        const boundary = convergeFiniteBoundary(
+          interval.left.finite ? interval.left : middle,
+          interval.left.finite ? middle : interval.left,
+        );
+        if (boundary) {
+          if (interval.left.finite) queueFiniteRemainder(interval.left, boundary);
+          else queueFiniteRemainder(boundary, middle);
+        }
+      }
+      if (middle.finite !== interval.right.finite) {
+        const boundary = convergeFiniteBoundary(
+          middle.finite ? middle : interval.right,
+          middle.finite ? interval.right : middle,
+        );
+        if (boundary) {
+          if (middle.finite) queueFiniteRemainder(middle, boundary);
+          else queueFiniteRemainder(boundary, interval.right);
+        }
+      }
+      if (!interval.left.finite || !middle.finite || !interval.right.finite) continue;
+      if (sharedOutsideSide([interval.left, middle, interval.right], input.viewport)) continue;
+      const a = screen(interval.left, input.viewport, input.cssSize);
+      const b = screen(middle, input.viewport, input.cssSize);
+      const c = screen(interval.right, input.viewport, input.cssSize);
+      const chord = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 };
+      const deviation = Math.hypot(b.x - chord.x, b.y - chord.y);
+      const length = Math.max(
+        Math.hypot(b.x - a.x, b.y - a.y),
+        Math.hypot(c.x - b.x, c.y - b.y),
+      );
+      if (deviation > (input.quality === 'preview' ? 2.4 : 0.8)
+        || length > (input.quality === 'preview' ? 52 : 26)) {
+        pending.push(
+          { left: middle, right: interval.right },
+          { left: interval.left, right: middle },
+        );
+      }
     }
   };
   for (let index = 0; index <= initialIntervals; index += 1) {
@@ -260,8 +332,9 @@ export function sampleParametricGraphRelation(input: {
   if (!stopped) {
     const coarse = [...points.values()].sort((left, right) => left.parameter - right.parameter);
     for (let index = 1; index < coarse.length && !stopped; index += 1) {
-      refine(coarse[index - 1]!, coarse[index]!, 0);
+      pending.push({ left: coarse[index - 1]!, right: coarse[index]! });
     }
+    refineToScreenConvergence();
   }
   const ordered = [...points.values()].sort((left, right) => left.parameter - right.parameter);
   const coordinates: number[] = [];
@@ -295,7 +368,6 @@ export function sampleParametricGraphRelation(input: {
     stats: {
       evaluatedSamples: points.size,
       emittedVertices: parameters.length,
-      maximumDepthReached: depthLimit,
       elapsedMs: Math.max(0, input.control.now() - startedAt),
     },
   };

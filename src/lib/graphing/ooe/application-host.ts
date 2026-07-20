@@ -1,8 +1,8 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   validateTransferredGraphSampleResult,
-  type GraphSampleRequestV1,
-  type GraphSampleResultV1,
+  type GraphSampleRequestV2,
+  type GraphSampleResultV2,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
 import { collectGraphSceneTransferables } from '../scene';
@@ -32,7 +32,7 @@ export type GraphSamplingHostExecution =
       hostId: typeof GRAPH_SAMPLE_WORKER_HOST_ID;
       isolated: true;
       terminalStatus: 'cancelled';
-      termination: 'hardStop';
+      termination: 'hardStop' | 'cooperative';
       reason: string;
     }
   | {
@@ -64,7 +64,7 @@ type GraphSamplingApplicationHostOptions = {
 };
 
 type ActiveRun = {
-  cancel: (reason: string) => void;
+  cancel: (reason: string, hard: boolean) => void;
 };
 
 function defaultWorker(): GraphSamplingWorkerLike {
@@ -75,8 +75,8 @@ function defaultWorker(): GraphSamplingWorkerLike {
 }
 
 function resultMatchesRequest(
-  result: GraphSampleResultV1,
-  request: GraphSampleRequestV1,
+  result: GraphSampleResultV2,
+  request: GraphSampleRequestV2,
 ) {
   return result.requestId === request.requestId
     && result.workspaceInstanceId === request.workspaceInstanceId
@@ -114,7 +114,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async run(
-    request: GraphSampleRequestV1,
+    request: GraphSampleRequestV2,
     context: OoeRuntimeControlContext,
   ): Promise<GraphSamplingHostResult> {
     if (context.shouldCancel()) {
@@ -131,7 +131,7 @@ export class GraphSamplingApplicationHost {
         },
       };
     }
-    this.#activeRun?.cancel('Superseded by the latest Graph sampling request.');
+    this.#activeRun?.cancel('Superseded by the latest Graph sampling request.', false);
     const worker = this.#ensureWorker();
     if (!worker) {
       return this.#runFallback(request, context, 'worker-unavailable');
@@ -140,11 +140,11 @@ export class GraphSamplingApplicationHost {
   }
 
   cancelActive(reason = 'Graph sampling host was cancelled.') {
-    this.#activeRun?.cancel(reason);
+    this.#activeRun?.cancel(reason, true);
   }
 
   dispose(reason = 'Graph sampling host was disposed.') {
-    this.#activeRun?.cancel(reason);
+    this.#activeRun?.cancel(reason, true);
     this.#terminateWorker();
     this.#fallbackPlanCache.clear();
   }
@@ -168,7 +168,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async #runFallback(
-    request: GraphSampleRequestV1,
+    request: GraphSampleRequestV2,
     context: OoeRuntimeControlContext,
     reason: string,
   ): Promise<GraphSamplingHostResult> {
@@ -216,7 +216,7 @@ export class GraphSamplingApplicationHost {
 
   #runWorker(
     worker: GraphSamplingWorkerLike,
-    request: GraphSampleRequestV1,
+    request: GraphSampleRequestV2,
     context: OoeRuntimeControlContext,
   ) {
     this.#requestSequence += 1;
@@ -250,11 +250,12 @@ export class GraphSamplingApplicationHost {
         this.#terminateWorker();
         reject(new Error(`Graph sampling worker failed: ${message}`));
       };
-      const cancel = (reason: string) => settleCancelled(reason);
-      const settleCancelled = (reason: string) => {
+      const cancel = (reason: string, hard: boolean) => settleCancelled(reason, hard);
+      const settleCancelled = (reason: string, hard = true) => {
         if (settled) return;
-        this.#terminateWorker();
-        const execution = buildCancelledGraphSampleExecution(request, 'worker-hard-stop');
+        if (hard) this.#terminateWorker();
+        else worker.postMessage({ kind: 'cancel', requestId });
+        const execution = buildCancelledGraphSampleExecution(request, hard ? 'worker-hard-stop' : 'worker-cooperative-supersession');
         settle({
           ...execution,
           hostExecution: {
@@ -262,7 +263,7 @@ export class GraphSamplingApplicationHost {
             hostId: GRAPH_SAMPLE_WORKER_HOST_ID,
             isolated: true,
             terminalStatus: 'cancelled',
-            termination: 'hardStop',
+            termination: hard ? 'hardStop' : 'cooperative',
             reason,
           },
         });

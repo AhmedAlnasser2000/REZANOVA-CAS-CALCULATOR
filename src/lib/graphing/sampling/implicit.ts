@@ -48,7 +48,6 @@ export type GraphSampledImplicitRelation = {
   stats: {
     evaluatedSamples: number;
     emittedVertices: number;
-    maximumDepthReached: number;
     elapsedMs: number;
   };
 };
@@ -241,7 +240,7 @@ export function sampleImplicitGraphRelation(
       status: 'complete',
       boundaries: [],
       stopReasons: [compiled.stopReason],
-      stats: { evaluatedSamples: 0, emittedVertices: 0, maximumDepthReached: 0, elapsedMs: 0 },
+      stats: { evaluatedSamples: 0, emittedVertices: 0, elapsedMs: 0 },
     };
   }
   const { columns, rows } = chooseGrid(input, compiled.clauses.length);
@@ -337,7 +336,6 @@ export function sampleImplicitGraphRelation(
       stats: {
         evaluatedSamples,
         emittedVertices: 0,
-        maximumDepthReached: 0,
         elapsedMs: Math.max(0, now() - startedAt),
       },
     };
@@ -452,7 +450,6 @@ export function sampleImplicitGraphRelation(
     stats: {
       evaluatedSamples,
       emittedVertices,
-      maximumDepthReached: 0,
       elapsedMs: Math.max(0, now() - startedAt),
     },
   };

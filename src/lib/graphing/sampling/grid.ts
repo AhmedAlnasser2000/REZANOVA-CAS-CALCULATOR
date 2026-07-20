@@ -1,6 +1,6 @@
 import type {
   GraphGridPolicyV1,
-  GraphGridSceneV1,
+  GraphGridSceneV2,
   GraphSceneLabelV1,
   GraphViewportV1,
 } from '../contracts';
@@ -40,37 +40,44 @@ function values(minimum: number, maximum: number, step: number, limit = 80) {
   return output;
 }
 
-function line(output: number[], x1: number, y1: number, x2: number, y2: number) {
-  output.push(x1, y1, x2, y2);
+function line(
+  output: GraphGridSceneV2['lines'],
+  lineId: string,
+  role: GraphGridSceneV2['lines'][number]['role'],
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+) {
+  output.push({ lineId, role, x1, y1, x2, y2 });
 }
 
 function formatNumber(value: number, step: number) {
   if (value === 0) return '0';
   const decimals = Math.max(0, Math.min(5, -Math.floor(Math.log10(step))));
-  return value.toFixed(decimals).replace(/\.?0+$/u, '');
+  return decimals === 0 ? String(Math.round(value)) : value.toFixed(decimals).replace(/\.?0+$/u, '');
 }
 
-function cartesianGrid(input: GridInput): GraphGridSceneV1 {
+function cartesianGrid(input: GridInput): GraphGridSceneV2 {
   const { viewport, cssSize, policy } = input;
   const previous = previousSteps(input.previousHysteresisKey, 'cartesian');
   const xStep = niceStep(viewport.xMax - viewport.xMin, cssSize.width, 88, previous[0]);
   const yStep = niceStep(viewport.yMax - viewport.yMin, cssSize.height, 88, previous[1]);
-  const majorLines: number[] = [];
-  const minorLines: number[] = [];
+  const lines: GraphGridSceneV2['lines'] = [];
   const labels: GraphSceneLabelV1[] = [];
   const xValues = values(viewport.xMin, viewport.xMax, xStep);
   const yValues = values(viewport.yMin, viewport.yMax, yStep);
   if (policy.major) {
-    xValues.forEach((x) => line(majorLines, x, viewport.yMin, x, viewport.yMax));
-    yValues.forEach((y) => line(majorLines, viewport.xMin, y, viewport.xMax, y));
+    xValues.forEach((x) => line(lines, `grid-major-x:${x}`, x === 0 ? 'axis' : 'major', x, viewport.yMin, x, viewport.yMax));
+    yValues.forEach((y) => line(lines, `grid-major-y:${y}`, y === 0 ? 'axis' : 'major', viewport.xMin, y, viewport.xMax, y));
   }
   if (policy.minor) {
     values(viewport.xMin, viewport.xMax, xStep / 5).filter((x) => (
       Math.abs(x / xStep - Math.round(x / xStep)) > 1e-7
-    )).forEach((x) => line(minorLines, x, viewport.yMin, x, viewport.yMax));
+    )).forEach((x) => line(lines, `grid-minor-x:${x}`, 'minor', x, viewport.yMin, x, viewport.yMax));
     values(viewport.yMin, viewport.yMax, yStep / 5).filter((y) => (
       Math.abs(y / yStep - Math.round(y / yStep)) > 1e-7
-    )).forEach((y) => line(minorLines, viewport.xMin, y, viewport.xMax, y));
+    )).forEach((y) => line(lines, `grid-minor-y:${y}`, 'minor', viewport.xMin, y, viewport.xMax, y));
   }
   if (policy.axisNumbers) {
     const xLabelY = Math.max(viewport.yMin, Math.min(viewport.yMax, 0));
@@ -95,9 +102,10 @@ function cartesianGrid(input: GridInput): GraphGridSceneV1 {
     });
   }
   return {
+    version: 2,
     kind: 'cartesian',
-    majorLines,
-    minorLines,
+    lines,
+    circles: [],
     labels: labels.slice(0, 28),
     hysteresisKey: `cartesian:${xStep}:${yStep}`,
   };
@@ -110,17 +118,7 @@ const ANGLE_LABELS: Array<[number, string]> = [
   [5 * Math.PI / 3, '5pi/3'], [11 * Math.PI / 6, '11pi/6'],
 ];
 
-function ring(output: number[], radius: number, segments: number) {
-  for (let index = 0; index < segments; index += 1) {
-    const left = index / segments * Math.PI * 2;
-    const right = (index + 1) / segments * Math.PI * 2;
-    line(output,
-      radius * Math.cos(left), radius * Math.sin(left),
-      radius * Math.cos(right), radius * Math.sin(right));
-  }
-}
-
-function polarGrid(input: GridInput): GraphGridSceneV1 {
+function polarGrid(input: GridInput): GraphGridSceneV2 {
   const { viewport, cssSize, policy } = input;
   const radius = Math.max(
     Math.hypot(viewport.xMin, viewport.yMin), Math.hypot(viewport.xMin, viewport.yMax),
@@ -128,18 +126,21 @@ function polarGrid(input: GridInput): GraphGridSceneV1 {
   );
   const previous = previousSteps(input.previousHysteresisKey, 'polar');
   const radiusStep = niceStep(radius, Math.min(cssSize.width, cssSize.height) / 2, 72, previous[0]);
-  const majorLines: number[] = [];
-  const minorLines: number[] = [];
+  const lines: GraphGridSceneV2['lines'] = [];
+  const circles: GraphGridSceneV2['circles'] = [];
   const labels: GraphSceneLabelV1[] = [];
-  const segments = Math.max(40, Math.min(96, Math.round(Math.min(cssSize.width, cssSize.height) / 10)));
   const rings = values(radiusStep, radius, radiusStep, 16);
-  if (policy.major) rings.forEach((value) => ring(majorLines, value, segments));
+  if (policy.major) rings.forEach((value) => circles.push({
+    circleId: `grid-ring-major:${value}`, role: 'major', center: { x: 0, y: 0 }, radius: value,
+  }));
   if (policy.minor) values(radiusStep / 2, radius, radiusStep / 2, 24)
     .filter((value) => Math.abs(value / radiusStep - Math.round(value / radiusStep)) > 1e-7)
-    .forEach((value) => ring(minorLines, value, Math.max(32, Math.floor(segments / 2))));
+    .forEach((value) => circles.push({
+      circleId: `grid-ring-minor:${value}`, role: 'minor', center: { x: 0, y: 0 }, radius: value,
+    }));
   const spokeStep = Math.min(cssSize.width, cssSize.height) < 520 ? Math.PI / 4 : Math.PI / 6;
   for (let angle = 0; angle < Math.PI * 2 - 1e-8; angle += spokeStep) {
-    line(majorLines, 0, 0, radius * Math.cos(angle), radius * Math.sin(angle));
+    line(lines, `grid-spoke:${angle}`, 'spoke', 0, 0, radius * Math.cos(angle), radius * Math.sin(angle));
   }
   if (policy.axisNumbers) rings.slice(0, 8).forEach((value) => labels.push({
     labelId: `grid:r:${value}`,
@@ -149,9 +150,11 @@ function polarGrid(input: GridInput): GraphGridSceneV1 {
     plainText: formatNumber(value, radiusStep),
   }));
   if (policy.angleLabels) {
-    const labelRadius = Math.min(radius, Math.max(radiusStep, Math.min(
-      Math.abs(viewport.xMin), Math.abs(viewport.xMax), Math.abs(viewport.yMin), Math.abs(viewport.yMax),
-    ))) * 0.92;
+    const nearestVisibleRadius = Math.max(radiusStep, Math.min(radius * 0.9, Math.hypot(
+      Math.max(viewport.xMin, Math.min(0, viewport.xMax)),
+      Math.max(viewport.yMin, Math.min(0, viewport.yMax)),
+    ) + radiusStep));
+    const labelRadius = nearestVisibleRadius;
     ANGLE_LABELS.filter(([angle]) => Math.abs(angle / spokeStep - Math.round(angle / spokeStep)) < 1e-7)
       .forEach(([angle, text]) => labels.push({
         labelId: `grid:theta:${angle}`,
@@ -162,17 +165,18 @@ function polarGrid(input: GridInput): GraphGridSceneV1 {
       }));
   }
   return {
+    version: 2,
     kind: 'polar',
-    majorLines,
-    minorLines,
+    lines,
+    circles,
     labels: labels.slice(0, 28),
     hysteresisKey: `polar:${radiusStep}:${spokeStep}`,
   };
 }
 
-export function buildGraphGridScene(input: GridInput): GraphGridSceneV1 {
+export function buildGraphGridScene(input: GridInput): GraphGridSceneV2 {
   if (input.policy.kind === 'none') {
-    return { kind: 'none', majorLines: [], minorLines: [], labels: [], hysteresisKey: 'none:v1' };
+    return { version: 2, kind: 'none', lines: [], circles: [], labels: [], hysteresisKey: 'none:v2' };
   }
   return input.policy.kind === 'polar' ? polarGrid(input) : cartesianGrid(input);
 }
