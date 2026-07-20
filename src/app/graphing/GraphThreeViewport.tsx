@@ -15,7 +15,7 @@ import {
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
   type InteractiveGraph3dRenderer,
-  type GraphSpatialSceneRuntimeV1,
+  type GraphSpatialSceneRuntimeV2,
 } from '../../lib/graphing';
 import {
   moveGraphCamera,
@@ -33,7 +33,7 @@ type Props = {
   onSizeChange: (size: { width: number; height: number }) => void;
   onViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
   presentation: GraphRendererPresentationFrame;
-  scene: GraphSpatialSceneRuntimeV1 | null;
+  scene: GraphSpatialSceneRuntimeV2 | null;
   sceneViewport: GraphViewportV1 | null;
   selectedItemId: string | null;
   view: GraphPaneViewStateV1;
@@ -150,7 +150,7 @@ export function GraphThreeViewport({
     const renderer = rendererRef.current;
     if (!renderer || !ready) return;
     renderer.setScene(scene && sceneViewport ? {
-      version: 2, scene, sourceViewport: sceneViewport,
+      version: 3, scene, sourceViewport: sceneViewport,
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 },
     } : null);

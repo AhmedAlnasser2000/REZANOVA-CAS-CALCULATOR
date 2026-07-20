@@ -30,7 +30,7 @@ import type {
   NotebookSurfaceState,
   NotebookWorkspaceTarget,
 } from '../../lib/notebook';
-import type { GraphWorkspaceSessionStateV6 } from '../graphing/graph-workspace-session';
+import type { GraphWorkspaceSessionStateV7 } from '../graphing/graph-workspace-session';
 
 const GraphWorkspacePageHost = lazy(() => import('../graphing/GraphWorkspacePageHost'));
 const FormulaViewerPage = lazy(() => import('./FormulaViewerPage').then((module) => ({
@@ -73,7 +73,7 @@ type ActiveSurfaceHostProps = {
   onResetCalculatorMemory: () => void;
   onResetHistory: () => void;
   onStopPendingHistoryTicket?: (ticket: PendingHistoryTicket) => void;
-  onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV6) => void;
+  onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV7) => void;
   onUpdateNotebookSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   pendingHistory: PendingHistoryTicket[];
   renderCalculatorSurface: () => ReactNode;

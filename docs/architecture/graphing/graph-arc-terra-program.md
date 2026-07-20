@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-25 complete; Move 26 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-26 complete; Move 27 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -353,6 +353,8 @@ Status: implementation and verification complete; commit pending at write time.
 - The current ground-plane viewport supplies default x/y bounds; an expanded row editor can lock bounds per surface. View/domain changes settle into resampling, while vertical exaggeration remains render-only.
 
 ## 26. `GRAPHING-COMPLEX-MAPPING-SOLVER1`
+
+Status: implementation and verification complete; commit pending at write time.
 
 - Terra: High; gate type: backend and ui.
 - Objective: add structured `f: C -> C` mappings for `f(z)=...`, `w=...`, and bare z-expressions, continuous domain coloring, synchronized component maps, real-axis-slice Both mode, visible certified principal cuts/branch points, graph-local assumptions, and bounded exact/numeric complex solving inside Analyze.

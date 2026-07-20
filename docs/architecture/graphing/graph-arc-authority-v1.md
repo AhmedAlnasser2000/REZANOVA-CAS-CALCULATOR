@@ -2,7 +2,7 @@
 
 Status: approved architecture contract; implementation active through the 30-move Graphing program
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
-Implementation baseline: `98af027b`; implementation is verified through Move 25 with its commit pending at write time
+Implementation baseline: `c5f2e106`; implementation is verified through Move 26 with its commit pending at write time
 Date: 2026-07-19
 
 ## Scope and outcome
@@ -11,7 +11,7 @@ This contract defines the first production Graphing arc. Graphing will be a full
 
 Graphing is not a calculator `ModeId`, side surface, result card, launcher tile, History artifact, Notebook block, Surface Protocol capability, or detached experiment. The first arc has no cross-workspace Open, Send, or Plot action and no durable graph-project persistence.
 
-Moves 1-25 now establish the public non-singleton Graph workspace, structured real-relation authority, governed adaptive sampling, renderer-neutral scene and appearance contracts, deterministic SVG reference view, a private on-demand Three WebGL2 view, independent Graph analysis authority, its floating Analyze overlay, and explicit real surfaces. Three is dynamically loaded only after a pane enters 3D; current curves stay on `z=0`; strict session V6/surface V5 and document V3 migration preserves independent real/complex camera state, tab-local Analyze state, and z-capable pins. Explicit `z=f(x,y)` owns bounded adaptive meshes, domain breaks, normals, contours, 2D height/contour presentation, shaded 3D presentation, and `(x,y,z)` trace without reinterpreting existing x expressions. Complex mappings, Riemann sheets/surfaces, and export remain sequenced in Moves 26-30.
+Moves 1-26 now establish the public non-singleton Graph workspace, structured real and complex relation authority, governed adaptive sampling, renderer-neutral scene and appearance contracts, deterministic SVG reference view, a private on-demand Three WebGL2 view, independent Graph analysis authority, its floating Analyze overlay, explicit real surfaces, and general bounded complex mapping/solve behavior. Three is dynamically loaded only after a pane enters 3D; current curves stay on `z=0`; strict session V7/surface V6 and document V4 migration preserves independent real/complex camera state, tab-local Analyze state, graph-local assumptions, and z-capable pins. Complex mappings normalize `f(z)=...`, `w=...`, and bare z-expressions into structured IR, while real-parameterized Argand trajectories remain distinct. Renderer-neutral complex tiles drive default domain coloring and synchronized Re/Im/magnitude/phase maps; Analyze distinguishes exact facts, bounded validated candidates, and explicit non-completeness. Riemann sheets/surfaces and export remain sequenced in Moves 27-30.
 
 ## Rebased repository authority map
 

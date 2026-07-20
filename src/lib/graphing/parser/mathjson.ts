@@ -43,11 +43,14 @@ export const GRAPH_EXPRESSION_OPERATOR_ARITY: ReadonlyMap<
   ['Ceil', { minimum: 1, maximum: 1 }],
   ['Cos', { minimum: 1, maximum: 1 }],
   ['Cosh', { minimum: 1, maximum: 1 }],
+  ['Conjugate', { minimum: 1, maximum: 1 }],
+  ['Complex', { minimum: 2, maximum: 2 }],
   ['Cot', { minimum: 1, maximum: 1 }],
   ['Csc', { minimum: 1, maximum: 1 }],
   ['Divide', { minimum: 2, maximum: 2 }],
   ['Exp', { minimum: 1, maximum: 1 }],
   ['Floor', { minimum: 1, maximum: 1 }],
+  ['ImaginaryPart', { minimum: 1, maximum: 1 }],
   ['Ln', { minimum: 1, maximum: 1 }],
   ['Log', { minimum: 1, maximum: 2 }],
   ['Max', { minimum: 1, maximum: 64 }],
@@ -57,6 +60,8 @@ export const GRAPH_EXPRESSION_OPERATOR_ARITY: ReadonlyMap<
   ['Negate', { minimum: 1, maximum: 1 }],
   ['Power', { minimum: 2, maximum: 2 }],
   ['Rational', { minimum: 2, maximum: 2 }],
+  ['Real', { minimum: 1, maximum: 1 }],
+  ['RealPart', { minimum: 1, maximum: 1 }],
   ['Root', { minimum: 2, maximum: 2 }],
   ['Round', { minimum: 1, maximum: 1 }],
   ['Sec', { minimum: 1, maximum: 1 }],
@@ -66,13 +71,13 @@ export const GRAPH_EXPRESSION_OPERATOR_ARITY: ReadonlyMap<
   ['Sqrt', { minimum: 1, maximum: 1 }],
   ['Tan', { minimum: 1, maximum: 1 }],
   ['Tanh', { minimum: 1, maximum: 1 }],
+  ['Arg', { minimum: 1, maximum: 1 }],
 ]);
 
-const RESERVED_CONSTANTS = new Set(['ExponentialE', 'GoldenRatio', 'Pi']);
+const RESERVED_CONSTANTS = new Set(['ExponentialE', 'GoldenRatio', 'ImaginaryUnit', 'Pi']);
 const FORBIDDEN_CONSTANTS = new Set([
   'ComplexInfinity',
   'False',
-  'ImaginaryUnit',
   'NaN',
   'NegativeInfinity',
   'PositiveInfinity',

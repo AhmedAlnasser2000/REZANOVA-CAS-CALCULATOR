@@ -2,15 +2,17 @@ import {
   type GraphDocumentV1,
   type GraphDocumentV2,
   type GraphDocumentV3,
+  type GraphDocumentV4,
   type GraphSurfaceStateV1,
   type GraphSurfaceStateV2,
   type GraphSurfaceStateV3,
   type GraphSurfaceStateV4,
   type GraphSurfaceStateV5,
+  type GraphSurfaceStateV6,
   type GraphPaneViewStateV1,
 } from '../../lib/graphing/contracts/types';
 
-export const GRAPH_WORKSPACE_SESSION_VERSION = 6 as const;
+export const GRAPH_WORKSPACE_SESSION_VERSION = 7 as const;
 
 export type GraphPiecewiseAuthoringDraftV1 = {
   version: 1;
@@ -65,9 +67,16 @@ export type GraphWorkspaceSessionStateV5 = {
 };
 
 export type GraphWorkspaceSessionStateV6 = {
-  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  version: 6;
   document: GraphDocumentV3;
   surface: GraphSurfaceStateV5;
+  authoring?: GraphWorkspaceAuthoringStateV1;
+};
+
+export type GraphWorkspaceSessionStateV7 = {
+  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  document: GraphDocumentV4;
+  surface: GraphSurfaceStateV6;
   authoring?: GraphWorkspaceAuthoringStateV1;
 };
 
@@ -98,20 +107,21 @@ export function graphWorkspaceDefaultTitle(sequence: number) {
 export function createGraphWorkspaceSessionState(
   workspaceInstanceId: string,
   title: string,
-): GraphWorkspaceSessionStateV6 {
+): GraphWorkspaceSessionStateV7 {
   return {
     version: GRAPH_WORKSPACE_SESSION_VERSION,
     document: {
-      version: 3,
+      version: 4,
       documentId: `graph-document.${workspaceInstanceId}`,
       title,
       contentRevision: 0,
       mathematicsRevision: 0,
       items: [],
+      assumptions: [],
     },
     authoring: { piecewiseDrafts: [] },
     surface: {
-      version: 5,
+      version: 6,
       viewport: {
         coordinateSystem: 'cartesian',
         xMin: -10,
@@ -143,6 +153,7 @@ export function createGraphWorkspaceSessionState(
         complex: createDefaultGraphPaneViewState(),
       },
       analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] },
+      complex: { displayMode: 'domain-coloring', searchRegion: null },
     },
   };
 }
@@ -152,11 +163,11 @@ export function renameGraphWorkspaceSessionState(
   title: string,
 ) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  const session = value as Partial<GraphWorkspaceSessionStateV6>;
+  const session = value as Partial<GraphWorkspaceSessionStateV7>;
   if (
-    session.version !== 6
+    session.version !== 7
     || !session.document
-    || session.document.version !== 3
+    || session.document.version !== 4
     || session.document.title === title
   ) return value;
   return {
@@ -166,5 +177,5 @@ export function renameGraphWorkspaceSessionState(
       title,
       contentRevision: session.document.contentRevision + 1,
     },
-  } as GraphWorkspaceSessionStateV6;
+  } as GraphWorkspaceSessionStateV7;
 }

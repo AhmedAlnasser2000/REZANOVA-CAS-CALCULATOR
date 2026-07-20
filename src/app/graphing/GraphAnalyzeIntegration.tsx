@@ -9,16 +9,18 @@ import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/wor
 import { graphItemSourceLatex } from './graph-document';
 import { GraphAnalysisMarkers, GraphAnalyzeOverlay } from './GraphAnalyzeOverlay';
 import { graphFeatureNumber, graphPinnedAnnotation } from './graph-analysis-overlay-support';
-import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 import { useGraphAnalysis } from './useGraphAnalysis';
 
 export function GraphAnalyzeIntegration({
-  onSetViewport, onUpdateAnalyze, onUpdatePresentation, session, workspaceContext,
+  onAddAssumption, onRemoveAssumption, onSetViewport, onUpdateAnalyze, onUpdatePresentation, session, workspaceContext,
 }: {
+  onAddAssumption: (sourceLatex: string) => boolean;
+  onRemoveAssumption: (assumptionId: string) => void;
   onSetViewport: (viewport: GraphViewportV1) => void;
   onUpdateAnalyze: (values: Partial<GraphSurfaceStateV5['analyze']> & { open?: boolean }) => void;
   onUpdatePresentation: (itemId: string, presentation: GraphItemPresentationV2) => boolean;
-  session: GraphWorkspaceSessionStateV6;
+  session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
   const [preview, setPreview] = useState<import('../../lib/graphing').GraphAnalysisEvidenceV1 | null>(null);
@@ -34,11 +36,13 @@ export function GraphAnalyzeIntegration({
     {session.surface.analyzeOpen ? <GraphAnalyzeOverlay
       activeTab={session.surface.analyze.activeTab}
       analysis={evidence}
+      assumptions={session.document.assumptions}
       colorVisionMode={session.surface.appearance.colorVisionMode}
       itemPresentation={selectedItem && 'presentation' in selectedItem
         ? normalizeGraphItemPresentation(selectedItem.presentation) : undefined}
       message={analysis.message}
       onClose={() => { setPreview(null); onUpdateAnalyze({ open: false }); }}
+      onAddAssumption={onAddAssumption}
       onPin={(entry) => {
         const annotation = graphPinnedAnnotation(entry);
         if (!annotation) return;
@@ -47,6 +51,7 @@ export function GraphAnalyzeIntegration({
           ? pins.filter((pin) => pin.annotationId !== annotation.annotationId) : [...pins, annotation] });
       }}
       onPreview={setPreview}
+      onRemoveAssumption={onRemoveAssumption}
       onRecenter={(entry) => {
         const x = graphFeatureNumber(entry.coordinates?.x); const y = graphFeatureNumber(entry.coordinates?.y);
         if (x === undefined && y === undefined) return;

@@ -1,8 +1,8 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   validateTransferredGraphSampleResult,
-  type GraphSampleRequestV5,
-  type GraphSampleResultV5,
+  type GraphSampleRequestV6,
+  type GraphSampleResultV6,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
 import { collectGraphSpatialSceneTransferables } from '../scene';
@@ -76,8 +76,8 @@ function defaultWorker(): GraphSamplingWorkerLike {
 }
 
 function resultMatchesRequest(
-  result: GraphSampleResultV5,
-  request: GraphSampleRequestV5,
+  result: GraphSampleResultV6,
+  request: GraphSampleRequestV6,
 ) {
   return result.requestId === request.requestId
     && result.workspaceInstanceId === request.workspaceInstanceId
@@ -117,7 +117,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async run(
-    request: GraphSampleRequestV5,
+    request: GraphSampleRequestV6,
     context: OoeRuntimeControlContext,
   ): Promise<GraphSamplingHostResult> {
     if (context.shouldCancel()) {
@@ -178,7 +178,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async #runFallback(
-    request: GraphSampleRequestV5,
+    request: GraphSampleRequestV6,
     context: OoeRuntimeControlContext,
     reason: string,
   ): Promise<GraphSamplingHostResult> {
@@ -226,7 +226,7 @@ export class GraphSamplingApplicationHost {
 
   #runWorker(
     worker: GraphSamplingWorkerLike,
-    request: GraphSampleRequestV5,
+    request: GraphSampleRequestV6,
     context: OoeRuntimeControlContext,
   ) {
     this.#requestSequence += 1;

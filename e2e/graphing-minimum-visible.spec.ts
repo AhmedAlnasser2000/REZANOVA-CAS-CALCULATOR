@@ -104,9 +104,9 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(3);
     await expect(page.locator('.graph-status')).toContainText('Ready');
     await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
-    await expect(page.getByRole('button', { name: /Analyze/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Analyze/i })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /Export/i })).toHaveCount(0);
-    await expect(page.getByText('Complex', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Complex' })).toHaveCount(1);
 
     const reciprocalPath = page.getByTestId('graph-scene-paths').locator('path').nth(2);
     await expect.poll(async () => (
@@ -138,6 +138,41 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-three-viewport')).not.toHaveAttribute('data-camera-target', '0,0,0');
     await expect(page.locator('.graph-three-canvas')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('graphing-real-surface-3d-1440x940.png'), fullPage: true });
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('renders and analyzes continuous complex mappings with explicit bounded evidence', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/'); await openGraph(page);
+    await enterExpression(page, 'f(z)=z^2+1');
+
+    await expect(page.getByRole('button', { name: 'Complex' })).toHaveAttribute('aria-pressed', 'true');
+    const complexViewport = page.getByTestId('graph-complex-viewport');
+    await expect(complexViewport).toBeVisible();
+    await expect(complexViewport.getByText(/holomorphic/u)).toBeVisible();
+    await expect(complexViewport.getByRole('button', { name: 'Domain color' })).toHaveAttribute('aria-pressed', 'true');
+    await page.screenshot({ path: testInfo.outputPath('graphing-complex-domain-1440x940.png'), fullPage: true });
+    await complexViewport.getByRole('button', { name: '2×2 components' }).click();
+    await expect(complexViewport.getByRole('button', { name: '2×2 components' })).toHaveAttribute('aria-pressed', 'true');
+    await page.screenshot({ path: testInfo.outputPath('graphing-complex-components-1440x940.png'), fullPage: true });
+
+    await page.getByRole('button', { name: 'Analyze' }).click();
+    const overlay = page.getByRole('complementary', { name: 'Analyze graph' });
+    await expect(overlay.getByRole('heading', { name: 'Complex Zero' })).toBeVisible();
+    await expect(overlay.getByText(/do not imply global completeness/u)).toBeVisible();
+    await overlay.getByLabel('Graph-local complex assumption').fill('z\\ne0');
+    await overlay.getByRole('button', { name: 'Add' }).click();
+    await expect(overlay.getByText('z\\ne0')).toBeVisible();
+    await overlay.getByRole('button', { name: 'Close Analyze' }).click();
+
+    await page.getByRole('button', { name: 'Both' }).click();
+    await expect(page.getByTestId('graph-viewport')).toBeVisible();
+    await expect(page.getByTestId('graph-complex-viewport')).toBeVisible();
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
+    await page.screenshot({ path: testInfo.outputPath('graphing-complex-both-1440x940.png'), fullPage: true });
     expect(consoleErrors).toEqual([]);
   });
 

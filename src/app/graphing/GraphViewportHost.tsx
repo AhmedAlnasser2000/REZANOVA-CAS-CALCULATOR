@@ -4,7 +4,7 @@ import {
   type GraphPaneViewStateV1,
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
-  type GraphSpatialSceneRuntimeV1,
+  type GraphSpatialSceneRuntimeV2,
 } from '../../lib/graphing';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphThreeViewport } from './GraphThreeViewport';
@@ -19,7 +19,7 @@ type Props = {
   paneView: GraphPaneViewStateV1;
   pending: boolean;
   presentation: GraphRendererPresentationFrame;
-  scene: GraphSpatialSceneRuntimeV1 | null;
+  scene: GraphSpatialSceneRuntimeV2 | null;
   sceneViewport: GraphViewportV1 | null;
   selectedItemId: string | null;
   viewport: GraphViewportV1;

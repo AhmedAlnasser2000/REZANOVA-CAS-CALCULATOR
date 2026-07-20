@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GraphAnalysisRequestV1, GraphSampleRequestV5 } from '../../lib/graphing';
+import type { GraphAnalysisRequestV1, GraphSampleRequestV6 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
 import { createGraphNoteItem, replaceGraphDocumentNote } from './graph-document';
 import GraphWorkspacePage from './GraphWorkspacePage';
@@ -41,9 +41,9 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
     ooe: { commitAssessment: { commitDecision: 'committed' as const } },
   })),
   threeRenderer,
-  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV5) => ({
+  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV6) => ({
   payload: {
-    version: 5 as const,
+    version: 6 as const,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -51,7 +51,7 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
     viewport: request.viewport,
     quality: request.quality,
     status: 'complete' as const,
-    scene: { version: 1 as const, surfaceMeshes: [], planarScene: {
+    scene: { version: 2 as const, surfaceMeshes: [], complexTiles: [], planarScene: {
       sceneRevision: request.revisions.scene, mathematicsRevision: request.revisions.mathematics,
       viewportRevision: request.revisions.viewport, parameterRevision: request.revisions.parameter,
       paths: request.items.filter((item) => item.visible && (item.kind === 'piecewise'
@@ -93,7 +93,7 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
 
 vi.mock('../../lib/graphing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/graphing')>()),
-  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV5) => (
+  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV6) => (
     `input.graph.sample.${request.revisions.scene}`
   )),
   createGraphThreeRenderer,
@@ -146,7 +146,7 @@ describe('GraphWorkspacePage', () => {
     await new Promise((resolve) => setTimeout(resolve, 260));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
     expect(onUpdateSession.mock.calls.at(-1)?.[0].document).toMatchObject({
-      version: 3, mathematicsRevision: 0,
+      version: 4, mathematicsRevision: 0,
     });
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
@@ -613,7 +613,7 @@ describe('GraphWorkspacePage', () => {
 
     expect(screen.getByRole('button', { name: 'Analyze' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Export/i })).not.toBeInTheDocument();
-    expect(screen.queryByText('Complex')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Complex' })).toBeInTheDocument();
   });
 
   it('does not resample when only the expression rail presentation changes', async () => {
@@ -713,9 +713,9 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Real · Three interactive')).toBeVisible();
     expect(onUpdateSession.mock.calls.at(-1)?.[0]).toMatchObject({
-      version: 6,
+      version: 7,
       document: { mathematicsRevision: 0 },
-      surface: { version: 5, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
+      surface: { version: 6, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
     });
     await new Promise((resolve) => setTimeout(resolve, 220));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();

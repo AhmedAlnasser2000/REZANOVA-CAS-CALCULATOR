@@ -229,6 +229,151 @@
   overflow: hidden;
 }
 
+.graph-domain-switch,
+.graph-complex-toolbar > div {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+}
+
+.graph-domain-switch button,
+.graph-complex-toolbar button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.graph-domain-switch button[aria-pressed='true'],
+.graph-complex-toolbar button[aria-pressed='true'] {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+}
+
+.graph-viewport-panel.is-both {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+.graph-viewport-panel.is-both > .graph-viewport-host,
+.graph-viewport-panel.is-both > .graph-complex-viewport {
+  position: relative;
+  inset: auto;
+  height: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.graph-viewport-panel.is-both .graph-complex-toolbar > span {
+  display: none;
+}
+
+.graph-complex-viewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: #071517;
+  overflow: hidden;
+}
+
+.graph-complex-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.graph-complex-toolbar {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(144, 190, 179, .24);
+  border-radius: 10px;
+  background: rgba(7, 21, 23, .86);
+  backdrop-filter: blur(8px);
+}
+
+.graph-complex-toolbar > span {
+  margin-left: auto;
+  color: #9fc2b8;
+  font-size: 11px;
+}
+
+.graph-complex-trace {
+  position: absolute;
+  z-index: 4;
+  left: 12px;
+  bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(120, 185, 255, .5);
+  border-radius: 8px;
+  color: #eaf6f2;
+  background: rgba(4, 14, 17, .9);
+  font: 12px/1.45 ui-monospace, monospace;
+}
+
+.graph-analyze-solve form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.graph-analyze-solve input {
+  min-width: 0;
+  border: 1px solid var(--graph-border-strong);
+  border-radius: 0.4rem;
+  background: var(--graph-panel-deep);
+  color: var(--graph-text);
+  padding: 0.45rem 0.55rem;
+}
+
+.graph-assumption-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.graph-assumption-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--graph-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.3rem 0.2rem 0.55rem;
+  color: var(--graph-text-soft);
+}
+
+.graph-assumption-list button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.graph-complex-3d-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #9fc2b8;
+}
+
 .graph-workbench.is-rail-collapsed .graph-expression-rail {
   display: none;
 }

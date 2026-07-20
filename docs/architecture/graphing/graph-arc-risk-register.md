@@ -28,7 +28,7 @@ Parent gate: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
 
 No risk is mitigated by screenshots, string manipulation, a second command bus, a universal AST, or retaining parallel legacy implementations.
 
-## Verified through Move 25
+## Verified through Move 26
 
 - Renderer contamination is ratcheted: production source and a negative fixture prove Three imports are accepted only under the private adapter directory; the Graph page and app startup retain dynamic boundaries.
 - WebGL context loss is exercised in Chromium: the current SVG scene appears with a non-destructive notice, context restoration rebuilds from renderer-neutral state, and switching back to 2D removes the Three canvas and disposes its listener/resource ownership.
@@ -39,3 +39,5 @@ No risk is mitigated by screenshots, string manipulation, a second command bus, 
 - Strict session V5/surface V4 migration remembers overlay width, active tab, selected item, and bounded stable pins per tab. Chromium verifies responsive clamping, resize persistence, preview/pin markers, evidence readback, mirrored style controls, and no browser console errors.
 - Surface overclaiming is bounded by explicit `z=f(x,y)` authority, optional locked x/y bounds, adaptive mesh and contour budgets, domain-break cells, transfer validation, and visible truncated/reduced-detail evidence. Existing x expressions remain real curves on `z=0`.
 - Strict document V3/session V6/surface V5 migration adds real-surface relations and z-capable pins without loosening historical validators. Chromium verifies top-down height coloring and contours, a fitted shaded Three surface, optional wireframe ownership, and `(x,y,z)` trace contracts.
+- Complex overclaiming is bounded by structured `f:C -> C` and distinct real-parameterized trajectory relations, a reviewed domain-neutral Equation seam, explicit holomorphic status, certified principal cuts/points, graph-local assumptions, and bounded Newton evidence that always states it does not prove global completeness.
+- Strict document V4/session V7/surface V6/sample V6/spatial-scene V2 migration adds complex mappings, assumptions, pane policy, search bounds, and transferable domain tiles without loosening historical validators. Chromium verifies domain coloring, synchronized component maps, real-axis Both mode, and no browser console errors.

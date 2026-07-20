@@ -4,6 +4,8 @@ import {
   complex,
   complexAbs,
   complexAdd,
+  complexArg,
+  complexConjugate,
   complexDiv,
   complexMul,
   complexNeg,
@@ -101,6 +103,31 @@ function complexCos(value: ComplexValue) {
     Math.cos(value.re) * Math.cosh(value.im),
     -Math.sin(value.re) * Math.sinh(value.im),
   );
+}
+
+function complexSinh(value: ComplexValue) {
+  return complex(Math.sinh(value.re) * Math.cos(value.im), Math.cosh(value.re) * Math.sin(value.im));
+}
+
+function complexCosh(value: ComplexValue) {
+  return complex(Math.cosh(value.re) * Math.cos(value.im), Math.sinh(value.re) * Math.sin(value.im));
+}
+
+function complexAsinh(value: ComplexValue) {
+  const root = complexSqrt(complexAdd(complexMul(value, value), complex(1, 0)));
+  return complexLog(complexAdd(value, root));
+}
+
+function complexAcosh(value: ComplexValue) {
+  const product = complexMul(complexSqrt(complexAdd(value, complex(1, 0))),
+    complexSqrt(complexSub(value, complex(1, 0))));
+  return complexLog(complexAdd(value, product));
+}
+
+function complexAtanh(value: ComplexValue) {
+  const left = complexLog(complexAdd(complex(1, 0), value));
+  const right = complexLog(complexSub(complex(1, 0), value));
+  return left && right ? complexMul(complex(0.5, 0), complexSub(left, right)) : null;
 }
 
 function complexTan(value: ComplexValue) {
@@ -245,15 +272,24 @@ function derivativeNode(node: MathJson, target: string): MathJson | null {
   if (operator === 'Tan' && args.length === 1) {
     return ['Divide', d[0], ['Power', ['Cos', args[0]], 2]];
   }
+  if (operator === 'Complex' && args.length === 2) {
+    return ['Complex', d[0], d[1]];
+  }
   return null;
 }
 
 export function createComplexNumericEvaluator(input: {
-  expressionLatex: string;
+  expressionLatex?: string;
+  expressionMathJson?: unknown;
   target: string;
   parameters?: Record<string, ComplexValue | number>;
 }): ComplexNumericEvaluator {
-  const parsed = zeroFormNode(ce.parse(input.expressionLatex).json as MathJson);
+  if (input.expressionMathJson === undefined && input.expressionLatex === undefined) {
+    throw new Error('Complex numeric evaluation requires LaTeX or structured MathJSON.');
+  }
+  const parsed = zeroFormNode(input.expressionMathJson === undefined
+    ? ce.parse(input.expressionLatex ?? '').json as MathJson
+    : ce.box(input.expressionMathJson as never).json as MathJson);
   const derivativeParsed = derivativeNode(parsed, input.target);
   const evaluateParsedAt = (root: MathJson, value: ComplexValue): ComplexNumericEvaluationResult => {
     let evaluationCount = 0;
@@ -324,6 +360,10 @@ export function createComplexNumericEvaluator(input: {
         result = complexNeg(args[0]);
       } else if (operator === 'Multiply') {
         result = args.reduce((product, part) => complexMul(product, part), complex(1, 0));
+      } else if (operator === 'Complex' && args.length === 2) {
+        if (Math.abs(args[0].im) < EPSILON && Math.abs(args[1].im) < EPSILON) {
+          result = complex(args[0].re, args[1].re);
+        }
       } else if (operator === 'Divide' && args.length === 2) {
         if (complexAbs(args[1]) < EPSILON) {
           diagnostics.push(diagnostic('error', 'complex-division-by-zero', 'Complex division by zero.'));
@@ -352,6 +392,8 @@ export function createComplexNumericEvaluator(input: {
         result = numerator && denominator && complexAbs(denominator) >= EPSILON
           ? complexDiv(numerator, denominator)
           : null;
+      } else if (operator === 'Exp' && args.length === 1) {
+        result = complexExp(args[0]);
       } else if (operator === 'Sin' && args.length === 1) {
         result = complexSin(args[0]);
       } else if (operator === 'Cos' && args.length === 1) {
@@ -367,6 +409,29 @@ export function createComplexNumericEvaluator(input: {
         result = complexAcos(args[0], diagnostics);
       } else if ((operator === 'Arctan' || operator === 'atan') && args.length === 1) {
         result = complexAtan(args[0], diagnostics);
+      } else if (operator === 'Sinh' && args.length === 1) {
+        result = complexSinh(args[0]);
+      } else if (operator === 'Cosh' && args.length === 1) {
+        result = complexCosh(args[0]);
+      } else if (operator === 'Tanh' && args.length === 1) {
+        const denominator = complexCosh(args[0]);
+        result = complexAbs(denominator) < EPSILON ? null : complexDiv(complexSinh(args[0]), denominator);
+      } else if ((operator === 'Arsinh' || operator === 'Asinh') && args.length === 1) {
+        result = complexAsinh(args[0]);
+      } else if ((operator === 'Arcosh' || operator === 'Acosh') && args.length === 1) {
+        result = complexAcosh(args[0]);
+      } else if ((operator === 'Artanh' || operator === 'Atanh') && args.length === 1) {
+        result = complexAtanh(args[0]);
+      } else if (operator === 'Conjugate' && args.length === 1) {
+        result = complexConjugate(args[0]);
+      } else if ((operator === 'Real' || operator === 'RealPart') && args.length === 1) {
+        result = complex(args[0].re, 0);
+      } else if (operator === 'ImaginaryPart' && args.length === 1) {
+        result = complex(args[0].im, 0);
+      } else if (operator === 'Abs' && args.length === 1) {
+        result = complex(complexAbs(args[0]), 0);
+      } else if (operator === 'Arg' && args.length === 1) {
+        result = complex(complexArg(args[0]), 0);
       } else {
         diagnostics.push(diagnostic('error', 'complex-unsupported-operator', `Unsupported complex numeric operator: ${operator}.`));
         return {

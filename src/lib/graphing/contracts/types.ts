@@ -83,6 +83,19 @@ export type GraphRelationIR =
         yMin: number;
         yMax: number;
       };
+    }
+  | {
+      kind: 'complex-mapping';
+      inputSymbol: 'z';
+      outputSymbol: 'w' | 'f';
+      expression: GraphExpressionIR;
+      authoredForm: 'function' | 'output-relation' | 'bare-expression';
+    }
+  | {
+      kind: 'complex-trajectory';
+      parameterSymbol: string;
+      value: GraphExpressionIR;
+      domain?: GraphConditionIR;
     };
 
 export type GraphPiecewiseSpecV1 = {
@@ -245,6 +258,19 @@ export type GraphDocumentV3 = {
   items: GraphItemSpecV2[];
 };
 
+export type GraphAuthoredAssumptionV1 = {
+  version: 1;
+  assumptionId: string;
+  sourceLatex: string;
+  sourceRevision: number;
+  factKind: 'domain-exclusion' | 'domain-constraint' | 'branch-principal-range' | 'complex-domain-note';
+};
+
+export type GraphDocumentV4 = Omit<GraphDocumentV3, 'version'> & {
+  version: 4;
+  assumptions: GraphAuthoredAssumptionV1[];
+};
+
 export type GraphViewportV1 = {
   coordinateSystem: 'cartesian' | 'polar' | 'argand';
   xMin: number;
@@ -353,6 +379,20 @@ export type GraphSurfaceStateV5 = Omit<GraphSurfaceStateV4, 'version' | 'analyze
   version: 5;
   analyze: Omit<GraphSurfaceStateV4['analyze'], 'pinnedAnnotations'> & {
     pinnedAnnotations: GraphPinnedAnnotationV2[];
+  };
+};
+
+export type GraphComplexDisplayModeV1 = 'domain-coloring' | 'components';
+
+export type GraphSurfaceStateV6 = Omit<GraphSurfaceStateV5, 'version' | 'viewPolicy'> & {
+  version: 6;
+  viewPolicy:
+    | { mode: 'real' }
+    | { mode: 'complex'; interpretation: 'complex-mapping' }
+    | { mode: 'both'; interpretation: 'complex-mapping'; layout: 'synchronized-split' };
+  complex: {
+    displayMode: GraphComplexDisplayModeV1;
+    searchRegion: { reMin: number; reMax: number; imMin: number; imMax: number } | null;
   };
 };
 
@@ -501,10 +541,29 @@ export type GraphSurfaceMeshRuntimeV1 = {
   truncated: boolean;
 };
 
+export type GraphComplexDomainTileRuntimeV1 = {
+  tileId: string;
+  itemId: string;
+  width: number;
+  height: number;
+  bounds: { reMin: number; reMax: number; imMin: number; imMax: number };
+  rgba: Uint8Array;
+  values: Float32Array;
+  analyticity: 'holomorphic' | 'non-holomorphic' | 'unknown';
+  branchCuts: Array<{ family: string; from: { re: number; im: number }; to: { re: number; im: number } }>;
+  branchPoints: Array<{ family: string; z: { re: number; im: number } }>;
+  truncated: boolean;
+};
+
 export type GraphSpatialSceneRuntimeV1 = {
   version: 1;
   planarScene: SampledSceneRuntimeV2;
   surfaceMeshes: GraphSurfaceMeshRuntimeV1[];
+};
+
+export type GraphSpatialSceneRuntimeV2 = Omit<GraphSpatialSceneRuntimeV1, 'version'> & {
+  version: 2;
+  complexTiles: GraphComplexDomainTileRuntimeV1[];
 };
 
 export type GraphRendererSceneFrameV2 = {
@@ -514,7 +573,14 @@ export type GraphRendererSceneFrameV2 = {
   policy: GraphRenderPolicy;
 };
 
-export type GraphRendererSceneFrame = GraphRendererSceneFrameV1 | GraphRendererSceneFrameV2;
+export type GraphRendererSceneFrameV3 = {
+  version: 3;
+  scene: GraphSpatialSceneRuntimeV2;
+  sourceViewport: GraphViewportV1;
+  policy: GraphRenderPolicy;
+};
+
+export type GraphRendererSceneFrame = GraphRendererSceneFrameV1 | GraphRendererSceneFrameV2 | GraphRendererSceneFrameV3;
 
 export type GraphRendererCameraFrameV1 = {
   version: 1;
@@ -687,11 +753,20 @@ export type GraphSampleResultV5 = Omit<GraphSampleResultV4, 'version' | 'scene'>
   scene: GraphSpatialSceneRuntimeV1;
 };
 
+export type GraphSampleRequestV6 = Omit<GraphSampleRequestV5, 'version'> & {
+  version: 6;
+};
+
+export type GraphSampleResultV6 = Omit<GraphSampleResultV5, 'version' | 'scene'> & {
+  version: 6;
+  scene: GraphSpatialSceneRuntimeV2;
+};
+
 export const GRAPH_ANALYSIS_FEATURES = [
   'root', 'x-intercept', 'y-intercept', 'extremum', 'intersection', 'hole', 'pole',
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
   'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point',
-  'local-extremum',
+  'local-extremum', 'complex-zero', 'complex-pole', 'branch-point',
 ] as const;
 
 export type GraphAnalysisFeature = typeof GRAPH_ANALYSIS_FEATURES[number];
@@ -737,6 +812,8 @@ export type GraphAnalysisRequestV1 = {
   revisions: GraphRevisionSetV2;
   items: GraphClassifiedItemSnapshotV2[];
   parameterEnvironment: Record<string, number>;
+  assumptions?: GraphAuthoredAssumptionV1[];
+  complexSearchRegion?: { reMin: number; reMax: number; imMin: number; imMax: number };
   features: GraphAnalysisFeature[];
   numericWindow?: GraphViewportV1;
   maximumTimeMs: number;

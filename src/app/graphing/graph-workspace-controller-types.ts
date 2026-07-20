@@ -1,6 +1,6 @@
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
-import type { GraphDocumentV3 } from '../../lib/graphing';
-import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
+import type { GraphDocumentV4 } from '../../lib/graphing';
+import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 
 export type GraphControllerStatus =
   | { kind: 'ready'; label: string }
@@ -10,14 +10,14 @@ export type GraphControllerStatus =
   | { kind: 'error'; label: string };
 
 export type GraphHistory = {
-  undo: Array<{ document: GraphDocumentV3; appearance: GraphWorkspaceSessionStateV6['surface']['appearance'] }>;
-  redo: Array<{ document: GraphDocumentV3; appearance: GraphWorkspaceSessionStateV6['surface']['appearance'] }>;
+  undo: Array<{ document: GraphDocumentV4; appearance: GraphWorkspaceSessionStateV7['surface']['appearance'] }>;
+  redo: Array<{ document: GraphDocumentV4; appearance: GraphWorkspaceSessionStateV7['surface']['appearance'] }>;
   typingItemId: string | null;
 };
 
 export type UseGraphWorkspaceControllerInput = {
-  initialSession: GraphWorkspaceSessionStateV6;
+  initialSession: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
   cssSize: { width: number; height: number };
-  onPersistSession: (session: GraphWorkspaceSessionStateV6) => void;
+  onPersistSession: (session: GraphWorkspaceSessionStateV7) => void;
 };

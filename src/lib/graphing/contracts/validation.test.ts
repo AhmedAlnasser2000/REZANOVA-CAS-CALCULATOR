@@ -17,7 +17,7 @@ import {
 } from './index';
 
 const expression = { mathJson: ['Sin', 'x'], freeSymbols: ['x'] };
-const currentDocument = { ...GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2, version: 3 as const };
+const currentDocument = { ...GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2, version: 4 as const, assumptions: [] };
 
 describe('Graph v1 contract validators', () => {
   it('accepts the bounded baseline document and independent contract planes', () => {
@@ -79,7 +79,7 @@ describe('Graph v1 contract validators', () => {
         return item;
       });
     const request = {
-      version: 5,
+      version: 6,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'document-1',
@@ -99,7 +99,7 @@ describe('Graph v1 contract validators', () => {
 
   it('keeps surface state clone-safe and independent from document truth', () => {
     const surface = {
-      version: 5,
+      version: 6,
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },
       viewportRevision: 2,
       parameterRevision: 3,
@@ -131,6 +131,7 @@ describe('Graph v1 contract validators', () => {
         },
       },
       analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] },
+      complex: { displayMode: 'domain-coloring', searchRegion: null },
     };
     expect(validateGraphSurfaceState(surface).ok).toBe(true);
     expect(validateGraphSurfaceState({ ...surface, workerHandle: {} }).ok).toBe(false);

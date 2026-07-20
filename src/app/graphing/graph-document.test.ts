@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GraphDocumentV3 } from '../../lib/graphing';
+import type { GraphDocumentV4 } from '../../lib/graphing';
 import {
   buildVisibleGraphItem,
   createGraphNoteItem,
@@ -12,13 +12,14 @@ import {
   updateGraphParameterItem,
 } from './graph-document';
 
-const document: GraphDocumentV3 = {
-  version: 3,
+const document: GraphDocumentV4 = {
+  version: 4,
   documentId: 'graph-document.test',
   title: 'Test graph',
   contentRevision: 0,
   mathematicsRevision: 0,
   items: [],
+  assumptions: [],
 };
 
 describe('Move 8 Graph document editing', () => {

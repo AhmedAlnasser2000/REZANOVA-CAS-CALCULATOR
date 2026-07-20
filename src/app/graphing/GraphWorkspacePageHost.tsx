@@ -1,6 +1,6 @@
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import GraphWorkspacePage from './GraphWorkspacePage';
-import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
 export default function GraphWorkspacePageHost({
@@ -8,7 +8,7 @@ export default function GraphWorkspacePageHost({
   session: rawSession,
   workspaceContext,
 }: {
-  onUpdateSession: (session: GraphWorkspaceSessionStateV6) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
   session: unknown;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {

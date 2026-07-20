@@ -17,6 +17,13 @@ const surface = (itemId: string, mathJson: GraphExpressionIR['mathJson']) => ({
   relation: { kind: 'real-surface' as const, z: { mathJson, freeSymbols: ['x', 'y'] } },
   visible: true,
 });
+const complexMapping = (itemId: string, mathJson: GraphExpressionIR['mathJson']) => ({
+  version: 1 as const, kind: 'relation' as const, itemId,
+  source: { sourceKind: 'mathlive-latex' as const, sourceLatex: itemId, sourceRevision: 1 },
+  relation: { kind: 'complex-mapping' as const, inputSymbol: 'z' as const, outputSymbol: 'f' as const,
+    authoredForm: 'function' as const, expression: { mathJson, freeSymbols: ['z'] } },
+  visible: true,
+});
 const request = (items: GraphAnalysisRequestV1['items'], features: GraphAnalysisRequestV1['features']): GraphAnalysisRequestV1 => ({
   version: 1, requestId: 'analysis.1', workspaceInstanceId: 'workspace.1', documentId: 'document.1',
   revisions: { mathematics: 2, viewport: 3, parameter: 1 }, items,
@@ -83,6 +90,29 @@ describe('Graph analysis authority', () => {
       expect.objectContaining({ itemIds: ['saddle'], feature: 'level-contour', level: 'numeric-validated' }),
     ]));
     expect(result.evidence.find((entry) => entry.feature === 'local-extremum')?.coordinates?.z).toBeDefined();
+  });
+
+  it('separates exact complex facts from bounded validated candidates and completeness limits', async () => {
+    const result = await runGraphAnalysisRequest({
+      ...request([
+        complexMapping('quadratic-complex', ['Add', ['Power', 'z', 2], 1]),
+        complexMapping('reciprocal-complex', ['Divide', 1, 'z']),
+        complexMapping('log-complex', ['Ln', 'z']),
+      ], ['complex-zero', 'complex-pole', 'branch-point']),
+      complexSearchRegion: { reMin: -2, reMax: 2, imMin: -2, imMax: 2 },
+    });
+    expect(result.evidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'numeric-validated' }),
+      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'inconclusive',
+        stopReason: expect.objectContaining({ detailCode: 'bounded-complex-search-does-not-prove-global-completeness' }) }),
+      expect.objectContaining({ itemIds: ['reciprocal-complex'], feature: 'complex-pole', level: 'exact-proved' }),
+      expect.objectContaining({ itemIds: ['log-complex'], feature: 'branch-point', level: 'exact-proved' }),
+    ]));
+    const exactPole = result.evidence.find((entry) => entry.itemIds[0] === 'reciprocal-complex'
+      && entry.feature === 'complex-pole');
+    expect(exactPole?.coordinates?.x).toMatchObject({ value: { mathJson: 0 } });
+    expect(exactPole?.coordinates?.y).toMatchObject({ value: { mathJson: 0 } });
+    expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
   });
 
   it('fails closed on malformed requests and cooperatively cancels', async () => {

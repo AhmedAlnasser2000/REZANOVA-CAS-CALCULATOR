@@ -20,7 +20,7 @@ import {
   type OoeRuntimeShellEvidence,
 } from '../../ooe/runtime-control/runtime-shell-contract';
 import type { WorkspaceInstanceRuntimeContext } from '../../../types/calculator/workspace-instance-types';
-import type { GraphSampleRequestV5, GraphSampleResultV5 } from '../contracts';
+import type { GraphSampleRequestV6, GraphSampleResultV6 } from '../contracts';
 import { releaseGraphSampleResultBuffers } from '../sampling/request';
 import {
   GRAPH_SAMPLE_FALLBACK_HOST_ID,
@@ -59,15 +59,15 @@ export type GraphSampleOoePilotMetadata = OoeRuntimeMetadata<
 };
 
 export type GraphSampleOoePilotRunResult = OoeRuntimeEnvelope<
-  GraphSampleResultV5,
+  GraphSampleResultV6,
   GraphSampleOoePilotMetadata
 >;
 
 export type GraphSampleOoeSnapshot = {
   workspaceInstanceId: string;
   documentId: string;
-  revisions: GraphSampleRequestV5['revisions'];
-  quality: GraphSampleRequestV5['quality'];
+  revisions: GraphSampleRequestV6['revisions'];
+  quality: GraphSampleRequestV6['quality'];
 };
 
 export function graphSamplePilotDefinition(): GraphSamplePilotDefinition {
@@ -81,7 +81,7 @@ export function graphSamplePilotDefinition(): GraphSamplePilotDefinition {
 }
 
 export function buildGraphSampleOoeSnapshot(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
 ): GraphSampleOoeSnapshot {
   return {
     workspaceInstanceId: request.workspaceInstanceId,
@@ -92,7 +92,7 @@ export function buildGraphSampleOoeSnapshot(
 }
 
 export function buildGraphSampleInputRevisionId(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
 ) {
   return buildOoeInputRevisionId(
     OOE_GRAPH_SAMPLE_CAPABILITY_ID,
@@ -105,7 +105,7 @@ export function prepareGraphSampleOoePilot(): Promise<GraphSampleOoePilotStatus>
 }
 
 function defaultWorkspaceContext(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
 ): WorkspaceInstanceRuntimeContext {
   return {
     workspaceInstanceId: request.workspaceInstanceId,
@@ -197,7 +197,7 @@ function errorMessage(error: unknown) {
 }
 
 export async function runGraphSampleWithOoe(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
   options: GraphSampleOoeOptions = {},
 ): Promise<GraphSampleOoePilotRunResult> {
   const routeSnapshot = buildGraphSampleOoeSnapshot(request);

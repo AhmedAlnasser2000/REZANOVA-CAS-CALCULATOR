@@ -8,7 +8,7 @@ import {
   parseGraphLatexToStructuralMathJson,
   serializeGraphMathJsonToLatex,
   type GraphConditionIR,
-  type GraphDocumentV3,
+  type GraphDocumentV4,
   type GraphItemPresentationV2,
   type GraphItemSpecV1,
   type GraphItemSpecV2,
@@ -165,12 +165,12 @@ function presentationPiecewiseLatex(item: Extract<GraphItemSpecV1, { kind: 'piec
 }
 
 export function updateGraphPiecewiseBranch(input: {
-  document: GraphDocumentV3;
+  document: GraphDocumentV4;
   itemId: string;
   branchId: string;
   valueLatex: string;
   conditionLatex: string;
-}): GraphDocumentV3 | null {
+}): GraphDocumentV4 | null {
   const item = input.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
     candidate.itemId === input.itemId && candidate.kind === 'piecewise'
   ));
@@ -201,11 +201,11 @@ export function updateGraphPiecewiseBranch(input: {
 }
 
 export function mutateGraphPiecewiseBranches(input: {
-  document: GraphDocumentV3;
+  document: GraphDocumentV4;
   itemId: string;
   action: 'add' | 'remove' | 'up' | 'down';
   branchId?: string;
-}): GraphDocumentV3 | null {
+}): GraphDocumentV4 | null {
   const item = input.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
     candidate.itemId === input.itemId && candidate.kind === 'piecewise'
   ));
@@ -272,7 +272,9 @@ export function buildVisibleGraphItem(input: {
       || classified.relation.kind === 'chained-inequality'
       || classified.relation.kind === 'polar-radius'
       || classified.relation.kind === 'parametric-curve'
-      || classified.relation.kind === 'real-surface')) {
+      || classified.relation.kind === 'real-surface'
+      || classified.relation.kind === 'complex-mapping'
+      || classified.relation.kind === 'complex-trajectory')) {
     return {
       version: 1,
       kind: 'relation',
@@ -377,7 +379,7 @@ export function createGraphParameterItem(input: {
 }
 
 export function updateGraphParameterItem(input: {
-  document: GraphDocumentV3;
+  document: GraphDocumentV4;
   itemId: string;
   values: Partial<Pick<Extract<GraphItemSpecV1, { kind: 'parameter' }>['parameter'],
     'value' | 'minimum' | 'maximum' | 'step' | 'animation'>>;
@@ -398,7 +400,7 @@ export function updateGraphParameterItem(input: {
 }
 
 export function updateGraphRealSurfaceBounds(input: {
-  document: GraphDocumentV3;
+  document: GraphDocumentV4;
   itemId: string;
   bounds?: { xMin: number; xMax: number; yMin: number; yMax: number };
 }) {
@@ -418,7 +420,7 @@ export function updateGraphRealSurfaceBounds(input: {
 }
 
 export function replaceGraphDocumentItem(
-  document: GraphDocumentV3,
+  document: GraphDocumentV4,
   item: GraphItemSpecV1,
 ) {
   const existingIndex = document.items.findIndex((candidate) => candidate.itemId === item.itemId);
@@ -430,11 +432,11 @@ export function replaceGraphDocumentItem(
     contentRevision: document.contentRevision + 1,
     mathematicsRevision: document.mathematicsRevision + 1,
     items,
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function removeGraphDocumentItem(
-  document: GraphDocumentV3,
+  document: GraphDocumentV4,
   itemId: string,
 ) {
   const removed = document.items.find((item) => item.itemId === itemId);
@@ -443,11 +445,11 @@ export function removeGraphDocumentItem(
     contentRevision: document.contentRevision + 1,
     mathematicsRevision: document.mathematicsRevision + (removed?.kind === 'note' ? 0 : 1),
     items: document.items.filter((item) => item.itemId !== itemId),
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function toggleGraphDocumentItem(
-  document: GraphDocumentV3,
+  document: GraphDocumentV4,
   itemId: string,
 ) {
   return {
@@ -457,11 +459,11 @@ export function toggleGraphDocumentItem(
     items: document.items.map((item) => item.itemId === itemId
       ? item.kind === 'note' ? item : { ...item, visible: !item.visible }
       : item),
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function replaceGraphDocumentPresentation(input: {
-  document: GraphDocumentV3;
+  document: GraphDocumentV4;
   itemId: string;
   presentation: GraphItemPresentationV2;
 }) {
@@ -473,7 +475,7 @@ export function replaceGraphDocumentPresentation(input: {
     items: input.document.items.map((candidate) => candidate.itemId === input.itemId
       ? { ...candidate, presentation: input.presentation }
       : candidate),
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function createGraphNoteItem(itemId: string): GraphNoteItemV1 {
@@ -481,7 +483,7 @@ export function createGraphNoteItem(itemId: string): GraphNoteItemV1 {
 }
 
 export function replaceGraphDocumentNote(
-  document: GraphDocumentV3,
+  document: GraphDocumentV4,
   note: GraphNoteItemV1,
 ) {
   const existingIndex = document.items.findIndex((candidate) => candidate.itemId === note.itemId);
@@ -492,11 +494,11 @@ export function replaceGraphDocumentNote(
     ...document,
     contentRevision: document.contentRevision + 1,
     items,
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function reorderGraphDocumentItem(
-  document: GraphDocumentV3,
+  document: GraphDocumentV4,
   itemId: string,
   destinationIndex: number,
 ) {
@@ -511,7 +513,7 @@ export function reorderGraphDocumentItem(
     ...document,
     contentRevision: document.contentRevision + 1,
     items,
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function graphDraftMessage(stop: GraphStopReason) {

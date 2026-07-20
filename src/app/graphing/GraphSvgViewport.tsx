@@ -9,7 +9,7 @@ import {
   type GraphGridPolicyV1,
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
-  type GraphSpatialSceneRuntimeV1,
+  type GraphSpatialSceneRuntimeV2,
   type SampledSceneRuntimeV2,
 } from '../../lib/graphing';
 import {
@@ -31,7 +31,7 @@ type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
   presentation?: GraphRendererPresentationFrame;
-  scene: GraphSpatialSceneRuntimeV1 | SampledSceneRuntimeV2 | null;
+  scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null;
   sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
@@ -50,9 +50,9 @@ const WHEEL_SETTLE_MS = 180;
 const CLICK_DISTANCE = 24;
 const RETAIN_DISTANCE = 30;
 
-function asSpatialScene(scene: GraphSpatialSceneRuntimeV1 | SampledSceneRuntimeV2 | null) {
+function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null) {
   return scene && 'planarScene' in scene ? scene
-    : scene ? { version: 1 as const, planarScene: scene, surfaceMeshes: [] } : null;
+    : scene ? { version: 2 as const, planarScene: scene, surfaceMeshes: [], complexTiles: [] } : null;
 }
 
 function formatTraceNumber(value: number) {
@@ -78,7 +78,7 @@ function panViewport(base: GraphViewportV1, dx: number, dy: number, size: Size) 
 }
 
 function surfaceTargetAtScreen(
-  scene: GraphSpatialSceneRuntimeV1,
+  scene: GraphSpatialSceneRuntimeV2,
   viewport: GraphViewportV1,
   size: Size,
   screen: { x: number; y: number },
@@ -180,7 +180,7 @@ export function GraphSvgViewport({
 
   useLayoutEffect(() => {
     const renderer = rendererRef.current; if (!renderer) return;
-    renderer.setScene(spatialScene && sceneViewport ? { version: 2, scene: spatialScene, sourceViewport: sceneViewport,
+    renderer.setScene(spatialScene && sceneViewport ? { version: 3, scene: spatialScene, sourceViewport: sceneViewport,
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 } } : null);
   }, [scene, sceneViewport, spatialScene]);

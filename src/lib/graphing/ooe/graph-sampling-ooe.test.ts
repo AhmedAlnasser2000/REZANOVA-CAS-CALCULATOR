@@ -15,7 +15,7 @@ import {
   getLatestOoeDiagnostics,
 } from '../../ooe/diagnostics/diagnostics-buffer';
 import { requestWorkspaceTabJobCancellation } from '../../../app/runtime/workspaceTabJobs';
-import type { GraphSampleRequestV5 } from '../contracts';
+import type { GraphSampleRequestV6 } from '../contracts';
 import { runGraphSampleRequest } from '../sampling/request';
 import { GraphSamplingApplicationHost } from './application-host';
 import {
@@ -41,9 +41,9 @@ vi.mock('../../ooe/bridge-schema/ooe-bridge', async (importOriginal) => {
   };
 });
 
-function request(overrides: Partial<GraphSampleRequestV5> = {}): GraphSampleRequestV5 {
+function request(overrides: Partial<GraphSampleRequestV6> = {}): GraphSampleRequestV6 {
   return {
-    version: 5,
+    version: 6,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',

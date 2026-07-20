@@ -1,8 +1,8 @@
 import {
   hashGraphSpatialSceneRuntime,
   validateGraphSampleRequest,
-  type GraphSampleRequestV5,
-  type GraphSampleResultV5,
+  type GraphSampleRequestV6,
+  type GraphSampleResultV6,
   type GraphSurfaceMeshRuntimeV1,
   type GraphSamplingItemEvidenceV1,
   type GraphStopReason,
@@ -30,6 +30,7 @@ import {
 } from './adaptive-policy';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
 import { sampleRealSurface } from './surface';
+import { sampleComplexMapping, sampleComplexTrajectory } from './complex';
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -45,7 +46,7 @@ function effectiveMaximumItemTimeMs(policyMaximum: number, controlMaximum?: numb
 }
 
 export type GraphSampleExecution = {
-  result: GraphSampleResultV5;
+  result: GraphSampleResultV6;
   transferList: ArrayBuffer[];
 };
 
@@ -64,7 +65,7 @@ function budgetStop(detailCode: string): GraphStopReason {
 }
 
 function achievedQuality(
-  quality: GraphSampleRequestV5['quality'],
+  quality: GraphSampleRequestV6['quality'],
   status: 'complete' | 'budget-exhausted' | 'cancelled',
   hasGeometry: boolean,
 ): GraphSamplingItemEvidenceV1['achievedQuality'] {
@@ -74,15 +75,15 @@ function achievedQuality(
   return 'coarse';
 }
 
-function errorTarget(quality: GraphSampleRequestV5['quality']) {
+function errorTarget(quality: GraphSampleRequestV6['quality']) {
   return quality === 'preview' ? 1.5 : quality === 'settled' ? 0.35 : 0.2;
 }
 
 function graphResult(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
   input: {
-    scene: GraphSampleResultV5['scene'];
-    status: GraphSampleResultV5['status'];
+    scene: GraphSampleResultV6['scene'];
+    status: GraphSampleResultV6['status'];
     stopReasons: GraphStopReason[];
     sampleCount: number;
     vertexCount: number;
@@ -91,9 +92,9 @@ function graphResult(
     schedulerPasses: number;
     cacheBytes: number;
   },
-): GraphSampleResultV5 {
+): GraphSampleResultV6 {
   return {
-    version: 5,
+    version: 6,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -115,18 +116,18 @@ function graphResult(
   };
 }
 
-function assembleEmptyScene(request: GraphSampleRequestV5) {
+function assembleEmptyScene(request: GraphSampleRequestV6) {
   const assembled = assembleSampledScene({
     revisions: request.revisions,
     viewport: request.viewport,
     paths: [],
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
-  return { version: 1 as const, planarScene: assembled.bundle.scene, surfaceMeshes: [] };
+  return { version: 2 as const, planarScene: assembled.bundle.scene, surfaceMeshes: [], complexTiles: [] };
 }
 
 export function buildCancelledGraphSampleExecution(
-  request: GraphSampleRequestV5,
+  request: GraphSampleRequestV6,
   detailCode = 'host-cancellation',
 ): GraphSampleExecution {
   const scene = assembleEmptyScene(request);
@@ -147,7 +148,7 @@ export function buildCancelledGraphSampleExecution(
 }
 
 export async function runGraphSampleRequest(
-  input: GraphSampleRequestV5,
+  input: GraphSampleRequestV6,
   planCache = new GraphExpressionPlanCache(100),
   control: GraphSampleRequestControl = {},
   samplingCache = new GraphSamplingRuntimeCache(),
@@ -162,6 +163,7 @@ export async function runGraphSampleRequest(
   const regions: GraphRegionSceneInput[] = [];
   const pointBatches: GraphPointBatchSceneInput[] = [];
   const surfaceMeshes: GraphSurfaceMeshRuntimeV1[] = [];
+  const complexTiles: GraphSampleResultV6['scene']['complexTiles'] = [];
   const stopReasons: GraphStopReason[] = [];
   const itemEvidence: GraphSamplingItemEvidenceV1[] = [];
   let sampleCount = 0;
@@ -172,7 +174,7 @@ export async function runGraphSampleRequest(
   const cacheItem = (input: {
     key: string;
     viewport: GraphViewportV1;
-    quality: GraphSampleRequestV5['quality'];
+    quality: GraphSampleRequestV6['quality'];
     evidence: GraphSamplingItemEvidenceV1;
     pathStart: number;
     regionStart: number;
@@ -250,6 +252,57 @@ export async function runGraphSampleRequest(
       item,
       parameterEnvironment: request.parameterEnvironment,
     });
+    if (item.kind === 'relation' && item.relation.kind === 'complex-mapping') {
+      const sampled = sampleComplexMapping({ itemId: item.itemId, relation: item.relation,
+        viewport: request.viewport, cssSize: request.cssSize, quality: request.quality,
+        parameters: request.parameterEnvironment, isCancelled });
+      complexTiles.push(sampled.tile);
+      const makeSlice = (coordinates: Float64Array, suffix: string): GraphSampledPathSceneInput | null => {
+        if (coordinates.length < 4) return null;
+        return { pathId: `${item.itemId}:real-axis-${suffix}`, strokeRole: 'teaching-overlay', sample: {
+          itemId: item.itemId, status: 'complete', coordinates,
+          independentValues: new Float64Array(Array.from({ length: coordinates.length / 2 }, (_, index) => coordinates[index * 2]!)),
+          segmentOffsets: new Uint32Array([0]),
+          stats: { evaluatedSamples: coordinates.length / 2, emittedVertices: coordinates.length / 2, elapsedMs: 0 },
+        } };
+      };
+      const realSlice = makeSlice(sampled.sliceRe, 'real'); const imaginarySlice = makeSlice(sampled.sliceIm, 'imaginary');
+      if (realSlice) paths.push(realSlice); if (imaginarySlice) paths.push(imaginarySlice);
+      sampleCount += sampled.sampleCount; vertexCount += sampled.tile.width * sampled.tile.height;
+      if (sampled.invalidCount > 0) stopReasons.push({ code: 'analysis-inconclusive',
+        detailCode: `complex-invalid-pixels:${sampled.invalidCount}`, path: item.itemId });
+      itemEvidence.push({ itemId: item.itemId, route: 'complex-mapping',
+        achievedQuality: sampled.tile.truncated ? 'reduced-detail' : request.quality === 'polish' ? 'polished'
+          : request.quality === 'settled' ? 'settled' : 'coarse',
+        estimatedMaximumErrorPixels: errorTarget(request.quality), cache: 'miss',
+        refinable: !sampled.tile.truncated && request.quality !== 'polish' });
+      await control.yieldBetweenItems?.();
+      if (sampled.tile.truncated) { cancelled = true; break; }
+      continue;
+    }
+    if (item.kind === 'relation' && item.relation.kind === 'complex-trajectory') {
+      const sampled = sampleComplexTrajectory({ itemId: item.itemId, relation: item.relation,
+        viewport: request.viewport, quality: request.quality,
+        parameters: request.parameterEnvironment, isCancelled });
+      if (sampled.coordinates.length >= 4) paths.push({
+        pathId: `${item.itemId}:argand-trajectory`, strokeRole: 'default', sample: {
+          itemId: item.itemId, status: sampled.truncated ? 'cancelled' : 'complete',
+          coordinates: sampled.coordinates, independentValues: sampled.independentValues,
+          segmentOffsets: sampled.segmentOffsets,
+          stats: { evaluatedSamples: sampled.evaluatedSamples,
+            emittedVertices: sampled.coordinates.length / 2, elapsedMs: 0 },
+        },
+      });
+      sampleCount += sampled.evaluatedSamples; vertexCount += sampled.coordinates.length / 2;
+      itemEvidence.push({ itemId: item.itemId, route: 'complex-trajectory',
+        achievedQuality: sampled.truncated ? 'reduced-detail' : request.quality === 'polish' ? 'polished'
+          : request.quality === 'settled' ? 'settled' : 'coarse',
+        estimatedMaximumErrorPixels: errorTarget(request.quality), cache: 'miss',
+        refinable: !sampled.truncated && request.quality !== 'polish' });
+      await control.yieldBetweenItems?.();
+      if (sampled.truncated) { cancelled = true; break; }
+      continue;
+    }
     if (item.kind === 'relation' && item.relation.kind === 'real-surface') {
       const sampled = sampleRealSurface({
         itemId: item.itemId,
@@ -679,7 +732,7 @@ export async function runGraphSampleRequest(
     : partial
       ? 'partial'
       : 'complete';
-  const spatialScene = { version: 1 as const, planarScene: assembled.bundle.scene, surfaceMeshes };
+  const spatialScene = { version: 2 as const, planarScene: assembled.bundle.scene, surfaceMeshes, complexTiles };
   const transfers = collectGraphSpatialSceneTransferables(spatialScene);
   if (!transfers.ok) runtimeError(transfers.message);
   const result = graphResult(request, {
@@ -696,7 +749,7 @@ export async function runGraphSampleRequest(
   return { result, transferList: transfers.transferList };
 }
 
-export function releaseGraphSampleResultBuffers(result: GraphSampleResultV5) {
+export function releaseGraphSampleResultBuffers(result: GraphSampleResultV6) {
   const transfers = collectGraphSpatialSceneTransferables(result.scene);
   if (!transfers.ok || transfers.transferList.length === 0) return 0;
   const releasedBytes = transfers.transferList.reduce(

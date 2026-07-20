@@ -1,11 +1,11 @@
 import type {
   GraphClassifiedItemSnapshotV2,
-  GraphDocumentV3,
+  GraphDocumentV4,
   GraphItemSpecV1,
   GraphViewportV1,
 } from '../../lib/graphing';
 
-export function classifiedGraphItems(document: GraphDocumentV3): GraphClassifiedItemSnapshotV2[] {
+export function classifiedGraphItems(document: GraphDocumentV4): GraphClassifiedItemSnapshotV2[] {
   const items: GraphClassifiedItemSnapshotV2[] = [];
   document.items.forEach((item) => {
     if (item.kind !== 'relation' && item.kind !== 'piecewise' && item.kind !== 'point-set') return;
@@ -16,7 +16,7 @@ export function classifiedGraphItems(document: GraphDocumentV3): GraphClassified
   return items;
 }
 
-export function graphParameterEnvironment(document: GraphDocumentV3) {
+export function graphParameterEnvironment(document: GraphDocumentV4) {
   return Object.fromEntries(document.items
     .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
     .map((item) => [item.parameter.symbol, item.parameter.value]));
@@ -37,14 +37,14 @@ export function graphItemFreeSymbols(item: GraphItemSpecV1 | GraphClassifiedItem
   return symbols;
 }
 
-export function graphParameterEnvironmentChanged(left: GraphDocumentV3, right: GraphDocumentV3) {
+export function graphParameterEnvironmentChanged(left: GraphDocumentV4, right: GraphDocumentV4) {
   const leftParameters = graphParameterEnvironment(left);
   const rightParameters = graphParameterEnvironment(right);
   const symbols = new Set([...Object.keys(leftParameters), ...Object.keys(rightParameters)]);
   return [...symbols].some((symbol) => leftParameters[symbol] !== rightParameters[symbol]);
 }
 
-export function unresolvedGraphSymbols(document: GraphDocumentV3) {
+export function unresolvedGraphSymbols(document: GraphDocumentV4) {
   const declared = new Set(document.items
     .filter((item): item is Extract<GraphItemSpecV1, { kind: 'parameter' }> => item.kind === 'parameter')
     .map((item) => item.parameter.symbol));
@@ -72,7 +72,7 @@ export function unresolvedGraphSymbols(document: GraphDocumentV3) {
   return [...symbols].sort();
 }
 
-function graphMathematicsProjection(document: GraphDocumentV3) {
+function graphMathematicsProjection(document: GraphDocumentV4) {
   return document.items.flatMap((item): unknown[] => {
     if (item.kind === 'note') return [];
     if ('presentation' in item) {
@@ -84,14 +84,14 @@ function graphMathematicsProjection(document: GraphDocumentV3) {
   });
 }
 
-export function restoredGraphDocument(current: GraphDocumentV3, snapshot: GraphDocumentV3) {
+export function restoredGraphDocument(current: GraphDocumentV4, snapshot: GraphDocumentV4) {
   const mathematicsChanged = JSON.stringify(graphMathematicsProjection(current))
     !== JSON.stringify(graphMathematicsProjection(snapshot));
   return {
     ...snapshot,
     contentRevision: current.contentRevision + 1,
     mathematicsRevision: current.mathematicsRevision + (mathematicsChanged ? 1 : 0),
-  } satisfies GraphDocumentV3;
+  } satisfies GraphDocumentV4;
 }
 
 export function isFiniteGraphViewport(viewport: GraphViewportV1) {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   validateGraphSampleResult,
   type GraphExpressionIR,
-  type GraphSampleRequestV5,
+  type GraphSampleRequestV6,
 } from '../contracts';
 import {
   releaseGraphSampleResultBuffers,
@@ -10,9 +10,9 @@ import {
 } from './request';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
 
-function request(): GraphSampleRequestV5 {
+function request(): GraphSampleRequestV6 {
   return {
-    version: 5,
+    version: 6,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -57,6 +57,53 @@ const surfaceCases = [
 ] satisfies Array<[string, GraphExpressionIR['mathJson'], boolean]>;
 
 describe('Graph sample request runtime', () => {
+  it('samples continuous complex mappings, component values, cuts, and real-axis slices', async () => {
+    const complexRequest = request();
+    complexRequest.items = [{
+      version: 1, kind: 'relation', itemId: 'complex-log', visible: true,
+      source: { sourceKind: 'mathlive-latex', sourceLatex: 'f(z)=\\ln(z)', sourceRevision: 1 },
+      relation: { kind: 'complex-mapping', inputSymbol: 'z', outputSymbol: 'f', authoredForm: 'function',
+        expression: { mathJson: ['Ln', 'z'], freeSymbols: ['z'] } },
+    }];
+    const execution = await runGraphSampleRequest(complexRequest);
+    const tile = execution.result.scene.complexTiles[0];
+    expect(tile).toMatchObject({ itemId: 'complex-log', analyticity: 'holomorphic', truncated: false });
+    expect(tile?.values.length).toBe((tile?.width ?? 0) * (tile?.height ?? 0) * 4);
+    expect(tile?.branchCuts).toHaveLength(1);
+    expect(tile?.branchPoints).toEqual(expect.arrayContaining([expect.objectContaining({ z: { re: 0, im: 0 } })]));
+    expect(execution.result.scene.planarScene.paths.map((path) => path.pathId)).toEqual(expect.arrayContaining([
+      'complex-log:real-axis-real', 'complex-log:real-axis-imaginary',
+    ]));
+  });
+
+  it('samples a real-parameterized complex trajectory as an Argand path', async () => {
+    const trajectory = request();
+    trajectory.items = [{
+      version: 1, kind: 'relation', itemId: 'unit-trajectory', visible: true,
+      source: { sourceKind: 'mathlive-latex', sourceLatex: 'f(t)=e^{it}', sourceRevision: 1 },
+      relation: { kind: 'complex-trajectory', parameterSymbol: 't',
+        value: { mathJson: ['Exp', ['Multiply', 'ImaginaryUnit', 't']], freeSymbols: ['t'] } },
+    }];
+    const execution = await runGraphSampleRequest(trajectory);
+    expect(execution.result.scene.planarScene.paths[0]).toMatchObject({ pathId: 'unit-trajectory:argand-trajectory' });
+    expect(execution.result.scene.planarScene.paths[0]?.coordinates.length).toBeGreaterThan(100);
+  });
+
+  it.each([
+    ['ln(-x)', ['Ln', ['Negate', 'x']]],
+    ['sqrt(-x)', ['Sqrt', ['Negate', 'x']]],
+  ] as const)('preserves the valid real domain of %s', async (_label, mathJson) => {
+    const realRequest = request();
+    const first = realRequest.items[0];
+    if (!first || first.kind !== 'relation') throw new Error('Expected relation fixture.');
+    first.relation = { kind: 'explicit-y', origin: 'bare-expression', rhs: { mathJson, freeSymbols: ['x'] } };
+    const execution = await runGraphSampleRequest(realRequest);
+    const xs = Array.from(execution.result.scene.planarScene.paths[0]?.coordinates ?? [])
+      .filter((_, index) => index % 2 === 0);
+    expect(xs.length).toBeGreaterThan(2);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(1e-9);
+    expect(Math.min(...xs)).toBeLessThan(-1);
+  });
   it.each(surfaceCases)('samples a bounded adaptive %s surface with normals and contours', async (_label, mathJson, hasBreaks) => {
     const surface = request();
     surface.items = [{

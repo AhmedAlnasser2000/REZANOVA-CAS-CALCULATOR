@@ -3,8 +3,8 @@ import type {
   GraphSceneLabelV1,
   SampledSceneRuntimeV2,
   SampledSceneSnapshotV2,
-  GraphSampleResultV5,
-  GraphSpatialSceneRuntimeV1,
+  GraphSampleResultV6,
+  GraphSpatialSceneRuntimeV2,
 } from './types';
 import { validateGraphStopReason, validateGraphViewport } from './validation';
 
@@ -403,7 +403,7 @@ export function validateSampledSceneRuntimeStructure(
 
 function validPiecewiseConditionEvidence(input: unknown) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
-  const evidence = input as GraphSampleResultV5['itemEvidence'][number]['piecewiseCondition'];
+  const evidence = input as GraphSampleResultV6['itemEvidence'][number]['piecewiseCondition'];
   if (!evidence || evidence.version !== 1
     || !['x', 'y'].includes(evidence.independentSymbol)
     || !['exact-global', 'adaptive-current-viewport', 'mixed', 'unresolved'].includes(evidence.basis)
@@ -427,11 +427,11 @@ function validPiecewiseConditionEvidence(input: unknown) {
 function validateGraphSampleResultEnvelope(
   input: unknown,
   verifySnapshotHash: boolean,
-): GraphSceneValidationResult<GraphSampleResultV5> {
+): GraphSceneValidationResult<GraphSampleResultV6> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Graph sample result must be an object.');
-  const result = input as GraphSampleResultV5;
+  const result = input as GraphSampleResultV6;
   if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'itemEvidence', 'evidence'])
-    || result.version !== 5 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
+    || result.version !== 6 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
   if (!['preview', 'settled', 'polish'].includes(result.quality) || !['complete', 'partial', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
   if (!result.revisions || Object.values(result.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Graph sample result revisions are invalid.');
   if (!validateGraphViewport(result.viewport).ok) return fail('invalid-scene', 'Graph sample result viewport is invalid.');
@@ -475,13 +475,14 @@ function validateGraphSampleResultEnvelope(
 
 export function validateGraphSpatialSceneRuntime(
   input: unknown,
-): GraphSceneStructureValidationResult<GraphSpatialSceneRuntimeV1> {
+): GraphSceneStructureValidationResult<GraphSpatialSceneRuntimeV2> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return fail('invalid-scene', 'Spatial scene must be an object.');
   }
-  const scene = input as GraphSpatialSceneRuntimeV1;
-  if (!hasOnlyKeys(scene, ['version', 'planarScene', 'surfaceMeshes'])
-    || scene.version !== 1 || !Array.isArray(scene.surfaceMeshes) || scene.surfaceMeshes.length > 100) {
+  const scene = input as GraphSpatialSceneRuntimeV2;
+  if (!hasOnlyKeys(scene, ['version', 'planarScene', 'surfaceMeshes', 'complexTiles'])
+    || scene.version !== 2 || !Array.isArray(scene.surfaceMeshes) || scene.surfaceMeshes.length > 100
+    || !Array.isArray(scene.complexTiles) || scene.complexTiles.length > 100) {
     return fail('invalid-scene', 'Spatial scene structure is invalid.');
   }
   const planar = validateSampledSceneRuntimeStructure(scene.planarScene);
@@ -514,12 +515,34 @@ export function validateGraphSpatialSceneRuntime(
       ?? validateNumbers(mesh.contourOffsets, `${base}.contourOffsets`);
     if (numbers) return numbers;
   }
+  for (const [index, tile] of scene.complexTiles.entries()) {
+    const base = `$.complexTiles[${index}]`;
+    if (!hasOnlyKeys(tile, ['tileId', 'itemId', 'width', 'height', 'bounds', 'rgba', 'values', 'analyticity', 'branchCuts', 'branchPoints', 'truncated'])
+      || !tile.tileId || !tile.itemId || !Number.isInteger(tile.width) || !Number.isInteger(tile.height)
+      || tile.width < 1 || tile.height < 1 || tile.width > 512 || tile.height > 512
+      || !(tile.rgba instanceof Uint8Array) || !(tile.values instanceof Float32Array)
+      || tile.rgba.length !== tile.width * tile.height * 4 || tile.values.length !== tile.rgba.length
+      || !['holomorphic', 'non-holomorphic', 'unknown'].includes(tile.analyticity)
+      || !Array.isArray(tile.branchCuts) || !Array.isArray(tile.branchPoints)
+      || typeof tile.truncated !== 'boolean') return fail('invalid-scene', 'Complex domain tile structure is invalid.', base);
+    const bounds = tile.bounds;
+    if (!bounds || ![bounds.reMin, bounds.reMax, bounds.imMin, bounds.imMax].every(Number.isFinite)
+      || bounds.reMin >= bounds.reMax || bounds.imMin >= bounds.imMax) return fail('invalid-scene', 'Complex tile bounds are invalid.', `${base}.bounds`);
+    for (let offset = 0; offset < tile.values.length; offset += 4) {
+      const tuple = [tile.values[offset], tile.values[offset + 1], tile.values[offset + 2], tile.values[offset + 3]];
+      if (!tuple.every(Number.isFinite) && !tuple.every(Number.isNaN)) return fail('non-finite-number', 'Complex tile values must be finite tuples or unavailable tuples.', `${base}.values[${offset}]`);
+    }
+    const pointFinite = (point: { re: number; im: number }) => Number.isFinite(point.re) && Number.isFinite(point.im);
+    if (tile.branchCuts.some((cut) => !cut.family || !pointFinite(cut.from) || !pointFinite(cut.to))
+      || tile.branchPoints.some((point) => !point.family || !pointFinite(point.z))) return fail('invalid-scene', 'Complex branch geometry is invalid.', base);
+    numericCount += tile.rgba.length + tile.values.length + tile.branchCuts.length * 4 + tile.branchPoints.length * 2;
+  }
   if (numericCount > MAX_SCENE_NUMBERS) return fail('scene-budget-exceeded', 'Spatial scene exceeds the numeric budget.');
   return { ok: true, value: scene };
 }
 
 export function hashGraphSpatialSceneRuntime(
-  scene: GraphSpatialSceneRuntimeV1,
+  scene: GraphSpatialSceneRuntimeV2,
   viewport: SampledSceneSnapshotV2['viewport'],
 ) {
   let lane = 0x811c9dc5;
@@ -534,6 +557,13 @@ export function hashGraphSpatialSceneRuntime(
       const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
       for (const byte of bytes) appendByte(byte);
     }
+  }
+  for (const tile of [...scene.complexTiles].sort((left, right) => left.tileId.localeCompare(right.tileId))) {
+    appendText(tile.tileId); appendText(tile.itemId); appendText(tile.analyticity); appendByte(tile.truncated ? 1 : 0);
+    for (const view of [tile.rgba, tile.values]) {
+      for (const byte of new Uint8Array(view.buffer, view.byteOffset, view.byteLength)) appendByte(byte);
+    }
+    appendText(JSON.stringify({ bounds: tile.bounds, branchCuts: tile.branchCuts, branchPoints: tile.branchPoints }));
   }
   return `graph64:${lane.toString(16).padStart(8, '0')}${((lane ^ 0x9e3779b9) >>> 0).toString(16).padStart(8, '0')}`;
 }

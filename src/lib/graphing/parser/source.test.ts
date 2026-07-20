@@ -65,6 +65,20 @@ describe('Graph MathLive source classifier', () => {
     });
   });
 
+  it('keeps complex mappings, Argand trajectories, and real x-functions distinct', () => {
+    expect(relation('f(z)=z^2')).toMatchObject({
+      kind: 'complex-mapping', inputSymbol: 'z', outputSymbol: 'f', authoredForm: 'function',
+      expression: { mathJson: ['Power', 'z', 2], freeSymbols: ['z'] },
+    });
+    expect(relation(String.raw`w=\frac{1}{z}`)).toMatchObject({
+      kind: 'complex-mapping', outputSymbol: 'w', authoredForm: 'output-relation',
+    });
+    expect(relation(String.raw`\exp(z)`)).toMatchObject({ kind: 'complex-mapping', authoredForm: 'bare-expression' });
+    expect(relation(String.raw`f(t)=\exp(it)`)).toMatchObject({ kind: 'complex-trajectory', parameterSymbol: 't' });
+    expect(relation(String.raw`\ln(-x)`)).toMatchObject({ kind: 'explicit-y', rhs: { freeSymbols: ['x'] } });
+    expect(relation(String.raw`\sqrt{-x}`)).toMatchObject({ kind: 'explicit-y', rhs: { freeSymbols: ['x'] } });
+  });
+
   it('preserves inequality semantics including mixed strict/inclusive chains', () => {
     expect(relation('y>x')).toMatchObject({
       kind: 'inequality',

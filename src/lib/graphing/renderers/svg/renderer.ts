@@ -218,8 +218,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     if (!frame) { this.surfaces.replaceChildren(); this.regions.replaceChildren(); this.paths.replaceChildren(); this.points.replaceChildren(); return; }
     this.sceneProjectionSize = { ...this.size };
     const { sourceViewport, policy } = frame;
-    const scene = frame.version === 2 ? frame.scene.planarScene : frame.scene;
-    const surfaceMeshes = frame.version === 2 ? frame.scene.surfaceMeshes : [];
+    const scene = frame.version === 1 ? frame.scene : frame.scene.planarScene;
+    const surfaceMeshes = frame.version === 1 ? [] : frame.scene.surfaceMeshes;
     const surfacePaths = surfaceMeshes.flatMap((mesh) => {
       const bands = surfaceBands(mesh, sourceViewport, this.size);
       return [

@@ -26,6 +26,9 @@ const FORBIDDEN_SOLVER_ROOTS = [
   'src/lib/symbolic-engine/',
   'src/lib/trigonometry/',
 ];
+const REVIEWED_PUBLIC_SOLVER_SEAMS = new Set([
+  'src/lib/equation/complex-domain-public',
+]);
 
 function normalize(value) {
   return value.split(path.sep).join('/');
@@ -86,7 +89,8 @@ export function validateGraphingBoundaries({ rootDir = process.cwd(), files } = 
         || resolved.startsWith('src/styles/')) {
         failures.push(`${repoPath} imports app UI state from ${specifier}.`);
       }
-      if (FORBIDDEN_SOLVER_ROOTS.some((root) => resolved.startsWith(root))) {
+      if (FORBIDDEN_SOLVER_ROOTS.some((root) => resolved.startsWith(root))
+        && !REVIEWED_PUBLIC_SOLVER_SEAMS.has(resolved)) {
         failures.push(`${repoPath} imports private solver ownership from ${specifier}.`);
       }
       if (resolved.startsWith('src/lib/ooe/') && !repoPath.startsWith(`${OOE_ROOT}/`)) {

@@ -380,6 +380,24 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
     );
   }
 
+  const complexCall = graphFunctionCall(leftNode);
+  if (complexCall && (complexCall.name === 'f' || complexCall.name === 'w')
+    && complexCall.arguments.length === 1) {
+    const inputSymbol = graphSymbolName(complexCall.arguments[0]);
+    const value = adaptGraphExpressionMathJson(rightNode, `${path}.right`);
+    if (!value.ok) return value;
+    if (!inputSymbol || ['x', 'y', 'r', 'theta'].includes(inputSymbol)
+      || expressionUsesAny(value.expression, new Set(['x', 'y', 'r', 'theta', 'w']))) {
+      return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+    }
+    const relation = inputSymbol === 'z'
+      ? validatedRelation({ kind: 'complex-mapping', inputSymbol: 'z', outputSymbol: complexCall.name,
+        expression: value.expression, authoredForm: 'function' })
+      : validatedRelation({ kind: 'complex-trajectory', parameterSymbol: inputSymbol,
+        value: value.expression });
+    return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+  }
+
   const target = graphSymbolName(leftNode);
   if ((target === 'x' || target === 'y' || target === 'r')
     && graphNodeOperator(rightNode) === 'Which') {
@@ -389,6 +407,15 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   if (!left.ok) return left;
   const right = adaptGraphExpressionMathJson(rightNode, `${path}.right`);
   if (!right.ok) return right;
+
+  if (target === 'w') {
+    if (expressionUsesAny(right.expression, new Set(['x', 'y', 'r', 'theta', 'w']))) {
+      return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+    }
+    const relation = validatedRelation({ kind: 'complex-mapping', inputSymbol: 'z', outputSymbol: 'w',
+      expression: right.expression, authoredForm: 'output-relation' });
+    return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+  }
 
   if (target
     && !ALL_COORDINATES.has(target)
@@ -475,6 +502,14 @@ function classifyBareExpression(input: unknown, path: string): GraphSourceClassi
   const expression = adaptGraphExpressionMathJson(input, path);
   if (!expression.ok) return expression;
   const symbols = new Set(expression.expression.freeSymbols);
+  if (symbols.has('z')) {
+    if (['x', 'y', 'r', 'theta', 'w'].some((symbol) => symbols.has(symbol))) {
+      return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+    }
+    const relation = validatedRelation({ kind: 'complex-mapping', inputSymbol: 'z', outputSymbol: 'f',
+      expression: expression.expression, authoredForm: 'bare-expression' });
+    return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+  }
   if (symbols.has('y') || symbols.has('r') || symbols.has('theta')) {
     return graphParserFailure(
       'ambiguous-bare-expression',

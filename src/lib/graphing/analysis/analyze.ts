@@ -2,6 +2,10 @@ import {
   createGraphExpressionEvaluator,
   GraphExpressionPlanCache,
 } from '../evaluator';
+import {
+  createComplexNumericEvaluator,
+  findComplexNewtonCandidates,
+} from '../../equation/complex-domain-public';
 import type {
   GraphAnalysisEvidenceV1,
   GraphAnalysisFeature,
@@ -25,6 +29,119 @@ export type GraphAnalysisControl = {
 type Polynomial = [number, number, number];
 type Evaluator = (x: number) => number | undefined;
 type SurfaceEvaluator = (x: number, y: number) => number | undefined;
+
+function complexPoint(value: { re: number; im: number }, error?: number) {
+  return {
+    x: error === undefined ? exact(value.re) : approximate(value.re, error),
+    y: error === undefined ? exact(value.im) : approximate(value.im, error),
+  };
+}
+
+function complexPoleExpression(node: unknown) {
+  if (!Array.isArray(node) || typeof node[0] !== 'string') return undefined;
+  if (node[0] === 'Divide' && node.length === 3) return node[2];
+  if (node[0] === 'Power' && typeof node[2] === 'number' && node[2] < 0) return node[1];
+  return undefined;
+}
+
+function exactZeroAtOrigin(node: unknown): boolean {
+  if (node === 'z') return true;
+  if (!Array.isArray(node) || typeof node[0] !== 'string') return false;
+  if (node[0] === 'Power' && node[1] === 'z' && typeof node[2] === 'number' && node[2] > 0) return true;
+  return node[0] === 'Multiply' && node.slice(1).some(exactZeroAtOrigin);
+}
+
+function branchPointsFor(node: unknown) {
+  const kinds = new Set<string>();
+  let multivaluedPower = false;
+  const visit = (value: unknown) => {
+    if (!Array.isArray(value)) return;
+    if (typeof value[0] === 'string') kinds.add(value[0]);
+    if (value[0] === 'Power' && !(typeof value[2] === 'number' && Number.isInteger(value[2]))) multivaluedPower = true;
+    value.slice(1).forEach(visit);
+  };
+  visit(node);
+  const points: Array<{ re: number; im: number; family: string }> = [];
+  if (['Ln', 'Log', 'Sqrt', 'Root'].some((kind) => kinds.has(kind)) || multivaluedPower) {
+    points.push({ re: 0, im: 0, family: 'principal zero branch point' });
+  }
+  if (kinds.has('Arcsin') || kinds.has('Arccos')) {
+    points.push({ re: -1, im: 0, family: 'inverse-trig branch point' },
+      { re: 1, im: 0, family: 'inverse-trig branch point' });
+  }
+  if (kinds.has('Arctan')) {
+    points.push({ re: 0, im: -1, family: 'inverse-tangent branch point' },
+      { re: 0, im: 1, family: 'inverse-tangent branch point' });
+  }
+  return points;
+}
+
+function analyzeComplexMapping(input: {
+  request: GraphAnalysisRequestV1;
+  item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>;
+  relation: Extract<GraphRelationIR, { kind: 'complex-mapping' }>;
+  requested: Set<GraphAnalysisFeature>;
+  serial: () => number;
+  onEvaluations: (count: number) => void;
+}) {
+  const findings: GraphAnalysisEvidenceV1[] = [];
+  const region = input.request.complexSearchRegion ?? {
+    reMin: input.request.numericWindow?.xMin ?? -10, reMax: input.request.numericWindow?.xMax ?? 10,
+    imMin: input.request.numericWindow?.yMin ?? -10, imMax: input.request.numericWindow?.yMax ?? 10,
+  };
+  const expression = input.relation.expression.mathJson;
+  const evaluator = createComplexNumericEvaluator({ expressionMathJson: expression, target: 'z',
+    parameters: input.request.parameterEnvironment });
+  if (input.requested.has('complex-zero')) {
+    const originIsExact = exactZeroAtOrigin(expression) && region.reMin <= 0 && region.reMax >= 0
+      && region.imMin <= 0 && region.imMax >= 0;
+    if (originIsExact) findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'exact-proved', input.serial(), {
+      coordinates: complexPoint({ re: 0, im: 0 }), relationValue: exact(0),
+      basis: { source: 'graph-symbolic', validator: 'structured zero factor identity' },
+    }));
+    const roots = findComplexNewtonCandidates({ evaluator, region, gridSize: 7, lowDiscrepancySeedCount: 8 });
+    input.onEvaluations(roots.diagnostics.totalEvaluations);
+    for (const candidate of roots.candidates) {
+      if (originIsExact && Math.hypot(candidate.value.re, candidate.value.im) < 1e-7) continue;
+      findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'numeric-validated', input.serial(), {
+        coordinates: complexPoint(candidate.value, Math.max(1e-10, candidate.residualNorm)),
+        relationValue: approximate(0, candidate.residualNorm),
+        basis: { source: 'numeric-validator', validator: `bounded complex Newton search in [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]`, residualBound: candidate.residualNorm },
+      }));
+    }
+    findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'inconclusive', input.serial(), {
+      basis: { source: 'numeric-validator', validator: `bounded search region [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]` },
+      stopReason: { code: 'analysis-inconclusive', detailCode: 'bounded-complex-search-does-not-prove-global-completeness' },
+    }));
+  }
+  const poleExpression = complexPoleExpression(expression);
+  if (input.requested.has('complex-pole')) {
+    if (poleExpression === 'z' && region.reMin <= 0 && region.reMax >= 0 && region.imMin <= 0 && region.imMax >= 0) {
+      findings.push(evidence(input.request, 'complex-pole', [input.item.itemId], 'exact-proved', input.serial(), {
+        coordinates: complexPoint({ re: 0, im: 0 }),
+        basis: { source: 'graph-symbolic', validator: 'structured denominator or negative-power exclusion' },
+      }));
+    } else if (poleExpression !== undefined) {
+      const poleEvaluator = createComplexNumericEvaluator({ expressionMathJson: poleExpression, target: 'z',
+        parameters: input.request.parameterEnvironment });
+      const poles = findComplexNewtonCandidates({ evaluator: poleEvaluator, region, gridSize: 7, lowDiscrepancySeedCount: 8 });
+      input.onEvaluations(poles.diagnostics.totalEvaluations);
+      for (const candidate of poles.candidates) findings.push(evidence(
+        input.request, 'complex-pole', [input.item.itemId], 'numeric-validated', input.serial(), {
+          coordinates: complexPoint(candidate.value, Math.max(1e-10, candidate.residualNorm)),
+          basis: { source: 'numeric-validator', validator: 'bounded denominator-zero search', residualBound: candidate.residualNorm },
+        },
+      ));
+    }
+  }
+  if (input.requested.has('branch-point')) for (const point of branchPointsFor(expression)) {
+    if (point.re < region.reMin || point.re > region.reMax || point.im < region.imMin || point.im > region.imMax) continue;
+    findings.push(evidence(input.request, 'branch-point', [input.item.itemId], 'exact-proved', input.serial(), {
+      coordinates: complexPoint(point), basis: { source: 'reviewed-public-fact', validator: point.family },
+    }));
+  }
+  return findings;
+}
 
 function add(a: Polynomial, b: Polynomial): Polynomial {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -282,6 +399,14 @@ export async function runGraphAnalysisRequest(
       if (run) findings.push(...analyzeSurface({
         request, item: snapshot, run, window, requested, serial: () => serial++,
         onEvaluation: () => { evaluatedPointCount += 1; },
+      }));
+      await control.yieldBetweenItems?.();
+      continue;
+    }
+    if (snapshot.relation.kind === 'complex-mapping') {
+      findings.push(...analyzeComplexMapping({
+        request, item: snapshot, relation: snapshot.relation, requested,
+        serial: () => serial++, onEvaluations: (count) => { evaluatedPointCount += count; },
       }));
       await control.yieldBetweenItems?.();
       continue;

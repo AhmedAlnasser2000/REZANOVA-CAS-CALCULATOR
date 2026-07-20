@@ -39,6 +39,15 @@ describe('Graphing boundary ratchet', () => {
     assert.throws(() => validateGraphingBoundaries({ rootDir: solverRoot }), /imports private solver ownership/u);
   });
 
+  it('allows only the reviewed domain-neutral complex seam', () => {
+    const publicRoot = rootWith('src/lib/graphing/sampling/complex.ts',
+      "import { evaluate } from '../../equation/complex-domain-public';\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: publicRoot }));
+    const privateRoot = rootWith('src/lib/graphing/sampling/complex.ts',
+      "import { evaluate } from '../../equation/complex/numeric-evaluator';\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: privateRoot }), /imports private solver ownership/u);
+  });
+
   it('keeps OOE in its future Graph-owned district and contracts renderer-neutral', () => {
     const ooeRoot = rootWith('src/lib/graphing/sampling.ts', "import { launch } from '../ooe/job-launch/launch';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir: ooeRoot }), /imports OOE outside/u);

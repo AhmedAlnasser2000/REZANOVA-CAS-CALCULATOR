@@ -44,8 +44,21 @@ export function validateGraphAnalysisRequest(input: unknown): Validation<GraphAn
   if (value.numericWindow && !validateGraphViewport(value.numericWindow).ok) {
     return { ok: false, message: 'Graph analysis numeric window is invalid.' };
   }
+  if (value.complexSearchRegion && (!Number.isFinite(value.complexSearchRegion.reMin)
+    || !Number.isFinite(value.complexSearchRegion.reMax)
+    || !Number.isFinite(value.complexSearchRegion.imMin)
+    || !Number.isFinite(value.complexSearchRegion.imMax)
+    || value.complexSearchRegion.reMin >= value.complexSearchRegion.reMax
+    || value.complexSearchRegion.imMin >= value.complexSearchRegion.imMax)) {
+    return { ok: false, message: 'Graph analysis complex search region is invalid.' };
+  }
+  if (value.assumptions && (!Array.isArray(value.assumptions) || value.assumptions.length > 64
+    || value.assumptions.some((entry) => entry.version !== 1 || !entry.assumptionId
+      || !entry.sourceLatex.trim() || entry.sourceLatex.length > 8_192))) {
+    return { ok: false, message: 'Graph analysis assumptions are invalid.' };
+  }
   const itemCheck = validateGraphSampleRequest({
-    version: 5,
+    version: 6,
     requestId: value.requestId,
     workspaceInstanceId: value.workspaceInstanceId,
     documentId: value.documentId,

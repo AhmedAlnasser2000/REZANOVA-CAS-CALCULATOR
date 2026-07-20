@@ -39,7 +39,7 @@ import {
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV6,
+  GraphWorkspaceSessionStateV7,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
@@ -54,11 +54,12 @@ import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
 import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
 import { GraphParameterControls } from './GraphParameterControls';
+import { GraphComplexViewport } from './GraphComplexViewport';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV6;
+  session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV6) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
 };
 
 type GraphRailEntry =
@@ -562,6 +563,8 @@ export default function GraphWorkspacePage({
   const hasPolarRelation = controller.session.document.items.some((item) => (
     item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
   ));
+  const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
+    ?? scene?.complexTiles[0] ?? null;
 
   const focusNextRow = useCallback((itemId: string) => {
     requestAnimationFrame(() => {
@@ -663,8 +666,16 @@ export default function GraphWorkspacePage({
               }
               controller.updateAnalyze({ open: !controller.session.surface.analyzeOpen });
             }} type="button"><Search aria-hidden="true" size={16} /><span>Analyze</span></button>
-          <span className="graph-toolbar-context">Real · {controller.session.surface.panes.real.dimension === '3d'
-            ? 'Three interactive' : 'SVG reference'}</span>
+          <div aria-label="Graph number domain" className="graph-domain-switch" role="group">
+            {(['real', 'complex', 'both'] as const).map((mode) => <button
+              aria-pressed={controller.session.surface.viewPolicy.mode === mode} key={mode}
+              onClick={() => controller.updateViewPolicy(mode)} type="button">
+              {mode[0].toUpperCase() + mode.slice(1)}
+            </button>)}
+          </div>
+          <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
+            ? `Real · ${controller.session.surface.panes.real.dimension === '3d' ? 'Three interactive' : 'SVG reference'}`
+            : controller.session.surface.viewPolicy.mode === 'complex' ? 'Complex · mapping' : 'Real + Complex'}</span>
         </div>
 
         {gridPanelOpen ? (
@@ -856,8 +867,8 @@ export default function GraphWorkspacePage({
           </div>
         </aside>
 
-        <section className="graph-viewport-panel" aria-label="Graph viewport">
-          <GraphViewportHost
+        <section className={`graph-viewport-panel is-${controller.session.surface.viewPolicy.mode}`} aria-label="Graph viewport">
+          {controller.session.surface.viewPolicy.mode !== 'complex' ? <GraphViewportHost
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}
@@ -871,8 +882,19 @@ export default function GraphWorkspacePage({
             sceneViewport={controller.sampleResult?.viewport ?? null}
             selectedItemId={controller.session.surface.selectedItemId}
             viewport={controller.session.surface.viewport}
-          />
-          <GraphAnalyzeIntegration onSetViewport={controller.setViewport}
+          /> : null}
+          {controller.session.surface.viewPolicy.mode !== 'real' ? <GraphComplexViewport
+            colorVisionMode={controller.session.surface.appearance.colorVisionMode}
+            displayMode={controller.session.surface.complex.displayMode}
+            onDisplayModeChange={(displayMode) => controller.updateComplexView({ displayMode })}
+            onPaneViewChange={(values) => controller.updatePaneView('complex', values)}
+            onViewportChange={controller.setViewport}
+            paneView={controller.session.surface.panes.complex}
+            tile={activeComplexTile}
+            viewport={controller.session.surface.viewport}
+          /> : null}
+          <GraphAnalyzeIntegration onAddAssumption={controller.addAssumption}
+            onRemoveAssumption={controller.removeAssumption} onSetViewport={controller.setViewport}
             onUpdateAnalyze={controller.updateAnalyze} onUpdatePresentation={controller.updatePresentation}
             session={controller.session} workspaceContext={workspaceContext} />
           {controller.status.kind === 'sampling' || controller.suppressedPiecewiseItems.size > 0 ? (

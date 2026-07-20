@@ -7,16 +7,17 @@ import {
 } from '../../lib/graphing';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { classifiedGraphItems, graphParameterEnvironment } from './graph-controller-support';
-import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 
 const ALL_FEATURES = [
   'root', 'x-intercept', 'y-intercept', 'extremum', 'intersection', 'hole', 'pole',
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
   'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point', 'local-extremum',
+  'complex-zero', 'complex-pole', 'branch-point',
 ] as const;
 
 export function useGraphAnalysis(input: {
-  session: GraphWorkspaceSessionStateV6;
+  session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
   const { session, workspaceContext } = input;
@@ -53,6 +54,11 @@ export function useGraphAnalysis(input: {
         },
         items,
         parameterEnvironment: graphParameterEnvironment(snapshot.document),
+        assumptions: snapshot.document.assumptions,
+        complexSearchRegion: snapshot.surface.complex.searchRegion ?? {
+          reMin: snapshot.surface.viewport.xMin, reMax: snapshot.surface.viewport.xMax,
+          imMin: snapshot.surface.viewport.yMin, imMax: snapshot.surface.viewport.yMax,
+        },
         features: [...ALL_FEATURES],
         numericWindow: snapshot.surface.viewport,
         maximumTimeMs: 600,

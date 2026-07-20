@@ -5,7 +5,7 @@ import {
 } from './graph-workspace-session';
 import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
-describe('Graph workspace session V6', () => {
+describe('Graph workspace session V7', () => {
   it('migrates a validated V1 session without changing mathematical identity', () => {
     const current = createGraphWorkspaceSessionState('graph.1', 'Graph');
     const legacy = {
@@ -23,17 +23,19 @@ describe('Graph workspace session V6', () => {
     delete (legacy.surface as { appearance?: unknown }).appearance;
     delete (legacy.surface as { panes?: unknown }).panes;
     delete (legacy.surface as { analyze?: unknown }).analyze;
+    delete (legacy.surface as { complex?: unknown }).complex;
     expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
-      version: 6,
-      document: { version: 3, contentRevision: 7, mathematicsRevision: 7 },
+      version: 7,
+      document: { version: 4, assumptions: [], contentRevision: 7, mathematicsRevision: 7 },
       surface: {
-        version: 5,
+        version: 6,
         appearance: { theme: 'technical', colorVisionMode: 'standard' },
         panes: {
           real: { version: 1, dimension: '2d', camera3d: { projection: 'perspective' } },
           complex: { version: 1, dimension: '2d', camera3d: { projection: 'perspective' } },
         },
         analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] },
+        complex: { displayMode: 'domain-coloring', searchRegion: null },
       },
     });
   });
@@ -45,10 +47,12 @@ describe('Graph workspace session V6', () => {
     delete (legacy.surface as { appearance?: unknown }).appearance;
     delete (legacy.surface as { panes?: unknown }).panes;
     delete (legacy.surface as { analyze?: unknown }).analyze;
+    delete (legacy.surface as { complex?: unknown }).complex;
+    delete (legacy.document as { assumptions?: unknown }).assumptions;
     expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
-      version: 6,
+      version: 7,
       surface: {
-        version: 5,
+        version: 6,
         appearance: { theme: 'technical', colorVisionMode: 'standard' },
         panes: { real: { dimension: '2d' }, complex: { dimension: '2d' } },
         analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] },
@@ -66,10 +70,12 @@ describe('Graph workspace session V6', () => {
     };
     delete (legacy.surface as { panes?: unknown }).panes;
     delete (legacy.surface as { analyze?: unknown }).analyze;
+    delete (legacy.surface as { complex?: unknown }).complex;
+    delete (legacy.document as { assumptions?: unknown }).assumptions;
     const migrated = migrateGraphWorkspaceSessionState(legacy);
     expect(migrated).toMatchObject({
-      version: 6,
-      surface: { version: 5, panes: { real: { dimension: '2d' }, complex: { dimension: '2d' } },
+      version: 7,
+      surface: { version: 6, panes: { real: { dimension: '2d' }, complex: { dimension: '2d' } },
         analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] } },
     });
     expect(migrated?.surface.panes.real).not.toBe(migrated?.surface.panes.complex);
@@ -80,9 +86,11 @@ describe('Graph workspace session V6', () => {
     const legacy = { ...current, version: 4, document: { ...current.document, version: 2 },
       surface: { ...current.surface, version: 3 } };
     delete (legacy.surface as { analyze?: unknown }).analyze;
+    delete (legacy.surface as { complex?: unknown }).complex;
+    delete (legacy.document as { assumptions?: unknown }).assumptions;
     expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
-      version: 6,
-      surface: { version: 5, analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] } },
+      version: 7,
+      surface: { version: 6, analyze: { width: 380, activeTab: 'features', pinnedAnnotations: [] } },
     });
   });
 
@@ -107,10 +115,12 @@ describe('Graph workspace session V6', () => {
         },
       },
     };
+    delete (legacy.surface as { complex?: unknown }).complex;
+    delete (legacy.document as { assumptions?: unknown }).assumptions;
     expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
-      version: 6,
-      document: { version: 3 },
-      surface: { version: 5, analyze: { pinnedAnnotations: [{
+      version: 7,
+      document: { version: 4, assumptions: [] },
+      surface: { version: 6, analyze: { pinnedAnnotations: [{
         version: 2, coordinates: { x: { kind: 'exact' }, y: { kind: 'exact' } },
       }] } },
     });

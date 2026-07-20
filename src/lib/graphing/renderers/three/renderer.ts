@@ -137,8 +137,8 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     this.geometryRoot.children.slice().forEach(disposeObject);
     this.itemObjects.clear();
     if (!frame) { this.render(); return; }
-    const planarScene = frame.version === 2 ? frame.scene.planarScene : frame.scene;
-    const surfaceMeshes = frame.version === 2 ? frame.scene.surfaceMeshes : [];
+    const planarScene = frame.version === 1 ? frame.scene : frame.scene.planarScene;
+    const surfaceMeshes = frame.version === 1 ? [] : frame.scene.surfaceMeshes;
     for (const surface of surfaceMeshes) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(surface.positions), 3));
@@ -283,7 +283,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     const itemId = hit?.object.userData.graphItemId as string | undefined;
     if (!hit || !itemId) return null;
     return {
-      itemId, sceneRevision: this.sceneFrame.version === 2
+      itemId, sceneRevision: this.sceneFrame.version !== 1
         ? this.sceneFrame.scene.planarScene.sceneRevision : this.sceneFrame.scene.sceneRevision,
       world: { x: hit.point.x, y: hit.point.y, z: hit.point.z }, distancePixels: 0,
     };
