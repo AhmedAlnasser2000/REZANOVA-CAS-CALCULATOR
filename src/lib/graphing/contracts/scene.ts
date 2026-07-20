@@ -3,7 +3,8 @@ import type {
   GraphSceneLabelV1,
   SampledSceneRuntimeV2,
   SampledSceneSnapshotV2,
-  GraphSampleResultV4,
+  GraphSampleResultV5,
+  GraphSpatialSceneRuntimeV1,
 } from './types';
 import { validateGraphStopReason, validateGraphViewport } from './validation';
 
@@ -402,7 +403,7 @@ export function validateSampledSceneRuntimeStructure(
 
 function validPiecewiseConditionEvidence(input: unknown) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
-  const evidence = input as GraphSampleResultV4['itemEvidence'][number]['piecewiseCondition'];
+  const evidence = input as GraphSampleResultV5['itemEvidence'][number]['piecewiseCondition'];
   if (!evidence || evidence.version !== 1
     || !['x', 'y'].includes(evidence.independentSymbol)
     || !['exact-global', 'adaptive-current-viewport', 'mixed', 'unresolved'].includes(evidence.basis)
@@ -426,11 +427,11 @@ function validPiecewiseConditionEvidence(input: unknown) {
 function validateGraphSampleResultEnvelope(
   input: unknown,
   verifySnapshotHash: boolean,
-): GraphSceneValidationResult<GraphSampleResultV4> {
+): GraphSceneValidationResult<GraphSampleResultV5> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return fail('invalid-scene', 'Graph sample result must be an object.');
-  const result = input as GraphSampleResultV4;
+  const result = input as GraphSampleResultV5;
   if (!hasOnlyKeys(result, ['version', 'requestId', 'workspaceInstanceId', 'documentId', 'revisions', 'viewport', 'quality', 'status', 'scene', 'snapshotHash', 'stopReasons', 'itemEvidence', 'evidence'])
-    || result.version !== 4 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
+    || result.version !== 5 || !result.requestId || !result.workspaceInstanceId || !result.documentId) return fail('invalid-scene', 'Graph sample result identity is invalid.');
   if (!['preview', 'settled', 'polish'].includes(result.quality) || !['complete', 'partial', 'cancelled'].includes(result.status)) return fail('invalid-scene', 'Graph sample result status is invalid.');
   if (!result.revisions || Object.values(result.revisions).some((value) => !Number.isSafeInteger(value) || value < 0)) return fail('invalid-scene', 'Graph sample result revisions are invalid.');
   if (!validateGraphViewport(result.viewport).ok) return fail('invalid-scene', 'Graph sample result viewport is invalid.');
@@ -447,12 +448,13 @@ function validateGraphSampleResultEnvelope(
     || (item.piecewiseCondition !== undefined && !validPiecewiseConditionEvidence(item.piecewiseCondition))
   ))) return fail('invalid-scene', 'Graph sample result item evidence is invalid.');
   if (!result.evidence || Object.values(result.evidence).some((value) => !Number.isFinite(value) || value < 0)) return fail('invalid-scene', 'Graph sample result counters are invalid.');
-  const sceneValidation = validateSampledSceneRuntimeStructure(result.scene);
+  const sceneValidation = validateGraphSpatialSceneRuntime(result.scene);
   if (!sceneValidation.ok) return sceneValidation;
-  if (result.revisions.scene !== result.scene.sceneRevision
-    || result.revisions.mathematics !== result.scene.mathematicsRevision
-    || result.revisions.viewport !== result.scene.viewportRevision
-    || result.revisions.parameter !== result.scene.parameterRevision) {
+  const planar = result.scene.planarScene;
+  if (result.revisions.scene !== planar.sceneRevision
+    || result.revisions.mathematics !== planar.mathematicsRevision
+    || result.revisions.viewport !== planar.viewportRevision
+    || result.revisions.parameter !== planar.parameterRevision) {
     return fail('invalid-scene', 'Graph sample result revisions do not match its scene.');
   }
   if (result.status === 'partial'
@@ -466,9 +468,74 @@ function validateGraphSampleResultEnvelope(
   if (!verifySnapshotHash) {
     return { ok: true, value: result, hash: result.snapshotHash };
   }
-  const verifiedHash = hashSampledSceneRuntime(result.scene, result.viewport);
+  const verifiedHash = hashGraphSpatialSceneRuntime(result.scene, result.viewport);
   if (result.snapshotHash !== verifiedHash) return fail('invalid-scene', 'Graph sample result snapshot hash does not match its scene.');
   return { ok: true, value: result, hash: verifiedHash };
+}
+
+export function validateGraphSpatialSceneRuntime(
+  input: unknown,
+): GraphSceneStructureValidationResult<GraphSpatialSceneRuntimeV1> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return fail('invalid-scene', 'Spatial scene must be an object.');
+  }
+  const scene = input as GraphSpatialSceneRuntimeV1;
+  if (!hasOnlyKeys(scene, ['version', 'planarScene', 'surfaceMeshes'])
+    || scene.version !== 1 || !Array.isArray(scene.surfaceMeshes) || scene.surfaceMeshes.length > 100) {
+    return fail('invalid-scene', 'Spatial scene structure is invalid.');
+  }
+  const planar = validateSampledSceneRuntimeStructure(scene.planarScene);
+  if (!planar.ok) return planar;
+  let numericCount = sceneNumberCount(scene.planarScene);
+  for (const [index, mesh] of scene.surfaceMeshes.entries()) {
+    const base = `$.surfaceMeshes[${index}]`;
+    if (!hasOnlyKeys(mesh, ['meshId', 'itemId', 'positions', 'triangleIndices', 'normals', 'contourCoordinates', 'contourOffsets', 'truncated'])
+      || !mesh.meshId || mesh.meshId.length > MAX_SCENE_ID_LENGTH
+      || !mesh.itemId || mesh.itemId.length > MAX_SCENE_ID_LENGTH
+      || !(mesh.positions instanceof Float64Array)
+      || !(mesh.triangleIndices instanceof Uint32Array)
+      || !(mesh.normals instanceof Float32Array)
+      || !(mesh.contourCoordinates instanceof Float64Array)
+      || !(mesh.contourOffsets instanceof Uint32Array)
+      || typeof mesh.truncated !== 'boolean') return fail('invalid-scene', 'Surface mesh structure is invalid.', base);
+    const vertexCount = mesh.positions.length / 3;
+    numericCount += mesh.positions.length + mesh.triangleIndices.length + mesh.normals.length
+      + mesh.contourCoordinates.length + mesh.contourOffsets.length;
+    if (mesh.positions.length % 3 !== 0 || mesh.normals.length !== mesh.positions.length
+      || mesh.triangleIndices.length % 3 !== 0 || mesh.contourCoordinates.length % 3 !== 0
+      || mesh.triangleIndices.some((value) => value >= vertexCount)
+      || mesh.contourOffsets.some((value) => value >= mesh.contourCoordinates.length / 3)) {
+      return fail('invalid-index', 'Surface mesh indices or dimensions are invalid.', base);
+    }
+    const numbers = validateNumbers(mesh.positions, `${base}.positions`)
+      ?? validateNumbers(mesh.normals, `${base}.normals`)
+      ?? validateNumbers(mesh.triangleIndices, `${base}.triangleIndices`)
+      ?? validateNumbers(mesh.contourCoordinates, `${base}.contourCoordinates`)
+      ?? validateNumbers(mesh.contourOffsets, `${base}.contourOffsets`);
+    if (numbers) return numbers;
+  }
+  if (numericCount > MAX_SCENE_NUMBERS) return fail('scene-budget-exceeded', 'Spatial scene exceeds the numeric budget.');
+  return { ok: true, value: scene };
+}
+
+export function hashGraphSpatialSceneRuntime(
+  scene: GraphSpatialSceneRuntimeV1,
+  viewport: SampledSceneSnapshotV2['viewport'],
+) {
+  let lane = 0x811c9dc5;
+  const appendByte = (value: number) => { lane = Math.imul(lane ^ value, 0x01000193) >>> 0; };
+  const appendText = (value: string) => {
+    for (const byte of new TextEncoder().encode(value)) appendByte(byte);
+  };
+  appendText(hashSampledSceneRuntime(scene.planarScene, viewport));
+  for (const mesh of [...scene.surfaceMeshes].sort((left, right) => left.meshId.localeCompare(right.meshId))) {
+    appendText(mesh.meshId); appendText(mesh.itemId); appendByte(mesh.truncated ? 1 : 0);
+    for (const view of [mesh.positions, mesh.triangleIndices, mesh.normals, mesh.contourCoordinates, mesh.contourOffsets]) {
+      const bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+      for (const byte of bytes) appendByte(byte);
+    }
+  }
+  return `graph64:${lane.toString(16).padStart(8, '0')}${((lane ^ 0x9e3779b9) >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 export function validateGraphSampleResult(input: unknown) {

@@ -552,6 +552,34 @@
   background: #0a1719;
 }
 
+.graph-surface-bounds {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 8px;
+  margin: 2px 10px 10px 0;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--graph-item-color) 24%, #294247);
+  border-radius: 9px;
+  background: color-mix(in srgb, #09191c 90%, var(--graph-item-color));
+}
+
+.graph-surface-bounds > div:first-child { display: flex; justify-content: space-between; gap: 12px; }
+.graph-surface-bounds > div:first-child span { color: #86a19d; font-size: 11px; }
+.graph-surface-bounds-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.graph-surface-bounds-grid label { display: grid; gap: 3px; color: #91aaa6; font-size: 10px; }
+.graph-surface-bounds-grid input {
+  width: 100%; min-width: 0; padding: 6px; border: 1px solid #2b4549; border-radius: 6px;
+  background: #071416; color: #dce9e5;
+}
+.graph-surface-bounds button { justify-self: start; color: #b7cbc7; }
+.graph-surface-bounds p { margin: 0; color: #ffc46b; font-size: 11px; }
+
+.graph-three-trace {
+  position: absolute; left: 14px; bottom: 38px; z-index: 3; padding: 7px 10px;
+  border: 1px solid #416a77; border-radius: 7px; background: rgb(5 18 22 / 92%);
+  color: #deebe8; font: 12px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
 .graph-parameter-heading,
 .graph-parameter-slider-row,
 .graph-parameter-fields {

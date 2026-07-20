@@ -73,6 +73,16 @@ export type GraphRelationIR =
       x: GraphExpressionIR;
       y: GraphExpressionIR;
       domain?: GraphConditionIR;
+    }
+  | {
+      kind: 'real-surface';
+      z: GraphExpressionIR;
+      bounds?: {
+        xMin: number;
+        xMax: number;
+        yMin: number;
+        yMax: number;
+      };
     };
 
 export type GraphPiecewiseSpecV1 = {
@@ -226,6 +236,15 @@ export type GraphDocumentV2 = {
   items: GraphItemSpecV2[];
 };
 
+export type GraphDocumentV3 = {
+  version: 3;
+  documentId: string;
+  title: string;
+  contentRevision: number;
+  mathematicsRevision: number;
+  items: GraphItemSpecV2[];
+};
+
 export type GraphViewportV1 = {
   coordinateSystem: 'cartesian' | 'polar' | 'argand';
   xMin: number;
@@ -322,6 +341,18 @@ export type GraphSurfaceStateV4 = Omit<GraphSurfaceStateV3, 'version'> & {
     width: number;
     activeTab: GraphAnalyzeTabV1;
     pinnedAnnotations: GraphPinnedAnnotationV1[];
+  };
+};
+
+export type GraphPinnedAnnotationV2 = Omit<GraphPinnedAnnotationV1, 'version' | 'coordinates'> & {
+  version: 2;
+  coordinates: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1; z?: GraphFeatureValueV1 };
+};
+
+export type GraphSurfaceStateV5 = Omit<GraphSurfaceStateV4, 'version' | 'analyze'> & {
+  version: 5;
+  analyze: Omit<GraphSurfaceStateV4['analyze'], 'pinnedAnnotations'> & {
+    pinnedAnnotations: GraphPinnedAnnotationV2[];
   };
 };
 
@@ -476,6 +507,15 @@ export type GraphSpatialSceneRuntimeV1 = {
   surfaceMeshes: GraphSurfaceMeshRuntimeV1[];
 };
 
+export type GraphRendererSceneFrameV2 = {
+  version: 2;
+  scene: GraphSpatialSceneRuntimeV1;
+  sourceViewport: GraphViewportV1;
+  policy: GraphRenderPolicy;
+};
+
+export type GraphRendererSceneFrame = GraphRendererSceneFrameV1 | GraphRendererSceneFrameV2;
+
 export type GraphRendererCameraFrameV1 = {
   version: 1;
   camera: GraphCameraStateV1;
@@ -517,7 +557,7 @@ export interface InteractiveGraphRenderer {
   mount(target: HTMLElement): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
   setView(frame: GraphRendererViewFrameV1): void;
-  setScene(frame: GraphRendererSceneFrameV1 | null): void;
+  setScene(frame: GraphRendererSceneFrame | null): void;
   setPresentation(frame: GraphRendererPresentationFrame): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
@@ -638,10 +678,20 @@ export type GraphSampleResultV4 = {
   };
 };
 
+export type GraphSampleRequestV5 = Omit<GraphSampleRequestV4, 'version'> & {
+  version: 5;
+};
+
+export type GraphSampleResultV5 = Omit<GraphSampleResultV4, 'version' | 'scene'> & {
+  version: 5;
+  scene: GraphSpatialSceneRuntimeV1;
+};
+
 export const GRAPH_ANALYSIS_FEATURES = [
   'root', 'x-intercept', 'y-intercept', 'extremum', 'intersection', 'hole', 'pole',
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
-  'domain-boundary', 'piecewise-continuity',
+  'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point',
+  'local-extremum',
 ] as const;
 
 export type GraphAnalysisFeature = typeof GRAPH_ANALYSIS_FEATURES[number];
@@ -667,7 +717,7 @@ export type GraphAnalysisEvidenceV1 = {
   itemIds: string[];
   feature: GraphAnalysisFeature;
   level: GraphEvidenceLevel;
-  coordinates?: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1 };
+  coordinates?: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1; z?: GraphFeatureValueV1 };
   relationValue?: GraphFeatureValueV1;
   conditions: CanonicalMathValueV2[];
   basis: {

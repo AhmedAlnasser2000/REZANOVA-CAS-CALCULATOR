@@ -3,6 +3,7 @@ import {
   GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2,
   validateGraphCondition,
   validateGraphDocument,
+  validateGraphDocumentV2,
   validateGraphParameter,
   validateGraphRelation,
   validateGraphRenderPolicy,
@@ -16,10 +17,12 @@ import {
 } from './index';
 
 const expression = { mathJson: ['Sin', 'x'], freeSymbols: ['x'] };
+const currentDocument = { ...GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2, version: 3 as const };
 
 describe('Graph v1 contract validators', () => {
   it('accepts the bounded baseline document and independent contract planes', () => {
-    expect(validateGraphDocument(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2).ok).toBe(true);
+    expect(validateGraphDocument(currentDocument).ok).toBe(true);
+    expect(validateGraphDocumentV2(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2).ok).toBe(true);
     expect(validateGraphSource({ sourceKind: 'mathlive-latex', sourceLatex: '\\sin(x)', sourceRevision: 2 }).ok).toBe(true);
     expect(validateGraphRelation({ kind: 'explicit-y', rhs: expression, origin: 'bare-expression' }).ok).toBe(true);
     expect(validateGraphCondition({ kind: 'comparison', left: expression, operator: '<=', right: { mathJson: 1, freeSymbols: [] } }).ok).toBe(true);
@@ -32,7 +35,7 @@ describe('Graph v1 contract validators', () => {
   });
 
   it('keeps authored source separate from downstream mathematical authority', () => {
-    const document = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2) as unknown as Record<string, unknown>;
+    const document = structuredClone(currentDocument) as unknown as Record<string, unknown>;
     document.exactLatex = 'forbidden-authority';
     const validation = validateGraphDocument(document);
 
@@ -41,20 +44,20 @@ describe('Graph v1 contract validators', () => {
   });
 
   it('rejects cyclic, non-finite, oversized, duplicate, and invalid-bound documents', () => {
-    const cyclic = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2) as GraphDocumentV1 & { self?: unknown };
+    const cyclic = structuredClone(currentDocument) as unknown as GraphDocumentV1 & { self?: unknown };
     cyclic.self = cyclic;
     expect(validateGraphDocument(cyclic)).toMatchObject({ ok: false, failure: { reason: 'cyclic-value' } });
 
-    const nonFinite = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
+    const nonFinite = structuredClone(currentDocument);
     const parameter = nonFinite.items.find((item) => item.kind === 'parameter');
     if (parameter?.kind === 'parameter') parameter.parameter.value = Number.NaN;
     expect(validateGraphDocument(nonFinite)).toMatchObject({ ok: false, failure: { reason: 'non-finite-number' } });
 
-    const oversized = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
+    const oversized = structuredClone(currentDocument);
     oversized.items = Array.from({ length: 101 }, (_, index) => ({ ...oversized.items[0]!, itemId: `row-${index}` }));
     expect(validateGraphDocument(oversized).ok).toBe(false);
 
-    const duplicate = structuredClone(GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2);
+    const duplicate = structuredClone(currentDocument);
     duplicate.items[1]!.itemId = duplicate.items[0]!.itemId;
     expect(validateGraphDocument(duplicate).ok).toBe(false);
 
@@ -76,7 +79,7 @@ describe('Graph v1 contract validators', () => {
         return item;
       });
     const request = {
-      version: 4,
+      version: 5,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'document-1',
@@ -96,7 +99,7 @@ describe('Graph v1 contract validators', () => {
 
   it('keeps surface state clone-safe and independent from document truth', () => {
     const surface = {
-      version: 4,
+      version: 5,
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },
       viewportRevision: 2,
       parameterRevision: 3,

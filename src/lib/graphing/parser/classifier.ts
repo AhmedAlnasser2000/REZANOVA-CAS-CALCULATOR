@@ -34,7 +34,7 @@ import {
 
 const CARTESIAN_COORDINATES = new Set(['x', 'y']);
 const POLAR_COORDINATES = new Set(['r', 'theta']);
-const ALL_COORDINATES = new Set([...CARTESIAN_COORDINATES, ...POLAR_COORDINATES]);
+const ALL_COORDINATES = new Set([...CARTESIAN_COORDINATES, ...POLAR_COORDINATES, 'z']);
 const PARAMETRIC_SHORTHAND_SYMBOLS = ['t', 'u', 's'] as const;
 const COMPARISON_OPERATORS = new Set(['Equal', 'Greater', 'GreaterEqual', 'Less', 'LessEqual']);
 const UNSAFE_TOP_LEVEL_OPERATORS = new Set([
@@ -430,6 +430,13 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
     return restricted.ok
       ? { ok: true, itemKind: 'relation', relation: restricted.relation }
       : restricted;
+  }
+  if (target === 'z' && !right.expression.freeSymbols.includes('z')) {
+    if (expressionUsesAny(right.expression, new Set(['r', 'theta']))) {
+      return graphParserFailure('coordinate-parameter-conflict', 'real-surface-coordinate-conflict', path);
+    }
+    const relation = validatedRelation({ kind: 'real-surface', z: right.expression });
+    return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
   }
   if (restrictedRight) {
     return graphParserFailure('unsupported-relation', 'domain-restriction-route', path);

@@ -7,16 +7,16 @@ import {
 } from '../../lib/graphing';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { classifiedGraphItems, graphParameterEnvironment } from './graph-controller-support';
-import type { GraphWorkspaceSessionStateV5 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
 
 const ALL_FEATURES = [
   'root', 'x-intercept', 'y-intercept', 'extremum', 'intersection', 'hole', 'pole',
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
-  'domain-boundary', 'piecewise-continuity',
+  'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point', 'local-extremum',
 ] as const;
 
 export function useGraphAnalysis(input: {
-  session: GraphWorkspaceSessionStateV5;
+  session: GraphWorkspaceSessionStateV6;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
   const { session, workspaceContext } = input;

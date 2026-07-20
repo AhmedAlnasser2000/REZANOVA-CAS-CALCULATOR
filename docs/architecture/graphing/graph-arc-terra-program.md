@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-24 complete; Move 25 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-25 complete; Move 26 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -336,7 +336,7 @@ Status: complete in `13b89ef7`.
 
 ## 24. `GRAPHING-ANALYZE-UI1`
 
-Status: implementation and verification complete; commit pending at write time.
+Status: complete in `98af027b`.
 
 - Terra: Medium; gate type: ui.
 - Objective: expose a floating, resizable, non-dimming Analyze overlay with Features, Evidence, and Style tabs, tab-local remembered state, hover/focus previews, explicit pins for proven/validated annotations, and explicit recenter actions.
@@ -345,9 +345,12 @@ Status: implementation and verification complete; commit pending at write time.
 
 ## 25. `GRAPHING-REAL-SURFACES1`
 
+Status: implementation and verification complete; commit pending at write time.
+
 - Terra: High; gate type: backend and ui.
 - Objective: add explicit structured `z=f(x,y)` relations, bounded adaptive meshes, domain breaks, normals, contours, budget evidence, top-down 2D height/contour rendering, and shaded 3D rendering with optional wireframe.
 - Surface trace reports `(x,y,z)`; analysis adds domain boundaries, `z=0` contours, and validated stationary/local-extrema candidates. Implicit and parametric surfaces plus broad surface-surface solving remain deferred.
+- The current ground-plane viewport supplies default x/y bounds; an expanded row editor can lock bounds per surface. View/domain changes settle into resampling, while vertical exaggeration remains render-only.
 
 ## 26. `GRAPHING-COMPLEX-MAPPING-SOLVER1`
 

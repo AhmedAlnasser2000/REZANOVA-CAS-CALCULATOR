@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GraphDocumentV2 } from '../../lib/graphing';
+import type { GraphDocumentV3 } from '../../lib/graphing';
 import {
   buildVisibleGraphItem,
   createGraphNoteItem,
@@ -12,8 +12,8 @@ import {
   updateGraphParameterItem,
 } from './graph-document';
 
-const document: GraphDocumentV2 = {
-  version: 2,
+const document: GraphDocumentV3 = {
+  version: 3,
   documentId: 'graph-document.test',
   title: 'Test graph',
   contentRevision: 0,

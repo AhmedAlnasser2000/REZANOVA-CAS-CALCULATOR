@@ -120,6 +120,27 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test('renders explicit real surfaces in precise 2D and interactive 3D', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/'); await openGraph(page);
+    await enterExpression(page, 'z=x^2+y^2');
+    await expect(page.getByTestId('graph-scene-surfaces').locator('[data-surface-band]')).toHaveCount(12);
+    await expect(page.getByTestId('graph-scene-surfaces').locator('[data-surface-contours="true"]')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Expand surface bounds' }).click();
+    await expect(page.getByRole('region', { name: 'Surface domain' })).toContainText('Current ground-plane view');
+    await page.screenshot({ path: testInfo.outputPath('graphing-real-surface-2d-1440x940.png'), fullPage: true });
+    await page.getByRole('button', { name: '3D' }).click();
+    await expect(page.getByTestId('graph-three-viewport')).toHaveAttribute('data-ready', 'true');
+    await expect(page.getByTestId('graph-three-viewport')).toHaveAttribute('data-surface-mesh-count', '1');
+    await expect(page.getByTestId('graph-three-viewport')).not.toHaveAttribute('data-camera-target', '0,0,0');
+    await expect(page.locator('.graph-three-canvas')).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('graphing-real-surface-3d-1440x940.png'), fullPage: true });
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('coalesces pan and zoom, supports rail collapse, and preserves independent tabs', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 940 });
     await page.goto('/');

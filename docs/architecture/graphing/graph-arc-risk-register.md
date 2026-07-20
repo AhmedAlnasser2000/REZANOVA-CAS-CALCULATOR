@@ -28,7 +28,7 @@ Parent gate: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
 
 No risk is mitigated by screenshots, string manipulation, a second command bus, a universal AST, or retaining parallel legacy implementations.
 
-## Verified through Move 24
+## Verified through Move 25
 
 - Renderer contamination is ratcheted: production source and a negative fixture prove Three imports are accepted only under the private adapter directory; the Graph page and app startup retain dynamic boundaries.
 - WebGL context loss is exercised in Chromium: the current SVG scene appears with a non-destructive notice, context restoration rebuilds from renderer-neutral state, and switching back to 2D removes the Three canvas and disposes its listener/resource ownership.
@@ -37,3 +37,5 @@ No risk is mitigated by screenshots, string manipulation, a second command bus, 
 - `graph.analyze` has an independent retained worker/cooperative fallback, capability/host/shell identities, revision matching, cancellation, runtime probe, Graph compartment fact, and validated Canonical Result V2 boundary. It imports no Equation-private implementation.
 - The Analyze overlay is non-modal and leaves the viewport dimensions unchanged. Features preview on hover/focus, exact or numerically validated evidence alone can persist, and navigation changes only through an explicit Recenter action.
 - Strict session V5/surface V4 migration remembers overlay width, active tab, selected item, and bounded stable pins per tab. Chromium verifies responsive clamping, resize persistence, preview/pin markers, evidence readback, mirrored style controls, and no browser console errors.
+- Surface overclaiming is bounded by explicit `z=f(x,y)` authority, optional locked x/y bounds, adaptive mesh and contour budgets, domain-break cells, transfer validation, and visible truncated/reduced-detail evidence. Existing x expressions remain real curves on `z=0`.
+- Strict document V3/session V6/surface V5 migration adds real-surface relations and z-capable pins without loosening historical validators. Chromium verifies top-down height coloring and contours, a fitted shaded Three surface, optional wireframe ownership, and `(x,y,z)` trace contracts.

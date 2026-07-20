@@ -9,16 +9,16 @@ import {
   buildGraphSampleInputRevisionId,
   releaseGraphSampleResultBuffers,
   runGraphSampleWithOoe,
-  type GraphDocumentV2,
+  type GraphDocumentV3,
   type GraphItemPresentationV2,
   type GraphItemSpecV1,
-  type GraphSampleRequestV4,
-  type GraphSampleResultV4,
+  type GraphSampleRequestV5,
+  type GraphSampleResultV5,
   type GraphViewportV1,
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV5,
+  GraphWorkspaceSessionStateV6,
 } from './graph-workspace-session';
 import {
   buildGraphPiecewiseItemFromAuthoringDraft,
@@ -36,6 +36,7 @@ import {
   replaceGraphDocumentNote,
   toggleGraphDocumentItem,
   updateGraphParameterItem,
+  updateGraphRealSurfaceBounds,
 } from './graph-document';
 import {
   classifiedGraphItems,
@@ -68,7 +69,7 @@ export function useGraphWorkspaceController({
   workspaceContext,
 }: UseGraphWorkspaceControllerInput) {
   const [session, setSession] = useState(initialSession);
-  const [sampleResult, setSampleResult] = useState<GraphSampleResultV4 | null>(null);
+  const [sampleResult, setSampleResult] = useState<GraphSampleResultV5 | null>(null);
   const [status, setStatus] = useState<GraphControllerStatus>({ kind: 'ready', label: 'Ready' });
   const [visibleDraftErrors, setVisibleDraftErrors] = useState<ReadonlySet<string>>(new Set());
   const [suppressedPiecewiseItems, setSuppressedPiecewiseItems] = useState<ReadonlySet<string>>(new Set());
@@ -76,7 +77,7 @@ export function useGraphWorkspaceController({
   const [historyAvailability, setHistoryAvailability] = useState({ canRedo: false, canUndo: false });
   const sessionRef = useRef(session);
   const resultRef = useRef(sampleResult);
-  const retiredResultsRef = useRef<GraphSampleResultV4[]>([]);
+  const retiredResultsRef = useRef<GraphSampleResultV5[]>([]);
   const activeSamplingItemIdRef = useRef<string | null>(null);
   const setActiveSamplingItem = useCallback((itemId: string | null) => {
     activeSamplingItemIdRef.current = itemId;
@@ -95,11 +96,11 @@ export function useGraphWorkspaceController({
   const samplingInFlightRef = useRef(false);
   const queuedSampleRef = useRef<{
     quality: 'preview' | 'settled' | 'polish';
-    snapshot: GraphWorkspaceSessionStateV5;
+    snapshot: GraphWorkspaceSessionStateV6;
   } | null>(null);
   const launchSampleRef = useRef<(
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV5,
+    snapshot: GraphWorkspaceSessionStateV6,
   ) => Promise<void>>(async () => undefined);
   const itemSequenceRef = useRef(2);
   const historyRef = useRef<GraphHistory>({ undo: [], redo: [], typingItemId: null });
@@ -125,7 +126,7 @@ export function useGraphWorkspaceController({
     workspaceContextRef.current = workspaceContext;
   }, [workspaceContext]);
 
-  const persistSoon = useCallback((next: GraphWorkspaceSessionStateV5, immediate = false) => {
+  const persistSoon = useCallback((next: GraphWorkspaceSessionStateV6, immediate = false) => {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
     if (immediate) {
       persistTimerRef.current = null;
@@ -139,7 +140,7 @@ export function useGraphWorkspaceController({
   }, []);
 
   const commitSession = useCallback((
-    next: GraphWorkspaceSessionStateV5,
+    next: GraphWorkspaceSessionStateV6,
     immediate = false,
   ) => {
     sessionRef.current = next;
@@ -154,7 +155,7 @@ export function useGraphWorkspaceController({
     commitSession({ ...current, surface: { ...current.surface, selectedItemId: itemId } }, true);
   }, [commitSession]);
 
-  const pushHistory = useCallback((document: GraphDocumentV2, typingItemId: string | null) => {
+  const pushHistory = useCallback((document: GraphDocumentV3, typingItemId: string | null) => {
     const history = historyRef.current;
     if (typingItemId && history.typingItemId === typingItemId) return;
     history.undo = [...history.undo.slice(-(MAX_UNDO_STEPS - 1)), {
@@ -532,6 +533,15 @@ export function useGraphWorkspaceController({
     return true;
   }, [commitSession, pushHistory]);
 
+  const updateSurfaceBounds = useCallback((itemId: string, bounds?: Parameters<typeof updateGraphRealSurfaceBounds>[0]['bounds']) => {
+    const current = sessionRef.current;
+    const document = updateGraphRealSurfaceBounds({ document: current.document, itemId, bounds });
+    if (!document) return false;
+    pushHistory(current.document, null);
+    commitSession({ ...current, document });
+    return true;
+  }, [commitSession, pushHistory]);
+
   const undo = useCallback(() => {
     const history = historyRef.current;
     const snapshot = history.undo.at(-1);
@@ -603,7 +613,7 @@ export function useGraphWorkspaceController({
     }, true);
   }, [commitSession]);
 
-  const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV5['surface']['grid']>) => {
+  const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV6['surface']['grid']>) => {
     const current = sessionRef.current;
     const grid = { ...current.surface.grid, ...values };
     commitSession({
@@ -621,7 +631,7 @@ export function useGraphWorkspaceController({
   }, [commitSession]);
 
   const updateAppearance = useCallback((
-    values: Partial<GraphWorkspaceSessionStateV5['surface']['appearance']>,
+    values: Partial<GraphWorkspaceSessionStateV6['surface']['appearance']>,
   ) => {
     const current = sessionRef.current;
     const appearance = { ...current.surface.appearance, ...values };
@@ -633,7 +643,7 @@ export function useGraphWorkspaceController({
 
   const updatePaneView = useCallback((
     pane: 'real' | 'complex',
-    values: Partial<GraphWorkspaceSessionStateV5['surface']['panes']['real']>,
+    values: Partial<GraphWorkspaceSessionStateV6['surface']['panes']['real']>,
   ) => {
     const current = sessionRef.current;
     const paneView = { ...current.surface.panes[pane], ...values };
@@ -641,7 +651,7 @@ export function useGraphWorkspaceController({
       panes: { ...current.surface.panes, [pane]: paneView } } }, true);
   }, [commitSession]);
 
-  const updateAnalyze = useCallback((values: Partial<GraphWorkspaceSessionStateV5['surface']['analyze']> & { open?: boolean }) => {
+  const updateAnalyze = useCallback((values: Partial<GraphWorkspaceSessionStateV6['surface']['analyze']> & { open?: boolean }) => {
     const current = sessionRef.current;
     const { open, ...analyzeValues } = values;
     commitSession({ ...current, surface: { ...current.surface,
@@ -659,12 +669,12 @@ export function useGraphWorkspaceController({
   }, [commitSession, pushHistory]);
 
   const autoFit = useCallback(() => {
-    setViewport(graphAutoFitViewport(resultRef.current?.scene ?? null));
+    setViewport(graphAutoFitViewport(resultRef.current?.scene.planarScene ?? null));
   }, [setViewport]);
 
   const runSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV5,
+    snapshot: GraphWorkspaceSessionStateV6,
   ) => {
     const width = Math.max(1, Math.round(cssSize.width));
     const height = Math.max(1, Math.round(cssSize.height));
@@ -697,8 +707,8 @@ export function useGraphWorkspaceController({
       };
       lastSampleViewRef.current = { viewport, at: Date.now() };
     }
-    const request: GraphSampleRequestV4 = {
-      version: 4,
+    const request: GraphSampleRequestV5 = {
+      version: 5,
       requestId: `${workspaceContext.workspaceInstanceId}.sample.${sequence}`,
       workspaceInstanceId: workspaceContextRef.current.workspaceInstanceId,
       documentId: snapshot.document.documentId,
@@ -775,7 +785,7 @@ export function useGraphWorkspaceController({
 
   const launchSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV5,
+    snapshot: GraphWorkspaceSessionStateV6,
   ) => {
     if (samplingInFlightRef.current) {
       queuedSampleRef.current = { quality, snapshot };
@@ -871,7 +881,7 @@ export function useGraphWorkspaceController({
 
   useEffect(() => {
     resultRef.current = sampleResult;
-    const retained: GraphSampleResultV4[] = [];
+    const retained: GraphSampleResultV5[] = [];
     retiredResultsRef.current.splice(0).forEach((result) => {
       if (result === sampleResult) retained.push(result);
       else releaseGraphSampleResultBuffers(result);
@@ -939,6 +949,7 @@ export function useGraphWorkspaceController({
     updateParameter,
     updatePaneView,
     updatePresentation,
+    updateSurfaceBounds,
     updatePiecewiseDraft,
     visibleDraftErrors,
   }), [
@@ -978,6 +989,7 @@ export function useGraphWorkspaceController({
     updateParameter,
     updatePaneView,
     updatePresentation,
+    updateSurfaceBounds,
     updatePiecewiseDraft,
     visibleDraftErrors,
   ]);

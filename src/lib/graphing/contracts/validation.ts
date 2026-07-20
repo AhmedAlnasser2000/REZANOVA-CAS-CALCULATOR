@@ -14,6 +14,7 @@ import type {
   GraphConditionIR,
   GraphDocumentV1,
   GraphDocumentV2,
+  GraphDocumentV3,
   GraphExpressionIR,
   GraphItemPresentation,
   GraphItemPresentationV1,
@@ -24,13 +25,14 @@ import type {
   GraphRenderPolicy,
   GraphRendererCapabilities,
   GraphRevisionSetV2,
-  GraphSampleRequestV4,
+  GraphSampleRequestV5,
   GraphSourceV1,
   GraphStopReason,
   GraphSurfaceStateV1,
   GraphSurfaceStateV2,
   GraphSurfaceStateV3,
   GraphSurfaceStateV4,
+  GraphSurfaceStateV5,
   GraphViewportV1,
   SampledSceneSnapshotV2,
 } from './types';
@@ -136,6 +138,18 @@ const relationSchema: z.ZodType<GraphRelationIR> = z.discriminatedUnion('kind', 
     x: expressionSchema,
     y: expressionSchema,
     domain: conditionSchema.optional(),
+  }),
+  z.strictObject({
+    kind: z.literal('real-surface'),
+    z: expressionSchema,
+    bounds: z.strictObject({
+      xMin: finiteSchema,
+      xMax: finiteSchema,
+      yMin: finiteSchema,
+      yMax: finiteSchema,
+    }).refine((value) => value.xMin < value.xMax && value.yMin < value.yMax, {
+      message: 'Surface bounds minimums must be less than maximums.',
+    }).optional(),
   }),
 ]);
 
@@ -260,7 +274,11 @@ const noteSchema = z.strictObject({
   text: z.string().max(GRAPH_NOTE_MAX_CHARACTERS),
 });
 
-const itemV2Schema = z.union([itemSchema, noteSchema]);
+const legacyItemSchema = itemSchema.refine((item) => (
+  item.kind !== 'relation' || item.relation.kind !== 'real-surface'
+), { message: 'Real surfaces require Graph document V3.' });
+const itemV2Schema = z.union([legacyItemSchema, noteSchema]);
+const itemV3Schema = z.union([itemSchema, noteSchema]);
 
 const samplingItemSchema = z.discriminatedUnion('kind', [
   z.strictObject({
@@ -277,6 +295,9 @@ const samplingItemSchema = z.discriminatedUnion('kind', [
     visible: z.boolean(),
   }),
 ]);
+const samplingItemV4Schema = samplingItemSchema.refine((item) => (
+  item.kind !== 'relation' || item.relation.kind !== 'real-surface'
+), { message: 'Real surfaces require Graph sample request V5.' });
 
 const viewportSchema: z.ZodType<GraphViewportV1> = z.strictObject({
   coordinateSystem: z.enum(['cartesian', 'polar', 'argand']),
@@ -312,7 +333,7 @@ const documentV1Schema = z.strictObject({
   documentId: idSchema,
   title: z.string().trim().min(1).max(240),
   documentRevision: revisionSchema,
-  items: z.array(itemSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+  items: z.array(legacyItemSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
 }).refine((value) => new Set(value.items.map((item) => item.itemId)).size === value.items.length, {
   message: 'Graph item IDs must be unique.',
 }) as z.ZodType<GraphDocumentV1>;
@@ -327,6 +348,17 @@ const documentSchema = z.strictObject({
 }).refine((value) => new Set(value.items.map((item) => item.itemId)).size === value.items.length, {
   message: 'Graph item IDs must be unique.',
 }) as z.ZodType<GraphDocumentV2>;
+
+const documentV3Schema = z.strictObject({
+  version: z.literal(3),
+  documentId: idSchema,
+  title: z.string().trim().min(1).max(240),
+  contentRevision: revisionSchema,
+  mathematicsRevision: revisionSchema,
+  items: z.array(itemV3Schema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+}).refine((value) => new Set(value.items.map((item) => item.itemId)).size === value.items.length, {
+  message: 'Graph item IDs must be unique.',
+}) as z.ZodType<GraphDocumentV3>;
 
 const surfaceV1Schema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
   version: z.literal(1),
@@ -426,6 +458,22 @@ const surfaceSchema: z.ZodType<GraphSurfaceStateV4> = surfaceV3ObjectSchema.exte
   }),
 }) as z.ZodType<GraphSurfaceStateV4>;
 
+const surfaceV5Schema: z.ZodType<GraphSurfaceStateV5> = surfaceV3ObjectSchema.extend({
+  version: z.literal(5),
+  analyze: z.strictObject({
+    width: finiteSchema.min(300).max(560),
+    activeTab: z.enum(['features', 'evidence', 'style']),
+    pinnedAnnotations: z.array(z.strictObject({
+      version: z.literal(2), annotationId: idSchema, feature: featureSchema,
+      level: z.enum(['exact-proved', 'numeric-validated']),
+      itemIds: z.array(idSchema).min(1).max(GRAPH_DOCUMENT_MAX_ITEMS),
+      coordinates: z.strictObject({
+        x: featureValueSchema.optional(), y: featureValueSchema.optional(), z: featureValueSchema.optional(),
+      }),
+    })).max(100),
+  }),
+}) as z.ZodType<GraphSurfaceStateV5>;
+
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({
   rendererId: z.enum(['headless', 'svg', 'three-webgl']),
   interactive: z.boolean(), hitTesting: z.boolean(), regionFill: z.boolean(),
@@ -444,7 +492,7 @@ const renderPolicySchema: z.ZodType<GraphRenderPolicy> = z.strictObject({
 const sampleRequestSchema = z.strictObject({
   version: z.literal(4), requestId: idSchema, workspaceInstanceId: idSchema,
   documentId: idSchema, revisions: sampleRequestRevisionsSchema,
-  items: z.array(samplingItemSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+  items: z.array(samplingItemV4Schema).max(GRAPH_DOCUMENT_MAX_ITEMS),
   parameterEnvironment: z.record(idSchema, finiteSchema),
   viewport: viewportSchema,
   cssSize: z.strictObject({
@@ -462,7 +510,12 @@ const sampleRequestSchema = z.strictObject({
     panVelocityY: finiteSchema,
     zoomRatio: finiteSchema.positive().max(100),
   }),
-}) as unknown as z.ZodType<GraphSampleRequestV4>;
+});
+
+const sampleRequestV5Schema = sampleRequestSchema.extend({
+  version: z.literal(5),
+  items: z.array(samplingItemSchema).max(GRAPH_DOCUMENT_MAX_ITEMS),
+}) as unknown as z.ZodType<GraphSampleRequestV5>;
 
 export type GraphContractValidationFailure = {
   reason: 'structure' | 'condition-depth' | 'condition-clause-limit';
@@ -538,7 +591,7 @@ function validateJsonContract<T>(
 const standardLimits = { maxNodes: 50_000, maxDepth: 96, maxBytes: 2_000_000 };
 
 export const validateGraphDocument = (input: unknown) =>
-  validateJsonContract(input, 'Graph document', documentSchema, standardLimits);
+  validateJsonContract(input, 'Graph document', documentV3Schema, standardLimits);
 export const validateGraphDocumentV1 = (input: unknown) =>
   validateJsonContract(input, 'Graph V1 document', documentV1Schema, standardLimits);
 export const validateGraphSource = (input: unknown) =>
@@ -558,13 +611,21 @@ export const validateGraphStopReason = (input: unknown) =>
 export const validateGraphViewport = (input: unknown) =>
   validateJsonContract(input, 'Graph viewport', viewportSchema, standardLimits);
 export const validateGraphSurfaceState = (input: unknown) =>
-  validateJsonContract(input, 'Graph surface state', surfaceSchema, standardLimits);
+  validateJsonContract(input, 'Graph surface state', surfaceV5Schema, standardLimits);
 export const validateGraphSurfaceStateV1 = (input: unknown) =>
   validateJsonContract(input, 'Graph V1 surface state', surfaceV1Schema, standardLimits);
 export const validateGraphSurfaceStateV2 = (input: unknown) =>
   validateJsonContract(input, 'Graph V2 surface state', surfaceV2Schema, standardLimits);
 export const validateGraphSurfaceStateV3 = (input: unknown) =>
   validateJsonContract(input, 'Graph V3 surface state', surfaceV3Schema, standardLimits);
+export const validateGraphDocumentV2 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V2 document', documentSchema, standardLimits);
+export const validateGraphDocumentV3 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V3 document', documentV3Schema, standardLimits);
+export const validateGraphSurfaceStateV4 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V4 surface state', surfaceSchema, standardLimits);
+export const validateGraphSurfaceStateV5 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V5 surface state', surfaceV5Schema, standardLimits);
 export const validateGraphRevisionSet = (input: unknown) =>
   validateJsonContract(input, 'Graph revision set', revisionsSchema, standardLimits);
 export const validateGraphRendererCapabilities = (input: unknown) =>
@@ -572,11 +633,11 @@ export const validateGraphRendererCapabilities = (input: unknown) =>
 export const validateGraphRenderPolicy = (input: unknown) =>
   validateJsonContract(input, 'Graph render policy', renderPolicySchema, standardLimits);
 export const validateGraphSampleRequest = (input: unknown) =>
-  validateJsonContract(input, 'Graph sample request', sampleRequestSchema, standardLimits);
+  validateJsonContract(input, 'Graph sample request', sampleRequestV5Schema, standardLimits);
 
 export const graphContractSchemas = {
   condition: conditionSchema,
-  document: documentSchema,
+  document: documentV3Schema,
   expression: expressionSchema,
   parameter: parameterSchema,
   piecewise: piecewiseSchema,
@@ -584,10 +645,10 @@ export const graphContractSchemas = {
   renderPolicy: renderPolicySchema,
   rendererCapabilities: rendererCapabilitiesSchema,
   revisions: revisionsSchema,
-  sampleRequest: sampleRequestSchema,
+  sampleRequest: sampleRequestV5Schema,
   source: sourceSchema,
   stopReason: stopReasonSchema,
-  surface: surfaceSchema,
+  surface: surfaceV5Schema,
   viewport: viewportSchema,
 };
 

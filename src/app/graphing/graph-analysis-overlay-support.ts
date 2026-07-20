@@ -1,7 +1,7 @@
 import type {
   GraphAnalysisEvidenceV1,
   GraphFeatureValueV1,
-  GraphPinnedAnnotationV1,
+  GraphPinnedAnnotationV2,
 } from '../../lib/graphing';
 
 export function graphFeatureNumber(value: GraphFeatureValueV1 | undefined) {
@@ -30,8 +30,8 @@ export function graphAnalysisAnnotationId(entry: GraphAnalysisEvidenceV1) {
   return `annotation.${entry.feature}.${(hash >>> 0).toString(36)}`;
 }
 
-export function graphPinnedAnnotation(entry: GraphAnalysisEvidenceV1): GraphPinnedAnnotationV1 | null {
+export function graphPinnedAnnotation(entry: GraphAnalysisEvidenceV1): GraphPinnedAnnotationV2 | null {
   if (!entry.coordinates || (entry.level !== 'exact-proved' && entry.level !== 'numeric-validated')) return null;
-  return { version: 1, annotationId: graphAnalysisAnnotationId(entry), feature: entry.feature,
+  return { version: 2, annotationId: graphAnalysisAnnotationId(entry), feature: entry.feature,
     level: entry.level, itemIds: [...entry.itemIds], coordinates: structuredClone(entry.coordinates) };
 }

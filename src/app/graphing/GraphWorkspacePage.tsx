@@ -20,8 +20,6 @@ import {
   Grid3X3,
   PanelLeftClose,
   PanelLeftOpen,
-  Pause,
-  Play,
   Redo2,
   Search,
   Trash2,
@@ -37,10 +35,11 @@ import {
   type GraphItemPresentationV2,
   type GraphItemSpecV1,
   type GraphNoteItemV1,
+  type GraphViewportV1,
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV5,
+  GraphWorkspaceSessionStateV6,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
@@ -53,11 +52,13 @@ import { GraphViewportHost } from './GraphViewportHost';
 import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
+import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
+import { GraphParameterControls } from './GraphParameterControls';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV5;
+  session: GraphWorkspaceSessionStateV6;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV5) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV6) => void;
 };
 
 type GraphRailEntry =
@@ -76,6 +77,8 @@ type GraphExpressionRowProps = {
   onSubmit: () => void;
   onToggle?: () => void;
   onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
+  viewport: GraphViewportV1;
+  onUpdateSurfaceBounds?: (bounds?: { xMin: number; xMax: number; yMin: number; yMax: number }) => boolean;
   appearance: {
     theme: GraphAppearanceThemeV1;
     colorVisionMode: 'standard' | 'color-vision-friendly';
@@ -155,117 +158,6 @@ function GraphPiecewiseDraftRow({
     data-testid="graph-piecewise-authoring-draft"><span className="graph-expression-color" aria-hidden="true" />{editor}</div>;
 }
 
-function GraphParameterControls({
-  item,
-  onSettle,
-  onUpdate,
-  samplingBusy,
-}: {
-  item: Extract<GraphItemSpecV1, { kind: 'parameter' }>;
-  onSettle: () => void;
-  onUpdate: NonNullable<GraphExpressionRowProps['onUpdateParameter']>;
-  samplingBusy: boolean;
-}) {
-  const parameter = item.parameter;
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return undefined;
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReducedMotion(query.matches);
-    sync();
-    query.addEventListener?.('change', sync);
-    return () => query.removeEventListener?.('change', sync);
-  }, []);
-  const playing = parameter.animation?.enabled === true && !reducedMotion;
-  useEffect(() => {
-    if (!playing) return undefined;
-    const timer = window.setInterval(() => {
-      if (samplingBusy) return;
-      const span = parameter.maximum - parameter.minimum;
-      if (!(span > 0)) return;
-      const candidate = parameter.value + parameter.step;
-      onUpdate({ value: candidate > parameter.maximum ? parameter.minimum : candidate });
-    }, 80);
-    return () => window.clearInterval(timer);
-  }, [onUpdate, parameter.maximum, parameter.minimum, parameter.step, parameter.value, playing, samplingBusy]);
-
-  const commitNumber = (
-    key: 'value' | 'minimum' | 'maximum' | 'step',
-    rawValue: string,
-  ) => {
-    const value = Number(rawValue);
-    if (Number.isFinite(value)) onUpdate({ [key]: value });
-    onSettle();
-  };
-
-  return (
-    <div className="graph-parameter-controls" data-testid={`graph-parameter-${parameter.symbol}`}>
-      <div className="graph-parameter-heading">
-        <strong>{parameter.symbol}</strong>
-        <span>{parameter.origin === 'authored-definition' ? 'Authored parameter' : 'Graph slider'}</span>
-        <output aria-label={`${parameter.symbol} value`}>{parameter.value.toFixed(2)}</output>
-      </div>
-      <div className="graph-parameter-slider-row">
-        <input
-          aria-label={`${parameter.symbol} slider`}
-          max={parameter.maximum}
-          min={parameter.minimum}
-          onChange={(event) => onUpdate({ value: event.currentTarget.valueAsNumber })}
-          onKeyUp={(event) => {
-            if (event.key === 'Enter') onSettle();
-          }}
-          onPointerUp={onSettle}
-          step={parameter.step}
-          type="range"
-          value={parameter.value}
-        />
-        <button
-          aria-label={playing ? `Pause ${parameter.symbol}` : `Play ${parameter.symbol}`}
-          className="graph-parameter-play"
-          disabled={reducedMotion}
-          onClick={() => {
-            onUpdate({
-              animation: {
-                direction: 'forward',
-                enabled: !playing,
-                periodMs: Math.max(80, Math.round((parameter.maximum - parameter.minimum) / parameter.step) * 80),
-              },
-            });
-            if (playing) onSettle();
-          }}
-          title={reducedMotion ? 'Animation is disabled by reduced motion.' : undefined}
-          type="button"
-        >
-          {playing ? <Pause aria-hidden="true" size={14} /> : <Play aria-hidden="true" size={14} />}
-        </button>
-      </div>
-      <div className="graph-parameter-fields">
-        {([
-          ['value', 'Value'],
-          ['minimum', 'Min'],
-          ['maximum', 'Max'],
-          ['step', 'Step'],
-        ] as const).map(([key, label]) => (
-          <label key={key}>
-            <span>{label}</span>
-            <input
-              aria-label={`${parameter.symbol} ${label.toLowerCase()}`}
-              defaultValue={parameter[key]}
-              key={`${key}:${parameter[key]}`}
-              onBlur={(event) => commitNumber(key, event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') event.currentTarget.blur();
-              }}
-              step={key === 'step' ? 'any' : parameter.step}
-              type="number"
-            />
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function GraphExpressionRow({
   errorVisible,
   item,
@@ -287,9 +179,12 @@ function GraphExpressionRow({
   piecewiseDraft,
   samplingBusy = false,
   appearance,
+  viewport,
+  onUpdateSurfaceBounds,
 }: GraphExpressionRowProps) {
   const [piecewiseCollapsed, setPiecewiseCollapsed] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
+  const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [editorOverflowing, setEditorOverflowing] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
   const measureEditorOverflow = useCallback(() => {
@@ -393,6 +288,11 @@ function GraphExpressionRow({
               {piecewiseEditorOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
           ) : null}
+          {item.kind === 'relation' && item.relation.kind === 'real-surface' ? <button
+            aria-expanded={surfaceExpanded} aria-label={surfaceExpanded ? 'Collapse surface bounds' : 'Expand surface bounds'}
+            className="graph-icon-button" onClick={() => setSurfaceExpanded((open) => !open)} type="button">
+            {surfaceExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button> : null}
           <button
             aria-label={hidden ? 'Show graph' : 'Hide graph'}
             className="graph-icon-button"
@@ -435,6 +335,8 @@ function GraphExpressionRow({
           samplingBusy={samplingBusy}
         />
       ) : null}
+      {item?.kind === 'relation' && item.relation.kind === 'real-surface' && surfaceExpanded && onUpdateSurfaceBounds
+        ? <GraphSurfaceBoundsEditor bounds={item.relation.bounds} onChange={onUpdateSurfaceBounds} viewport={viewport} /> : null}
     </div>
   );
 }
@@ -571,10 +473,14 @@ export default function GraphWorkspacePage({
     const visible = (itemId: string | undefined) => !itemId || !controller.suppressedPiecewiseItems.has(itemId);
     return {
       ...sampled,
-      paths: sampled.paths.filter((path) => visible(path.itemId)),
-      regions: sampled.regions.filter((region) => visible(region.itemId)),
-      pointBatches: sampled.pointBatches.filter((batch) => visible(batch.itemId)),
-      labels: sampled.labels.filter((label) => visible(label.itemId)),
+      planarScene: {
+        ...sampled.planarScene,
+        paths: sampled.planarScene.paths.filter((path) => visible(path.itemId)),
+        regions: sampled.planarScene.regions.filter((region) => visible(region.itemId)),
+        pointBatches: sampled.planarScene.pointBatches.filter((batch) => visible(batch.itemId)),
+        labels: sampled.planarScene.labels.filter((label) => visible(label.itemId)),
+      },
+      surfaceMeshes: sampled.surfaceMeshes.filter((mesh) => visible(mesh.itemId)),
     };
   }, [controller.sampleResult, controller.suppressedPiecewiseItems]);
   const visibleCount = controller.session.document.items.filter((item) => item.kind !== 'note' && item.visible).length;
@@ -647,6 +553,8 @@ export default function GraphWorkspacePage({
           kind: 'parametric-curve',
           parameterSymbol: item.relation.parameterSymbol,
         };
+      } else if (item.kind === 'relation' && item.relation.kind === 'real-surface') {
+        routes[item.itemId] = 'real-surface';
       }
     }
     return routes;
@@ -890,6 +798,9 @@ export default function GraphWorkspacePage({
                   runtimeWarning={item ? runtimeWarnings.get(itemId) : undefined}
                   samplingBusy={controller.status.kind === 'sampling' || controller.status.kind === 'editing'}
                   piecewiseDraft={piecewiseDraftsByItem.get(itemId)}
+                  viewport={controller.session.surface.viewport}
+                  onUpdateSurfaceBounds={item?.kind === 'relation' && item.relation.kind === 'real-surface'
+                    ? (bounds) => controller.updateSurfaceBounds(itemId, bounds) : undefined}
                 />
               );
             })}

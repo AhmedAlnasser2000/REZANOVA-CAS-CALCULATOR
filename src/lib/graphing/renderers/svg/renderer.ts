@@ -4,7 +4,8 @@ import type {
   GraphItemPresentation,
   GraphRendererCapabilities,
   GraphRendererPresentationFrame,
-  GraphRendererSceneFrameV1,
+  GraphRendererSceneFrame,
+  GraphSurfaceMeshRuntimeV1,
   GraphRendererViewFrameV1,
   GraphScenePathRuntimeV2,
   GraphSceneRegionRuntimeV2,
@@ -60,6 +61,35 @@ function regionData(region: GraphSceneRegionRuntimeV2, viewport: GraphViewportV1
   return parts.join('');
 }
 
+function surfaceBands(mesh: GraphSurfaceMeshRuntimeV1, viewport: GraphViewportV1, size: Size) {
+  let minimum = Infinity; let maximum = -Infinity;
+  for (let index = 2; index < mesh.positions.length; index += 3) {
+    minimum = Math.min(minimum, mesh.positions[index]!); maximum = Math.max(maximum, mesh.positions[index]!);
+  }
+  const span = Math.max(Number.EPSILON, maximum - minimum);
+  const bands = Array.from({ length: 12 }, () => [] as string[]);
+  for (let index = 0; index + 2 < mesh.triangleIndices.length; index += 3) {
+    const vertices = [0, 1, 2].map((offset) => mesh.triangleIndices[index + offset]!);
+    const average = vertices.reduce((sum, vertex) => sum + mesh.positions[vertex * 3 + 2]!, 0) / 3;
+    const band = Math.max(0, Math.min(11, Math.floor((average - minimum) / span * 12)));
+    const points = vertices.map((vertex) => project(
+      mesh.positions[vertex * 3]!, mesh.positions[vertex * 3 + 1]!, viewport, size,
+    ));
+    bands[band]!.push(`M${points[0]!.x.toFixed(2)} ${points[0]!.y.toFixed(2)}L${points[1]!.x.toFixed(2)} ${points[1]!.y.toFixed(2)}L${points[2]!.x.toFixed(2)} ${points[2]!.y.toFixed(2)}Z`);
+  }
+  return bands;
+}
+
+function surfaceContourData(mesh: GraphSurfaceMeshRuntimeV1, viewport: GraphViewportV1, size: Size) {
+  const starts = new Set(mesh.contourOffsets);
+  const parts: string[] = [];
+  for (let vertex = 0; vertex * 3 + 2 < mesh.contourCoordinates.length; vertex += 1) {
+    const point = project(mesh.contourCoordinates[vertex * 3]!, mesh.contourCoordinates[vertex * 3 + 1]!, viewport, size);
+    parts.push(`${starts.has(vertex) ? 'M' : 'L'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`);
+  }
+  return parts.join('');
+}
+
 function syncKeyed<T extends SVGElement>(
   host: SVGGElement,
   values: readonly { id: string; update: (node: T) => void }[],
@@ -98,7 +128,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   private paths: SVGGElement | null = null;
   private points: SVGGElement | null = null;
   private view: GraphRendererViewFrameV1 | null = null;
-  private scene: GraphRendererSceneFrameV1 | null = null;
+  private scene: GraphRendererSceneFrame | null = null;
+  private surfaces: SVGGElement | null = null;
   private presentation = new Map<string, GraphItemPresentation>();
   private theme: GraphAppearanceThemeV1 = 'technical';
   private colorVisionMode: 'standard' | 'color-vision-friendly' = 'standard';
@@ -114,11 +145,12 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     grid.append(gridLines, gridCircles);
     const labels = svgElement('g'); labels.classList.add('graph-svg-ticks'); labels.dataset.testid = 'graph-scene-grid-labels';
     const geometry = svgElement('g'); geometry.classList.add('graph-svg-sampled-geometry');
+    const surfaces = svgElement('g'); surfaces.classList.add('graph-svg-surfaces'); surfaces.dataset.testid = 'graph-scene-surfaces';
     const regions = svgElement('g'); regions.classList.add('graph-svg-regions'); regions.dataset.testid = 'graph-scene-regions';
     const paths = svgElement('g'); paths.classList.add('graph-svg-paths'); paths.dataset.testid = 'graph-scene-paths';
     const points = svgElement('g'); points.classList.add('graph-svg-points'); points.dataset.testid = 'graph-scene-points';
-    geometry.append(regions, paths, points); svg.append(grid, labels, geometry); target.replaceChildren(svg);
-    Object.assign(this, { svg, gridLines, gridCircles, labels, geometry, regions, paths, points });
+    geometry.append(surfaces, regions, paths, points); svg.append(grid, labels, geometry); target.replaceChildren(svg);
+    Object.assign(this, { svg, gridLines, gridCircles, labels, geometry, surfaces, regions, paths, points });
     this.resize(this.size.width, this.size.height, 1);
   }
 
@@ -180,12 +212,35 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.updateGeometryTransform();
   }
 
-  setScene(frame: GraphRendererSceneFrameV1 | null) {
+  setScene(frame: GraphRendererSceneFrame | null) {
     this.scene = frame;
-    if (!this.regions || !this.paths || !this.points) return;
-    if (!frame) { this.regions.replaceChildren(); this.paths.replaceChildren(); this.points.replaceChildren(); return; }
+    if (!this.surfaces || !this.regions || !this.paths || !this.points) return;
+    if (!frame) { this.surfaces.replaceChildren(); this.regions.replaceChildren(); this.paths.replaceChildren(); this.points.replaceChildren(); return; }
     this.sceneProjectionSize = { ...this.size };
-    const { scene, sourceViewport, policy } = frame;
+    const { sourceViewport, policy } = frame;
+    const scene = frame.version === 2 ? frame.scene.planarScene : frame.scene;
+    const surfaceMeshes = frame.version === 2 ? frame.scene.surfaceMeshes : [];
+    const surfacePaths = surfaceMeshes.flatMap((mesh) => {
+      const bands = surfaceBands(mesh, sourceViewport, this.size);
+      return [
+        ...bands.map((parts, band) => ({
+          id: `${mesh.meshId}:band:${band}`,
+          update: (node: SVGPathElement) => {
+            node.dataset.itemId = mesh.itemId; node.dataset.surfaceBand = String(band);
+            node.setAttribute('d', parts.join('')); node.setAttribute('stroke', 'none');
+            node.setAttribute('fill', `hsl(${220 - band * 16} 78% ${36 + band * 1.8}%)`);
+            node.setAttribute('fill-opacity', '0.82');
+          },
+        })),
+        { id: `${mesh.meshId}:contours`, update: (node: SVGPathElement) => {
+          node.dataset.itemId = mesh.itemId; node.dataset.surfaceContours = 'true';
+          node.setAttribute('d', surfaceContourData(mesh, sourceViewport, this.size));
+          node.setAttribute('fill', 'none'); node.setAttribute('stroke', 'rgba(255,255,255,.55)');
+          node.setAttribute('stroke-width', '1'); node.setAttribute('vector-effect', 'non-scaling-stroke');
+        } },
+      ];
+    });
+    syncKeyed<SVGPathElement>(this.surfaces, surfacePaths, 'path');
     syncKeyed<SVGPathElement>(this.regions, scene.regions.map((region) => ({ id: region.regionId, update: (node) => {
       node.dataset.regionId = region.regionId; node.setAttribute('d', regionData(region, sourceViewport, this.size));
       node.dataset.itemId = region.itemId;
@@ -273,7 +328,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   clear() { this.setScene(null); }
   dispose() {
     this.svg?.remove();
-    this.svg = this.gridLines = this.gridCircles = this.labels = this.geometry = this.regions = this.paths = this.points = null;
+    this.svg = this.gridLines = this.gridCircles = this.labels = this.geometry = this.surfaces = this.regions = this.paths = this.points = null;
     this.view = null; this.scene = null;
     this.presentation.clear();
   }

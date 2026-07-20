@@ -1,11 +1,11 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
   validateTransferredGraphSampleResult,
-  type GraphSampleRequestV4,
-  type GraphSampleResultV4,
+  type GraphSampleRequestV5,
+  type GraphSampleResultV5,
 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
-import { collectGraphSceneTransferables } from '../scene';
+import { collectGraphSpatialSceneTransferables } from '../scene';
 import {
   buildCancelledGraphSampleExecution,
   runGraphSampleRequest,
@@ -76,8 +76,8 @@ function defaultWorker(): GraphSamplingWorkerLike {
 }
 
 function resultMatchesRequest(
-  result: GraphSampleResultV4,
-  request: GraphSampleRequestV4,
+  result: GraphSampleResultV5,
+  request: GraphSampleRequestV5,
 ) {
   return result.requestId === request.requestId
     && result.workspaceInstanceId === request.workspaceInstanceId
@@ -117,7 +117,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async run(
-    request: GraphSampleRequestV4,
+    request: GraphSampleRequestV5,
     context: OoeRuntimeControlContext,
   ): Promise<GraphSamplingHostResult> {
     if (context.shouldCancel()) {
@@ -178,7 +178,7 @@ export class GraphSamplingApplicationHost {
   }
 
   async #runFallback(
-    request: GraphSampleRequestV4,
+    request: GraphSampleRequestV5,
     context: OoeRuntimeControlContext,
     reason: string,
   ): Promise<GraphSamplingHostResult> {
@@ -226,7 +226,7 @@ export class GraphSamplingApplicationHost {
 
   #runWorker(
     worker: GraphSamplingWorkerLike,
-    request: GraphSampleRequestV4,
+    request: GraphSampleRequestV5,
     context: OoeRuntimeControlContext,
   ) {
     this.#requestSequence += 1;
@@ -307,7 +307,7 @@ export class GraphSamplingApplicationHost {
           fail('result identity or revisions did not match the active request');
           return;
         }
-        const collected = collectGraphSceneTransferables(validation.value.scene);
+        const collected = collectGraphSpatialSceneTransferables(validation.value.scene);
         if (!collected.ok) {
           fail(collected.message);
           return;

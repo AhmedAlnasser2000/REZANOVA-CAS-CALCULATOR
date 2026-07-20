@@ -10,7 +10,7 @@ import type {
   GraphRendererCapabilities,
   GraphRendererLifecycleCallbacksV1,
   GraphRendererPresentationFrame,
-  GraphRendererSceneFrameV1,
+  GraphRendererSceneFrame,
   GraphRendererViewFrameV1,
   GraphVector3V1,
   InteractiveGraph3dRenderer,
@@ -68,7 +68,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
   private raycaster = new THREE.Raycaster();
   private renderer: THREE.WebGLRenderer | null = null;
   private scene = new THREE.Scene();
-  private sceneFrame: GraphRendererSceneFrameV1 | null = null;
+  private sceneFrame: GraphRendererSceneFrame | null = null;
   private size: Size = { width: 1, height: 1 };
   private theme: GraphAppearanceThemeV1 = 'technical';
   private colorVisionMode: 'standard' | 'color-vision-friendly' = 'standard';
@@ -132,12 +132,48 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     this.render();
   }
 
-  setScene(frame: GraphRendererSceneFrameV1 | null) {
+  setScene(frame: GraphRendererSceneFrame | null) {
     this.sceneFrame = frame;
     this.geometryRoot.children.slice().forEach(disposeObject);
     this.itemObjects.clear();
     if (!frame) { this.render(); return; }
-    for (const region of frame.scene.regions) {
+    const planarScene = frame.version === 2 ? frame.scene.planarScene : frame.scene;
+    const surfaceMeshes = frame.version === 2 ? frame.scene.surfaceMeshes : [];
+    for (const surface of surfaceMeshes) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(surface.positions), 3));
+      geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(surface.normals), 3));
+      const colors = new Float32Array(surface.positions.length);
+      let minimum = Infinity; let maximum = -Infinity;
+      for (let index = 2; index < surface.positions.length; index += 3) {
+        minimum = Math.min(minimum, surface.positions[index]!); maximum = Math.max(maximum, surface.positions[index]!);
+      }
+      const span = Math.max(Number.EPSILON, maximum - minimum);
+      const color = new THREE.Color();
+      for (let vertex = 0; vertex < surface.positions.length / 3; vertex += 1) {
+        const ratio = (surface.positions[vertex * 3 + 2]! - minimum) / span;
+        color.setHSL(0.62 - ratio * 0.52, 0.76, 0.5);
+        colors.set([color.r, color.g, color.b], vertex * 3);
+      }
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(surface.triangleIndices), 1));
+      const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+        vertexColors: true, roughness: 0.72, metalness: 0.04, side: THREE.DoubleSide,
+        wireframe: this.cameraFrame?.wireframe ?? false,
+      }));
+      this.registerItem(surface.itemId, mesh);
+      const starts = [...surface.contourOffsets]; starts.push(surface.contourCoordinates.length / 3);
+      for (let segment = 0; segment < starts.length - 1; segment += 1) {
+        const coordinates = Array.from(surface.contourCoordinates.slice(starts[segment]! * 3, starts[segment + 1]! * 3));
+        if (coordinates.length < 6) continue;
+        const contourGeometry = new LineGeometry(); contourGeometry.setPositions(coordinates);
+        const contourMaterial = new LineMaterial({ color: 0xffffff, linewidth: 1, transparent: true, opacity: 0.62 });
+        contourMaterial.resolution.set(this.size.width, this.size.height);
+        const contour = new Line2(contourGeometry, contourMaterial); contour.computeLineDistances();
+        this.registerItem(surface.itemId, contour);
+      }
+    }
+    for (const region of planarScene.regions) {
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(region.vertices.length / 2 * 3);
       for (let index = 0; index < region.vertices.length / 2; index += 1) {
@@ -151,7 +187,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
       }));
       this.registerItem(region.itemId, mesh);
     }
-    for (const path of frame.scene.paths) {
+    for (const path of planarScene.paths) {
       const starts = [...path.segmentOffsets];
       starts.push(path.coordinates.length / 2);
       for (let segment = 0; segment < starts.length - 1; segment += 1) {
@@ -169,7 +205,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
         this.registerItem(path.itemId, line);
       }
     }
-    for (const batch of frame.scene.pointBatches) {
+    for (const batch of planarScene.pointBatches) {
       const positions = new Float32Array(batch.coordinates.length / 2 * 3);
       for (let index = 0; index < batch.coordinates.length / 2; index += 1) {
         positions[index * 3] = batch.coordinates[index * 2]!;
@@ -247,7 +283,8 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     const itemId = hit?.object.userData.graphItemId as string | undefined;
     if (!hit || !itemId) return null;
     return {
-      itemId, sceneRevision: this.sceneFrame.scene.sceneRevision,
+      itemId, sceneRevision: this.sceneFrame.version === 2
+        ? this.sceneFrame.scene.planarScene.sceneRevision : this.sceneFrame.scene.sceneRevision,
       world: { x: hit.point.x, y: hit.point.y, z: hit.point.z }, distancePixels: 0,
     };
   }
@@ -325,6 +362,11 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
         } else if (material instanceof THREE.MeshBasicMaterial) {
           material.color.copy(color); material.opacity = style.regionOpacity;
           material.wireframe = this.cameraFrame?.wireframe ?? false;
+        } else if (material instanceof THREE.MeshStandardMaterial) {
+          material.wireframe = this.cameraFrame?.wireframe ?? false;
+          material.emissive.set(selected ? color : 0x000000);
+          material.emissiveIntensity = selected ? 0.16 : 0;
+          material.needsUpdate = true;
         }
       }
     }

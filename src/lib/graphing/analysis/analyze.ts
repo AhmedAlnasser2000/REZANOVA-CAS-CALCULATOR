@@ -12,6 +12,7 @@ import type {
   GraphFeatureValueV1,
   GraphRelationIR,
   GraphStopReason,
+  GraphViewportV1,
 } from '../contracts';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
 
@@ -23,6 +24,7 @@ export type GraphAnalysisControl = {
 
 type Polynomial = [number, number, number];
 type Evaluator = (x: number) => number | undefined;
+type SurfaceEvaluator = (x: number, y: number) => number | undefined;
 
 function add(a: Polynomial, b: Polynomial): Polynomial {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -155,6 +157,96 @@ function relationExpression(relation: GraphRelationIR) {
   return relation.kind === 'explicit-y' ? relation.rhs : undefined;
 }
 
+function surfaceEvaluatorFor(
+  relation: Extract<GraphRelationIR, { kind: 'real-surface' }>,
+  item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>,
+  environment: Record<string, number>,
+  cache: GraphExpressionPlanCache,
+): SurfaceEvaluator | undefined {
+  const compiled = cache.getOrCompile({
+    planId: `graph-analysis.${item.itemId}.surface`, sourceRevision: item.source.sourceRevision,
+    expression: relation.z,
+  });
+  if (!compiled.ok) return undefined;
+  const runner = createGraphExpressionEvaluator(compiled.plan);
+  return (x, y) => {
+    const result = runner.evaluate({ ...environment, x, y });
+    return result.status === 'finite' ? result.value : undefined;
+  };
+}
+
+function analyzeSurface(input: {
+  request: GraphAnalysisRequestV1;
+  item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>;
+  run: SurfaceEvaluator;
+  window: GraphViewportV1;
+  requested: Set<GraphAnalysisFeature>;
+  serial: () => number;
+  onEvaluation: () => void;
+}) {
+  const findings: GraphAnalysisEvidenceV1[] = [];
+  const bounds = input.item.relation.kind === 'real-surface' && input.item.relation.bounds
+    ? input.item.relation.bounds : input.window;
+  const steps = 28;
+  const dx = (bounds.xMax - bounds.xMin) / steps;
+  const dy = (bounds.yMax - bounds.yMin) / steps;
+  const values: Array<Array<number | undefined>> = [];
+  for (let row = 0; row <= steps; row += 1) {
+    const line: Array<number | undefined> = [];
+    for (let column = 0; column <= steps; column += 1) {
+      line.push(input.run(bounds.xMin + column * dx, bounds.yMin + row * dy)); input.onEvaluation();
+    }
+    values.push(line);
+  }
+  let boundaryCount = 0; let contourCount = 0; let stationaryCount = 0;
+  for (let row = 1; row < steps; row += 1) for (let column = 1; column < steps; column += 1) {
+    const z = values[row]![column];
+    const neighbors = [values[row]![column - 1], values[row]![column + 1], values[row - 1]![column], values[row + 1]![column]];
+    const x = bounds.xMin + column * dx; const y = bounds.yMin + row * dy;
+    if (z === undefined) {
+      if (input.requested.has('domain-boundary') && boundaryCount < 12 && neighbors.some((value) => value !== undefined)) {
+        findings.push(evidence(input.request, 'domain-boundary', [input.item.itemId], 'sampled-estimate', input.serial(), {
+          coordinates: { x: approximate(x, dx), y: approximate(y, dy) },
+          basis: { source: 'sampler', validator: 'finite/non-finite surface cell boundary' },
+        })); boundaryCount += 1;
+      }
+      continue;
+    }
+    if (input.requested.has('level-contour') && contourCount < 16
+      && neighbors.some((value) => value !== undefined && (value < 0) !== (z < 0))) {
+      findings.push(evidence(input.request, 'level-contour', [input.item.itemId], 'numeric-validated', input.serial(), {
+        coordinates: { x: approximate(x, dx), y: approximate(y, dy), z: approximate(0, Math.abs(z)) },
+        relationValue: approximate(0, Math.abs(z)),
+        basis: { source: 'numeric-validator', validator: 'z=0 sign-change cell', residualBound: Math.abs(z) },
+      })); contourCount += 1;
+    }
+    if ((!input.requested.has('stationary-point') && !input.requested.has('local-extremum')) || stationaryCount >= 10
+      || neighbors.some((value) => value === undefined)) continue;
+    const numericNeighbors = neighbors as [number, number, number, number];
+    const [left, right, down, up] = numericNeighbors;
+    const gx = (right - left) / (2 * dx); const gy = (up - down) / (2 * dy);
+    const gradientBound = Math.hypot(gx, gy);
+    const scale = Math.max(1, Math.abs(z));
+    if (gradientBound > 0.04 * scale / Math.max(dx, dy)) continue;
+    const localMinimum = numericNeighbors.every((value) => value >= z);
+    const localMaximum = numericNeighbors.every((value) => value <= z);
+    if (input.requested.has('stationary-point')) findings.push(evidence(
+      input.request, 'stationary-point', [input.item.itemId], 'numeric-validated', input.serial(), {
+        coordinates: { x: approximate(x, dx / 2), y: approximate(y, dy / 2), z: approximate(z, gradientBound * Math.max(dx, dy)) },
+        basis: { source: 'numeric-validator', validator: 'central-difference gradient', residualBound: gradientBound },
+      },
+    ));
+    if (input.requested.has('local-extremum') && (localMinimum || localMaximum)) findings.push(evidence(
+      input.request, 'local-extremum', [input.item.itemId], 'numeric-validated', input.serial(), {
+        coordinates: { x: approximate(x, dx / 2), y: approximate(y, dy / 2), z: approximate(z, gradientBound * Math.max(dx, dy)) },
+        basis: { source: 'numeric-validator', validator: localMinimum ? 'local grid minimum' : 'local grid maximum', residualBound: gradientBound },
+      },
+    ));
+    stationaryCount += 1;
+  }
+  return findings;
+}
+
 export async function runGraphAnalysisRequest(
   request: GraphAnalysisRequestV1,
   cache = new GraphExpressionPlanCache(100),
@@ -182,6 +274,15 @@ export async function runGraphAnalysisRequest(
           stopReason: { code: 'analysis-inconclusive', detailCode: 'branch-limit-proof-required' },
         }));
       }
+      await control.yieldBetweenItems?.();
+      continue;
+    }
+    if (snapshot.relation.kind === 'real-surface') {
+      const run = surfaceEvaluatorFor(snapshot.relation, snapshot, request.parameterEnvironment, cache);
+      if (run) findings.push(...analyzeSurface({
+        request, item: snapshot, run, window, requested, serial: () => serial++,
+        onEvaluation: () => { evaluatedPointCount += 1; },
+      }));
       await control.yieldBetweenItems?.();
       continue;
     }

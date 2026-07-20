@@ -15,7 +15,7 @@ import {
   getLatestOoeDiagnostics,
 } from '../../ooe/diagnostics/diagnostics-buffer';
 import { requestWorkspaceTabJobCancellation } from '../../../app/runtime/workspaceTabJobs';
-import type { GraphSampleRequestV4 } from '../contracts';
+import type { GraphSampleRequestV5 } from '../contracts';
 import { runGraphSampleRequest } from '../sampling/request';
 import { GraphSamplingApplicationHost } from './application-host';
 import {
@@ -41,9 +41,9 @@ vi.mock('../../ooe/bridge-schema/ooe-bridge', async (importOriginal) => {
   };
 });
 
-function request(overrides: Partial<GraphSampleRequestV4> = {}): GraphSampleRequestV4 {
+function request(overrides: Partial<GraphSampleRequestV5> = {}): GraphSampleRequestV5 {
   return {
-    version: 4,
+    version: 5,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -330,7 +330,7 @@ describe('Graph sampling OOE runtime', () => {
       activeInputRevisionId: 'input.graph.sample.newer',
       isWorkspaceInstanceOpen: () => false,
     });
-    const coordinates = envelope.payload.scene.paths[0]!.coordinates;
+    const coordinates = envelope.payload.scene.planarScene.paths[0]!.coordinates;
 
     expect(envelope.ooe.commitAssessment).toMatchObject({
       legality: 'staleDrop',

@@ -1,4 +1,4 @@
-import type { SampledSceneRuntimeV2 } from '../contracts';
+import type { GraphSpatialSceneRuntimeV1, SampledSceneRuntimeV2 } from '../contracts';
 
 export type GraphSceneTransferCollection =
   | { ok: true; transferList: ArrayBuffer[] }
@@ -36,4 +36,29 @@ export function collectGraphSceneTransferables(
 
 export function graphSceneTypedArrayBuffers(scene: SampledSceneRuntimeV2) {
   return sceneViews(scene).map((view) => view.buffer);
+}
+
+export function collectGraphSpatialSceneTransferables(
+  scene: GraphSpatialSceneRuntimeV1,
+): GraphSceneTransferCollection {
+  const planar = collectGraphSceneTransferables(scene.planarScene);
+  if (!planar.ok) return planar;
+  const transferList = [...planar.transferList];
+  const ownership = new Set(transferList);
+  for (const mesh of scene.surfaceMeshes) {
+    for (const view of [
+      mesh.positions, mesh.triangleIndices, mesh.normals,
+      mesh.contourCoordinates, mesh.contourOffsets,
+    ]) {
+      if (!(view.buffer instanceof ArrayBuffer)) {
+        return { ok: false, message: 'Graph surface buffers must use transferable ArrayBuffer ownership.' };
+      }
+      if (ownership.has(view.buffer)) {
+        return { ok: false, message: 'Graph spatial typed arrays must not share mutable buffer ownership.' };
+      }
+      ownership.add(view.buffer);
+      transferList.push(view.buffer);
+    }
+  }
+  return { ok: true, transferList };
 }

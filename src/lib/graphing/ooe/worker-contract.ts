@@ -1,17 +1,17 @@
 import type {
-  GraphSampleRequestV4,
-  GraphSampleResultV4,
+  GraphSampleRequestV5,
+  GraphSampleResultV5,
 } from '../contracts';
 
 export type GraphSamplingWorkerInboundMessage = {
   kind: 'run';
   requestId: string;
-  request: GraphSampleRequestV4;
+  request: GraphSampleRequestV5;
 } | { kind: 'cancel'; requestId: string };
 
 export type GraphSamplingWorkerOutboundMessage =
   | { kind: 'started'; requestId: string }
-  | { kind: 'completed'; requestId: string; result: GraphSampleResultV4 }
+  | { kind: 'completed'; requestId: string; result: GraphSampleResultV5 }
   | { kind: 'failed'; requestId: string; message: string };
 
 export type GraphSamplingWorkerLike = {

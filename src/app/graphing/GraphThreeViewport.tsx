@@ -15,7 +15,7 @@ import {
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
   type InteractiveGraph3dRenderer,
-  type SampledSceneRuntimeV2,
+  type GraphSpatialSceneRuntimeV1,
 } from '../../lib/graphing';
 import {
   moveGraphCamera,
@@ -33,7 +33,7 @@ type Props = {
   onSizeChange: (size: { width: number; height: number }) => void;
   onViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
   presentation: GraphRendererPresentationFrame;
-  scene: SampledSceneRuntimeV2 | null;
+  scene: GraphSpatialSceneRuntimeV1 | null;
   sceneViewport: GraphViewportV1 | null;
   selectedItemId: string | null;
   view: GraphPaneViewStateV1;
@@ -59,6 +59,7 @@ export function GraphThreeViewport({
   const cameraRef = useRef(view.camera3d);
   const dragRef = useRef<DragState | null>(null);
   const [ready, setReady] = useState(false);
+  const [trace, setTrace] = useState<{ itemId: string; x: number; y: number; z: number } | null>(null);
   const [size, setSize] = useState({ width: 960, height: 600 });
   const [camera, setCamera] = useState(view.camera3d);
 
@@ -149,11 +150,34 @@ export function GraphThreeViewport({
     const renderer = rendererRef.current;
     if (!renderer || !ready) return;
     renderer.setScene(scene && sceneViewport ? {
-      version: 1, scene, sourceViewport: sceneViewport,
+      version: 2, scene, sourceViewport: sceneViewport,
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 },
     } : null);
   }, [ready, scene, sceneViewport]);
+
+  useEffect(() => {
+    const mesh = scene?.surfaceMeshes[0];
+    const current = cameraRef.current;
+    const isDefault = current.orientation === 'isometric'
+      && current.target.x === 0 && current.target.y === 0 && current.target.z === 0
+      && current.position.x === 8 && current.position.y === -10 && current.position.z === 8;
+    if (!ready || !mesh || !isDefault) return;
+    let xMin = Infinity; let xMax = -Infinity; let yMin = Infinity; let yMax = -Infinity; let zMin = Infinity; let zMax = -Infinity;
+    for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
+      const x = mesh.positions[vertex * 3]!; const y = mesh.positions[vertex * 3 + 1]!; const z = mesh.positions[vertex * 3 + 2]!;
+      xMin = Math.min(xMin, x); xMax = Math.max(xMax, x); yMin = Math.min(yMin, y); yMax = Math.max(yMax, y); zMin = Math.min(zMin, z); zMax = Math.max(zMax, z);
+    }
+    if (![xMin, xMax, yMin, yMax, zMin, zMax].every(Number.isFinite)) return;
+    const target = { x: (xMin + xMax) / 2, y: (yMin + yMax) / 2, z: (zMin + zMax) / 2 };
+    const radius = Math.max(xMax - xMin, yMax - yMin, (zMax - zMin) * view.verticalExaggeration, 1) / 2;
+    const length = Math.hypot(8, -10, 8);
+    const distance = radius * 2.8;
+    const next = { ...current, target, position: {
+      x: target.x + 8 / length * distance, y: target.y - 10 / length * distance, z: target.z + 8 / length * distance,
+    } };
+    publishCamera(next); onViewChange({ camera3d: next });
+  }, [onViewChange, publishCamera, ready, scene, view.verticalExaggeration]);
 
   useLayoutEffect(() => {
     if (!ready) return;
@@ -224,6 +248,7 @@ export function GraphThreeViewport({
       selectedPivotRef.current = hit
         ? { itemId: hit.itemId, world: { x: hit.world.x, y: hit.world.y, z: hit.world.z ?? 0 } }
         : null;
+      setTrace(hit ? { itemId: hit.itemId, x: hit.world.x, y: hit.world.y, z: hit.world.z ?? 0 } : null);
       onSelectItem(hit?.itemId ?? null);
     } else if (drag.mode !== 'pick') commitCamera();
   };
@@ -262,6 +287,7 @@ export function GraphThreeViewport({
   return <div aria-label="3D graph viewport" aria-hidden={fallback} className={`graph-three-viewport${fallback ? ' is-fallback' : ''}`}
     data-camera-orientation={camera.orientation} data-camera-position={`${camera.position.x},${camera.position.y},${camera.position.z}`}
     data-camera-projection={camera.projection} data-camera-target={`${camera.target.x},${camera.target.y},${camera.target.z}`}
+    data-surface-mesh-count={scene?.surfaceMeshes.length ?? 0}
     data-ready={ready ? 'true' : 'false'} data-testid="graph-three-viewport" onContextMenu={(event) => event.preventDefault()}
     onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
     onPointerCancel={onPointerCancel} onPointerUp={onPointerUp} ref={hostRef} tabIndex={fallback ? -1 : 0}>
@@ -290,5 +316,8 @@ export function GraphThreeViewport({
       })} type="button">Fly</button>
     </div>
     <span className="graph-three-help">MMB pan · Alt+LMB orbit · wheel or Alt+RMB zoom · F focus · Home reset</span>
+    {trace ? <output aria-label="Surface trace" className="graph-three-trace">
+      ({Number(trace.x.toPrecision(6))}, {Number(trace.y.toPrecision(6))}, {Number(trace.z.toPrecision(6))})
+    </output> : null}
   </div>;
 }

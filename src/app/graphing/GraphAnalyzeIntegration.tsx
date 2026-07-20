@@ -2,23 +2,23 @@ import { useMemo, useState } from 'react';
 import {
   normalizeGraphItemPresentation,
   type GraphItemPresentationV2,
-  type GraphSurfaceStateV4,
+  type GraphSurfaceStateV5,
   type GraphViewportV1,
 } from '../../lib/graphing';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { graphItemSourceLatex } from './graph-document';
 import { GraphAnalysisMarkers, GraphAnalyzeOverlay } from './GraphAnalyzeOverlay';
 import { graphFeatureNumber, graphPinnedAnnotation } from './graph-analysis-overlay-support';
-import type { GraphWorkspaceSessionStateV5 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
 import { useGraphAnalysis } from './useGraphAnalysis';
 
 export function GraphAnalyzeIntegration({
   onSetViewport, onUpdateAnalyze, onUpdatePresentation, session, workspaceContext,
 }: {
   onSetViewport: (viewport: GraphViewportV1) => void;
-  onUpdateAnalyze: (values: Partial<GraphSurfaceStateV4['analyze']> & { open?: boolean }) => void;
+  onUpdateAnalyze: (values: Partial<GraphSurfaceStateV5['analyze']> & { open?: boolean }) => void;
   onUpdatePresentation: (itemId: string, presentation: GraphItemPresentationV2) => boolean;
-  session: GraphWorkspaceSessionStateV5;
+  session: GraphWorkspaceSessionStateV6;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
   const [preview, setPreview] = useState<import('../../lib/graphing').GraphAnalysisEvidenceV1 | null>(null);

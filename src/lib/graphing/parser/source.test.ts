@@ -54,6 +54,17 @@ describe('Graph MathLive source classifier', () => {
     expect(relation('y=y^2+x')).toMatchObject({ kind: 'implicit-equality' });
   });
 
+  it('requires explicit z=f(x,y) authoring for real surfaces', () => {
+    expect(relation('z=x^2+y^2')).toMatchObject({
+      kind: 'real-surface',
+      z: { mathJson: ['Add', ['Power', 'x', 2], ['Power', 'y', 2]], freeSymbols: ['x', 'y'] },
+    });
+    expect(classifyGraphSource(source('x^2+y^2'))).toMatchObject({
+      ok: false,
+      stopReason: { code: 'ambiguous-bare-expression' },
+    });
+  });
+
   it('preserves inequality semantics including mixed strict/inclusive chains', () => {
     expect(relation('y>x')).toMatchObject({
       kind: 'inequality',

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GraphAnalysisRequestV1, GraphSampleRequestV4 } from '../../lib/graphing';
+import type { GraphAnalysisRequestV1, GraphSampleRequestV5 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
 import { createGraphNoteItem, replaceGraphDocumentNote } from './graph-document';
 import GraphWorkspacePage from './GraphWorkspacePage';
@@ -41,9 +41,9 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
     ooe: { commitAssessment: { commitDecision: 'committed' as const } },
   })),
   threeRenderer,
-  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV4) => ({
+  runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV5) => ({
   payload: {
-    version: 4 as const,
+    version: 5 as const,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -51,12 +51,11 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
     viewport: request.viewport,
     quality: request.quality,
     status: 'complete' as const,
-    scene: {
-      sceneRevision: request.revisions.scene,
-      mathematicsRevision: request.revisions.mathematics,
-      viewportRevision: request.revisions.viewport,
-      parameterRevision: request.revisions.parameter,
-      paths: request.items.filter((item) => item.visible && (item.kind === 'relation' || item.kind === 'piecewise')).map((item) => ({
+    scene: { version: 1 as const, surfaceMeshes: [], planarScene: {
+      sceneRevision: request.revisions.scene, mathematicsRevision: request.revisions.mathematics,
+      viewportRevision: request.revisions.viewport, parameterRevision: request.revisions.parameter,
+      paths: request.items.filter((item) => item.visible && (item.kind === 'piecewise'
+        || (item.kind === 'relation' && item.relation.kind !== 'real-surface'))).map((item) => ({
         pathId: `${item.itemId}.path`,
         itemId: item.itemId,
         coordinates: new Float64Array([-2, -2, 0, 0, 2, 2]),
@@ -71,7 +70,7 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
         coordinates: new Float64Array([1, 2, 3, 4]),
       })),
       labels: [],
-    },
+    } },
     snapshotHash: 'graph64:test',
     stopReasons: [],
     itemEvidence: request.items.filter((item) => item.visible).map((item) => ({
@@ -94,7 +93,7 @@ const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe,
 
 vi.mock('../../lib/graphing', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lib/graphing')>()),
-  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV4) => (
+  buildGraphSampleInputRevisionId: vi.fn((request: GraphSampleRequestV5) => (
     `input.graph.sample.${request.revisions.scene}`
   )),
   createGraphThreeRenderer,
@@ -147,7 +146,7 @@ describe('GraphWorkspacePage', () => {
     await new Promise((resolve) => setTimeout(resolve, 260));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
     expect(onUpdateSession.mock.calls.at(-1)?.[0].document).toMatchObject({
-      version: 2, mathematicsRevision: 0,
+      version: 3, mathematicsRevision: 0,
     });
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
@@ -714,9 +713,9 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Real · Three interactive')).toBeVisible();
     expect(onUpdateSession.mock.calls.at(-1)?.[0]).toMatchObject({
-      version: 5,
+      version: 6,
       document: { mathematicsRevision: 0 },
-      surface: { version: 4, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
+      surface: { version: 5, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
     });
     await new Promise((resolve) => setTimeout(resolve, 220));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
@@ -725,5 +724,24 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('graph-viewport')).toBeVisible();
     expect(threeRenderer.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('authors explicit real surfaces and locks optional x/y bounds from the compact row', async () => {
+    const onUpdateSession = vi.fn();
+    render(<GraphWorkspacePage onUpdateSession={onUpdateSession}
+      session={createGraphWorkspaceSessionState('graphing.2', 'Surface Graph')} workspaceContext={workspaceContext} />);
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'z=x^2+y^2');
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(([request]) => (
+      request.items[0]?.kind === 'relation' && request.items[0].relation.kind === 'real-surface'
+    ))).toBe(true));
+    fireEvent.click(screen.getByRole('button', { name: 'Expand surface bounds' }));
+    expect(screen.getByRole('region', { name: 'Surface domain' })).toHaveTextContent('Current ground-plane view');
+    const xMinimum = screen.getByRole('spinbutton', { name: 'x min' });
+    fireEvent.change(xMinimum, { target: { value: '-4' } }); fireEvent.blur(xMinimum);
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Surface domain' })).toHaveTextContent('Locked bounds'));
+    await waitFor(() => expect(onUpdateSession.mock.calls.some(([state]) => (
+      state.document.items[0]?.kind === 'relation' && state.document.items[0].relation.kind === 'real-surface'
+        && state.document.items[0].relation.bounds?.xMin === -4
+    ))).toBe(true));
   });
 });

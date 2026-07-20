@@ -6,7 +6,7 @@ import type {
 } from '../../lib/graphing';
 
 export type GraphTraceTarget = GraphHitResult & {
-  kind: 'path' | 'point';
+  kind: 'path' | 'point' | 'surface';
   pathId?: string;
   pointBatchId?: string;
   vertexIndex?: number;

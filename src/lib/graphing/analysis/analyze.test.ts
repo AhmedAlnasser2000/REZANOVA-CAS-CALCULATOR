@@ -11,6 +11,12 @@ const item = (itemId: string, mathJson: GraphExpressionIR['mathJson']) => ({
   relation: { kind: 'explicit-y' as const, rhs: expression(mathJson), origin: 'bare-expression' as const },
   visible: true,
 });
+const surface = (itemId: string, mathJson: GraphExpressionIR['mathJson']) => ({
+  version: 1 as const, kind: 'relation' as const, itemId,
+  source: { sourceKind: 'mathlive-latex' as const, sourceLatex: itemId, sourceRevision: 1 },
+  relation: { kind: 'real-surface' as const, z: { mathJson, freeSymbols: ['x', 'y'] } },
+  visible: true,
+});
 const request = (items: GraphAnalysisRequestV1['items'], features: GraphAnalysisRequestV1['features']): GraphAnalysisRequestV1 => ({
   version: 1, requestId: 'analysis.1', workspaceInstanceId: 'workspace.1', documentId: 'document.1',
   revisions: { mathematics: 2, viewport: 3, parameter: 1 }, items,
@@ -64,6 +70,19 @@ describe('Graph analysis authority', () => {
       { kind: 'exact', value: { canonicalLatex: '-2', mathJson: -2 } },
       { kind: 'exact', value: { canonicalLatex: '3', mathJson: 3 } },
     ]);
+  });
+
+  it('validates surface stationary points, extrema, and z=0 contour cells in the bounded window', async () => {
+    const result = await runGraphAnalysisRequest(request([
+      surface('paraboloid', ['Add', ['Power', 'x', 2], ['Power', 'y', 2]]),
+      surface('saddle', ['Multiply', 'x', 'y']),
+    ], ['stationary-point', 'local-extremum', 'level-contour']));
+    expect(result.evidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({ itemIds: ['paraboloid'], feature: 'stationary-point', level: 'numeric-validated' }),
+      expect.objectContaining({ itemIds: ['paraboloid'], feature: 'local-extremum', level: 'numeric-validated' }),
+      expect.objectContaining({ itemIds: ['saddle'], feature: 'level-contour', level: 'numeric-validated' }),
+    ]));
+    expect(result.evidence.find((entry) => entry.feature === 'local-extremum')?.coordinates?.z).toBeDefined();
   });
 
   it('fails closed on malformed requests and cooperatively cancels', async () => {

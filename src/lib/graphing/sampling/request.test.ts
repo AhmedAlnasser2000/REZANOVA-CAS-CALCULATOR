@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateGraphSampleResult,
-  type GraphSampleRequestV4,
+  type GraphExpressionIR,
+  type GraphSampleRequestV5,
 } from '../contracts';
 import {
   releaseGraphSampleResultBuffers,
@@ -9,9 +10,9 @@ import {
 } from './request';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
 
-function request(): GraphSampleRequestV4 {
+function request(): GraphSampleRequestV5 {
   return {
-    version: 4,
+    version: 5,
     requestId: 'graph-request-1',
     workspaceInstanceId: 'graph-tab-1',
     documentId: 'graph-document-1',
@@ -48,12 +49,39 @@ function request(): GraphSampleRequestV4 {
   };
 }
 
+const surfaceCases = [
+  ['plane', ['Add', 'x', 'y'], false],
+  ['paraboloid', ['Add', ['Power', 'x', 2], ['Power', 'y', 2]], false],
+  ['bounded radical', ['Sqrt', ['Add', 4, ['Negate', ['Add', ['Power', 'x', 2], ['Power', 'y', 2]]]]], true],
+  ['discontinuous reciprocal', ['Divide', 1, ['Add', 'x', ['Negate', 'y']]], true],
+] satisfies Array<[string, GraphExpressionIR['mathJson'], boolean]>;
+
 describe('Graph sample request runtime', () => {
+  it.each(surfaceCases)('samples a bounded adaptive %s surface with normals and contours', async (_label, mathJson, hasBreaks) => {
+    const surface = request();
+    surface.items = [{
+      version: 1, kind: 'relation', itemId: 'surface-1', visible: true,
+      source: { sourceKind: 'mathlive-latex', sourceLatex: 'surface', sourceRevision: 1 },
+      relation: { kind: 'real-surface', z: { mathJson, freeSymbols: ['x', 'y'] } },
+    }];
+    surface.viewport = { coordinateSystem: 'cartesian', xMin: -3, xMax: 3, yMin: -3, yMax: 3 };
+    surface.quality = 'settled';
+    const execution = await runGraphSampleRequest(surface);
+    const mesh = execution.result.scene.surfaceMeshes[0];
+    expect(mesh?.positions.length).toBeGreaterThan(0);
+    expect(mesh?.normals.length).toBe(mesh?.positions.length);
+    expect(mesh?.triangleIndices.length).toBeGreaterThan(0);
+    expect(mesh?.contourCoordinates.length).toBeGreaterThan(0);
+    expect(execution.result.itemEvidence[0]).toMatchObject({ route: 'real-surface' });
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+    if (hasBreaks) expect(execution.result.stopReasons.some((reason) => reason.detailCode?.startsWith('surface-domain-breaks:'))).toBe(true);
+  });
+
   it('assembles a bounded transferable scene directly from relation authority', async () => {
     const execution = await runGraphSampleRequest(request());
 
     expect(execution.result.status).toBe('complete');
-    expect(execution.result.scene.paths).toHaveLength(1);
+    expect(execution.result.scene.planarScene.paths).toHaveLength(1);
     expect(execution.transferList.length).toBeGreaterThan(0);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
     expect(() => structuredClone(execution.result)).not.toThrow();
@@ -71,7 +99,7 @@ describe('Graph sample request runtime', () => {
         detailCode: 'cooperative-request-cancellation',
       }],
     });
-    expect(execution.result.scene.paths).toEqual([]);
+    expect(execution.result.scene.planarScene.paths).toEqual([]);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
@@ -93,8 +121,8 @@ describe('Graph sample request runtime', () => {
     const execution = await runGraphSampleRequest(pointRequest);
 
     expect(execution.result.status).toBe('complete');
-    expect(execution.result.scene.paths).toEqual([]);
-    expect([...execution.result.scene.pointBatches[0]!.coordinates]).toEqual([5, 2, 3, 4]);
+    expect(execution.result.scene.planarScene.paths).toEqual([]);
+    expect([...execution.result.scene.planarScene.pointBatches[0]!.coordinates]).toEqual([5, 2, 3, 4]);
     expect(execution.result.evidence).toMatchObject({ sampleCount: 4, vertexCount: 2 });
     expect(execution.transferList).toHaveLength(1);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
@@ -126,13 +154,13 @@ describe('Graph sample request runtime', () => {
     const execution = await runGraphSampleRequest(implicitRequest);
 
     expect(execution.result.status).toBe('complete');
-    expect(execution.result.scene.paths).toHaveLength(1);
-    expect(execution.result.scene.paths[0]?.strokeRole).toBeUndefined();
-    expect(execution.result.scene.regions).toHaveLength(1);
-    expect(execution.result.scene.regions[0]?.boundaryPathIds).toEqual([
-      execution.result.scene.paths[0]?.pathId,
+    expect(execution.result.scene.planarScene.paths).toHaveLength(1);
+    expect(execution.result.scene.planarScene.paths[0]?.strokeRole).toBeUndefined();
+    expect(execution.result.scene.planarScene.regions).toHaveLength(1);
+    expect(execution.result.scene.planarScene.regions[0]?.boundaryPathIds).toEqual([
+      execution.result.scene.planarScene.paths[0]?.pathId,
     ]);
-    expect(execution.result.scene.regions[0]?.triangleIndices.length).toBeGreaterThan(3);
+    expect(execution.result.scene.planarScene.regions[0]?.triangleIndices.length).toBeGreaterThan(3);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
@@ -160,11 +188,11 @@ describe('Graph sample request runtime', () => {
     }];
     const execution = await runGraphSampleRequest(chainRequest);
 
-    expect(execution.result.scene.paths.map((path) => path.strokeRole)).toEqual([
+    expect(execution.result.scene.planarScene.paths.map((path) => path.strokeRole)).toEqual([
       'strict-boundary',
       undefined,
     ]);
-    expect(execution.result.scene.regions).toHaveLength(1);
+    expect(execution.result.scene.planarScene.regions).toHaveLength(1);
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 
@@ -215,15 +243,15 @@ describe('Graph sample request runtime', () => {
     const execution = await runGraphSampleRequest(piecewiseRequest);
 
     expect(execution.result.status).toBe('complete');
-    expect(execution.result.scene.paths.map((path) => path.pathId)).toEqual([
+    expect(execution.result.scene.planarScene.paths.map((path) => path.pathId)).toEqual([
       'piecewise-1:branch:negative',
       'piecewise-1:branch:nonnegative',
     ]);
-    expect(execution.result.scene.pointBatches.map((batch) => batch.marker).sort()).toEqual([
+    expect(execution.result.scene.planarScene.pointBatches.map((batch) => batch.marker).sort()).toEqual([
       'filled',
       'open',
     ]);
-    expect(execution.result.scene.pointBatches.flatMap((batch) => [...batch.coordinates]))
+    expect(execution.result.scene.planarScene.pointBatches.flatMap((batch) => [...batch.coordinates]))
       .toEqual(expect.arrayContaining([0, 0]));
     expect(execution.result.itemEvidence[0]?.piecewiseCondition).toMatchObject({
       basis: 'exact-global',
@@ -280,11 +308,11 @@ describe('Graph sample request runtime', () => {
     const execution = await runGraphSampleRequest(routed);
 
     expect(execution.result.status).toBe('complete');
-    expect(execution.result.scene.paths).toHaveLength(2);
-    expect(execution.result.scene.paths.every((path) => (
+    expect(execution.result.scene.planarScene.paths).toHaveLength(2);
+    expect(execution.result.scene.planarScene.paths.every((path) => (
       path.parameterValues?.length === path.coordinates.length / 2
     ))).toBe(true);
-    expect(execution.result.scene.paths.find((path) => path.itemId === 'polar-1')
+    expect(execution.result.scene.planarScene.paths.find((path) => path.itemId === 'polar-1')
       ?.parameterValues?.[0]).toBeCloseTo(0);
   });
 
@@ -295,8 +323,8 @@ describe('Graph sample request runtime', () => {
     const execution = await runGraphSampleRequest(teaching);
 
     expect('grid' in execution.result.scene).toBe(false);
-    expect(execution.result.scene.paths).toHaveLength(1);
-    expect(execution.result.scene.paths[0]).toMatchObject({
+    expect(execution.result.scene.planarScene.paths).toHaveLength(1);
+    expect(execution.result.scene.planarScene.paths[0]).toMatchObject({
       itemId: 'graph-overlay.unit-circle',
       closed: true,
     });
@@ -331,7 +359,7 @@ describe('Graph sample request runtime', () => {
     };
     const execution = await runGraphSampleRequest(ordinary);
 
-    expect(execution.result.scene.paths.length).toBeGreaterThan(0);
+    expect(execution.result.scene.planarScene.paths.length).toBeGreaterThan(0);
     expect(execution.result.status).toBe('complete');
     expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
       code: 'sampling-budget-exceeded',
@@ -367,7 +395,7 @@ describe('Graph sample request runtime', () => {
 
   it('detaches every owned scene buffer when a result is dropped', async () => {
     const execution = await runGraphSampleRequest(request());
-    const coordinates = execution.result.scene.paths[0]!.coordinates;
+    const coordinates = execution.result.scene.planarScene.paths[0]!.coordinates;
     const releasedBytes = releaseGraphSampleResultBuffers(execution.result);
 
     expect(releasedBytes).toBeGreaterThan(0);

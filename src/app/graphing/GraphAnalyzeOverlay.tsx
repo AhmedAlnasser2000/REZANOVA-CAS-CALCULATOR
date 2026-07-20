@@ -5,11 +5,11 @@ import type {
   GraphAnalyzeTabV1,
   GraphFeatureValueV1,
   GraphItemPresentationV2,
-  GraphPinnedAnnotationV1,
+  GraphPinnedAnnotationV2,
   GraphViewportV1,
 } from '../../lib/graphing';
 import { GraphStylePopover } from './GraphAppearanceControls';
-import type { GraphWorkspaceSessionStateV5 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV6 } from './graph-workspace-session';
 import { graphAnalysisAnnotationId, graphFeatureNumber } from './graph-analysis-overlay-support';
 function featureText(value: GraphFeatureValueV1 | undefined) {
   if (!value) return '—';
@@ -20,7 +20,7 @@ function label(feature: string) { return feature.split('-').map((word) => word[0
 export function GraphAnalysisMarkers({
   pinned, preview, viewport,
 }: {
-  pinned: GraphPinnedAnnotationV1[];
+  pinned: GraphPinnedAnnotationV2[];
   preview: GraphAnalysisEvidenceV1 | null;
   viewport: GraphViewportV1;
 }) {
@@ -50,7 +50,7 @@ export function GraphAnalyzeOverlay({
 }: {
   activeTab: GraphAnalyzeTabV1;
   analysis: GraphAnalysisEvidenceV1[];
-  colorVisionMode: GraphWorkspaceSessionStateV5['surface']['appearance']['colorVisionMode'];
+  colorVisionMode: GraphWorkspaceSessionStateV6['surface']['appearance']['colorVisionMode'];
   itemPresentation?: GraphItemPresentationV2;
   message: string;
   onClose: () => void;
@@ -60,10 +60,10 @@ export function GraphAnalyzeOverlay({
   onTabChange: (tab: GraphAnalyzeTabV1) => void;
   onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
   onWidthChange: (width: number) => void;
-  pinned: GraphPinnedAnnotationV1[];
+  pinned: GraphPinnedAnnotationV2[];
   selectedItemLabel: string;
   state: 'idle' | 'loading' | 'ready' | 'error';
-  theme: GraphWorkspaceSessionStateV5['surface']['appearance']['theme'];
+  theme: GraphWorkspaceSessionStateV6['surface']['appearance']['theme'];
   width: number;
 }) {
   const panelRef = useRef<HTMLElement | null>(null);
@@ -103,6 +103,7 @@ export function GraphAnalyzeOverlay({
             }} onFocus={() => onPreview(entry)} onMouseEnter={() => onPreview(entry)} onMouseLeave={() => onPreview(null)} tabIndex={0}>
               <div><strong>{entry.coordinates?.x ? `x ${featureText(entry.coordinates.x)}` : label(entry.feature)}</strong>
                 {entry.coordinates?.y ? <span>y {featureText(entry.coordinates.y)}</span> : null}</div>
+              {entry.coordinates?.z ? <span className="graph-feature-z">z {featureText(entry.coordinates.z)}</span> : null}
               <span className={`graph-evidence-badge is-${entry.level}`}>{entry.level.replaceAll('-', ' ')}</span>
               <div className="graph-feature-actions">
                 <button disabled={!entry.coordinates} onClick={() => onRecenter(entry)} type="button"><LocateFixed size={14} /> Recenter</button>

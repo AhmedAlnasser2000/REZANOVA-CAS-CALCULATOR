@@ -45,7 +45,7 @@ export function validateGraphAnalysisRequest(input: unknown): Validation<GraphAn
     return { ok: false, message: 'Graph analysis numeric window is invalid.' };
   }
   const itemCheck = validateGraphSampleRequest({
-    version: 4,
+    version: 5,
     requestId: value.requestId,
     workspaceInstanceId: value.workspaceInstanceId,
     documentId: value.documentId,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SampledSceneRuntimeV2 } from './types';
 import {
   hashGraphSceneSnapshot,
+  hashGraphSpatialSceneRuntime,
   hashSampledSceneRuntime,
   normalizeGraphSceneSnapshot,
   snapshotSampledSceneRuntime,
@@ -78,7 +79,7 @@ describe('Graph scene contracts', () => {
     const scene = runtimeScene();
     const viewport = { coordinateSystem: 'cartesian' as const, xMin: -2, xMax: 2, yMin: -2, yMax: 2 };
     const result = {
-      version: 4,
+      version: 5,
       requestId: 'request-1',
       workspaceInstanceId: 'graph-tab-1',
       documentId: 'graph-document-1',
@@ -86,8 +87,8 @@ describe('Graph scene contracts', () => {
       viewport,
       quality: 'preview',
       status: 'complete',
-      scene,
-      snapshotHash: hashGraphSceneSnapshot(snapshotSampledSceneRuntime(scene, viewport)),
+      scene: { version: 1 as const, planarScene: scene, surfaceMeshes: [] },
+      snapshotHash: hashGraphSpatialSceneRuntime({ version: 1, planarScene: scene, surfaceMeshes: [] }, viewport),
       stopReasons: [],
       itemEvidence: [],
       evidence: { sampleCount: 4, vertexCount: 4, elapsedMs: 12, cacheBytes: 0, schedulerPasses: 1 },

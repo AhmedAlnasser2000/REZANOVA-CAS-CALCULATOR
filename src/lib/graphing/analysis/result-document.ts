@@ -37,6 +37,7 @@ export function buildGraphAnalysisCanonicalResult(
   const firstExact = reproveExact(evidence.flatMap((entry) => [
     exactValue(entry.coordinates?.x),
     exactValue(entry.coordinates?.y),
+    exactValue(entry.coordinates?.z),
     exactValue(entry.relationValue),
   ]).find((value) => value !== undefined));
   const validated = evidence.filter((entry) => entry.level === 'numeric-validated').length;

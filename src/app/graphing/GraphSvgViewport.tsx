@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useLayoutEffect, useRef, useState,
+  useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
@@ -9,6 +9,7 @@ import {
   type GraphGridPolicyV1,
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
+  type GraphSpatialSceneRuntimeV1,
   type SampledSceneRuntimeV2,
 } from '../../lib/graphing';
 import {
@@ -22,6 +23,7 @@ import {
 } from './graph-hit-testing';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
+  | 'real-surface'
   | { kind: 'polar-radius'; parameterSymbol: 'theta' }
   | { kind: 'parametric-curve'; parameterSymbol: string };
 
@@ -29,7 +31,7 @@ type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
   presentation?: GraphRendererPresentationFrame;
-  scene: SampledSceneRuntimeV2 | null;
+  scene: GraphSpatialSceneRuntimeV1 | SampledSceneRuntimeV2 | null;
   sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
@@ -47,6 +49,11 @@ type TraceLock = {
 const WHEEL_SETTLE_MS = 180;
 const CLICK_DISTANCE = 24;
 const RETAIN_DISTANCE = 30;
+
+function asSpatialScene(scene: GraphSpatialSceneRuntimeV1 | SampledSceneRuntimeV2 | null) {
+  return scene && 'planarScene' in scene ? scene
+    : scene ? { version: 1 as const, planarScene: scene, surfaceMeshes: [] } : null;
+}
 
 function formatTraceNumber(value: number) {
   return String(Math.abs(value) < 1e-10 ? 0 : Number(value.toPrecision(6)));
@@ -70,11 +77,35 @@ function panViewport(base: GraphViewportV1, dx: number, dy: number, size: Size) 
     yMin: base.yMin + yShift, yMax: base.yMax + yShift };
 }
 
+function surfaceTargetAtScreen(
+  scene: GraphSpatialSceneRuntimeV1,
+  viewport: GraphViewportV1,
+  size: Size,
+  screen: { x: number; y: number },
+  itemId?: string,
+): GraphTraceTarget | null {
+  let best: GraphTraceTarget | null = null;
+  for (const mesh of scene.surfaceMeshes) {
+    if (itemId && mesh.itemId !== itemId) continue;
+    for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
+      const x = mesh.positions[vertex * 3]!; const y = mesh.positions[vertex * 3 + 1]!;
+      const projected = { x: (x - viewport.xMin) / (viewport.xMax - viewport.xMin) * size.width,
+        y: (viewport.yMax - y) / (viewport.yMax - viewport.yMin) * size.height };
+      const distancePixels = Math.hypot(projected.x - screen.x, projected.y - screen.y);
+      if (distancePixels > CLICK_DISTANCE || (best && best.distancePixels <= distancePixels)) continue;
+      best = { kind: 'surface', itemId: mesh.itemId, sceneRevision: scene.planarScene.sceneRevision,
+        vertexIndex: vertex, world: { x, y, z: mesh.positions[vertex * 3 + 2]! }, screen: projected, distancePixels };
+    }
+  }
+  return best;
+}
+
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
   itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
   presentation = { version: 1, contentRevision: 0, items: [] }, scene, viewport, sceneViewport = viewport,
 }: Props) {
+  const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<GraphSvgReferenceRenderer | null>(null);
@@ -86,7 +117,7 @@ export function GraphSvgViewport({
   const traceIndexRef = useRef<GraphTraceIndex | null>(null);
   const traceFrameRef = useRef<number | null>(null);
   const viewFrameRef = useRef<number | null>(null);
-  const sceneRef = useRef(scene); const routesRef = useRef(itemRoutes);
+  const sceneRef = useRef(spatialScene); const routesRef = useRef(itemRoutes);
   const pendingRef = useRef(pending); const viewportRef = useRef(viewport);
   const liveViewportRef = useRef(viewport); const gridRef = useRef(grid);
   const sizeRef = useRef<Size>({ width: 960, height: 600 });
@@ -149,10 +180,10 @@ export function GraphSvgViewport({
 
   useLayoutEffect(() => {
     const renderer = rendererRef.current; if (!renderer) return;
-    renderer.setScene(scene && sceneViewport ? { version: 1, scene, sourceViewport: sceneViewport,
+    renderer.setScene(spatialScene && sceneViewport ? { version: 2, scene: spatialScene, sourceViewport: sceneViewport,
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 } } : null);
-  }, [scene, sceneViewport]);
+  }, [scene, sceneViewport, spatialScene]);
 
   useLayoutEffect(() => {
     rendererRef.current?.setPresentation(presentation);
@@ -186,18 +217,18 @@ export function GraphSvgViewport({
     const ly = Math.max(8, Math.min(sizeRef.current.height - 38, target.screen.y - 36));
     label.hidden = false; label.style.transform = `translate3d(${lx}px,${ly}px,0)`;
     label.dataset.traceItemId = target.itemId;
-    const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)})`;
+    const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
     label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
   }, [hideTrace, onTraceItemChange]);
 
   useEffect(() => {
-    sceneRef.current = scene; routesRef.current = itemRoutes; pendingRef.current = pending;
-    if (scene && !pending) {
-      traceIndexRef.current = buildGraphTraceIndex(scene, viewport, sizeRef.current);
+    sceneRef.current = spatialScene; routesRef.current = itemRoutes; pendingRef.current = pending;
+    if (spatialScene && !pending) {
+      traceIndexRef.current = buildGraphTraceIndex(spatialScene.planarScene, viewport, sizeRef.current);
     } else { traceIndexRef.current = null; hideTrace(); }
-  }, [hideTrace, itemRoutes, pending, scene, size, viewport]);
+  }, [hideTrace, itemRoutes, pending, size, spatialScene, viewport]);
 
   useLayoutEffect(() => {
     viewportRef.current = viewport; gridRef.current = grid;
@@ -277,7 +308,7 @@ export function GraphSvgViewport({
       return;
     }
     const lock = traceLockRef.current;
-    const currentScene = sceneRef.current;
+    const currentScene = sceneRef.current?.planarScene;
     const index = traceIndexRef.current;
     if (!lock || !currentScene || !index || pendingRef.current || wheelRef.current) return;
     tracePointerRef.current = clientToScreen(event.clientX, event.clientY);
@@ -287,7 +318,9 @@ export function GraphSvgViewport({
       const screen = tracePointerRef.current;
       if (!screen) return;
       const route = routesRef.current[lock.itemId];
-      const target = route === 'explicit-y' || route === 'explicit-x'
+      const target = route === 'real-surface' && sceneRef.current
+        ? surfaceTargetAtScreen(sceneRef.current, viewportRef.current, sizeRef.current, screen, lock.itemId)
+        : route === 'explicit-y' || route === 'explicit-x'
         ? traceGraphPathAtPointer({ scene: currentScene, viewport: viewportRef.current, size: sizeRef.current,
             itemId: lock.itemId, pathId: lock.pathId, relationKind: route, screen })
         : hitTestGraphTraceIndex({ index, scene: currentScene, screen,
@@ -301,25 +334,28 @@ export function GraphSvgViewport({
     dragRef.current = null; delete event.currentTarget.dataset.interacting;
     if (Math.hypot(drag.clientDx, drag.clientDy) > 4) { const settled = liveViewportRef.current; viewportRef.current = settled; onViewportChange(settled); return; }
     const screen = clientToScreen(event.clientX, event.clientY);
-    const currentScene = sceneRef.current; const index = traceIndexRef.current;
-    const current = currentScene && index && !pendingRef.current
+    const currentScene = sceneRef.current?.planarScene; const index = traceIndexRef.current;
+    const spatialScene = sceneRef.current;
+    const current = currentScene && index && spatialScene && !pendingRef.current
       ? hitTestGraphTraceIndex({ index, scene: currentScene, screen,
           maximumDistancePixels: drag.pointerType === 'touch' ? 28 : CLICK_DISTANCE })
       : null;
-    if (current) {
+    const target = current ?? (spatialScene && !pendingRef.current
+      ? surfaceTargetAtScreen(spatialScene, viewportRef.current, sizeRef.current, screen) : null);
+    if (target) {
       traceLockRef.current = {
-        itemId: current.itemId,
-        kind: current.kind,
-        ...(current.pathId ? { pathId: current.pathId } : {}),
-        ...(current.pointBatchId ? { pointBatchId: current.pointBatchId } : {}),
+        itemId: target.itemId,
+        kind: target.kind,
+        ...(target.pathId ? { pathId: target.pathId } : {}),
+        ...(target.pointBatchId ? { pointBatchId: target.pointBatchId } : {}),
       };
-      publishTrace(current, true);
+      publishTrace(target, true);
     }
     else clearTrace();
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const currentScene = sceneRef.current; if (!currentScene || pendingRef.current) return;
+    const currentScene = sceneRef.current?.planarScene; if (!currentScene || pendingRef.current) return;
     if (event.key === 'Escape') { clearTrace(); return; }
     if (event.key === 'Enter' && !traceRef.current) {
       event.preventDefault();
@@ -340,7 +376,9 @@ export function GraphSvgViewport({
       size: sizeRef.current, current: traceRef.current, delta: event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1 }), true);
   };
 
-  const hasGeometry = scene !== null && (scene.paths.some((path) => !path.itemId.startsWith('graph-overlay.')) || scene.regions.length > 0 || scene.pointBatches.length > 0);
+  const hasGeometry = spatialScene !== null && (spatialScene.surfaceMeshes.length > 0
+    || spatialScene.planarScene.paths.some((path) => !path.itemId.startsWith('graph-overlay.'))
+    || spatialScene.planarScene.regions.length > 0 || spatialScene.planarScene.pointBatches.length > 0);
   return <div className="graph-svg-viewport" data-scene-pending={pending ? 'true' : 'false'} data-testid="graph-viewport"
     aria-describedby="graph-trace-instructions" aria-label={`Interactive ${grid.kind} graph. Press Enter to start keyboard tracing.`}
     role="region" onKeyDown={handleKeyDown} onPointerCancel={finishPointer} onPointerDown={handlePointerDown}

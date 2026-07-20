@@ -1,8 +1,9 @@
 import {
-  hashSampledSceneRuntime,
+  hashGraphSpatialSceneRuntime,
   validateGraphSampleRequest,
-  type GraphSampleRequestV4,
-  type GraphSampleResultV4,
+  type GraphSampleRequestV5,
+  type GraphSampleResultV5,
+  type GraphSurfaceMeshRuntimeV1,
   type GraphSamplingItemEvidenceV1,
   type GraphStopReason,
   type GraphViewportV1,
@@ -10,7 +11,7 @@ import {
 import { GraphExpressionPlanCache } from '../evaluator';
 import {
   assembleSampledScene,
-  collectGraphSceneTransferables,
+  collectGraphSpatialSceneTransferables,
   type GraphPointBatchSceneInput,
   type GraphRegionSceneInput,
   type GraphSampledPathSceneInput,
@@ -28,6 +29,7 @@ import {
   overscannedGraphViewport,
 } from './adaptive-policy';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
+import { sampleRealSurface } from './surface';
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -43,7 +45,7 @@ function effectiveMaximumItemTimeMs(policyMaximum: number, controlMaximum?: numb
 }
 
 export type GraphSampleExecution = {
-  result: GraphSampleResultV4;
+  result: GraphSampleResultV5;
   transferList: ArrayBuffer[];
 };
 
@@ -62,7 +64,7 @@ function budgetStop(detailCode: string): GraphStopReason {
 }
 
 function achievedQuality(
-  quality: GraphSampleRequestV4['quality'],
+  quality: GraphSampleRequestV5['quality'],
   status: 'complete' | 'budget-exhausted' | 'cancelled',
   hasGeometry: boolean,
 ): GraphSamplingItemEvidenceV1['achievedQuality'] {
@@ -72,15 +74,15 @@ function achievedQuality(
   return 'coarse';
 }
 
-function errorTarget(quality: GraphSampleRequestV4['quality']) {
+function errorTarget(quality: GraphSampleRequestV5['quality']) {
   return quality === 'preview' ? 1.5 : quality === 'settled' ? 0.35 : 0.2;
 }
 
 function graphResult(
-  request: GraphSampleRequestV4,
+  request: GraphSampleRequestV5,
   input: {
-    scene: GraphSampleResultV4['scene'];
-    status: GraphSampleResultV4['status'];
+    scene: GraphSampleResultV5['scene'];
+    status: GraphSampleResultV5['status'];
     stopReasons: GraphStopReason[];
     sampleCount: number;
     vertexCount: number;
@@ -89,9 +91,9 @@ function graphResult(
     schedulerPasses: number;
     cacheBytes: number;
   },
-): GraphSampleResultV4 {
+): GraphSampleResultV5 {
   return {
-    version: 4,
+    version: 5,
     requestId: request.requestId,
     workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId,
@@ -100,7 +102,7 @@ function graphResult(
     quality: request.quality,
     status: input.status,
     scene: input.scene,
-    snapshotHash: hashSampledSceneRuntime(input.scene, request.viewport),
+    snapshotHash: hashGraphSpatialSceneRuntime(input.scene, request.viewport),
     stopReasons: input.stopReasons,
     itemEvidence: input.itemEvidence,
     evidence: {
@@ -113,18 +115,18 @@ function graphResult(
   };
 }
 
-function assembleEmptyScene(request: GraphSampleRequestV4) {
+function assembleEmptyScene(request: GraphSampleRequestV5) {
   const assembled = assembleSampledScene({
     revisions: request.revisions,
     viewport: request.viewport,
     paths: [],
   });
   if (!assembled.ok) runtimeError(assembled.failure.message);
-  return assembled.bundle.scene;
+  return { version: 1 as const, planarScene: assembled.bundle.scene, surfaceMeshes: [] };
 }
 
 export function buildCancelledGraphSampleExecution(
-  request: GraphSampleRequestV4,
+  request: GraphSampleRequestV5,
   detailCode = 'host-cancellation',
 ): GraphSampleExecution {
   const scene = assembleEmptyScene(request);
@@ -145,7 +147,7 @@ export function buildCancelledGraphSampleExecution(
 }
 
 export async function runGraphSampleRequest(
-  input: GraphSampleRequestV4,
+  input: GraphSampleRequestV5,
   planCache = new GraphExpressionPlanCache(100),
   control: GraphSampleRequestControl = {},
   samplingCache = new GraphSamplingRuntimeCache(),
@@ -159,6 +161,7 @@ export async function runGraphSampleRequest(
   const paths: GraphSampledPathSceneInput[] = [];
   const regions: GraphRegionSceneInput[] = [];
   const pointBatches: GraphPointBatchSceneInput[] = [];
+  const surfaceMeshes: GraphSurfaceMeshRuntimeV1[] = [];
   const stopReasons: GraphStopReason[] = [];
   const itemEvidence: GraphSamplingItemEvidenceV1[] = [];
   let sampleCount = 0;
@@ -169,7 +172,7 @@ export async function runGraphSampleRequest(
   const cacheItem = (input: {
     key: string;
     viewport: GraphViewportV1;
-    quality: GraphSampleRequestV4['quality'];
+    quality: GraphSampleRequestV5['quality'];
     evidence: GraphSamplingItemEvidenceV1;
     pathStart: number;
     regionStart: number;
@@ -247,6 +250,43 @@ export async function runGraphSampleRequest(
       item,
       parameterEnvironment: request.parameterEnvironment,
     });
+    if (item.kind === 'relation' && item.relation.kind === 'real-surface') {
+      const sampled = sampleRealSurface({
+        itemId: item.itemId,
+        sourceRevision: item.source.sourceRevision,
+        relation: item.relation,
+        viewport: request.viewport,
+        parameterEnvironment: request.parameterEnvironment,
+        quality: request.quality,
+        cache: planCache,
+        control: { isCancelled },
+      });
+      if (sampled.mesh) surfaceMeshes.push(sampled.mesh);
+      sampleCount += sampled.sampleCount;
+      vertexCount += sampled.vertexCount;
+      if (sampled.stopReason) stopReasons.push({ ...sampled.stopReason, path: item.itemId });
+      if (sampled.domainBreakCells > 0) {
+        stopReasons.push({
+          code: 'analysis-inconclusive',
+          detailCode: `surface-domain-breaks:${sampled.domainBreakCells}`,
+          path: item.itemId,
+        });
+      }
+      if (sampled.status === 'cancelled') cancelled = true;
+      if (sampled.status === 'budget-exhausted') partial = true;
+      itemEvidence.push({
+        itemId: item.itemId,
+        route: 'real-surface',
+        achievedQuality: achievedQuality(request.quality, sampled.status, sampled.mesh !== undefined),
+        estimatedMaximumErrorPixels: errorTarget(request.quality),
+        cache: 'miss',
+        refinable: sampled.status !== 'cancelled' && request.quality !== 'polish',
+        ...(sampled.stopReason ? { stopReason: { ...sampled.stopReason, path: item.itemId } } : {}),
+      });
+      await control.yieldBetweenItems?.();
+      if (cancelled) break;
+      continue;
+    }
     const cached = samplingCache.read({ key: cacheKey, viewport: request.viewport, quality: request.quality });
     if (cached) {
       paths.push(...cached.paths);
@@ -639,8 +679,11 @@ export async function runGraphSampleRequest(
     : partial
       ? 'partial'
       : 'complete';
+  const spatialScene = { version: 1 as const, planarScene: assembled.bundle.scene, surfaceMeshes };
+  const transfers = collectGraphSpatialSceneTransferables(spatialScene);
+  if (!transfers.ok) runtimeError(transfers.message);
   const result = graphResult(request, {
-    scene: assembled.bundle.scene,
+    scene: spatialScene,
     status,
     stopReasons,
     sampleCount,
@@ -650,11 +693,11 @@ export async function runGraphSampleRequest(
     schedulerPasses: request.quality === 'preview' ? 1 : request.quality === 'settled' ? 2 : 3,
     cacheBytes: samplingCache.bytes,
   });
-  return { result, transferList: assembled.bundle.transferList };
+  return { result, transferList: transfers.transferList };
 }
 
-export function releaseGraphSampleResultBuffers(result: GraphSampleResultV4) {
-  const transfers = collectGraphSceneTransferables(result.scene);
+export function releaseGraphSampleResultBuffers(result: GraphSampleResultV5) {
+  const transfers = collectGraphSpatialSceneTransferables(result.scene);
   if (!transfers.ok || transfers.transferList.length === 0) return 0;
   const releasedBytes = transfers.transferList.reduce(
     (count, buffer) => count + buffer.byteLength,
