@@ -1,4 +1,5 @@
 export * from './contracts';
+export * from './analysis';
 export * from './evaluator';
 export * from './headless';
 export * from './ooe';

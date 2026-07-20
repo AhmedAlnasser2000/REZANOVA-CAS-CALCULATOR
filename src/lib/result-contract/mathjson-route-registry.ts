@@ -1,5 +1,7 @@
 import type { HistoryReplayWorkspace } from '../history-replay/fixture-contract';
 
+export type CanonicalMathJsonProducerOwner = HistoryReplayWorkspace | 'graphing';
+
 export const CANONICAL_MATH_LEAF_PATHS = [
   'primaryMath',
   'primary.value',
@@ -52,13 +54,13 @@ export const CANONICAL_MATH_LEAF_PATHS = [
 export type CanonicalMathLeafPath = typeof CANONICAL_MATH_LEAF_PATHS[number];
 
 export type MathJsonRoutePolicy = {
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   replayFixtureIds: readonly string[];
   leafPolicy: 'required-when-present';
 };
 
 const route = (
-  owner: HistoryReplayWorkspace,
+  owner: CanonicalMathJsonProducerOwner,
   ...replayFixtureIds: string[]
 ): MathJsonRoutePolicy => ({ owner, replayFixtureIds, leafPolicy: 'required-when-present' });
 
@@ -123,6 +125,7 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'table.domain-boundary': route('table', 'table-partial-domain'),
   'table.rational-function': route('table', 'table-reciprocal'),
   'table.trigonometric-function': route('table', 'table-trigonometric'),
+  'graphing.analysis': route('graphing'),
 } as const satisfies Record<string, MathJsonRoutePolicy>;
 
 export type MathJsonRouteId = keyof typeof MATHJSON_ROUTE_REGISTRY;

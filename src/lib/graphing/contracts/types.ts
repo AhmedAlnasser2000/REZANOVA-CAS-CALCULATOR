@@ -1,4 +1,5 @@
 import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
+import type { CanonicalMathValueV2, CanonicalResultDocumentV2 } from '../../../types/calculator';
 
 export type GraphSourceV1 = {
   sourceKind: 'mathlive-latex';
@@ -614,5 +615,78 @@ export type GraphSampleResultV4 = {
     elapsedMs: number;
     cacheBytes: number;
     schedulerPasses: number;
+  };
+};
+
+export const GRAPH_ANALYSIS_FEATURES = [
+  'root', 'x-intercept', 'y-intercept', 'extremum', 'intersection', 'hole', 'pole',
+  'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
+  'domain-boundary', 'piecewise-continuity',
+] as const;
+
+export type GraphAnalysisFeature = typeof GRAPH_ANALYSIS_FEATURES[number];
+
+export type GraphEvidenceLevel =
+  | 'exact-proved'
+  | 'conditional'
+  | 'numeric-validated'
+  | 'sampled-estimate'
+  | 'suspected'
+  | 'inconclusive'
+  | 'unsupported';
+
+export type GraphFeatureValueV1 =
+  | { kind: 'exact'; value: CanonicalMathValueV2 }
+  | { kind: 'approximate'; value: number; errorBound?: number };
+
+export type GraphAnalysisEvidenceV1 = {
+  version: 1;
+  evidenceId: string;
+  documentId: string;
+  revisions: GraphRevisionSetV2;
+  itemIds: string[];
+  feature: GraphAnalysisFeature;
+  level: GraphEvidenceLevel;
+  coordinates?: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1 };
+  relationValue?: GraphFeatureValueV1;
+  conditions: CanonicalMathValueV2[];
+  basis: {
+    source: 'graph-symbolic' | 'reviewed-public-fact' | 'numeric-validator' | 'sampler';
+    validator?: string;
+    residualBound?: number;
+    sampleSceneRevision?: number;
+  };
+  stopReason?: GraphStopReason;
+};
+
+export type GraphAnalysisRequestV1 = {
+  version: 1;
+  requestId: string;
+  workspaceInstanceId: string;
+  documentId: string;
+  revisions: GraphRevisionSetV2;
+  items: GraphClassifiedItemSnapshotV2[];
+  parameterEnvironment: Record<string, number>;
+  features: GraphAnalysisFeature[];
+  numericWindow?: GraphViewportV1;
+  maximumTimeMs: number;
+};
+
+export type GraphAnalysisResultV1 = {
+  version: 1;
+  requestId: string;
+  workspaceInstanceId: string;
+  documentId: string;
+  revisions: GraphRevisionSetV2;
+  status: 'complete' | 'partial' | 'cancelled';
+  evidence: GraphAnalysisEvidenceV1[];
+  canonicalResult: CanonicalResultDocumentV2;
+  stopReasons: GraphStopReason[];
+  diagnostics: {
+    elapsedMs: number;
+    evaluatedPointCount: number;
+    exactFindingCount: number;
+    validatedFindingCount: number;
+    analysisRevision: number;
   };
 };

@@ -254,6 +254,10 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/graphing/ooe/pilot.ts',
       'src/lib/graphing/ooe/worker-contract.ts',
       'src/lib/graphing/sampling/request.ts',
+      'src/lib/graphing/ooe/analysis-application-host.ts',
+      'src/lib/graphing/ooe/graph-analysis.worker.ts',
+      'src/lib/graphing/ooe/analysis-pilot.ts',
+      'src/lib/graphing/ooe/analysis-worker-contract.ts',
     ],
     dependencyPolicies: [
       'library-no-app-ui',
@@ -261,7 +265,7 @@ export const COMPARTMENT_MANIFEST = [
       'private-solver-boundary',
     ],
     ooeFacts: {
-      exact: ['graph.sample'],
+      exact: ['graph.sample', 'graph.analyze'],
     },
   },
   {

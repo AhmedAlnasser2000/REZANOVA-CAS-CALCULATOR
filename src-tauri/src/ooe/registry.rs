@@ -226,6 +226,16 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Graphing,
+        capability_id: "graph.analyze",
+        host_id: "graph-analysis-worker-runtime",
+        entrypoint: "runGraphAnalysisWorkerRuntime",
+        description: "Analyze selected Graph relations through the independent isolated Graph analysis worker runtime shell.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::LinearAlgebra,
         capability_id: "linearAlgebra.matrix",
         host_id: "matrix-worker-runtime",
@@ -348,6 +358,8 @@ mod tests {
         "editor-analysis-runtime",
         "geometry-runtime",
         "geometry-worker-runtime",
+        "graph-analysis-runtime",
+        "graph-analysis-worker-runtime",
         "graph-sampling-runtime",
         "graph-sampling-worker-runtime",
         "matrix-runtime",
@@ -396,6 +408,7 @@ mod tests {
                 "statistics.evaluate",
                 "geometry.evaluate",
                 "graph.sample",
+                "graph.analyze",
                 "linearAlgebra.matrix",
                 "linearAlgebra.vector",
             ]
@@ -522,6 +535,7 @@ mod tests {
                     | "statistics.evaluate"
                     | "geometry.evaluate"
                     | "graph.sample"
+                    | "graph.analyze"
                     | "linearAlgebra.matrix"
                     | "linearAlgebra.vector"
             ) {

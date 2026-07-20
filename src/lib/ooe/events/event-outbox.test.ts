@@ -128,6 +128,10 @@ describe('OOE event outbox', () => {
       compartmentId: 'graphing',
       compartmentLabel: 'Graphing',
     });
+    expect(resolveOoeEventCompartment({ capabilityId: 'graph.analyze' })).toEqual({
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
+    });
     expect(resolveOoeEventCompartment({ capabilityId: 'linearAlgebra.matrix' })).toEqual({
       compartmentId: 'linear-algebra',
       compartmentLabel: 'Linear Algebra',

@@ -9,8 +9,7 @@ import {
   validateSerializableMathJson,
   type MathJsonValidationFailure,
 } from '../display/printer';
-import type { HistoryReplayWorkspace } from '../history-replay/fixture-contract';
-import type { MathJsonRouteId } from './mathjson-route-registry';
+import type { CanonicalMathJsonProducerOwner, MathJsonRouteId } from './mathjson-route-registry';
 import { findCustomMathJsonOperator } from './standard-mathjson-operators';
 export { findCustomMathJsonOperator } from './standard-mathjson-operators';
 
@@ -22,7 +21,7 @@ export type ProducerOwnedAnswerMathJsonCandidate = {
   readonly mathJson: unknown;
   readonly provenance: {
     readonly kind: 'producer-answer-tree';
-    readonly owner: HistoryReplayWorkspace;
+    readonly owner: CanonicalMathJsonProducerOwner;
     readonly routeId: MathJsonRouteId;
     readonly source: string;
   };
@@ -48,7 +47,7 @@ export type ProvenCanonicalMathValueV2 = Omit<CanonicalMathValueV2, 'mathJson'> 
 export type ProvenAnswerMathJsonEvidence = {
   canonicalLatex: string;
   mathJson: ProvenAnswerMathJson;
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   routeId: MathJsonRouteId;
   source: string;
   nodeCount: number;
@@ -239,7 +238,7 @@ function containsApplyOperator(node: unknown): boolean {
 
 export function declareProducerOwnedAnswerMathJson(input: {
   mathJson: unknown;
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   routeId: MathJsonRouteId;
   source: string;
 }): ProducerOwnedAnswerMathJsonCandidate {
@@ -424,7 +423,7 @@ export function canonicalMathValueV2FromProof(
 export function requireProvenCanonicalMathValueV2(input: {
   canonicalLatex: string;
   mathJson: unknown;
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   routeId: MathJsonRouteId;
   source: string;
 }): ProvenCanonicalMathValueV2 {
@@ -455,7 +454,7 @@ export function canonicalMathValueFromProof(
 export function requireProvenCanonicalMathValue(input: {
   canonicalLatex: string;
   mathJson: unknown;
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   routeId: MathJsonRouteId;
   source: string;
 }): ProvenCanonicalMathValue {
@@ -481,7 +480,7 @@ export function requireProvenCanonicalMathValue(input: {
 export function tryProvenCanonicalMathValue(input: {
   canonicalLatex: string;
   mathJson: unknown;
-  owner: HistoryReplayWorkspace;
+  owner: CanonicalMathJsonProducerOwner;
   routeId: MathJsonRouteId;
   source: string;
 }): ProvenCanonicalMathValue | undefined {

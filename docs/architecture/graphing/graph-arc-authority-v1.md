@@ -309,21 +309,24 @@ Visibility has one document property. Hidden relations and point sets continue t
 ```ts
 type GraphAnalysisRequestV1 = {
   version: 1;
+  requestId: string;
+  workspaceInstanceId: string;
   documentId: string;
-  documentRevision: number;
-  parameterRevision: number;
-  itemIds: string[];
+  revisions: GraphRevisionSetV2;
+  items: GraphClassifiedItemSnapshotV2[];
+  parameterEnvironment: Record<string, number>;
   features: Array<
     'root' | 'x-intercept' | 'y-intercept' | 'extremum' | 'intersection' |
     'hole' | 'pole' | 'vertical-asymptote' | 'horizontal-asymptote' |
     'oblique-asymptote' | 'domain-boundary' | 'piecewise-continuity'
   >;
   numericWindow?: GraphViewportV1;
+  maximumTimeMs: number;
 };
 
 type GraphEvidenceLevel =
   | 'exact-proved'
-  | 'exact-conditional'
+  | 'conditional'
   | 'numeric-validated'
   | 'sampled-estimate'
   | 'suspected'
@@ -338,8 +341,7 @@ type GraphAnalysisEvidenceV1 = {
   version: 1;
   evidenceId: string;
   documentId: string;
-  documentRevision: number;
-  parameterRevision: number;
+  revisions: GraphRevisionSetV2;
   itemIds: string[];
   feature: GraphAnalysisRequestV1['features'][number];
   level: GraphEvidenceLevel;

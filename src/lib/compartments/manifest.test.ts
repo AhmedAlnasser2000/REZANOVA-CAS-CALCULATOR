@@ -97,6 +97,12 @@ describe('compartment manifest', () => {
       compartmentLabel: 'Graphing',
     });
     expect(resolveOoeEventCompartment({
+      capabilityId: 'graph.analyze',
+    })).toEqual({
+      compartmentId: 'graphing',
+      compartmentLabel: 'Graphing',
+    });
+    expect(resolveOoeEventCompartment({
       capabilityId: 'linearAlgebra.vector',
     })).toEqual({
       compartmentId: 'linear-algebra',

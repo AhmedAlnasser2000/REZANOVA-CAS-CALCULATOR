@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-22 complete; Move 23 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-23 complete; Move 24 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -318,7 +318,7 @@ Status: complete in `8fafd717`.
 
 ## 22. `GRAPHING-THREE-RENDERER1`
 
-Status: implementation and verification complete; commit pending at write time.
+Status: complete in `b655d02b`.
 
 - Terra: High; gate type: ui.
 - Objective: pin audited `three@0.185.1`, widen renderer-neutral scene/camera contracts, and add the private on-demand WebGL2 adapter plus a permanent per-pane 2D/3D switch.
@@ -327,9 +327,12 @@ Status: implementation and verification complete; commit pending at write time.
 
 ## 23. `GRAPHING-ANALYSIS-OOE1`
 
+Status: implementation and verification complete; commit pending at write time.
+
 - Terra: High; gate type: backend.
 - Objective: add independent `graph.analyze` traffic control and validated V2 evidence for roots/intercepts, extrema, compatible intersections, holes/poles, asymptotes/domain boundaries, and piecewise continuity without importing Equation-private internals.
 - Preserve exact-proved, conditional, numeric-validated, sampled-estimate, suspected, inconclusive, and unsupported evidence classes. Only exact or numeric-validated findings may become persistent annotations.
+- The Graph-owned analyzer proves degree-at-most-two polynomial facts and structurally recognized real-domain facts, numerically validates bounded roots/intersections and rational poles, and refuses to upgrade denominator exclusions, non-finite samples, or turning samples into stronger claims. Its isolated worker and cooperative fallback have independent cancellation, revisions, diagnostics, runtime probe, and OOE registrations.
 
 ## 24. `GRAPHING-ANALYZE-UI1`
 
