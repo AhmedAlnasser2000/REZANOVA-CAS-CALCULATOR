@@ -197,7 +197,8 @@ function refineTransition(input: {
   leftValue: boolean;
   toleranceWorld: number;
 }) {
-  let { left, right, leftValue } = input;
+  let { left, right } = input;
+  const { leftValue } = input;
   let unresolved = false;
   for (let iteration = 0; iteration < 40 && right - left > input.toleranceWorld; iteration += 1) {
     const middle = (left + right) / 2;

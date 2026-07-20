@@ -2,9 +2,10 @@ import {
   type GraphDocumentV1,
   type GraphDocumentV2,
   type GraphSurfaceStateV1,
+  type GraphSurfaceStateV2,
 } from '../../lib/graphing/contracts/types';
 
-export const GRAPH_WORKSPACE_SESSION_VERSION = 2 as const;
+export const GRAPH_WORKSPACE_SESSION_VERSION = 3 as const;
 
 export type GraphPiecewiseAuthoringDraftV1 = {
   version: 1;
@@ -31,9 +32,16 @@ export type GraphWorkspaceSessionStateV1 = {
 };
 
 export type GraphWorkspaceSessionStateV2 = {
-  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  version: 2;
   document: GraphDocumentV2;
   surface: GraphSurfaceStateV1;
+  authoring?: GraphWorkspaceAuthoringStateV1;
+};
+
+export type GraphWorkspaceSessionStateV3 = {
+  version: typeof GRAPH_WORKSPACE_SESSION_VERSION;
+  document: GraphDocumentV2;
+  surface: GraphSurfaceStateV2;
   authoring?: GraphWorkspaceAuthoringStateV1;
 };
 
@@ -44,7 +52,7 @@ export function graphWorkspaceDefaultTitle(sequence: number) {
 export function createGraphWorkspaceSessionState(
   workspaceInstanceId: string,
   title: string,
-): GraphWorkspaceSessionStateV2 {
+): GraphWorkspaceSessionStateV3 {
   return {
     version: GRAPH_WORKSPACE_SESSION_VERSION,
     document: {
@@ -57,7 +65,7 @@ export function createGraphWorkspaceSessionState(
     },
     authoring: { piecewiseDrafts: [] },
     surface: {
-      version: 1,
+      version: 2,
       viewport: {
         coordinateSystem: 'cartesian',
         xMin: -10,
@@ -80,6 +88,10 @@ export function createGraphWorkspaceSessionState(
       analyzeOpen: false,
       selectedItemId: null,
       presentationMode: false,
+      appearance: {
+        theme: 'technical',
+        colorVisionMode: 'standard',
+      },
     },
   };
 }
@@ -89,9 +101,9 @@ export function renameGraphWorkspaceSessionState(
   title: string,
 ) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  const session = value as Partial<GraphWorkspaceSessionStateV2>;
+  const session = value as Partial<GraphWorkspaceSessionStateV3>;
   if (
-    session.version !== 2
+    session.version !== 3
     || !session.document
     || session.document.version !== 2
     || session.document.title === title
@@ -103,5 +115,5 @@ export function renameGraphWorkspaceSessionState(
       title,
       contentRevision: session.document.contentRevision + 1,
     },
-  } as GraphWorkspaceSessionStateV2;
+  } as GraphWorkspaceSessionStateV3;
 }

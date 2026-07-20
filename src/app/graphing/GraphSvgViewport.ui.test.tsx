@@ -75,6 +75,39 @@ describe('GraphSvgViewport', () => {
     expect(region?.closest('g')?.nextElementSibling).toHaveClass('graph-svg-paths');
   });
 
+  it('applies V2 presentation without changing sampled scene geometry', () => {
+    render(
+      <GraphSvgViewport
+        itemRoutes={{ 'explicit-x': 'explicit-x', points: 'point-set' }}
+        onSizeChange={vi.fn()}
+        onViewportChange={vi.fn()}
+        pending={false}
+        presentation={{ version: 2, contentRevision: 4, theme: 'luminous', colorVisionMode: 'standard', items: [{
+          itemId: 'explicit-x', presentation: {
+            version: 2, color: { kind: 'custom', value: '#ff8a65' }, stroke: 'dotted', strokeWidth: 'strong',
+            strokeOpacity: 0.65, regionOpacity: 0.2, halo: 'soft', label: 'always', markers: 'semantic',
+          },
+        }, {
+          itemId: 'points', presentation: {
+            version: 2, color: { kind: 'token', token: 'graph-green' }, stroke: 'solid', strokeWidth: 'normal',
+            strokeOpacity: 1, regionOpacity: 0.22, halo: 'none', label: 'auto', markers: 'none',
+          },
+        }] }}
+        scene={scene}
+        viewport={viewport}
+      />,
+    );
+
+    const path = document.querySelector<SVGPathElement>('[data-path-id="explicit-x.path"]');
+    const point = document.querySelector<SVGCircleElement>('[data-point-batch-id="points.batch"]');
+    expect(path).toHaveAttribute('stroke', '#ff8a65');
+    expect(path).toHaveAttribute('stroke-width', '3');
+    expect(path).toHaveAttribute('stroke-opacity', '0.65');
+    expect(path).toHaveAttribute('stroke-dasharray', '2 5');
+    expect(path).toHaveAttribute('data-halo', 'soft');
+    expect(point).toHaveStyle({ display: 'none' });
+  });
+
   it('keeps pointer movement imperative and commits the viewport only on release', () => {
     const onViewportChange = vi.fn();
     render(

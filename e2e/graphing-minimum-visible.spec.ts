@@ -655,6 +655,56 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'summary');
   });
 
+  test('matches the compact piecewise target and keeps theme and style edits presentation-only', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 2020, height: 1077 });
+    await page.goto('/');
+    await openGraph(page);
+    await page.getByRole('button', { name: '+ Add item' }).click();
+    await page.getByRole('menuitem', { name: 'Piecewise Function' }).click();
+    const values = page.locator('[data-testid^="graph-piecewise-draft-value-"]');
+    const conditions = page.locator('[data-testid^="graph-piecewise-draft-condition-"]');
+    const setField = async (field: Locator, latex: string) => field.evaluate((element, source) => {
+      const mathField = element as HTMLElement & { setValue: (value: string) => void };
+      mathField.setValue(source);
+      mathField.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    }, latex);
+    await setField(values.nth(0), 'x');
+    await setField(conditions.nth(0), 'x<0');
+    await setField(values.nth(1), '-x');
+    await setField(conditions.nth(1), 'x>0');
+
+    const row = page.locator('[data-testid="graph-expression-row"][data-piecewise-state]');
+    await expect(row).toHaveAttribute('data-piecewise-state', 'summary');
+    await expect(page.getByRole('button', { name: 'Expand piecewise branches' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide graph' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Delete expression' })).toBeVisible();
+    await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
+    expect((await row.boundingBox())?.height).toBeLessThan(190);
+    await page.screenshot({
+      path: testInfo.outputPath('graphing-move21-piecewise-reference-2020x1077.png'),
+      fullPage: true,
+    });
+
+    await page.getByRole('button', { name: 'Style graph item' }).click();
+    await page.getByRole('combobox', { name: 'Curve width' }).selectOption('strong');
+    await page.getByRole('combobox', { name: 'Curve line style' }).selectOption('dotted');
+    const paths = page.getByTestId('graph-scene-paths').locator('path');
+    await expect(paths.first()).toHaveAttribute('stroke-width', '3');
+    await expect(paths.first()).toHaveAttribute('stroke-dasharray', '2 5');
+    await page.getByRole('button', { name: 'Close curve style' }).click();
+    await page.getByRole('combobox', { name: 'Graph theme' }).selectOption('paper');
+    await expect(page.getByTestId('graph-page')).toHaveAttribute('data-graph-theme', 'paper');
+    await expect.poll(() => page.locator('.graph-viewport-panel').evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    )).toBe('rgb(244, 240, 230)');
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('keeps high-degree and directed routes complete through rapid interaction', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 940 });
     await page.goto('/');

@@ -1,73 +1,49 @@
-# Design QA: GRAPHING-MINIMUM-VISIBLE1
+**Comparison Target**
 
-## Source visual truth
+- Source visual truth: `/home/ahmed/Pictures/Screenshots/Screenshot from 2026-07-20 19-22-05.png`
+- Browser-rendered implementation: `/home/ahmed/Downloads/Calculator/test-results/graphing-minimum-visible-G-382cf-yle-edits-presentation-only-chromium/graphing-move21-piecewise-reference-2020x1077.png`
+- Full-view comparison: `/home/ahmed/Downloads/Calculator/.task_tmp/graphing-appearance-styling1/piecewise-reference-comparison.png`
+- Focused comparison: `/home/ahmed/Downloads/Calculator/.task_tmp/graphing-appearance-styling1/piecewise-focused-comparison.png`
+- Viewport: 2020 x 1077 CSS pixels, Chromium desktop.
+- State: Technical theme; collapsed `y={x if x<0; -x if x>0}` item; allowed-gap diagnostic visible; curve rendered.
 
-- The approved REZANOVA Graphing mockups supplied by the user in the Graphing discussion are the visual authority.
-- The interaction and layout interpretation is supported by `/home/ahmed/Downloads/codex-handoff-rezanova-graphing-rebased-latest.md`.
-- Move 8 intentionally implements only the base real-function state. Future mock controls such as Analyze, Export, Complex/Both, Presentation, and Three.js are omitted because the production shell exposes only working controls.
+**Findings**
 
-## Implementation evidence
+- No actionable P0, P1, or P2 mismatch remains in the approved compact piecewise surface.
+- Typography: both states use the product MathLive rendering for the cases expression and the established condensed UI face for controls and diagnostics. The focused comparison preserves the same hierarchy and readable two-line warning.
+- Spacing and layout: the swatch, rendered brace/cases expression, expand control, visibility control, delete control, and diagnostic follow the same compact horizontal and vertical rhythm. The full-page implementation includes the current Calcwiz shell around the Graph page, while the source is cropped to the Graph surface; this is an expected framing difference.
+- Colors and tokens: the dark technical canvas, blue item token, muted borders, white mathematics, and amber diagnostic remain consistent. Paper was separately exercised as a warm light canvas without changing the outer Calcwiz chrome.
+- Image and icon fidelity: no decorative raster asset is needed for this component. Existing Calcwiz product assets and the established Lucide control icons are retained.
+- Copy and content: the piecewise branches and the allowed-gap diagnostic match the source meaning and wording.
 
-- Production screenshot: `test-results/graphing-minimum-visible-G-85523-he-visible-surface-truthful-chromium/graphing-1280x800.png`.
-- Additional development comparison: `.task_tmp/graphing-minimum-visible1/1600x940.png`.
-- States checked: three real expressions with one trailing blank row; independent Graph tabs; collapsed/expanded expression rail; pan and zoom; invalid typing grace; reduced motion.
-- User defect evidence: `/home/ahmed/Videos/Screencasts/Screencast from 2026-07-19 12-01-36.mp4` was inspected for first-character focus transfer, wheel stutter, and the blue native-selection wash.
-- Viewports checked: 1280x800 and 1600x940.
+**Open Questions**
 
-## Full-view comparison
+- None for Move 21. The source includes a legacy reorder gutter outside the approved compact-row control list; this implementation intentionally retains the current Graph ordering model rather than reintroducing that withdrawn behavior.
 
-- The app-level tab strip remains above a distinct Graph page, matching Calcwiz ownership rather than imitating the mock window chrome.
-- Graphing retains the mock's dark green-black hierarchy: identity header, concise toolbar, left expression rail, large Cartesian viewport, and restrained status footer.
-- The first three expression rows and curves use blue, green, and violet consistently. The blank row remains visually subordinate.
-- The official REZANOVA application icon is used instead of inventing a glyph.
+**Implementation Checklist**
 
-## Fidelity surfaces
+- [x] Restore collapsed rendered-cases presentation.
+- [x] Keep branch editing behind the expand control.
+- [x] Place gap/overlap diagnostics directly below the expression.
+- [x] Verify theme and curve-style commands in the browser.
+- [x] Confirm style-only edits do not resample mathematics.
+- [x] Check browser console and page errors.
 
-### 1. Layout and composition
+**Comparison History**
 
-- Passed at 1280x800 and 1600x940. Rail, viewport, toolbar, and footer remain legible without overlap. The rail collapses and restores without changing document state.
+- Initial comparison: no P0/P1/P2 issue was found, so no visual correction iteration was required.
+- Focused post-build evidence confirms the compact row control order, cases rendering, and diagnostic placement at the reference state.
 
-### 2. Typography and hierarchy
+**Primary Interactions Tested**
 
-- Passed. MathLive expressions provide the intended mathematical texture; labels and status text remain subordinate to the graph. No fake mathematical text is used for authored expressions.
+- Create a structured two-branch piecewise relation.
+- Keep the completed item collapsed and expand it through its keyboard-accessible button.
+- Open and close the style popover; change width and dash style.
+- Switch to Paper and verify only the graph canvas changes.
+- Verify no browser console or page errors.
 
-### 3. Color and surfaces
+**Follow-up Polish**
 
-- Passed after correcting successive rows from a repeated blue token to the approved distinguishing palette. Borders and surfaces separate regions without decorative gradients.
+- None required for Move 21.
 
-### 4. Controls and iconography
-
-- Passed. Every visible control works and has an accessible name. Inert future controls are absent. Official app identity and conventional icon controls replace placeholder glyphs.
-
-### 5. Content and density
-
-- Passed. The plot remains the dominant surface, expression rows are dense but readable, and the footer reports readiness/visible count/gesture guidance without crowding.
-
-## Focused-region review
-
-- Expression rail and canvas were reviewed together because row-color/curve-color identity crosses the boundary. The production screenshot confirms all three mappings and the reciprocal discontinuity.
-- No separate crop was needed: the 1280x800 full view renders the relevant rail, toolbar, axes, paths, and footer at readable scale.
-
-## Findings and resolution history
-
-- P1: React Strict Mode cleanup left the first real sample unable to commit. Fixed by restoring mounted lifecycle state during effect setup; real browser plotting then completed.
-- P2: Parent runtime-context identity changes restarted settled sampling after OOE tab-status events. Fixed by retaining the context in a ref and keying sampling to primitive workspace identity.
-- P2: MathLive accessory chrome, edge tick clipping, and stale tab-running status reduced fidelity. Fixed before production evidence.
-- P2: Successive expressions initially reused blue. Fixed with stable new-row palette indexing and a focused regression test.
-- P1: The first character promoted a blank row while the newly mounted trailing MathLive row stole focus. The Move 8 delayed-focus correction covered separated test input but did not preserve an uninterrupted real typing session. Move 9 fixes the root cause by reconciling authored and blank rows in one flat keyed collection, preserving the exact MathLive DOM element and restoring focus synchronously only if it was genuinely lost.
-- P1: Plot dragging could trigger a full blue native-selection wash. Fixed by cancelling pointer selection/drag behavior across the viewport and its descendants; production pan verification confirms no non-collapsed selection remains.
-- P2: The 90ms wheel timer repeatedly committed viewport revisions during normal scroll bursts, while an SVG-group transform did not guarantee compositor promotion. Fixed with a 180ms coalescing window and one HTML compositor layer around the SVG canvas.
-- No open P0, P1, or P2 finding remains for the Move 8 surface.
-
-## Final result
-
-passed
-
-## GRAPHING-RELATION-ROUTES1 follow-up
-
-- Production screenshot: `test-results/graphing-minimum-visible-G-27e42-th-relation-correct-tracing-chromium/graphing-relation-routes-1440x940.png`.
-- Checked at 1440x940: `x=y^2`, a two-point set, matching item/geometry colors, direct point hit testing, explicit-x y-directed trace at `(9, 3)`, keyboard stepping, and the special `+ Point Set` affordance.
-- The first capture exposed the screen-reader trace instruction as visible viewport text. A Graph-local visually-hidden rule resolved it; the recapture is clean with no plot obstruction.
-- Real MathLive sequential typing verifies `sin(x)` remains one uninterrupted promoted-row edit and `infinity` becomes `\infty`; Graphing removes only the ambiguous `in` and `!in` word shortcuts and retains explicit command entry for set membership.
-- Pointer trace motion remains imperative and scene-local. It neither commits a viewport nor sends pointer events through OOE.
-- Result: passed with no open P0, P1, or P2 finding for Move 9.
+final result: passed

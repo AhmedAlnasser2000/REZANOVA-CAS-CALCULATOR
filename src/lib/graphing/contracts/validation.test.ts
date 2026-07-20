@@ -71,7 +71,10 @@ describe('Graph v1 contract validators', () => {
   it('validates clone-safe bounded sampling requests without renderer state', () => {
     const items = GRAPH_PRE_THREE_BASELINE_WORKLOAD_V2.items
       .filter((item) => item.kind === 'relation').slice(0, 3)
-      .map(({ presentation: _presentation, ...item }) => item);
+      .map(({ presentation, ...item }) => {
+        void presentation;
+        return item;
+      });
     const request = {
       version: 4,
       requestId: 'request-1',
@@ -93,7 +96,7 @@ describe('Graph v1 contract validators', () => {
 
   it('keeps surface state clone-safe and independent from document truth', () => {
     const surface = {
-      version: 1,
+      version: 2,
       viewport: { coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -5, yMax: 5 },
       viewportRevision: 2,
       parameterRevision: 3,
@@ -103,6 +106,7 @@ describe('Graph v1 contract validators', () => {
       analyzeOpen: false,
       selectedItemId: null,
       presentationMode: false,
+      appearance: { theme: 'technical', colorVisionMode: 'standard' },
     };
     expect(validateGraphSurfaceState(surface).ok).toBe(true);
     expect(validateGraphSurfaceState({ ...surface, workerHandle: {} }).ok).toBe(false);

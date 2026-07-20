@@ -2,38 +2,20 @@ import {
   classifyGraphSource,
   compileGraphExpression,
   createGraphExpressionEvaluator,
+  defaultGraphItemPresentation,
   adaptGraphExpressionMathJson,
   parseGraphConditionMathJson,
   parseGraphLatexToStructuralMathJson,
   serializeGraphMathJsonToLatex,
   type GraphConditionIR,
   type GraphDocumentV2,
-  type GraphItemPresentationV1,
+  type GraphItemPresentationV2,
   type GraphItemSpecV1,
   type GraphItemSpecV2,
   type GraphNoteItemV1,
   type GraphSourceV1,
   type GraphStopReason,
 } from '../../lib/graphing';
-
-const GRAPH_COLOR_TOKENS = [
-  'graph-blue',
-  'graph-green',
-  'graph-violet',
-  'graph-orange',
-  'graph-cyan',
-] as const;
-
-function presentation(index: number): GraphItemPresentationV1 {
-  return {
-    version: 1,
-    colorToken: GRAPH_COLOR_TOKENS[index % GRAPH_COLOR_TOKENS.length],
-    stroke: 'solid',
-    strokeWidth: 'normal',
-    fillOpacity: 0.18,
-    label: 'auto',
-  };
-}
 
 export function graphItemSource(item: GraphItemSpecV2) {
   return 'source' in item
@@ -168,7 +150,7 @@ export function buildGraphPiecewiseItemFromAuthoringDraft(input: {
     source: { sourceKind: 'mathlive-latex', sourceLatex: '', sourceRevision: input.sourceRevision },
     piecewise: { version: 1, branches },
     visible: input.previous?.visible ?? true,
-    presentation: input.previous?.presentation ?? presentation(input.index),
+    presentation: input.previous?.presentation ?? defaultGraphItemPresentation(input.index),
   };
   item.source.sourceLatex = presentationPiecewiseLatex(item);
   return item;
@@ -278,7 +260,7 @@ export function buildVisibleGraphItem(input: {
   };
   const previousPresentation = input.previous && 'presentation' in input.previous
     ? input.previous.presentation
-    : presentation(input.index);
+    : defaultGraphItemPresentation(input.index);
   const visible = input.previous?.visible ?? true;
   const classified = classifyGraphSource(source);
   if (classified.ok
@@ -454,6 +436,22 @@ export function toggleGraphDocumentItem(
     items: document.items.map((item) => item.itemId === itemId
       ? item.kind === 'note' ? item : { ...item, visible: !item.visible }
       : item),
+  } satisfies GraphDocumentV2;
+}
+
+export function replaceGraphDocumentPresentation(input: {
+  document: GraphDocumentV2;
+  itemId: string;
+  presentation: GraphItemPresentationV2;
+}) {
+  const item = input.document.items.find((candidate) => candidate.itemId === input.itemId);
+  if (!item || !('presentation' in item)) return null;
+  return {
+    ...input.document,
+    contentRevision: input.document.contentRevision + 1,
+    items: input.document.items.map((candidate) => candidate.itemId === input.itemId
+      ? { ...candidate, presentation: input.presentation }
+      : candidate),
   } satisfies GraphDocumentV2;
 }
 

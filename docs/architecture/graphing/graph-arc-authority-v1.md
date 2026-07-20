@@ -1,6 +1,6 @@
 # REZANOVA Graphing authority contract v1
 
-Status: approved architecture contract; implementation active through the pre-Three foundation arc
+Status: approved architecture contract; implementation active through the 30-move Graphing program
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
 Implementation baseline: `76c0c61b`; implementation is complete through the verified Move 7 gate
 Date: 2026-07-19
@@ -558,7 +558,12 @@ The headless adapter validates scene semantics and snapshots. SVG is the determi
 | point/point set | `GRAPHING-RELATION-ROUTES1` | exact/numeric point evaluator | point index | finite coordinates | symbolic locus generation deferred |
 | polar `r=f(theta)` | `GRAPHING-POLAR-GRID1` | polar sampler | `theta` | bounded parameter domain | implicit polar regions deferred unless separately approved |
 | parametric `(x(t),y(t))` | `GRAPHING-POLAR-GRID1` | parametric sampler | declared parameter | bounded interval condition | surfaces and multi-parameter families deferred |
-| real-parameterized complex trajectory | `GRAPHING-COMPLEX-VIEWS1` | safe complex evaluator -> Argand path | real source parameter | trajectory only; Both is synchronized split | no domain coloring, complex input plane, Riemann surface, or 3D |
+| explicit real surface `z=f(x,y)` | `GRAPHING-REAL-SURFACES1` | bounded adaptive surface sampler | `(x,y)` | domain breaks, normals, contours, stationary/local-extrema candidates | no implicit/parametric surface or broad surface-surface solving |
+| real-parameterized complex trajectory | `GRAPHING-COMPLEX-MAPPING-SOLVER1` | domain-neutral complex evaluator -> Argand path | real source parameter | bounded trajectory analysis; independent from complex input-plane maps | never presented as domain coloring |
+| complex mapping `f:C -> C` | `GRAPHING-COMPLEX-MAPPING-SOLVER1` | structured complex IR -> tiles/component fields/analyzer | complex input `z` | certified principal cuts, branch points, holomorphic status, bounded exact/local solve evidence | no universal closed-form or false global numerical completeness |
+| multivalued complex family | `GRAPHING-RIEMANN-SHEETS2D1` | mapping plus `ComplexBranchAddress` vector | `z` plus branch address | finite/all sheets or budgeted infinite neighborhood; analytic continuation | no uncontrolled Cartesian product or arbitrary cut editing |
+
+Real surface, complex tile, and Riemann mesh contracts remain renderer-neutral and versioned. Persisted pane/camera/overlay/active-sheet state is tab-local; source expressions and authored assumptions are document truth. Every contract widening migrates old versions strictly rather than loosening their validators. Three objects and types never cross a public Graph contract.
 
 ## Sampling contract
 
@@ -642,12 +647,12 @@ Piecewise execution consumes the existing structured branch relations and `Graph
 
 Unless a later dedicated prerequisite is approved, Graph milestones must not modify History persistence/replay/tickets, Notebook document/schema/page/publication, Surface Protocol, calculator Variables, existing solver route precedence, canonical-result types/version policy, shared printer authority, app-shell panel-motion behavior, unrelated OOE capability IDs/hosts, release packaging, remote/cloud compute, plugins, or public SDK contracts.
 
-Deferred product work includes cross-workspace Open/Send/Plot, graph projects/persistence/import packages, Notebook graph blocks or media insertion, Surface Protocol exposure, Spreadsheet integration, unrestricted Boolean regions, global topology proofs, general 3D, Riemann surfaces, unrestricted complex-domain coloring, remote graph compute, plugins, and a public SDK.
+Deferred product work includes cross-workspace Open/Send/Plot, graph projects/persistence/import packages, Notebook graph blocks or media insertion, Surface Protocol exposure, Spreadsheet integration, unrestricted Boolean regions, global topology proofs, implicit/parametric real surfaces, broad surface-surface solving, arbitrary branch-cut editing, unlimited sheet loading, dedicated touchpad gestures, remote graph compute, plugins, and a public SDK.
 
 ## Architecture stop conditions
 
-Implementation stops for review if it appears to require a universal solver AST, existing solver-precedence changes, generated-LaTeX authority, a second command bus, History/Notebook changes, renderer types in document/math contracts, unbounded theorem proving, rewriting all app-page runtime behavior, or complex semantics beyond real-parameterized Argand trajectories. A new shared canonical-result version requires its own approved contract milestone.
+Implementation stops for review if it appears to require a universal solver AST, existing solver-precedence changes, generated-LaTeX authority, a second command bus, History/Notebook changes, renderer types in document/math contracts, unbounded theorem proving, rewriting all app-page runtime behavior, an unreviewed Equation-private import, or claims of universal/global complex solving without bounded evidence. A new shared canonical-result version requires its own approved contract milestone.
 
 ## First-arc acceptance boundary
 
-The first arc is complete only when the user can create independent Graph tabs, enter bare or explicit supported relations through a trailing blank row, see truthful adaptive plots/regions, pan/zoom/trace, manage visibility and local sliders, use structured piecewise and bounded inequalities, use Cartesian/polar grids, inspect evidence-classified features, switch among bounded Real/Complex/Both views, and export SVG/PNG—while every job is governed, every stale result is rejected, every scene is renderer-neutral, and protected systems remain unchanged.
+The 30-move arc is complete only when the user can create independent Graph tabs, enter supported real relations, explicit real surfaces, complex mappings, and complex trajectories through structured authority, see truthful adaptive plots/regions/surfaces/sheets, navigate independent 2D/3D panes, trace and analyze evidence-classified features, load bounded branch neighborhoods, and export SVG/PNG—while every job is governed, every stale result is rejected, every scene is renderer-neutral, every incompleteness boundary is visible, and protected systems remain unchanged.

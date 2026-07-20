@@ -5,12 +5,13 @@ import {
 } from './graph-workspace-session';
 import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
-describe('Graph workspace session V2', () => {
+describe('Graph workspace session V3', () => {
   it('migrates a validated V1 session without changing mathematical identity', () => {
     const current = createGraphWorkspaceSessionState('graph.1', 'Graph');
     const legacy = {
       ...current,
       version: 1,
+      surface: { ...current.surface, version: 1 },
       document: {
         version: 1,
         documentId: current.document.documentId,
@@ -19,9 +20,21 @@ describe('Graph workspace session V2', () => {
         items: [],
       },
     };
+    delete (legacy.surface as { appearance?: unknown }).appearance;
     expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
-      version: 2,
+      version: 3,
       document: { version: 2, contentRevision: 7, mathematicsRevision: 7 },
+      surface: { version: 2, appearance: { theme: 'technical', colorVisionMode: 'standard' } },
+    });
+  });
+
+  it('migrates a V2 session with the technical appearance default', () => {
+    const current = createGraphWorkspaceSessionState('graph.2', 'Graph');
+    const legacy = { ...current, version: 2, surface: { ...current.surface, version: 1 } };
+    delete (legacy.surface as { appearance?: unknown }).appearance;
+    expect(migrateGraphWorkspaceSessionState(legacy)).toMatchObject({
+      version: 3,
+      surface: { version: 2, appearance: { theme: 'technical', colorVisionMode: 'standard' } },
     });
   });
 

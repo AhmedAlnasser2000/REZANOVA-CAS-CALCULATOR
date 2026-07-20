@@ -15,7 +15,9 @@ import type {
   GraphDocumentV1,
   GraphDocumentV2,
   GraphExpressionIR,
+  GraphItemPresentation,
   GraphItemPresentationV1,
+  GraphItemPresentationV2,
   GraphParameterSpecV1,
   GraphPiecewiseSpecV1,
   GraphRelationIR,
@@ -26,6 +28,7 @@ import type {
   GraphSourceV1,
   GraphStopReason,
   GraphSurfaceStateV1,
+  GraphSurfaceStateV2,
   GraphViewportV1,
   SampledSceneSnapshotV2,
 } from './types';
@@ -153,7 +156,7 @@ const stopReasonSchema: z.ZodType<GraphStopReason> = z.strictObject({
   detailCode: z.string().max(160).optional(),
 });
 
-const presentationSchema: z.ZodType<GraphItemPresentationV1> = z.strictObject({
+const presentationV1Schema: z.ZodType<GraphItemPresentationV1> = z.strictObject({
   version: z.literal(1),
   colorToken: idSchema,
   stroke: z.enum(['solid', 'dashed']),
@@ -161,6 +164,26 @@ const presentationSchema: z.ZodType<GraphItemPresentationV1> = z.strictObject({
   fillOpacity: finiteSchema.min(0).max(1),
   label: z.enum(['auto', 'always', 'never']),
 });
+
+const presentationV2Schema: z.ZodType<GraphItemPresentationV2> = z.strictObject({
+  version: z.literal(2),
+  color: z.discriminatedUnion('kind', [
+    z.strictObject({ kind: z.literal('token'), token: idSchema }),
+    z.strictObject({ kind: z.literal('custom'), value: z.string().regex(/^#[0-9a-fA-F]{6}$/u) }),
+  ]),
+  stroke: z.enum(['solid', 'dashed', 'dotted']),
+  strokeWidth: z.enum(['thin', 'normal', 'strong']),
+  strokeOpacity: finiteSchema.min(0.15).max(1),
+  regionOpacity: finiteSchema.min(0).max(0.8),
+  halo: z.enum(['none', 'soft']),
+  markers: z.enum(['semantic', 'none']),
+  label: z.enum(['auto', 'always', 'never']),
+});
+
+const presentationSchema: z.ZodType<GraphItemPresentation> = z.union([
+  presentationV1Schema,
+  presentationV2Schema,
+]);
 
 const parameterSchema: z.ZodType<GraphParameterSpecV1> = z.strictObject({
   version: z.literal(1),
@@ -302,7 +325,7 @@ const documentSchema = z.strictObject({
   message: 'Graph item IDs must be unique.',
 }) as z.ZodType<GraphDocumentV2>;
 
-const surfaceSchema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
+const surfaceV1Schema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
   version: z.literal(1),
   viewport: viewportSchema,
   viewportRevision: revisionSchema,
@@ -324,6 +347,34 @@ const surfaceSchema: z.ZodType<GraphSurfaceStateV1> = z.strictObject({
   analyzeOpen: z.boolean(),
   selectedItemId: idSchema.nullable(),
   presentationMode: z.boolean(),
+});
+
+const surfaceSchema: z.ZodType<GraphSurfaceStateV2> = z.strictObject({
+  version: z.literal(2),
+  viewport: viewportSchema,
+  viewportRevision: revisionSchema,
+  parameterRevision: revisionSchema,
+  viewPolicy: z.discriminatedUnion('mode', [
+    z.strictObject({ mode: z.literal('real') }),
+    z.strictObject({
+      mode: z.literal('complex'),
+      interpretation: z.literal('real-parameterized-argand-trajectory'),
+    }),
+    z.strictObject({
+      mode: z.literal('both'),
+      interpretation: z.literal('real-parameterized-argand-trajectory'),
+      layout: z.literal('synchronized-split'),
+    }),
+  ]),
+  grid: gridPolicySchema,
+  expressionRailCollapsed: z.boolean(),
+  analyzeOpen: z.boolean(),
+  selectedItemId: idSchema.nullable(),
+  presentationMode: z.boolean(),
+  appearance: z.strictObject({
+    theme: z.enum(['technical', 'paper', 'aurora', 'luminous']),
+    colorVisionMode: z.enum(['standard', 'color-vision-friendly']),
+  }),
 });
 
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({
@@ -459,6 +510,8 @@ export const validateGraphViewport = (input: unknown) =>
   validateJsonContract(input, 'Graph viewport', viewportSchema, standardLimits);
 export const validateGraphSurfaceState = (input: unknown) =>
   validateJsonContract(input, 'Graph surface state', surfaceSchema, standardLimits);
+export const validateGraphSurfaceStateV1 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V1 surface state', surfaceV1Schema, standardLimits);
 export const validateGraphRevisionSet = (input: unknown) =>
   validateJsonContract(input, 'Graph revision set', revisionsSchema, standardLimits);
 export const validateGraphRendererCapabilities = (input: unknown) =>

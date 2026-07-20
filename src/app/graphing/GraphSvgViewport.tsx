@@ -7,7 +7,7 @@ import {
   buildGraphGridScene,
   GraphSvgReferenceRenderer,
   type GraphGridPolicyV1,
-  type GraphRendererPresentationFrameV1,
+  type GraphRendererPresentationFrame,
   type GraphViewportV1,
   type SampledSceneRuntimeV2,
 } from '../../lib/graphing';
@@ -28,7 +28,7 @@ export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
 type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
-  presentation?: GraphRendererPresentationFrameV1;
+  presentation?: GraphRendererPresentationFrame;
   scene: SampledSceneRuntimeV2 | null;
   sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;

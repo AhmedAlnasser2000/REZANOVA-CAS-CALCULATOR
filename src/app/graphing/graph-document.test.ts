@@ -7,6 +7,7 @@ import {
   mutateGraphPiecewiseBranches,
   replaceGraphDocumentItem,
   replaceGraphDocumentNote,
+  replaceGraphDocumentPresentation,
   updateGraphPiecewiseBranch,
   updateGraphParameterItem,
 } from './graph-document';
@@ -111,6 +112,34 @@ describe('Move 8 Graph document editing', () => {
     });
     expect(updated).toMatchObject({ contentRevision: 2, mathematicsRevision: 0 });
     expect(updated.items[0]).toMatchObject({ kind: 'note', text: 'Domain observations' });
+  });
+
+  it('changes item presentation without changing mathematics authority', () => {
+    const item = buildVisibleGraphItem({
+      itemId: 'item.1', sourceLatex: 'x', sourceRevision: 1, index: 0,
+    });
+    const graphed = replaceGraphDocumentItem(document, item);
+    const updated = replaceGraphDocumentPresentation({
+      document: graphed,
+      itemId: item.itemId,
+      presentation: {
+        version: 2,
+        color: { kind: 'custom', value: '#ff8a65' },
+        stroke: 'dashed',
+        strokeWidth: 'strong',
+        strokeOpacity: 0.65,
+        regionOpacity: 0.2,
+        halo: 'none',
+        label: 'always',
+        markers: 'semantic',
+      },
+    });
+
+    if (!updated) throw new Error('Expected the graph item presentation to update.');
+    expect(updated).toMatchObject({ contentRevision: 2, mathematicsRevision: 1 });
+    expect(updated.items[0]).toMatchObject({
+      presentation: { version: 2, color: { kind: 'custom', value: '#ff8a65' }, stroke: 'dashed' },
+    });
   });
 
   it('keeps authored and slider-created parameter provenance distinct', () => {

@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 27-move implementation program; Moves 1-16 complete; Move 17 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-20 complete; Move 21 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -311,41 +311,65 @@ Status: implementation verified; pre-Three checkpoint remains blocked by the exi
 ## 21. `GRAPHING-APPEARANCE-STYLING1`
 
 - Terra: High; gate type: ui.
-- Objective: add renderer-neutral Technical/Paper/Aurora/Luminous themes and per-curve color, width, dash, opacity, region opacity, soft halo, and marker controls through `setPresentation()` without sampling.
+- Objective: restore the compact rendered-cases piecewise resting row and add renderer-neutral Technical/Paper/Aurora/Luminous themes plus per-item color, opacity, width, dash, region opacity, soft halo, label, and semantic-marker commands through `setPresentation()` without resampling.
+- Paper changes only the Graph canvas; Luminous remains restrained. Theme and style state is tab-local, undoable, versioned, and preserves custom item overrides without incrementing mathematics revisions.
 
 ## 22. `GRAPHING-THREE-RENDERER1`
 
 - Terra: High; gate type: ui.
-- Objective: pin audited `three@0.185.1` and add the automatic private WebGL2 adapter using an orthographic camera, CSS-pixel `Line2` lines, basic region geometry, on-demand rendering, deterministic disposal, and immediate SVG fallback on context loss.
-- Three types remain private; labels, callouts, accessibility, scene authority, and SVG reference/export ownership stay outside Three.
+- Objective: pin audited `three@0.185.1`, widen renderer-neutral scene/camera contracts, and add the private on-demand WebGL2 adapter plus a permanent per-pane 2D/3D switch.
+- 2D uses an orthographic planar camera; 3D offers Perspective/Orthographic, Top/Front/Right/Isometric snaps, Unity-compatible pan/orbit/zoom/focus/reset, optional flythrough, equal units, explicit vertical exaggeration, restrained lighting, selection outline, and optional wireframe.
+- Existing curves stay on `z=0`. Three types remain private; SVG remains the precise deterministic 2D reference/fallback. Context loss, unavailable WebGL2, resource caps, and disposal are visible and deterministic.
 
 ## 23. `GRAPHING-ANALYSIS-OOE1`
 
 - Terra: High; gate type: backend.
-- Objective: add independent `graph.analyze` traffic control and validated V2 feature evidence for core curve/shape analysis without importing Equation-private internals.
+- Objective: add independent `graph.analyze` traffic control and validated V2 evidence for roots/intercepts, extrema, compatible intersections, holes/poles, asymptotes/domain boundaries, and piecewise continuity without importing Equation-private internals.
+- Preserve exact-proved, conditional, numeric-validated, sampled-estimate, suspected, inconclusive, and unsupported evidence classes. Only exact or numeric-validated findings may become persistent annotations.
 
 ## 24. `GRAPHING-ANALYZE-UI1`
 
 - Terra: Medium; gate type: ui.
-- Objective: expose a non-dimming Analyze drawer with Features, Evidence, and Style tabs plus renderer-neutral proven/validated annotations and explicit recenter actions.
+- Objective: expose a floating, resizable, non-dimming Analyze overlay with Features, Evidence, and Style tabs, tab-local remembered state, hover/focus previews, explicit pins for proven/validated annotations, and explicit recenter actions.
+- The overlay does not resize or auto-pan the viewport and reserves an integrated Solve section for Move 26.
 
-## 25. `GRAPHING-COMPLEX-VIEWS1`
+## 25. `GRAPHING-REAL-SURFACES1`
 
 - Terra: High; gate type: backend and ui.
-- Objective: add real-parameterized Argand trajectories, explicit Real/Complex/Both modes, accessible split view, synchronized path parameter, independent cameras, and bounded trajectory analysis.
+- Objective: add explicit structured `z=f(x,y)` relations, bounded adaptive meshes, domain breaks, normals, contours, budget evidence, top-down 2D height/contour rendering, and shaded 3D rendering with optional wireframe.
+- Surface trace reports `(x,y,z)`; analysis adds domain boundaries, `z=0` contours, and validated stationary/local-extrema candidates. Implicit and parametric surfaces plus broad surface-surface solving remain deferred.
 
-## 26. `GRAPHING-PRESENTATION-EXPORT1`
+## 26. `GRAPHING-COMPLEX-MAPPING-SOLVER1`
+
+- Terra: High; gate type: backend and ui.
+- Objective: add structured `f: C -> C` mappings for `f(z)=...`, `w=...`, and bare z-expressions, continuous domain coloring, synchronized component maps, real-axis-slice Both mode, visible certified principal cuts/branch points, graph-local assumptions, and bounded exact/numeric complex solving inside Analyze.
+- Core mappings include roots, rational/complex powers, logarithms, inverse trig/hyperbolic families, conjugate, Re, Im, magnitude, and argument. Non-holomorphic mappings are explicit. Real-parameterized Argand trajectories remain a separate relation.
+- A reviewed domain-neutral complex evaluation/branch seam may be shared with Equation; Graph never imports Equation-private code or silently reinterprets real `x` expressions.
+
+## 27. `GRAPHING-RIEMANN-SHEETS2D1`
+
+- Terra: High; gate type: backend and ui.
+- Objective: add a structured `ComplexBranchAddress` vector, finite/all-sheet and bounded infinite-family loading, nearest composed neighbors, a compact sheet strip, certified cut correspondences, and trace-driven analytic continuation.
+- Camera movement never changes sheets; loaded-sheet truncation is explicit; domain coloring and all component maps follow the selected address.
+
+## 28. `GRAPHING-RIEMANN-SURFACES3D1`
+
+- Terra: High; gate type: backend and ui.
+- Objective: add exploratory 3D Riemann meshes for the selected and adjacent connected sheets with Re/Im/magnitude height modes, phase/magnitude color, reduced adjacent-sheet emphasis, truthful paired seams, branch-transition trace readback, bounded neighborhood loading, and precise 2D fallback.
+- Real/Complex/Both panes retain independent mode, camera, projection, and navigation state. No fake geometric bridges are drawn for relationships that cannot be truthfully embedded in 3D.
+
+## 29. `GRAPHING-PRESENTATION-EXPORT1`
 
 - Terra: High; gate type: ui.
 - Objective: add Graph Presentation Mode and deterministic renderer-neutral SVG/PNG export with explicit viewport policy, visible-item selection, theme/style/grid/annotation options, transparent backgrounds, bounded PNG sizes, and native/browser Save As paths.
 - The live WebGL canvas is never export authority; editable Graph project persistence remains deferred.
 
-## 27. `GRAPHING-ARC-CLOSEOUT1`
+## 30. `GRAPHING-ARC-CLOSEOUT1`
 
 - Terra: High; gate type: backend and ui closeout.
-- Objective: run the complete Graph semantic/runtime/renderer/analysis/complex/export/browser evidence, the canonical performance workload, lifecycle and bundle gates, plus one packaged Linux Graph smoke.
+- Objective: run the complete Graph semantic/runtime/renderer/analysis/surface/complex/Riemann/export/browser evidence, the canonical performance workload, lifecycle and bundle gates, plus one packaged Linux Graph smoke.
 - Stop on any false mathematical claim, stale result, renderer leak, unverified visible output, or protected-system widening.
 
 ## Intended visible progression
 
-The first visible release is Move 8, not Three.js: a truthful SVG-backed graph with governed sampling. Relations widen before the production renderer, so Three.js consumes a mature renderer-neutral scene rather than defining it. Analyze follows evidence authority, and Complex follows a stable two-view governor. This order optimizes for correctness and reversibility while still giving the user a usable plotter early.
+The first visible release is Move 8, not Three.js: a truthful SVG-backed graph with governed sampling. Relations widen before the production renderer, so Three consumes a mature renderer-neutral scene rather than defining it. Analyze follows evidence authority; explicit real surfaces precede general complex mappings; precise sheet identity precedes exploratory Riemann geometry. This order optimizes for correctness and reversibility while still giving the user a usable plotter early.

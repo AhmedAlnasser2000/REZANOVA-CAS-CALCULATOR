@@ -595,4 +595,31 @@ describe('GraphWorkspacePage', () => {
     await new Promise((resolve) => setTimeout(resolve, 220));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
   });
+
+  it('updates theme and curve style without resampling mathematics', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Styled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'x');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Style graph item' })).toBeEnabled());
+    await waitFor(() => expect(runGraphSampleWithOoe.mock.calls.some(
+      ([request]) => request.quality === 'polish' && request.revisions.mathematics === 1,
+    )).toBe(true), { timeout: 900 });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    runGraphSampleWithOoe.mockClear();
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Graph theme' }), { target: { value: 'paper' } });
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Style graph item' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Curve width' }), { target: { value: 'strong' } });
+
+    expect(screen.getByTestId('graph-page')).toHaveAttribute('data-graph-theme', 'paper');
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
+  });
 });

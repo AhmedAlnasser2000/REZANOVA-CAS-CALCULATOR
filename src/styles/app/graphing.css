@@ -1,3 +1,5 @@
+@import './graphing-appearance.css';
+
 .active-surface--graphing {
   min-height: min(900px, calc(100vh - 150px));
 }
@@ -353,7 +355,9 @@
   width: 15px;
   height: 15px;
   border-radius: 4px;
-  background: #5598ff;
+  padding: 0;
+  border: 0;
+  background: var(--graph-item-color, #5598ff);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 

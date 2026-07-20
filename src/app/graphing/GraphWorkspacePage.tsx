@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -28,10 +29,17 @@ import {
 } from 'lucide-react';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { MathEditor } from '../../components/MathEditor';
-import type { GraphItemSpecV1, GraphNoteItemV1 } from '../../lib/graphing';
+import {
+  normalizeGraphItemPresentation,
+  resolveGraphPresentationColor,
+  type GraphAppearanceThemeV1,
+  type GraphItemPresentationV2,
+  type GraphItemSpecV1,
+  type GraphNoteItemV1,
+} from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV2,
+  GraphWorkspaceSessionStateV3,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
@@ -40,12 +48,13 @@ import {
   graphPiecewiseDraftBranchFeedback,
 } from './graph-document';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
+import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV2;
+  session: GraphWorkspaceSessionStateV3;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV2) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV3) => void;
 };
 
 type GraphRailEntry =
@@ -63,6 +72,11 @@ type GraphExpressionRowProps = {
   runtimeWarning?: string;
   onSubmit: () => void;
   onToggle?: () => void;
+  onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
+  appearance: {
+    theme: GraphAppearanceThemeV1;
+    colorVisionMode: 'standard' | 'color-vision-friendly';
+  };
   onUpdateParameter?: (values: Partial<Pick<
     Extract<GraphItemSpecV1, { kind: 'parameter' }>['parameter'],
     'value' | 'minimum' | 'maximum' | 'step' | 'animation'
@@ -264,12 +278,15 @@ function GraphExpressionRow({
   onSettleParameter,
   onSubmit,
   onToggle,
+  onUpdatePresentation,
   onUpdateParameter,
   runtimeWarning,
   piecewiseDraft,
   samplingBusy = false,
+  appearance,
 }: GraphExpressionRowProps) {
   const [piecewiseCollapsed, setPiecewiseCollapsed] = useState(false);
+  const [styleOpen, setStyleOpen] = useState(false);
   const [editorOverflowing, setEditorOverflowing] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
   const measureEditorOverflow = useCallback(() => {
@@ -297,11 +314,17 @@ function GraphExpressionRow({
   const draftMessage = item?.kind === 'invalid-relation-draft'
     ? graphDraftMessage(item.parseStop)
     : '';
-  const colorToken = item?.kind === 'parameter'
-    ? 'graph-violet'
+  const color = item?.kind === 'parameter'
+    ? '#ae68f5'
     : item && 'presentation' in item
-      ? item.presentation.colorToken
-      : 'graph-blue';
+      ? resolveGraphPresentationColor(item.presentation, appearance.colorVisionMode)
+      : '#5598ff';
+  const presentationColor = item && 'presentation' in item
+    ? normalizeGraphItemPresentation(item.presentation).color
+    : null;
+  const colorToken = presentationColor?.kind === 'token'
+    ? presentationColor.token
+    : item?.kind === 'parameter' ? 'graph-violet' : item ? undefined : 'graph-blue';
   const hidden = item ? !item.visible : false;
   const piecewiseEditorOpen = item?.kind === 'piecewise'
     && Boolean(piecewiseDraft)
@@ -310,12 +333,19 @@ function GraphExpressionRow({
   return (
     <div
       className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}${item?.kind === 'piecewise' ? ' is-piecewise' : ''}`}
+      style={{ '--graph-item-color': color } as CSSProperties}
       data-color-token={colorToken}
       data-graph-item-id={itemId}
       data-piecewise-state={item?.kind === 'piecewise' ? (piecewiseEditorOpen ? 'expanded' : 'summary') : undefined}
       data-testid={item ? 'graph-expression-row' : 'graph-expression-blank-row'}
     >
-      <span className="graph-expression-color" aria-hidden="true" />
+      {item && 'presentation' in item ? <button aria-expanded={styleOpen}
+        aria-label="Style graph item" className="graph-expression-color" onClick={() => setStyleOpen((open) => !open)}
+        type="button" /> : <span className="graph-expression-color" aria-hidden="true" />}
+      {styleOpen && item && 'presentation' in item && onUpdatePresentation ? <GraphStylePopover
+        colorVisionMode={appearance.colorVisionMode} onClose={() => setStyleOpen(false)}
+        onUpdate={onUpdatePresentation} presentation={normalizeGraphItemPresentation(item.presentation)}
+        theme={appearance.theme} /> : null}
       {item?.kind === 'parameter' && item.parameter.origin === 'slider-created' ? (
         <strong className="graph-parameter-symbol" aria-label={`Parameter ${item.parameter.symbol}`}>
           {item.parameter.symbol}
@@ -407,13 +437,11 @@ function GraphExpressionRow({
 }
 
 function GraphNoteRow({
-  focus,
   item,
   onChange,
   onDelete,
   readOnly,
 }: {
-  focus: boolean;
   item: GraphNoteItemV1;
   onChange: (text: string) => void;
   onDelete: () => void;
@@ -429,8 +457,7 @@ function GraphNoteRow({
   }, []);
   useLayoutEffect(() => {
     resize();
-    if (focus) textareaRef.current?.focus({ preventScroll: true });
-  }, [focus, item.text, resize]);
+  }, [item.text, resize]);
   return (
     <section className="graph-note-row" data-graph-item-id={item.itemId} data-testid="graph-note-row">
       <textarea
@@ -513,14 +540,16 @@ export default function GraphWorkspacePage({
   const [addItemOpen, setAddItemOpen] = useState(false);
   const promotedItemIdRef = useRef<string | null>(null);
   const piecewiseFocusItemIdRef = useRef<string | null>(null);
-  const noteFocusItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
     cssSize: viewportSize,
     initialSession,
     onPersistSession: onUpdateSession,
     workspaceContext,
   });
-  const piecewiseDrafts = controller.session.authoring?.piecewiseDrafts ?? [];
+  const piecewiseDrafts = useMemo(
+    () => controller.session.authoring?.piecewiseDrafts ?? [],
+    [controller.session.authoring?.piecewiseDrafts],
+  );
   const piecewiseDraftsByItem = useMemo(() => new Map(
     piecewiseDrafts.filter((draft) => draft.mode === 'replace').map((draft) => [draft.itemId, draft]),
   ), [piecewiseDrafts]);
@@ -547,12 +576,18 @@ export default function GraphWorkspacePage({
   }, [controller.sampleResult, controller.suppressedPiecewiseItems]);
   const visibleCount = controller.session.document.items.filter((item) => item.kind !== 'note' && item.visible).length;
   const presentation = useMemo(() => ({
-    version: 1 as const,
+    version: 2 as const,
     contentRevision: controller.session.document.contentRevision,
+    theme: controller.session.surface.appearance.theme,
+    colorVisionMode: controller.session.surface.appearance.colorVisionMode,
     items: controller.session.document.items.flatMap((item) => (
       'presentation' in item ? [{ itemId: item.itemId, presentation: item.presentation }] : []
     )),
-  }), [controller.session.document.contentRevision, controller.session.document.items]);
+  }), [
+    controller.session.document.contentRevision,
+    controller.session.document.items,
+    controller.session.surface.appearance,
+  ]);
   const runtimeWarnings = useMemo(() => {
     const warnings = new Map<string, string>();
     for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
@@ -649,7 +684,8 @@ export default function GraphWorkspacePage({
   }, [controller.session.authoring?.piecewiseDrafts.length]);
 
   return (
-    <article className="app-page graph-page" data-testid="graph-page">
+    <article className="app-page graph-page" data-graph-theme={controller.session.surface.appearance.theme}
+      data-testid="graph-page">
       <header className="app-page-shell-header graph-page-header">
         <span className="graph-brand-mark" aria-hidden="true">
           <img alt="" src={graphBrandIcon} />
@@ -706,6 +742,8 @@ export default function GraphWorkspacePage({
             <Grid3X3 aria-hidden="true" size={17} />
             <span>Grid &amp; Axes</span>
           </button>
+          <GraphThemeControls colorVisionMode={controller.session.surface.appearance.colorVisionMode}
+            onChange={controller.updateAppearance} theme={controller.session.surface.appearance.theme} />
           <span className="graph-toolbar-context">Real · SVG reference</span>
         </div>
 
@@ -779,7 +817,7 @@ export default function GraphWorkspacePage({
                   {!controller.session.surface.presentationMode ? <GraphRowOrderControls index={index}
                     itemCount={controller.session.document.items.length} itemId={entry.item.itemId}
                     onMove={controller.reorderItem} /> : <div aria-hidden="true" className="graph-row-order-placeholder" />}
-                  <GraphNoteRow focus={noteFocusItemIdRef.current === entry.item.itemId} item={entry.item}
+                  <GraphNoteRow item={entry.item}
                     onChange={(text) => controller.updateNote(entry.item.itemId, text)}
                     onDelete={() => controller.removeItem(entry.item.itemId)}
                     readOnly={controller.session.surface.presentationMode} />
@@ -788,6 +826,7 @@ export default function GraphWorkspacePage({
               const { item, itemId } = entry;
               return (
                 <GraphExpressionRow
+                  appearance={controller.session.surface.appearance}
                   errorVisible={item
                     ? controller.visibleDraftErrors.has(item.itemId)
                     : false}
@@ -830,6 +869,9 @@ export default function GraphWorkspacePage({
                     focusNextRow(itemId);
                   }}
                   onToggle={item ? () => controller.toggleItem(itemId) : undefined}
+                  onUpdatePresentation={item && 'presentation' in item
+                    ? (presentation) => { controller.updatePresentation(itemId, presentation); }
+                    : undefined}
                   onUpdateParameter={item?.kind === 'parameter'
                     ? (values) => controller.updateParameter(itemId, values)
                     : undefined}
@@ -866,7 +908,6 @@ export default function GraphWorkspacePage({
               {addItemOpen ? <div className="graph-add-item-menu" role="menu">
                 <button onClick={() => {
                   const itemId = controller.addNote();
-                  noteFocusItemIdRef.current = itemId;
                   setAddItemOpen(false);
                   requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>(
                     `[data-graph-item-id="${itemId}"] textarea`,

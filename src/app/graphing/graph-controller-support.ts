@@ -10,6 +10,7 @@ export function classifiedGraphItems(document: GraphDocumentV2): GraphClassified
   document.items.forEach((item) => {
     if (item.kind !== 'relation' && item.kind !== 'piecewise' && item.kind !== 'point-set') return;
     const { presentation: _presentation, ...mathematics } = item;
+    void _presentation;
     items.push(mathematics);
   });
   return items;
@@ -76,6 +77,7 @@ function graphMathematicsProjection(document: GraphDocumentV2) {
     if (item.kind === 'note') return [];
     if ('presentation' in item) {
       const { presentation: _presentation, ...mathematics } = item;
+      void _presentation;
       return [mathematics];
     }
     return [item];

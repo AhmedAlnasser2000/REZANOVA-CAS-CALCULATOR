@@ -136,6 +136,24 @@ export type GraphItemPresentationV1 = {
   label: 'auto' | 'always' | 'never';
 };
 
+export type GraphColorChoiceV1 =
+  | { kind: 'token'; token: string }
+  | { kind: 'custom'; value: string };
+
+export type GraphItemPresentationV2 = {
+  version: 2;
+  color: GraphColorChoiceV1;
+  stroke: 'solid' | 'dashed' | 'dotted';
+  strokeWidth: 'thin' | 'normal' | 'strong';
+  strokeOpacity: number;
+  regionOpacity: number;
+  halo: 'none' | 'soft';
+  markers: 'semantic' | 'none';
+  label: 'auto' | 'always' | 'never';
+};
+
+export type GraphItemPresentation = GraphItemPresentationV1 | GraphItemPresentationV2;
+
 export type GraphItemSpecV1 =
   | {
       version: 1;
@@ -144,7 +162,7 @@ export type GraphItemSpecV1 =
       source: GraphSourceV1;
       relation: GraphRelationIR;
       visible: boolean;
-      presentation: GraphItemPresentationV1;
+      presentation: GraphItemPresentation;
     }
   | {
       version: 1;
@@ -153,7 +171,7 @@ export type GraphItemSpecV1 =
       source: GraphSourceV1;
       parseStop: GraphStopReason;
       visible: boolean;
-      presentation: GraphItemPresentationV1;
+      presentation: GraphItemPresentation;
     }
   | {
       version: 1;
@@ -162,7 +180,7 @@ export type GraphItemSpecV1 =
       source: GraphSourceV1;
       piecewise: GraphPiecewiseSpecV1;
       visible: boolean;
-      presentation: GraphItemPresentationV1;
+      presentation: GraphItemPresentation;
     }
   | {
       version: 1;
@@ -178,7 +196,7 @@ export type GraphItemSpecV1 =
       source: GraphSourceV1;
       points: Array<{ x: SerializableMathJson; y: SerializableMathJson }>;
       visible: boolean;
-      presentation: GraphItemPresentationV1;
+      presentation: GraphItemPresentation;
     };
 
 export type GraphDocumentV1 = {
@@ -244,6 +262,16 @@ export type GraphSurfaceStateV1 = {
   analyzeOpen: boolean;
   selectedItemId: string | null;
   presentationMode: boolean;
+};
+
+export type GraphAppearanceThemeV1 = 'technical' | 'paper' | 'aurora' | 'luminous';
+
+export type GraphSurfaceStateV2 = Omit<GraphSurfaceStateV1, 'version'> & {
+  version: 2;
+  appearance: {
+    theme: GraphAppearanceThemeV1;
+    colorVisionMode: 'standard' | 'color-vision-friendly';
+  };
 };
 
 export type GraphRevisionSetV1 = {
@@ -383,8 +411,20 @@ export type GraphRendererSceneFrameV1 = {
 export type GraphRendererPresentationFrameV1 = {
   version: 1;
   contentRevision: number;
-  items: Array<{ itemId: string; presentation: GraphItemPresentationV1 }>;
+  items: Array<{ itemId: string; presentation: GraphItemPresentation }>;
 };
+
+export type GraphRendererPresentationFrameV2 = {
+  version: 2;
+  contentRevision: number;
+  theme: GraphAppearanceThemeV1;
+  colorVisionMode: 'standard' | 'color-vision-friendly';
+  items: Array<{ itemId: string; presentation: GraphItemPresentation }>;
+};
+
+export type GraphRendererPresentationFrame =
+  | GraphRendererPresentationFrameV1
+  | GraphRendererPresentationFrameV2;
 
 export type GraphHitResult = {
   itemId: string;
@@ -402,7 +442,7 @@ export interface InteractiveGraphRenderer {
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
   setView(frame: GraphRendererViewFrameV1): void;
   setScene(frame: GraphRendererSceneFrameV1 | null): void;
-  setPresentation(frame: GraphRendererPresentationFrameV1): void;
+  setPresentation(frame: GraphRendererPresentationFrame): void;
   hitTest(clientX: number, clientY: number): GraphHitResult | null;
   handleContextRestored(): void;
   dispose(): void;

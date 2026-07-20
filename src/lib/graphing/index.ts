@@ -3,6 +3,7 @@ export * from './evaluator';
 export * from './headless';
 export * from './ooe';
 export * from './parser';
+export * from './presentation';
 export * from './sampling';
 export * from './scene';
 export * from './renderers/svg';

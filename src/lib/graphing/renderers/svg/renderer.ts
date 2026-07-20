@@ -1,8 +1,9 @@
 import type {
   GraphHitResult,
-  GraphItemPresentationV1,
+  GraphAppearanceThemeV1,
+  GraphItemPresentation,
   GraphRendererCapabilities,
-  GraphRendererPresentationFrameV1,
+  GraphRendererPresentationFrame,
   GraphRendererSceneFrameV1,
   GraphRendererViewFrameV1,
   GraphScenePathRuntimeV2,
@@ -10,12 +11,13 @@ import type {
   GraphViewportV1,
   InteractiveGraphRenderer,
 } from '../../contracts';
+import {
+  defaultGraphItemPresentation,
+  normalizeGraphItemPresentation,
+  resolveGraphPresentationColor,
+} from '../../presentation';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const GRAPH_COLORS: Record<string, string> = {
-  'graph-blue': '#5598ff', 'graph-green': '#59dd88', 'graph-violet': '#ae68f5',
-  'graph-orange': '#ff9b4c', 'graph-cyan': '#52d4d8',
-};
 type Size = { width: number; height: number };
 export type GraphRendererScreenPoint = { x: number; y: number };
 
@@ -97,7 +99,9 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   private points: SVGGElement | null = null;
   private view: GraphRendererViewFrameV1 | null = null;
   private scene: GraphRendererSceneFrameV1 | null = null;
-  private presentation = new Map<string, GraphItemPresentationV1>();
+  private presentation = new Map<string, GraphItemPresentation>();
+  private theme: GraphAppearanceThemeV1 = 'technical';
+  private colorVisionMode: 'standard' | 'color-vision-friendly' = 'standard';
   private sceneProjectionSize: Size = { width: 1, height: 1 };
 
   mount(target: HTMLElement) {
@@ -209,38 +213,46 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.updateGeometryTransform();
   }
 
-  setPresentation(frame: GraphRendererPresentationFrameV1) {
+  setPresentation(frame: GraphRendererPresentationFrame) {
     this.presentation = new Map(frame.items.map((item) => [item.itemId, item.presentation]));
+    this.theme = frame.version === 2 ? frame.theme : 'technical';
+    this.colorVisionMode = frame.version === 2 ? frame.colorVisionMode : 'standard';
     this.svg?.setAttribute('data-content-revision', String(frame.contentRevision));
+    this.svg?.setAttribute('data-graph-theme', this.theme);
     this.applyPresentation();
   }
 
-  private itemPresentation(itemId: string): GraphItemPresentationV1 {
-    return this.presentation.get(itemId) ?? {
-      version: 1,
-      colorToken: itemId === 'graph.overlay.unit-circle' ? 'graph-violet' : 'graph-blue',
-      stroke: 'solid', strokeWidth: 'normal', fillOpacity: 0.18, label: 'auto',
-    };
+  private itemPresentation(itemId: string) {
+    const fallback = defaultGraphItemPresentation(itemId === 'graph.overlay.unit-circle' ? 2 : 0);
+    return normalizeGraphItemPresentation(this.presentation.get(itemId) ?? fallback);
   }
 
   private applyPresentation() {
     this.regions?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
       const style = this.itemPresentation(node.dataset.itemId ?? '');
-      setAttribute(node, 'fill', GRAPH_COLORS[style.colorToken] ?? '#5598ff');
-      setAttribute(node, 'fill-opacity', String(style.fillOpacity));
+      setAttribute(node, 'fill', resolveGraphPresentationColor(style, this.colorVisionMode));
+      setAttribute(node, 'fill-opacity', String(style.regionOpacity));
     });
     this.paths?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
       const style = this.itemPresentation(node.dataset.itemId ?? '');
-      setAttribute(node, 'stroke', GRAPH_COLORS[style.colorToken] ?? '#5598ff');
+      const color = resolveGraphPresentationColor(style, this.colorVisionMode);
+      setAttribute(node, 'stroke', color);
+      node.style.color = color;
+      setAttribute(node, 'stroke-opacity', String(style.strokeOpacity));
       setAttribute(node, 'stroke-width', style.strokeWidth === 'thin' ? '1.5' : style.strokeWidth === 'strong' ? '3' : '2.25');
       const dashed = style.stroke === 'dashed' || node.dataset.strokeRole === 'strict-boundary';
-      if (dashed) setAttribute(node, 'stroke-dasharray', '8 6'); else node.removeAttribute('stroke-dasharray');
+      const dotted = style.stroke === 'dotted';
+      if (dashed) setAttribute(node, 'stroke-dasharray', '8 6');
+      else if (dotted) setAttribute(node, 'stroke-dasharray', '2 5');
+      else node.removeAttribute('stroke-dasharray');
+      node.dataset.halo = this.theme === 'luminous' && style.halo === 'soft' ? 'soft' : 'none';
     });
     this.points?.querySelectorAll<SVGCircleElement>('[data-item-id]').forEach((node) => {
       const style = this.itemPresentation(node.dataset.itemId ?? '');
-      const color = GRAPH_COLORS[style.colorToken] ?? '#5598ff';
+      const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'fill', node.dataset.marker === 'open' ? '#071517' : color);
       setAttribute(node, 'stroke', color); setAttribute(node, 'stroke-width', '2');
+      node.style.display = style.markers === 'none' ? 'none' : '';
     });
   }
 
