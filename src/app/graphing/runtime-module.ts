@@ -1,10 +1,10 @@
-import type { GraphWorkspaceSessionStateV4 } from './graph-workspace-session';
+import type { GraphWorkspaceSessionStateV5 } from './graph-workspace-session';
 import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
 export const GRAPH_WORKSPACE_RUNTIME_MODULE_ID = 'graphing-runtime-v1' as const;
 
 export type GraphWorkspaceSessionValidation =
-  | { ok: true; value: GraphWorkspaceSessionStateV4 }
+  | { ok: true; value: GraphWorkspaceSessionStateV5 }
   | { ok: false; failure: string };
 
 export function validateGraphWorkspaceSession(

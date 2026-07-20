@@ -18,7 +18,7 @@ import {
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV4,
+  GraphWorkspaceSessionStateV5,
 } from './graph-workspace-session';
 import {
   buildGraphPiecewiseItemFromAuthoringDraft,
@@ -51,6 +51,7 @@ import type {
   GraphHistory,
   UseGraphWorkspaceControllerInput,
 } from './graph-workspace-controller-types';
+import { graphAutoFitViewport } from './graph-auto-fit';
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
@@ -94,11 +95,11 @@ export function useGraphWorkspaceController({
   const samplingInFlightRef = useRef(false);
   const queuedSampleRef = useRef<{
     quality: 'preview' | 'settled' | 'polish';
-    snapshot: GraphWorkspaceSessionStateV4;
+    snapshot: GraphWorkspaceSessionStateV5;
   } | null>(null);
   const launchSampleRef = useRef<(
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV4,
+    snapshot: GraphWorkspaceSessionStateV5,
   ) => Promise<void>>(async () => undefined);
   const itemSequenceRef = useRef(2);
   const historyRef = useRef<GraphHistory>({ undo: [], redo: [], typingItemId: null });
@@ -124,7 +125,7 @@ export function useGraphWorkspaceController({
     workspaceContextRef.current = workspaceContext;
   }, [workspaceContext]);
 
-  const persistSoon = useCallback((next: GraphWorkspaceSessionStateV4, immediate = false) => {
+  const persistSoon = useCallback((next: GraphWorkspaceSessionStateV5, immediate = false) => {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
     if (immediate) {
       persistTimerRef.current = null;
@@ -138,7 +139,7 @@ export function useGraphWorkspaceController({
   }, []);
 
   const commitSession = useCallback((
-    next: GraphWorkspaceSessionStateV4,
+    next: GraphWorkspaceSessionStateV5,
     immediate = false,
   ) => {
     sessionRef.current = next;
@@ -602,7 +603,7 @@ export function useGraphWorkspaceController({
     }, true);
   }, [commitSession]);
 
-  const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV4['surface']['grid']>) => {
+  const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV5['surface']['grid']>) => {
     const current = sessionRef.current;
     const grid = { ...current.surface.grid, ...values };
     commitSession({
@@ -620,7 +621,7 @@ export function useGraphWorkspaceController({
   }, [commitSession]);
 
   const updateAppearance = useCallback((
-    values: Partial<GraphWorkspaceSessionStateV4['surface']['appearance']>,
+    values: Partial<GraphWorkspaceSessionStateV5['surface']['appearance']>,
   ) => {
     const current = sessionRef.current;
     const appearance = { ...current.surface.appearance, ...values };
@@ -632,12 +633,20 @@ export function useGraphWorkspaceController({
 
   const updatePaneView = useCallback((
     pane: 'real' | 'complex',
-    values: Partial<GraphWorkspaceSessionStateV4['surface']['panes']['real']>,
+    values: Partial<GraphWorkspaceSessionStateV5['surface']['panes']['real']>,
   ) => {
     const current = sessionRef.current;
     const paneView = { ...current.surface.panes[pane], ...values };
     commitSession({ ...current, surface: { ...current.surface,
       panes: { ...current.surface.panes, [pane]: paneView } } }, true);
+  }, [commitSession]);
+
+  const updateAnalyze = useCallback((values: Partial<GraphWorkspaceSessionStateV5['surface']['analyze']> & { open?: boolean }) => {
+    const current = sessionRef.current;
+    const { open, ...analyzeValues } = values;
+    commitSession({ ...current, surface: { ...current.surface,
+      ...(open === undefined ? {} : { analyzeOpen: open }),
+      analyze: { ...current.surface.analyze, ...analyzeValues } } }, true);
   }, [commitSession]);
 
   const updatePresentation = useCallback((itemId: string, presentation: GraphItemPresentationV2) => {
@@ -650,38 +659,12 @@ export function useGraphWorkspaceController({
   }, [commitSession, pushHistory]);
 
   const autoFit = useCallback(() => {
-    const scene = resultRef.current?.scene;
-    if (!scene || scene.paths.length === 0) {
-      setViewport({ coordinateSystem: 'cartesian', xMin: -10, xMax: 10, yMin: -6, yMax: 6 });
-      return;
-    }
-    let xMin = Number.POSITIVE_INFINITY;
-    let xMax = Number.NEGATIVE_INFINITY;
-    let yMin = Number.POSITIVE_INFINITY;
-    let yMax = Number.NEGATIVE_INFINITY;
-    for (const path of scene.paths) {
-      for (let index = 0; index + 1 < path.coordinates.length; index += 2) {
-        xMin = Math.min(xMin, path.coordinates[index]);
-        xMax = Math.max(xMax, path.coordinates[index]);
-        yMin = Math.min(yMin, path.coordinates[index + 1]);
-        yMax = Math.max(yMax, path.coordinates[index + 1]);
-      }
-    }
-    if (![xMin, xMax, yMin, yMax].every(Number.isFinite)) return;
-    const xPad = Math.max(1, (xMax - xMin) * 0.12);
-    const yPad = Math.max(1, (yMax - yMin) * 0.12);
-    setViewport({
-      coordinateSystem: 'cartesian',
-      xMin: xMin - xPad,
-      xMax: xMax + xPad,
-      yMin: yMin - yPad,
-      yMax: yMax + yPad,
-    });
+    setViewport(graphAutoFitViewport(resultRef.current?.scene ?? null));
   }, [setViewport]);
 
   const runSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV4,
+    snapshot: GraphWorkspaceSessionStateV5,
   ) => {
     const width = Math.max(1, Math.round(cssSize.width));
     const height = Math.max(1, Math.round(cssSize.height));
@@ -792,7 +775,7 @@ export function useGraphWorkspaceController({
 
   const launchSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
-    snapshot: GraphWorkspaceSessionStateV4,
+    snapshot: GraphWorkspaceSessionStateV5,
   ) => {
     if (samplingInFlightRef.current) {
       queuedSampleRef.current = { quality, snapshot };
@@ -951,6 +934,7 @@ export function useGraphWorkspaceController({
     unresolvedSymbols: unresolvedGraphSymbols(session.document),
     updateGrid,
     updateAppearance,
+    updateAnalyze,
     updateNote,
     updateParameter,
     updatePaneView,
@@ -989,6 +973,7 @@ export function useGraphWorkspaceController({
     undo,
     updateGrid,
     updateAppearance,
+    updateAnalyze,
     updateNote,
     updateParameter,
     updatePaneView,

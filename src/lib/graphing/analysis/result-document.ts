@@ -12,6 +12,13 @@ function exactValue(value: GraphFeatureValueV1 | undefined) {
   return value?.kind === 'exact' ? value.value : undefined;
 }
 
+function reproveExact(value: ReturnType<typeof exactValue>) {
+  if (!value) return undefined;
+  return requireProvenCanonicalMathValueV2({ canonicalLatex: value.canonicalLatex,
+    mathJson: value.mathJson, owner: 'graphing', routeId: 'graphing.analysis',
+    source: 'Graph analysis canonical result summary' });
+}
+
 export function graphAnalysisExactValue(value: number) {
   const canonicalLatex = Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(14)));
   return requireProvenCanonicalMathValueV2({
@@ -27,11 +34,11 @@ export function buildGraphAnalysisCanonicalResult(
   request: GraphAnalysisRequestV1,
   evidence: GraphAnalysisEvidenceV1[],
 ) {
-  const firstExact = evidence.flatMap((entry) => [
+  const firstExact = reproveExact(evidence.flatMap((entry) => [
     exactValue(entry.coordinates?.x),
     exactValue(entry.coordinates?.y),
     exactValue(entry.relationValue),
-  ]).find((value) => value !== undefined);
+  ]).find((value) => value !== undefined));
   const validated = evidence.filter((entry) => entry.level === 'numeric-validated').length;
   const provisional = evidence.filter((entry) => ![
     'exact-proved', 'numeric-validated',

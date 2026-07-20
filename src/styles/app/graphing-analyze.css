@@ -1,0 +1,191 @@
+.graph-analyze-overlay {
+  position: absolute;
+  z-index: 10;
+  inset: 12px 12px 12px auto;
+  width: min(var(--graph-analyze-width), calc(100% - 24px));
+  min-width: min(300px, calc(100% - 24px));
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  overflow: visible;
+  border: 1px solid rgba(160, 199, 181, 0.3);
+  border-radius: 12px;
+  background: rgba(10, 24, 27, 0.96);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.44);
+  color: #e4eee8;
+  backdrop-filter: blur(12px);
+}
+
+.graph-analyze-resize {
+  position: absolute;
+  inset: 14px auto 14px -5px;
+  width: 10px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.graph-analyze-resize::after {
+  content: '';
+  position: absolute;
+  inset: 40% 3px;
+  border-radius: 2px;
+  background: rgba(169, 203, 186, 0.45);
+}
+
+.graph-analyze-heading,
+.graph-analyze-heading > div,
+.graph-evidence-card header {
+  display: flex;
+  align-items: center;
+}
+
+.graph-analyze-heading {
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px 10px;
+}
+
+.graph-analyze-heading > div { min-width: 0; gap: 9px; }
+.graph-analyze-heading strong { font-size: 0.95rem; }
+.graph-analyze-heading span {
+  min-width: 0;
+  overflow: hidden;
+  color: #91a89d;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-analyze-heading button,
+.graph-feature-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 7px;
+  background: rgba(19, 38, 41, 0.9);
+  color: #dbe7e0;
+  cursor: pointer;
+}
+
+.graph-analyze-heading button { width: 30px; height: 30px; padding: 0; }
+.graph-feature-actions button { min-height: 29px; padding: 0 8px; font-size: 0.7rem; }
+.graph-feature-actions button:disabled { opacity: 0.42; cursor: not-allowed; }
+
+.graph-analyze-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--graph-line);
+}
+
+.graph-analyze-tabs button {
+  min-height: 36px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #91a89d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.graph-analyze-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--graph-green);
+  color: #e8f2eb;
+}
+
+.graph-analyze-status,
+.graph-analyze-empty,
+.graph-analyze-solve p {
+  margin: 0;
+  color: #8ea59a;
+  font-size: 0.71rem;
+  line-height: 1.45;
+}
+
+.graph-analyze-status { padding: 9px 13px; border-bottom: 1px solid var(--graph-line); }
+.graph-analyze-status.is-loading { color: #74cfff; }
+.graph-analyze-status.is-error { color: #ff9f91; }
+
+.graph-analyze-content {
+  min-height: 0;
+  overflow: auto;
+  padding: 11px;
+  scrollbar-width: thin;
+}
+
+.graph-feature-group,
+.graph-analyze-solve { display: grid; gap: 7px; margin-bottom: 14px; }
+.graph-feature-group h3,
+.graph-analyze-solve h3 {
+  margin: 0;
+  color: #9db2a7;
+  font-size: 0.69rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.graph-feature-card,
+.graph-evidence-card,
+.graph-analyze-solve {
+  border: 1px solid var(--graph-line);
+  border-radius: 9px;
+  background: rgba(18, 35, 38, 0.78);
+}
+
+.graph-feature-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 9px;
+  outline: none;
+}
+
+.graph-feature-card:hover,
+.graph-feature-card:focus-visible { border-color: rgba(98, 230, 144, 0.42); }
+.graph-feature-card > div:first-child { display: grid; gap: 2px; min-width: 0; }
+.graph-feature-card strong { color: #edf5f0; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; }
+.graph-feature-card > div:first-child span { color: #9db2a7; font-family: 'IBM Plex Mono', monospace; font-size: 0.69rem; }
+.graph-feature-actions { grid-column: 1 / -1; display: flex; gap: 6px; }
+
+.graph-evidence-badge {
+  align-self: start;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(133, 151, 142, 0.13);
+  color: #a8bbb1;
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+.graph-evidence-badge.is-exact-proved { background: rgba(98, 230, 144, 0.14); color: #80eca2; }
+.graph-evidence-badge.is-numeric-validated { background: rgba(80, 163, 255, 0.15); color: #88baff; }
+
+.graph-evidence-card { margin-bottom: 8px; padding: 10px; }
+.graph-evidence-card header { justify-content: space-between; gap: 8px; }
+.graph-evidence-card header span { color: #8dbba0; font-size: 0.65rem; }
+.graph-evidence-card dl { display: grid; gap: 7px; margin: 10px 0 0; }
+.graph-evidence-card dl div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; }
+.graph-evidence-card dt { color: #789087; font-size: 0.66rem; }
+.graph-evidence-card dd { margin: 0; color: #c5d4cc; font-size: 0.7rem; line-height: 1.35; }
+.graph-analyze-solve { padding: 10px; }
+
+.graph-analyze-style .graph-style-popover {
+  position: static;
+  width: auto;
+  box-shadow: none;
+  background: rgba(18, 35, 38, 0.76);
+}
+
+.graph-analysis-markers { position: absolute; z-index: 7; inset: 0; pointer-events: none; overflow: hidden; }
+.graph-analysis-marker { position: absolute; display: flex; align-items: center; gap: 6px; transform: translate(-6px, -6px); }
+.graph-analysis-marker i { width: 12px; height: 12px; border: 3px solid #8eb8ff; border-radius: 50%; background: #0b1719; box-shadow: 0 0 0 2px rgba(11, 23, 25, 0.72); }
+.graph-analysis-marker b { padding: 3px 6px; border: 1px solid rgba(111, 162, 255, 0.48); border-radius: 6px; background: rgba(8, 20, 23, 0.9); color: #dce9ff; font-size: 0.63rem; }
+.graph-analysis-marker.is-preview i { border-color: #77ef9c; transform: scale(1.18); }
+.graph-analysis-marker.is-preview b { border-color: rgba(98, 230, 144, 0.5); color: #dff8e6; }
+
+@media (max-width: 880px) {
+  .graph-analyze-overlay { right: 6px; width: min(340px, calc(100% - 12px)); }
+  .graph-analyze-resize { display: none; }
+}

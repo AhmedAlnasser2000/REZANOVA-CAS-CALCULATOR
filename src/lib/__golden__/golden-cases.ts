@@ -14,6 +14,7 @@ import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
 import type { RunTableModeRequest } from '../modes/table';
 import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
 import type { RunVectorModeRequest } from '../modes/vector';
+import type { GraphAnalysisRequestV1 } from '../graphing/contracts';
 
 type GoldenBase = {
   id: string;
@@ -71,6 +72,11 @@ export type GoldenTableCase = GoldenBase & {
   request: RunTableModeRequest;
 };
 
+export type GoldenGraphingCase = GoldenBase & {
+  mode: 'graphing';
+  request: GraphAnalysisRequestV1;
+};
+
 export type GoldenCase =
   | GoldenCalculateCase
   | GoldenEquationCase
@@ -80,7 +86,8 @@ export type GoldenCase =
   | GoldenStatisticsCase
   | GoldenMatrixCase
   | GoldenVectorCase
-  | GoldenTableCase;
+  | GoldenTableCase
+  | GoldenGraphingCase;
 
 export type GoldenExpectation = {
   kind: 'success' | 'error' | 'prompt';
@@ -824,6 +831,53 @@ export const goldenCases: GoldenCase[] = [
         { index: 1, x: '1', primary: '1', secondary: '2' },
         { index: 2, x: '2', primary: '4', secondary: '3' },
       ],
+    },
+  },
+  {
+    id: 'graphing-analysis-quadratic',
+    lane: 'graphing-analysis',
+    mode: 'graphing',
+    request: {
+      version: 1,
+      requestId: 'golden.graphing.analysis',
+      workspaceInstanceId: 'golden.graphing',
+      documentId: 'golden.graphing.document',
+      revisions: { mathematics: 1, viewport: 1, parameter: 1 },
+      items: [{
+        version: 1,
+        kind: 'relation',
+        itemId: 'quadratic',
+        source: {
+          sourceKind: 'mathlive-latex',
+          sourceLatex: 'x^2-4',
+          sourceRevision: 1,
+        },
+        relation: {
+          kind: 'explicit-y',
+          rhs: {
+            mathJson: ['Add', ['Power', 'x', 2], -4],
+            freeSymbols: ['x'],
+          },
+          origin: 'bare-expression',
+        },
+        visible: true,
+      }],
+      parameterEnvironment: {},
+      features: ['root', 'x-intercept', 'y-intercept', 'extremum'],
+      numericWindow: {
+        coordinateSystem: 'cartesian',
+        xMin: -5,
+        xMax: 5,
+        yMin: -5,
+        yMax: 5,
+      },
+      maximumTimeMs: 500,
+    },
+    expected: {
+      kind: 'success',
+      title: 'Graph analysis',
+      exactEquals: '-2',
+      detailTitlesInclude: ['Evidence'],
     },
   },
 ];

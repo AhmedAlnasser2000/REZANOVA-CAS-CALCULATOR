@@ -305,6 +305,26 @@ export type GraphSurfaceStateV3 = Omit<GraphSurfaceStateV2, 'version'> & {
   };
 };
 
+export type GraphAnalyzeTabV1 = 'features' | 'evidence' | 'style';
+
+export type GraphPinnedAnnotationV1 = {
+  version: 1;
+  annotationId: string;
+  feature: GraphAnalysisFeature;
+  level: Extract<GraphEvidenceLevel, 'exact-proved' | 'numeric-validated'>;
+  itemIds: string[];
+  coordinates: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1 };
+};
+
+export type GraphSurfaceStateV4 = Omit<GraphSurfaceStateV3, 'version'> & {
+  version: 4;
+  analyze: {
+    width: number;
+    activeTab: GraphAnalyzeTabV1;
+    pinnedAnnotations: GraphPinnedAnnotationV1[];
+  };
+};
+
 export type GraphRevisionSetV1 = {
   document: number;
   viewport: number;

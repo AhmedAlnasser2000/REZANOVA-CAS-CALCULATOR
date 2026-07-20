@@ -177,6 +177,7 @@ export const GOLDEN_CASE_ROUTE_REGISTRY = {
   'vector-geometric-measures': 'vector.geometric-measures',
   'table-partial-real-domain': 'table.domain-boundary',
   'table-two-function-grid': 'table.two-functions',
+  'graphing-analysis-quadratic': 'graphing.analysis',
 } as const satisfies Record<string, MathJsonRouteId>;
 
 export function mathJsonRouteForGoldenCase(caseId: string): MathJsonRouteId | undefined {

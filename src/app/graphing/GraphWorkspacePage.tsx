@@ -23,6 +23,7 @@ import {
   Pause,
   Play,
   Redo2,
+  Search,
   Trash2,
   Undo2,
   X,
@@ -39,7 +40,7 @@ import {
 } from '../../lib/graphing';
 import type {
   GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV4,
+  GraphWorkspaceSessionStateV5,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
 import {
@@ -51,11 +52,12 @@ import type { GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphViewportHost } from './GraphViewportHost';
 import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
+import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
 
 type GraphWorkspacePageProps = {
-  session: GraphWorkspaceSessionStateV4;
+  session: GraphWorkspaceSessionStateV5;
   workspaceContext: WorkspaceInstanceRuntimeContext;
-  onUpdateSession: (session: GraphWorkspaceSessionStateV4) => void;
+  onUpdateSession: (session: GraphWorkspaceSessionStateV5) => void;
 };
 
 type GraphRailEntry =
@@ -745,6 +747,14 @@ export default function GraphWorkspacePage({
           </button>
           <GraphThemeControls colorVisionMode={controller.session.surface.appearance.colorVisionMode}
             onChange={controller.updateAppearance} theme={controller.session.surface.appearance.theme} />
+          <button aria-pressed={controller.session.surface.analyzeOpen} className="graph-toolbar-button"
+            onClick={() => {
+              if (!controller.session.surface.analyzeOpen && !controller.session.surface.selectedItemId) {
+                const first = controller.session.document.items.find((item) => item.kind !== 'note' && item.kind !== 'parameter' && item.visible);
+                if (first) controller.selectItem(first.itemId);
+              }
+              controller.updateAnalyze({ open: !controller.session.surface.analyzeOpen });
+            }} type="button"><Search aria-hidden="true" size={16} /><span>Analyze</span></button>
           <span className="graph-toolbar-context">Real · {controller.session.surface.panes.real.dimension === '3d'
             ? 'Three interactive' : 'SVG reference'}</span>
         </div>
@@ -951,6 +961,9 @@ export default function GraphWorkspacePage({
             selectedItemId={controller.session.surface.selectedItemId}
             viewport={controller.session.surface.viewport}
           />
+          <GraphAnalyzeIntegration onSetViewport={controller.setViewport}
+            onUpdateAnalyze={controller.updateAnalyze} onUpdatePresentation={controller.updatePresentation}
+            session={controller.session} workspaceContext={workspaceContext} />
           {controller.status.kind === 'sampling' || controller.suppressedPiecewiseItems.size > 0 ? (
             <span className="graph-pending-badge">{controller.suppressedPiecewiseItems.size > 0
               ? 'Complete piecewise branches' : 'Updating'}</span>

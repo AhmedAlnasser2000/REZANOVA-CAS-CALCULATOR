@@ -11,7 +11,11 @@ import { buildCanonicalTrigonometryModeRunPayload } from '../trigonometry/runtim
 import {
   buildCanonicalTableModeResult,
 } from '../modes/table-core';
-import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
+import {
+  createCanonicalRuntimeResult,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
+} from '../result-contract';
+import { runGraphAnalysisRequest } from '../graphing/analysis';
 import type { GoldenCase } from './golden-cases';
 
 export type GoldenExecution = {
@@ -86,6 +90,10 @@ export async function runGoldenCase(goldenCase: GoldenCase): Promise<GoldenExecu
     case 'table': {
       const result = buildCanonicalTableModeResult(runTableMode(goldenCase.request));
       return { outcome: result.outcome, tableResponse: result.response };
+    }
+    case 'graphing': {
+      const result = await runGraphAnalysisRequest(goldenCase.request);
+      return { outcome: createCanonicalRuntimeResult(result.canonicalResult) };
     }
   }
 }

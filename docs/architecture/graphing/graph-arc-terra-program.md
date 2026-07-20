@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-23 complete; Move 24 is the active gated milestone
+Status: revised 30-move implementation program; Moves 1-24 complete; Move 25 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -327,7 +327,7 @@ Status: complete in `b655d02b`.
 
 ## 23. `GRAPHING-ANALYSIS-OOE1`
 
-Status: implementation and verification complete; commit pending at write time.
+Status: complete in `13b89ef7`.
 
 - Terra: High; gate type: backend.
 - Objective: add independent `graph.analyze` traffic control and validated V2 evidence for roots/intercepts, extrema, compatible intersections, holes/poles, asymptotes/domain boundaries, and piecewise continuity without importing Equation-private internals.
@@ -336,9 +336,12 @@ Status: implementation and verification complete; commit pending at write time.
 
 ## 24. `GRAPHING-ANALYZE-UI1`
 
+Status: implementation and verification complete; commit pending at write time.
+
 - Terra: Medium; gate type: ui.
 - Objective: expose a floating, resizable, non-dimming Analyze overlay with Features, Evidence, and Style tabs, tab-local remembered state, hover/focus previews, explicit pins for proven/validated annotations, and explicit recenter actions.
 - The overlay does not resize or auto-pan the viewport and reserves an integrated Solve section for Move 26.
+- Analysis launches only on overlay opening, selection, or settled mathematics/parameter revision changes. Viewport gestures do not relaunch it; persisted pins use bounded stable identities and sampled estimates remain non-persistable.
 
 ## 25. `GRAPHING-REAL-SURFACES1`
 

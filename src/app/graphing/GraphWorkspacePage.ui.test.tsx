@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GraphSampleRequestV4 } from '../../lib/graphing';
+import type { GraphAnalysisRequestV1, GraphSampleRequestV4 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
 import { createGraphNoteItem, replaceGraphDocumentNote } from './graph-document';
 import GraphWorkspacePage from './GraphWorkspacePage';
 import '../../styles/app/shell.css';
 import '../../styles/app/graphing.css';
 
-const { createGraphThreeRenderer, runGraphSampleWithOoe, threeRenderer } = vi.hoisted(() => {
+const { createGraphThreeRenderer, runGraphAnalyzeWithOoe, runGraphSampleWithOoe, threeRenderer } = vi.hoisted(() => {
   const threeRenderer = {
     capabilities: {
       rendererId: 'three-webgl', interactive: true, hitTesting: true, regionFill: true,
@@ -21,6 +21,25 @@ const { createGraphThreeRenderer, runGraphSampleWithOoe, threeRenderer } = vi.ho
   };
   return {
   createGraphThreeRenderer: vi.fn(async () => threeRenderer),
+  runGraphAnalyzeWithOoe: vi.fn(async (request: GraphAnalysisRequestV1) => ({
+    payload: {
+      version: 1 as const, requestId: request.requestId, workspaceInstanceId: request.workspaceInstanceId,
+      documentId: request.documentId, revisions: request.revisions, status: 'complete' as const,
+      evidence: [{ version: 1 as const, evidenceId: `${request.requestId}.root`, documentId: request.documentId,
+        revisions: request.revisions, itemIds: [request.items[0]!.itemId], feature: 'root' as const,
+        level: 'exact-proved' as const,
+        coordinates: { x: { kind: 'exact' as const, value: { canonicalLatex: '2', mathJson: 2 } },
+          y: { kind: 'exact' as const, value: { canonicalLatex: '0', mathJson: 0 } } },
+        conditions: [], basis: { source: 'graph-symbolic' as const, validator: 'test proof' } },
+      { version: 1 as const, evidenceId: `${request.requestId}.estimate`, documentId: request.documentId,
+        revisions: request.revisions, itemIds: [request.items[0]!.itemId], feature: 'extremum' as const,
+        level: 'sampled-estimate' as const, coordinates: { x: { kind: 'approximate' as const, value: 1 }, y: { kind: 'approximate' as const, value: 2 } },
+        conditions: [], basis: { source: 'sampler' as const } }],
+      canonicalResult: { version: 2 as const, outcomeKind: 'success' as const, title: 'Graph analysis', warnings: [] },
+      stopReasons: [], diagnostics: { elapsedMs: 1, evaluatedPointCount: 3, exactFindingCount: 1, validatedFindingCount: 0, analysisRevision: request.revisions.mathematics },
+    },
+    ooe: { commitAssessment: { commitDecision: 'committed' as const } },
+  })),
   threeRenderer,
   runGraphSampleWithOoe: vi.fn(async (request: GraphSampleRequestV4) => ({
   payload: {
@@ -79,8 +98,10 @@ vi.mock('../../lib/graphing', async (importOriginal) => ({
     `input.graph.sample.${request.revisions.scene}`
   )),
   createGraphThreeRenderer,
+  buildGraphAnalyzeInputRevisionId: vi.fn(() => 'input.graph.analyze.test'),
   releaseGraphSampleResultBuffers: vi.fn(() => 0),
   runGraphSampleWithOoe,
+  runGraphAnalyzeWithOoe,
 }));
 
 const workspaceContext = {
@@ -100,6 +121,7 @@ function setMathFieldValue(field: HTMLElement, value: string) {
 describe('GraphWorkspacePage', () => {
   beforeEach(() => {
     runGraphSampleWithOoe.mockClear();
+    runGraphAnalyzeWithOoe.mockClear();
     createGraphThreeRenderer.mockClear();
     threeRenderer.dispose.mockClear();
   });
@@ -590,7 +612,7 @@ describe('GraphWorkspacePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo graph edit' }));
     expect(screen.getByTestId('graph-expression-row')).toBeInTheDocument();
 
-    expect(screen.queryByRole('button', { name: /Analyze/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Analyze' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Export/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Complex')).not.toBeInTheDocument();
   });
@@ -641,6 +663,37 @@ describe('GraphWorkspacePage', () => {
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();
   });
 
+  it('opens a non-modal Analyze overlay, previews, pins, explains, styles, and recenters explicitly', async () => {
+    const onUpdateSession = vi.fn();
+    render(<GraphWorkspacePage onUpdateSession={onUpdateSession}
+      session={createGraphWorkspaceSessionState('graphing.2', 'Analyze Graph')} workspaceContext={workspaceContext} />);
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'x');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Analyze' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    expect(await screen.findByRole('complementary', { name: 'Analyze graph' })).toBeVisible();
+    await waitFor(() => expect(runGraphAnalyzeWithOoe).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('exact proved')).toBeVisible();
+    expect(screen.getByText('sampled estimate')).toBeVisible();
+
+    const rootCard = screen.getByText('x 2').closest<HTMLElement>('.graph-feature-card')!;
+    fireEvent.mouseEnter(rootCard);
+    expect(document.querySelector('.graph-analysis-marker.is-preview')).not.toBeNull();
+    fireEvent.click(rootCard.querySelectorAll('button')[1]!);
+    expect(onUpdateSession.mock.calls.at(-1)?.[0].surface.analyze.pinnedAnnotations).toHaveLength(1);
+    const estimateCard = screen.getByText('x ≈ 1').closest<HTMLElement>('.graph-feature-card')!;
+    expect(estimateCard.querySelectorAll('button')[1]).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }));
+    expect(screen.getByText('test proof')).toBeVisible();
+    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+    expect(screen.getByRole('dialog', { name: 'Curve style' })).toBeVisible();
+    fireEvent.click(screen.getByRole('tab', { name: 'Features' }));
+    const viewportBefore = onUpdateSession.mock.calls.at(-1)?.[0].surface.viewportRevision;
+    const currentRootCard = screen.getByText('x 2').closest<HTMLElement>('.graph-feature-card')!;
+    fireEvent.click(currentRootCard.querySelectorAll('button')[0]!);
+    await waitFor(() => expect(onUpdateSession.mock.calls.at(-1)?.[0].surface.viewportRevision).toBeGreaterThan(viewportBefore));
+  });
+
   it('keeps the 2D/3D switch visible and persists 3D view state without resampling', async () => {
     const onUpdateSession = vi.fn();
     render(
@@ -661,9 +714,9 @@ describe('GraphWorkspacePage', () => {
     expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Real · Three interactive')).toBeVisible();
     expect(onUpdateSession.mock.calls.at(-1)?.[0]).toMatchObject({
-      version: 4,
+      version: 5,
       document: { mathematicsRevision: 0 },
-      surface: { version: 3, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
+      surface: { version: 4, panes: { real: { dimension: '3d' }, complex: { dimension: '2d' } } },
     });
     await new Promise((resolve) => setTimeout(resolve, 220));
     expect(runGraphSampleWithOoe).not.toHaveBeenCalled();

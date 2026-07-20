@@ -30,9 +30,11 @@ import type {
   GraphSurfaceStateV1,
   GraphSurfaceStateV2,
   GraphSurfaceStateV3,
+  GraphSurfaceStateV4,
   GraphViewportV1,
   SampledSceneSnapshotV2,
 } from './types';
+import { GRAPH_ANALYSIS_FEATURES } from './types';
 
 export const GRAPH_DOCUMENT_MAX_ITEMS = 100;
 export const GRAPH_POINT_SET_MAX_POINTS = 2_000;
@@ -397,10 +399,32 @@ const paneViewSchema = z.strictObject({
   wireframe: z.boolean(),
   flythroughEnabled: z.boolean(),
 });
-const surfaceSchema: z.ZodType<GraphSurfaceStateV3> = surfaceV2Schema.extend({
+const surfaceV3ObjectSchema = surfaceV2Schema.extend({
   version: z.literal(3),
   panes: z.strictObject({ real: paneViewSchema, complex: paneViewSchema }),
-}) as z.ZodType<GraphSurfaceStateV3>;
+});
+const surfaceV3Schema = surfaceV3ObjectSchema as z.ZodType<GraphSurfaceStateV3>;
+const featureSchema = z.enum(GRAPH_ANALYSIS_FEATURES);
+const featureValueSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('exact'), value: z.strictObject({
+    canonicalLatex: z.string().trim().min(1).max(16_384),
+    mathJson: z.unknown().refine((value) => validateSerializableMathJson(value).ok, 'standard MathJSON'),
+  }) }),
+  z.strictObject({ kind: z.literal('approximate'), value: finiteSchema, errorBound: finiteSchema.nonnegative().optional() }),
+]);
+const surfaceSchema: z.ZodType<GraphSurfaceStateV4> = surfaceV3ObjectSchema.extend({
+  version: z.literal(4),
+  analyze: z.strictObject({
+    width: finiteSchema.min(300).max(560),
+    activeTab: z.enum(['features', 'evidence', 'style']),
+    pinnedAnnotations: z.array(z.strictObject({
+      version: z.literal(1), annotationId: idSchema, feature: featureSchema,
+      level: z.enum(['exact-proved', 'numeric-validated']),
+      itemIds: z.array(idSchema).min(1).max(GRAPH_DOCUMENT_MAX_ITEMS),
+      coordinates: z.strictObject({ x: featureValueSchema.optional(), y: featureValueSchema.optional() }),
+    })).max(100),
+  }),
+}) as z.ZodType<GraphSurfaceStateV4>;
 
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({
   rendererId: z.enum(['headless', 'svg', 'three-webgl']),
@@ -539,6 +563,8 @@ export const validateGraphSurfaceStateV1 = (input: unknown) =>
   validateJsonContract(input, 'Graph V1 surface state', surfaceV1Schema, standardLimits);
 export const validateGraphSurfaceStateV2 = (input: unknown) =>
   validateJsonContract(input, 'Graph V2 surface state', surfaceV2Schema, standardLimits);
+export const validateGraphSurfaceStateV3 = (input: unknown) =>
+  validateJsonContract(input, 'Graph V3 surface state', surfaceV3Schema, standardLimits);
 export const validateGraphRevisionSet = (input: unknown) =>
   validateJsonContract(input, 'Graph revision set', revisionsSchema, standardLimits);
 export const validateGraphRendererCapabilities = (input: unknown) =>

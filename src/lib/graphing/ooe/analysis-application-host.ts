@@ -77,7 +77,7 @@ export class GraphAnalysisApplicationHost {
     try {
       result = await runGraphAnalysisRequest(request, this.#cache, {
         isCancelled: () => localCancelled || context.shouldCancel(),
-        yieldBetweenItems: () => context.yieldIfBudgetExceeded('Graph analysis fallback yielded between items.'),
+        yieldBetweenItems: async () => { await context.yieldIfBudgetExceeded('Graph analysis fallback yielded between items.'); },
       });
     } finally { if (this.#active?.cancel === cancel) this.#active = null; }
     const stopped = result.status === 'cancelled';

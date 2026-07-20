@@ -7,9 +7,9 @@ import type {
   GraphAnalysisFeature,
   GraphAnalysisRequestV1,
   GraphAnalysisResultV1,
+  GraphClassifiedItemSnapshotV2,
   GraphExpressionIR,
   GraphFeatureValueV1,
-  GraphItemSpecV1,
   GraphRelationIR,
   GraphStopReason,
 } from '../contracts';
@@ -107,7 +107,7 @@ function evidence(
 
 function evaluatorFor(
   expression: GraphExpressionIR,
-  item: GraphItemSpecV1,
+  item: GraphClassifiedItemSnapshotV2,
   environment: Record<string, number>,
   cache: GraphExpressionPlanCache,
 ): Evaluator | undefined {
@@ -168,7 +168,7 @@ export async function runGraphAnalysisRequest(
   const stopReasons: GraphStopReason[] = [];
   const window = request.numericWindow ?? { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
   const requested = new Set(request.features);
-  const explicitItems: Array<{ item: Extract<GraphItemSpecV1, { kind: 'relation' }>; run: Evaluator; expression: GraphExpressionIR }> = [];
+  const explicitItems: Array<{ item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>; run: Evaluator; expression: GraphExpressionIR }> = [];
 
   for (const snapshot of request.items) {
     if (control.isCancelled?.()) break;

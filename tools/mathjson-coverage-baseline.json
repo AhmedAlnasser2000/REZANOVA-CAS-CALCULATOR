@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "EQUATION-SYSTEMS-LOCUS-READBACK-REPAIR proves Equation system/locus/readback rows and the delegated Trigonometry equation answer-row bridge.",
+  "reason": "add executable graphing analysis golden evidence",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -31,6 +31,7 @@
     "geometry.line-equation",
     "geometry.shape-2d",
     "geometry.triangle",
+    "graphing.analysis",
     "matrix.definiteness",
     "matrix.determinant",
     "matrix.inverse",
@@ -65,13 +66,13 @@
   ],
   "exemptionIds": [],
   "totals": {
-    "evidence": 146,
+    "evidence": 147,
     "replayFixtures": 100,
-    "goldenCases": 46,
-    "bytes": 126330,
+    "goldenCases": 47,
+    "bytes": 126611,
     "maxBytes": 2894,
-    "leaves": 504,
-    "proven": 504,
+    "leaves": 505,
+    "proven": 505,
     "exempt": 0,
     "missing": 0
   },
@@ -390,6 +391,17 @@
       "goldenCases": 0,
       "bytes": 384,
       "maxBytes": 384,
+      "leaves": 1,
+      "proven": 1,
+      "exempt": 0,
+      "missing": 0
+    },
+    "graphing.analysis": {
+      "evidence": 1,
+      "replayFixtures": 0,
+      "goldenCases": 1,
+      "bytes": 281,
+      "maxBytes": 281,
       "leaves": 1,
       "proven": 1,
       "exempt": 0,

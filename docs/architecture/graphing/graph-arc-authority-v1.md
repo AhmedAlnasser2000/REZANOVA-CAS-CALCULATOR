@@ -2,7 +2,7 @@
 
 Status: approved architecture contract; implementation active through the 30-move Graphing program
 Milestone: `GRAPH-ARC-REBASE-AND-AUTHORITY-DESIGN1`
-Implementation baseline: `76c0c61b`; implementation is complete through the verified Move 22 gate
+Implementation baseline: `13b89ef7`; implementation is verified through Move 24 with its commit pending at write time
 Date: 2026-07-19
 
 ## Scope and outcome
@@ -11,7 +11,7 @@ This contract defines the first production Graphing arc. Graphing will be a full
 
 Graphing is not a calculator `ModeId`, side surface, result card, launcher tile, History artifact, Notebook block, Surface Protocol capability, or detached experiment. The first arc has no cross-workspace Open, Send, or Plot action and no durable graph-project persistence.
 
-Moves 1-22 now establish the public non-singleton Graph workspace, structured real-relation authority, governed adaptive sampling, renderer-neutral scene and appearance contracts, deterministic SVG reference view, and a private on-demand Three WebGL2 view. Three is dynamically loaded only after a pane enters 3D; current curves stay on `z=0`; strict session V4/surface V3 migration preserves independent real/complex camera state; WebGL2 loss or absence immediately retains the precise SVG scene. Analysis, real-surface mathematics, complex mappings, Riemann sheets/surfaces, and export remain sequenced in Moves 23-30.
+Moves 1-24 now establish the public non-singleton Graph workspace, structured real-relation authority, governed adaptive sampling, renderer-neutral scene and appearance contracts, deterministic SVG reference view, a private on-demand Three WebGL2 view, independent Graph analysis authority, and its floating Analyze overlay. Three is dynamically loaded only after a pane enters 3D; current curves stay on `z=0`; strict session V5/surface V4 migration preserves independent real/complex camera state plus tab-local Analyze width, tab, selection, and pins; WebGL2 loss or absence immediately retains the precise SVG scene. Real-surface mathematics, complex mappings, Riemann sheets/surfaces, and export remain sequenced in Moves 25-30.
 
 ## Rebased repository authority map
 
@@ -616,7 +616,7 @@ Preview completes coarse geometry for every visible item before later quality st
 
 ## Analyze ownership
 
-The Analyze drawer is Graph-owned state and content. It queries cached/requested `GraphAnalysisEvidenceV1`, and only exact/validated evidence may acquire persistent annotations. The drawer may follow the app-shell presence phases and motion tokens, but it is not a global side surface and does not use the global `sideSurface` ownership state. Features, Evidence, and Style remain Graph tabs. Opening the drawer must not dim or disable the Graph document as though it were a modal.
+The Analyze overlay is Graph-owned state and content. It queries requested `GraphAnalysisEvidenceV1`, and only exact/validated evidence may acquire persistent annotations. It floats above the viewport without resizing, dimming, or disabling the Graph document and does not use global `sideSurface` ownership. Width, active tab, selected item, and bounded annotation identities are tab-local. Features, Evidence, and Style remain Graph tabs; preview and selection never auto-pan, while Recenter remains explicit. Analysis launches after opening, selection, or settled mathematics/parameter changes, never from camera gestures.
 
 ## Anti-regression contract
 

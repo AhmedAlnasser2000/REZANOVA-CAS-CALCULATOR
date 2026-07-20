@@ -911,4 +911,56 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     });
     expect(consoleErrors).toEqual([]);
   });
+
+  test('keeps Analyze floating, evidence-honest, persistent, and explicitly navigated', async ({ page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+    page.on('pageerror', (error) => consoleErrors.push(error.message));
+    await page.setViewportSize({ width: 1440, height: 940 });
+    await page.goto('/');
+    await openGraph(page);
+    await enterExpression(page, 'x^2-4');
+    await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
+
+    const graphViewport = page.getByRole('region', { name: 'Graph viewport' });
+    const viewportBefore = await graphViewport.boundingBox();
+    await page.getByRole('button', { name: 'Analyze' }).click();
+    const overlay = page.getByRole('complementary', { name: 'Analyze graph' });
+    await expect(overlay).toBeVisible();
+    await expect(overlay.getByRole('heading', { name: 'Root' })).toBeVisible();
+    const viewportAfter = await graphViewport.boundingBox();
+    expect(viewportAfter).toEqual(viewportBefore);
+
+    const rootCard = overlay.locator('.graph-feature-card').filter({ hasText: 'x -2' }).first();
+    await rootCard.hover();
+    await expect(page.locator('.graph-analysis-marker.is-preview')).toBeVisible();
+    await rootCard.getByRole('button', { name: 'Pin' }).click();
+    await expect(page.locator('.graph-analysis-marker:not(.is-preview)')).toBeVisible();
+    await overlay.getByRole('tab', { name: 'Evidence' }).click();
+    await expect(overlay.getByText('degree-at-most-two polynomial identity').first()).toBeVisible();
+    await overlay.getByRole('tab', { name: 'Style' }).click();
+    await expect(overlay.getByRole('dialog', { name: 'Curve style' })).toBeVisible();
+    await overlay.getByRole('tab', { name: 'Features' }).click();
+
+    const beforeRecenter = await page.getByTestId('graph-scene-grid').locator('[data-grid-line="axis"]').first().getAttribute('d');
+    await overlay.locator('.graph-feature-card').filter({ hasText: 'x -2' }).first().getByRole('button', { name: 'Recenter' }).click();
+    await expect.poll(() => page.getByTestId('graph-scene-grid').locator('[data-grid-line="axis"]').first().getAttribute('d')).not.toBe(beforeRecenter);
+
+    const resize = overlay.getByRole('separator', { name: 'Resize Analyze panel' });
+    const resizeBox = await resize.boundingBox();
+    const overlayWidth = (await overlay.boundingBox())?.width ?? 0;
+    if (!resizeBox) throw new Error('Analyze resize handle had no layout bounds.');
+    await page.mouse.move(resizeBox.x + 4, resizeBox.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(resizeBox.x - 70, resizeBox.y + 20, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(async () => (await overlay.boundingBox())?.width ?? 0).toBeGreaterThan(overlayWidth + 40);
+
+    await page.setViewportSize({ width: 760, height: 800 });
+    const narrowOverlay = await overlay.boundingBox();
+    expect(narrowOverlay?.x).toBeGreaterThanOrEqual(0);
+    expect((narrowOverlay?.x ?? 0) + (narrowOverlay?.width ?? 0)).toBeLessThanOrEqual(760);
+    await page.screenshot({ path: testInfo.outputPath('graphing-move24-analyze-overlay-760x800.png'), fullPage: true });
+    expect(consoleErrors).toEqual([]);
+  });
 });
