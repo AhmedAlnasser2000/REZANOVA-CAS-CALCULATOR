@@ -1,4 +1,23 @@
+<p align="center">
+  <img src="docs/assets/branding/logo.png" alt="REZANOVA logo" width="96" />
+</p>
+
 # REZANOVA CLASSWIZ CALCULATOR
+
+<p align="center">
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/github/license/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR" /></a>
+  <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR?include_prereleases&sort=semver" /></a>
+  <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR" /></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Linux-informational" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download AppImage" src="https://img.shields.io/badge/Download-AppImage-4c1?logo=linux&logoColor=white" /></a>
+  <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .deb" src="https://img.shields.io/badge/Download-.deb-4c1?logo=debian&logoColor=white" /></a>
+  <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .rpm" src="https://img.shields.io/badge/Download-.rpm-4c1?logo=redhat&logoColor=white" /></a>
+</p>
+
+<p align="center"><sub>Linux preview builds only — see <a href="#preview-release">Preview release</a>. Windows/macOS are not yet packaged.</sub></p>
 
 REZANOVA CLASSWIZ CALCULATOR is an open-source, Linux-first desktop mathematics workbench built with Tauri, React, TypeScript, Rust, and MathLive. It combines textbook-style input with dedicated workspaces for symbolic and numeric calculation, equation solving, calculus, graphing, linear algebra, statistics, geometry, trigonometry, tables, and mathematical notebook authoring.
 
@@ -10,7 +29,7 @@ The project is deliberately **exact-first, bounded, and evidence-oriented**. It 
 
 ## Project status
 
-- **Current version:** `0.2.0`
+- **Current version:** `0.3.0`
 - **Primary release direction:** Linux-first preview
 - **License:** MIT
 - **Input and rendering:** MathLive

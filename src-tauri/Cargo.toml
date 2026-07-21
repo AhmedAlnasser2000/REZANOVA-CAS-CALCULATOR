@@ -1,6 +1,6 @@
 [package]
 name = "calcwiz_desktop"
-version = "0.2.0"
+version = "0.3.0"
 description = "Casio-inspired scientific calculator desktop app"
 authors = ["Codex and Ahmed"]
 license = "MIT"

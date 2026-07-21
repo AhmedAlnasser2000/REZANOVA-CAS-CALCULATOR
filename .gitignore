@@ -23,6 +23,7 @@ playground/sources/editors/**/mirror/**
 !playground/sources/editors/**/README.md
 !playground/sources/editors/metadata/
 !playground/sources/editors/metadata/*.yaml
+playground/sources/editors/**/mirror/**
 
 .memory/logs/**
 !.memory/logs/.gitkeep
