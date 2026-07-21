@@ -6,7 +6,7 @@ The project is deliberately **exact-first, bounded, and evidence-oriented**. It 
 
 `Calcwiz` and `Classwiz` are friendly aliases. The primary public identity is **REZANOVA CLASSWIZ CALCULATOR**.
 
-> **Development note:** the current implementation grew over roughly **four months and a few days** of intensive development. That explains its unusually broad scope, but it is not a claim of production maturity. This repository should still be treated as an advancing preview whose mathematical and platform boundaries are stated openly.
+> **Development note:** the current implementation grew over roughly **four months and a few days, with 2 months intensively and the other 2 intermittent work due to university pressure**. That explains its unusually broad scope, but it is not a claim of production maturity. This repository should still be treated as an advancing preview whose mathematical and platform boundaries are stated openly.
 
 ## Project status
 
