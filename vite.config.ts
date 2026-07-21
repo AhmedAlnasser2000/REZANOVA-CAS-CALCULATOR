@@ -2,11 +2,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { labsRunnerDevPlugin } from './tools/labs-runner-dev-plugin'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const labsRunnerEnabled = process.env.VITE_SHOW_LABS === '1' && process.env.VITE_ENABLE_LAB_RUNNERS === '1'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), labsRunnerDevPlugin({ enabled: labsRunnerEnabled })],
+  plugins: [react(), labsRunnerDevPlugin({ enabled: labsRunnerEnabled }), cloudflare()],
   clearScreen: false,
   build: {
     manifest: true,

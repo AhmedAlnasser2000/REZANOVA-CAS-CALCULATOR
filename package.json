@@ -86,14 +86,15 @@
     "test:gate": "npm run test:memory-protocol && npm run test:canonical-result-v2-enforcement && npm run test:ci-gate-alignment && npm run test:seam-impact-selector && npm run test:printer-migration && npm run test:detail-segment-migration && npm run test:result-intent && npm run test:result-contract && npm run test:mathjson-coverage && npm run test:equation-solve-result && npm run test:display-contract-inversion && npm run test:clipboard-contract && npm run test:feature-probes && npm run test:app-identity && npm run test:surface-protocol && npm run test:pillars && npm run test:golden && npm run test:print-hygiene && npm run test:workspace-freshness && npm run test:labs-catalog && npm run test:source-mirrors && npm run test:area-studies && npm run test:ooe-boundaries && npm run test:compartments-boundaries && npm run test:file-sizes && npm run test:canary-registry && npm run test:runtime-probes && npm run test:unit && npm run test:ui && npm run test:e2e && npm run lint && cargo check --manifest-path src-tauri/Cargo.toml",
     "seam:impact": "node tools/seam-impact-selector.mjs",
     "test:unit:watch": "vitest",
-    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "preview": "npm run build && wrangler dev",
     "pretauri:dev": "node tools/check-tauri-linux-deps.mjs",
     "tauri:dev": "npx tauri dev --no-watch",
     "fix:linux-watch-limits": "node tools/fix-linux-watch-limits.mjs",
     "pretauri:dev:watch": "node tools/check-tauri-linux-deps.mjs",
     "tauri:dev:watch": "npx tauri dev",
     "pretauri:build": "node tools/check-tauri-linux-deps.mjs",
-    "tauri:build": "npx tauri build"
+    "tauri:build": "npx tauri build",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@cortex-js/compute-engine": "^0.54.1",
@@ -126,6 +127,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.45.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.58.2",
     "@tauri-apps/cli": "^2.10.0",
@@ -149,6 +151,7 @@
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1",
     "vite-node": "^6.0.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wrangler": "^4.112.0"
   }
 }
