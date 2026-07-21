@@ -15,9 +15,11 @@
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download AppImage" src="https://img.shields.io/badge/Download-AppImage-4c1?logo=linux&logoColor=white" /></a>
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .deb" src="https://img.shields.io/badge/Download-.deb-4c1?logo=debian&logoColor=white" /></a>
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .rpm" src="https://img.shields.io/badge/Download-.rpm-4c1?logo=redhat&logoColor=white" /></a>
+  <a href="https://rezanova-cas-calculator.ahmed-2007-fn.workers.dev"><img alt="Try in Browser" src="https://img.shields.io/badge/Try_in-Browser-orange?logo=googlechrome&logoColor=white" /></a>
 </p>
 
 <p align="center"><sub>Linux preview builds only — see <a href="#preview-release">Preview release</a>. Windows/macOS are not yet packaged.</sub></p>
+<p align="center"><sub>The browser version is the full app, not a limited demo — the only difference is where your work is saved. The desktop app saves to your file system; the browser version saves to that browser's local storage, so work saved in one won't appear in the other.</sub></p>
 
 REZANOVA CLASSWIZ CALCULATOR is an open-source, Linux-first desktop mathematics workbench built with Tauri, React, TypeScript, Rust, and MathLive. It combines textbook-style input with dedicated workspaces for symbolic and numeric calculation, equation solving, calculus, graphing, linear algebra, statistics, geometry, trigonometry, tables, and mathematical notebook authoring.
 

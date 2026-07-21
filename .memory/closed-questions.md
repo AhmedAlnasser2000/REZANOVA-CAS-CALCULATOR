@@ -107,3 +107,9 @@ Closed during the July 3 memory cleanup:
 - attribution_basis: live
 
 - Closed the Move 16 quality-policy question. CSS-pixel preview/settled/polish stages, route-derived internal safety limits, complete all-item preview coverage, active/dependent later priority, bounded predictive overscan/cache reuse, and per-item truthful reduced-detail evidence replace equal caller-authored quotas. The fixed 25-row/10-visible checkpoint passes; Three.js remains the separate Move 17.
+
+## 2026-07-21 - Rezanova README Logo
+
+- [agent: claude | model: claude-fable-5 | attribution_basis: live]
+
+- Closed the open logo question from earlier the same day. User affirmed the sky-background render as the final choice over the black-background one, despite both lacking an alpha channel (flagged twice: opaque background renders as a hard-edged tile on GitHub's light/dark README themes, and a tested luminance-based transparency cutout of the black version showed a visible halo artifact on light backgrounds). docs/assets/branding/logo.png now holds the sky-background version; no further processing was requested.
