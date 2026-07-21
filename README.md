@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/branding/logo.png" alt="REZANOVA logo" width="96" />
+  <img src="docs/assets/branding/logo.png" alt="REZANOVA logo" width="562" />
 </p>
 
 # REZANOVA CLASSWIZ CALCULATOR
