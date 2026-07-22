@@ -73,19 +73,20 @@ describe('runSharedEquationSolve absolute-value routing', () => {
     expect(result.solveBadges).toContain('Candidate Checked');
   });
 
-  it('returns no real solutions for negative direct absolute-value comparisons', () => {
+  it('returns typed empty-set evidence for negative direct absolute-value comparisons', () => {
     const result = runSharedEquationSolve({
       ...request,
       originalLatex: '\\left|x-2\\right|=-3',
       resolvedLatex: '\\left|x-2\\right|=-3',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toContain('No real solutions');
-    expect(result.error).toContain('absolute values are always nonnegative');
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.solveBadges).toContain('Range Guard');
+    expect(result.warnings.join(' ')).toContain('absolute values are always nonnegative');
   });
 
   it('collapses zero direct absolute-value comparisons to the single branch', () => {

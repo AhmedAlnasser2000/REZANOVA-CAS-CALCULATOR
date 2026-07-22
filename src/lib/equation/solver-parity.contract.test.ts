@@ -32,12 +32,13 @@ describe('solver parity contract', () => {
       resolvedLatex: '\\sin\\left(x^2\\right)=5',
     });
 
-    expect(outcome.kind).toBe('error');
-    if (outcome.kind !== 'error') {
-      throw new Error('Expected error outcome');
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected success outcome');
     }
+    expect(outcome.exactLatex).toBe('\\varnothing');
     expect(outcome.solveBadges).toContain('Range Guard');
-    expect(outcome.error).toContain('between -1 and 1');
+    expect(outcome.warnings?.join(' ')).toContain('between -1 and 1');
   });
 
   it('keeps log-combine bounded solve behavior stable', () => {

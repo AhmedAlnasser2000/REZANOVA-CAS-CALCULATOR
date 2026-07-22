@@ -432,12 +432,12 @@ describe('web-preview app-state persistence', () => {
     });
   });
 
-  it('removes legacy rows once while preserving versions above V3 verbatim and outside retention', async () => {
+  it('removes legacy rows once while preserving versions above V4 verbatim and outside retention', async () => {
     const future = {
-      id: 'future-result-v4',
+      id: 'future-result-v5',
       mode: 'calculate',
       inputLatex: 'future()',
-      resultDocument: { version: 4, title: 'Future result', payload: ['kept', 'verbatim'] },
+      resultDocument: { version: 5, title: 'Future result', payload: ['kept', 'verbatim'] },
       timestamp: '2026-07-12T00:00:00.000Z',
     };
     storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({

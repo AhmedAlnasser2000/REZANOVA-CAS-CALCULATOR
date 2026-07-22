@@ -30,7 +30,6 @@ describe('Equation Complex wrapper baseline lock', () => {
     const cases = [
       String.raw`\sqrt{z^3+z+1}=b`,
       String.raw`\sqrt[3]{z^4+z+1}=b`,
-      String.raw`\left|z^3+z+1\right|=b`,
       String.raw`\sqrt{z^3+z+1}+\sqrt{z+1}=1`,
       String.raw`\sqrt{\sqrt{z^3+z+1}}=b`,
     ];
@@ -40,6 +39,15 @@ describe('Equation Complex wrapper baseline lock', () => {
       expect(result.kind, equationLatex).toBe('error');
       expectNoDeferredComplexArtifacts(result);
     }
+
+    const absoluteValueLocus = solve(String.raw`\left|z^3+z+1\right|=b`);
+    expect(absoluteValueLocus.kind).toBe('success');
+    expectNoDeferredComplexArtifacts(absoluteValueLocus);
+    if (absoluteValueLocus.kind !== 'success') {
+      throw new Error('Expected Complex absolute-value wrapper locus evidence.');
+    }
+    expect(absoluteValueLocus.detailSections?.some((section) => section.title === 'Locus Meaning')).toBe(true);
+    expect(JSON.stringify(absoluteValueLocus)).toContain('recognized locus; no general curve readback is claimed');
   });
 
   it('keeps generated cubic and quartic wrapper formula payloads deferred in Complex exact mode', () => {

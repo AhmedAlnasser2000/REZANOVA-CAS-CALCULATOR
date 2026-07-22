@@ -105,7 +105,7 @@ describe('Equation numeric card credibility polish', () => {
     for (const result of [squareRootSquare, absoluteValue]) {
       expect(result.exactLatex).toBe('x=-2');
       expect(result.exactSupplementLatex ?? []).not.toContain(String.raw`\text{Conditions: } x+3\ge0`);
-      expect(sectionText(result, 'Branch Guards')).toContain(String.raw`x+3\ge0`);
+      expect(sectionText(result, 'Domain Facts')).toContain(String.raw`x+3`);
     }
   });
 
@@ -240,14 +240,15 @@ describe('Equation numeric card credibility polish', () => {
     expect(sectionText(result, 'Extraneous Solutions')).toContain('Candidate approximately 2');
   });
 
-  it('shows no roots plus clear pole evidence for pure reciprocal zero equations', () => {
-    const result = expectError(solve({
+  it('shows empty-set plus clear pole evidence for pure reciprocal zero equations', () => {
+    const result = expectSuccess(solve({
       equationLatex: String.raw`\frac{1}{x-2}=0`,
       interval: { start: '-10', end: '10', subdivisions: 256 },
     }));
 
+    expect(result.exactLatex).toBe(String.raw`\varnothing`);
     expect(sectionText(result, 'Domain and Exclusions')).toContain(String.raw`x-2\ne 0`);
-    expect(result.error).toContain('No real solutions');
+    expect(result.warnings?.join(' ') ?? '').toContain('No real solutions');
   });
 
   it('keeps exact periodic output readable while solve notes collapse by display policy', () => {

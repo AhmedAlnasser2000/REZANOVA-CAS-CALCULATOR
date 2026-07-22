@@ -141,7 +141,8 @@ describe('equation complex route', () => {
     const square = solveComplex(String.raw`\exp(x^2)=1`);
     const quartic = solveComplex(String.raw`\exp(x^4)=1`);
 
-    expect(direct.exactLatex).toBe('x=2\\pi i k,\\ k\\in\\mathbb{Z}');
+    expect(direct.exactLatex).toBe('x=2\\pi i k');
+    expect(direct.exactSupplementLatex).toContain('k\\in\\mathbb{Z}');
     expect(affine.exactLatex).toContain('\\frac{i\\left(\\frac{\\pi}{2}+2\\pi k\\right)-1}{2}');
     expect(rational.exactLatex).toContain('\\frac{4\\pi i k+1}{1-2\\pi i k}');
     expect(rational.exactSupplementLatex).toContain('x+2\\ne0');
@@ -177,7 +178,7 @@ describe('equation complex route', () => {
     expect(log.exactSupplementLatex).toContain('x-2\\ne0');
     expect(log.exactSupplementLatex).toContain('\\frac{x^2+1}{x-2}\\ne0');
     expect(exp.exactLatex).toContain('i\\left(\\frac{\\pi}{2}+2\\pi k\\right)');
-    expect(exp.exactLatex).toContain('k\\in\\mathbb{Z}');
+    expect(exp.exactSupplementLatex).toContain('k\\in\\mathbb{Z}');
     expect(exp.exactSupplementLatex).toContain('x-2\\ne0');
   });
 
@@ -192,16 +193,17 @@ describe('equation complex route', () => {
 
     expect(sin.exactLatex).toContain('\\arcsin\\left(i\\right)+2\\pi k');
     expect(sin.exactLatex).toContain('\\pi-\\arcsin\\left(i\\right)+2\\pi k');
-    expect(sin.exactLatex).toContain('k\\in\\mathbb{Z}');
+    expect(sin.exactSupplementLatex).toContain('k\\in\\mathbb{Z}');
     expect(tan.exactLatex).toContain('\\arctan\\left(1+i\\right)+\\pi k');
     expect(cosDeg.exactLatex).toContain('\\frac{180}{\\pi}\\arccos\\left(i\\right)');
     expect(cosDeg.exactLatex).toContain('360k');
-    expect(cosZero.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi}{4}+\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
-    expect(sinZero.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
-    expect(tanUnit.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi}{8}+\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
-    expect(cosHalf.exactLatex).toBe(String.raw`x\in\left\{\pi+2\pi k\right\},\ k\in\mathbb{Z}`);
+    expect(cosZero.exactLatex).toBe(String.raw`x=\frac{\pi}{4}+\frac{\pi k}{2}`);
+    expect(sinZero.exactLatex).toBe(String.raw`x=\frac{\pi k}{2}`);
+    expect(tanUnit.exactLatex).toBe(String.raw`x=\frac{\pi}{8}+\frac{\pi k}{2}`);
+    expect(cosHalf.exactLatex).toBe(String.raw`x=\pi+2\pi k`);
     for (const result of [cosZero, sinZero, tanUnit, cosHalf]) {
       expect(result.exactLatex).not.toContain(String.raw`\frac{\frac`);
+      expect(result.exactSupplementLatex).toContain(String.raw`k\in\mathbb{Z}`);
     }
   });
 
@@ -211,11 +213,11 @@ describe('equation complex route', () => {
     const cosTan = solveComplex(String.raw`\cos\left(\tan\left(x\right)\right)=1+\imaginaryI`, { angleUnit: 'rad' });
 
     expect(tanSin.exactLatex).toContain('\\arcsin\\left(\\arctan\\left(1+i\\right)+\\pi k\\right)+2\\pi n');
-    expect(tanSin.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(tanSin.exactSupplementLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(sinCos.exactLatex).toContain('\\arccos\\left(\\arcsin\\left(i\\right)+2\\pi k\\right)+2\\pi n');
-    expect(sinCos.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(sinCos.exactSupplementLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(cosTan.exactLatex).toContain('\\arctan\\left(\\arccos\\left(1+i\\right)+2\\pi k\\right)+\\pi n');
-    expect(cosTan.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(cosTan.exactSupplementLatex).toContain('k,n\\in\\mathbb{Z}');
   });
 
   it('hands two-trig-layer complex preimages to bounded selected-target powers', () => {
@@ -225,12 +227,12 @@ describe('equation complex route', () => {
     expect(square.exactLatex).toContain('-\\sqrt{\\arcsin');
     expect(square.exactLatex).toContain('\\sqrt{\\arcsin');
     expect(square.exactLatex).not.toContain('\\operatorname{Roots}_{2}');
-    expect(square.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(square.exactSupplementLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(square.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
       .toBeUndefined();
     expect(quartic.exactLatex).toContain('\\sqrt[4]{');
     expect(quartic.exactLatex).not.toContain('\\mathrm{all}');
-    expect(quartic.exactLatex).toContain('k,n\\in\\mathbb{Z}');
+    expect(quartic.exactSupplementLatex).toContain('k,n\\in\\mathbb{Z}');
     expect(quartic.detailSections?.find((section) => section.title === 'Expanded Branches')?.lineKind)
       .toBe('math');
   });
@@ -252,7 +254,6 @@ describe('equation complex route', () => {
       String.raw`\tan\left(\sin\left(\frac{x-1}{x+2}\right)\right)=1+\imaginaryI`,
       String.raw`\sin\left(\sin\left(x^5\right)\right)=\imaginaryI`,
       String.raw`\sin\left(\sin\left(x+y\right)\right)=\imaginaryI`,
-      String.raw`\left|x\right|=2`,
     ];
 
     for (const equationLatex of cases) {
@@ -268,6 +269,18 @@ describe('equation complex route', () => {
       expect(result.error).toContain('supported guarded complex preimage families');
       expect(result.answerDomain).not.toBe('real');
     }
+
+    const absLocus = runEquationMode({
+      ...makeRequest(String.raw`\left|x\right|=2`),
+      equationDomainIntent: 'complex',
+    });
+    expect(absLocus.kind).toBe('success');
+    if (absLocus.kind !== 'success') {
+      throw new Error('Expected complex absolute-value locus success');
+    }
+    expect(absLocus.exactLatex).toBe(String.raw`\left|x\right|=2`);
+    expect(absLocus.answerDomain).toBe('complex');
+    expect(absLocus.detailSections?.some((section) => section.title === 'Locus Meaning')).toBe(true);
   });
 
   it('solves mixed factorable polynomial equations with real and complex branches', () => {

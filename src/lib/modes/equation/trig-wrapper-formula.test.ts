@@ -53,20 +53,22 @@ describe('Equation mode trig wrapper formulas', () => {
     expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
-  it('dedupes exact endpoint branches and keeps range-empty cases stopped', () => {
+  it('dedupes exact endpoint branches and returns range-empty cases as typed empty sets', () => {
     const sineEndpoint = solve('\\sin\\left(z^3+z+1\\right)=1');
     const cosineEndpoint = solve('\\cos\\left(z^4+z+1\\right)=-1');
     const outOfRange = solve('\\sin\\left(z^3+z+1\\right)=2');
 
     expect(sineEndpoint.kind).toBe('success');
     expect(cosineEndpoint.kind).toBe('success');
-    expect(outOfRange.kind).toBe('error');
-    if (sineEndpoint.kind !== 'success' || cosineEndpoint.kind !== 'success' || outOfRange.kind !== 'error') {
-      throw new Error('Expected endpoint dedupe successes and out-of-range stop');
+    expect(outOfRange.kind).toBe('success');
+    if (sineEndpoint.kind !== 'success' || cosineEndpoint.kind !== 'success' || outOfRange.kind !== 'success') {
+      throw new Error('Expected endpoint dedupe successes and out-of-range empty-set success');
     }
     expect(sineEndpoint.exactLatex).not.toContain('\\pi-\\arcsin(1)');
     expect(cosineEndpoint.exactLatex).not.toContain('-\\arccos(-1)');
-    expect(outOfRange.error).toContain('only take values between -1 and 1');
+    expect(outOfRange.exactLatex).toBe('\\varnothing');
+    expect(outOfRange.solveBadges).toContain('Range Guard');
+    expect(outOfRange.warnings?.join(' ')).toContain('only take values between -1 and 1');
   });
 
   it('keeps Complex trig formula wrappers unsupported', () => {

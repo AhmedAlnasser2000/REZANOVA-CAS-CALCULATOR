@@ -4,11 +4,11 @@ import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './runtimeControllers';
-import { runEquationModeWithOoePilot } from '../../lib/modes/equation';
+import { runEquationModeWithOoePilot } from './equationRuntimeLoader';
 import { createCanonicalRuntimeError } from '../../lib/result-contract';
 
-vi.mock('../../lib/modes/equation', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/modes/equation')>();
+vi.mock('./equationRuntimeLoader', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./equationRuntimeLoader')>();
   return {
     ...actual,
     runEquationModeWithOoePilot: vi.fn(actual.runEquationModeWithOoePilot),

@@ -178,5 +178,6 @@ export function tryLinearCombinationFallback(
     antiderivativeExpression,
     mergeFactNodes(results),
     mergeDetailNodes(results),
+    'precomputed-exact',
   );
 }

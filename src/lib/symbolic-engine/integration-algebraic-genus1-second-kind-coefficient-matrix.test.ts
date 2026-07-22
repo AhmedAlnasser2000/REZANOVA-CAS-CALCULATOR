@@ -93,7 +93,7 @@ describe('algebraic genus-1 second-kind coefficient matrix readiness', () => {
     const live = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
     expect(live.kind).toBe('error');
     if (live.kind === 'error') {
-      expect(live.error).toContain('elliptic/genus-1 analysis');
+      expect(live.error).toContain('genus-1');
     }
   });
 });

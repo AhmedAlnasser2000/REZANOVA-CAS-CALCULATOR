@@ -72,11 +72,10 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
     }
   });
 
-  it('keeps two-root, nested-root, abs-companion, and non-Exact boundaries deferred', () => {
+  it('keeps two-root, nested-root, and non-Exact boundaries deferred', () => {
     const cases = [
       solve(String.raw`\sqrt{z+a}+\sqrt{z+1}=b`),
       solve(String.raw`\sqrt{\sqrt{z^2+1}}+z=b`),
-      solve(String.raw`\sqrt{z+a}+\left|z\right|=b`),
       solve(String.raw`\sqrt{z+a}+z^2=b`),
     ];
 
@@ -84,6 +83,18 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
       expect(result.kind).toBe('error');
       expectNoFormulaLeak(result);
     }
+  });
+
+  it('returns bounded locus evidence for the abs-companion mixed boundary', () => {
+    const result = solve(String.raw`\sqrt{z+a}+\left|z\right|=b`);
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected abs-companion locus evidence');
+    }
+    expect(result.exactLatex).toBe(String.raw`\sqrt{z+a}+\left|z\right|=b`);
+    expect(result.detailSections?.map((section) => section.title)).toContain('Locus Evidence');
+    expectNoFormulaLeak(result);
   });
 });
 

@@ -26,7 +26,7 @@ function expectNoRealFormulaLeak(result: unknown) {
 }
 
 describe('Equation Complex absolute-value wrapper policy', () => {
-  it('keeps Complex absolute-value wrappers deferred as locus semantics', () => {
+  it('returns recognized locus evidence for Complex absolute-value wrappers', () => {
     const cases = [
       String.raw`\left|z-1\right|=2`,
       String.raw`\left|z^2+1\right|=a`,
@@ -36,54 +36,59 @@ describe('Equation Complex absolute-value wrapper policy', () => {
 
     for (const equationLatex of cases) {
       const result = solve(equationLatex);
-      expect(result.kind, equationLatex).toBe('error');
-      if (result.kind !== 'error') {
-        throw new Error(`Expected Complex abs wrapper policy stop for ${equationLatex}`);
+      expect(result.kind, equationLatex).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error(`Expected Complex abs wrapper locus evidence for ${equationLatex}`);
       }
       const text = JSON.stringify(result);
-      expect(result.error).toContain('outside the supported guarded complex preimage families');
-      expect(text).toContain('Complex Locus Policy');
-      expect(text).toContain('locus-deferred');
-      expect(text).toContain('two-real-variable');
-      expect(text).toContain('real-domain equation');
+      expect(result.answerDomain).toBe('complex');
+      expect(result.resultOrigin).toBe('rule-based-symbolic');
+      if (equationLatex === String.raw`\left|z-1\right|=2`) {
+        expect(text).toContain('Circle');
+        expect(text).toContain('Center: ');
+      } else {
+        expect(text).toContain('Recognized locus');
+        expect(text).toContain('Locus Evidence');
+        expect(text).toContain('recognized locus; no general curve readback is claimed');
+      }
       expect(text).not.toContain('Real Abs');
       expect(text).not.toContain('sign split');
       expectNoRealFormulaLeak(result);
     }
   });
 
-  it('does not return finite branches for affine circle cases in Complex mode', () => {
+  it('returns circle locus evidence without finite branches for affine circle cases in Complex mode', () => {
     const result = solve(String.raw`\left|z-1\right|=2`);
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected Complex affine circle policy stop');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Complex affine circle locus evidence');
     }
-    expect(result.detailSections?.some((section) => section.title === 'Complex Locus Policy')).toBe(true);
-    expect(result).not.toHaveProperty('exactLatex');
+    expect(result.exactLatex).toBe(String.raw`\left|z-1\right|=2`);
+    expect(result.answerRows?.rows[0]?.label).toBe('Circle');
+    expect(result.detailSections?.some((section) => section.title === 'Locus Meaning')).toBe(true);
     expect(result).not.toHaveProperty('branchReadback');
   });
 
-  it('keeps Re, Im, and conjugate carriers on the deferred locus route', () => {
+  it('returns recognized locus evidence for Re, Im, and conjugate carriers', () => {
     const cases = [
-      'Re(z)=1',
-      'Im(z)=1',
-      String.raw`\operatorname{Re}(z)=1`,
-      String.raw`\operatorname{Im}(z)=1`,
-      String.raw`\operatorname{conj}(z)=1`,
-      'conj(z)=1',
+      ['Re(z)=1', String.raw`z=1+t\imaginaryI`, 'vertical line'],
+      ['Im(z)=1', String.raw`z=t+\imaginaryI`, 'horizontal line'],
+      [String.raw`\operatorname{Re}(z)=1`, String.raw`z=1+t\imaginaryI`, 'vertical line'],
+      [String.raw`\operatorname{Im}(z)=1`, String.raw`z=t+\imaginaryI`, 'horizontal line'],
+      [String.raw`\operatorname{conj}(z)=1`, String.raw`\operatorname{conj}(z)=1`, 'Conjugate equality isolates the candidate point z=1.'],
+      ['conj(z)=1', String.raw`\operatorname{conj}(z)=1`, 'Conjugate equality isolates the candidate point z=1.'],
     ];
 
-    for (const equationLatex of cases) {
+    for (const [equationLatex, exactLatex, expectedText] of cases) {
       const result = solve(equationLatex);
-      expect(result.kind, equationLatex).toBe('error');
-      if (result.kind !== 'error') {
-        throw new Error(`Expected Complex locus policy stop for ${equationLatex}`);
+      expect(result.kind, equationLatex).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error(`Expected Complex locus evidence for ${equationLatex}`);
       }
       const text = JSON.stringify(result);
-      expect(text).toContain('Complex Locus Policy');
-      expect(text).toContain('Complex Locus Meaning');
-      expect(text).toContain('locus-deferred');
+      expect(result.exactLatex).toBe(exactLatex);
+      expect(text).toContain(expectedText);
       expect(text).not.toContain('eRz');
       expect(text).not.toContain('mIz');
       expect(text).not.toContain('Complex region nonlinear solve');

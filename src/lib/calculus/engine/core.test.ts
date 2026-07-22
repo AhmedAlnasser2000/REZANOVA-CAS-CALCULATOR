@@ -376,7 +376,7 @@ describe('calculus core', () => {
     expect(polynomial.error).toBeUndefined();
     expect(polynomial.exactLatex).toBe('1');
     expect(polynomial.resultOrigin).toBe('rule-based-symbolic');
-    expect(polynomial.integrationCandidate?.method).toBe('direct-rule');
+    expect(polynomial.integrationCandidate?.method).toBe('u-substitution');
     expect(polynomial.detailSections?.[0]?.title).toBe('Integral Method');
     expect(polynomial.detailSections?.[1]?.title).toBe('Interval Safety');
 

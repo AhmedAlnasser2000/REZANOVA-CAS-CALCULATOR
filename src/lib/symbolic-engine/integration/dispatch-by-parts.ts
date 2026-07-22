@@ -35,10 +35,13 @@ export function tryIntegrationByPartsRoute(
       textbookByParts.verification, textbookByParts.exactSupplementLatex, textbookByParts.detailSections,
       textbookByParts.antiderivativeNode === undefined
         ? undefined
-        : nativeStandardAntiderivative(
-            textbookByParts.antiderivativeNode,
-            'calculus.integration:textbook-by-parts',
-          ));
+          : nativeStandardAntiderivative(
+              textbookByParts.antiderivativeNode,
+              'calculus.integration:textbook-by-parts',
+          ),
+      undefined,
+      undefined,
+      textbookByParts.antiderivativeNode === undefined ? 'backcheck' : 'precomputed-exact');
   }
 
   const byParts = tryPartsRuleDetailed(node, variable);
@@ -110,10 +113,15 @@ export function tryIntegrationByPartsRoute(
       rischNorman.verification,
       rischNorman.exactSupplementLatex,
       undefined,
-      nativeStandardAntiderivative(
-        rischNorman.antiderivativeNode,
-        'calculus.integration:risch-norman-integration-by-parts',
-      ),
+      rischNorman.antiderivativeNode === undefined
+        ? undefined
+        : nativeStandardAntiderivative(
+            rischNorman.antiderivativeNode,
+            'calculus.integration:risch-norman-integration-by-parts',
+          ),
+      undefined,
+      undefined,
+      rischNorman.antiderivativeNode === undefined ? 'backcheck' : 'precomputed-exact',
     )
     : undefined;
 }

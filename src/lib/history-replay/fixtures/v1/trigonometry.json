@@ -133,7 +133,7 @@
         "cardinalities": {
           "warnings": 0,
           "supplements": 1,
-          "answerRows": 0,
+          "answerRows": 2,
           "branchRows": 2,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -141,7 +141,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\ncanonicalResult.branchReadback.branches[1].canonicalLatex=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{30+360n,\\ 150+360n\\right\\}\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=x=30+360n\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=x=150+360n\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=30+360n\ncanonicalResult.branchReadback.branches[1].canonicalLatex=150+360n\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
       }
     },
     {

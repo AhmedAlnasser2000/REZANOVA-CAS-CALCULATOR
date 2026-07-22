@@ -23,25 +23,20 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.approxText).toContain('x \\approx');
   });
 
-  it('attaches a shared range-guard stop reason when the guarded backend proves impossibility', () => {
+  it('returns a typed empty-set result when the guarded backend proves range impossibility', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
       equationLatex: '\\sin\\left(x\\right)=2',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.runtimeAdvisories?.stopReason).toEqual({
-      kind: 'range-guard',
-      source: 'stage',
-    });
-    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
-      kind: 'blocked',
-      reason: 'range-guard',
-    });
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.solveBadges).toContain('Range Guard');
+    expect(result.warnings?.join(' ')).toContain('between -1 and 1');
   });
 
   it('marks successful symbolic equation solves as manual-only for numeric follow-up', () => {
@@ -345,7 +340,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toBe('x=90n');
   });
 
   it('solves selected trig rewrite families from Equation mode', () => {
@@ -359,7 +354,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.exactLatex).toContain('x\\in');
+    expect(result.exactLatex).toBe('x=45+180n');
   });
 
   it('normalizes bounded rational equations before solving and carries exclusions', () => {

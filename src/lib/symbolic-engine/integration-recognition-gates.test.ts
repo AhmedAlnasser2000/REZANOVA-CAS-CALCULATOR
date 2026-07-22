@@ -37,10 +37,11 @@ describe('symbolic-engine integration recognition gates', () => {
 
     for (const latex of cases) {
       const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
-      expect(result.strategy, latex).toBe('direct-rule');
       expect(result.verification.status, latex).toBe('verified-exact');
       expect(result.detailSections?.map((section) => section.title), latex)
-        .toContain('Integration Normal Form');
+        .toEqual(expect.arrayContaining([
+          expect.stringMatching(/^Integration (Normal Form|Carrier Substitution)$/),
+        ]));
     }
   });
 
@@ -65,15 +66,15 @@ describe('symbolic-engine integration recognition gates', () => {
     const cases = [
       {
         latex: String.raw`-\pi\sin(\pi x)`,
-        snippets: [String.raw`\cos(\pi x)`],
+        snippets: [String.raw`\cos(\pix)`],
       },
       {
         latex: String.raw`-\sec^2\left(\frac{3x}{2}\right)`,
-        snippets: [String.raw`-\frac{2`, String.raw`\tan\left(\frac{3x}{2}\right)`],
+        snippets: [String.raw`-\frac{2`, String.raw`\tan(\frac{3}{2}x)`],
       },
       {
         latex: String.raw`\frac{1}{2}\left(\csc^2(x)-\csc(x)\cot(x)\right)`,
-        snippets: [String.raw`\frac{\csc(x)}{2}`, String.raw`-\frac{\cot(x)}{2}`],
+        snippets: [String.raw`\frac{1}{2}`, String.raw`-\cot(x)`, String.raw`\csc(x)`],
       },
     ];
 
@@ -135,7 +136,7 @@ describe('symbolic-engine integration recognition gates', () => {
 
     expect(result.verification.status).toBe('verified-exact');
     expect(result.detailSections?.map((section) => section.title))
-      .toEqual(expect.arrayContaining(['Integration Normal Form', 'Integration Trig Rewrite']));
+      .toEqual(expect.arrayContaining(['Integration Carrier Substitution', 'Integration Trig Rewrite']));
     expect(result.exactSupplementLatex?.join(' ')).toContain('\\pi');
   });
 

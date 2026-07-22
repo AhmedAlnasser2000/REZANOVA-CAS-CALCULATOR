@@ -112,7 +112,7 @@ describe('symbolic-engine integration', () => {
       expect(direct.candidate.method).toBe('direct-rule')
       expect(direct.candidate.requiredPrerequisites).toContain('derivative-backcheck')
       expect(direct.candidate.blockedPrerequisites).toEqual([])
-      expect(direct.exactLatex).toContain('x^{3}')
+      expect(direct.exactLatex).toMatch(/x\^\{?3\}?/u)
       expect(direct.verification.status).toBe('verified-exact')
       expect(direct.candidate.verificationStatus).toBe('verified-exact')
     }
@@ -142,7 +142,7 @@ describe('symbolic-engine integration', () => {
     if (byParts.kind === 'success') {
       expect(byParts.strategy).toBe('integration-by-parts')
       expect(byParts.candidate.requiredPrerequisites).toContain('polynomial-core')
-      expect(byParts.exactLatex).toContain('e^{x}')
+      expect(byParts.exactLatex).toMatch(/(?:e|\\exponentialE)\^\{x\}/u)
     }
   })
 
@@ -183,7 +183,7 @@ describe('symbolic-engine integration', () => {
     expect(fourth.kind).toBe('success')
     if (fourth.kind === 'success') {
       expect(fourth.exactLatex).toContain('3x^2+3x+2')
-      expect(fourth.exactLatex).toContain('^{6}')
+      expect(fourth.exactLatex).toContain('^6')
     }
   })
 
@@ -500,7 +500,7 @@ describe('symbolic-engine integration', () => {
       resolveSymbolicIntegralFromLatex('x^2+(c x+d)e^{a x+b}'),
     )
     expect(mixed.strategy).toBe('integration-by-parts')
-    expect(mixed.exactLatex).toContain('x^{3}')
+    expect(mixed.exactLatex).toContain('x^3')
     expect(mixed.exactLatex).toContain('e^{ax+b}')
 
     const unsupported = expectIntegrationError(

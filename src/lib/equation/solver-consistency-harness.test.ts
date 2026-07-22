@@ -68,12 +68,14 @@ describe('Equation solver consistency harness', () => {
     const exact = normalSolve('\\left|x-2\\right|=-3');
     const interval = intervalSolve('\\left|x-2\\right|=-3', '-10', '10');
 
-    expect(exact.kind).toBe('error');
+    expect(exact.kind).toBe('success');
     expect(interval.kind).toBe('error');
-    if (exact.kind !== 'error' || interval.kind !== 'error') {
-      throw new Error('Expected exact and interval errors');
+    if (exact.kind !== 'success' || interval.kind !== 'error') {
+      throw new Error('Expected exact empty-set success and interval error');
     }
-    expect(exact.error).toContain('No real solutions');
+    expect(exact.exactLatex).toBe('\\varnothing');
+    expect(exact.solveBadges).toContain('Range Guard');
+    expect(exact.warnings?.join(' ')).toContain('No real solutions');
     expect(interval.error).toContain('No bracketed or near-zero real roots');
   });
 

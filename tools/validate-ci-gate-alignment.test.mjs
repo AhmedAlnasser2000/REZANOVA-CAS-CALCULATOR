@@ -5,6 +5,7 @@ import {
   PACKAGE_COMMAND,
   SEAM_IMPACT_COMMAND,
   STATIC_GATE_COMMANDS,
+  UNIT_CI_COMMAND,
   V2_ENFORCEMENT_COMMAND,
   validateCiGateAlignment,
   validateRepoCiGateAlignment,
@@ -28,7 +29,7 @@ function fixture(overrides = {}) {
       '        with:',
       '          fetch-depth: 0',
       `      - run: ${SEAM_IMPACT_COMMAND}`,
-      '      - run: npm run test:unit',
+      `      - run: ${UNIT_CI_COMMAND}`,
       '  e2e-linux:',
       `      - run: ${CANARY_COMMAND}`,
     ].join('\n'),
@@ -37,6 +38,7 @@ function fixture(overrides = {}) {
       '  linux-preview:',
       staticSteps,
       `      - run: ${CANARY_COMMAND}`,
+      `      - run: ${UNIT_CI_COMMAND}`,
       `      - run: ${PACKAGE_COMMAND}`,
     ].join('\n'),
     playwrightConfig: 'export default { retries: 0, workers: 1 };\n',
@@ -127,8 +129,8 @@ describe('CI gate alignment validation', () => {
     lateRunner.ciWorkflow = lateRunner.ciWorkflow
       .replace(`      - run: ${SEAM_IMPACT_COMMAND}\n`, '')
       .replace(
-        '      - run: npm run test:unit\n',
-        `      - run: npm run test:unit\n      - run: ${SEAM_IMPACT_COMMAND}\n`,
+        `      - run: ${UNIT_CI_COMMAND}\n`,
+        `      - run: ${UNIT_CI_COMMAND}\n      - run: ${SEAM_IMPACT_COMMAND}\n`,
       );
     assert.throws(
       () => validateCiGateAlignment(lateRunner),
@@ -139,8 +141,8 @@ describe('CI gate alignment validation', () => {
   it('rejects Linux packaging before the workspace canaries', () => {
     const input = fixture();
     input.releaseWorkflow = input.releaseWorkflow.replace(
-      `      - run: ${CANARY_COMMAND}\n      - run: ${PACKAGE_COMMAND}`,
-      `      - run: ${PACKAGE_COMMAND}\n      - run: ${CANARY_COMMAND}`,
+      `      - run: ${CANARY_COMMAND}\n      - run: ${UNIT_CI_COMMAND}\n      - run: ${PACKAGE_COMMAND}`,
+      `      - run: ${PACKAGE_COMMAND}\n      - run: ${CANARY_COMMAND}\n      - run: ${UNIT_CI_COMMAND}`,
     );
 
     assert.throws(

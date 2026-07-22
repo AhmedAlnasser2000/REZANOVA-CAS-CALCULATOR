@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "CI-REGRESSION-REPAIR1 accepts the already-shipped canonical answer rows, typed supplements, exact readback, and presentation changes across 46 golden cases.",
-  "caseCount": 46,
+  "acceptedReason": "GRAPHING-ANALYZE-UI1 added graphing-analysis-quadratic and Equation canonical condition supplements now serialize as math-only leaves",
+  "caseCount": 47,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -11,7 +11,8 @@
     "statistics": 2,
     "matrix": 4,
     "vector": 3,
-    "table": 2
+    "table": 2,
+    "graphing": 1
   },
   "successfulWorkspaceCounts": {
     "calculate": 21,
@@ -22,7 +23,8 @@
     "statistics": 2,
     "matrix": 4,
     "vector": 3,
-    "table": 2
+    "table": 2,
+    "graphing": 1
   },
   "entries": [
     {
@@ -621,7 +623,12 @@
         {
           "path": "canonicalResult.supplements[0].canonicalLatex",
           "kind": "supplement",
-          "value": "\\text{Conditions: } x+1\\ge0,\\;x-1\\ge0"
+          "value": "x+1\\ge0"
+        },
+        {
+          "path": "canonicalResult.supplements[1].canonicalLatex",
+          "kind": "supplement",
+          "value": "x-1\\ge0"
         },
         {
           "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
@@ -1445,6 +1452,19 @@
           "path": "tableResponse.rows[2].secondary",
           "kind": "table-secondary",
           "value": "3"
+        }
+      ]
+    },
+    {
+      "id": "graphing-analysis-quadratic",
+      "workspace": "graphing",
+      "outcomeKind": "success",
+      "title": "Graph analysis",
+      "fragments": [
+        {
+          "path": "canonicalResult.primaryMath.canonicalLatex",
+          "kind": "primary-answer",
+          "value": "-2"
         }
       ]
     }

@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import { createEquationRuntimeController } from './runtimeControllers';
-import {
-  EQUATION_USE_STORED_VALUES_ACTION,
-  runEquationModeWithOoePilot,
-} from '../../lib/modes/equation';
+import { EQUATION_USE_STORED_VALUES_ACTION } from '../../lib/modes/equation';
+import { runEquationModeWithOoePilot } from './equationRuntimeLoader';
 
-vi.mock('../../lib/modes/equation', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/modes/equation')>();
+vi.mock('./equationRuntimeLoader', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./equationRuntimeLoader')>();
   return {
     ...actual,
     runEquationModeWithOoePilot: vi.fn(actual.runEquationModeWithOoePilot),
@@ -25,7 +23,7 @@ describe('Equation numeric preparation controller action', () => {
     vi.clearAllMocks();
   });
 
-  it('reports missing stored values without launching the Equation solver pilot', () => {
+  it('reports missing stored values without launching the Equation solver pilot', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const controller = createEquationRuntimeController({
       equationScreen: 'symbolic',
@@ -53,7 +51,9 @@ describe('Equation numeric preparation controller action', () => {
     controller.runEquationAlgebraTransformAction(EQUATION_USE_STORED_VALUES_ACTION);
 
     expect(runEquationModeWithOoePilot).not.toHaveBeenCalled();
-    expect(commitOutcome).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(commitOutcome).toHaveBeenCalledTimes(1);
+    });
     const [outcome, inputLatex, mode] = commitOutcome.mock.calls[0];
     expect(inputLatex).toBe('\\sqrt{x+c}-t=v^2');
     expect(mode).toBe('equation');

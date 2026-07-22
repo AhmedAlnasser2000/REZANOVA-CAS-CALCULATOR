@@ -15,7 +15,7 @@
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download AppImage" src="https://img.shields.io/badge/Download-AppImage-4c1?logo=linux&logoColor=white" /></a>
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .deb" src="https://img.shields.io/badge/Download-.deb-4c1?logo=debian&logoColor=white" /></a>
   <a href="https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/releases"><img alt="Download .rpm" src="https://img.shields.io/badge/Download-.rpm-4c1?logo=redhat&logoColor=white" /></a>
-  <a href="https://rezanova-cas-calculator.ahmed-2007-fn.workers.dev"><img alt="Try in Browser" src="https://img.shields.io/badge/Try_in-Browser-orange?logo=googlechrome&logoColor=white" /></a>
+  <a href="https://rezanova-cas.com"><img alt="Try in Browser" src="https://img.shields.io/badge/Try_in-Browser-orange?logo=googlechrome&logoColor=white" /></a>
 </p>
 
 <p align="center"><sub>Linux preview builds only — see <a href="#preview-release">Preview release</a>. Windows/macOS are not yet packaged.</sub></p>

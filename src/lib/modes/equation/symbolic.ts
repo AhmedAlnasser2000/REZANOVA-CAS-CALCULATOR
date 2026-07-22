@@ -89,6 +89,11 @@ function parameterizedOptionsFromTargetResolution(targetResolution: ReturnType<t
   };
 }
 
+function allowsExactModeNumericReadback(sharedOutcome: ResultProducerDraft, numericInterval?: NumericSolveInterval) {
+  return Boolean(numericInterval)
+    || sharedOutcome.substitutionDiagnostics?.family === 'same-base-equality';
+}
+
 function tryRealCubicCardanoSharedFallback(input: {
   sharedOutcome: ResultProducerDraft;
   equationLatex: string;
@@ -766,7 +771,7 @@ export function solveSymbolicEquation(
     sharedResolvedLatex,
     sharedResolvedMathJson: planner.resolvedMathJson,
     plannerBadges: planner.badges,
-    allowNumericOnly: Boolean(numericInterval),
+    allowNumericOnly: allowsExactModeNumericReadback(sharedOutcome, numericInterval),
     realDomainOnly: equationDomainIntent === 'real',
   }), deferredComplexWrapperOutcome);
 }
@@ -868,7 +873,7 @@ export async function solveSymbolicEquationAsync(
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       sharedResolvedMathJson: planner.kind === 'blocked' ? undefined : planner.resolvedMathJson,
       plannerBadges,
-      allowNumericOnly: Boolean(numericInterval),
+      allowNumericOnly: allowsExactModeNumericReadback(sharedOutcome, numericInterval),
       realDomainOnly: equationDomainIntent === 'real',
     }), error.deferredComplexWrapperOutcome);
   }

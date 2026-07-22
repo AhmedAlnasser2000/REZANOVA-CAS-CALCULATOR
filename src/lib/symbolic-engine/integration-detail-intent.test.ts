@@ -29,7 +29,7 @@ function sectionFor(input: string, title: string) {
 
 describe('Symbolic Integration detail intent', () => {
   it.each([
-    [String.raw`\frac{3}{2}\sqrt{x}`, 'Integration Normal Form'],
+    [String.raw`\frac{3}{2}\sqrt{x}`, 'Integration Carrier Substitution'],
     [String.raw`(\sin(x)-\cos(x))^2`, 'Integration Trig Rewrite'],
     [String.raw`-\pi\sin(\pi x)`, 'Integration Scalar Multiple'],
     [String.raw`\frac{\ln(x)^2}{x}`, 'Integration Log-Power Substitution'],

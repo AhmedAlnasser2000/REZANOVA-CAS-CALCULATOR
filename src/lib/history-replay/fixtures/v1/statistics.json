@@ -38,7 +38,7 @@
         "cardinalities": {
           "warnings": 0,
           "supplements": 0,
-          "answerRows": 0,
+          "answerRows": 7,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -46,7 +46,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ Q_1=13.5,\\ Q_3=19,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\operatorname{IQR}=5.5,\\ F_L=5.25,\\ F_U=27.25,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207,\\ \\operatorname{mode}=15"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ Q_1=13.5,\\ Q_3=19,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\operatorname{IQR}=5.5,\\ F_L=5.25,\\ F_U=27.25,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207,\\ \\operatorname{mode}=15\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=n=5,\\ \\sum x=80\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=\\bar{x}=16,\\ \\operatorname{median}=15\ncanonicalResult.answerRows.rows[2].math.canonicalLatex=\\min=12,\\ Q_1=13.5,\\ \\operatorname{median}=15,\\ Q_3=19,\\ \\max=20\ncanonicalResult.answerRows.rows[3].math.canonicalLatex=\\operatorname{range}=8,\\ \\operatorname{IQR}=5.5,\\ F_L=5.25,\\ F_U=27.25\ncanonicalResult.answerRows.rows[4].math.canonicalLatex=\\sigma^2=7.6,\\ \\sigma=2.75681\ncanonicalResult.answerRows.rows[5].math.canonicalLatex=s^2=9.5,\\ s=3.082207\ncanonicalResult.answerRows.rows[6].math.canonicalLatex=\\operatorname{mode}=15"
       }
     },
     {
@@ -84,7 +84,7 @@
         "cardinalities": {
           "warnings": 0,
           "supplements": 0,
-          "answerRows": 0,
+          "answerRows": 3,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -92,7 +92,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=n=6,\\ \\left\\{(1,2),\\ (2,3),\\ (4,1)\\right\\},\\ \\operatorname{mode}=2"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=n=6,\\ \\left\\{(1,2),\\ (2,3),\\ (4,1)\\right\\},\\ \\operatorname{mode}=2\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=n=6\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=\\left\\{(1,2),\\ (2,3),\\ (4,1)\\right\\}\ncanonicalResult.answerRows.rows[2].math.canonicalLatex=\\operatorname{mode}=2"
       }
     },
     {
@@ -129,7 +129,7 @@
         "cardinalities": {
           "warnings": 0,
           "supplements": 0,
-          "answerRows": 0,
+          "answerRows": 3,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -137,7 +137,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=X=3,\\ p=0.117188,\\ \\operatorname{mean}(X)=5,\\ \\sigma=1.581139"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=X=3,\\ p=0.117188,\\ \\operatorname{mean}(X)=5,\\ \\sigma=1.581139\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=X=3\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=p=0.117188\ncanonicalResult.answerRows.rows[2].math.canonicalLatex=\\operatorname{mean}(X)=5,\\ \\sigma=1.581139"
       }
     },
     {
@@ -175,7 +175,7 @@
         "cardinalities": {
           "warnings": 1,
           "supplements": 0,
-          "answerRows": 0,
+          "answerRows": 3,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -183,7 +183,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=y_{\\mathrm{fit}}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ncanonicalResult.details[0].lines[1][1].math.canonicalLatex=0\ncanonicalResult.details[0].lines[2][1].math.canonicalLatex=0\ncanonicalResult.details[0].lines[3][1].math.canonicalLatex=0"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=y_{\\mathrm{fit}}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=y_{\\mathrm{fit}}=2x+0\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=m=2,\\ b=0\ncanonicalResult.answerRows.rows[2].math.canonicalLatex=r=1,\\ r^2=1,\\ n=3\ncanonicalResult.details[0].lines[1][1].math.canonicalLatex=0\ncanonicalResult.details[0].lines[2][1].math.canonicalLatex=0\ncanonicalResult.details[0].lines[3][1].math.canonicalLatex=0"
       }
     },
     {
@@ -221,7 +221,7 @@
         "cardinalities": {
           "warnings": 0,
           "supplements": 0,
-          "answerRows": 0,
+          "answerRows": 3,
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
@@ -229,7 +229,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065\ncanonicalResult.answerRows.rows[2].math.canonicalLatex=12.172935\\le\\mu\\le19.827065"
       }
     }
   ]

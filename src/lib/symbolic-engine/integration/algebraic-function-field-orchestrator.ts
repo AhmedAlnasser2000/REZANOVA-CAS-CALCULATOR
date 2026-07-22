@@ -121,6 +121,9 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         genus1Hermite.exactSupplementLatex,
         genus1Hermite.detailSections,
         genus1Hermite.antiderivativeExpression,
+        undefined,
+        undefined,
+        'precomputed-exact',
       ),
     };
   }

@@ -165,6 +165,9 @@ function tryRoute(
           algebraicGenus0RationalInRadical.antiderivativeNode,
           'calculus.integration:algebraic-genus0-rational-radical',
         ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -539,6 +542,9 @@ function tryRoute(
           hyperbolicSquare.antiderivativeNode,
           'calculus.integration:hyperbolic-square-table',
         ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -733,7 +739,7 @@ function tryNormalFormRetry(
     variable,
     retried.exactLatex,
     retried.strategy,
-    undefined,
+    retried.verification,
     retried.exactSupplementLatex,
     [
       normalFormDetail(normalized.detailRows),
@@ -742,6 +748,7 @@ function tryNormalFormRetry(
     retried.antiderivativeExpression,
     retried.factNodes,
     retried.detailNodes,
+    'precomputed-trusted',
   );
 }
 
@@ -800,6 +807,7 @@ function tryTrigRewriteRetry(
     retried.antiderivativeExpression,
     retried.factNodes,
     retried.detailNodes,
+    'precomputed-exact',
   );
 }
 

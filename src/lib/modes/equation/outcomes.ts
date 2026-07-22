@@ -472,6 +472,78 @@ function realDomainComplexRootsOutcome(target: string): ResultProducerDraft {
   });
 }
 
+const CONDITION_SUPPLEMENT_PREFIX = String.raw`\text{Conditions: } `;
+
+function detailSectionText(outcome: ResultProducerDraft, title: string) {
+  if (outcome.kind !== 'success') {
+    return '';
+  }
+  return (outcome.detailSections ?? [])
+    .filter((section) => section.title === title)
+    .flatMap((section) => [
+      ...(section.lines ?? []),
+      ...(section.lineParts ?? []).flatMap((parts) => parts.map((part) =>
+        part.kind === 'math' ? part.latex : part.text)),
+    ])
+    .join(' ');
+}
+
+function splitConditionSupplementBody(body: string) {
+  return body.split(/,\\;|,\s*/u).map((part) => part.trim()).filter(Boolean);
+}
+
+function conditionIsAlreadyDetailed(condition: string, detailText: string) {
+  if (detailText.includes(condition)) {
+    return true;
+  }
+  const nonnegativeMatch = condition.match(/^(.*)\\ge0$/u);
+  return Boolean(nonnegativeMatch?.[1] && detailText.includes(nonnegativeMatch[1]));
+}
+
+function scopeBranchGuardSupplements(outcome: ResultProducerDraft): ResultProducerDraft {
+  if (outcome.kind !== 'success' || !outcome.exactSupplementLatex?.length) {
+    return outcome;
+  }
+
+  const scopedDetailText = [
+    detailSectionText(outcome, 'Branch Guards'),
+    detailSectionText(outcome, 'Domain Facts'),
+  ].join(' ');
+  if (!scopedDetailText.trim()) {
+    return outcome;
+  }
+
+  let changed = false;
+  const exactSupplementLatex = outcome.exactSupplementLatex.flatMap((supplement) => {
+    if (!supplement.startsWith(CONDITION_SUPPLEMENT_PREFIX)) {
+      return [supplement];
+    }
+
+    const retainedConditions = splitConditionSupplementBody(
+      supplement.slice(CONDITION_SUPPLEMENT_PREFIX.length),
+    ).filter((condition) => !conditionIsAlreadyDetailed(condition, scopedDetailText));
+
+    if (retainedConditions.length === 0) {
+      changed = true;
+      return [];
+    }
+    if (retainedConditions.length < splitConditionSupplementBody(
+      supplement.slice(CONDITION_SUPPLEMENT_PREFIX.length),
+    ).length) {
+      changed = true;
+      return [`${CONDITION_SUPPLEMENT_PREFIX}${retainedConditions.join(String.raw`,\;`)}`];
+    }
+    return [supplement];
+  });
+
+  return changed
+    ? {
+        ...outcome,
+        exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
+      }
+    : outcome;
+}
+
 export function finalizeSharedSymbolicOutcome(input: {
   sharedOutcome: ResultProducerDraft;
   solveTarget: string;
@@ -492,13 +564,14 @@ export function finalizeSharedSymbolicOutcome(input: {
     : input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)
       ? exactModeNeedsExactOutcome(input.solveTarget)
       : outcome;
+  const scopedOutcome = scopeBranchGuardSupplements(finalOutcome);
 
   return attachEquationRuntimeEnvelope(
-    finalOutcome,
+    scopedOutcome,
     input.equationLatex,
     input.sharedResolvedLatex,
     input.plannerBadges,
-    classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+    classifyEquationRuntimeAdvisories({ outcome: scopedOutcome }),
     input.sharedResolvedMathJson,
   );
 }

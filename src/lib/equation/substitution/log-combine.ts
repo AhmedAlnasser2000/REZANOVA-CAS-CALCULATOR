@@ -450,14 +450,15 @@ function trySameBaseEquationProductSolve(equationAst: unknown): SubstitutionSolv
     constraints: mergeDomainConstraints(terms.map((term) => term.call)),
     provenance: 'substitution-log-combine',
   });
+  const solveBadge = negative.length > 0 ? 'Log Quotient' : 'Log Combine';
   return {
     kind: 'branches',
     equations: branchSet.equations,
-    solveBadges: ['Symbolic Substitution', 'Log Combine', 'Candidate Checked'],
+    solveBadges: ['Symbolic Substitution', solveBadge, 'Candidate Checked'],
     ...proseSolveSummary(`Combined same-base logarithms into ${toInlineSummaryMath(nextEquationLatex)}`),
     domainConstraints: branchSet.constraints,
     diagnostics: {
-      family: 'log-same-base',
+      family: solveBadge === 'Log Quotient' ? 'log-quotient' : 'log-same-base',
       carrierKind: anchor.kind,
       branchCount: 1,
       filteredBranchCount: 0,

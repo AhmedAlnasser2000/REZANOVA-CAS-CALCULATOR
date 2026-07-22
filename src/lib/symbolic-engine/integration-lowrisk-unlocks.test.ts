@@ -24,7 +24,7 @@ function expectIntegrationError(result: IntegrationResult): IntegrationError {
 describe('symbolic-engine low-risk textbook integration unlocks', () => {
   it.each([
     [String.raw`\frac{\ln(x)^2}{x}`, String.raw`\ln`],
-    [String.raw`\frac{1}{x\ln(x)^2}`, String.raw`\frac{1}{\ln`],
+    [String.raw`\frac{1}{x\ln(x)^2}`, String.raw`\ln(x)^{-1}`],
   ])('handles bounded log-power substitution %s', (latex, marker) => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
     expect(result.strategy).toBe('u-substitution');
@@ -75,8 +75,8 @@ describe('symbolic-engine low-risk textbook integration unlocks', () => {
 
   it.each([
     [String.raw`\sinh^2(x)`, String.raw`-\frac{1}{2}x`],
-    [String.raw`\sinh^2(2x)`, String.raw`\sinh\left(2\left(2x\right)\right)`],
-    [String.raw`\cosh^2(2x)`, String.raw`\sinh\left(2\left(2x\right)\right)`],
+    [String.raw`\sinh^2(2x)`, String.raw`\sinh(4x)`],
+    [String.raw`\cosh^2(2x)`, String.raw`\sinh(4x)`],
     [String.raw`\cosh^2(2x+1)`, '+'],
   ])('handles tiny hyperbolic table form %s', (latex, marker) => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));

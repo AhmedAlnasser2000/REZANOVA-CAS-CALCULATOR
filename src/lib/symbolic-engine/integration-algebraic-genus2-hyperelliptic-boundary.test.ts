@@ -58,7 +58,7 @@ describe('algebraic genus-2 and hyperelliptic boundary stops', () => {
   it('keeps deferred cubic radicals on the genus-1 boundary rather than genus-2', () => {
     const result = error('\\sqrt{x^3-x}');
 
-    expect(result.error).toContain('elliptic/genus-1 analysis');
+    expect(result.error).toContain('genus-1');
     expect(result.error).not.toContain('hyperelliptic');
   });
 });

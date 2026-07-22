@@ -73,11 +73,12 @@ describe('runSharedEquationSolve transforms', () => {
       resolvedLatex: '\\sin^2\\left(x\\right)=2',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
-    expect(result.error).toContain('stay between 0 and 1');
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.warnings?.join(' ')).toContain('stay between 0 and 1');
     expect(result.solveBadges).toContain('Range Guard');
   });
 
@@ -208,19 +209,20 @@ describe('runSharedEquationSolve transforms', () => {
     expect(result.solveBadges).toContain('Trig Sum-Product');
   });
 
-  it('returns range-guard errors for impossible bounded equations', () => {
+  it('returns typed empty-set results for impossible bounded equations', () => {
     const result = runSharedEquationSolve({
       ...request,
       originalLatex: '\\sin\\left(x^2\\right)=5',
       resolvedLatex: '\\sin\\left(x^2\\right)=5',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
+    expect(result.exactLatex).toBe('\\varnothing');
     expect(result.solveBadges).toContain('Range Guard');
-    expect(result.error).toContain('between -1 and 1');
+    expect(result.warnings?.join(' ')).toContain('between -1 and 1');
   });
 
   it('rejects excluded roots after bounded rational normalization', () => {
@@ -282,12 +284,17 @@ describe('runSharedEquationSolve transforms', () => {
       resolvedLatex: '\\frac{x^2-1}{x^2-x}=1',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected an error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
     }
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.solveBadges).toContain('Range Guard');
     expect(result.solveBadges).toContain('LCD Clear');
-    expect(result.error).toContain('No real solutions');
+    expect(result.warnings?.join(' ')).toContain('No real solutions');
+    expect(result.detailSections?.some((section) => section.title === 'Domain and Exclusions')).toBe(true);
+    expect(result.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('x-1\\ne0');
   });
 
   it('solves isolated square-root equations through the guarded algebra stage', () => {

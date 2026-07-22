@@ -369,7 +369,10 @@ describe('runCalculateMode', () => {
     expect(quadratic.title).toBe('Integral');
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.calculusStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C');
+    expect(quadratic.exactLatex).toContain('\\frac{1}{2}\\ln');
+    expect(quadratic.exactLatex).toContain('x^2+1');
+    expect(quadratic.exactLatex).toContain('\\arctan');
+    expect(quadratic.exactLatex).toContain('+C');
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 

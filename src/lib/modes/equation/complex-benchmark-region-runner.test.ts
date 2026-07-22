@@ -45,20 +45,15 @@ describe('Equation Complex benchmark region runner', () => {
     });
   });
 
-  it('records Complex locus cases as deferred without staged region runs', () => {
+  it('keeps Complex locus cases supported without staged region runs', () => {
     const result = runEquationComplexBenchmarkRegionFallback(request(String.raw`\left|z-1\right|=2`));
 
-    expect(result.status).toBe('primary-controlled-stop');
+    expect(result.status).toBe('primary-supported');
     expect(result.attemptedRegions).toHaveLength(0);
-    expect(result.outcome.kind).toBe('error');
-    expect(result.evidence).toMatchObject({
-      complex_numeric_scope: 'locus-deferred',
-      complex_engine: 'locus-deferred',
-      complex_verification_status: 'not-applicable',
-      complex_branch_policy: 'locus-deferred',
-    });
-    expect(collectOutcomeText(result.outcome)).toContain('locus-deferred');
-    expect(collectOutcomeText(result.outcome)).toContain('two-real-variable');
+    expect(result.outcome.kind).toBe('success');
+    expect(result.evidence).toBeUndefined();
+    expect(collectOutcomeText(result.outcome)).toContain('Center: 1');
+    expect(collectOutcomeText(result.outcome)).toContain('Radius: 2');
   });
 
   it('records controlled Complex abs boundaries without staged region runs', () => {

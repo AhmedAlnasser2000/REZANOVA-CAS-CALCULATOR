@@ -172,13 +172,13 @@ describe('Tauri Notebook persistence ports', () => {
     });
     const ports = createTauriNotebookPorts();
 
-    expect((await ports.library.load('desktop.record.1'))?.document.version).toBe(13);
+    expect((await ports.library.load('desktop.record.1'))?.document.version).toBe(14);
     expect(ports.library.loadedDocumentVersion('desktop.record.1')).toBe(10);
-    expect((await ports.library.moveToTrash('desktop.record.1')).document.version).toBe(13);
-    expect((await ports.library.restoreFromTrash('desktop.record.1')).document.version).toBe(13);
+    expect((await ports.library.moveToTrash('desktop.record.1')).document.version).toBe(14);
+    expect((await ports.library.restoreFromTrash('desktop.record.1')).document.version).toBe(14);
     expect((await ports.library.listVersions('desktop.record.1'))[0].record.document.version)
-      .toBe(13);
-    expect((await ports.package.importPortable(new Uint8Array([1]))).document.version).toBe(13);
+      .toBe(14);
+    expect((await ports.package.importPortable(new Uint8Array([1]))).document.version).toBe(14);
     expect(await ports.library.loadRawRecovery('desktop.record.1'))
       .toEqual(new Uint8Array([123, 125]));
   });
@@ -188,7 +188,7 @@ describe('Tauri Notebook persistence ports', () => {
     const ports = createTauriNotebookPorts();
     mockedInvoke.mockResolvedValueOnce({ record: legacyRecord(5), sourceDocumentVersion: 5 });
     await expect(ports.library.load('desktop.record.1')).rejects.toThrow(/SCHEMA_PRE_V6/);
-    mockedInvoke.mockResolvedValueOnce({ record: legacyRecord(14), sourceDocumentVersion: 14 });
+    mockedInvoke.mockResolvedValueOnce({ record: legacyRecord(15), sourceDocumentVersion: 15 });
     await expect(ports.library.load('desktop.record.1')).rejects.toThrow(/SCHEMA_NEWER/);
   });
 });

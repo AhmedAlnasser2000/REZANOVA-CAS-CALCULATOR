@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "add executable graphing analysis golden evidence",
+  "reason": "GRAPHING-ANALYZE-UI1 added graphing-analysis-quadratic, increasing proven canonical leaves by one with zero missing proof and zero exemptions",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -69,10 +69,10 @@
     "evidence": 147,
     "replayFixtures": 100,
     "goldenCases": 47,
-    "bytes": 126611,
+    "bytes": 126371,
     "maxBytes": 2894,
-    "leaves": 505,
-    "proven": 505,
+    "leaves": 506,
+    "proven": 506,
     "exempt": 0,
     "missing": 0
   },
@@ -323,10 +323,10 @@
       "evidence": 6,
       "replayFixtures": 4,
       "goldenCases": 2,
-      "bytes": 7028,
-      "maxBytes": 1919,
-      "leaves": 28,
-      "proven": 28,
+      "bytes": 6788,
+      "maxBytes": 1881,
+      "leaves": 29,
+      "proven": 29,
       "exempt": 0,
       "missing": 0
     },

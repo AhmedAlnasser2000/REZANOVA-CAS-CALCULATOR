@@ -156,31 +156,36 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(text).toContain('Known pole count: 1.');
   });
 
-  it('returns bounded locus evidence instead of analytic contour solving for non-holomorphic carriers', () => {
+  it('returns exact locus evidence instead of analytic contour solving for recognized non-holomorphic carriers', () => {
     const cases = [
       {
         equationLatex: String.raw`\left|z-1\right|=2`,
-        expected: 'circle-like locus centered at 1',
+        exactLatex: String.raw`\left|z-1\right|=2`,
+        expected: 'This equation describes a circle in the complex plane.',
       },
       {
         equationLatex: 'Re(z)=1',
-        expected: 'vertical line z=x+iy with x=1',
+        exactLatex: String.raw`z=1+t\imaginaryI`,
+        expected: 'This is a vertical line in the complex plane.',
       },
       {
         equationLatex: 'Im(z)=1',
-        expected: 'horizontal line z=x+iy with y=1',
+        exactLatex: String.raw`z=t+\imaginaryI`,
+        expected: 'This is a horizontal line in the complex plane.',
       },
       {
         equationLatex: 'conj(z)=z',
-        expected: 'real-axis locus y=0',
+        exactLatex: 'z=t',
+        expected: 'A complex number equals its conjugate exactly on the real axis.',
       },
       {
         equationLatex: 'abs(z)=0',
-        expected: 'Absolute-value magnitude collapses to the candidate point z=0.',
+        exactLatex: 'z=0',
+        expected: 'A zero magnitude fixes one complex point.',
       },
     ];
 
-    for (const { equationLatex, expected } of cases) {
+    for (const { equationLatex, exactLatex, expected } of cases) {
       const result = solve(equationLatex, {
         complexRegion: {
           reMin: '-2',
@@ -190,18 +195,15 @@ describe('Equation Complex region nonlinear solve', () => {
           gridSize: 8,
         },
       });
-      expect(result.kind, equationLatex).toBe('error');
-      if (result.kind !== 'error') {
-        throw new Error(`Expected locus-controlled stop for ${equationLatex}`);
+      expect(result.kind, equationLatex).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error(`Expected exact locus result for ${equationLatex}`);
       }
       const text = collectOutcomeText(result);
       const serialized = JSON.stringify(result);
-      expect(serialized).toContain('Complex Locus Evidence');
-      expect(text).toContain('Sampled cells: 64.');
-      expect(text).toContain('Residual band across sampled cell centers/probes');
-      expect(text).toContain('Candidate finite points from bounded sampling/probes');
-      expect(text).toContain(expected);
-      expect(text).toContain('Do not treat sampled/probed points as a complete Complex solution set.');
+      expect(result.exactLatex).toBe(exactLatex);
+      expect(serialized).toContain(expected);
+      expect(result.answerDomain).toBe('complex');
       expect(serialized).not.toContain('Complex Contour Verification');
       expect(text).not.toContain('Complex region nonlinear solve');
     }

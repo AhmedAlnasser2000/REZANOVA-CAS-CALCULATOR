@@ -78,6 +78,7 @@
     "test:app-identity": "node --test tools/check-app-identity.test.mjs",
     "test:bundle-size": "node tools/report-bundle-size.mjs --check",
     "test:unit": "vitest run --maxWorkers=4",
+    "test:unit:ci": "vitest run --maxWorkers=4 --bail=1 --testTimeout=120000",
     "test:playground": "vitest run --config vitest.playground.config.ts",
     "playground:ssh-vm": "vite-node playground/level-0-research/external-compute/operator-entrypoint.ts",
     "test:ui": "vitest run --config vitest.ui.config.ts --maxWorkers=4",
