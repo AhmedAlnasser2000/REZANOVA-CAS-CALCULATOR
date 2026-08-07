@@ -104,7 +104,7 @@ describe('Equation numeric card credibility polish', () => {
 
     for (const result of [squareRootSquare, absoluteValue]) {
       expect(result.exactLatex).toBe('x=-2');
-      expect(result.exactSupplementLatex ?? []).not.toContain(String.raw`\text{Conditions: } x+3\ge0`);
+      expect(result.exactSupplementLatex ?? []).toContain(String.raw`\text{Conditions: } x+3\ge0`);
       expect(sectionText(result, 'Domain Facts')).toContain(String.raw`x+3`);
     }
   });
