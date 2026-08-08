@@ -48,6 +48,18 @@ function compactAnalysisEvidence(entry: EquationAnalysisEvidence): EquationAnaly
           },
         }
       : {}),
+    ...(entry.supplementEvidence
+      ? {
+          supplementEvidence: {
+            role: entry.supplementEvidence.role,
+            ...(entry.supplementEvidence.expressionLatex !== undefined
+              ? { expressionLatex: entry.supplementEvidence.expressionLatex }
+              : {}),
+            canonicalLatex: entry.supplementEvidence.canonicalLatex,
+            mathJson: entry.supplementEvidence.mathJson,
+          },
+        }
+      : {}),
   };
 }
 

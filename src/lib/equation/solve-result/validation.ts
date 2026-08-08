@@ -73,6 +73,12 @@ const evidencePointSchema = z.object({
   latex: z.string().optional(),
   role: z.enum(['root', 'extraneous', 'boundary', 'singularity', 'sample']).optional(),
 }).strict();
+const supplementEvidenceSchema = z.object({
+  role: z.enum(['exclusion', 'condition']),
+  expressionLatex: z.string().optional(),
+  canonicalLatex: nonEmptyString,
+  mathJson: z.unknown(),
+}).strict();
 const analysisEvidenceSchema = z.object({
   id: nonEmptyString,
   target: nonEmptyString,
@@ -103,6 +109,7 @@ const analysisEvidenceSchema = z.object({
   text: z.string().optional(),
   interval: evidenceIntervalSchema.optional(),
   point: evidencePointSchema.optional(),
+  supplementEvidence: supplementEvidenceSchema.optional(),
 }).strict();
 const diagnosticsSchema = z.object({
   substitutionDiagnostics: z.unknown().optional(),

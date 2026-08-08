@@ -41,6 +41,10 @@ import {
   createEquationResultOutcome,
   type EquationResultProducerInput,
 } from '../solve-result/producer';
+import {
+  attachEquationAnalysisEvidence,
+  type EquationAnalysisEvidence,
+} from '../analysis-evidence';
 import { tryProvenCanonicalMathValue } from '../../result-contract';
 import {
   equationMathValuesWithOwnedReadback,
@@ -53,6 +57,15 @@ const NUMERIC_MATCH_TOLERANCE = 1e-6;
 
 function isMathJsonArray(node: unknown): node is unknown[] {
   return Array.isArray(node);
+}
+
+function mathJsonContainsSymbol(node: unknown, symbol: string): boolean {
+  if (node === symbol) return true;
+  if (Array.isArray(node)) return node.some((child) => mathJsonContainsSymbol(child, symbol));
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((child) => mathJsonContainsSymbol(child, symbol));
+  }
+  return false;
 }
 
 function isZeroNode(node: unknown) {
@@ -291,6 +304,7 @@ function attachAlgebraMetadata(
     outcome.canonicalResult,
     'equation-algebra-metadata-input',
   );
+  const constraintEvidence: EquationAnalysisEvidence[] = [];
   const routeId = inferEquationMathJsonRoute(producerInput);
   const addConstraintLeaf = (
     canonicalLatex: string,
@@ -304,7 +318,9 @@ function attachAlgebraMetadata(
       routeId,
       source,
     });
-    if (proof) nativeLeaves.push({ canonicalLatex, mathJson, source });
+    if (!proof) return false;
+    nativeLeaves.push({ canonicalLatex, mathJson, source });
+    return true;
   };
   for (const constraint of request.domainConstraints ?? []) {
     if (!('expressionLatex' in constraint)) continue;
@@ -320,23 +336,48 @@ function attachAlgebraMetadata(
       `equation-domain-constraint:${constraint.kind}:expression`,
     );
     const relation = constraint.kind === 'nonzero'
-      ? { operator: 'NotEqual', latex: `${constraint.expressionLatex}\\ne 0` }
+      ? { operator: 'NotEqual', latex: `${constraint.expressionLatex}\\ne0` }
       : constraint.kind === 'positive'
         ? { operator: 'Greater', latex: `${constraint.expressionLatex}>0` }
         : constraint.kind === 'nonnegative'
-          ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge 0` }
+          ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge0` }
           : constraint.kind === 'expression-interval'
             && constraint.min === 0
             && constraint.minInclusive
             && constraint.max === undefined
-            ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge 0` }
+            ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge0` }
           : undefined;
     if (relation) {
-      addConstraintLeaf(
+      const relationMathJson = [
+        relation.operator,
+        expressionMathJson,
+        0,
+      ] as SerializableMathJson;
+      const source = `equation-domain-constraint:${constraint.kind}:relation`;
+      if (addConstraintLeaf(
         relation.latex,
-        [relation.operator, expressionMathJson, 0],
-        `equation-domain-constraint:${constraint.kind}:relation`,
-      );
+        relationMathJson,
+        source,
+      )) {
+        const target = request.solveTarget ?? 'x';
+        if (mathJsonContainsSymbol(expressionMathJson, target)) {
+          constraintEvidence.push({
+            id: ['domain', 'guarded-domain-constraint', target, constraint.kind, relation.latex]
+              .join(':'),
+            target,
+            sourceRoute: 'guarded-domain-constraint',
+            category: 'domain',
+            confidence: 'proven',
+            latex: relation.latex,
+            supplementEvidence: {
+              role: constraint.kind === 'nonzero' ? 'exclusion' : 'condition',
+              expressionLatex: constraint.expressionLatex,
+              canonicalLatex: relation.latex,
+              mathJson: relationMathJson,
+            },
+          });
+        }
+      }
     }
   }
   if (resolvedInputLatex && request.resolvedMathJson !== undefined) {
@@ -346,13 +387,14 @@ function attachAlgebraMetadata(
       'equation-algebra-resolved-input',
     );
   }
-  return createEquationResultOutcome(producerInput, {
+  const result = createEquationResultOutcome(producerInput, {
     mathValues: equationMathValuesWithOwnedReadback({
       outcome: producerInput,
       routeId,
       leaves: nativeLeaves,
     }),
   });
+  return attachEquationAnalysisEvidence(result, constraintEvidence);
 }
 
 function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveRequest {

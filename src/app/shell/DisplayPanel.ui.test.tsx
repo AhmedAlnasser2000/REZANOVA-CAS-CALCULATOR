@@ -540,7 +540,9 @@ describe('DisplayPanel result shell', () => {
 
     fireEvent.click(within(compactPreview).getByRole('button', { name: 'Open Formula Viewer' }));
 
-    expect(openFormulaViewer).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(openFormulaViewer).toHaveBeenCalledTimes(1);
+    });
     const artifact = openFormulaViewer.mock.calls[0]?.[0];
     expect(artifact).toMatchObject({
       kind: 'formula-viewer-artifact',

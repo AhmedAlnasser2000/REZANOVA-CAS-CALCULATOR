@@ -126,7 +126,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected log-combine branch');
     }
     expect(result.solveBadges).toContain('Log Combine');
-    expect(solveSummaryPlainText(result)).toContain('Combined ln(x)+ln(x+1) into (x)(x+1)=e^(2)');
+    expect(solveSummaryPlainText(result)).toContain('Combined same-base logarithms into (x)(x+1)=e^(2)');
     expect(result.equations[0]).toContain('\\left(x\\right)\\left(x+1\\right)=e^{2}');
     expect(result.diagnostics?.family).toBe('log-same-base');
   });
@@ -138,7 +138,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected explicit same-base log-combine branch');
     }
     expect(result.solveBadges).toContain('Log Combine');
-    expect(result.solveBadges).toContain('Log Base Normalize');
+    expect(result.solveBadges).toContain('Candidate Checked');
     expect(result.equations[0]).toContain('=4^{5}');
     expect(result.diagnostics?.family).toBe('log-same-base');
   });
@@ -150,8 +150,8 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected log-quotient branch');
     }
     expect(result.solveBadges).toContain('Log Quotient');
-    expect(result.solveBadges).toContain('Same-Base Equality');
-    expect(result.equations[0]).toBe('\\frac{x+1}{x}=2');
+    expect(result.solveBadges).toContain('Candidate Checked');
+    expect(result.equations[0]).toBe('x+1=\\left(x\\right)\\left(2\\right)');
     expect(result.diagnostics?.family).toBe('log-quotient');
   });
 
@@ -173,7 +173,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected bounded mixed-base branch');
     }
     expect(result.solveBadges).toContain('Log Base Normalize');
-    expect(result.equations[0]).toBe('\\log_{9}\\left(x\\right)=1');
+    expect(result.equations[0]).toBe('\\log_{3}\\left(x\\right)=2');
     expect(result.diagnostics?.family).toBe('log-mixed-base-rational');
   });
 

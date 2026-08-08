@@ -48,6 +48,84 @@ describe('Canonical Result V2 typed supplements and Table cells', () => {
     });
   });
 
+  it('splits grouped radical conditions into independently proven V2 supplements', async () => {
+    const goldenCase = goldenCases.find((entry) =>
+      entry.id === 'equation-radical-candidate-rejection');
+    if (!goldenCase) throw new Error('Missing radical candidate-rejection golden case.');
+    const execution = await runGoldenCase(goldenCase);
+    expect(execution.outcome.kind).toBe('success');
+    if (execution.outcome.kind === 'prompt') throw new Error('Unexpected golden prompt.');
+    const document = execution.outcome.canonicalResult;
+    expect(document.version).toBe(2);
+    if (document.version !== 2) {
+      throw new Error('Radical candidate-rejection result did not select V2.');
+    }
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: { canonicalLatex: 'x=3' },
+    });
+    expect(document.supplements).toEqual([
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: 'x+1\\ge0',
+        math: expect.objectContaining({
+          canonicalLatex: 'x+1\\ge0',
+          mathJson: expect.anything(),
+        }),
+      }),
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: 'x-1\\ge0',
+        math: expect.objectContaining({
+          canonicalLatex: 'x-1\\ge0',
+          mathJson: expect.anything(),
+        }),
+      }),
+    ]);
+    expect(document.supplements?.every((supplement) =>
+      !supplement.math.canonicalLatex.includes('\\text{Conditions: }'))).toBe(true);
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
+  it('promotes log-combine through its explicit V2 selector without changing output', async () => {
+    const document = await replay('equation-log-combine');
+    expect(document.version).toBe(2);
+    if (document.version !== 2) throw new Error('Log-combine result did not select V2.');
+    expect(document).toMatchObject({
+      title: 'Solve',
+      primary: {
+        kind: 'math',
+        value: {
+          canonicalLatex: 'x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}',
+        },
+      },
+      supplements: [
+        {
+          role: 'condition',
+          presentationLatex: 'x>0',
+          math: { canonicalLatex: 'x>0', mathJson: expect.anything() },
+        },
+        {
+          role: 'condition',
+          presentationLatex: 'x+1>0',
+          math: { canonicalLatex: 'x+1>0', mathJson: expect.anything() },
+        },
+      ],
+      warnings: [],
+      metadata: {
+        solveBadges: expect.arrayContaining(['Log Combine']),
+        resolvedInput: { canonicalLatex: '\\ln(x)+\\ln(x+1)=2' },
+      },
+    });
+    expect(document.details?.map((detail) => detail.title)).toEqual([
+      'Extraneous Solutions',
+      'Candidate Checking',
+    ]);
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
   it('keeps untouched periodic Equation producers on V1 when primary proof is unavailable', async () => {
     const execution = await runEquationModeWithOoePilot({
       ...makeRequest(),

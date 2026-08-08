@@ -374,6 +374,7 @@ describe('Canonical Result V2 contract', () => {
       'equation.polynomial': ['directPolynomialSystem'],
       'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
       'equation.rational-radical': ['typedLabeledSupplement'],
+      'equation.trig-exp-log': ['typedLabeledSupplement'],
       'trigonometry.equation': ['equationSolve'],
       'trigonometry.right-triangle': ['rightTriangle'],
     });
@@ -423,6 +424,8 @@ describe('Canonical Result V2 contract', () => {
             ? { directPolynomialSystem: 2 }
         : routeId === 'equation.rational-radical'
             ? { typedLabeledSupplement: 2 }
+        : routeId === 'equation.trig-exp-log'
+          ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.equation'
           ? { equationSolve: 2 }
         : routeId === 'trigonometry.right-triangle'
@@ -442,6 +445,10 @@ describe('Canonical Result V2 contract', () => {
     })).toBe(2);
     expect(canonicalResultVersionForProducer({
       routeId: 'equation.rational-radical',
+      selector: 'typedLabeledSupplement',
+    })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'equation.trig-exp-log',
       selector: 'typedLabeledSupplement',
     })).toBe(2);
     expect(canonicalResultVersionForProducer({

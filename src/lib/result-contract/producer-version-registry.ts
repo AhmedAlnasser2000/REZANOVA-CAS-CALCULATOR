@@ -111,6 +111,7 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
     'equation.polynomial': ['directPolynomialSystem'],
     'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
     'equation.rational-radical': ['typedLabeledSupplement'],
+    'equation.trig-exp-log': ['typedLabeledSupplement'],
     'trigonometry.equation': ['equationSolve'],
     'trigonometry.right-triangle': ['rightTriangle'],
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
