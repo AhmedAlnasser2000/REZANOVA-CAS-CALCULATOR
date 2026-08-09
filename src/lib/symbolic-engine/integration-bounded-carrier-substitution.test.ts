@@ -16,31 +16,31 @@ describe('symbolic-engine bounded carrier substitution integration', () => {
   it.each([
     [
       String.raw`x^3\sqrt{1-x^2}`,
-      [String.raw`(-x^2+1)`, String.raw`\frac{3}{2}`, String.raw`\frac{5}{2}`],
+      [String.raw`\left(-x^{2}+1\right)`, String.raw`^{\frac{3}{2}}`, String.raw`^{\frac{5}{2}}`],
     ],
     [
       String.raw`\frac{x}{\sqrt{1-x}}`,
-      [String.raw`\sqrt{-x+1}`, String.raw`\frac{2}{3}`],
+      [String.raw`\sqrt{-x+1}`, String.raw`\frac{2\left(-x+1\right)^{\frac{3}{2}}}{3}`],
     ],
     [
       String.raw`\frac{x^3}{\sqrt{4x^2-1}}`,
-      [String.raw`\sqrt{4x^2-1}`, String.raw`\frac{1}{48}`],
+      [String.raw`\sqrt{4x^{2}-1}`, String.raw`\frac{\left(4x^{2}-1\right)^{\frac{3}{2}}}{48}`],
     ],
     [
       String.raw`(e^{x^2}+16)xe^{x^2}`,
-      [String.raw`\frac{1}{4}`, String.raw`16`],
+      [String.raw`\frac{\left(e^{x^{2}}+16\right)^{2}}{4}`, String.raw`16`],
     ],
     [
       String.raw`\frac{\cos(3x)}{\sqrt{\sin(3x)}}`,
-      [String.raw`\frac{2}{3}`, String.raw`\sqrt{\sin(3x)}`],
+      [String.raw`\frac{2\sqrt{\sin(3x)}}{3}`, String.raw`\sqrt{\sin(3x)}`],
     ],
     [
       String.raw`(x^{3/2}+47)^3\sqrt{x}`,
-      [String.raw`\frac{1}{6}`, String.raw`47`],
+      [String.raw`\frac{\left(x^{\frac{3}{2}}+47\right)^{4}}{6}`, String.raw`47`],
     ],
     [
       String.raw`\frac{x^3}{(2-x^2)^{5/2}}`,
-      [String.raw`\frac{2}{3}`, String.raw`\frac{-3}{2}`],
+      [String.raw`\frac{2\left(-x^{2}+2\right)^{\frac{-3}{2}}}{3}`, String.raw`\frac{-3}{2}`],
     ],
   ])('integrates %s by bounded carrier substitution', (latex, fragments) => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
@@ -60,7 +60,7 @@ describe('symbolic-engine bounded carrier substitution integration', () => {
     expect(moment.strategy).toBe('u-substitution');
     expect(moment.verification.status).toBe('verified-exact');
     expect(moment.exactLatex).toContain(String.raw`\arcsin(x)`);
-    expect(moment.exactLatex).toContain(String.raw`\sqrt{-x^2+1}`);
+    expect(moment.exactLatex).toContain(String.raw`\sqrt{-x^{2}+1}`);
     expect(moment.detailSections?.map((section) => section.title))
       .toContain('Integration Radical Template');
 
@@ -69,7 +69,7 @@ describe('symbolic-engine bounded carrier substitution integration', () => {
     ));
     expect(reciprocal.strategy).toBe('u-substitution');
     expect(reciprocal.verification.status).toBe('verified-exact');
-    expect(reciprocal.exactLatex).toContain(String.raw`-\frac{1}{x}\sqrt{x^2+1}`);
+    expect(reciprocal.exactLatex).toContain(String.raw`-\frac{\sqrt{x^{2}+1}}{x}`);
     expect(reciprocal.exactSupplementLatex?.join(' ')).toContain(String.raw`x\ne0`);
   });
 });

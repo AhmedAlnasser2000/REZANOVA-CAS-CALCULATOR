@@ -91,6 +91,7 @@ type PendingValue = {
   value: unknown;
   depth: number;
   role: 'expression' | 'dictionary-value';
+  exit?: boolean;
 };
 
 export function validateSerializableMathJson(
@@ -106,12 +107,18 @@ export function validateSerializableMathJson(
   }
 
   const pending: PendingValue[] = [{ value: input, depth: 1, role: 'expression' }];
-  const seen = new WeakSet<object>();
+  const ancestors = new WeakSet<object>();
   let nodeCount = 0;
   let deepest = 0;
 
   while (pending.length > 0) {
     const current = pending.pop() as PendingValue;
+    if (current.exit) {
+      if (current.value !== null && typeof current.value === 'object') {
+        ancestors.delete(current.value);
+      }
+      continue;
+    }
     nodeCount += 1;
     deepest = Math.max(deepest, current.depth);
 
@@ -147,10 +154,11 @@ export function validateSerializableMathJson(
     if (!isPlainObject(value) && !Array.isArray(value)) {
       return failure('non-plain-object', 'MathJSON must contain only arrays and plain objects.');
     }
-    if (seen.has(value)) {
+    if (ancestors.has(value)) {
       return failure('cyclic-value', 'MathJSON must not contain cyclic references.');
     }
-    seen.add(value);
+    ancestors.add(value);
+    pending.push({ ...current, exit: true });
 
     if (Array.isArray(value)) {
       if (current.role === 'expression' && !isExpressionArray(value)) {

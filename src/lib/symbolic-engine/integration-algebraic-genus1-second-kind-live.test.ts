@@ -25,8 +25,8 @@ describe('algebraic genus-1 second-kind live gate', () => {
     }
 
     expect(result.exactLatex).toContain('EllipticF');
-    expect(result.exactLatex).toContain('\\sqrt{x^3+x}');
-    expect(result.exactLatex).toContain('2\\arctan\\sqrt{x}');
+    expect(result.exactLatex).toContain('\\sqrt{x^{3}+x}');
+    expect(result.exactLatex).toContain('2\\arctan(\\sqrt{x})');
     expect(result.exactLatex).not.toContain('A_{\\alpha');
     expect(result.verification.status).toBe('verified-exact');
     expect(result.exactSupplementLatex.join('\n')).toContain('x\\ge0');

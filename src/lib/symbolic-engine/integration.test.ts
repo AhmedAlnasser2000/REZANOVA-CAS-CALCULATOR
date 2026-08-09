@@ -177,13 +177,13 @@ describe('symbolic-engine integration', () => {
     expect(third.kind).toBe('success')
     if (third.kind === 'success') {
       expect(third.exactLatex).toContain('e^{')
-      expect(third.exactLatex).toContain('x^3+x^2')
+      expect(third.exactLatex).toContain('x^{3}+x^{2}')
     }
 
     expect(fourth.kind).toBe('success')
     if (fourth.kind === 'success') {
-      expect(fourth.exactLatex).toContain('3x^2+3x+2')
-      expect(fourth.exactLatex).toContain('^6')
+      expect(fourth.exactLatex).toContain('3x^{2}+3x+2')
+      expect(fourth.exactLatex).toContain('^{6}')
     }
   })
 
@@ -350,13 +350,19 @@ describe('symbolic-engine integration', () => {
 
   it('handles exact-rational derivative-present binomial substitution', () => {
     const cases = [
-      { latex: 'x^5(1+x^6)^2', contains: ['x^6+1', '^{3}'] },
-      { latex: '\\frac{7}{2}x^5(3+\\frac{2}{3}x^6)^2', contains: ['\\frac{7}{24}', '\\frac{2x^6}{3}+3'] },
-      { latex: '\\frac{x^5}{(1+x^6)^2}', contains: ['x^6+1', '^{-1}'] },
-      { latex: 'x^5(1+x^6)^{-1}', contains: ['\\ln', 'x^6+1'] },
-      { latex: 'x^{-3}(1+x^{-2})^2', contains: ['\\frac{1}{x^2}+1', '^{3}'] },
-      { latex: '\\frac{x^{-3}}{1+x^{-2}}', contains: ['\\ln', '\\frac{1}{x^2}+1'] },
-      { latex: '2x^{-3}(3+\\frac{1}{2}x^{-2})^{-2}', contains: ['\\frac{1}{', '+3'] },
+      { latex: 'x^5(1+x^6)^2', contains: ['x^{6}+1', '^{3}'] },
+      {
+        latex: '\\frac{7}{2}x^5(3+\\frac{2}{3}x^6)^2',
+        contains: ['\\frac{7\\left(\\frac{2x^{6}}{3}+3\\right)^{3}}{24}'],
+      },
+      { latex: '\\frac{x^5}{(1+x^6)^2}', contains: ['x^{6}+1', '^{-1}'] },
+      { latex: 'x^5(1+x^6)^{-1}', contains: ['\\ln', 'x^{6}+1'] },
+      { latex: 'x^{-3}(1+x^{-2})^2', contains: ['x^{-2}+1', '^{3}'] },
+      { latex: '\\frac{x^{-3}}{1+x^{-2}}', contains: ['\\ln', 'x^{-2}+1'] },
+      {
+        latex: '2x^{-3}(3+\\frac{1}{2}x^{-2})^{-2}',
+        contains: ['2\\left(\\frac{x^{-2}}{2}+3\\right)^{-1}'],
+      },
       { latex: 'x^{-2}(1+x^{-1})^{-1}', contains: ['\\ln', '\\frac{1}{x}+1'] },
     ]
 
@@ -500,7 +506,7 @@ describe('symbolic-engine integration', () => {
       resolveSymbolicIntegralFromLatex('x^2+(c x+d)e^{a x+b}'),
     )
     expect(mixed.strategy).toBe('integration-by-parts')
-    expect(mixed.exactLatex).toContain('x^3')
+    expect(mixed.exactLatex).toContain('x^{3}')
     expect(mixed.exactLatex).toContain('e^{ax+b}')
 
     const unsupported = expectIntegrationError(
@@ -515,7 +521,7 @@ describe('symbolic-engine integration', () => {
     )
     expect(integrateA.strategy).toBe('direct-rule')
     expect(integrateA.verification.status).toBe('verified-exact')
-    expect(integrateA.exactLatex).toContain('A^2')
+    expect(integrateA.exactLatex).toContain('A^{2}')
     expect(integrateA.exactLatex).toContain('B')
     expect(integrateA.exactSupplementLatex?.join(' ')).toContain('(cx+d)(ax+b)^2\\ne0')
 
@@ -524,15 +530,15 @@ describe('symbolic-engine integration', () => {
     )
     expect(integrateB.strategy).toBe('direct-rule')
     expect(integrateB.verification.status).toBe('verified-exact')
-    expect(integrateB.exactLatex).toContain('B^2')
+    expect(integrateB.exactLatex).toContain('B^{2}')
     expect(integrateB.exactLatex).toContain('ABx')
 
     const polynomialOverTargetFree = expectIntegrationSuccess(
       resolveSymbolicIntegralFromLatex('\\frac{A^3+A}{m x+n}', 'A'),
     )
     expect(polynomialOverTargetFree.strategy).toBe('direct-rule')
-    expect(polynomialOverTargetFree.exactLatex).toContain('A^4')
-    expect(polynomialOverTargetFree.exactLatex).toContain('A^2')
+    expect(polynomialOverTargetFree.exactLatex).toContain('A^{4}')
+    expect(polynomialOverTargetFree.exactLatex).toContain('A^{2}')
     expect(polynomialOverTargetFree.exactSupplementLatex?.join(' ')).toContain('mx+n\\ne0')
 
     const targetDependentDenominator = expectIntegrationSuccess(
@@ -595,11 +601,11 @@ describe('symbolic-engine integration', () => {
     const cases = [
       { latex: '\\cos(3x+2)', contains: '\\sin' },
       { latex: '5\\cos(3x+2)', contains: '\\frac{5' },
-      { latex: '2x e^{x^2+1}', contains: 'e^{x^2+1}' },
+      { latex: '2x e^{x^2+1}', contains: 'e^{x^{2}+1}' },
       { latex: '2x\\ln(x^2+1)', contains: '\\ln' },
       { latex: '2x\\log(x^2+1)', contains: '\\ln(10)' },
       { latex: '2x\\sqrt{x^2+1}', contains: '\\frac{2' },
-      { latex: '\\frac{2x}{\\sqrt{x^2+1}}', contains: '2\\sqrt{x^2+1}' },
+      { latex: '\\frac{2x}{\\sqrt{x^2+1}}', contains: '2\\sqrt{x^{2}+1}' },
       { latex: '\\cos(\\sin(x))\\cos(x)', contains: '\\sin' },
     ]
 
@@ -768,7 +774,7 @@ describe('symbolic-engine integration', () => {
     expect(minus.strategy).toBe('u-substitution')
     expect(minus.verification.status).toBe('verified-exact')
     expect(minus.exactLatex).toContain('\\arcsin')
-    expect(minus.exactSupplementLatex?.join(' ')).toContain('4-x^2\\ge0')
+    expect(minus.exactSupplementLatex?.join(' ')).toContain('4-x^{2}\\ge0')
 
     const shiftedMinus = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\sqrt{9-(2x+1)^2}'))
     expect(shiftedMinus.strategy).toBe('u-substitution')
@@ -779,12 +785,12 @@ describe('symbolic-engine integration', () => {
     expect(plus.strategy).toBe('u-substitution')
     expect(plus.verification.status).toBe('verified-exact')
     expect(plus.exactLatex).toContain('arsinh')
-    expect(plus.exactLatex).toContain('\\sqrt{x^2+4}')
+    expect(plus.exactLatex).toContain('\\sqrt{x^{2}+4}')
 
     const outside = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\sqrt{(2x+1)^2-9}'))
     expect(outside.strategy).toBe('u-substitution')
     expect(outside.verification.status).toBe('verified-exact')
-    expect(outside.exactLatex).toContain('\\ln')
+    expect(outside.exactLatex).toContain('\\operatorname{arcosh}')
     expect(outside.exactSupplementLatex?.join(' ')).toContain('\\left(2x+1\\right)^{2}-9\\ge0')
   })
 

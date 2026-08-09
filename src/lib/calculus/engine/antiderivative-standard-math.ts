@@ -10,10 +10,12 @@ function printedStandardMathLatex(mathJson: unknown) {
   if (!printed.ok) {
     throw new Error('Calculus antiderivative MathJSON could not be rendered: ' + printed.message);
   }
-  return printed.canonicalLatex
-    .replace(/\\operatorname\{erf\}/gu, String.raw`\mathrm{Erf}`)
-    .replace(/\\operatorname\{erfc\}/gu, String.raw`\mathrm{Erfc}`);
+  return printed.canonicalLatex;
 }
+
+export type CalculusStandardMathRenderOptions = {
+  variable?: string;
+};
 
 function positiveMagnitudeNode(node: unknown): unknown | undefined {
   if (typeof node === 'number' && node < 0) return -node;
@@ -184,7 +186,6 @@ function normalizeDivideNode(numeratorNode: unknown, denominatorNode: unknown): 
     const divided = divideExactRationals(numeratorScalar, denominatorScalar);
     return divided ? rationalNode(divided) : ['Divide', numerator, denominator];
   }
-
   const split = splitSignedProduct(numerator);
   const cancelIndex = split.factors.findIndex((factor) => sameMathJson(factor, denominator));
   if (cancelIndex >= 0) {
@@ -276,8 +277,8 @@ function containsFormalApply(node: unknown): boolean {
     || (Array.isArray(node) && node.slice(1).some(containsFormalApply));
 }
 
-function formalApplyLatex(node: unknown[]) {
-  return `${node[1]}\\left(${standardMathLatex(node[2])}\\right)`;
+function formalApplyLatex(node: unknown[], options: CalculusStandardMathRenderOptions) {
+  return `${node[1]}\\left(${standardMathLatex(node[2], options)}\\right)`;
 }
 
 const STANDARD_FUNCTION_LATEX = new Map<string, string>([
@@ -296,6 +297,18 @@ const STANDARD_FUNCTION_LATEX = new Map<string, string>([
   ['Arsinh', '\\operatorname{arsinh}'],
   ['Arcosh', '\\operatorname{arcosh}'],
   ['Artanh', '\\operatorname{artanh}'],
+  ['Erf', '\\operatorname{erf}'],
+  ['Erfc', '\\operatorname{erfc}'],
+  ['Erfi', '\\operatorname{erfi}'],
+  ['Si', '\\operatorname{Si}'],
+  ['Ci', '\\operatorname{Ci}'],
+  ['Ei', '\\operatorname{Ei}'],
+  ['LogarithmicIntegral', '\\operatorname{li}'],
+  ['FresnelS', '\\operatorname{FresnelS}'],
+  ['FresnelC', '\\operatorname{FresnelC}'],
+  ['EllipticF', '\\operatorname{EllipticF}'],
+  ['EllipticE', '\\operatorname{EllipticE}'],
+  ['EllipticPi', '\\operatorname{EllipticPi}'],
 ]);
 
 const INFIX_POWER_FUNCTION_HEADS = new Set([
@@ -310,39 +323,87 @@ const INFIX_POWER_FUNCTION_HEADS = new Set([
   'Tanh',
 ]);
 
-function groupedArgumentLatex(argument: unknown) {
-  return `(${standardMathLatex(argument)})`;
+function groupedArgumentLatex(
+  argument: unknown,
+  options: CalculusStandardMathRenderOptions,
+) {
+  const rendered = standardMathLatex(argument, options);
+  return `(${rendered})`;
 }
 
-function standardFunctionLatex(node: unknown[]): string | undefined {
+function standardFunctionLatex(
+  node: unknown[],
+  options: CalculusStandardMathRenderOptions,
+): string | undefined {
   const command = typeof node[0] === 'string' ? STANDARD_FUNCTION_LATEX.get(node[0]) : undefined;
-  if (!command || node.length !== 2) return undefined;
-  return `${command}${groupedArgumentLatex(node[1])}`;
+  if (!command || node.length < 2) return undefined;
+  const argumentsLatex = node.slice(1)
+    .map((argument) => {
+      if (
+        options.variable
+        && INFIX_POWER_FUNCTION_HEADS.has(String(node[0]))
+      ) {
+        const linear = exactIntegerLinearCoefficients(argument, options.variable);
+        if (linear) {
+          const divisor = gcd(linear.variableCoefficient, linear.constant);
+          if (divisor > 1) {
+            const reduced = [
+              'Add',
+              ['Multiply', linear.variableCoefficient / divisor, options.variable],
+              linear.constant / divisor,
+            ];
+            return `${divisor}\\left(${standardMathLatex(reduced, options)}\\right)`;
+          }
+        }
+      }
+      return standardMathLatex(argument, options);
+    })
+    .join(',');
+  return command.startsWith('\\operatorname')
+    ? `${command}\\left(${argumentsLatex}\\right)`
+    : `${command}(${argumentsLatex})`;
 }
 
-function standardFunctionPowerLatex(node: unknown[], exponent: unknown): string | undefined {
+function standardFunctionPowerLatex(
+  node: unknown[],
+  exponent: unknown,
+  options: CalculusStandardMathRenderOptions,
+): string | undefined {
   const head = typeof node[0] === 'string' ? node[0] : undefined;
   const command = head ? STANDARD_FUNCTION_LATEX.get(head) : undefined;
   if (!head || !command || node.length !== 2) return undefined;
-  const exponentLatex = standardMathLatex(exponent);
+  const exponentLatex = standardMathLatex(exponent, options);
   if (INFIX_POWER_FUNCTION_HEADS.has(head)) {
-    return /^[A-Za-z0-9]+$/u.test(exponentLatex)
-      ? `${command}^${exponentLatex}${groupedArgumentLatex(node[1])}`
-      : `${command}^{${exponentLatex}}${groupedArgumentLatex(node[1])}`;
+    return `${command}^{${exponentLatex}}${groupedArgumentLatex(node[1], options)}`;
   }
-  return /^[A-Za-z0-9]+$/u.test(exponentLatex)
-    ? `${command}${groupedArgumentLatex(node[1])}^${exponentLatex}`
-    : `${command}${groupedArgumentLatex(node[1])}^{${exponentLatex}}`;
+  return `${command}${groupedArgumentLatex(node[1], options)}^{${exponentLatex}}`;
 }
 
-function explicitProductLatex(factors: unknown[]) {
-  return factors.map((factor) =>
-    isAdditiveNode(factor)
-      ? `(${standardMathLatex(factor)})`
-      : standardMathLatex(factor)).join(String.raw`\cdot `);
+function explicitProductLatex(
+  factors: unknown[],
+  options: CalculusStandardMathRenderOptions,
+) {
+  return factors.map((factor, index) => {
+    const rendered = isAdditiveNode(factor)
+      ? `\\left(${standardMathLatex(factor, options)}\\right)`
+      : standardMathLatex(factor, options);
+    if (index === 0) return rendered;
+    return `${Array.isArray(factor) && (factor[0] === 'Ln' || factor[0] === 'Log')
+      ? String.raw`\cdot`
+      : String.raw`\cdot `}${rendered}`;
+  }).join('');
 }
 
 function shouldUseProductDot(left: unknown, right: unknown) {
+  if (
+    Array.isArray(right)
+    && (right[0] === 'Ln' || right[0] === 'Log')
+  ) return true;
+  if (
+    Array.isArray(right)
+    && typeof right[0] === 'string'
+    && STANDARD_FUNCTION_LATEX.get(right[0])?.startsWith('\\operatorname')
+  ) return true;
   if (!isAdditiveNode(left)) return false;
   return !(
     Array.isArray(right)
@@ -351,25 +412,122 @@ function shouldUseProductDot(left: unknown, right: unknown) {
   );
 }
 
-function compactProductLatex(factors: unknown[]) {
+function dependsOnVariable(node: unknown, variable: string): boolean {
+  if (node === variable) return true;
+  if (!Array.isArray(node)) return false;
+  return node.slice(1).some((child) => dependsOnVariable(child, variable));
+}
+
+function exactIntegerLinearCoefficients(
+  node: unknown,
+  variable: string,
+): { variableCoefficient: number; constant: number } | undefined {
+  if (!Array.isArray(node) || node[0] !== 'Add') return undefined;
+  let variableCoefficient = 0;
+  let constant = 0;
+  for (const term of node.slice(1)) {
+    if (typeof term === 'number' && Number.isInteger(term)) {
+      constant += term;
+      continue;
+    }
+    if (term === variable) {
+      variableCoefficient += 1;
+      continue;
+    }
+    if (
+      Array.isArray(term)
+      && term[0] === 'Multiply'
+      && term.length === 3
+      && typeof term[1] === 'number'
+      && Number.isInteger(term[1])
+      && term[2] === variable
+    ) {
+      variableCoefficient += term[1];
+      continue;
+    }
+    return undefined;
+  }
+  return variableCoefficient !== 0
+    ? { variableCoefficient, constant }
+    : undefined;
+}
+
+function selectedVariableDegree(node: unknown, variable: string): number | undefined {
+  if (node === variable) return 1;
+  if (!dependsOnVariable(node, variable)) return 0;
+  if (!Array.isArray(node)) return undefined;
+  if (node[0] === 'Negate' && node.length === 2) {
+    return selectedVariableDegree(node[1], variable);
+  }
+  if (node[0] === 'Power' && node.length === 3) {
+    const baseDegree = selectedVariableDegree(node[1], variable);
+    const exponent = exactRationalScalar(node[2]);
+    return baseDegree !== undefined && exponent?.denominator === 1 && exponent.numerator >= 0
+      ? baseDegree * exponent.numerator
+      : undefined;
+  }
+  if (node[0] === 'Multiply') {
+    const degrees = node.slice(1).map((factor) => selectedVariableDegree(factor, variable));
+    return degrees.every((degree) => degree !== undefined)
+      ? degrees.reduce<number>((sum, degree) => sum + (degree ?? 0), 0)
+      : undefined;
+  }
+  return undefined;
+}
+
+function orderedProductFactors(
+  factors: unknown[],
+  options: CalculusStandardMathRenderOptions,
+) {
+  if (!options.variable) return factors;
+  return factors
+    .map((factor, index) => ({ factor, index }))
+    .sort((left, right) => {
+      if (typeof left.factor === 'string' && typeof right.factor === 'string') {
+        const leftUpper = /^[A-Z]$/u.test(left.factor);
+        const rightUpper = /^[A-Z]$/u.test(right.factor);
+        if (leftUpper !== rightUpper) return leftUpper ? -1 : 1;
+        return left.factor.localeCompare(right.factor);
+      }
+      const leftDepends = dependsOnVariable(left.factor, options.variable as string);
+      const rightDepends = dependsOnVariable(right.factor, options.variable as string);
+      return leftDepends === rightDepends ? left.index - right.index : leftDepends ? 1 : -1;
+    })
+    .map(({ factor }) => factor);
+}
+
+function compactProductLatex(
+  rawFactors: unknown[],
+  options: CalculusStandardMathRenderOptions,
+) {
+  const factors = orderedProductFactors(rawFactors, options);
   return factors.map((factor, index) => {
     const rendered = isAdditiveNode(factor)
-      ? `(${standardMathLatex(factor)})`
-      : standardMathLatex(factor);
+      ? `\\left(${standardMathLatex(factor, options)}\\right)`
+      : standardMathLatex(factor, options);
     if (index === 0) return rendered;
-    return `${shouldUseProductDot(factors[index - 1], factor) ? String.raw`\cdot ` : ''}${rendered}`;
+    const separator = Array.isArray(factor) && (factor[0] === 'Ln' || factor[0] === 'Log')
+      ? String.raw`\cdot`
+      : shouldUseProductDot(factors[index - 1], factor)
+        ? String.raw`\cdot `
+        : '';
+    return `${separator}${rendered}`;
   }).join('');
 }
 
-function productFactorsLatex(factors: unknown[]) {
+function productFactorsLatex(
+  factors: unknown[],
+  options: CalculusStandardMathRenderOptions,
+) {
   return factors.some(containsFormalApply)
-    ? explicitProductLatex(factors)
-    : compactProductLatex(factors);
+    ? explicitProductLatex(factors, options)
+    : compactProductLatex(factors, options);
 }
 
 function renderCoefficientTimesDivide(
   coefficient: ExactRational,
   divideNode: unknown[],
+  options: CalculusStandardMathRenderOptions,
 ): string | undefined {
   if (divideNode.length !== 3) {
     return undefined;
@@ -384,10 +542,39 @@ function renderCoefficientTimesDivide(
     divideNode[2],
   ];
 
-  return String.raw`\frac{${productFactorsLatex(numeratorFactors)}}{${productFactorsLatex(denominatorFactors)}}`;
+  return String.raw`\frac{${productFactorsLatex(numeratorFactors, options)}}{${productFactorsLatex(denominatorFactors, options)}}`;
 }
 
-function standardMathLatex(mathJson: unknown): string {
+function renderedSymbol(symbol: string) {
+  if (symbol === 'ExponentialE') return 'e';
+  const indexedGreek = /^(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)_([0-9]+)$/u.exec(symbol);
+  return indexedGreek ? `\\${indexedGreek[1]}_{${indexedGreek[2]}}` : undefined;
+}
+
+function orderedAddTerms(
+  terms: unknown[],
+  options: CalculusStandardMathRenderOptions,
+) {
+  if (!options.variable) return terms;
+  return terms
+    .map((term, index) => ({
+      term,
+      index,
+      degree: selectedVariableDegree(term, options.variable as string),
+    }))
+    .sort((left, right) => {
+      if (left.degree === undefined || right.degree === undefined || left.degree === right.degree) {
+        return left.index - right.index;
+      }
+      return right.degree - left.degree;
+    })
+    .map(({ term }) => term);
+}
+
+function standardMathLatex(
+  mathJson: unknown,
+  options: CalculusStandardMathRenderOptions = {},
+): string {
   if (
     Array.isArray(mathJson)
     && mathJson[0] === 'Rational'
@@ -402,7 +589,7 @@ function standardMathLatex(mathJson: unknown): string {
   }
 
   if (Array.isArray(mathJson) && isFormalApplyNode(mathJson)) {
-    return formalApplyLatex(mathJson);
+    return formalApplyLatex(mathJson, options);
   }
 
   if (
@@ -414,7 +601,7 @@ function standardMathLatex(mathJson: unknown): string {
     && mathJson[2][1] === 1
     && mathJson[2][2] === 2
   ) {
-    return String.raw`\sqrt{${standardMathLatex(mathJson[1])}}`;
+    return String.raw`\sqrt{${standardMathLatex(mathJson[1], options)}}`;
   }
 
   if (
@@ -423,10 +610,8 @@ function standardMathLatex(mathJson: unknown): string {
     && mathJson.length === 3
     && containsFormalApply(mathJson[1])
   ) {
-    const exponentLatex = standardMathLatex(mathJson[2]);
-    return /^[A-Za-z0-9]+$/u.test(exponentLatex)
-      ? `${standardMathLatex(mathJson[1])}^${exponentLatex}`
-      : `${standardMathLatex(mathJson[1])}^{${exponentLatex}}`;
+    const exponentLatex = standardMathLatex(mathJson[2], options);
+    return `${standardMathLatex(mathJson[1], options)}^{${exponentLatex}}`;
   }
 
   if (
@@ -435,24 +620,22 @@ function standardMathLatex(mathJson: unknown): string {
     && mathJson.length === 3
     && Array.isArray(mathJson[1])
   ) {
-    const base = standardFunctionPowerLatex(mathJson[1], mathJson[2]);
+    const base = standardFunctionPowerLatex(mathJson[1], mathJson[2], options);
     if (base) {
       return base;
     }
   }
 
   if (Array.isArray(mathJson) && mathJson[0] === 'Sqrt' && mathJson.length === 2) {
-    return String.raw`\sqrt{${standardMathLatex(mathJson[1])}}`;
+    return String.raw`\sqrt{${standardMathLatex(mathJson[1], options)}}`;
   }
 
   if (Array.isArray(mathJson) && mathJson[0] === 'Power' && mathJson.length === 3) {
     const base = isAdditiveNode(mathJson[1])
-      ? `(${standardMathLatex(mathJson[1])})`
-      : standardMathLatex(mathJson[1]);
-    const exponentLatex = standardMathLatex(mathJson[2]);
-    return /^\d+$/u.test(exponentLatex)
-      ? `${base}^${exponentLatex}`
-      : `${base}^{${exponentLatex}}`;
+      ? `\\left(${standardMathLatex(mathJson[1], options)}\\right)`
+      : standardMathLatex(mathJson[1], options);
+    const exponentLatex = standardMathLatex(mathJson[2], options);
+    return `${base}^{${exponentLatex}}`;
   }
 
   if (
@@ -461,46 +644,51 @@ function standardMathLatex(mathJson: unknown): string {
     && mathJson.length === 2
   ) {
     if (Array.isArray(mathJson[1]) && mathJson[1][0] === 'Abs' && mathJson[1].length === 2) {
-      return `\\ln|${standardMathLatex(mathJson[1][1])}|`;
+      const absoluteArgument = mathJson[1][1];
+      const argumentLatex = Array.isArray(absoluteArgument)
+        && (absoluteArgument[0] === 'Ln' || absoluteArgument[0] === 'Log')
+        && absoluteArgument.length === 2
+        ? `\\ln\\left(${standardMathLatex(absoluteArgument[1], options)}\\right)`
+        : standardMathLatex(absoluteArgument, options);
+      return `\\ln\\left|${argumentLatex}\\right|`;
     }
-    return `\\ln${groupedArgumentLatex(mathJson[1])}`;
+    return `\\ln${groupedArgumentLatex(mathJson[1], options)}`;
   }
 
   if (Array.isArray(mathJson) && mathJson[0] === 'Abs' && mathJson.length === 2) {
-    return `|${standardMathLatex(mathJson[1])}|`;
+    return `\\left|${standardMathLatex(mathJson[1], options)}\\right|`;
   }
 
   if (Array.isArray(mathJson)) {
-    const renderedFunction = standardFunctionLatex(mathJson);
+    const renderedFunction = standardFunctionLatex(mathJson, options);
     if (renderedFunction) return renderedFunction;
   }
 
   if (Array.isArray(mathJson) && mathJson[0] === 'Divide' && mathJson.length === 3) {
     const numerator = positiveMagnitudeNode(mathJson[1]);
     if (numerator !== undefined) {
-      return `-${standardMathLatex(['Divide', numerator, mathJson[2]])}`;
+      return `-${standardMathLatex(['Divide', numerator, mathJson[2]], options)}`;
     }
     const numeratorSplit = splitProductCoefficient(mathJson[1]);
     const denominatorScalar = exactRationalScalar(mathJson[2]);
     if (
-      containsFormalApply(mathJson[1])
-      && denominatorScalar
+      denominatorScalar
       && numeratorSplit.coefficient.numerator === numeratorSplit.coefficient.denominator
       && numeratorSplit.factors.length > 0
     ) {
-      const denominator = standardMathLatex(mathJson[2]);
-      const numeratorLatex = numeratorSplit.factors.length === 1
-        ? standardMathLatex(numeratorSplit.factors[0])
-        : explicitProductLatex(numeratorSplit.factors);
-      return `\\frac{${numeratorLatex}}{${denominator}}`;
+      return String.raw`\frac{${standardMathLatex(mathJson[1], options)}}{${standardMathLatex(mathJson[2], options)}}`;
     }
-    if (denominatorScalar) {
+    if (
+      denominatorScalar
+      && numeratorSplit.coefficient.numerator !== numeratorSplit.coefficient.denominator
+    ) {
       const coefficient = divideExactRationals(numeratorSplit.coefficient, denominatorScalar);
       if (coefficient) {
         return standardMathLatex(
           numeratorSplit.factors.length === 0
             ? rationalNode(coefficient)
             : ['Multiply', rationalNode(coefficient), ...numeratorSplit.factors],
+          options,
         );
       }
     }
@@ -516,12 +704,19 @@ function standardMathLatex(mathJson: unknown): string {
       const coefficientDenominator = absoluteCoefficient.denominator === 1
         ? mathJson[2]
         : ['Multiply', absoluteCoefficient.denominator, mathJson[2]];
-      const rendered = compactProductLatex([
-        ['Divide', absoluteCoefficient.numerator, coefficientDenominator],
+      const rendered = String.raw`\frac{${productFactorsLatex([
+        ...(absoluteCoefficient.numerator === 1 ? [] : [absoluteCoefficient.numerator]),
         ...numeratorSplit.factors,
-      ]);
+      ], options)}}{${standardMathLatex(coefficientDenominator, options)}}`;
       return negative ? `-${rendered}` : rendered;
     }
+    const rationalNumerator = exactRationalScalar(mathJson[1]);
+    if (rationalNumerator && rationalNumerator.denominator !== 1) {
+      const coefficient = standardMathLatex(mathJson[1], options);
+      const reciprocal = String.raw`\frac{1}{${standardMathLatex(mathJson[2], options)}}`;
+      return `${coefficient}\\cdot ${reciprocal}`;
+    }
+    return String.raw`\frac{${standardMathLatex(mathJson[1], options)}}{${standardMathLatex(mathJson[2], options)}}`;
   }
 
   if (Array.isArray(mathJson) && mathJson[0] === 'Multiply' && mathJson.length >= 3) {
@@ -549,14 +744,52 @@ function standardMathLatex(mathJson: unknown): string {
         && Array.isArray(factors[0])
         && factors[0][0] === 'Divide'
       ) {
-        const rendered = renderCoefficientTimesDivide(exactCoefficient, factors[0]);
+        const rendered = renderCoefficientTimesDivide(exactCoefficient, factors[0], options);
         if (rendered) {
           return negative ? `-${rendered}` : rendered;
         }
       }
+      if (exactCoefficient.denominator !== 1 && factors.length > 0) {
+        const numeratorFactors = [
+          ...(exactCoefficient.numerator === 1 ? [] : [exactCoefficient.numerator]),
+          ...factors,
+        ];
+        const rendered = String.raw`\frac{${productFactorsLatex(
+          numeratorFactors,
+          options,
+        )}}{${exactCoefficient.denominator}}`;
+        return negative ? `-${rendered}` : rendered;
+      }
       factors.unshift(exactCoefficient.denominator === 1
         ? exactCoefficient.numerator
         : ['Rational', exactCoefficient.numerator, exactCoefficient.denominator]);
+    }
+    const divideIndex = factors.findIndex((factor) =>
+      Array.isArray(factor) && factor[0] === 'Divide' && factor.length === 3,
+    );
+    if (divideIndex >= 0 && factors.length > 1) {
+      const divideFactor = factors[divideIndex] as unknown[];
+      const otherFactors = factors.filter((_, index) => index !== divideIndex);
+      const preserveSpecialPrefactor = exactRationalScalar(divideFactor[2]) !== undefined
+        && otherFactors.every((factor) =>
+          Array.isArray(factor)
+          && typeof factor[0] === 'string'
+          && STANDARD_FUNCTION_LATEX.get(factor[0])?.startsWith('\\operatorname'));
+      if (!preserveSpecialPrefactor) {
+        const numerator = Array.isArray(divideFactor[1])
+          && divideFactor[1][0] === 'Negate'
+          && divideFactor[1].length === 2
+          ? divideFactor[1][1]
+          : divideFactor[1];
+        const divideNegative = Array.isArray(divideFactor[1])
+          && divideFactor[1][0] === 'Negate'
+          && divideFactor[1].length === 2;
+        const rendered = String.raw`\frac{${productFactorsLatex(
+          [numerator, ...otherFactors],
+          options,
+        )}}{${standardMathLatex(divideFactor[2], options)}}`;
+        return negative !== divideNegative ? `-${rendered}` : rendered;
+      }
     }
     const ordered = [
       ...factors.filter(isScalarNode),
@@ -565,10 +798,10 @@ function standardMathLatex(mathJson: unknown): string {
     const normalized = ordered.length === 0
       ? '1'
         : ordered.length === 1
-        ? standardMathLatex(ordered[0])
+        ? standardMathLatex(ordered[0], options)
         : ordered.some(containsFormalApply)
-          ? explicitProductLatex(ordered)
-          : compactProductLatex(ordered);
+          ? explicitProductLatex(ordered, options)
+          : compactProductLatex(ordered, options);
     return negative ? `-${normalized}` : normalized;
   }
 
@@ -577,33 +810,39 @@ function standardMathLatex(mathJson: unknown): string {
       'Add',
       mathJson[1],
       ...mathJson.slice(2).map((term) => ['Negate', term]),
-    ]);
+    ], options);
   }
 
   if (!Array.isArray(mathJson) || mathJson[0] !== 'Add' || mathJson.length < 2) {
     if (Array.isArray(mathJson) && mathJson[0] === 'Negate' && mathJson.length === 2) {
-      const operand = standardMathLatex(mathJson[1]);
+      const operand = standardMathLatex(mathJson[1], options);
       return isAdditiveNode(mathJson[1]) ? `-(${operand})` : `-${operand}`;
+    }
+    if (typeof mathJson === 'string') {
+      return renderedSymbol(mathJson) ?? printedStandardMathLatex(mathJson);
     }
     return printedStandardMathLatex(mathJson);
   }
 
-  return mathJson.slice(1).map((term, index) => {
+  return orderedAddTerms(mathJson.slice(1), options).map((term, index) => {
     if (
       Array.isArray(term)
       && term[0] === 'Negate'
       && term.length === 2
       && (!Array.isArray(term[1]) || (term[1][0] !== 'Add' && term[1][0] !== 'Subtract'))
     ) {
-      return `-${standardMathLatex(term[1])}`;
+      return `-${standardMathLatex(term[1], options)}`;
     }
-    const rendered = standardMathLatex(term);
+    const rendered = standardMathLatex(term, options);
     return index === 0 || rendered.startsWith('-') ? rendered : `+${rendered}`;
   }).join('');
 }
 
-export function renderCalculusStandardMathJson(mathJson: unknown): string {
-  return standardMathLatex(mathJson);
+export function renderCalculusStandardMathJson(
+  mathJson: unknown,
+  options: CalculusStandardMathRenderOptions = {},
+): string {
+  return standardMathLatex(normalizeStandardMathJson(mathJson), options);
 }
 
 export function standardLeaf(

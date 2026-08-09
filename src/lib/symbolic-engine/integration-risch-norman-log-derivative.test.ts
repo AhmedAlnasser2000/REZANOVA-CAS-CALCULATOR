@@ -33,7 +33,7 @@ describe('Risch-Norman log-derivative detector', () => {
     expect(result.strategy).toBe('partial-fractions');
     expect(result.verification.status).toBe('verified-exact');
     expect(result.verification.reason).toContain('Risch-Norman log-derivative');
-    expect(compact(result.exactLatex)).toContain('\\ln\\left|ax^3+bx^2+cx+d\\right|');
+    expect(compact(result.exactLatex)).toContain('\\ln\\left|ax^{3}+bx^{2}+cx+d\\right|');
     expect(result.exactLatex).not.toContain('\\arctan');
   });
 
@@ -47,7 +47,7 @@ describe('Risch-Norman log-derivative detector', () => {
 
     const variableT = success('\\frac{k*(2a*t+b)}{a*t^2+b*t+c}', 't');
     expect(compact(variableT.exactLatex)).toContain('k\\cdot\\ln');
-    expect(compact(variableT.exactLatex)).toContain('at^2+bt+c');
+    expect(compact(variableT.exactLatex)).toContain('at^{2}+bt+c');
   });
 
   it('preserves existing exact-rational and affine symbolic overlap ownership', () => {

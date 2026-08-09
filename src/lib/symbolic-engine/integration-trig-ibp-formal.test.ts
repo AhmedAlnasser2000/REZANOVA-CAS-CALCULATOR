@@ -34,14 +34,14 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
     const sinSquared = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`x\sin^2(x)`));
     expect(sinSquared.strategy).toBe('integration-by-parts');
     expect(sinSquared.verification.status).toBe('verified-exact');
-    expect(sinSquared.exactLatex).toContain(String.raw`\frac{1}{4}x^2`);
+    expect(sinSquared.exactLatex).toContain(String.raw`\frac{x^{2}}{4}`);
     expect(sinSquared.exactLatex).toContain(String.raw`x\sin(2x)`);
 
     const sinCos = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`x\sin(x)\cos(x)`));
     expect(sinCos.strategy).toBe('integration-by-parts');
     expect(sinCos.verification.status).toBe('verified-exact');
     expect(sinCos.exactLatex).toContain(String.raw`x\cos(2x)`);
-    expect(sinCos.exactLatex).toContain(String.raw`\frac{1}{8}\sin(2x)`);
+    expect(sinCos.exactLatex).toContain(String.raw`\frac{\sin(2x)}{8}`);
   });
 
   it('integrates polynomial times logarithm powers by bounded integration by parts', () => {
@@ -52,7 +52,7 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
     expect(result.strategy).toBe('integration-by-parts');
     expect(result.verification.status).toBe('verified-exact');
     expect(result.exactLatex).toBe(
-      String.raw`\frac{1}{2}x^2\ln(x)^2-\frac{1}{2}x^2\ln(x)+\frac{1}{4}x^2`,
+      String.raw`\frac{x^{2}\ln(x)^{2}}{2}-\frac{x^{2}\cdot\ln(x)}{2}+\frac{x^{2}}{4}`,
     );
     expect(result.exactSupplementLatex?.join(' ')).toContain('x>0');
     expect(result.detailSections?.map((section) => section.title))
@@ -74,7 +74,7 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
       mathJson: ['Divide', ['Power', ['Apply', 'f', 'x'], 2], 2],
       source: 'test:formal-product',
     });
-    expect(renderCalculusAntiderivativeExpression(expression)).toBe(String.raw`\frac{f\left(x\right)^2}{2}`);
+    expect(renderCalculusAntiderivativeExpression(expression)).toBe(String.raw`\frac{f\left(x\right)^{2}}{2}`);
 
     const structured = expectIntegrationSuccess(resolveSymbolicIntegralFromAst([
       'Multiply',
@@ -83,7 +83,7 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
     ], 'x'));
     expect(structured.strategy).toBe('integration-by-parts');
     expect(structured.verification.status).toBe('verified-exact');
-    expect(structured.exactLatex).toBe(String.raw`\frac{f\left(x\right)^2}{2}`);
+    expect(structured.exactLatex).toBe(String.raw`\frac{f\left(x\right)^{2}}{2}`);
 
     const parserTuple = expectIntegrationSuccess(resolveSymbolicIntegralFromAst([
       'Tuple',
@@ -91,6 +91,6 @@ describe('symbolic-engine trig IBP and formal-function integration', () => {
       'x',
       ['D', ['f', 'x'], 'x'],
     ], 'x'));
-    expect(parserTuple.exactLatex).toBe(String.raw`\frac{f\left(x\right)^2}{2}`);
+    expect(parserTuple.exactLatex).toBe(String.raw`\frac{f\left(x\right)^{2}}{2}`);
   });
 });

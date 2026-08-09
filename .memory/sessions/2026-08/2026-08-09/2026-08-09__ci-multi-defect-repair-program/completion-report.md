@@ -17,7 +17,7 @@
 ## Status
 
 - Gate 1 `INTEGRATION-PROOF-ROUTING1`: complete and verified.
-- Gate 2 `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: pending.
+- Gate 2 `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: complete and verified.
 - Gate 3 `CI-EQUATION-HISTORY-REPAIR1`: pending.
 - Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.
 
@@ -35,3 +35,13 @@
 - Kept native-expression adoption fail-closed when exact proof is missing or insufficient.
 - Preferred the existing direct-rule route for genus-0 pullbacks before the ordinary dispatcher, preserving direct ownership for pure polynomial pullbacks without relabeling other routes.
 - Confirmed the four historically stuck files terminate under an external timeout; no Vitest worker remained active.
+
+## Gate 2 — UI
+
+- Made the producer-owned standard MathJSON renderer authoritative for migrated Integration readback, including selected-variable ordering, structural signs and products, logarithms, indexed symbols, and canonical `e`, `erf`, and `erfi` notation.
+- Routed affected producers through native antiderivative expressions or native coefficients and retained exact proof rather than reparsing rendered LaTeX.
+- Corrected serializable MathJSON validation so shared DAG nodes are accepted while genuine ancestor cycles still fail closed.
+- Added a narrow standard-function proof alias for canonical lowercase `\operatorname{erf}`/`\operatorname{erfc}` presentation; the native standard `Erf`/`Erfc` MathJSON remains semantic authority and mismatched arguments still fail.
+- Accepted only the reviewed canonical-string baseline delta: MathJSON coverage remains `506/506/0/0`, global maximum remains 2,894 bytes, and the print baseline changes only three Integration answer pairs.
+- Refreshed only the three matching Calculus History snapshots after replay confirmed their deltas were the same producer-owned canonical readback normalization.
+- Real-app Playwright evidence covers exponential, error-function, affine-rational, indexed elliptic, inverse-trig, details, clipboard, History replay, and overflow/readability behavior.

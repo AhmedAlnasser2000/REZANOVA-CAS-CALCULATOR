@@ -184,7 +184,10 @@ export function presentVerifiedIndefiniteAntiderivative(
       input.antiderivativeExpression,
       input.variable,
     );
-    const exactLatex = renderCalculusAntiderivativeExpression(antiderivativeExpression);
+    const exactLatex = renderCalculusAntiderivativeExpression(
+      antiderivativeExpression,
+      { variable: input.variable },
+    );
     return {
       exactLatex,
       answerRows: answerRowsFor(exactLatex),

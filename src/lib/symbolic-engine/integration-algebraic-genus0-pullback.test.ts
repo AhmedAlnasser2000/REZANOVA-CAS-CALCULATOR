@@ -42,7 +42,7 @@ describe('algebraic genus-0 rational pullback evidence', () => {
     expect(result.parametrization.family).toBe('quadratic-plus');
     expect(result.pullbackIntegral.strategy).toBe('partial-fractions');
     expect(pullback).toContain('t^2');
-    expect(result.pullbackAntiderivativeLatex).toContain('\\frac{1}{2}t');
+    expect(result.pullbackAntiderivativeLatex).toContain('\\frac{t}{2}');
     expect(result.pullbackAntiderivativeLatex).toContain('\\frac{1}{t}');
     expect(compact(result.exactSupplementLatex.join('\n'))).toContain('t\\ne0');
   });

@@ -18,7 +18,7 @@ describe('algebraic genus-0 rational-in-radical integration', () => {
 
     expect(result.strategy).toBe('u-substitution');
     expect(result.verification.status).toBe('verified-exact');
-    expect(result.exactLatex).toContain('\\sqrt{x^2+1}');
+    expect(result.exactLatex).toContain('\\sqrt{x^{2}+1}');
   });
 
   it('integrates degree-two numerators over plus quadratic radicals', () => {
@@ -26,7 +26,7 @@ describe('algebraic genus-0 rational-in-radical integration', () => {
 
     expect(result.strategy).toBe('u-substitution');
     expect(result.verification.status).toBe('verified-exact');
-    expect(result.exactLatex).toContain('x\\sqrt{1+x^2}');
+    expect(result.exactLatex).toContain('x\\sqrt{x^{2}+1}');
     expect(result.exactLatex).toContain('arsinh');
     expect(result.exactSupplementLatex?.join('\n')).toContain('x^2+1\\ge0');
   });
@@ -36,7 +36,7 @@ describe('algebraic genus-0 rational-in-radical integration', () => {
 
     expect(result.strategy).toBe('u-substitution');
     expect(result.verification.status).toBe('verified-exact');
-    expect(result.exactLatex).toContain('x\\sqrt{4-x^2}');
+    expect(result.exactLatex).toContain('x\\sqrt{-x^{2}+4}');
     expect(result.exactLatex).toContain('\\arcsin');
     expect(result.exactSupplementLatex?.join('\n')).toContain('4-x^2\\ge0');
     expect(result.exactSupplementLatex?.join('\n')).not.toContain('t\\ne0');
@@ -47,7 +47,7 @@ describe('algebraic genus-0 rational-in-radical integration', () => {
 
     expect(result.strategy).toBe('u-substitution');
     expect(result.verification.status).toBe('verified-exact');
-    expect(result.exactLatex).toContain('x\\sqrt{-4+x^2}');
+    expect(result.exactLatex).toContain('x\\sqrt{x^{2}-4}');
     expect(result.exactLatex).toContain('arcosh');
     expect(result.exactSupplementLatex?.join('\n')).toContain('x^2-4\\ge0');
   });
@@ -57,8 +57,8 @@ describe('algebraic genus-0 rational-in-radical integration', () => {
 
     expect(result.strategy).toBe('u-substitution');
     expect(result.verification.status).toBe('verified-exact');
-    expect(result.exactLatex).toContain('x\\sqrt{1+x^2}');
-    expect(result.exactLatex).toContain('3\\sqrt{1+x^2}');
+    expect(result.exactLatex).toContain('x\\sqrt{x^{2}+1}');
+    expect(result.exactLatex).toContain('3\\sqrt{x^{2}+1}');
     expect(result.exactLatex).toContain('arsinh');
   });
 

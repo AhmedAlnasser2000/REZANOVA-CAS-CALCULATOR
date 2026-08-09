@@ -33,6 +33,7 @@ import { certificateUxDetailSections } from './certificate-ux';
 import { profileSymbolicIntegrationResult } from '../../../display/printer';
 import {
   namedSpecialFunctionCallExpression,
+  renderCalculusAntiderivativeExpression,
   specialFunctionAntiderivativeExpression,
   specialFunctionAntiderivativeExpressionFromMathJson,
   standardAntiderivativeExpression,
@@ -974,23 +975,24 @@ export function buildExpQuadraticSpecialFunctionCertificateFromProof(
   const functionLatex =
     exactQuadraticSpecialFunctionLatex(proof)
     ?? symbolicQuadraticSpecialFunctionLatex(proof);
-  if (!functionLatex) {
-    return undefined;
-  }
+  if (!functionLatex) return undefined;
 
   const certificate = buildTranscendentalNonElementaryCertificateFromProof(proof);
-  if (!certificate) {
-    return undefined;
-  }
+  if (!certificate) return undefined;
+
+  const antiderivativeExpression = exactQuadraticAntiderivativeExpression(proof);
+  const canonicalFunctionLatex = antiderivativeExpression
+    ? renderCalculusAntiderivativeExpression(antiderivativeExpression, { variable: proof.variable })
+    : functionLatex;
 
   return profileSymbolicIntegrationResult({
     ...certificate,
-    exactLatex: functionLatex,
-    antiderivativeExpression: exactQuadraticAntiderivativeExpression(proof),
+    exactLatex: canonicalFunctionLatex,
+    antiderivativeExpression,
     antiderivativeKind: 'special-function',
     detailSections: [
       ...updateProofScopeForSpecialFunction(certificate.detailSections),
-      specialFunctionDetail(functionLatex),
+      specialFunctionDetail(canonicalFunctionLatex),
     ],
   });
 }

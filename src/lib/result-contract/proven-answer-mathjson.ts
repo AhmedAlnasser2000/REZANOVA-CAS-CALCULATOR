@@ -236,6 +236,34 @@ function containsApplyOperator(node: unknown): boolean {
   return node[0] === 'Apply' || node.slice(1).some(containsApplyOperator);
 }
 
+const STANDARD_FUNCTION_PROOF_ALIASES = [
+  {
+    operator: 'Erf',
+    visibleLatex: String.raw`\operatorname{erf}`,
+    proofLatex: String.raw`\operatorname{Erf}`,
+  },
+  {
+    operator: 'Erfc',
+    visibleLatex: String.raw`\operatorname{erfc}`,
+    proofLatex: String.raw`\operatorname{Erfc}`,
+  },
+] as const;
+
+function containsOperator(node: unknown, operator: string): boolean {
+  return Array.isArray(node)
+    && (node[0] === operator || node.slice(1).some((child) => containsOperator(child, operator)));
+}
+
+function standardFunctionProofLatex(canonicalLatex: string, mathJson: unknown) {
+  let proofLatex = canonicalLatex;
+  for (const alias of STANDARD_FUNCTION_PROOF_ALIASES) {
+    if (containsOperator(mathJson, alias.operator)) {
+      proofLatex = proofLatex.replaceAll(alias.visibleLatex, alias.proofLatex);
+    }
+  }
+  return proofLatex === canonicalLatex ? undefined : proofLatex;
+}
+
 export function declareProducerOwnedAnswerMathJson(input: {
   mathJson: unknown;
   owner: CanonicalMathJsonProducerOwner;
@@ -341,7 +369,24 @@ export function proveAnswerMathJson(input: {
       }
     }
   }
-  const mathematicallyEqual = directlyEqual || simplifiedSame || formalApplySame;
+  let standardFunctionAliasSame = false;
+  if (!directlyEqual && !simplifiedSame && !formalApplySame) {
+    const proofLatex = standardFunctionProofLatex(canonicalLatex, cloned);
+    if (proofLatex) {
+      try {
+        const proofExpression = ce.parse(proofLatex, { form: 'structural' });
+        standardFunctionAliasSame = answerExpression.isSame(proofExpression)
+          || answerExpression.isEqual(proofExpression) === true
+          || answerExpression.simplify().latex === proofExpression.simplify().latex;
+      } catch {
+        standardFunctionAliasSame = false;
+      }
+    }
+  }
+  const mathematicallyEqual = directlyEqual
+    || simplifiedSame
+    || formalApplySame
+    || standardFunctionAliasSame;
   if (!mathematicallyEqual) {
     return failure(
       'semantic-mismatch',
@@ -375,7 +420,7 @@ export function proveAnswerMathJson(input: {
       byteLength: validation.validated.byteLength,
       semanticRelation: structurallySame
         ? 'structural'
-        : formalApplySame
+        : formalApplySame || standardFunctionAliasSame
           ? 'equal'
         : simplifiedSame
           ? 'simplified'

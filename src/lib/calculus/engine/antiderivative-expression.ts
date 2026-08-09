@@ -8,6 +8,7 @@ import {
   renderCalculusStandardMathJson as standardMathLatex,
   scaleStandardMathJson,
   standardLeaf,
+  type CalculusStandardMathRenderOptions,
 } from './antiderivative-standard-math';
 import { renderCanonicalSpecialFunctionExpressionV4 } from '../../result-contract';
 
@@ -454,14 +455,19 @@ export function calculusAntiderivativeExpressionMathLeaves(
 
 export function renderCalculusAntiderivativeExpression(
   expression: CalculusAntiderivativeExpression,
+  options: CalculusStandardMathRenderOptions = {},
 ): string {
   if (expression.kind === 'standard-math-json') {
-    return standardMathLatex(expression.mathJson);
+    return standardMathLatex(expression.mathJson, options);
   }
   if (expression.kind === 'special-function-expression') {
+    const mathJson = specialExpressionToAst(expression.expression);
+    if (mathJson !== undefined) {
+      return standardMathLatex(mathJson, options);
+    }
     return renderCanonicalSpecialFunctionExpressionV4(expression.expression);
   }
-  return `${renderCalculusAntiderivativeExpression(expression.antiderivative)}+${expression.constantSymbol}`;
+  return `${renderCalculusAntiderivativeExpression(expression.antiderivative, options)}+${expression.constantSymbol}`;
 }
 
 function specialExpressionToAst(

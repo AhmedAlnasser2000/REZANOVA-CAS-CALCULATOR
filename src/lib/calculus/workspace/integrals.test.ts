@@ -50,14 +50,14 @@ describe('calculus integrals', () => {
       integrationVariable: 'y',
     });
     expect(yResult.error).toBeUndefined();
-    expect(yResult.exactLatex).toContain('y^3');
+    expect(yResult.exactLatex).toContain('y^{3}');
 
     const tResult = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 't e^t',
       integrationVariable: 't',
     });
     expect(tResult.error).toBeUndefined();
-    expect(tResult.exactLatex).toContain('\\exponentialE^{t}');
+    expect(tResult.exactLatex).toContain('e^{t}');
 
     const parameterResult = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'x t',
@@ -65,7 +65,7 @@ describe('calculus integrals', () => {
     });
     expect(parameterResult.error).toBeUndefined();
     expect(parameterResult.exactLatex).toContain('x');
-    expect(parameterResult.exactLatex).toContain('t^2');
+    expect(parameterResult.exactLatex).toContain('t^{2}');
   });
 
   it('rejects equation-like indefinite-integral inputs with a controlled expression error', () => {
@@ -91,7 +91,7 @@ describe('calculus integrals', () => {
     expect(integrateA.error).toBeUndefined();
     expect(integrateA.resultOrigin).toBe('rule-based-symbolic');
     expect(integrateA.integrationStrategy).toBe('direct-rule');
-    expect(integrateA.exactLatex).toContain('A^2');
+    expect(integrateA.exactLatex).toContain('A^{2}');
     expect(integrateA.exactSupplementLatex?.join(' ')).toContain('(cx+d)(ax+b)^2\\ne0');
 
     const integrateB = evaluateCalculusIndefiniteIntegral({
@@ -101,7 +101,7 @@ describe('calculus integrals', () => {
     expect(integrateB.error).toBeUndefined();
     expect(integrateB.resultOrigin).toBe('rule-based-symbolic');
     expect(integrateB.integrationStrategy).toBe('direct-rule');
-    expect(integrateB.exactLatex).toContain('B^2');
+    expect(integrateB.exactLatex).toContain('B^{2}');
   });
 
   it('rejects compound or reserved integration variables', () => {
@@ -163,7 +163,7 @@ describe('calculus integrals', () => {
   it('renders non-elementary certificates for quadratic exponentials after elementary routes miss', () => {
     for (const [bodyLatex, specialFunctionLatex] of [
       ['e^{x^2}', String.raw`\operatorname{erfi}`],
-      ['e^{-x^2}', String.raw`\mathrm{Erf}`],
+      ['e^{-x^2}', String.raw`\operatorname{erf}`],
       ['e^{2*x^2+3*x+1}', String.raw`\operatorname{erfi}`],
     ] as const) {
       const result = evaluateCalculusIndefiniteIntegral({ bodyLatex });
@@ -319,8 +319,8 @@ describe('calculus integrals', () => {
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.integrationStrategy).toBe('partial-fractions');
-    expect(result.exactLatex).toMatch(/k(?:\\cdot )?\\ln/);
-    expect(result.exactLatex).toContain('ax^2');
+    expect(result.exactLatex).toMatch(/k(?:\\cdot ?)?\\ln/);
+    expect(result.exactLatex).toContain('ax^{2}');
     expect(result.exactLatex).toContain('bx');
     expectParseableLatex(result.exactLatex);
   });
@@ -353,7 +353,7 @@ describe('calculus integrals', () => {
     expect(quadratic.error).toBeUndefined();
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.integrationStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C');
+    expect(quadratic.exactLatex).toBe('\\frac{\\ln(x^{2}+1)}{2}+\\arctan(x)+C');
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 
@@ -363,7 +363,7 @@ describe('calculus integrals', () => {
     });
     expect(rootSum.error).toBeUndefined();
     expect(rootSum.exactLatex).toBe(
-      String.raw`\frac{2}{3}x^{\frac{3}{2}}+\frac{3}{4}x^{\frac{4}{3}}+C`,
+      String.raw`\frac{2x^{\frac{3}{2}}}{3}+\frac{3x^{\frac{4}{3}}}{4}+C`,
     );
     expect(rootSum.exactLatex).not.toContain(String.raw`\sqrt{x}^{3}`);
     expect(rootSum.exactLatex).not.toMatch(/\d+\\frac/u);
@@ -377,9 +377,10 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{2x^3-3x^2+1}{x^2-3x+1}`,
     });
     expect(rational.error).toBeUndefined();
-    expect(rational.exactLatex).toContain('x^2+3x');
+    expect(rational.exactLatex).toContain('x^{2}+3x');
     expect(rational.exactLatex).not.toContain(String.raw`2\left(\frac{x^{2}}{2}\right)`);
-    expect(rational.exactLatex).toContain(String.raw`\frac{17}{2\sqrt{5}}\ln`);
+    expect(rational.exactLatex).toContain(String.raw`\frac{17\cdot\ln`);
+    expect(rational.exactLatex).toContain(String.raw`}{2\sqrt{5}}`);
     expect(rational.answerRows?.rows).toEqual([
       { latex: rational.exactLatex },
     ]);
@@ -393,9 +394,9 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{1}{(4-x^2)^{3/2}}`,
     });
     expect(differenceRadical.error).toBeUndefined();
-    expect(differenceRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4-x^2}}+C`);
+    expect(differenceRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{-x^{2}+4}}+C`);
     expect(differenceRadical.answerRows?.rows).toEqual([
-      { latex: String.raw`\frac{x}{4\sqrt{4-x^2}}+C` },
+      { latex: String.raw`\frac{x}{4\sqrt{-x^{2}+4}}+C` },
     ]);
     expectParseableLatex(differenceRadical.exactLatex);
 
@@ -403,14 +404,14 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\frac{1}{(x^2+4)^{3/2}}`,
     });
     expect(sumRadical.error).toBeUndefined();
-    expect(sumRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{x^2+4}}+C`);
+    expect(sumRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{x^{2}+4}}+C`);
     expectParseableLatex(sumRadical.exactLatex);
 
     const sinh = evaluateCalculusIndefiniteIntegral({
       bodyLatex: String.raw`\sinh^2(x)`,
     });
     expect(sinh.error).toBeUndefined();
-    expect(sinh.exactLatex).toBe(String.raw`\frac{1}{4}\sinh(2x)-\frac{1}{2}x+C`);
+    expect(sinh.exactLatex).toBe(String.raw`\frac{\sinh(2x)}{4}-\frac{x}{2}+C`);
     expectParseableLatex(sinh.exactLatex);
 
     const cosh = evaluateCalculusIndefiniteIntegral({
@@ -418,7 +419,7 @@ describe('calculus integrals', () => {
     });
     expect(cosh.error).toBeUndefined();
     expect(cosh.exactLatex).not.toContain(String.raw`2\left(\left(2x+1\right)\right)`);
-    expect(cosh.exactLatex).toContain(String.raw`\sinh(2(2x+1))`);
+    expect(cosh.exactLatex).toContain(String.raw`\sinh(2\left(2x+1\right))`);
     expect(cosh.exactLatex?.endsWith('+C')).toBe(true);
     expectParseableLatex(cosh.exactLatex);
 
@@ -439,7 +440,7 @@ describe('calculus integrals', () => {
     });
     expect(reciprocalCosPower.error).toBeUndefined();
     expect(reciprocalCosPower.integrationStrategy).toBe('u-substitution');
-    expect(reciprocalCosPower.exactLatex).toBe(String.raw`\frac{1}{2}\cos^{-2}(x)+C`);
+    expect(reciprocalCosPower.exactLatex).toBe(String.raw`\frac{\cos^{-2}(x)}{2}+C`);
     expectParseableLatex(reciprocalCosPower.exactLatex);
 
     const nestedTan = evaluateCalculusIndefiniteIntegral({
@@ -455,7 +456,7 @@ describe('calculus integrals', () => {
     });
     expect(arctanQuadratic.error).toBeUndefined();
     expect(arctanQuadratic.integrationStrategy).toBe('u-substitution');
-    expect(arctanQuadratic.exactLatex).toBe(String.raw`\frac{1}{4}\arctan(2x)^2+C`);
+    expect(arctanQuadratic.exactLatex).toBe(String.raw`\frac{\arctan(2x)^{2}}{4}+C`);
     expectParseableLatex(arctanQuadratic.exactLatex);
 
     const arctanRoot = evaluateCalculusIndefiniteIntegral({
@@ -463,7 +464,9 @@ describe('calculus integrals', () => {
     });
     expect(arctanRoot.error).toBeUndefined();
     expect(arctanRoot.integrationStrategy).toBe('u-substitution');
-    expect(arctanRoot.exactLatex).toBe(String.raw`(x+1)\arctan(\sqrt{x})-\sqrt{x}+C`);
+    expect(arctanRoot.exactLatex).toBe(
+      String.raw`\left(x+1\right)\arctan(\sqrt{x})-\sqrt{x}+C`,
+    );
     expectParseableLatex(arctanRoot.exactLatex);
 
     const sinRoot = evaluateCalculusIndefiniteIntegral({
@@ -472,7 +475,7 @@ describe('calculus integrals', () => {
     expect(sinRoot.error).toBeUndefined();
     expect(sinRoot.integrationStrategy).toBe('u-substitution');
     expect(sinRoot.exactLatex).toBe(
-      String.raw`2(\sin(\sqrt{x})-\sqrt{x}\cos(\sqrt{x}))+C`,
+      String.raw`2\left(\sin(\sqrt{x})-\sqrt{x}\cos(\sqrt{x})\right)+C`,
     );
     expectParseableLatex(sinRoot.exactLatex);
   });
@@ -494,7 +497,7 @@ describe('calculus integrals', () => {
     expect(logPower.error).toBeUndefined();
     expect(logPower.integrationStrategy).toBe('integration-by-parts');
     expect(logPower.exactLatex).toBe(
-      String.raw`\frac{1}{2}x^2\ln(x)^2-\frac{1}{2}x^2\ln(x)+\frac{1}{4}x^2+C`,
+      String.raw`\frac{x^{2}\ln(x)^{2}}{2}-\frac{x^{2}\cdot\ln(x)}{2}+\frac{x^{2}}{4}+C`,
     );
     expectParseableLatex(logPower.exactLatex);
     expect(logPower.detailSections?.map((section) => section.title))
@@ -553,7 +556,7 @@ describe('calculus integrals', () => {
       'indefiniteIntegral:special-function',
     );
     expect(result.exactLatex).toContain(String.raw`\operatorname{EllipticF}`);
-    expect(result.exactLatex).toContain(String.raw`\sqrt{x^3+x}`);
+    expect(result.exactLatex).toContain(String.raw`\sqrt{x^{3}+x}`);
     expect(result.exactLatex).not.toContain('A_{\\alpha');
     expect(result.exactLatex?.endsWith('+C')).toBe(true);
     for (const leaf of result.mathJsonLeaves ?? []) {

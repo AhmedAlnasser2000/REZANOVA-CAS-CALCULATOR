@@ -58,8 +58,8 @@ describe('symbolic-engine integration recognition gates', () => {
     }
 
     const rootSum = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`\sqrt{x}+x^{1/3}`));
-    expect(rootSum.exactLatex).toContain(String.raw`\frac{2}{3}`);
-    expect(rootSum.exactLatex).toContain(String.raw`\frac{3}{4}`);
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{2x^{\frac{3}{2}}}{3}`);
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{3x^{\frac{4}{3}}}{4}`);
   });
 
   it('recognizes scalar multiples of supported primitive atoms and sums', () => {
@@ -70,11 +70,15 @@ describe('symbolic-engine integration recognition gates', () => {
       },
       {
         latex: String.raw`-\sec^2\left(\frac{3x}{2}\right)`,
-        snippets: [String.raw`-\frac{2`, String.raw`\tan(\frac{3}{2}x)`],
+        snippets: [String.raw`-\frac{2`, String.raw`\tan(\frac{3x}{2})`],
       },
       {
         latex: String.raw`\frac{1}{2}\left(\csc^2(x)-\csc(x)\cot(x)\right)`,
-        snippets: [String.raw`\frac{1}{2}`, String.raw`-\cot(x)`, String.raw`\csc(x)`],
+        snippets: [
+          String.raw`\frac{\left(-\cot(x)+\csc(x)\right)}{2}`,
+          String.raw`-\cot(x)`,
+          String.raw`\csc(x)`,
+        ],
       },
     ];
 

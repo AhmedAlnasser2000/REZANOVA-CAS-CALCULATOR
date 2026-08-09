@@ -48,6 +48,32 @@ function requireV4Document(
 }
 
 describe('runCalculusWorkspaceMode stored values', () => {
+  it('keeps canonical error-function readback aligned with producer-owned standard MathJSON', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
+      indefiniteIntegral: { bodyLatex: 'e^{-x^2}' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('Expected success');
+    expect(result.exactLatex).toBe(
+      String.raw`\frac{\sqrt{\pi}}{2}\cdot \operatorname{erf}\left(x\right)`,
+    );
+    const document = requireV2Document(result);
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: {
+        canonicalLatex: result.exactLatex,
+        mathJson: [
+          'Multiply',
+          ['Divide', ['Sqrt', 'Pi'], 2],
+          ['Erf', 'x'],
+        ],
+      },
+    });
+    expect(requireCanonicalResultAuthority(result, 'Calculus erf authority test').canonicalResult)
+      .toStrictEqual(document);
+  });
+
   it('substitutes integral parameters without replacing the active variable', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
       indefiniteIntegral: { bodyLatex: 'a x' },

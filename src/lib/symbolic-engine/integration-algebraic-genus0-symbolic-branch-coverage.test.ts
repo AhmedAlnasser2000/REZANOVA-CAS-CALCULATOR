@@ -30,7 +30,7 @@ describe('algebraic genus-0 symbolic branch coverage', () => {
     expect(reciprocal.strategy).toBe('u-substitution');
     expect(reciprocal.verification.status).toBe('verified-exact');
     expect(reciprocal.exactLatex).toContain('\\sqrt{ax+b}');
-    expect(compact(reciprocal.exactLatex)).toContain('\\frac{2}{a}\\sqrt{ax+b}');
+    expect(compact(reciprocal.exactLatex)).toContain('\\frac{2\\sqrt{ax+b}}{a}');
     expect(compact(reciprocal.exactLatex)).not.toContain('2\\frac{1}{a}');
     expect(compact(reciprocal.exactSupplementLatex?.join('\n'))).toContain('a\\ne0');
   });

@@ -20,6 +20,23 @@ describe('serializable MathJSON validation', () => {
     }
   });
 
+  it('accepts repeated DAG nodes while rejecting ancestor cycles', () => {
+    const shared = ['Add', 'x', 1];
+    const dag = ['Multiply', shared, shared];
+    const result = validateSerializableMathJson(dag);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.validated.value).toEqual(dag);
+      expect(result.validated.nodeCount).toBe(7);
+    }
+
+    const cyclic: unknown[] = ['Add', 1];
+    cyclic.push(cyclic);
+    expect(validateSerializableMathJson(cyclic))
+      .toMatchObject({ ok: false, failure: { reason: 'cyclic-value' } });
+  });
+
   it('rejects boxed expressions, cycles, and non-finite literals', () => {
     const ce = new ComputeEngine();
     expect(validateSerializableMathJson(ce.box(['Add', 'x', 1])).ok).toBe(false);

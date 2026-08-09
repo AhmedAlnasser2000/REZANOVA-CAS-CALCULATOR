@@ -74,7 +74,7 @@ describe('symbolic-engine low-risk textbook integration unlocks', () => {
   }, 60000);
 
   it.each([
-    [String.raw`\sinh^2(x)`, String.raw`-\frac{1}{2}x`],
+    [String.raw`\sinh^2(x)`, String.raw`-\frac{x}{2}`],
     [String.raw`\sinh^2(2x)`, String.raw`\sinh(4x)`],
     [String.raw`\cosh^2(2x)`, String.raw`\sinh(4x)`],
     [String.raw`\cosh^2(2x+1)`, '+'],

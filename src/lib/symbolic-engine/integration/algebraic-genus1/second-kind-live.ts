@@ -382,7 +382,7 @@ export function tryAlgebraicGenus1SecondKindLiveRule(
       ? `\\operatorname{EllipticF}\\left(2\\arctan\\sqrt{${variable}},\\frac{1}{2}\\right)`
       : firstKindRule?.kind === 'first-kind'
       ? firstKindRule.exactLatex
-      : renderCalculusAntiderivativeExpression(firstKindExpression);
+      : renderCalculusAntiderivativeExpression(firstKindExpression, { variable });
   }
 
   const expression = addAntiderivativeExpressions({
@@ -398,7 +398,7 @@ export function tryAlgebraicGenus1SecondKindLiveRule(
 
   return {
     kind: 'success',
-    exactLatex: renderCalculusAntiderivativeExpression(expression),
+    exactLatex: renderCalculusAntiderivativeExpression(expression, { variable }),
     verification: proof(),
     exactSupplementLatex: mergeExactSupplementLatex({
       entries: preconditioner.exactSupplementEntries,

@@ -94,7 +94,7 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
 
     expect(result.kind).toBe('error');
     if (result.kind === 'error') {
-      expect(result.error).toContain('elliptic/genus-1 analysis');
+      expect(result.error).toContain('second-kind elliptic residual');
     }
   });
 
@@ -103,7 +103,7 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
 
     expect(result.kind).toBe('error');
     if (result.kind === 'error') {
-      expect(result.error).toContain('elliptic/genus-1 analysis');
+      expect(result.error).toContain('second-kind elliptic residual');
     }
   });
 });

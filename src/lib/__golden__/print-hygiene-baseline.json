@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "GRAPHING-ANALYZE-UI1 added graphing-analysis-quadratic and Equation canonical condition supplements now serialize as math-only leaves",
+  "acceptedReason": "producer-owned canonical Integration readback normalization",
   "caseCount": 47,
   "workspaceCounts": {
     "calculate": 23,
@@ -180,12 +180,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\frac{1}{2}\\ln|x-1|-\\frac{1}{2}\\ln|x+1|+C"
+          "value": "\\frac{\\ln\\left|x-1\\right|}{2}-\\frac{\\ln\\left|x+1\\right|}{2}+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "\\frac{1}{2}\\ln|x-1|-\\frac{1}{2}\\ln|x+1|+C"
+          "value": "\\frac{\\ln\\left|x-1\\right|}{2}-\\frac{\\ln\\left|x+1\\right|}{2}+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
@@ -226,12 +226,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C"
+          "value": "\\frac{\\ln(x^{2}+1)}{2}+\\arctan(x)+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "\\frac{1}{2}\\ln(x^2+1)+\\arctan(x)+C"
+          "value": "\\frac{\\ln(x^{2}+1)}{2}+\\arctan(x)+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
@@ -249,12 +249,12 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "(x^2+1)\\cdot \\ln(x^2+1)-(x^2+1)+C"
+          "value": "\\left(x^{2}+1\\right)\\cdot\\ln(x^{2}+1)-(x^{2}+1)+C"
         },
         {
           "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
-          "value": "(x^2+1)\\cdot \\ln(x^2+1)-(x^2+1)+C"
+          "value": "\\left(x^{2}+1\\right)\\cdot\\ln(x^{2}+1)-(x^{2}+1)+C"
         },
         {
           "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",

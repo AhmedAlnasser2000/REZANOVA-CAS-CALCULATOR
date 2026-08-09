@@ -35,7 +35,7 @@ describe('Risch-Norman Hermite rational correction', () => {
     expect(result.strategy).toBe('partial-fractions');
     expect(result.verification.status).toBe('verified-exact');
     expect(result.verification.reason).toContain('Risch-Norman Hermite rational-correction');
-    expect(compact(result.exactLatex)).toContain('\\frac{B+Ax}{ax^2+bx+c}');
+    expect(compact(result.exactLatex)).toContain('\\frac{Ax+B}{ax^{2}+bx+c}');
   });
 
   it('detects exact rational derivatives with denominator power three', () => {
@@ -45,7 +45,7 @@ describe('Risch-Norman Hermite rational correction', () => {
 
     expect(result.strategy).toBe('partial-fractions');
     expect(result.verification.reason).toContain('Risch-Norman Hermite rational-correction');
-    expect(compact(result.exactLatex)).toContain('\\frac{x}{{(ax^2+bx+c)}^2}');
+    expect(compact(result.exactLatex)).toContain('\\frac{x}{\\left(ax^{2}+bx+c\\right)^{2}}');
   });
 
   it('reduces a bounded residual to a log-derivative correction', () => {
@@ -55,8 +55,8 @@ describe('Risch-Norman Hermite rational correction', () => {
 
     expect(result.strategy).toBe('partial-fractions');
     expect(result.verification.reason).toContain('Risch-Norman Hermite rational-correction');
-    expect(compact(result.exactLatex)).toContain('\\frac{x}{c+ax^2+bx}');
-    expect(compact(result.exactLatex)).toContain('k\\ln');
+    expect(compact(result.exactLatex)).toContain('\\frac{x}{ax^{2}+bx+c}');
+    expect(compact(result.exactLatex)).toContain('k\\cdot\\ln');
   });
 
   it('honors arbitrary selected variables', () => {
@@ -65,7 +65,7 @@ describe('Risch-Norman Hermite rational correction', () => {
       't',
     );
 
-    expect(compact(result.exactLatex)).toContain('\\frac{B+At}{at^2+bt+c}');
+    expect(compact(result.exactLatex)).toContain('\\frac{At+B}{at^{2}+bt+c}');
   });
 
   it('runs the Hermite rational-reduction proof through the degree-eight cap', () => {
@@ -74,14 +74,14 @@ describe('Risch-Norman Hermite rational correction', () => {
     );
     expect(degreeSeven.strategy).toBe('partial-fractions');
     expect(degreeSeven.verification.reason).toContain('Risch-Norman Hermite rational-correction');
-    expect(compact(degreeSeven.exactLatex)).toContain('\\frac{B+Ax}{x^7+ax+1}');
+    expect(compact(degreeSeven.exactLatex)).toContain('\\frac{Ax+B}{x^{7}+ax+1}');
 
     const degreeEight = success(
       '\\frac{A*(x^8+a*x+1)-(A*x+B)*(8*x^7+a)}{(x^8+a*x+1)^2}',
     );
     expect(degreeEight.strategy).toBe('partial-fractions');
     expect(degreeEight.verification.reason).toContain('Risch-Norman Hermite rational-correction');
-    expect(compact(degreeEight.exactLatex)).toContain('\\frac{B+Ax}{x^8+ax+1}');
+    expect(compact(degreeEight.exactLatex)).toContain('\\frac{Ax+B}{x^{8}+ax+1}');
   });
 
   it('exposes direct solver stops for over-scope cases', () => {

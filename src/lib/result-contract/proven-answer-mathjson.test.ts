@@ -100,6 +100,28 @@ describe('producer-proven answer MathJSON', () => {
     })).toMatchObject({ ok: false });
   });
 
+  it('accepts canonical lowercase error-function notation for standard MathJSON heads', () => {
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\frac{\sqrt{\pi}}{2}\cdot \operatorname{erf}\left(x\right)`,
+      candidate: candidate([
+        'Multiply',
+        ['Divide', ['Sqrt', 'Pi'], 2],
+        ['Erf', 'x'],
+      ]),
+    })).toMatchObject({
+      ok: true,
+      evidence: {
+        semanticRelation: 'equal',
+        printerSource: 'compatibility-fallback',
+      },
+    });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\operatorname{erf}\left(x+1\right)`,
+      candidate: candidate(['Erf', 'x']),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+  });
+
   it('rejects mismatched answers and mismatched ownership', () => {
     expect(proveAnswerMathJson({
       canonicalLatex: 'x+2',

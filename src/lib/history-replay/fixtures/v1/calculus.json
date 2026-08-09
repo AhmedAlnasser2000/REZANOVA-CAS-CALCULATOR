@@ -766,7 +766,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\frac{1}{3}x^3+C\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\frac{1}{3}x^3+C\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\int x^2\\,dx"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\frac{x^{3}}{3}+C\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\frac{x^{3}}{3}+C\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\int x^2\\,dx"
       }
     },
     {
@@ -1026,7 +1026,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\ln|x|+C\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\ln|x|+C\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\int \\frac{1}{x}\\,dx"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\ln\\left|x\\right|+C\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=\\ln\\left|x\\right|+C\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\int \\frac{1}{x}\\,dx"
       }
     },
     {
@@ -2953,7 +2953,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=y=C\\,e^{\\left(\\frac{1}{2}x^2+C\\right)}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=y=C\\,e^{\\left(\\frac{x^{2}}{2}+C\\right)}"
       }
     },
     {

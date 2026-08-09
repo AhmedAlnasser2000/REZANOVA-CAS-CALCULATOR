@@ -44,7 +44,7 @@ export function symbolicSuccess(
     ? calculusAntiderivativeExpressionToAst(antiderivativeExpression)
     : undefined;
   const canonicalLatex = antiderivativeExpression
-    ? renderCalculusAntiderivativeExpression(antiderivativeExpression)
+    ? renderCalculusAntiderivativeExpression(antiderivativeExpression, { variable })
     : exactLatex;
   const verification = antiderivativeExpression
     ? nativeVerificationMode === 'precomputed-exact'

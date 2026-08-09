@@ -618,6 +618,9 @@ function tryRoute(
             symbolicDirect.antiderivativeNode,
             'calculus.integration:symbolic-direct-rule',
           ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 

@@ -173,7 +173,7 @@ function resolvedComputeEngineIntegral(
     antiderivativeExpression = undefined;
   }
   const exactLatex = antiderivativeExpression
-    ? renderCalculusAntiderivativeExpression(antiderivativeExpression)
+    ? renderCalculusAntiderivativeExpression(antiderivativeExpression, { variable })
     : computed.latex;
   const backcheck = antiderivativeExpression
     ? backcheckAntiderivativeAst({
