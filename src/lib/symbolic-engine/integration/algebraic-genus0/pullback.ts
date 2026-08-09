@@ -1,4 +1,7 @@
-import { resolveSymbolicIntegralFromAst } from '../dispatch';
+import {
+  resolveDirectRuleIntegralFromAst,
+  resolveSymbolicIntegralFromAst,
+} from '../dispatch';
 import {
   divideMathJsonNodes,
   multiplyMathJsonNodes,
@@ -269,7 +272,8 @@ export function pullbackAlgebraicGenus0Integral(
     });
   }
 
-  const pullbackIntegral = resolveSymbolicIntegralFromAst(pullback.node, parameter);
+  const pullbackIntegral = resolveDirectRuleIntegralFromAst(pullback.node, parameter)
+    ?? resolveSymbolicIntegralFromAst(pullback.node, parameter);
   if (pullbackIntegral.kind !== 'success') {
     return stop({
       variable,

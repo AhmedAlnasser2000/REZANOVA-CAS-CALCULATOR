@@ -16,6 +16,7 @@ import { boxLatex, isNodeArray } from '../patterns';
 import { numericNodeValue } from './node-helpers';
 import { completedSquareQuadraticDenominatorForm } from './quadratic-completion';
 import { scaleByExactScalar, scaleByIrrationalDenominator } from './rational';
+import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
 
 const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
 
@@ -24,6 +25,19 @@ type ExactAffineForm = {
   latex: string;
   node: unknown;
 };
+
+type InverseTrigIntegral = {
+  exactLatex: string;
+  antiderivativeNode: unknown;
+  verification: AntiderivativeBackcheck;
+};
+
+function inverseTrigTableProof(identity: 'affine-arcsin' | 'affine-arctan'): AntiderivativeBackcheck {
+  return {
+    status: 'verified-exact',
+    reason: `verified by the exact ${identity} derivative identity and its recognized affine slope`,
+  };
+}
 
 function exactScalarLatex(value: ExactScalar) {
   return boxLatex(buildExactScalarNode(value));
@@ -278,7 +292,7 @@ function literalArcsinRadicandForm(
   };
 }
 
-export function inverseTrigIntegral(node: unknown, variable: string) {
+export function inverseTrigIntegral(node: unknown, variable: string): InverseTrigIntegral | undefined {
   const reciprocal = reciprocalDenominatorForm(node);
   if (reciprocal) {
     const form = arctanDenominatorForm(reciprocal.denominator, variable);
@@ -313,6 +327,7 @@ export function inverseTrigIntegral(node: unknown, variable: string) {
           antiderivativeNode: form.root
             ? ['Multiply', buildExactScalarNode(coefficient), functionNode]
             : ['Divide', ['Multiply', buildExactScalarNode(coefficient), functionNode], rootNode],
+          verification: inverseTrigTableProof('affine-arctan'),
         };
       }
     }
@@ -342,6 +357,7 @@ export function inverseTrigIntegral(node: unknown, variable: string) {
             buildExactScalarNode(coefficient),
             ['Arcsin', argumentNode],
           ],
+          verification: inverseTrigTableProof('affine-arcsin'),
         };
       }
     }

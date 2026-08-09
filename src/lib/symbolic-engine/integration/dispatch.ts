@@ -115,13 +115,16 @@ function tryRoute(
         variable,
         inverseTrig.exactLatex,
         'inverse-trig',
-        undefined,
+        inverseTrig.verification,
         undefined,
         undefined,
         nativeStandardAntiderivative(
           inverseTrig.antiderivativeNode,
           'calculus.integration:inverse-trig',
         ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       )
       : undefined;
   }
@@ -185,6 +188,9 @@ function tryRoute(
           symbolicAlgebraicGenus0Standard.antiderivativeNode,
           'calculus.integration:algebraic-genus0-symbolic-radical',
         ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -521,6 +527,9 @@ function tryRoute(
           symbolicAlgebraicGenus0Standard.antiderivativeNode,
           'calculus.integration:algebraic-genus0-symbolic-radical',
         ),
+        undefined,
+        undefined,
+        'precomputed-exact',
       );
     }
 
@@ -959,6 +968,13 @@ export function resolveSymbolicIntegralFromAst(
     recognitionGates,
     recognitionGates,
   );
+}
+
+export function resolveDirectRuleIntegralFromAst(
+  node: unknown,
+  variable = 'x',
+): IntegralResolution | undefined {
+  return tryRoute(node, variable, 'direct-rule', true);
 }
 
 export function resolveSymbolicIntegralFromLatex(latex: string, variable = 'x'): IntegralResolution {

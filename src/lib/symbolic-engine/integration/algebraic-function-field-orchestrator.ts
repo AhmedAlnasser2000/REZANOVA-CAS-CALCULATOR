@@ -104,6 +104,9 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         genus1EllipticKinds.exactSupplementLatex,
         genus1EllipticKinds.detailSections,
         genus1EllipticKinds.antiderivativeExpression,
+        undefined,
+        undefined,
+        'precomputed-exact',
       ),
     };
   }

@@ -750,6 +750,7 @@ describe('symbolic-engine integration', () => {
       expect(result.strategy).toBe('inverse-trig')
       expect(result.exactLatex).toContain(inverseTrig)
       expect(result.verification.status).toBe('verified-exact')
+      expect(result.verification.reason).toContain('exact affine-arc')
     }
   })
 
