@@ -20,8 +20,8 @@
 ## Approved commit sequence
 
 - `INTEGRATION-PROOF-ROUTING1`: committed as `ad0939a7` with subject `INTEGRATION-PROOF-ROUTING1 preserve route-owned exact proofs`.
-- `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: committed locally and amended with its three reviewed Calculus History snapshots; subject `CALCULUS-INTEGRATION-READBACK-AUTHORITY1 normalize producer-owned readback`; amended hash will be recorded at the next gate checkpoint.
-- `CI-EQUATION-HISTORY-REPAIR1`: pending.
+- `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: committed as amended hash `2bff3925` with subject `CALCULUS-INTEGRATION-READBACK-AUTHORITY1 normalize producer-owned readback`, including its three reviewed Calculus History snapshots.
+- `CI-EQUATION-HISTORY-REPAIR1`: approved and verified; subject `CI-EQUATION-HISTORY-REPAIR1 restore candidate-validated readback`; hash will be recorded at the Gate-4 checkpoint.
 - `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.
 
 User approval covers all four separate commits. Push remains unauthorized.

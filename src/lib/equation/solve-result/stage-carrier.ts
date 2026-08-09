@@ -9,6 +9,7 @@ import type {
   ResultProducerDraft,
 } from '../../../types/calculator';
 import { attachEquationAnalysisEvidence } from '../analysis-evidence';
+import { transferCandidateValidatedReadbackPermission } from '../candidate-validated-readback';
 import { buildEquationSolveResultFromProducerDraft } from './producer-adapter';
 import type { EquationSolveResultContractV1 } from './contract';
 import { buildEquationSolveResultContract } from './factory';
@@ -197,7 +198,7 @@ export function buildEquationStageResultCarrier(
       `Equation stage carrier rejected ${projection.failure.reason}: ${projection.failure.message}`,
     );
   }
-  return projection.result;
+  return transferCandidateValidatedReadbackPermission(outcome, projection.result);
 }
 
 export function buildOptionalEquationStageResultCarrier(
@@ -226,8 +227,8 @@ export function buildEquationStageResultCarrierFromRuntime(
 export function readEquationStageResultCarrier(
   carrier: EquationStageResultCarrierV1,
 ): EquationStageResultReadModel {
-  return attachEquationAnalysisEvidence(
+  return transferCandidateValidatedReadbackPermission(carrier, attachEquationAnalysisEvidence(
     readEquationProducerDraftFromCanonicalResult(carrier.document),
     carrier.diagnostics.analysisEvidence,
-  );
+  ));
 }

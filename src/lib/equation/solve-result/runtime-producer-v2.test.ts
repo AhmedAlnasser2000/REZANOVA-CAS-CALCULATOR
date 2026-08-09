@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   CanonicalResultDocumentV1,
   ResultProducerDraft,
+  SerializableMathJson,
 } from '../../../types/calculator';
 import type { EquationAnalysisEvidence } from '../analysis-evidence';
 import { buildEquationRuntimeCanonicalResultDocument } from './runtime-producer-v2';
@@ -33,7 +34,10 @@ function outcome(exactSupplementLatex: string[]): Exclude<ResultProducerDraft, {
   };
 }
 
-function evidence(canonicalLatex: string): EquationAnalysisEvidence {
+function evidence(
+  canonicalLatex: string,
+  mathJson: SerializableMathJson = ['Greater', 'x', 0],
+): EquationAnalysisEvidence {
   return {
     id: `domain:guarded-domain-constraint:x:positive:${canonicalLatex}`,
     target: 'x',
@@ -43,12 +47,62 @@ function evidence(canonicalLatex: string): EquationAnalysisEvidence {
     supplementEvidence: {
       role: 'condition',
       canonicalLatex,
-      mathJson: ['Greater', 'x', 0],
+      mathJson,
     },
   };
 }
 
 describe('Equation runtime Canonical Result V2 supplements', () => {
+  it('keeps a single producer-proven condition label as presentation only', () => {
+    const runtimeDocument = buildEquationRuntimeCanonicalResultDocument({
+      outcome: outcome(['\\text{Conditions: } x+1\\ge0']),
+      document,
+      analysisEvidence: [evidence(
+        'x+1\\ge0',
+        ['GreaterEqual', ['Add', 'x', 1], 0],
+      )],
+    });
+
+    expect(runtimeDocument.version).toBe(2);
+    if (runtimeDocument.version !== 2) throw new Error('Expected typed V2 supplements.');
+    expect(runtimeDocument.supplements).toEqual([
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: '\\text{Conditions: } x+1\\ge0',
+        math: expect.objectContaining({
+          canonicalLatex: 'x+1\\ge0',
+          mathJson: ['GreaterEqual', ['Add', 'x', 1], 0],
+        }),
+      }),
+    ]);
+  });
+
+  it('splits grouped presentation into independently proven clean condition rows', () => {
+    const runtimeDocument = buildEquationRuntimeCanonicalResultDocument({
+      outcome: outcome(['\\text{Conditions: } x+1\\ge0,\\;x-1\\ge0']),
+      document,
+      analysisEvidence: [
+        evidence('x+1\\ge0', ['GreaterEqual', ['Add', 'x', 1], 0]),
+        evidence('x-1\\ge0', ['GreaterEqual', ['Add', 'x', -1], 0]),
+      ],
+    });
+
+    expect(runtimeDocument.version).toBe(2);
+    if (runtimeDocument.version !== 2) throw new Error('Expected typed V2 supplements.');
+    expect(runtimeDocument.supplements).toEqual([
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: 'x+1\\ge0',
+        math: expect.objectContaining({ canonicalLatex: 'x+1\\ge0' }),
+      }),
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: 'x-1\\ge0',
+        math: expect.objectContaining({ canonicalLatex: 'x-1\\ge0' }),
+      }),
+    ]);
+  });
+
   it('fails closed when a typed supplement route has no producer-owned evidence', () => {
     expect(() => buildEquationRuntimeCanonicalResultDocument({
       outcome: outcome(['\\text{Conditions: } x>0']),

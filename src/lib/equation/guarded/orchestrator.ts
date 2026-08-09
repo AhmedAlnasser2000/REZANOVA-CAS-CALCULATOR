@@ -30,6 +30,7 @@ import type {
 } from './types';
 import { createEquationResultOutcome } from '../solve-result/producer';
 import { equationMathValuesWithOwnedReadback } from '../solve-result/owned-readback-math';
+import { transferCandidateValidatedReadbackPermission } from '../candidate-validated-readback';
 import {
   buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
@@ -41,11 +42,13 @@ function attachCarrierAlgebraMetadata(
   originalResolvedLatex: string,
   request: GuardedSolveRequest,
 ) {
-  return buildEquationStageResultCarrier(attachAlgebraMetadata(
-    readEquationStageResultCarrier(carrier),
+  const outcome = readEquationStageResultCarrier(carrier);
+  const attached = transferCandidateValidatedReadbackPermission(outcome, attachAlgebraMetadata(
+    outcome,
     originalResolvedLatex,
     request,
   ));
+  return buildEquationStageResultCarrier(attached);
 }
 
 function rangeGuardOutcome(

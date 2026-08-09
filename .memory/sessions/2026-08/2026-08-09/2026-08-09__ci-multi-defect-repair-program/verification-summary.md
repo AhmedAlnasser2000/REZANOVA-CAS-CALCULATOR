@@ -34,5 +34,12 @@
   - History replay inspection found exactly three Calculus snapshot deltas from the same reviewed renderer authority (`calculus-indefinite-power`, `calculus-indefinite-log`, and `calculus-ode-separable`); those snapshots were refreshed without changing requests, budgets, or non-Calculus fixtures;
   - Playwright passed 1/1 against the built real app and visual inspection found the answer cards, facts/details, clipboard, History replay, and overflow readable for exponential, error-function, affine-rational, indexed elliptic, and inverse-trig representatives;
   - file-size validation and diff hygiene passed; no Vitest, Playwright, preview, or build process remained active after evidence collection.
-- Gate 3 `CI-EQUATION-HISTORY-REPAIR1`: pending.
+- Gate 3 `CI-EQUATION-HISTORY-REPAIR1` — UI:
+  - focused stage-carrier and runtime-supplement coverage passed 8/8 tests, including one-shot/non-serializable permission transport and clean single/grouped V2 condition leaves;
+  - full focused Equation answer-mode, parameterized-family, and supplement-table files passed 55/55 tests; the expensive exact-log case completed in about 42 seconds rather than hanging;
+  - History replay passed 6/6 Vitest checks plus the import boundary after exactly two Equation and three separately approved Calculus snapshots were refreshed;
+  - `npm run test:result-contract` passed 130/130 tests, and Canonical Result V2 enforcement passed with all 20 frozen fingerprints intact, 0 compatibility projections, and MathJSON coverage unchanged at `506/506/0/0`;
+  - `npm run build` passed after one test-only optional canonical-document assertion was aligned with the public draft type;
+  - Playwright passed all three final scenarios across the visual run and its exact-log delta rerun; screenshots were inspected for the answer/warning cards, condition facts, rejection details, History replay, and overflow/readability;
+  - the temporary Playwright spec was removed after evidence collection.
 - Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.

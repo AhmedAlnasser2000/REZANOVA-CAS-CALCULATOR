@@ -18,7 +18,7 @@
 
 - Gate 1 `INTEGRATION-PROOF-ROUTING1`: complete and verified.
 - Gate 2 `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: complete and verified.
-- Gate 3 `CI-EQUATION-HISTORY-REPAIR1`: pending.
+- Gate 3 `CI-EQUATION-HISTORY-REPAIR1`: complete and verified for commit.
 - Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.
 
 ## Scope boundaries
@@ -45,3 +45,12 @@
 - Accepted only the reviewed canonical-string baseline delta: MathJSON coverage remains `506/506/0/0`, global maximum remains 2,894 bytes, and the print baseline changes only three Integration answer pairs.
 - Refreshed only the three matching Calculus History snapshots after replay confirmed their deltas were the same producer-owned canonical readback normalization.
 - Real-app Playwright evidence covers exponential, error-function, affine-rational, indexed elliptic, inverse-trig, details, clipboard, History replay, and overflow/readability behavior.
+
+## Gate 3 — UI
+
+- Restored the reviewed same-base logarithmic Exact-mode result with a one-shot WeakMap permission granted only after candidate validation, moved explicitly through internal stage-carrier rebuilds, and consumed before target rewriting and canonical runtime attachment.
+- Kept the permission absent from serialized stage carriers, structured clones, runtime outcomes, canonical documents, and History; generic answer-mode behavior remains protected by the existing Exact-mode and numeric-interval tests.
+- Preserved simple radical V2 conditions as clean producer-proven math with their existing single-row presentation label, while grouped radical conditions remain separate independently proven rows.
+- Realigned the negative absolute-value regression to the existing successful `\varnothing` result with `Range Guard` and the no-real-solution warning.
+- Refreshed only `equation-radical-square` and `equation-radical-affine` in the Equation History fixture after separate approval placed the three Integration readback snapshots in Gate 2.
+- Real-app Playwright evidence covers exact-log readback, single/grouped radical conditions, rejection details, the empty-set warning and badge, History replay, and overflow/readability.

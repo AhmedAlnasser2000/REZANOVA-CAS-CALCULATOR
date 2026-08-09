@@ -1176,7 +1176,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=8\ncanonicalResult.supplements[0].canonicalLatex=x+1\\ge0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=3"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=8\ncanonicalResult.supplements[0].canonicalLatex=\\text{Conditions: } x+1\\ge0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=3"
       }
     },
     {
@@ -1283,7 +1283,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=12\ncanonicalResult.supplements[0].canonicalLatex=2x+1\\ge0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=2x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=5"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=12\ncanonicalResult.supplements[0].canonicalLatex=\\text{Conditions: } 2x+1\\ge0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=2x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=5"
       }
     },
     {

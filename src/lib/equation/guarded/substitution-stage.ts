@@ -49,6 +49,7 @@ import {
   readEquationStageResultCarrier,
   type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
+import { grantCandidateValidatedReadbackPermission } from '../candidate-validated-readback';
 
 const ce = new ComputeEngine();
 const EXACT_MATCH_TOLERANCE = 1e-6;
@@ -462,7 +463,12 @@ function substitutionSolve(
     mergedCarrier,
     [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
   );
-  return readEquationStageResultCarrier(resultCarrier);
+  const result = readEquationStageResultCarrier(resultCarrier);
+  return substitution.diagnostics?.family === 'same-base-equality'
+    && (substitution.diagnostics.carrierKind === 'ln'
+      || substitution.diagnostics.carrierKind === 'log')
+    ? grantCandidateValidatedReadbackPermission(result, 'same-base-log-equality')
+    : result;
 }
 
 async function substitutionSolveAsync(
@@ -703,7 +709,12 @@ async function substitutionSolveAsync(
     mergedCarrier,
     [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
   );
-  return readEquationStageResultCarrier(resultCarrier);
+  const result = readEquationStageResultCarrier(resultCarrier);
+  return substitution.diagnostics?.family === 'same-base-equality'
+    && (substitution.diagnostics.carrierKind === 'ln'
+      || substitution.diagnostics.carrierKind === 'log')
+    ? grantCandidateValidatedReadbackPermission(result, 'same-base-log-equality')
+    : result;
 }
 
 export { substitutionSolve, substitutionSolveAsync };

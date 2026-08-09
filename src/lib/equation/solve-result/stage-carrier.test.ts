@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { mergeEquationStageCarriers } from '../guarded/merge';
+import {
+  consumeCandidateValidatedReadbackPermission,
+  grantCandidateValidatedReadbackPermission,
+} from '../candidate-validated-readback';
 import { createEquationResultOutcome } from './producer';
 import {
   buildEquationStageResultCarrier,
@@ -32,6 +36,23 @@ describe('Equation stage result carrier', () => {
       exactLatex: 'x=1',
       solveSummaryParts: [[{ kind: 'text', text: 'Solved through a guarded branch.' }]],
     });
+  });
+
+  it('moves candidate-validated readback permission without serializing or duplicating it', () => {
+    const carrier = buildEquationStageResultCarrier(
+      grantCandidateValidatedReadbackPermission(solved('x\\approx1'), 'same-base-log-equality'),
+    );
+
+    expect(JSON.stringify(carrier)).not.toContain('candidate-validated');
+    const outcome = readEquationStageResultCarrier(carrier);
+    expect(consumeCandidateValidatedReadbackPermission(outcome, 'same-base-log-equality')).toBe(true);
+    expect(consumeCandidateValidatedReadbackPermission(outcome, 'same-base-log-equality')).toBe(false);
+
+    const clonedCarrier = structuredClone(buildEquationStageResultCarrier(
+      grantCandidateValidatedReadbackPermission(solved('x\\approx2'), 'same-base-log-equality'),
+    ));
+    const clonedOutcome = readEquationStageResultCarrier(clonedCarrier);
+    expect(consumeCandidateValidatedReadbackPermission(clonedOutcome, 'same-base-log-equality')).toBe(false);
   });
 
   it('merges guarded branches without transporting Display outcomes', () => {

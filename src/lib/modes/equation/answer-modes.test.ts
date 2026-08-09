@@ -321,5 +321,6 @@ describe('Equation mode answer modes', () => {
     expect(result.answerMode).toBe('exact');
     expect(result.exactLatex ?? result.approxText ?? '').toContain('x');
     expect((result.detailSections?.length ?? 0) > 0).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('candidate-validated');
   });
 });

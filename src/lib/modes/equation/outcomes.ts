@@ -18,6 +18,7 @@ import {
 import {
   inferEquationMathJsonRoute,
 } from '../../equation/solve-result/math-values';
+import { consumeCandidateValidatedReadbackPermission } from '../../equation/candidate-validated-readback';
 
 const ce = new ComputeEngine();
 
@@ -483,13 +484,20 @@ export function finalizeSharedSymbolicOutcome(input: {
   allowNumericOnly?: boolean;
   realDomainOnly?: boolean;
 }): ResultProducerDraft {
+  const candidateValidatedReadback = consumeCandidateValidatedReadbackPermission(
+    input.sharedOutcome,
+    'same-base-log-equality',
+  );
   const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
     input.sharedOutcome,
     input.solveTarget,
   ), input.solveTarget);
   const finalOutcome = input.realDomainOnly && answerPayloadContainsImaginaryUnit(outcome)
     ? realDomainComplexRootsOutcome(input.solveTarget)
-    : input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)
+    : input.answerMode === 'exact'
+      && !input.allowNumericOnly
+      && !candidateValidatedReadback
+      && exactModeShouldRejectNumericOnlyOutcome(outcome)
       ? exactModeNeedsExactOutcome(input.solveTarget)
       : outcome;
 

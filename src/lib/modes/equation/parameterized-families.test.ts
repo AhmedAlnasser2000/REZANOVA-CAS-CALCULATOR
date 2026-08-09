@@ -710,11 +710,17 @@ describe('Equation mode parameterized families', () => {
       equationDomainIntent: 'real',
     });
 
-    expect(result.kind).toBe('error');
-    if (result.kind !== 'error') {
-      throw new Error('Expected a domain-empty error outcome');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a typed domain-empty success outcome');
     }
-    expect(result.error).toBe('No real solutions because absolute values are always nonnegative.');
+    expect(result.exactLatex).toBe('\\varnothing');
+    expect(result.answerRows?.rows[0]?.latex).toBe('\\varnothing');
+    expect(result.solveBadges).toContain('Range Guard');
+    expect(result.warnings).toContain(
+      'No real solutions because absolute values are always nonnegative.',
+    );
+    expect(result.canonicalResult?.primaryMath?.canonicalLatex).toBe('\\varnothing');
   });
 
   it('solves two-layer periodic/composition carrier families after target selection', () => {
