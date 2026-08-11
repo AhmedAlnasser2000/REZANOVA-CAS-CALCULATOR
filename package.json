@@ -34,7 +34,7 @@
     "update:printer-migration": "node tools/printer-migration-ratchet.mjs --write-baseline",
     "test:detail-segment-migration": "node --test tools/detail-segment-migration-ratchet.test.mjs && node tools/detail-segment-migration-ratchet.mjs",
     "test:result-intent": "node --test tools/result-intent-ratchet.test.mjs && node tools/result-intent-ratchet.mjs && vitest run src/lib/display/result/result-intent-coverage.test.ts",
-    "test:result-contract": "vitest run src/lib/result-contract/*.test.ts",
+    "test:result-contract": "node tools/result-contract-runner.mjs",
     "test:mathjson-coverage": "vitest run src/lib/result-contract/mathjson-coverage.test.ts",
     "report:mathjson-coverage": "vite-node tools/mathjson-coverage-ratchet.ts",
     "update:mathjson-coverage": "vite-node tools/mathjson-coverage-ratchet.ts --write-baseline",

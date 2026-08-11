@@ -237,6 +237,7 @@ function diagonalizationDetails(input: {
   const equalityLine = exactMatricesEqual(input.ap, input.pd)
     ? `(${input.analysis.label})P=PD=${exactMatrixToLatex(input.ap)}`
     : `(${input.analysis.label})P=${exactMatrixToLatex(input.ap)},\\ PD=${exactMatrixToLatex(input.pd)}`;
+  const decompositionLatex = `${exactMatrixToLatex(input.p)}\\cdot ${exactMatrixToLatex(input.d)}\\cdot ${exactMatrixToLatex(input.pInverse)}`;
 
   return [
     characteristicSection(input.analysis),
@@ -246,7 +247,7 @@ function diagonalizationDetails(input: {
         `P=${exactMatrixToLatex(input.p)}`,
         `D=${exactMatrixToLatex(input.d)}`,
         `P^{-1}=${exactMatrixToLatex(input.pInverse)}`,
-        `${input.analysis.label}=PDP^{-1}`,
+        `${input.analysis.label}=${decompositionLatex}`,
       ],
       lineKind: 'math',
     },
@@ -340,9 +341,11 @@ export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): Mat
     return computed.response;
   }
   const { factors } = computed;
+  const decompositionLatex = `${exactMatrixToLatex(factors.p)}\\cdot ${exactMatrixToLatex(factors.d)}\\cdot ${exactMatrixToLatex(factors.pInverse)}`;
+  const primaryLatex = `\\operatorname{diag}(${factors.analysis.label})=${factors.analysis.label}=${decompositionLatex}`;
 
   const response = profileLinearAlgebraResult({
-    resultLatex: `\\operatorname{diag}(${factors.analysis.label})=${factors.analysis.label}=PDP^{-1}`,
+    resultLatex: primaryLatex,
     approxText: `diagonalizable; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
     detailSections: diagonalizationDetails(factors),
     warnings: [],
@@ -353,7 +356,6 @@ export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): Mat
   const dNode = exactMatrixMathJson(factors.d);
   const inverseNode = exactMatrixMathJson(factors.pInverse);
   const decomposition = ['Multiply', pNode, dNode, inverseNode];
-  const primaryLatex = `\\operatorname{diag}(${analysis.label})=${analysis.label}=PDP^{-1}`;
   const equality = exactMatricesEqual(factors.ap, factors.pd)
     ? `(${analysis.label})P=PD=${exactMatrixToLatex(factors.ap)}`
     : `(${analysis.label})P=${exactMatrixToLatex(factors.ap)},\\ PD=${exactMatrixToLatex(factors.pd)}`;
@@ -381,7 +383,7 @@ export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): Mat
       spectralMathEvidence(`P=${exactMatrixToLatex(factors.p)}`, equationMathJson('P', pNode), 'matrix.diagonalization.native-p'),
       spectralMathEvidence(`D=${exactMatrixToLatex(factors.d)}`, equationMathJson('D', dNode), 'matrix.diagonalization.native-d'),
       spectralMathEvidence(`P^{-1}=${exactMatrixToLatex(factors.pInverse)}`, equationMathJson(['Power', 'P', -1], inverseNode), 'matrix.diagonalization.native-p-inverse'),
-      spectralMathEvidence(`${analysis.label}=PDP^{-1}`, equationMathJson(operand, decomposition), 'matrix.diagonalization.native-formula'),
+      spectralMathEvidence(`${analysis.label}=${decompositionLatex}`, equationMathJson(operand, decomposition), 'matrix.diagonalization.native-formula'),
       spectralMathEvidence(equality, equationMathJson(['Multiply', operand, pNode], exactMatrixMathJson(factors.ap)), 'matrix.diagonalization.native-proof-product'),
       ...eigenvectorDetails,
       ...eigenspaceDetails,

@@ -96,8 +96,8 @@ function basisFacts(input: {
       `\\det(${input.sourceLabel})=${input.sourceDeterminant}`,
       `\\det(${input.targetLabel})=${input.targetDeterminant}`,
       `\\operatorname{dimension}=${input.dimension}`,
-      `\\operatorname{pivot\\ columns}(${input.sourceLabel})=\\{${pivotColumnsLatex(input.sourcePivots)}\\}`,
-      `\\operatorname{pivot\\ columns}(${input.targetLabel})=\\{${pivotColumnsLatex(input.targetPivots)}\\}`,
+      `\\operatorname{pivotColumns}(${input.sourceLabel})=\\{${pivotColumnsLatex(input.sourcePivots)}\\}`,
+      `\\operatorname{pivotColumns}(${input.targetLabel})=\\{${pivotColumnsLatex(input.targetPivots)}\\}`,
     ],
     lineKind: 'math',
   };
@@ -148,7 +148,7 @@ function notBasisDetails(input: {
       lines: [
         `\\operatorname{rank}(${input.label})=${input.rank}`,
         `\\operatorname{columns}(${input.label})=${input.columns}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
+        `\\operatorname{pivotColumns}(${input.label})=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
       ],
       lineKind: 'math',
     },
@@ -199,7 +199,7 @@ function attachNotBasisEvidence(
   return attachLinearAlgebraCanonicalEvidence(response, { details: [
     math(`\\operatorname{rank}(${check.label})=${check.rank}`, equationMathJson(operatorMathJson('rank', operand), check.rank), 'matrix.change-basis.native-rank-stop'),
     math(`\\operatorname{columns}(${check.label})=${check.columns}`, equationMathJson(operatorMathJson('columns', operand), check.columns), 'matrix.change-basis.native-column-count-stop'),
-    math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(check.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(check.pivotColumns.map((column) => column + 1))), 'matrix.change-basis.native-pivots-stop'),
+    math(`\\operatorname{pivotColumns}(${check.label})=\\{${pivotColumnsLatex(check.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(check.pivotColumns.map((column) => column + 1))), 'matrix.change-basis.native-pivots-stop'),
     math(`\\operatorname{rref}(${check.label})=${exactMatrixToLatex(check.rref)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(check.rref)), 'matrix.change-basis.native-rref-stop'),
   ] });
 }
@@ -299,8 +299,8 @@ export function runMatrixChangeOfBasis(input: MatrixChangeOfBasisInput): MatrixR
       math(`\\det(${input.sourceLabel})=${sourceDeterminantLatex}`, equationMathJson(operatorMathJson('det', sourceOperand), buildExactScalarNode(sourceDeterminant.determinant)), 'matrix.change-basis.native-source-determinant'),
       math(`\\det(${input.targetLabel})=${targetDeterminantLatex}`, equationMathJson(operatorMathJson('det', targetOperand), buildExactScalarNode(targetDeterminant.determinant)), 'matrix.change-basis.native-target-determinant'),
       math(`\\operatorname{dimension}=${sourceCheck.rows}`, equationMathJson('dimension', sourceCheck.rows), 'matrix.change-basis.native-dimension'),
-      math(`\\operatorname{pivot\\ columns}(${input.sourceLabel})=\\{${pivotColumnsLatex(sourceCheck.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', sourceOperand), integerSetMathJson(sourcePivots)), 'matrix.change-basis.native-source-pivots'),
-      math(`\\operatorname{pivot\\ columns}(${input.targetLabel})=\\{${pivotColumnsLatex(targetCheck.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', targetOperand), integerSetMathJson(targetPivots)), 'matrix.change-basis.native-target-pivots'),
+      math(`\\operatorname{pivotColumns}(${input.sourceLabel})=\\{${pivotColumnsLatex(sourceCheck.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', sourceOperand), integerSetMathJson(sourcePivots)), 'matrix.change-basis.native-source-pivots'),
+      math(`\\operatorname{pivotColumns}(${input.targetLabel})=\\{${pivotColumnsLatex(targetCheck.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', targetOperand), integerSetMathJson(targetPivots)), 'matrix.change-basis.native-target-pivots'),
       math(`${conversionLabel}=${input.targetLabel}^{-1}${input.sourceLabel}`, equationMathJson(conversionNode, ['Multiply', ['Power', targetOperand, -1], sourceOperand]), 'matrix.change-basis.native-formula'),
       math(primaryLatex, equationMathJson(conversionNode, changeNode), 'matrix.change-basis.native-conversion-detail'),
       math(`[v]_{${input.sourceLabel}}`, ['At', ['List', 'v'], sourceOperand], 'matrix.change-basis.native-source-coordinate'),

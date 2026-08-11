@@ -32,4 +32,15 @@
 - Memory protocol passed 21/21 validator tests and live validation.
 - File-size validation passed 10/10 tests across 2,158 files with all existing caps unchanged.
 - Final diff hygiene passed, and no Vitest, Playwright, or preview verification process remained active.
-- Gate 6 and Gate 7 remain unstarted.
+- Gate 6 focused proof and Linear Algebra authority passed 48/48 across all 62 Matrix and 23 Vector selectors.
+
+## Gate 6 evidence
+
+- The result-contract runner core passed 3/3, including stdout/stderr warning rejection and caller argument forwarding.
+- The complete result-contract suite passed with no `Compilation fallback for` output; focused proof coverage is 12/12.
+- MathJSON coverage passed at `506/506/0/0`, 147 executable probes, and zero gaps. No MathJSON or print baseline changed.
+- Canonical V2 enforcement passed seven tool tests, all 20 frozen producer fingerprints, and the Display inversion ratchet passed 24/24.
+- Print hygiene passed 7/7 across all 47 golden executions.
+- Production build passed with 4,494 transformed modules.
+- Real-app Playwright passed determinant and cross canaries plus current inline dot, span, and profile paths. The final profile screenshot shows answer, rank-nullity, kernel, image, invertibility, and collapsed RREF cards with no horizontal overflow.
+- Three older named-library visual drivers failed before evaluation on removed grid-descendant selectors; Gate 7 is paused for their classification.

@@ -57,7 +57,7 @@ function basisDetails(input: {
         `\\operatorname{rank}(${input.label})=${input.rank}`,
         `\\operatorname{columns}(${input.label})=${input.columns}`,
         `\\text{column vectors live in }\\mathbb{R}^{${input.rows}}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
+        `\\operatorname{pivotColumns}(${input.label})=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
         ...(input.determinantLatex ? [`\\det(${input.label})=${input.determinantLatex}`] : []),
       ],
       lineKind: 'math',
@@ -140,7 +140,7 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
       math(`\\operatorname{rank}(${input.label})=${rank}`, equationMathJson(operatorMathJson('rank', operand), rank), 'matrix.basis.native-rank'),
       math(`\\operatorname{columns}(${input.label})=${columns}`, equationMathJson(operatorMathJson('columns', operand), columns), 'matrix.basis.native-column-count'),
       math(`\\text{column vectors live in }\\mathbb{R}^{${rows}}`, ['InvisibleOperator', "'column vectors live in '", ['Power', 'RealNumbers', rows]], 'matrix.basis.native-ambient-space'),
-      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotNumbers)), 'matrix.basis.native-pivots'),
+      math(`\\operatorname{pivotColumns}(${input.label})=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotNumbers)), 'matrix.basis.native-pivots'),
       ...(determinant?.kind === 'success' && determinantLatex ? [math(
         `\\det(${input.label})=${determinantLatex}`,
         equationMathJson(operatorMathJson('det', operand), buildExactScalarNode(determinant.determinant)),

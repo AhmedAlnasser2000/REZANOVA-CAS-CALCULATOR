@@ -99,7 +99,7 @@ function notBasisDetails(input: {
       lines: [
         `\\operatorname{rank}(${input.basisLabel})=${input.rank}`,
         `\\operatorname{columns}(${input.basisLabel})=${input.columns}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
+        `\\operatorname{pivotColumns}(${input.basisLabel})=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
       ],
       lineKind: 'math',
     },
@@ -130,7 +130,7 @@ function coordinateDetails(input: {
       lines: [
         `\\det(${input.basisLabel})=${input.determinantLatex}`,
         `\\operatorname{rank}(${input.basisLabel})=${input.solution.length}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
+        `\\operatorname{pivotColumns}(${input.basisLabel})=\\{${pivotColumnsLatex(input.pivotColumns)}\\}`,
       ],
       lineKind: 'math',
     },
@@ -201,7 +201,7 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
     return attachLinearAlgebraCanonicalEvidence(response, { details: [
       math(`\\operatorname{rank}(${input.basisLabel})=${rank}`, equationMathJson(operatorMathJson('rank', operand), rank), 'matrix.coordinates.native-rank-stop'),
       math(`\\operatorname{columns}(${input.basisLabel})=${columns}`, equationMathJson(operatorMathJson('columns', operand), columns), 'matrix.coordinates.native-column-count-stop'),
-      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots-stop'),
+      math(`\\operatorname{pivotColumns}(${input.basisLabel})=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots-stop'),
       math(`\\operatorname{rref}(${input.basisLabel})=${exactMatrixToLatex(reducedBasis.matrix)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(reducedBasis.matrix)), 'matrix.coordinates.native-rref-stop'),
     ] });
   }
@@ -249,13 +249,13 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
   return attachLinearAlgebraCanonicalEvidence(response, {
     primary: canonicalLeafEvidence(
       primaryLatex,
-      equationMathJson(['Subscript', ['Delimiter', vectorOperand], basisOperand], solutionNode),
+      equationMathJson(['At', ['List', vectorOperand], basisOperand], solutionNode),
       'matrix.coordinates.native-solution',
     ),
     details: [
       math(`\\det(${input.basisLabel})=${determinantLatex}`, equationMathJson(operatorMathJson('det', basisOperand), buildExactScalarNode(determinant.determinant)), 'matrix.coordinates.native-determinant'),
       math(`\\operatorname{rank}(${input.basisLabel})=${solved.solution.length}`, equationMathJson(operatorMathJson('rank', basisOperand), solved.solution.length), 'matrix.coordinates.native-rank'),
-      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(solved.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', basisOperand), integerSetMathJson(solved.pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots'),
+      math(`\\operatorname{pivotColumns}(${input.basisLabel})=\\{${pivotColumnsLatex(solved.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', basisOperand), integerSetMathJson(solved.pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots'),
       math(`${input.basisLabel}c=${input.vectorLabel}`, equationMathJson(['Multiply', basisOperand, 'c'], vectorOperand), 'matrix.coordinates.native-system'),
       math('\\operatorname{rref}', 'rref', 'matrix.coordinates.native-rref-operator'),
       math(input.basisLabel, basisOperand, 'matrix.coordinates.native-rref-basis-label'),

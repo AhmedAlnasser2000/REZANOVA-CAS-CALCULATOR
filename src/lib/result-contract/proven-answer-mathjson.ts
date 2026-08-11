@@ -5,12 +5,14 @@ import type {
   SerializableMathJson,
 } from '../../types/calculator';
 import {
+  printCompatibilityLatex,
   printMathJson,
   validateSerializableMathJson,
   type MathJsonValidationFailure,
 } from '../display/printer';
 import type { CanonicalMathJsonProducerOwner, MathJsonRouteId } from './mathjson-route-registry';
 import { findCustomMathJsonOperator } from './standard-mathjson-operators';
+import { compareFormalMathJson } from './formal-mathjson-comparison';
 export { findCustomMathJsonOperator } from './standard-mathjson-operators';
 
 declare const producerOwnedCandidateBrand: unique symbol;
@@ -136,134 +138,6 @@ function privateOperator(value: unknown): string | undefined {
   return undefined;
 }
 
-function canonicalLatexText(value: string) {
-  return value.replace(/\s+/gu, '');
-}
-
-type FormalApplyRender = {
-  visibleLatex: string;
-  proofLatex: string;
-};
-
-function renderFormalApplyNode(node: unknown): FormalApplyRender | undefined {
-  if (typeof node === 'number') {
-    return Number.isInteger(node)
-      ? { visibleLatex: String(node), proofLatex: String(node) }
-      : undefined;
-  }
-  if (typeof node === 'string') {
-    return { visibleLatex: node, proofLatex: node };
-  }
-  if (!Array.isArray(node) || typeof node[0] !== 'string') {
-    return undefined;
-  }
-  if (
-    node[0] === 'Rational'
-    && node.length === 3
-    && typeof node[1] === 'number'
-    && typeof node[2] === 'number'
-  ) {
-    return {
-      visibleLatex: String.raw`\frac{${node[1]}}{${node[2]}}`,
-      proofLatex: String.raw`\frac{${node[1]}}{${node[2]}}`,
-    };
-  }
-  if (node[0] === 'Apply' && node.length === 3 && typeof node[1] === 'string') {
-    const argument = renderFormalApplyNode(node[2]);
-    if (!argument) return undefined;
-    return {
-      visibleLatex: `${node[1]}\\left(${argument.visibleLatex}\\right)`,
-      proofLatex: String.raw`\operatorname{Apply}(${node[1]},${argument.proofLatex})`,
-    };
-  }
-  if (node[0] === 'Power' && node.length === 3) {
-    const base = renderFormalApplyNode(node[1]);
-    const exponent = renderFormalApplyNode(node[2]);
-    if (!base || !exponent) return undefined;
-    return {
-      visibleLatex: /^[A-Za-z0-9]+$/u.test(exponent.visibleLatex)
-        ? `${base.visibleLatex}^${exponent.visibleLatex}`
-        : `${base.visibleLatex}^{${exponent.visibleLatex}}`,
-      proofLatex: /^[A-Za-z0-9]+$/u.test(exponent.proofLatex)
-        ? `${base.proofLatex}^${exponent.proofLatex}`
-        : `${base.proofLatex}^{${exponent.proofLatex}}`,
-    };
-  }
-  if (node[0] === 'Divide' && node.length === 3) {
-    const numerator = renderFormalApplyNode(node[1]);
-    const denominator = renderFormalApplyNode(node[2]);
-    if (!numerator || !denominator) return undefined;
-    return {
-      visibleLatex: String.raw`\frac{${numerator.visibleLatex}}{${denominator.visibleLatex}}`,
-      proofLatex: String.raw`\frac{${numerator.proofLatex}}{${denominator.proofLatex}}`,
-    };
-  }
-  if (node[0] === 'Negate' && node.length === 2) {
-    const operand = renderFormalApplyNode(node[1]);
-    if (!operand) return undefined;
-    return {
-      visibleLatex: `-${operand.visibleLatex}`,
-      proofLatex: `-${operand.proofLatex}`,
-    };
-  }
-  if (node[0] === 'Add' && node.length >= 2) {
-    const terms = node.slice(1).map(renderFormalApplyNode);
-    if (terms.some((term) => term === undefined)) return undefined;
-    return {
-      visibleLatex: terms.map((term, index) =>
-        index === 0 || term!.visibleLatex.startsWith('-')
-          ? term!.visibleLatex
-          : `+${term!.visibleLatex}`).join(''),
-      proofLatex: terms.map((term, index) =>
-        index === 0 || term!.proofLatex.startsWith('-')
-          ? term!.proofLatex
-          : `+${term!.proofLatex}`).join(''),
-    };
-  }
-  if (node[0] === 'Multiply' && node.length >= 2) {
-    const factors = node.slice(1).map(renderFormalApplyNode);
-    if (factors.some((factor) => factor === undefined)) return undefined;
-    return {
-      visibleLatex: factors.map((factor) => factor!.visibleLatex).join(String.raw`\cdot `),
-      proofLatex: factors.map((factor) => factor!.proofLatex).join(String.raw`\cdot `),
-    };
-  }
-  return undefined;
-}
-
-function containsApplyOperator(node: unknown): boolean {
-  if (!Array.isArray(node)) return false;
-  return node[0] === 'Apply' || node.slice(1).some(containsApplyOperator);
-}
-
-const STANDARD_FUNCTION_PROOF_ALIASES = [
-  {
-    operator: 'Erf',
-    visibleLatex: String.raw`\operatorname{erf}`,
-    proofLatex: String.raw`\operatorname{Erf}`,
-  },
-  {
-    operator: 'Erfc',
-    visibleLatex: String.raw`\operatorname{erfc}`,
-    proofLatex: String.raw`\operatorname{Erfc}`,
-  },
-] as const;
-
-function containsOperator(node: unknown, operator: string): boolean {
-  return Array.isArray(node)
-    && (node[0] === operator || node.slice(1).some((child) => containsOperator(child, operator)));
-}
-
-function standardFunctionProofLatex(canonicalLatex: string, mathJson: unknown) {
-  let proofLatex = canonicalLatex;
-  for (const alias of STANDARD_FUNCTION_PROOF_ALIASES) {
-    if (containsOperator(mathJson, alias.operator)) {
-      proofLatex = proofLatex.replaceAll(alias.visibleLatex, alias.proofLatex);
-    }
-  }
-  return proofLatex === canonicalLatex ? undefined : proofLatex;
-}
-
 export function declareProducerOwnedAnswerMathJson(input: {
   mathJson: unknown;
   owner: CanonicalMathJsonProducerOwner;
@@ -338,55 +212,39 @@ export function proveAnswerMathJson(input: {
   }
 
   let structurallySame: boolean;
-  let directlyEqual: boolean;
-  let simplifiedSame: boolean;
   try {
     structurallySame = answerExpression.isSame(canonicalExpression);
-    directlyEqual = structurallySame || answerExpression.isEqual(canonicalExpression) === true;
-    simplifiedSame = directlyEqual
-      ? false
-      : answerExpression.simplify().latex === canonicalExpression.simplify().latex;
   } catch {
     return failure(
       'compute-engine-invalid',
       'Compute Engine could not compare the answer MathJSON with canonical LaTeX.',
     );
   }
-  let formalApplySame = false;
-  if (!directlyEqual && !simplifiedSame) {
-    const formal = containsApplyOperator(cloned) ? renderFormalApplyNode(cloned) : undefined;
-    if (
-      formal
-      && canonicalLatexText(formal.visibleLatex) === canonicalLatexText(canonicalLatex)
-    ) {
-      try {
-        const formalProofExpression = ce.parse(formal.proofLatex, { form: 'structural' });
-        formalApplySame = answerExpression.isSame(formalProofExpression)
-          || answerExpression.isEqual(formalProofExpression) === true
-          || answerExpression.simplify().latex === formalProofExpression.simplify().latex;
-      } catch {
-        formalApplySame = false;
-      }
-    }
+  const formalComparison = compareFormalMathJson(cloned, canonicalExpression.json, canonicalLatex);
+  if (formalComparison.applicable && !structurallySame && !formalComparison.equal) {
+    return failure(
+      'semantic-mismatch',
+      'Producer MathJSON does not represent the same formal value as the canonical LaTeX.',
+    );
   }
-  let standardFunctionAliasSame = false;
-  if (!directlyEqual && !simplifiedSame && !formalApplySame) {
-    const proofLatex = standardFunctionProofLatex(canonicalLatex, cloned);
-    if (proofLatex) {
-      try {
-        const proofExpression = ce.parse(proofLatex, { form: 'structural' });
-        standardFunctionAliasSame = answerExpression.isSame(proofExpression)
-          || answerExpression.isEqual(proofExpression) === true
-          || answerExpression.simplify().latex === proofExpression.simplify().latex;
-      } catch {
-        standardFunctionAliasSame = false;
-      }
+
+  let directlyEqual = structurallySame || (formalComparison.applicable && formalComparison.equal);
+  let simplifiedSame = false;
+  if (!directlyEqual && !formalComparison.applicable) {
+    try {
+      directlyEqual = answerExpression.isEqual(canonicalExpression) === true;
+      simplifiedSame = directlyEqual
+        ? false
+        : answerExpression.simplify().latex === canonicalExpression.simplify().latex;
+    } catch {
+      return failure(
+        'compute-engine-invalid',
+        'Compute Engine could not compare the answer MathJSON with canonical LaTeX.',
+      );
     }
   }
   const mathematicallyEqual = directlyEqual
-    || simplifiedSame
-    || formalApplySame
-    || standardFunctionAliasSame;
+    || simplifiedSame;
   if (!mathematicallyEqual) {
     return failure(
       'semantic-mismatch',
@@ -394,12 +252,17 @@ export function proveAnswerMathJson(input: {
     );
   }
 
-  const printed = printMathJson({
-    mathJson: cloned,
-    compatibilityLatex: canonicalLatex,
-    profile: 'compatibility-v1',
-    target: 'canonical-latex',
-  });
+  const printed = formalComparison.applicable
+    ? printCompatibilityLatex(canonicalLatex, {
+        profile: 'compatibility-v1',
+        target: 'canonical-latex',
+      }, 'compatibility-fallback')
+    : printMathJson({
+        mathJson: cloned,
+        compatibilityLatex: canonicalLatex,
+        profile: 'compatibility-v1',
+        target: 'canonical-latex',
+      });
   if (!printed.ok) {
     return failure('printer-failure', printed.message);
   }
@@ -420,7 +283,7 @@ export function proveAnswerMathJson(input: {
       byteLength: validation.validated.byteLength,
       semanticRelation: structurallySame
         ? 'structural'
-        : formalApplySame || standardFunctionAliasSame
+        : formalComparison.applicable
           ? 'equal'
         : simplifiedSame
           ? 'simplified'

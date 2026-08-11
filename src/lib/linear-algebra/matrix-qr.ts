@@ -136,7 +136,7 @@ function exactQr(matrix: ExactMatrix): QrResult {
     for (let previous = 0; previous < qColumns.length; previous += 1) {
       const coefficient = exactDotVectors(qColumns[previous], original);
       r[previous][column] = coefficient;
-      const coefficientLatex = `r_{${previous + 1}${column + 1}}=q_{${previous + 1}}^{T}a_{${column + 1}}=${exactScalarToLatex(coefficient)}`;
+      const coefficientLatex = `r_{${previous + 1}${column + 1}}=${exactVectorToColumnLatex(qColumns[previous])}^{T}${exactVectorToColumnLatex(original)}=${exactScalarToLatex(coefficient)}`;
       steps.push(coefficientLatex);
       stepEvidence.push(canonicalLeafEvidence(
         coefficientLatex,
@@ -222,7 +222,7 @@ function qrDetails(result: Extract<QrResult, { kind: 'success' }>): DisplayDetai
 }
 
 function columnProjectionLabel(input: MatrixColumnProjectionInput) {
-  return `\\operatorname{proj}_{\\operatorname{Col}(${input.label})}(${input.vectorLabel})`;
+  return `\\operatorname{projection}(${input.label},${input.vectorLabel})`;
 }
 
 function columnProjectionDetails(
@@ -234,6 +234,7 @@ function columnProjectionDetails(
   residualCheck: ExactVector,
 ): DisplayDetailSection[] {
   const label = columnProjectionLabel(input);
+  const explicitFormula = `\\operatorname{projection}(${input.label},${input.vectorLabel})=${exactMatrixToLatex(result.q)}\\cdot ${exactMatrixToLatex(result.q)}^{T}\\cdot ${input.vectorLabel}`;
   return [
     {
       title: 'Column Projection Facts',
@@ -247,7 +248,7 @@ function columnProjectionDetails(
     {
       title: 'Column Projection Proof',
       lines: [
-        `${label}=QQ^{T}${input.vectorLabel}`,
+        explicitFormula,
         `${label}=${exactVectorToColumnLatex(projected)}`,
         `${input.vectorLabel}-${label}=${exactVectorToColumnLatex(residual)}`,
         `Q^{T}(${input.vectorLabel}-${label})=${exactVectorToColumnLatex(residualCheck)}`,
@@ -387,6 +388,7 @@ export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): M
   const projectedNode = exactVectorMathJson(projected);
   const residualNode = exactVectorMathJson(residual);
   const labelLatex = columnProjectionLabel(input);
+  const explicitFormula = `\\operatorname{projection}(${input.label},${input.vectorLabel})=${exactMatrixToLatex(qr.q)}\\cdot ${exactMatrixToLatex(qr.q)}^{T}\\cdot ${input.vectorLabel}`;
   const projectionNode = operatorMathJson('projection', ['List', matrixNode, vectorNode]);
   const primaryLatex = `${labelLatex}=${exactVectorToColumnLatex(projected)}`;
   return attachLinearAlgebraCanonicalEvidence(response, {
@@ -395,7 +397,7 @@ export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): M
       mathEvidence(leaf(`Q=${exactMatrixToLatex(qr.q)}`, equationMathJson('Q', qNode), 'matrix.column-projection.native-q')),
       mathEvidence(leaf(`Q^{T}Q=${exactMatrixToLatex(qr.qtq)}`, equationMathJson(['Multiply', ['Transpose', qNode], qNode], exactMatrixMathJson(qr.qtq)), 'matrix.column-projection.native-orthonormal-check')),
       mathEvidence(leaf(`Q^{T}${input.vectorLabel}=${exactVectorToColumnLatex(coordinates)}`, equationMathJson(['Multiply', ['Transpose', qNode], vectorNode], coordinatesNode), 'matrix.column-projection.native-coordinates')),
-      mathEvidence(leaf(`${labelLatex}=QQ^{T}${input.vectorLabel}`, equationMathJson(projectionNode, ['Multiply', qNode, ['Transpose', qNode], vectorNode]), 'matrix.column-projection.native-formula')),
+      mathEvidence(leaf(explicitFormula, equationMathJson(projectionNode, ['Multiply', qNode, ['Transpose', qNode], vectorNode]), 'matrix.column-projection.native-formula')),
       mathEvidence(leaf(primaryLatex, equationMathJson(projectionNode, projectedNode), 'matrix.column-projection.native-projected-vector-detail')),
       mathEvidence(leaf(`${input.vectorLabel}-${labelLatex}=${exactVectorToColumnLatex(residual)}`, equationMathJson(['Subtract', vectorNode, projectionNode], residualNode), 'matrix.column-projection.native-residual')),
       mathEvidence(leaf(`Q^{T}(${input.vectorLabel}-${labelLatex})=${exactVectorToColumnLatex(residualCheck)}`, equationMathJson(['Multiply', ['Transpose', qNode], residualNode], exactVectorMathJson(residualCheck)), 'matrix.column-projection.native-residual-check')),

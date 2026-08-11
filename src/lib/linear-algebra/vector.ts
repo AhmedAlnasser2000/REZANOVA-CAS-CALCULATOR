@@ -195,7 +195,9 @@ function dependencyResidualLines(
         'projections' in step
           ? step.projections.map((projection) => projection.basisIndex)
           : step.projectionBasisIndices,
-      )}=0`]
+      )}=${'projections' in step
+        ? exactVectorToColumnLatex(step.residual)
+        : vectorToLatex(step.residual)}`]
     : []);
 }
 
@@ -539,7 +541,7 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
           exactVectorMathJson(exactOperands[step.inputIndex]),
           basisIndices,
         );
-        const latex = `r_{${step.inputIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], basisIndices)}=0`;
+        const latex = `r_{${step.inputIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], basisIndices)}=${exactVectorToColumnLatex(step.residual)}`;
         detailEvidence.push(mathDetail(
           latex,
           equationMathJson(

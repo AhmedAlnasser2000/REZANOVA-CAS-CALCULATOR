@@ -223,16 +223,25 @@ export function matrixEigenspaceMathJson(root: MatrixEigenAnalysisRoot) {
 
 function eigenEntryMathJson(root: MatrixEigenAnalysisRoot) {
   const space = ['InvisibleOperator', 'span', exactVectorSetMathJson(root.basis)];
+  if (root.multiplicity === 2) {
+    return ['Delimiter', ['Sequence',
+      equationMathJson('lambda', buildExactScalarNode(root.eigenvalue)),
+      equationMathJson('m', 2),
+      equationMathJson(matrixEigenspaceMathJson(root), space),
+    ], "'(,)'"];
+  }
   const joined = ['Equal',
     ['InvisibleOperator', buildExactScalarNode(root.eigenvalue), "':'", matrixEigenspaceMathJson(root)],
     space,
   ];
-  return root.multiplicity === 2
-    ? ['Delimiter', ['Sequence',
-        equationMathJson('lambda', buildExactScalarNode(root.eigenvalue)),
-        equationMathJson('m', joined),
-      ], "','"]
-    : equationMathJson('lambda', joined);
+  return equationMathJson('lambda', joined);
+}
+
+function eigenEntryLatex(root: MatrixEigenAnalysisRoot) {
+  if (root.multiplicity === 2) {
+    return `\\left(\\lambda=${root.eigenvalueLatex},m=2,${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}\\right)`;
+  }
+  return `\\lambda=${root.eigenvalueLatex}\\text{:}${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}`;
 }
 
 export function analyzeMatrixEigen2x2(input: MatrixEigenInput): MatrixEigenAnalysisResult {
@@ -346,11 +355,10 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
   const resultEntries: string[] = [];
 
   for (const root of analysis.roots) {
-    const multiplicityText = root.multiplicity === 2 ? ',\\ m=2' : '';
-    resultEntries.push(`\\lambda=${root.eigenvalueLatex}${multiplicityText}\\text{:}${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}`);
+    resultEntries.push(eigenEntryLatex(root));
     eigenspaceLines.push(
-      `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`,
-      `${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`,
+      `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-(${root.eigenvalueLatex})I)=${root.spaceLatex}`,
+      `${analysis.label}-(${root.eigenvalueLatex})I=${exactMatrixToLatex(root.shifted)}`,
     );
   }
 
@@ -387,8 +395,8 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
   const details = [
     ...characteristicEvidence(analysis.label, analysis.exactMatrix, characteristic, analysis.equationLatex),
     ...analysis.roots.flatMap((root, index) => {
-      const eigenspaceLatex = `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`;
-      const shiftedLatex = `${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`;
+      const eigenspaceLatex = `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-(${root.eigenvalueLatex})I)=${root.spaceLatex}`;
+      const shiftedLatex = `${analysis.label}-(${root.eigenvalueLatex})I=${exactMatrixToLatex(root.shifted)}`;
       return [
         {
           kind: 'math' as const,

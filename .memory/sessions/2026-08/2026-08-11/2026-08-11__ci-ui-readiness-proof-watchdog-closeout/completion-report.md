@@ -17,8 +17,8 @@
 ## Status
 
 - Gate 5 `CI-UI-LAZY-READINESS-REPAIR1` — UI: complete and verified for commit approval.
-- Gate 6 `CANONICAL-PROOF-FORMAL-COMPARISON1` — backend: pending.
-- Gate 7 program closeout — backend/UI: pending.
+- Gate 6 `CANONICAL-PROOF-FORMAL-COMPARISON1` — backend: complete, verified, and approved for commit.
+- Gate 7 program closeout — backend/UI: paused for classification of stale Linear Algebra Playwright drivers.
 
 ## Gate 5 completed scope
 
@@ -39,3 +39,17 @@
 ## Out-of-scope observation
 
 - One prior Calculus implicit-derivative visual showed stale selected-target detail text. It is not caused by Gate 5 and remains outside this repair.
+
+## Gate 6 completed scope
+
+- Formal `Apply`, standard function aliases, Linear Algebra operators, formal subscripts, and their exact arithmetic surroundings compare through an internal deterministic normal form. A formal mismatch fails closed and never reaches compiled Compute Engine equality.
+- The result-contract command retains its public name, defaults to four workers, forwards caller arguments, relays output, and fails on `Compilation fallback for` in either stream.
+- Exposed producer conflicts were corrected at presentation construction: pivot-column functions show their operand, zero residuals remain explicit vectors, and decomposition/projection/eigenspace rows show the exact native values their MathJSON proves.
+- Ordinary Calculus function and differential trees remain on exact non-formal comparison; the implicit derivative's native `(-2x)/(2y)` proof is reduced deterministically without changing the stored tree.
+- No schema, frozen V1 inventory, dependency, proof baseline, or print baseline changed.
+
+## Gate 7 classification stop
+
+- Current inline-editor determinant, cross, dot, span, and profile Playwright paths pass.
+- Three older Linear Algebra visual specs fail before evaluation because their helpers search for removed `.linear-algebra-vector-grid input` or `.linear-algebra-matrix-grid input` descendants.
+- Per the program stop rule, this separate test-driver staleness is not hidden or repaired inside Gate 6.

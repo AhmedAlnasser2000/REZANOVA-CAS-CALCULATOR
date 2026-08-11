@@ -73,6 +73,26 @@ describe('producer-proven answer MathJSON', () => {
     });
   });
 
+  it('keeps ordinary Calculus function and differential trees on exact comparison', () => {
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`y\left(1\right)\approx2.71828`,
+      candidate: candidate(['Approx', ['y', 1], 2.71828]),
+    })).toMatchObject({ ok: true });
+
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`\frac{dy}{dx}=-\frac{x}{y}`,
+      candidate: candidate([
+        'Equal',
+        [
+          'Divide',
+          ['InvisibleOperator', 'd', 'y'],
+          ['InvisibleOperator', 'd', 'x'],
+        ],
+        ['Divide', ['Multiply', -2, 'x'], ['Multiply', 2, 'y']],
+      ]),
+    })).toMatchObject({ ok: true });
+  });
+
   it('accepts standard formal Apply trees behind visible function notation', () => {
     const result = proveStandardAnswerMathJson({
       canonicalLatex: String.raw`\frac{f\left(x\right)^2}{2}+C`,
@@ -122,6 +142,74 @@ describe('producer-proven answer MathJSON', () => {
     })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
   });
 
+  it('compares reviewed formal operators deterministically without changing producer trees', () => {
+    const cases = [
+      {
+        canonicalLatex: String.raw`\det(A)=1`,
+        mathJson: ['Equal', ['Determinant', 'A'], 1],
+      },
+      {
+        canonicalLatex: String.raw`\operatorname{tr}(A)=2`,
+        mathJson: ['Equal', ['Trace', 'A'], 2],
+      },
+      {
+        canonicalLatex: String.raw`\operatorname{dimension}(V)=3`,
+        mathJson: ['Equal', ['Apply', 'dim', 'V'], 3],
+      },
+      {
+        canonicalLatex: String.raw`u\cdot v=0`,
+        mathJson: ['Equal', ['Apply', 'dot', ['List', 'u', 'v']], 0],
+      },
+      {
+        canonicalLatex: String.raw`u\times v=w`,
+        mathJson: ['Equal', ['Apply', 'cross', ['List', 'u', 'v']], 'w'],
+      },
+      {
+        canonicalLatex: String.raw`P_{B\leftarrow A}=B^{-1}A`,
+        mathJson: [
+          'Equal',
+          ['Subscript', 'P', ['List', 'B', 'A']],
+          ['Multiply', ['Power', 'B', -1], 'A'],
+        ],
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const result = proveStandardAnswerMathJson({
+        canonicalLatex: testCase.canonicalLatex,
+        candidate: candidate(testCase.mathJson),
+      });
+      expect(result, testCase.canonicalLatex).toMatchObject({
+        ok: true,
+        evidence: {
+          mathJson: testCase.mathJson,
+          semanticRelation: expect.stringMatching(/^(structural|equal)$/u),
+        },
+      });
+    }
+  });
+
+  it('fails closed on formal name, case, arity, order, subscript, matrix, and value near-misses', () => {
+    const failures = [
+      [String.raw`f(x)`, ['Apply', 'F', 'x']],
+      [String.raw`f(x)`, ['Apply', 'f', ['List', 'x', 'y']]],
+      [String.raw`f(x,y)`, ['Apply', 'f', ['List', 'y', 'x']]],
+      [String.raw`P_{B\leftarrow A}`, ['Subscript', 'P', ['List', 'A', 'B']]],
+      [String.raw`\det\begin{bmatrix}1&0\\0&1\end{bmatrix}`, ['Determinant', ['Matrix', ['List', ['List', 1, 0], ['List', 0, 2]], "'[]'"]]],
+      [String.raw`\operatorname{dimension}(V)=3`, ['Equal', ['Apply', 'dim', 'V'], 4]],
+    ] as const;
+
+    for (const [canonicalLatex, mathJson] of failures) {
+      expect(proveStandardAnswerMathJson({
+        canonicalLatex,
+        candidate: candidate(mathJson),
+      }), canonicalLatex).toMatchObject({
+        ok: false,
+        failure: { reason: 'semantic-mismatch' },
+      });
+    }
+  });
+
   it('rejects mismatched answers and mismatched ownership', () => {
     expect(proveAnswerMathJson({
       canonicalLatex: 'x+2',
@@ -149,7 +237,7 @@ describe('producer-proven answer MathJSON', () => {
     })).toMatchObject({ ok: false, failure: { reason: 'private-operator' } });
   });
 
-  it('fails closed when Compute Engine cannot compare a boxed candidate', () => {
+  it('fails closed when formal comparison cannot align a boxed candidate', () => {
     const inlineMatrixLatex = String.raw`\begin{bmatrix}1&1\\2&2\end{bmatrix}`;
     expect(proveAnswerMathJson({
       canonicalLatex: String.raw`\det(${inlineMatrixLatex})=0`,
@@ -158,7 +246,7 @@ describe('producer-proven answer MathJSON', () => {
         ['Determinant', inlineMatrixLatex],
         0,
       ]),
-    })).toMatchObject({ ok: false, failure: { reason: 'compute-engine-invalid' } });
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
   });
 
   it('preserves existing validation limits and rejects malformed values', () => {

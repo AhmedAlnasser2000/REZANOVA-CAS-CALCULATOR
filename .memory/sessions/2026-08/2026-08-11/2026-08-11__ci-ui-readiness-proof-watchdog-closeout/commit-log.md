@@ -20,7 +20,7 @@
 ## Sequence
 
 - Gate 5 `CI-UI-LAZY-READINESS-REPAIR1`: verified and approved for commit with subject `CI-UI-LAZY-READINESS-REPAIR1 repair async UI readiness`.
-- Gate 6 `CANONICAL-PROOF-FORMAL-COMPARISON1`: pending.
-- Gate 7 closeout: pending.
+- Gate 6 `CANONICAL-PROOF-FORMAL-COMPARISON1`: verified and approved for commit with subject `CANONICAL-PROOF-FORMAL-COMPARISON1 remove compiled formal equality`.
+- Gate 7 closeout: paused for classification of stale Linear Algebra Playwright drivers.
 
 Push remains unauthorized.
