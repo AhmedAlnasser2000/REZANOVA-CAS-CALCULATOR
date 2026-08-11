@@ -34,6 +34,11 @@ type RuntimeSelection =
     };
 type SupplementEvidence = NonNullable<EquationAnalysisEvidence['supplementEvidence']>;
 
+const SUPPLEMENT_PRESENTATION_PREFIXES = {
+  condition: '\\text{Conditions: } ',
+  exclusion: '\\text{Exclusions: } ',
+} as const;
+
 function normalizedLatex(value: string) {
   return value.replace(/\s+/gu, '');
 }
@@ -79,6 +84,76 @@ function supplementEvidenceKey(evidence: SupplementEvidence) {
   ].join(':');
 }
 
+function labeledSupplementPresentationRole(presentationLatex: string) {
+  if (presentationLatex.startsWith(SUPPLEMENT_PRESENTATION_PREFIXES.condition)) {
+    return 'condition' as const;
+  }
+  if (presentationLatex.startsWith(SUPPLEMENT_PRESENTATION_PREFIXES.exclusion)) {
+    return 'exclusion' as const;
+  }
+  return undefined;
+}
+
+function pairTypedSupplementPresentations(
+  presentations: readonly string[],
+  evidence: readonly SupplementEvidence[],
+) {
+  if (presentations.length === evidence.length) {
+    return evidence.map((entry, index) => ({
+      evidence: entry,
+      presentationLatex: presentations[index],
+    }));
+  }
+  if (presentations.length === 1) {
+    return evidence.map((entry) => ({
+      evidence: entry,
+      presentationLatex: entry.canonicalLatex,
+    }));
+  }
+
+  const presentationsByRole = new Map<SupplementEvidence['role'], string[]>();
+  for (const presentationLatex of presentations) {
+    const role = labeledSupplementPresentationRole(presentationLatex);
+    if (!role) return undefined;
+    presentationsByRole.set(role, [
+      ...(presentationsByRole.get(role) ?? []),
+      presentationLatex,
+    ]);
+  }
+  const evidenceByRole = new Map<SupplementEvidence['role'], SupplementEvidence[]>();
+  for (const entry of evidence) {
+    evidenceByRole.set(entry.role, [
+      ...(evidenceByRole.get(entry.role) ?? []),
+      entry,
+    ]);
+  }
+
+  const presentationByEvidence = new Map<SupplementEvidence, string>();
+  for (const [role, roleEvidence] of evidenceByRole) {
+    const rolePresentations = presentationsByRole.get(role) ?? [];
+    if (rolePresentations.length === roleEvidence.length) {
+      roleEvidence.forEach((entry, index) => {
+        presentationByEvidence.set(entry, rolePresentations[index]);
+      });
+      continue;
+    }
+    if (rolePresentations.length === 1 && roleEvidence.length > 1) {
+      roleEvidence.forEach((entry) => {
+        presentationByEvidence.set(entry, entry.canonicalLatex);
+      });
+      continue;
+    }
+    return undefined;
+  }
+  if ([...presentationsByRole.keys()].some((role) => !evidenceByRole.has(role))) {
+    return undefined;
+  }
+  return evidence.map((entry) => ({
+    evidence: entry,
+    presentationLatex: presentationByEvidence.get(entry) ?? entry.canonicalLatex,
+  }));
+}
+
 function typedSupplements(input: {
   outcome: EquationOutcome;
   analysisEvidence: readonly EquationAnalysisEvidence[];
@@ -101,17 +176,13 @@ function typedSupplements(input: {
   if (evidence.length === 0) {
     throw new Error('Equation selected typed V2 supplements without producer-owned evidence.');
   }
-  if (presentations.length !== 1 && presentations.length !== evidence.length) {
+  const paired = pairTypedSupplementPresentations(presentations, evidence);
+  if (!paired) {
     throw new Error(
       `Equation typed V2 supplement presentation/evidence count mismatch (${presentations.length}/${evidence.length}).`,
     );
   }
-  return evidence.map((entry, index) => ({
-    evidence: entry,
-    presentationLatex: presentations.length === evidence.length
-      ? presentations[index]
-      : entry.canonicalLatex,
-  }));
+  return paired;
 }
 
 export function buildEquationRuntimeCanonicalResultDocument(input: {

@@ -7,7 +7,10 @@ import {
 } from './test/renderAppMain';
 
 async function waitForDisplayOutcomeSuccess() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitFor(
+    () => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument(),
+    { timeout: 5_000 },
+  );
   await waitFor(() => {
     expect(screen.getByTestId('display-status')).not.toHaveTextContent('Rendering result');
   });

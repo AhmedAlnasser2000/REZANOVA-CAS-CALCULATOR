@@ -65,9 +65,9 @@ const baseProps = {
 };
 
 describe('WorkspaceLowerPanel', () => {
-  it('replaces the keypad only for Statistics', () => {
+  it('replaces the keypad only for Statistics', async () => {
     const view = render(<WorkspaceLowerPanel {...baseProps} currentMode="statistics" />);
-    expect(screen.getByTestId('statistics-visualization-dock')).toBeVisible();
+    expect(await screen.findByTestId('statistics-visualization-dock')).toBeVisible();
     expect(screen.queryByTestId('keypad-one')).not.toBeInTheDocument();
 
     view.rerender(<WorkspaceLowerPanel {...baseProps} currentMode="calculate" />);
@@ -75,7 +75,7 @@ describe('WorkspaceLowerPanel', () => {
     expect(screen.getByTestId('keypad-one')).toBeVisible();
   });
 
-  it('selects result visuals and changes histogram bins without reevaluation', () => {
+  it('selects result visuals and changes histogram bins without reevaluation', async () => {
     const onKindChange = vi.fn();
     const onBinsChange = vi.fn();
     render(
@@ -88,6 +88,7 @@ describe('WorkspaceLowerPanel', () => {
       />,
     );
 
+    expect(await screen.findByTestId('statistics-visualization-dock')).toBeVisible();
     expect(screen.getByText('Stale')).toBeVisible();
     expect(screen.getByText('Visualization', { selector: 'span' })).toBeVisible();
     fireEvent.change(screen.getByRole('combobox', { name: 'Visualization' }), {
@@ -100,7 +101,7 @@ describe('WorkspaceLowerPanel', () => {
     expect(onBinsChange).toHaveBeenCalledWith(8);
   });
 
-  it('opens a precision-formatted chart data table without replacing the plot', () => {
+  it('opens a precision-formatted chart data table without replacing the plot', async () => {
     render(
       <WorkspaceLowerPanel
         {...baseProps}
@@ -109,7 +110,7 @@ describe('WorkspaceLowerPanel', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'View data' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'View data' }));
     expect(screen.getByTestId('statistics-visualization-chart')).toBeVisible();
     expect(screen.getByRole('table', { name: 'Distribution of values data' })).toBeVisible();
     expect(screen.getByRole('columnheader', { name: 'Interval' })).toBeVisible();
@@ -118,7 +119,7 @@ describe('WorkspaceLowerPanel', () => {
     expect(screen.getByRole('button', { name: 'Hide data' })).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('gives stopped empty docks a stable explicit state', () => {
+  it('gives stopped empty docks a stable explicit state', async () => {
     render(
       <WorkspaceLowerPanel
         {...baseProps}
@@ -129,11 +130,12 @@ describe('WorkspaceLowerPanel', () => {
       />,
     );
 
+    expect(await screen.findByTestId('statistics-visualization-dock')).toBeVisible();
     expect(screen.getByText('Stopped')).toBeVisible();
     expect(screen.getByTestId('statistics-visualization-empty')).toBeVisible();
   });
 
-  it('offers the existing keypad as a temporary Expression-only swap', () => {
+  it('offers the existing keypad as a temporary Expression-only swap', async () => {
     const view = render(
       <WorkspaceLowerPanel
         {...baseProps}
@@ -143,7 +145,7 @@ describe('WorkspaceLowerPanel', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show keypad' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Show keypad' }));
     expect(screen.getByTestId('statistics-expression-keypad')).toBeVisible();
     expect(screen.getByTestId('keypad-one')).toBeVisible();
 
@@ -156,7 +158,7 @@ describe('WorkspaceLowerPanel', () => {
       />,
     );
     expect(screen.queryByTestId('statistics-expression-keypad')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Show keypad' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Show keypad' }));
     fireEvent.click(screen.getByRole('button', { name: 'Show visualization' }));
     expect(screen.queryByTestId('statistics-expression-keypad')).not.toBeInTheDocument();
 

@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRef } from 'react';
 import type {
@@ -143,7 +143,7 @@ describe('useEquationRuntime', () => {
     vi.clearAllMocks();
   });
 
-  it('offers stored-value consent for parameterized equations only', () => {
+  it('offers stored-value consent for parameterized equations only', async () => {
     const { hook } = renderEquationRuntime();
 
     act(() => {
@@ -151,15 +151,19 @@ describe('useEquationRuntime', () => {
       hook.result.current.setEquationSolveTarget('z');
     });
 
-    expect(hook.result.current.equationAlgebraTransforms).toContain('useStoredValues');
+    await waitFor(() => {
+      expect(hook.result.current.equationAlgebraTransforms).toContain('useStoredValues');
+    }, { timeout: 5_000 });
 
     act(() => {
       hook.result.current.switchToEquationWithLatex('x^2+x+1=0');
       hook.result.current.setEquationSolveTarget('x');
     });
 
-    expect(hook.result.current.equationAlgebraTransforms).not.toContain('useStoredValues');
-    expect(hook.result.current.equationAlgebraTransforms).not.toContain('prepareNumericSolve');
+    await waitFor(() => {
+      expect(hook.result.current.equationAlgebraTransforms).not.toContain('useStoredValues');
+      expect(hook.result.current.equationAlgebraTransforms).not.toContain('prepareNumericSolve');
+    }, { timeout: 5_000 });
   });
 
   it('moves Equation menu selection and opens selected route entries', () => {

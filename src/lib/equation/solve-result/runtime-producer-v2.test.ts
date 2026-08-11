@@ -103,6 +103,48 @@ describe('Equation runtime Canonical Result V2 supplements', () => {
     ]);
   });
 
+  it('preserves a single exclusion label while splitting a grouped condition row', () => {
+    const runtimeDocument = buildEquationRuntimeCanonicalResultDocument({
+      outcome: outcome([
+        '\\text{Exclusions: } x\\ne0',
+        '\\text{Conditions: } x\\ge0,\\;\\frac{1}{x}\\ge0',
+      ]),
+      document,
+      analysisEvidence: [
+        {
+          ...evidence('x\\ne0', ['NotEqual', 'x', 0]),
+          supplementEvidence: {
+            role: 'exclusion',
+            canonicalLatex: 'x\\ne0',
+            mathJson: ['NotEqual', 'x', 0],
+          },
+        },
+        evidence('x\\ge0', ['GreaterEqual', 'x', 0]),
+        evidence('\\frac{1}{x}\\ge0', ['GreaterEqual', ['Divide', 1, 'x'], 0]),
+      ],
+    });
+
+    expect(runtimeDocument.version).toBe(2);
+    if (runtimeDocument.version !== 2) throw new Error('Expected typed V2 supplements.');
+    expect(runtimeDocument.supplements).toEqual([
+      expect.objectContaining({
+        role: 'exclusion',
+        presentationLatex: '\\text{Exclusions: } x\\ne0',
+        math: expect.objectContaining({ canonicalLatex: 'x\\ne0' }),
+      }),
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: 'x\\ge0',
+        math: expect.objectContaining({ canonicalLatex: 'x\\ge0' }),
+      }),
+      expect.objectContaining({
+        role: 'condition',
+        presentationLatex: '\\frac{1}{x}\\ge0',
+        math: expect.objectContaining({ canonicalLatex: '\\frac{1}{x}\\ge0' }),
+      }),
+    ]);
+  });
+
   it('fails closed when a typed supplement route has no producer-owned evidence', () => {
     expect(() => buildEquationRuntimeCanonicalResultDocument({
       outcome: outcome(['\\text{Conditions: } x>0']),

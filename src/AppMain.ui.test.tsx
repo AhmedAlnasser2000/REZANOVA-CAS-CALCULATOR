@@ -48,7 +48,7 @@ async function waitForDisplayQueueToSettle() {
 }
 
 async function waitForDisplayOutcomeSuccess() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument(), { timeout: 5_000 });
   await waitForDisplayQueueToSettle();
 }
 

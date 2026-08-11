@@ -282,8 +282,9 @@ describe('OoeDiagnosticsPanel', () => {
     );
     expect(screen.queryByTestId('ooe-diagnostics-events')).not.toBeInTheDocument();
     expect(screen.queryByTestId('ooe-diagnostics-status-filter')).not.toBeInTheDocument();
-    expect(screen.getAllByTestId('ooe-diagnostics-compartment-row')).toHaveLength(9);
+    expect(screen.getAllByTestId('ooe-diagnostics-compartment-row')).toHaveLength(10);
     expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('Equation');
+    expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('Graphing');
     expect(screen.getByTestId('ooe-diagnostics-compartment-list')).toHaveTextContent('active');
     expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
       'compartment',

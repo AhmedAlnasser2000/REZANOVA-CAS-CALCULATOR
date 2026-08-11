@@ -154,7 +154,9 @@ describe('Notebook block arrangement', () => {
     expect(outdentNotebookNode(editor, 'paragraph.moving')).toBe(true);
     expect(editor.state.doc.child(1).attrs.id).toBe('paragraph.moving');
     expect(moveNotebookNodeInParent(editor, 'paragraph.moving', 'down')).toBe(true);
-    expect(editor.state.doc.lastChild?.attrs.id).toBe('paragraph.moving');
+    expect(editor.state.doc.child(1).attrs.id).toBe('semantic.1');
+    expect(editor.state.doc.child(2).attrs.id).toBe('paragraph.moving');
+    expect(notebookNodeArrangementState(editor, 'paragraph.moving').canMoveDown).toBe(false);
   });
 
   it('normalizes floating object layer order while preserving one selected object', () => {

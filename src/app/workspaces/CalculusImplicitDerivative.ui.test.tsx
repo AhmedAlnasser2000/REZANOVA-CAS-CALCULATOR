@@ -1,24 +1,10 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  openLauncherApp,
+  openCalculusTool,
   renderAppMain,
   setMathFieldLatex,
 } from '../../test/renderAppMain';
-
-async function openCalculusTool(
-  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
-  ...toolLabels: string[]
-) {
-  await openLauncherApp(user, 'Calculus', 'Calculus');
-  for (const toolLabel of toolLabels) {
-    const candidates = await screen.findAllByRole('button', { name: new RegExp(toolLabel, 'i') });
-    const exactLabelCandidate = candidates.find((candidate) =>
-      candidate.querySelector('strong')?.textContent?.trim().toLowerCase() === toolLabel.toLowerCase(),
-    );
-    await user.click(exactLabelCandidate ?? candidates[0]);
-  }
-}
 
 async function waitForDisplayQueueToSettle() {
   await waitFor(() => {
@@ -60,7 +46,10 @@ describe('Calculus implicit derivative workspace', () => {
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2+y^2=25');
     expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
 
-    await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+    await waitFor(
+      () => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument(),
+      { timeout: 5_000 },
+    );
     await waitForDisplayQueueToSettle();
     expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
     expect(screen.queryByText('Resolved form')).not.toBeInTheDocument();

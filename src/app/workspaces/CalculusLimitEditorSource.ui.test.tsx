@@ -1,31 +1,10 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  openLauncherApp,
+  openCalculusTool,
   renderAppMain,
   setMathFieldLatex,
 } from '../../test/renderAppMain';
-
-async function openCalculusTool(
-  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
-  ...toolLabels: string[]
-) {
-  await openLauncherApp(user, 'Calculus', 'Calculus');
-  for (const toolLabel of toolLabels) {
-    const exactLabelCandidate = await waitFor(() => {
-      const menu = document.querySelector('.calculus-menu-list');
-      expect(menu).toBeInTheDocument();
-      const candidates = within(menu as HTMLElement)
-        .getAllByRole('button', { name: new RegExp(toolLabel, 'i') });
-      const exact = candidates.find((candidate) =>
-        candidate.querySelector('strong')?.textContent?.trim().toLowerCase() === toolLabel.toLowerCase(),
-      );
-      expect(exact).toBeDefined();
-      return exact as HTMLElement;
-    }, { timeout: 5_000 });
-    await user.click(exactLabelCandidate);
-  }
-}
 
 async function waitForDisplayQueueToSettle() {
   await waitFor(() => {

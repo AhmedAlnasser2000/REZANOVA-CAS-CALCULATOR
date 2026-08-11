@@ -49,8 +49,32 @@ export async function openLauncherApp(user: AppUser, categoryLabel: string, appL
 
 export async function openEquationSymbolic(user: AppUser) {
   await openLauncherApp(user, 'Core', 'Equation');
-  await user.click(await screen.findByRole('button', { name: /symbolic/i }));
-  await screen.findByTestId('main-editor');
+  const equationMenu = await waitFor(() => {
+    const menu = document.querySelector('.equation-menu-list');
+    expect(menu).toBeInTheDocument();
+    return menu as HTMLElement;
+  }, { timeout: 5_000 });
+  await user.click(await within(equationMenu).findByRole('button', { name: /symbolic/i }));
+  await screen.findByTestId('equation-answer-mode-control', {}, { timeout: 5_000 });
+}
+
+export async function openCalculusTool(user: AppUser, ...toolLabels: string[]) {
+  await openLauncherApp(user, 'Calculus', 'Calculus');
+  for (const toolLabel of toolLabels) {
+    const exactLabelCandidate = await waitFor(() => {
+      const menu = document.querySelector('.calculus-menu-list');
+      expect(menu).toBeInTheDocument();
+      const candidates = within(menu as HTMLElement)
+        .getAllByRole('button', { name: new RegExp(toolLabel, 'i') });
+      const exact = candidates.find((candidate) =>
+        candidate.querySelector('strong')?.textContent?.trim().toLowerCase()
+          === toolLabel.toLowerCase());
+      expect(exact).toBeDefined();
+      return exact as HTMLElement;
+    }, { timeout: 5_000 });
+    await user.click(exactLabelCandidate);
+  }
+  await screen.findByTestId('soft-action-toEditor', {}, { timeout: 5_000 });
 }
 
 export async function openTable(user: AppUser) {

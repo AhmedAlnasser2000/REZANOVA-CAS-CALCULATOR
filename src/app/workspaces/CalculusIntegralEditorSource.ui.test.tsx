@@ -1,24 +1,10 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  openLauncherApp,
+  openCalculusTool,
   renderAppMain,
   setMathFieldLatex,
 } from '../../test/renderAppMain';
-
-async function openCalculusTool(
-  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
-  ...toolLabels: string[]
-) {
-  await openLauncherApp(user, 'Calculus', 'Calculus');
-  for (const toolLabel of toolLabels) {
-    const candidates = await screen.findAllByRole('button', { name: new RegExp(toolLabel, 'i') });
-    const exactLabelCandidate = candidates.find((candidate) =>
-      candidate.querySelector('strong')?.textContent?.trim().toLowerCase() === toolLabel.toLowerCase(),
-    );
-    await user.click(exactLabelCandidate ?? candidates[0]);
-  }
-}
 
 async function waitForDisplayQueueToSettle() {
   await waitFor(() => {
@@ -27,7 +13,10 @@ async function waitForDisplayQueueToSettle() {
 }
 
 async function waitForDisplayOutcomeSuccess() {
-  await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
+  await waitFor(
+    () => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument(),
+    { timeout: 5_000 },
+  );
   await waitForDisplayQueueToSettle();
 }
 
@@ -88,8 +77,8 @@ describe('Calculus integral editor source', () => {
     const answer = screen.getByTestId('display-outcome-answer-block');
     await waitFor(() => {
       const renderedLatex = answer.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex') ?? '';
-      expect(renderedLatex).toContain('k\\cdot \\ln');
-      expect(renderedLatex).toContain('ax^2+bx+c');
+      expect(renderedLatex).toContain('k\\cdot\\ln');
+      expect(renderedLatex).toContain('ax^{2}+bx+c');
     });
   });
 

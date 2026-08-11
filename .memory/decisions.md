@@ -3193,3 +3193,7 @@
 ## 2026-08-11 - Linux Unit Watchdog
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Linux CI and release unit steps have a 30-minute GNU timeout with a 30-second TERM-to-KILL escalation. Local unit and closeout commands remain unguarded so local diagnostic behavior is unchanged, while CI alignment prevents removal or reordering of the guarded broad unit check.
+
+## 2026-08-11 - Equation Mixed Supplement Presentation Pairing
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] When an Equation V2 outcome carries mixed labeled supplement rows, the runtime adapter may classify only the exact presentation label prefix to pair rows with producer-owned evidence roles. One-to-one rows retain their presentation; one grouped row for a role expands to evidence-owned canonical rows. Mathematical presentation content is never parsed, MathJSON is never reconstructed, and unresolved role/count combinations fail closed.
