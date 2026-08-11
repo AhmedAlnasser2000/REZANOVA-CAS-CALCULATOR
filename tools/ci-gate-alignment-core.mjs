@@ -26,6 +26,8 @@ export const PACKAGE_COMMAND = 'npm run tauri:build';
 export const SEAM_IMPACT_COMMAND = 'npm run seam:impact -- --github-event --run';
 export const V2_ENFORCEMENT_COMMAND = 'npm run test:canonical-result-v2-enforcement:ci';
 export const UNIT_CI_COMMAND = 'npm run test:unit:ci';
+export const GUARDED_UNIT_CI_COMMAND =
+  'timeout --signal=TERM --kill-after=30s 30m npm run test:unit:ci';
 
 function assertIncludes(text, value, label) {
   if (!text.includes(value)) {
@@ -70,9 +72,16 @@ function assertCiSeamImpactRunner(ciWorkflow) {
   assertIncludes(ciWorkflow, `run: ${SEAM_IMPACT_COMMAND}`, 'CI workflow');
   assertIncludes(ciWorkflow, 'fetch-depth: 0', 'CI workflow checkout');
   const seamIndex = ciWorkflow.indexOf(`run: ${SEAM_IMPACT_COMMAND}`);
-  const unitIndex = ciWorkflow.indexOf(`run: ${UNIT_CI_COMMAND}`);
+  const unitIndex = ciWorkflow.indexOf(`run: ${GUARDED_UNIT_CI_COMMAND}`);
   if (seamIndex < 0 || unitIndex < 0 || seamIndex >= unitIndex) {
     throw new Error('CI workflow must run seam impact evidence before broad unit tests');
+  }
+}
+
+function assertGuardedUnitCommand(workflow, label) {
+  assertIncludes(workflow, `run: ${GUARDED_UNIT_CI_COMMAND}`, label);
+  if (/^\s*run:\s*npm run test:unit:ci\s*$/mu.test(workflow)) {
+    throw new Error(`${label} must not run ${UNIT_CI_COMMAND} without the CI watchdog`);
   }
 }
 
@@ -112,8 +121,8 @@ export function validateCiGateAlignment({
 }) {
   assertCiTriggers(ciWorkflow);
   assertCommands(ciWorkflow, STATIC_GATE_COMMANDS, 'CI workflow');
-  assertIncludes(ciWorkflow, `run: ${UNIT_CI_COMMAND}`, 'CI workflow');
-  assertIncludes(releaseWorkflow, `run: ${UNIT_CI_COMMAND}`, 'Release workflow');
+  assertGuardedUnitCommand(ciWorkflow, 'CI workflow');
+  assertGuardedUnitCommand(releaseWorkflow, 'Release workflow');
   assertV2EnforcementJob(ciWorkflow);
   assertCiCanaryJob(ciWorkflow);
   assertCiSeamImpactRunner(ciWorkflow);

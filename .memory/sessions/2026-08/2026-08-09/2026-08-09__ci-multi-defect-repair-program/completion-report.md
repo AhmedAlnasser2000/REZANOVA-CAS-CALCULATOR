@@ -19,7 +19,7 @@
 - Gate 1 `INTEGRATION-PROOF-ROUTING1`: complete and verified.
 - Gate 2 `CALCULUS-INTEGRATION-READBACK-AUTHORITY1`: complete and verified.
 - Gate 3 `CI-EQUATION-HISTORY-REPAIR1`: complete and verified for commit.
-- Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.
+- Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: complete and verified for commit.
 
 ## Scope boundaries
 
@@ -54,3 +54,12 @@
 - Realigned the negative absolute-value regression to the existing successful `\varnothing` result with `Range Guard` and the no-real-solution warning.
 - Refreshed only `equation-radical-square` and `equation-radical-affine` in the Equation History fixture after separate approval placed the three Integration readback snapshots in Gate 2.
 - Real-app Playwright evidence covers exact-log readback, single/grouped radical conditions, rejection details, the empty-set warning and badge, History replay, and overflow/readability.
+
+## Gate 4 — backend
+
+- Guarded Linux CI and release unit execution with `timeout --signal=TERM --kill-after=30s 30m npm run test:unit:ci` while leaving local unit and closeout commands unchanged.
+- Extended CI alignment to require the watchdog after seam-impact evidence and reject an unguarded replacement.
+- Added a synthetic synchronous CPU-bound parent/child proof that exits with timeout status 124 and leaves no descendant alive.
+- Serialized the result-contract seam command at one worker to stay inside its existing 120-second seam budget.
+- Retained three reviewed stale unit expectation alignments discovered by the earlier broad run.
+- The user renumbered the remaining repair work as Gate 5 UI readiness, Gate 6 formal proof comparison, and Gate 7 program closeout.

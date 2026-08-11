@@ -61,7 +61,7 @@ describe('symbolic Matrix spectral operations', () => {
     const values = [['0', '-1'], ['1', '0']];
     const real = runSymbolicMatrixOperation(request('eigenA', values, 'real'));
     const complex = runSymbolicMatrixOperation(request('eigenA', values, 'complex'));
-    expect(real.resultLatex).toContain('\\emptyset');
+    expect(real.resultLatex).toContain('\\varnothing');
     expect(complex.error).toBeUndefined();
     expect(complex.answerRows?.rows.filter((row) => row.label === 'Eigenvalue')).toHaveLength(2);
     expect(complex.answerRows?.rows.filter((row) => row.label === 'Eigenspace')).toHaveLength(2);

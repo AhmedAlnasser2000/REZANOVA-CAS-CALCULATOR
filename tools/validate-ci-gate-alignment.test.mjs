@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, it } from 'node:test';
 import {
   CANARY_COMMAND,
+  GUARDED_UNIT_CI_COMMAND,
   PACKAGE_COMMAND,
   SEAM_IMPACT_COMMAND,
   STATIC_GATE_COMMANDS,
@@ -29,7 +34,7 @@ function fixture(overrides = {}) {
       '        with:',
       '          fetch-depth: 0',
       `      - run: ${SEAM_IMPACT_COMMAND}`,
-      `      - run: ${UNIT_CI_COMMAND}`,
+      `      - run: ${GUARDED_UNIT_CI_COMMAND}`,
       '  e2e-linux:',
       `      - run: ${CANARY_COMMAND}`,
     ].join('\n'),
@@ -38,7 +43,7 @@ function fixture(overrides = {}) {
       '  linux-preview:',
       staticSteps,
       `      - run: ${CANARY_COMMAND}`,
-      `      - run: ${UNIT_CI_COMMAND}`,
+      `      - run: ${GUARDED_UNIT_CI_COMMAND}`,
       `      - run: ${PACKAGE_COMMAND}`,
     ].join('\n'),
     playwrightConfig: 'export default { retries: 0, workers: 1 };\n',
@@ -129,8 +134,8 @@ describe('CI gate alignment validation', () => {
     lateRunner.ciWorkflow = lateRunner.ciWorkflow
       .replace(`      - run: ${SEAM_IMPACT_COMMAND}\n`, '')
       .replace(
-        `      - run: ${UNIT_CI_COMMAND}\n`,
-        `      - run: ${UNIT_CI_COMMAND}\n      - run: ${SEAM_IMPACT_COMMAND}\n`,
+        `      - run: ${GUARDED_UNIT_CI_COMMAND}\n`,
+        `      - run: ${GUARDED_UNIT_CI_COMMAND}\n      - run: ${SEAM_IMPACT_COMMAND}\n`,
       );
     assert.throws(
       () => validateCiGateAlignment(lateRunner),
@@ -141,8 +146,8 @@ describe('CI gate alignment validation', () => {
   it('rejects Linux packaging before the workspace canaries', () => {
     const input = fixture();
     input.releaseWorkflow = input.releaseWorkflow.replace(
-      `      - run: ${CANARY_COMMAND}\n      - run: ${UNIT_CI_COMMAND}\n      - run: ${PACKAGE_COMMAND}`,
-      `      - run: ${PACKAGE_COMMAND}\n      - run: ${CANARY_COMMAND}\n      - run: ${UNIT_CI_COMMAND}`,
+      `      - run: ${CANARY_COMMAND}\n      - run: ${GUARDED_UNIT_CI_COMMAND}\n      - run: ${PACKAGE_COMMAND}`,
+      `      - run: ${PACKAGE_COMMAND}\n      - run: ${CANARY_COMMAND}\n      - run: ${GUARDED_UNIT_CI_COMMAND}`,
     );
 
     assert.throws(
@@ -175,5 +180,51 @@ describe('CI gate alignment validation', () => {
       })),
       /CI workflow must not override Playwright retries/u,
     );
+  });
+
+  it('requires the guarded unit command in both workflows', () => {
+    for (const field of ['ciWorkflow', 'releaseWorkflow']) {
+      const input = fixture();
+      input[field] = input[field].replace(GUARDED_UNIT_CI_COMMAND, UNIT_CI_COMMAND);
+      assert.throws(
+        () => validateCiGateAlignment(input),
+        /must include run: timeout --signal=TERM --kill-after=30s 30m npm run test:unit:ci/u,
+      );
+    }
+  });
+
+  it('terminates a synchronous CPU-bound descendant with timeout status 124', () => {
+    const tempDir = mkdtempSync(path.join(tmpdir(), 'calcwiz-ci-watchdog-'));
+    const childPidPath = path.join(tempDir, 'child.pid');
+    let childPid;
+
+    try {
+      const script = [
+        "const { spawn } = require('node:child_process');",
+        "const { writeFileSync } = require('node:fs');",
+        "const child = spawn(process.execPath, ['-e', 'while (true) {}'], { stdio: 'ignore' });",
+        `writeFileSync(${JSON.stringify(childPidPath)}, String(child.pid));`,
+        'while (true) {}',
+      ].join('\n');
+      const result = spawnSync(
+        'timeout',
+        ['--signal=TERM', '--kill-after=1s', '1s', process.execPath, '-e', script],
+        { encoding: 'utf8', timeout: 5_000 },
+      );
+
+      assert.equal(result.status, 124, result.stderr || result.error?.message);
+      childPid = Number.parseInt(readFileSync(childPidPath, 'utf8'), 10);
+      assert.ok(Number.isSafeInteger(childPid) && childPid > 0);
+      assert.throws(() => process.kill(childPid, 0), { code: 'ESRCH' });
+    } finally {
+      if (childPid) {
+        try {
+          process.kill(childPid, 'SIGKILL');
+        } catch (error) {
+          if (error?.code !== 'ESRCH') throw error;
+        }
+      }
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

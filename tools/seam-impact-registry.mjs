@@ -47,7 +47,7 @@ export const SEAM_COMMANDS = [
   {
     id: 'result-contracts',
     label: 'Canonical result document contracts',
-    argv: ['npm', 'run', 'test:result-contract'],
+    argv: ['npm', 'run', 'test:result-contract', '--', '--maxWorkers=1'],
   },
   {
     id: 'canonical-result-v2-enforcement',

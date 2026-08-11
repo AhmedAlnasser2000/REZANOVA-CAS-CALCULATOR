@@ -157,7 +157,8 @@ describe('runExpressionAction calculus execution', () => {
     expect(compositionSubstitution.error).toBeUndefined();
     expect(compositionSubstitution.resultOrigin).toBe('rule-based-symbolic');
     expect(compositionSubstitution.calculusStrategy).toBe('u-substitution');
-    expect(compositionSubstitution.exactLatex).toContain('\\sqrt');
+    expect(compositionSubstitution.exactLatex)
+      .toBe('\\frac{2\\left(x^{2}+1\\right)^{\\frac{3}{2}}}{3}+C');
 
     expect(inverseTrig.error).toBeUndefined();
     expect(['compute-engine', 'rule-based-symbolic']).toContain(inverseTrig.resultOrigin);

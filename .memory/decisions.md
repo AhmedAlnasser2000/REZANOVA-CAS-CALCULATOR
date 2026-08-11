@@ -3189,3 +3189,7 @@
 ## 2026-08-09 - Candidate-Validated Equation Readback
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Exact mode may retain a validated approximate readback for the bounded same-base logarithmic-equality route only through a one-shot internal permission granted after candidate validation. The permission is transported outside serialized carriers, consumed before canonical runtime attachment, and must never be inferred from badges, diagnostics, or presentation strings.
+
+## 2026-08-11 - Linux Unit Watchdog
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Linux CI and release unit steps have a 30-minute GNU timeout with a 30-second TERM-to-KILL escalation. Local unit and closeout commands remain unguarded so local diagnostic behavior is unchanged, while CI alignment prevents removal or reordering of the guarded broad unit check.

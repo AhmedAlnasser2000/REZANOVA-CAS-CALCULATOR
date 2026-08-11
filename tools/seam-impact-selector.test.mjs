@@ -159,6 +159,10 @@ describe('seam impact selector', () => {
       'detail-segment-migration-ratchet',
       'clipboard-contracts',
     ]);
+    assert.equal(
+      plan.additionalCommands.find((entry) => entry.id === 'result-contracts')?.command,
+      'npm run test:result-contract -- --maxWorkers=1',
+    );
     assert.match(formatHumanPlan(plan), /Baseline CI gates remain required and unchanged\./u);
     assert.doesNotThrow(() => JSON.parse(JSON.stringify(plan)));
   });

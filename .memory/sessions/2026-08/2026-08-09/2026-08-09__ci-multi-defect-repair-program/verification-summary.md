@@ -42,4 +42,9 @@
   - `npm run build` passed after one test-only optional canonical-document assertion was aligned with the public draft type;
   - Playwright passed all three final scenarios across the visual run and its exact-log delta rerun; screenshots were inspected for the answer/warning cards, condition facts, rejection details, History replay, and overflow/readability;
   - the temporary Playwright spec was removed after evidence collection.
-- Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1`: pending.
+- Gate 4 `CI-UNIT-WATCHDOG-CLOSEOUT1` — backend:
+  - `npm run test:ci-gate-alignment` passed 11/11 tests and validated both committed workflows;
+  - the synthetic watchdog returned status 124 and proved its CPU-bound descendant no longer existed;
+  - `npm run test:seam-impact-selector` passed 21/21 tests and retained the one-worker result-contract command;
+  - focused stale unit regressions passed 42/42 tests across Calculus, symbolic Matrix spectral output, and Calculate Integration readback;
+  - the program-wide `test:gate` and browser closeout were moved by user instruction to Gate 7 rather than duplicated at this checkpoint.
