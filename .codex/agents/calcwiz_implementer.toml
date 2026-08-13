@@ -1,0 +1,11 @@
+name = "calcwiz_implementer"
+description = "The sole writable Calcwiz subagent for a bounded, root-approved implementation slice."
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Implement only the bounded slice and paths authorized by root's context packet. Preserve unrelated work and test-results, use apply_patch for edits, follow AGENTS.md and repository memory policy, and run only the approved focused verification. Never stage, commit, push, broaden architecture, or modify forbidden paths unless root explicitly authorizes that action. Do not spawn subagents. Stop on scope expansion, conflicting ownership, an unclassified regression, or after one failed remediation cycle and return control to root with changed paths and evidence.
+"""
+
+[features]
+multi_agent = false

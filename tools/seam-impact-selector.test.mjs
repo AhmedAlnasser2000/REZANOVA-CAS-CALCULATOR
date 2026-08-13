@@ -14,6 +14,21 @@ import {
 } from './seam-impact-selector-core.mjs';
 
 describe('seam impact selector', () => {
+  it('selects the controlled Codex workflow ratchet for project agent configuration', () => {
+    const plan = buildExplicitPathPlan(['.codex/config.toml']);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'codex-agent-workflow-governance',
+    ]);
+    assert.deepEqual(plan.laneIds, ['configuration']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'codex-agent-workflow',
+    ]);
+    assert.deepEqual(plan.requiredBaselineEvidence.map((entry) => entry.id), [
+      'file-sizes',
+    ]);
+  });
+
   it('selects the Graph contract ratchet for Graph-owned source', () => {
     const plan = buildExplicitPathPlan([
       'src/lib/graphing/contracts/validation.ts',

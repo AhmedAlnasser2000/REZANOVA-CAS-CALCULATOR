@@ -69,6 +69,9 @@ jobs:
       - name: Validate memory protocol
         run: npm run test:memory-protocol
 
+      - name: Validate controlled Codex agent workflow
+        run: npm run test:codex-agent-workflow
+
       - name: Enforce Canonical Result V2 producers
         run: npm run test:canonical-result-v2-enforcement
 

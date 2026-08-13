@@ -10,6 +10,26 @@ permissions:
   contents: read
 
 jobs:
+  codex-agent-workflow:
+    name: codex-agent-workflow
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Validate controlled Codex agent workflow
+        run: npm run test:codex-agent-workflow
+
   canonical-result-v2-enforcement:
     name: canonical-result-v2-enforcement
     runs-on: ubuntu-24.04
@@ -70,6 +90,9 @@ jobs:
 
       - name: Validate memory protocol
         run: npm run test:memory-protocol
+
+      - name: Validate controlled Codex agent workflow
+        run: npm run test:codex-agent-workflow
 
       - name: Enforce Canonical Result V2 producers
         run: npm run test:canonical-result-v2-enforcement

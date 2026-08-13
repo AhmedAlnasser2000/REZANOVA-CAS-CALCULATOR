@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export const STATIC_GATE_COMMANDS = [
   'npm run test:memory-protocol',
+  'npm run test:codex-agent-workflow',
   'npm run test:canonical-result-v2-enforcement',
   'npm run test:ci-gate-alignment',
   'npm run test:seam-impact-selector',
@@ -25,6 +26,7 @@ export const CANARY_COMMAND = 'npm run test:canaries:browser';
 export const PACKAGE_COMMAND = 'npm run tauri:build';
 export const SEAM_IMPACT_COMMAND = 'npm run seam:impact -- --github-event --run';
 export const V2_ENFORCEMENT_COMMAND = 'npm run test:canonical-result-v2-enforcement:ci';
+export const CODEX_AGENT_WORKFLOW_COMMAND = 'npm run test:codex-agent-workflow';
 export const UNIT_CI_COMMAND = 'npm run test:unit:ci';
 export const GUARDED_UNIT_CI_COMMAND =
   'timeout --signal=TERM --kill-after=30s 30m npm run test:unit:ci';
@@ -39,6 +41,13 @@ function assertCommands(text, commands, label) {
   for (const command of commands) {
     assertIncludes(text, `run: ${command}`, label);
   }
+}
+
+function workflowJob(workflow, jobName, nextJobName, label) {
+  const start = workflow.indexOf(`  ${jobName}:`);
+  const end = nextJobName ? workflow.indexOf(`  ${nextJobName}:`, start + 1) : workflow.length;
+  if (start < 0 || end < 0) throw new Error(`${label} must include the ${jobName} job`);
+  return workflow.slice(start, end);
 }
 
 function assertCiTriggers(ciWorkflow) {
@@ -61,9 +70,32 @@ function assertV2EnforcementJob(ciWorkflow) {
   const jobIndex = ciWorkflow.indexOf('  canonical-result-v2-enforcement:');
   const commandIndex = ciWorkflow.indexOf(`run: ${V2_ENFORCEMENT_COMMAND}`);
   const ciIndex = ciWorkflow.indexOf('  ci-linux:');
-  if (jobIndex < 0 || commandIndex < jobIndex || ciIndex < 0 || jobIndex >= ciIndex) {
+  if (
+    jobIndex < 0 ||
+    commandIndex < jobIndex ||
+    ciIndex < 0 ||
+    jobIndex >= ciIndex ||
+    commandIndex >= ciIndex
+  ) {
     throw new Error(
       `CI workflow must run the independent canonical-result-v2-enforcement job before ci-linux with ${V2_ENFORCEMENT_COMMAND}`,
+    );
+  }
+}
+
+function assertCodexAgentWorkflowJob(ciWorkflow) {
+  const jobIndex = ciWorkflow.indexOf('  codex-agent-workflow:');
+  const commandIndex = ciWorkflow.indexOf(`run: ${CODEX_AGENT_WORKFLOW_COMMAND}`);
+  const ciIndex = ciWorkflow.indexOf('  ci-linux:');
+  if (
+    jobIndex < 0 ||
+    commandIndex < jobIndex ||
+    ciIndex < 0 ||
+    jobIndex >= ciIndex ||
+    commandIndex >= ciIndex
+  ) {
+    throw new Error(
+      `CI workflow must run the independent codex-agent-workflow job before ci-linux with ${CODEX_AGENT_WORKFLOW_COMMAND}`,
     );
   }
 }
@@ -119,11 +151,13 @@ export function validateCiGateAlignment({
   releaseWorkflow,
   playwrightConfig,
 }) {
+  const ciLinuxJob = workflowJob(ciWorkflow, 'ci-linux', 'e2e-linux', 'CI workflow');
   assertCiTriggers(ciWorkflow);
-  assertCommands(ciWorkflow, STATIC_GATE_COMMANDS, 'CI workflow');
+  assertCommands(ciLinuxJob, STATIC_GATE_COMMANDS, 'CI ci-linux job');
   assertGuardedUnitCommand(ciWorkflow, 'CI workflow');
   assertGuardedUnitCommand(releaseWorkflow, 'Release workflow');
   assertV2EnforcementJob(ciWorkflow);
+  assertCodexAgentWorkflowJob(ciWorkflow);
   assertCiCanaryJob(ciWorkflow);
   assertCiSeamImpactRunner(ciWorkflow);
 

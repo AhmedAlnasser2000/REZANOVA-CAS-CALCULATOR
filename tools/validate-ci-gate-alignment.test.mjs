@@ -6,6 +6,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import {
   CANARY_COMMAND,
+  CODEX_AGENT_WORKFLOW_COMMAND,
   GUARDED_UNIT_CI_COMMAND,
   PACKAGE_COMMAND,
   SEAM_IMPACT_COMMAND,
@@ -26,6 +27,8 @@ function fixture(overrides = {}) {
       '    branches:',
       '      - main',
       'jobs:',
+      '  codex-agent-workflow:',
+      `      - run: ${CODEX_AGENT_WORKFLOW_COMMAND}`,
       '  canonical-result-v2-enforcement:',
       `      - run: ${V2_ENFORCEMENT_COMMAND}`,
       '  ci-linux:',
@@ -58,14 +61,15 @@ describe('CI gate alignment validation', () => {
 
   it('rejects a missing required static gate', () => {
     const input = fixture();
+    const command = 'npm run test:ci-gate-alignment';
     input.ciWorkflow = input.ciWorkflow.replace(
-      `      - run: ${STATIC_GATE_COMMANDS[2]}\n`,
+      `      - run: ${command}\n`,
       '',
     );
 
     assert.throws(
       () => validateCiGateAlignment(input),
-      new RegExp(`CI workflow must include run: ${STATIC_GATE_COMMANDS[2]}`),
+      new RegExp(`CI ci-linux job must include run: ${command}`),
     );
   });
 
@@ -87,6 +91,34 @@ describe('CI gate alignment validation', () => {
     assert.throws(
       () => validateCiGateAlignment(late),
       /before ci-linux/u,
+    );
+  });
+
+  it('rejects a missing or late dedicated Codex agent workflow job', () => {
+    const missing = fixture();
+    missing.ciWorkflow = missing.ciWorkflow.replace(
+      `  codex-agent-workflow:\n      - run: ${CODEX_AGENT_WORKFLOW_COMMAND}\n`,
+      '',
+    );
+    assert.throws(
+      () => validateCiGateAlignment(missing),
+      /independent codex-agent-workflow job/u,
+    );
+
+    const late = fixture();
+    late.ciWorkflow = late.ciWorkflow
+      .replace(`  codex-agent-workflow:\n      - run: ${CODEX_AGENT_WORKFLOW_COMMAND}\n`, '')
+      .concat(`\n  codex-agent-workflow:\n      - run: ${CODEX_AGENT_WORKFLOW_COMMAND}`);
+    assert.throws(() => validateCiGateAlignment(late), /before ci-linux/u);
+
+    const missingCommand = fixture();
+    missingCommand.ciWorkflow = missingCommand.ciWorkflow.replace(
+      `      - run: ${CODEX_AGENT_WORKFLOW_COMMAND}\n  canonical-result-v2-enforcement:`,
+      '  canonical-result-v2-enforcement:',
+    );
+    assert.throws(
+      () => validateCiGateAlignment(missingCommand),
+      /independent codex-agent-workflow job/u,
     );
   });
 

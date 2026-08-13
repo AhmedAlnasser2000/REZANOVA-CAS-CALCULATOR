@@ -1,5 +1,10 @@
 export const SEAM_COMMANDS = [
   {
+    id: 'codex-agent-workflow',
+    label: 'Controlled Codex agent workflow governance ratchet',
+    argv: ['npm', 'run', 'test:codex-agent-workflow'],
+  },
+  {
     id: 'graph-contracts',
     label: 'Graphing contracts, performance budgets, and import boundaries',
     argv: ['npm', 'run', 'test:graph-contracts'],
@@ -131,6 +136,22 @@ const sharedLinearAlgebraLaneMatchers = [
 ];
 
 export const SEAM_REGISTRY = [
+  {
+    id: 'codex-agent-workflow-governance',
+    label: 'Project-scoped controlled Codex agent workflow',
+    matchers: [
+      ...prefix('.codex/'),
+      ...exact(
+        'AGENTS.md',
+        'tools/codex-agent-workflow-core.mjs',
+        'tools/codex-agent-workflow-model-baseline.json',
+        'tools/validate-codex-agent-workflow.mjs',
+        'tools/validate-codex-agent-workflow.test.mjs',
+      ),
+    ],
+    additionalCommandIds: ['codex-agent-workflow'],
+    baselineEvidenceIds: ['file-sizes'],
+  },
   {
     id: 'graphing-contracts',
     label: 'Graphing document, sampling, scene, and renderer-neutral contracts',
@@ -569,5 +590,5 @@ export const LANE_REGISTRY = [
   },
   { id: 'tooling', matchers: prefix('tools/', 'e2e/') },
   { id: 'docs-memory', matchers: prefix('docs/', '.memory/') },
-  { id: 'configuration', matchers: prefix('.github/', 'package', 'tsconfig', 'vite', 'vitest', 'playwright', 'eslint') },
+  { id: 'configuration', matchers: prefix('.github/', '.codex/', 'package', 'tsconfig', 'vite', 'vitest', 'playwright', 'eslint') },
 ];

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "acceptanceReason": "User-approved initial capability-based assignments for CODEX-CONTROLLED-AGENT-WORKFLOW1",
+  "roles": {
+    "calcwiz_explorer": {
+      "model": "gpt-5.6-terra",
+      "modelReasoningEffort": "medium"
+    },
+    "calcwiz_cas_researcher": {
+      "model": "gpt-5.6-sol",
+      "modelReasoningEffort": "high"
+    },
+    "calcwiz_implementer": {
+      "model": "gpt-5.6-sol",
+      "modelReasoningEffort": "medium"
+    },
+    "calcwiz_tester": {
+      "model": "gpt-5.6-terra",
+      "modelReasoningEffort": "medium"
+    },
+    "calcwiz_reviewer": {
+      "model": "gpt-5.6-sol",
+      "modelReasoningEffort": "high"
+    }
+  }
+}

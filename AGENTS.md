@@ -67,6 +67,20 @@
 - Every completed task handoff must list which durable memory files were updated.
 - Follow `docs/workflow/commit-first-gates.md` for the detailed gate contract and wrong-branch recovery procedure.
 
+## Controlled Codex Subagent Policy
+- `DIRECT` root-only work is the default. The existence of `.codex/` configuration does not authorize delegation.
+- `CONTROLLED` and `CRITICAL` routes require explicit user permission for the specific current task. Permission expires when that task completes or its material scope changes; prior permission never carries forward.
+- Root is the sole orchestrator. Only root may spawn, steer, interrupt, or close subagents, and root owns final decisions and the user-facing handoff.
+- At most three subagents may be open concurrently. At most one writable role may be active, and `calcwiz_implementer` is the only writable role.
+- Explorer, CAS Researcher, Tester, and Reviewer are read-only. Tester must never edit tests, baselines, snapshots, configuration, production code, or durable memory.
+- Child agents must not spawn subagents. Recursive delegation is forbidden even when the parent task is authorized.
+- Every delegated task requires a bounded context packet naming goal, role need, architecture, execution path, inspect paths, allowed write paths, forbidden paths, invariants, expected output, verification, and stop conditions.
+- After one failed remediation cycle, delegated remediation stops and control returns to root. Scope expansion, conflicting ownership, unclassified regressions, or missing authority also return control to root.
+- Root or Implementer owns required durable-memory changes. Do not add a Documentation role.
+- Role purpose, permissions, output contracts, and stop conditions are model-independent. Current model assignments live only in the reviewed enforcement baseline.
+- A model assignment change requires an explicitly approved model-migration gate that checks the installed Codex model catalog and current official OpenAI documentation, updates the baseline and affected agent files together, validates configuration and workflow, and records user approval and rationale in durable memory.
+- Never silently replace a retired model, automatically select `latest`, or assume future model families or reasoning levels. Model migration must not widen permissions, concurrency, responsibilities, or spawning authority.
+
 ## Visual Output Verification Policy
 - For any task that changes, validates, benchmarks, or discusses app-visible mathematical output, agents must use Playwright to inspect the real app output visually before calling the gate complete.
 - Unit tests, engine tests, and DOM assertions are necessary but not sufficient for app-visible output gates. They may support the work, but they do not replace Playwright visual verification.

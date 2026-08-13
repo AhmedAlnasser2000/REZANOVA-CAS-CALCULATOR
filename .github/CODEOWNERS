@@ -1,7 +1,10 @@
 * @AhmedAlnasser2000
 
 .github/** @AhmedAlnasser2000
+.codex/** @AhmedAlnasser2000
 AGENTS.md @AhmedAlnasser2000
+tools/codex-agent-workflow* @AhmedAlnasser2000
+tools/validate-codex-agent-workflow* @AhmedAlnasser2000
 src/lib/result-contract/** @AhmedAlnasser2000
 tools/canonical-result-v2-enforcement* @AhmedAlnasser2000
 tools/mathjson-coverage* @AhmedAlnasser2000

@@ -8,7 +8,7 @@
 - `checklists/2026-06/YYYY-MM-DD/` - 15 manual verification checklists across 2 day folders.
 - `checklists/2026-07/YYYY-MM-DD/` - 14 manual verification checklists across 6 day folders.
 - `readiness/` - 5 readiness, dependency, or candidate-metadata documents.
-- `audits/` - 84 audit/status documents.
+- `audits/` - 85 audit/status documents.
 - `source-context/fricas/` - 6 FriCAS context research outputs.
 - `architecture/` - 4 architecture or boundary notes.
 - `references/` - 3 interpreted reference/source notes.
@@ -40,6 +40,7 @@
 - `.memory/research/readiness/poly-core-readiness-matrix.md`
 - `.memory/research/readiness/poly-rat-core0-readiness-matrix.md`
 - `.memory/research/audits/vector-matrix-readiness-audit.md`
+- `.memory/research/audits/ooe-resource-breaker-prerequisite-audit0-2026-08-13.md`
 - `.memory/research/source-context/fricas/fricas-context-memo.md`
 - `.memory/research/references/codex-handoff-integration-pipeline-summary.md`
 - `.memory/research/references/sources.md`
