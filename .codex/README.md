@@ -2,11 +2,22 @@
 
 `AGENTS.md` is authoritative. These project-scoped roles are dormant unless the user explicitly authorizes subagents for the specific current task.
 
+## Task Start Recommendation
+
+Before substantive work on a new meaningful repository task, root performs only enough read-only grounding to classify it, then states the recommended route, the main reason, and whether subagents would be used.
+
+- If `DIRECT` is recommended, root explains briefly and proceeds automatically without waiting for approval.
+- If `CONTROLLED` is recommended, root pauses for explicit task-specific approval before spawning agents.
+- If `CRITICAL` is recommended, root pauses for explicit task-specific approval before spawning agents or beginning critical execution.
+- Status checks, simple questions, and clear continuations do not repeat the recommendation.
+- A material scope change, newly discovered independent task, or completed-task transition requires a fresh recommendation.
+- If the user already names a route, root explains the assessment and honors it without reconfirmation.
+
 ## Routes
 
-- `DIRECT`: root works alone. This is the default.
-- `CONTROLLED`: root may delegate bounded independent work after explicit per-task permission.
-- `CRITICAL`: root may delegate bounded investigation or review after explicit per-task permission, with stricter stop conditions and root-owned decisions.
+- `DIRECT`: cohesive, low-risk work with no useful independent delegation; root works alone. This is the default.
+- `CONTROLLED`: multiple independent investigation, testing, or review lanes with one bounded writer; root may delegate only after explicit per-task permission.
+- `CRITICAL`: unresolved high-risk correctness, schema or persistence, security, destructive recovery, or architecture work requiring stricter stops and root-owned decisions.
 
 Permission expires when the task completes or its material scope changes. Configuration presence, prior permission, or a prior task does not authorize delegation.
 

@@ -67,6 +67,15 @@
 - Every completed task handoff must list which durable memory files were updated.
 - Follow `docs/workflow/commit-first-gates.md` for the detailed gate contract and wrong-branch recovery procedure.
 
+## Task Mode Recommendation Policy
+- Before substantive work on a new meaningful repository task, root performs only enough read-only grounding to classify the task, then states the recommended route, the main reason, and whether subagents would be used.
+- `DIRECT`: explain briefly and proceed automatically without waiting for approval. Use it for cohesive, low-risk work with no useful independent delegation.
+- `CONTROLLED`: pause for explicit task-specific approval before spawning agents. Use it for multiple independent investigation, testing, or review lanes with one bounded writer.
+- `CRITICAL`: pause for explicit task-specific approval before spawning agents or beginning critical execution. Use it for unresolved high-risk correctness, schema or persistence, security, destructive recovery, or architecture work requiring stricter stops.
+- Do not repeat the recommendation for status checks, simple questions, or clear continuations of the current task.
+- A material scope change, newly discovered independent task, or completed-task transition requires a fresh recommendation.
+- If the user already names a route, explain the assessment and honor that route without reconfirmation.
+
 ## Controlled Codex Subagent Policy
 - `DIRECT` root-only work is the default. The existence of `.codex/` configuration does not authorize delegation.
 - `CONTROLLED` and `CRITICAL` routes require explicit user permission for the specific current task. Permission expires when that task completes or its material scope changes; prior permission never carries forward.

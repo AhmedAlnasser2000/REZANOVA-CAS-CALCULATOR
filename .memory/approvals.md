@@ -105,3 +105,21 @@
   source: chat-2026-07-14-canonical-result-v2-enforcement-approval
   canonical_targets: AGENTS.md; tools/canonical-result-v2-enforcement-baseline.json; tools/canonical-result-v2-enforcement-core.mjs; .github/workflows/ci.yml; .memory/sessions/2026-07/2026-07-14/2026-07-14__canonical-result-v2-enforcement/
   notes: Approval covers the named local commit only. No push or GitHub branch-protection mutation is authorized; concurrent Rust OOE files and test-results remain excluded.
+- approved_at_local: 2026-08-13 +03:00
+  approver: user
+  decision: Implement `CODEX-TASK-MODE-RECOMMENDATION1` and use the already-selected `CONTROLLED` route for the current CI Linear Algebra repair.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-08-13-ci-linear-algebra-task-mode-plan
+  canonical_targets: AGENTS.md; .codex/README.md; tools/codex-agent-workflow-core.mjs; tools/validate-codex-agent-workflow.test.mjs; .memory/sessions/2026-08/2026-08-13/2026-08-13__codex-task-mode-recommendation1/
+  notes: The user authorized CONTROLLED execution for this task and two selective commits remain separately approval-gated. No push is authorized; role models, permissions, concurrency, runtime code, and test-results remain unchanged.
+- approved_at_local: 2026-08-14 +03:00
+  approver: user
+  decision: Commit both `CODEX-TASK-MODE-RECOMMENDATION1` and `CI-LINEAR-ALGEBRA-PLAYWRIGHT-DRIVER-REPAIR1`, then begin Gate 2.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-08-14-two-gate-commit-approval
+  canonical_targets: .memory/sessions/2026-08/2026-08-13/2026-08-13__codex-task-mode-recommendation1/; .memory/sessions/2026-08/2026-08-11/2026-08-11__ci-ui-readiness-proof-watchdog-closeout/
+  notes: Approval covers the two named local commits only. No push is authorized; protected test-results remain excluded.
