@@ -46,5 +46,19 @@ describe('statistics descriptive summaries', () => {
     expect(result.exactLatex).toContain('n=10002');
     expect(result.exactLatex).toContain('\\sigma^2');
     expect(result.exactLatex).toContain('s^2');
+    if (result.canonicalResult?.version !== 2) throw new Error('Expected Canonical Result V2.');
+    const populationSpread = result.canonicalResult.answerRows?.rows
+      .find((row) => row.label === 'Population spread');
+    expect(populationSpread?.math).toEqual({
+      canonicalLatex: '\\sigma^2=0.0001,\\ \\sigma=0.009999',
+      mathJson: [
+        'Delimiter',
+        ['Sequence',
+          ['Equal', ['Power', 'sigma', 2], 0.0001],
+          ['Equal', 'sigma', 0.009999],
+        ],
+        "','",
+      ],
+    });
   });
 });

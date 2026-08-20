@@ -185,7 +185,7 @@ describe('runMatrixOperation', () => {
     expect(eigen.resultLatex).toContain(`\\operatorname{eigen}(${eigenLabel})=`);
     expect(eigen.detailSections?.[0]?.lines).toContain(`\\operatorname{tr}(${eigenLabel})=4`);
     expect(eigen.detailSections?.[2]?.lines).toContain(
-      `E_{3}=\\operatorname{Null}(${eigenLabel}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}`,
+      `E_{3}=\\operatorname{Null}(${eigenLabel}-(3)I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}`,
     );
   });
 
@@ -201,8 +201,8 @@ describe('runMatrixOperation', () => {
       matrixB,
     });
 
-    expect(nullSpace.resultLatex).toBe('\\operatorname{Null}(A)=\\{0\\}');
-    expect(columnSpace.resultLatex).toBe('\\operatorname{Col}(A)=\\{0\\}');
+    expect(nullSpace.resultLatex).toBe('\\operatorname{Null}(A)=\\{\\begin{bmatrix}0\\\\0\\end{bmatrix}\\}');
+    expect(columnSpace.resultLatex).toBe('\\operatorname{Col}(A)=\\{\\begin{bmatrix}0\\\\0\\end{bmatrix}\\}');
   });
 
   it('validates whether matrix columns form a basis', () => {
@@ -225,7 +225,7 @@ describe('runMatrixOperation', () => {
     expect(basis.resultLatex).toBe('\\operatorname{basis}(A)=\\text{Yes}');
     expect(basis.approxText).toBe('det(A) = -2');
     expect(basis.detailSections?.map((section) => section.title)).toEqual(['Basis Facts', 'Basis Proof']);
-    expect(basis.detailSections?.[0]?.lines).toContain('\\operatorname{pivot\\ columns}=\\{1, 2\\}');
+    expect(basis.detailSections?.[0]?.lines).toContain('\\operatorname{pivotColumns}(A)=\\{1, 2\\}');
     expect(basis.detailSections?.[1]?.lines).toContain(
       'The matrix is square and every column is a pivot, so its columns form a basis for \\mathbb{R}^{2}.',
     );
@@ -591,7 +591,7 @@ describe('runMatrixOperation', () => {
       'Matrix used those rational eigenvalues to compute the eigenspaces locally.',
     );
     expect(response.detailSections?.[2]?.lines).toContain(
-      'E_{3}=\\operatorname{Null}(A-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+      'E_{3}=\\operatorname{Null}(A-(3)I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
     );
   });
 
@@ -602,7 +602,9 @@ describe('runMatrixOperation', () => {
       matrixB,
     });
 
-    expect(response.resultLatex).toBe('\\operatorname{diag}(A)=A=PDP^{-1}');
+    expect(response.resultLatex).toBe(
+      '\\operatorname{diag}(A)=A=\\begin{bmatrix}1 & -1\\\\1 & 1\\end{bmatrix}\\cdot \\begin{bmatrix}3 & 0\\\\0 & 1\\end{bmatrix}\\cdot \\begin{bmatrix}\\frac{1}{2} & \\frac{1}{2}\\\\-\\frac{1}{2} & \\frac{1}{2}\\end{bmatrix}',
+    );
     expect(response.approxText).toBe('diagonalizable; eigenvalues 3, 1');
     expect(response.detailSections?.map((section) => section.title)).toEqual([
       'Characteristic Polynomial',
@@ -683,7 +685,9 @@ describe('runMatrixOperation', () => {
     expect(response.detailSections?.[0]?.lines).toContain('R=\\begin{bmatrix}5 & 4\\\\0 & 3\\end{bmatrix}');
     expect(response.detailSections?.[1]?.lines).toContain('Q^{T}Q=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
     expect(response.detailSections?.[1]?.lines).toContain('QR=\\begin{bmatrix}3 & 0\\\\4 & 5\\end{bmatrix}');
-    expect(response.detailSections?.[2]?.lines).toContain('r_{12}=q_{1}^{T}a_{2}=4');
+    expect(response.detailSections?.[2]?.lines).toContain(
+      'r_{12}=\\begin{bmatrix}\\frac{3}{5}\\\\\\frac{4}{5}\\end{bmatrix}^{T}\\begin{bmatrix}0\\\\5\\end{bmatrix}=4',
+    );
 
     expect(runMatrixOperation({
       operation: 'qrA',
@@ -701,7 +705,7 @@ describe('runMatrixOperation', () => {
     });
 
     expect(response.resultLatex).toBe(
-      '\\operatorname{proj}_{\\operatorname{Col}(A)}(b)=\\begin{bmatrix}2\\\\3\\\\0\\end{bmatrix}',
+      '\\operatorname{projection}(A,b)=\\begin{bmatrix}2\\\\3\\\\0\\end{bmatrix}',
     );
     expect(response.approxText).toBe('projection in \\mathbb{R}^{3}');
     expect(response.detailSections?.map((section) => section.title)).toEqual([
@@ -709,8 +713,8 @@ describe('runMatrixOperation', () => {
       'Column Projection Proof',
     ]);
     expect(response.detailSections?.[0]?.lines).toContain('Q^{T}b=\\begin{bmatrix}2\\\\3\\end{bmatrix}');
-    expect(response.detailSections?.[1]?.lines).toContain('b-\\operatorname{proj}_{\\operatorname{Col}(A)}(b)=\\begin{bmatrix}0\\\\0\\\\4\\end{bmatrix}');
-    expect(response.detailSections?.[1]?.lines).toContain('Q^{T}(b-\\operatorname{proj}_{\\operatorname{Col}(A)}(b))=\\begin{bmatrix}0\\\\0\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('b-\\operatorname{projection}(A,b)=\\begin{bmatrix}0\\\\0\\\\4\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('Q^{T}(b-\\operatorname{projection}(A,b))=\\begin{bmatrix}0\\\\0\\end{bmatrix}');
 
     expect(runMatrixOperation({
       operation: 'columnProjectionA',

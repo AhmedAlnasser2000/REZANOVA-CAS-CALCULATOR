@@ -189,6 +189,58 @@ describe('producer-proven answer MathJSON', () => {
     }
   });
 
+  it('normalizes exact negative integer products without weakening formal comparison', () => {
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`f(x)=-i`,
+      candidate: candidate([
+        'Equal',
+        ['Apply', 'f', 'x'],
+        ['Multiply', -1, 'ImaginaryUnit'],
+      ]),
+    })).toMatchObject({ ok: true });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`f(x)=-i`,
+      candidate: candidate([
+        'Equal',
+        ['Apply', 'f', 'x'],
+        ['Multiply', 1, 'ImaginaryUnit'],
+      ]),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+
+    const eigenspaceLatex = String.raw`E_{\imaginaryI}=\left\{\begin{bmatrix}\frac{-1}{\imaginaryI}\\1\end{bmatrix}\right\}`;
+    const eigenspace = (numerator: number) => [
+      'Equal',
+      ['Subscript', 'E', 'ImaginaryUnit'],
+      ['Set', ['Matrix', ['List', ['List', ['Divide', numerator, 'ImaginaryUnit']], ['List', 1]], "'[]'"]],
+    ];
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: eigenspaceLatex,
+      candidate: candidate(eigenspace(-1)),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: eigenspaceLatex,
+      candidate: candidate(eigenspace(1)),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+  });
+
+  it('compares evaluated derivative subscripts without discarding request structure', () => {
+    const request = [
+      'Subscript',
+      ['EvaluateAt', ['D', ['Delimiter', ['Add', ['Multiply', 4, ['Power', 't', 2]], ['Multiply', 2, 't']]], 't']],
+      ['Equal', 't', 3],
+    ];
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\left.\frac{\mathrm{d}}{\mathrm{d}t}\left(4t^2+2t\right)\right|_{t=3}`,
+      candidate: candidate(request),
+    })).toMatchObject({ ok: true });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\left.\frac{\mathrm{d}}{\mathrm{d}t}\left(4t^2+2t\right)\right|_{t=4}`,
+      candidate: candidate(request),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+  });
+
   it('fails closed on formal name, case, arity, order, subscript, matrix, and value near-misses', () => {
     const failures = [
       [String.raw`f(x)`, ['Apply', 'F', 'x']],

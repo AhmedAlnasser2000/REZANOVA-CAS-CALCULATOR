@@ -56,4 +56,30 @@ describe('Statistics vertical answer rows', () => {
     expect(roundedRows).not.toContain('-1.333333');
     expect(defaultRows).toContain('-1.333333');
   });
+
+  it('keeps hypothesis parentheses in producer-owned MathJSON evidence', () => {
+    const outcome = buildStatisticsModeRunPayload({
+      inputLatex: 'meanInference(values={8,9,10,11},mode=test,level=0.95,mu0=8,alternative=greater)',
+      screenHint: 'meanInference',
+      workingSourceHint: 'dataset',
+    }).outcome;
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 2) {
+      throw new Error('Expected a Canonical Result V2 mean-test success.');
+    }
+    const hypotheses = outcome.canonicalResult.answerRows?.rows
+      .find((row) => row.label === 'Hypotheses');
+    expect(hypotheses?.math).toEqual({
+      canonicalLatex: 'H_0=(\\mu=8),\\ H_a=(\\mu>8)',
+      mathJson: [
+        'Delimiter',
+        ['Sequence',
+          ['Equal', ['Subscript', 'H', 0], ['Delimiter', ['Equal', 'mu', 8]]],
+          ['Equal', ['Subscript', 'H', 'a'], ['Delimiter', ['Greater', 'mu', 8]]],
+        ],
+        "','",
+      ],
+    });
+  });
 });

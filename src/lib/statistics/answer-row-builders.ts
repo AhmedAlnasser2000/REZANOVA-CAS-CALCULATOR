@@ -190,8 +190,8 @@ export function meanTestAnswerReadback(input: {
       label: 'Hypotheses',
       latex: `H_0=(\\mu=${statisticsNumberToLatex(input.mu0)}),\\ H_a=(\\mu${input.alternativeSymbol}${statisticsNumberToLatex(input.mu0)})`,
       mathJson: statisticsMathSequence(
-        ['Equal', ['Subscript', 'H', 0], ['Equal', 'mu', statisticsMathNumber(input.mu0)]],
-        ['Equal', ['Subscript', 'H', 'a'], alternativeRelation],
+        ['Equal', ['Subscript', 'H', 0], ['Delimiter', ['Equal', 'mu', statisticsMathNumber(input.mu0)]]],
+        ['Equal', ['Subscript', 'H', 'a'], ['Delimiter', alternativeRelation]],
       ),
     },
     {

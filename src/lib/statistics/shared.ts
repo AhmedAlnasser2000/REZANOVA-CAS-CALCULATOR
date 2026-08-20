@@ -9,7 +9,7 @@ import type {
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
-import { formatApproxNumber, formatNumber, numberToLatex } from '../display/format';
+import { formatApproxNumber, formatNumber } from '../display/format';
 import { getNumericOutputSettings } from '../display/numeric-output';
 import { parseSignedNumberInput } from '../numeric/signed-number';
 
@@ -209,8 +209,15 @@ export function formatStatisticsNumber(value: number) {
   return formatApproxNumber(value);
 }
 
+export function statisticsCanonicalNumber(value: number) {
+  if (!Number.isFinite(value)) return undefined;
+  const normalized = Math.abs(value) < 1e-10 ? 0 : value;
+  return Number.parseFloat(normalized.toFixed(getNumericOutputSettings().approxDigits));
+}
+
 export function statisticsNumberToLatex(value: number) {
-  return numberToLatex(value, getNumericOutputSettings().approxDigits);
+  const rounded = statisticsCanonicalNumber(value);
+  return rounded === undefined ? '\\text{undefined}' : `${rounded}`;
 }
 
 export const DEFAULT_STATISTICS_SOURCE_SYNC_STATE: StatisticsSourceSyncState = {

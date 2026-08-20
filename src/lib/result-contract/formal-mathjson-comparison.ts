@@ -20,6 +20,8 @@ const FORMAL_NAME_ALIASES = new Map([
   ['dimension', 'Dimension'],
   ['erf', 'Erf'],
   ['erfc', 'Erfc'],
+  ['\\imaginaryI', 'ImaginaryUnit'],
+  ['i', 'ImaginaryUnit'],
   ['norm', 'Norm'],
   ['tr', 'Trace'],
 ]);
@@ -47,7 +49,7 @@ function normalizeSubscriptedName(value: string): FormalComparisonValue {
   const parts = value.split('_');
   if (parts.length === 1 || parts.some((part) => !part)) return value;
   const normalizePart = (part: string): FormalComparisonValue =>
-    /^[0-9]+$/u.test(part) ? Number(part) : part;
+    /^[0-9]+$/u.test(part) ? Number(part) : FORMAL_NAME_ALIASES.get(part) ?? part;
   let suffix = normalizePart(parts.at(-1)!);
   for (let index = parts.length - 2; index >= 1; index -= 1) {
     suffix = ['Subscript', normalizePart(parts[index]), suffix];
@@ -156,6 +158,10 @@ function exactIntegerProduct(value: unknown): { coefficient: number; factors: un
   if (typeof value === 'number' && Number.isInteger(value)) {
     return { coefficient: value, factors: [] };
   }
+  if (Array.isArray(value) && value[0] === 'Negate' && value.length === 2) {
+    const negated = exactIntegerProduct(value[1]);
+    return { coefficient: -negated.coefficient, factors: negated.factors };
+  }
   if (Array.isArray(value) && value[0] === 'Multiply') {
     return value.slice(1).reduce<{ coefficient: number; factors: unknown[] }>((result, factor) => {
       const next = exactIntegerProduct(factor);
@@ -186,7 +192,7 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
   if (typeof value === 'string') {
     if (value === 'Yes') return 'True';
     if (value === 'No') return 'False';
-    return normalizeSubscriptedName(value);
+    return normalizeFormalName(value);
   }
   if (!Array.isArray(value) || typeof value[0] !== 'string') return undefined;
 
@@ -260,8 +266,17 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
       ? undefined
       : ['Add', left, ['Negate', right]];
   }
+  if (head === 'Multiply') {
+    const product = exactIntegerProduct(value);
+    if (product.coefficient < 0) {
+      return normalizeFormalValue(productFromIntegerCoefficient(
+        product.coefficient,
+        product.factors,
+      ));
+    }
+  }
   if (head === 'Subscript' && operands.length === 2) {
-    const base = normalizeFormalName(operands[0]);
+    const base = normalizeFormalName(operands[0]) ?? normalizeFormalValue(operands[0]);
     const arrowSubscript = typeof operands[1] === 'string'
       ? /^([^']+)\\leftarrow([^']+)'?$/u.exec(operands[1])
       : null;

@@ -181,7 +181,7 @@ describe('runVectorOperation', () => {
     });
     expect(dependent.approxText).toBe('1 basis direction; dependent input skipped');
     expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines).toEqual([
-      'r_{2}=v-\\operatorname{proj}_{w_{1}}(v)=0',
+      'r_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\0\\end{bmatrix}',
       'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
     ]);
   });
@@ -231,7 +231,7 @@ describe('runVectorOperation', () => {
     });
     expect(dependent.answerRows?.rows).toHaveLength(2);
     expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines)
-      .toContain('r_{3}=r-\\operatorname{proj}_{w_{1}}(r)-\\operatorname{proj}_{w_{2}}(r)=0');
+      .toContain('r_{3}=r-\\operatorname{proj}_{w_{1}}(r)-\\operatorname{proj}_{w_{2}}(r)=\\begin{bmatrix}0\\\\0\\end{bmatrix}');
   });
 
   it('uses exact vector sidecars for finite-decimal projection and orthogonality readback', () => {

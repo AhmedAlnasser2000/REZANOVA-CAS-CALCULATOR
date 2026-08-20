@@ -8,7 +8,7 @@ import { roundedApproxNumberValue } from '../display/notation/numeric-output';
 import type { MeanInferenceSummary } from './inference';
 import type { DescriptiveStatisticsSummary } from './descriptive';
 import type { RegressionDiagnostics, RegressionFitSummary } from './quality-readback';
-import { formatStatisticsNumber } from './shared';
+import { formatStatisticsNumber, statisticsCanonicalNumber } from './shared';
 
 export type StatisticsMathJsonRouteId = Extract<MathJsonRouteId, `statistics.${string}`>;
 
@@ -19,8 +19,7 @@ export type StatisticsOwnedMathJsonLeaf = {
 };
 
 export function statisticsMathNumber(value: number) {
-  if (!Number.isFinite(value)) return undefined;
-  return roundedApproxNumberValue(value);
+  return statisticsCanonicalNumber(value);
 }
 
 function finiteMathNumber(value: number, label: string) {
@@ -177,8 +176,8 @@ export function meanTestMathJsonLeaves(input: {
   return primaryMathJsonLeaf(
     input.canonicalLatex,
     statisticsMathSequence(
-      ['Equal', ['Subscript', 'H', 0], ['Equal', 'mu', statisticsMathNumber(input.mu0)]],
-      ['Equal', ['Subscript', 'H', 'a'], alternativeRelation],
+      ['Equal', ['Subscript', 'H', 0], ['Delimiter', ['Equal', 'mu', statisticsMathNumber(input.mu0)]]],
+      ['Equal', ['Subscript', 'H', 'a'], ['Delimiter', alternativeRelation]],
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
       ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
       ['Equal', ['InvisibleOperator', 'S', 'E'], statisticsMathNumber(input.standardError)],

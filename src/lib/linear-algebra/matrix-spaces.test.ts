@@ -24,7 +24,7 @@ describe('runMatrixSpaceOperation', () => {
       '\\operatorname{rank}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})+\\operatorname{nullity}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})=2',
     );
     expect(response.detailSections?.[1]?.lines).toContain(
-      '\\operatorname{pivot\\ columns}=\\{1\\}',
+      '\\operatorname{pivotColumns}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})=\\{1\\}',
     );
     expect(response.detailSections?.[1]?.lines).toContain(
       'Each free variable creates one basis vector for the homogeneous system.',

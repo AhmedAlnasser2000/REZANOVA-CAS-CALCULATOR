@@ -22,7 +22,7 @@ describe('matrix eigen analysis', () => {
       'Matrix formed the characteristic polynomial, then Equation found the exact eigenvalues.',
     );
     expect(response.detailSections?.[2]?.lines).toContain(
-      'E_{3}=\\operatorname{Null}(A-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+      'E_{3}=\\operatorname{Null}(A-(3)I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
     );
   });
 
@@ -36,7 +36,7 @@ describe('matrix eigen analysis', () => {
     expect(response.resultLatex).toContain(`\\operatorname{eigen}(${label})=`);
     expect(response.detailSections?.[0]?.lines).toContain(`\\operatorname{tr}(${label})=4`);
     expect(response.detailSections?.[2]?.lines).toContain(
-      `E_{3}=\\operatorname{Null}(${label}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}`,
+      `E_{3}=\\operatorname{Null}(${label}-(3)I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}`,
     );
   });
 

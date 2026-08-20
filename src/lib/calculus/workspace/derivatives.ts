@@ -362,7 +362,7 @@ export function buildCalculusDerivativeStepsEvidence({
           ? {
               requestMathJson: [
                 'Subscript',
-                ['EvaluateAt', ['Function', ['Block', ['D', bodyAst, variable]], variable]],
+                ['EvaluateAt', ['D', ['Delimiter', bodyAst], variable]],
                 ['Equal', variable, pointAst],
               ],
             }
