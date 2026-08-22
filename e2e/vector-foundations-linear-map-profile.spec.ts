@@ -1,10 +1,14 @@
 import { mkdir } from 'node:fs/promises';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { openLauncherApp, setMathFieldLatex } from './helpers';
 import {
   expectAnswerOverflowReady,
   replayLatestHistoryEntry,
 } from './calculus-integral-evidence';
+import {
+  setMatrixScalarValues,
+  setVectorScalarValues,
+} from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/vector-foundations-linear-map-profile';
 
@@ -16,26 +20,8 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-function vectorCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Vector ${name} name`) })
-    .first();
-}
-
-function matrixCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Matrix ${name} name`) })
-    .first();
-}
-
 async function setVector(page: Page, name: string, values: readonly number[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
-  const inputs = vectorCard(page, name).locator('.linear-algebra-vector-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-    await inputs.nth(index).blur();
-  }
+  await setVectorScalarValues(page, name, values);
 }
 
 async function addVector(page: Page, name: string, values: readonly number[]) {
@@ -51,14 +37,7 @@ async function setMatrix(
   columns: number,
   values: readonly number[],
 ) {
-  await page.getByLabel(`Matrix ${name} rows`).fill(String(rows));
-  await page.getByLabel(`Matrix ${name} columns`).fill(String(columns));
-  const inputs = matrixCard(page, name).locator('.linear-algebra-matrix-grid input');
-  await expect(inputs).toHaveCount(rows * columns);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-    await inputs.nth(index).blur();
-  }
+  await setMatrixScalarValues(page, name, rows, columns, values);
 }
 
 async function rawAnswerLatex(page: Page) {

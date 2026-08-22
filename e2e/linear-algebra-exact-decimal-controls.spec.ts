@@ -6,23 +6,12 @@ import {
   openSettingsPanel,
   setMathFieldLatex,
 } from './helpers';
+import { setVectorScalarValues } from './linear-algebra-scalar-driver';
 
 const SCREENSHOT_DIR = '.task_tmp/linear-algebra-exact-decimal-controls1';
 
-function vectorCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Vector ${name} name`) })
-    .first();
-}
-
 async function setVector(page: Page, name: string, values: readonly number[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
-  const inputs = vectorCard(page, name).locator('.linear-algebra-vector-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-    await inputs.nth(index).blur();
-  }
+  await setVectorScalarValues(page, name, values);
 }
 
 async function rawLatex(locator: Locator) {

@@ -767,7 +767,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(eigen.detailSections?.map((section) => section.title) ?? [])
       .not.toContain('Equation Boundary');
     expect(eigen.detailSections?.[2]?.lines ?? []).toContain(
-      'E_{3}=\\operatorname{Null}(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+      'E_{3}=\\operatorname{Null}(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}-(3)I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
     );
 
     const diagonalizeLatex = '\\operatorname{diag}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';

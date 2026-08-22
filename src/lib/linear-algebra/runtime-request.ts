@@ -12,8 +12,6 @@ import type {
   VectorOperation,
 } from '../../types/calculator';
 import {
-  numericMatrixFromNamedValue,
-  numericVectorFromNamedValue,
   cloneMatrixNamedValues,
   cloneVectorNamedValues,
   type LinearAlgebraMatrixNamedValue,
@@ -29,6 +27,10 @@ import {
   resolveMatrixNamedValueOperand,
   resolveVectorNamedValueOperand,
 } from './scalar-operands';
+import {
+  projectMatrixNamedValueToNumeric,
+  projectVectorNamedValueToNumeric,
+} from './numeric-scalar-projection';
 
 export {
   dispatchMatrixEditorLatex,
@@ -86,6 +88,12 @@ export {
   resolveLinearAlgebraScalarWire,
 } from './scalar-wire';
 export {
+  matrixActionOperandSides,
+  projectMatrixNamedValueToNumeric,
+  projectVectorNamedValueToNumeric,
+  vectorActionOperandSides,
+} from './numeric-scalar-projection';
+export {
   resolveMatrixNamedValueOperand,
   resolveVectorNamedValueOperand,
 } from './scalar-operands';
@@ -109,20 +117,29 @@ export function buildActiveMatrixRuntimeRequest(
   values: readonly LinearAlgebraMatrixNamedValue[],
   leftId: string,
   rightId: string,
+  requiredSides: 'left' | 'right' | 'both' = 'both',
 ): { inputLatex: string; request: RunMatrixModeRequest } {
   const activeValues = activeMatrixValuePair(values, leftId, rightId);
   const inputLatex = matrixActionLabel(operation, activeValues.left.name, activeValues.right.name);
-  const matrixA = numericMatrixFromNamedValue(activeValues.left);
-  const matrixB = numericMatrixFromNamedValue(activeValues.right);
-  if (!matrixA || !matrixB) {
+  const left = projectMatrixNamedValueToNumeric(activeValues.left);
+  const right = projectMatrixNamedValueToNumeric(activeValues.right);
+  if (
+    (requiredSides !== 'right' && !left)
+    || (requiredSides !== 'left' && !right)
+    || (!left && !right)
+  ) {
     throw new Error('This Matrix action requires the symbolic Matrix producer.');
   }
+  const resolvedLeft = left ?? right!;
+  const resolvedRight = right ?? left!;
   return {
     inputLatex,
     request: {
       operation,
-      matrixA,
-      matrixB,
+      matrixA: resolvedLeft.value,
+      matrixB: resolvedRight.value,
+      ...(resolvedLeft.exactValue ? { exactMatrixA: resolvedLeft.exactValue } : {}),
+      ...(resolvedRight.exactValue ? { exactMatrixB: resolvedRight.exactValue } : {}),
       editorExpressionLatex: inputLatex,
       matrixOperandLatexA: activeValues.left.name,
       matrixOperandLatexB: activeValues.right.name,
@@ -136,20 +153,29 @@ export function buildActiveVectorRuntimeRequest(
   leftId: string,
   rightId: string,
   angleUnit: RunVectorModeRequest['angleUnit'],
+  requiredSides: 'left' | 'right' | 'both' = 'both',
 ): { inputLatex: string; request: RunVectorModeRequest } {
   const activeValues = activeVectorValuePair(values, leftId, rightId);
   const inputLatex = vectorActionLabel(operation, activeValues.left.name, activeValues.right.name);
-  const vectorA = numericVectorFromNamedValue(activeValues.left);
-  const vectorB = numericVectorFromNamedValue(activeValues.right);
-  if (!vectorA || !vectorB) {
+  const left = projectVectorNamedValueToNumeric(activeValues.left);
+  const right = projectVectorNamedValueToNumeric(activeValues.right);
+  if (
+    (requiredSides !== 'right' && !left)
+    || (requiredSides !== 'left' && !right)
+    || (!left && !right)
+  ) {
     throw new Error('This Vector action requires the symbolic Vector producer.');
   }
+  const resolvedLeft = left ?? right!;
+  const resolvedRight = right ?? left!;
   return {
     inputLatex,
     request: {
       operation,
-      vectorA,
-      vectorB,
+      vectorA: resolvedLeft.value,
+      vectorB: resolvedRight.value,
+      ...(resolvedLeft.exactValue ? { exactVectorA: resolvedLeft.exactValue } : {}),
+      ...(resolvedRight.exactValue ? { exactVectorB: resolvedRight.exactValue } : {}),
       angleUnit,
       editorExpressionLatex: inputLatex,
       vectorOperandLatexA: activeValues.left.name,

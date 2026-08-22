@@ -146,19 +146,26 @@ test('Notebook inline math stays visually seamless and template insertion leaves
   });
 
   await keyboard.getByRole('button', { name: 'Fraction' }).click();
-  const insertionState = await field.evaluate((mathField) => ({
-    collapsed: mathField.selectionIsCollapsed,
+  const insertionState = await field.evaluate((element) => {
+    const mathField = element as HTMLElement & {
+      selectionIsCollapsed: boolean;
+      getValue: (format: string) => string;
+    };
+    return {
+      collapsed: mathField.selectionIsCollapsed,
     groupHighlight: getComputedStyle(
       mathField.shadowRoot!.querySelector('.ML__contains-highlight')!,
     ).backgroundColor,
     value: mathField.getValue('latex'),
-  }));
+    };
+  });
   expect(insertionState.collapsed).toBe(true);
   expect(insertionState.groupHighlight).toBe('rgba(0, 0, 0, 0)');
   expect(insertionState.value).toContain('\\frac');
 
   await page.keyboard.type('x');
-  await expect.poll(() => field.evaluate((mathField) => mathField.getValue('latex')))
+  await expect.poll(() => field.evaluate((element) =>
+    (element as HTMLElement & { getValue: (format: string) => string }).getValue('latex')))
     .toContain('\\frac{x}');
 });
 

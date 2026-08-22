@@ -1,6 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { openLauncherApp, setMathFieldLatex } from './helpers';
+import {
+  expectMatrixScalarCellCount,
+  expectVectorScalarCellCount,
+} from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/linear-algebra-dimension-contract1';
 
@@ -17,7 +21,7 @@ test('Matrix distinguishes the 8 by 8 editor cap from the 6 by 6 exact RREF cap'
 
   await page.getByLabel('Matrix A rows').fill('8');
   await page.getByLabel('Matrix A columns').fill('8');
-  await expect(page.locator('.linear-algebra-value-card').first().locator('.matrix-grid input')).toHaveCount(64);
+  await expectMatrixScalarCellCount(page, 'A', 64);
 
   await setMathFieldLatex(page, String.raw`\operatorname{rank}\left(A\right)`);
   await page.getByTestId('editor-runtime-run').click();
@@ -49,7 +53,7 @@ test('Vector accepts length 8 and stops an inline length-9 operand clearly', asy
   await openLauncherApp(page, 'Linear', 'Vector');
 
   await page.getByLabel('Vector u length').fill('8');
-  await expect(page.locator('.linear-algebra-value-card').first().locator('.vector-grid input')).toHaveCount(8);
+  await expectVectorScalarCellCount(page, 'u', 8);
   await page.getByRole('button', { name: 'F3 ‖u‖' }).click();
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
 

@@ -150,12 +150,14 @@ export function runMatrixSpaceOperation(input: MatrixSpaceInput): MatrixResponse
       warnings: [],
     });
     const primaryLatex = `\\operatorname{Null}(${input.label})=${basisLatex(basis, columns)}`;
+    const basisSet = exactVectorSetMathJson(basis.length > 0 ? basis : [zeroVector]);
     return attachLinearAlgebraCanonicalEvidence(response, {
       primary: canonicalLeafEvidence(
         primaryLatex,
-        equationMathJson(operatorMathJson('Null', operand), exactVectorSetMathJson(
-          basis.length > 0 ? basis : [zeroVector],
-        )),
+        equationMathJson(
+          operatorMathJson('Null', operand),
+          basis.length > 0 ? operatorMathJson('span', basisSet) : basisSet,
+        ),
         'matrix.spaces.native-null-space',
       ),
       details: [

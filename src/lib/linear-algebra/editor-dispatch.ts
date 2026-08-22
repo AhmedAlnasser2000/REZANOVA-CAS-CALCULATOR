@@ -23,12 +23,14 @@ import {
 import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
 import {
   matrixNamedValueNames,
-  isScalarMatrixNamedValue,
-  isScalarVectorNamedValue,
   vectorNamedValueNames,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
+import {
+  matrixExpressionUsesOnlyNumericOperands,
+  vectorExpressionUsesOnlyNumericOperands,
+} from './numeric-scalar-projection';
 import {
   evaluateMatrixExpression,
   type EvaluatedMatrixOperand,
@@ -50,7 +52,7 @@ import {
   dispatchVectorFamilyExpression,
 } from './vector-family-dispatch';
 import { dispatchSymbolicVectorEditorLatex } from './symbolic-vector-editor';
-import { dispatchSymbolicMatrixEditorLatex } from './symbolic-matrix-editor';
+import { dispatchSymbolicMatrixInput } from './editor-symbolic-dispatch';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -732,20 +734,10 @@ function vectorUnaryRequest(
 
 export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): MatrixEditorDispatchResult {
   const matrixValues = input.matrixValues ?? [];
-  const usesScalarProducer = input.domain === 'complex'
-    || input.substitutionMode === 'use-stored-values'
-    || matrixValues.some(isScalarMatrixNamedValue);
-  if (usesScalarProducer) {
-    return dispatchSymbolicMatrixEditorLatex({
-      latex: input.latex,
-      matrixValues,
-      activeMatrixLeftId: input.activeMatrixLeftId,
-      activeMatrixRightId: input.activeMatrixRightId,
-      domain: input.domain ?? 'real',
-      substitutionMode: input.substitutionMode ?? 'symbolic',
-      storedVariables: input.storedVariables ?? [],
-      complexExactForm: input.complexExactForm ?? 'rectangular',
-    });
+  const requiresScalarContext = input.domain === 'complex'
+    || input.substitutionMode === 'use-stored-values';
+  if (requiresScalarContext) {
+    return dispatchSymbolicMatrixInput(input, matrixValues);
   }
   const parsed = parseLinearAlgebraEditorLatex(input.latex, {
     mode: 'matrix',
@@ -753,16 +745,7 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   });
   if (!parsed.ok) {
     if (matrixValues.length > 0) {
-      const symbolic = dispatchSymbolicMatrixEditorLatex({
-        latex: input.latex,
-        matrixValues,
-        activeMatrixLeftId: input.activeMatrixLeftId,
-        activeMatrixRightId: input.activeMatrixRightId,
-        domain: input.domain ?? 'real',
-        substitutionMode: input.substitutionMode ?? 'symbolic',
-        storedVariables: input.storedVariables ?? [],
-        complexExactForm: input.complexExactForm ?? 'rectangular',
-      });
+      const symbolic = dispatchSymbolicMatrixInput(input, matrixValues);
       if (symbolic.ok) return symbolic;
       if (symbolic.message.includes('imaginary unit i')) return symbolic;
     }
@@ -783,6 +766,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
 
   const expression = parsed.expression;
+  if (!matrixExpressionUsesOnlyNumericOperands(expression, matrixValues)) {
+    return dispatchSymbolicMatrixInput(input, matrixValues);
+  }
   const canonicalInput = {
     ...input,
     latex: formatLinearAlgebraEditorExpression(expression),
@@ -966,9 +952,9 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     && input.storedVariables
     && input.complexExactForm,
   );
-  const preferSymbolic = input.domain === 'complex'
-    || input.vectorValues?.some(isScalarVectorNamedValue) === true;
-  if (canDispatchSymbolic && preferSymbolic) {
+  const requiresScalarContext = input.domain === 'complex'
+    || input.substitutionMode === 'use-stored-values';
+  if (canDispatchSymbolic && requiresScalarContext) {
     const symbolic = dispatchSymbolicVectorEditorLatex({
       latex: input.latex,
       vectorValues: input.vectorValues ?? [],
@@ -984,6 +970,17 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
 
   const numeric = dispatchNumericVectorEditorLatex(input);
   if (numeric.ok || !canDispatchSymbolic) return numeric;
+  const routeProbe = parseLinearAlgebraEditorLatex(input.latex, {
+    mode: 'vector',
+    vectorNamedValues: vectorNamedValueNames(input.vectorValues),
+    scalarDomain: input.domain,
+  });
+  if (
+    routeProbe.ok
+    && vectorExpressionUsesOnlyNumericOperands(routeProbe.expression, input.vectorValues ?? [])
+  ) {
+    return numeric;
+  }
   const symbolic = dispatchSymbolicVectorEditorLatex({
     latex: input.latex,
     vectorValues: input.vectorValues ?? [],

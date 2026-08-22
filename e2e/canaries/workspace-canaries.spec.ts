@@ -89,6 +89,9 @@ async function runCanary(page: Page, canary: CanaryCase) {
     await page.getByTestId('editor-runtime-run').click();
     return;
   }
+  if (driver.kind !== 'table') {
+    throw new Error(`Unsupported canary driver: ${driver.kind}`);
+  }
 
   await openTable(page);
   await setMathFieldLatex(page, driver.inputLatex, 'table-primary-editor');

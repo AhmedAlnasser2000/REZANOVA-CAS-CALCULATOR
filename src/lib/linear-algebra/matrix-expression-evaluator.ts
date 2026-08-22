@@ -33,9 +33,9 @@ import {
 import type { LinearAlgebraEditorExpression } from './editor-parser';
 import {
   matrixValueByName,
-  numericMatrixFromNamedValue,
   type LinearAlgebraMatrixNamedValue,
 } from './named-values';
+import { projectMatrixNamedValueToNumeric } from './numeric-scalar-projection';
 
 export type EvaluatedMatrixOperand = {
   matrix: NumericMatrix;
@@ -86,8 +86,8 @@ function operandFromNamedNumeric(
   matrix: NumericMatrix,
   name: string,
   displayLatex: string,
+  exactMatrix = exactMatrixFromNumeric(matrix),
 ): EvaluatedMatrixOperand {
-  const exactMatrix = exactMatrixFromNumeric(matrix);
   return {
     matrix: cloneMatrix(matrix),
     named: name,
@@ -107,15 +107,20 @@ function evaluateNamedMatrix(
 ): MatrixExpressionEvaluation {
   const namedValue = matrixValueByName(input.matrixValues, expression.name);
   if (namedValue) {
-    const numericValue = numericMatrixFromNamedValue(namedValue);
-    if (!numericValue) {
+    const projection = projectMatrixNamedValueToNumeric(namedValue);
+    if (!projection) {
       return { ok: false, message: 'This Matrix expression requires a symbolic-capable operation.' };
     }
-    const dimensionStop = matrixDimensionStop(numericValue);
+    const dimensionStop = matrixDimensionStop(projection.value);
     if (dimensionStop) return dimensionStop;
     return {
       ok: true,
-      operand: operandFromNamedNumeric(numericValue, expression.name, expression.displayLatex),
+      operand: operandFromNamedNumeric(
+        projection.value,
+        expression.name,
+        expression.displayLatex,
+        projection.exactValue ? exactMatrixFromWire(projection.exactValue) : null,
+      ),
     };
   }
 

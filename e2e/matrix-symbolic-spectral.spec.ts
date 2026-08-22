@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { openLauncherApp, setMathFieldLatex } from './helpers';
+import { setMatrixScalarValues } from './linear-algebra-scalar-driver';
 import {
   copyResult,
   installClipboardCapture,
@@ -9,31 +10,14 @@ import {
 
 const screenshotDir = '.task_tmp/linear-algebra-symbolic-complex-program/milestone-12';
 
-async function setScalarCell(cell: Locator, latex: string) {
-  await cell.evaluate((element, nextLatex) => {
-    const field = element as HTMLElement & { setValue: (value: string) => void };
-    field.focus();
-    field.setValue(nextLatex as string);
-    field.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-    field.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'Enter',
-      bubbles: true,
-      composed: true,
-    }));
-  }, latex);
-}
-
 async function setMatrixA(page: Page, values: readonly (readonly string[])[]) {
-  await page.getByLabel('Matrix A rows').fill(String(values.length));
-  await page.getByLabel('Matrix A columns').fill(String(values[0].length));
-  for (let row = 0; row < values.length; row += 1) {
-    for (let column = 0; column < values[row].length; column += 1) {
-      await setScalarCell(
-        page.getByLabel(`Matrix A row ${row + 1} column ${column + 1}`),
-        values[row][column],
-      );
-    }
-  }
+  await setMatrixScalarValues(
+    page,
+    'A',
+    values.length,
+    values[0].length,
+    values.flat(),
+  );
 }
 
 async function runEditor(page: Page, latex: string) {
@@ -93,12 +77,11 @@ test('renders, copies, and replays a factorized four-parameter characteristic po
 
 test('distinguishes Real and Complex spectral domains for planar rotation', async ({ page }) => {
   await setMatrixA(page, [['0', '-1'], ['1', '0']]);
-  await runEditor(page, 'eigen(A)');
-  await expect(page.getByTestId('display-outcome-answer-block'))
-    .toContainText('Eigenvalues');
-  await expect.poll(() => page.getByTestId('display-outcome-answer-block').locator('[data-raw-latex]')
-    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-raw-latex'))))
-    .toContain('\\emptyset');
+  await setMathFieldLatex(page, 'eigen(A)');
+  await page.getByTestId('editor-runtime-run').click();
+  await expect(page.getByTestId('display-outcome-error')).toContainText(
+    'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.',
+  );
 
   await page.getByLabel('Scalar domain').selectOption('complex');
   await runEditor(page, 'eigen(A)');

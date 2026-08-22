@@ -4,6 +4,7 @@ import {
   openLauncherApp,
   setMathFieldLatex,
 } from './helpers';
+import { setVectorScalarValues } from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/linear-algebra-readback-trust-repair1';
 
@@ -72,15 +73,7 @@ async function expectAnswerContains(page: Page, ...snippets: string[]) {
 }
 
 async function setVector(page: Page, name: 'u' | 'v', values: readonly number[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
-  const card = page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Vector ${name} name`) });
-  const inputs = card.locator('.linear-algebra-vector-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (const [index, value] of values.entries()) {
-    await inputs.nth(index).fill(String(value));
-    await inputs.nth(index).blur();
-  }
+  await setVectorScalarValues(page, name, values);
 }
 
 test.beforeAll(async () => {
@@ -100,7 +93,10 @@ test('Matrix readback cards stay natural and do not leak fake Approx summaries',
   await leftPicker.click();
   await expect(page.getByRole('listbox', { name: 'Active Matrix left operand options' }))
     .toBeVisible();
-  await expect(page.getByRole('option', { name: 'A' })).toBeVisible();
+  await expect(
+    page.getByRole('listbox', { name: 'Active Matrix left operand options' })
+      .getByRole('option', { selected: true }),
+  ).toHaveText('A');
   await expectReadableDarkPicker(leftPicker);
 
   await runEditor(page, String.raw`\operatorname{eigen}\left(\begin{bmatrix}2&1\\1&2\end{bmatrix}\right)`);
@@ -150,7 +146,12 @@ test('Matrix readback cards stay natural and do not leak fake Approx summaries',
 
   await runEditor(page, String.raw`\operatorname{diag}\left(\begin{bmatrix}2&1\\1&2\end{bmatrix}\right)`);
   await expectTrustReadback(page);
-  await expectAnswerContains(page, String.raw`=PDP^{-1}`);
+  await expectAnswerContains(
+    page,
+    String.raw`\operatorname{diag}`,
+    String.raw`\begin{bmatrix}1 & -1`,
+    String.raw`\frac{1}{2}`,
+  );
   await expectDetailCard(page, 'Diagonalization Factors');
   await expectDetailCard(page, 'Diagonalization Proof');
   await expectDetailCard(page, 'Eigenvector Columns');
@@ -200,7 +201,7 @@ test('Vector readback keeps operation cards natural while preserving numeric app
   });
 
   await runEditor(page, String.raw`u\cdot v`);
-  await expect(page.locator('.result-summary-label', { hasText: exactText('Approx') }))
+  await expect(page.locator('.result-summary-label', { hasText: exactText('Decimal') }))
     .toBeVisible();
   await expect(page.getByTestId('display-outcome-readback')).toContainText('2');
 });

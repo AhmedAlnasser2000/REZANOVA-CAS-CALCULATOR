@@ -6,14 +6,9 @@ import {
   replayLatestHistoryEntry,
 } from './calculus-integral-evidence';
 import { openLauncherApp, setMathFieldLatex } from './helpers';
+import { setMatrixScalarValues } from './linear-algebra-scalar-driver';
 
 const SCREENSHOT_DIR = '.task_tmp/matrix-svd-pinverse-conditioning1';
-
-function matrixCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Matrix ${name} name`) })
-    .first();
-}
 
 async function setMatrix(
   page: Page,
@@ -22,14 +17,7 @@ async function setMatrix(
   columns: number,
   values: readonly number[],
 ) {
-  await page.getByLabel(`Matrix ${name} rows`).fill(String(rows));
-  await page.getByLabel(`Matrix ${name} columns`).fill(String(columns));
-  const inputs = matrixCard(page, name).locator('.linear-algebra-matrix-grid input');
-  await expect(inputs).toHaveCount(rows * columns);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-    await inputs.nth(index).blur();
-  }
+  await setMatrixScalarValues(page, name, rows, columns, values);
 }
 
 async function runEditor(page: Page, latex: string) {

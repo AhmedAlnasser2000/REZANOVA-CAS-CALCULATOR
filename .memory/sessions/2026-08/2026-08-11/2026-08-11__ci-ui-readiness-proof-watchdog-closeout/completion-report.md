@@ -18,7 +18,7 @@
 
 - Gate 5 `CI-UI-LAZY-READINESS-REPAIR1` — UI: complete and verified for commit approval.
 - Gate 6 `CANONICAL-PROOF-FORMAL-COMPARISON1` — backend: complete, verified, and approved for commit.
-- Gate 7 program closeout — backend/UI: paused for classification of stale Linear Algebra Playwright drivers.
+- Gate 7 `CI-LINEAR-ALGEBRA-PLAYWRIGHT-DRIVER-REPAIR1` — UI: expanded scalar-routing, Playwright, E2E typing, artifact cleanup, and singular null-space proof repair are verified for the approved selective commit. Repository closeout remains assigned to the separate critical Equation V2/AppMain gate.
 
 ## Gate 5 completed scope
 
@@ -53,3 +53,12 @@
 - Current inline-editor determinant, cross, dot, span, and profile Playwright paths pass.
 - Three older Linear Algebra visual specs fail before evaluation because their helpers search for removed `.linear-algebra-vector-grid input` or `.linear-algebra-matrix-grid input` descendants.
 - Per the program stop rule, this separate test-driver staleness is not hidden or repaired inside Gate 6.
+
+## Expanded Gate 7 completed scope
+
+- The shared Playwright driver targets the MathLive textbox/accessibility contract, commits through `setValue`, `input`, and Enter, and waits for committed values/focus movement without sleeps.
+- Persisted Matrix/Vector values remain `scalar-v1`; referenced finite-real values project into existing numeric producers with exact rational evidence when owned. Formal, Complex, and stored-substitution requests remain symbolic.
+- Numeric domain and dimension errors remain authoritative. The Real planar-rotation spectrum keeps its controlled complex-eigenvalue stop; Complex mode retains symbolic spectral success.
+- `e2e/tsconfig.json` gives every Playwright file Node, DOM, and Playwright typing. The user-approved expansion corrected latent test-only canary/History narrowing, History serialization inference, and Notebook MathLive element typing.
+- Generated `test-results/` is ignored and the formerly tracked `.last-run.json` is removed. No public schema, worker, capability, baseline, or dependency changed.
+- The presumed stale null-space assertion instead exposed a strict V2 proof mismatch: presentation owned `span` while MathJSON owned only the underlying basis set. The producer now proves the span for nontrivial null spaces and retains the explicit zero-vector set for the zero null space; visible output is unchanged.

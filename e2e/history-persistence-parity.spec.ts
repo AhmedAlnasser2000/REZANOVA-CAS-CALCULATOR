@@ -132,7 +132,11 @@ test('preserves a complete extension-rich History row across a real browser relo
       variableMemory: [],
       calculatorMemory,
     }));
-  }, { key: APP_STATE_KEY, entry: RICH_HISTORY_ENTRY, settings: DEFAULT_SETTINGS });
+  }, {
+    key: APP_STATE_KEY,
+    entry: RICH_HISTORY_ENTRY as unknown,
+    settings: DEFAULT_SETTINGS as unknown,
+  });
 
   await page.goto('/');
   await expect(page.getByTestId('main-editor')).toBeVisible();
@@ -207,7 +211,11 @@ test('renders stored canonical History math with current root and power preferen
       history: [historyEntry],
       variableMemory: [],
     }));
-  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+  }, {
+    key: APP_STATE_KEY,
+    historyEntry: entry as unknown,
+    settings: DEFAULT_SETTINGS as unknown,
+  });
 
   await page.goto('/');
   await expect(page.getByTestId('main-editor')).toBeVisible();
@@ -273,7 +281,11 @@ test('loads, renders, and replays a current V2 History result', async ({ page })
       history: [historyEntry],
       variableMemory: [],
     }));
-  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+  }, {
+    key: APP_STATE_KEY,
+    historyEntry: entry as unknown,
+    settings: DEFAULT_SETTINGS as unknown,
+  });
 
   await page.goto('/');
   await expect(page.getByTestId('main-editor')).toBeVisible();
@@ -315,7 +327,11 @@ test('loads, renders, copies, and replays a current V3 gradian angle quantity', 
       history: [historyEntry],
       variableMemory: [],
     }));
-  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+  }, {
+    key: APP_STATE_KEY,
+    historyEntry: entry as unknown,
+    settings: DEFAULT_SETTINGS as unknown,
+  });
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
   await page.goto('/');
@@ -380,7 +396,7 @@ test('removes old and malformed rows while preserving future result versions ver
     legacy: legacyEntry,
     malformed: malformedV1,
     future: futureV4,
-    settings: DEFAULT_SETTINGS,
+    settings: DEFAULT_SETTINGS as unknown,
   });
 
   await page.goto('/');

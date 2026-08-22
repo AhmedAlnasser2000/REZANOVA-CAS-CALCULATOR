@@ -41,10 +41,10 @@ import {
   type NumericVector,
 } from './vector-core';
 import {
-  numericVectorFromNamedValue,
   vectorValueByName,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
+import { projectVectorNamedValueToNumeric } from './numeric-scalar-projection';
 
 export type EvaluatedVectorOperand = {
   vector: NumericVector;
@@ -95,8 +95,8 @@ function operandFromNamedNumeric(
   vector: NumericVector,
   name: string,
   displayLatex: string,
+  exactVector = exactVectorFromNumeric(vector),
 ): EvaluatedVectorOperand {
-  const exactVector = exactVectorFromNumeric(vector);
   return {
     vector: cloneVector(vector),
     named: name,
@@ -191,15 +191,20 @@ function evaluateNamedVector(
 ): VectorExpressionEvaluation {
   const namedValue = vectorValueByName(input.vectorValues, expression.name);
   if (namedValue) {
-    const numericValue = numericVectorFromNamedValue(namedValue);
-    if (!numericValue) {
+    const projection = projectVectorNamedValueToNumeric(namedValue);
+    if (!projection) {
       return { ok: false, message: 'This Vector expression requires a symbolic-capable operation.' };
     }
-    const dimensionStop = vectorDimensionStop(numericValue);
+    const dimensionStop = vectorDimensionStop(projection.value);
     if (dimensionStop) return dimensionStop;
     return {
       ok: true,
-      operand: operandFromNamedNumeric(numericValue, expression.name, expression.displayLatex),
+      operand: operandFromNamedNumeric(
+        projection.value,
+        expression.name,
+        expression.displayLatex,
+        projection.exactValue ? exactVectorFromWire(projection.exactValue) : null,
+      ),
     };
   }
 

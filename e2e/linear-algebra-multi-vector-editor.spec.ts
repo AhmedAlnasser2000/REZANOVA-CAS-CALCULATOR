@@ -1,9 +1,10 @@
 import { mkdir } from 'node:fs/promises';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
   openLauncherApp,
   setMathFieldLatex,
 } from './helpers';
+import { setVectorScalarValues } from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/linear-algebra-multi-vector-editor1';
 
@@ -15,20 +16,8 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-function vectorCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Vector ${name} name`) })
-    .first();
-}
-
 async function setVector(page: Page, name: string, values: readonly number[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
-  const inputs = vectorCard(page, name).locator('.linear-algebra-vector-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-    await inputs.nth(index).blur();
-  }
+  await setVectorScalarValues(page, name, values);
 }
 
 async function addVector(page: Page, name: string, values: readonly number[]) {

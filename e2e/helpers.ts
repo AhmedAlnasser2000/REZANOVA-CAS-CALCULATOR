@@ -46,6 +46,10 @@ export async function getMathFieldLatex(page: Page, testId = 'main-editor') {
 export async function closeSidePanelIfOpen(page: Page) {
   const backdrop = page.getByTestId('side-surface-overlay-backdrop');
   if (await backdrop.isVisible()) {
+    if (!await backdrop.isEnabled()) {
+      await expect(backdrop).toBeHidden();
+      return;
+    }
     await backdrop.click();
     await expect(backdrop).toBeHidden();
   }

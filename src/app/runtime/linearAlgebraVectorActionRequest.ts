@@ -11,7 +11,8 @@ import type {
 import type { RunVectorModeRequest } from '../../lib/modes/vector';
 import {
   buildActiveScalarVectorRuntimeRequest,
-  isScalarVectorNamedValue,
+  projectVectorNamedValueToNumeric,
+  vectorActionOperandSides,
 } from '../../lib/linear-algebra/runtime-request';
 import {
   activeVectorValuePair,
@@ -44,10 +45,13 @@ export function buildVectorActionRuntimeRequest(
     state.activeVectorRightId,
   );
   const inputLatex = vectorActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  const requiredSides = vectorActionOperandSides(operation);
+  const leftIsNumeric = projectVectorNamedValueToNumeric(activeValues.left) !== null;
+  const rightIsNumeric = projectVectorNamedValueToNumeric(activeValues.right) !== null;
   const usesScalarProducer = state.domain === 'complex'
     || state.substitutionMode === 'use-stored-values'
-    || isScalarVectorNamedValue(activeValues.left)
-    || isScalarVectorNamedValue(activeValues.right);
+    || (requiredSides !== 'right' && !leftIsNumeric)
+    || (requiredSides !== 'left' && !rightIsNumeric);
   if (!usesScalarProducer) {
     return buildActiveVectorRuntimeRequest(
       operation,
@@ -55,6 +59,7 @@ export function buildVectorActionRuntimeRequest(
       state.activeVectorLeftId,
       state.activeVectorRightId,
       state.angleUnit,
+      requiredSides,
     );
   }
   const built = buildActiveScalarVectorRuntimeRequest(

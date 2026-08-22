@@ -5,6 +5,7 @@ import {
   openLauncherApp,
   setMathFieldLatex,
 } from './helpers';
+import { setVectorScalarValues } from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/linear-algebra-template-natural-input1';
 
@@ -60,15 +61,7 @@ async function expectCanonicalEditor(page: Page) {
 }
 
 async function setVector(page: Page, name: 'u' | 'v', values: readonly number[]) {
-  await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
-  const card = page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Vector ${name} name`) });
-  const inputs = card.locator('.linear-algebra-vector-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (const [index, value] of values.entries()) {
-    await inputs.nth(index).fill(String(value));
-    await inputs.nth(index).blur();
-  }
+  await setVectorScalarValues(page, name, values);
 }
 
 test.beforeAll(async () => {

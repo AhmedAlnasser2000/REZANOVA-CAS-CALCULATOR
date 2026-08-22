@@ -1,9 +1,10 @@
 import { mkdir } from 'node:fs/promises';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
   openLauncherApp,
   setMathFieldLatex,
 } from './helpers';
+import { setMatrixScalarValues } from './linear-algebra-scalar-driver';
 
 const screenshotDir = '.task_tmp/linear-algebra-multi-matrix-editor1';
 
@@ -15,18 +16,8 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-function matrixCard(page: Page, name: string): Locator {
-  return page.locator('.linear-algebra-value-card')
-    .filter({ has: page.getByLabel(`Matrix ${name} name`) })
-    .first();
-}
-
 async function fillMatrix(page: Page, name: string, values: readonly number[]) {
-  const inputs = matrixCard(page, name).locator('.matrix-grid input');
-  await expect(inputs).toHaveCount(values.length);
-  for (let index = 0; index < values.length; index += 1) {
-    await inputs.nth(index).fill(String(values[index]));
-  }
+  await setMatrixScalarValues(page, name, 2, 2, values);
 }
 
 async function runMatrixEditor(page: Page, latex: string) {

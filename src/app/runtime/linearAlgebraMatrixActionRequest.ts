@@ -10,7 +10,8 @@ import type {
 import type { RunMatrixModeRequest } from '../../lib/modes/matrix';
 import {
   buildActiveScalarMatrixRuntimeRequest,
-  isScalarMatrixNamedValue,
+  matrixActionOperandSides,
+  projectMatrixNamedValueToNumeric,
 } from '../../lib/linear-algebra/runtime-request';
 import {
   activeMatrixValuePair,
@@ -42,16 +43,20 @@ export function buildMatrixActionRuntimeRequest(
     state.activeMatrixRightId,
   );
   const inputLatex = matrixActionLabel(operation, activeValues.left.name, activeValues.right.name);
+  const requiredSides = matrixActionOperandSides(operation);
+  const leftIsNumeric = projectMatrixNamedValueToNumeric(activeValues.left) !== null;
+  const rightIsNumeric = projectMatrixNamedValueToNumeric(activeValues.right) !== null;
   const usesScalarProducer = state.domain === 'complex'
     || state.substitutionMode === 'use-stored-values'
-    || isScalarMatrixNamedValue(activeValues.left)
-    || isScalarMatrixNamedValue(activeValues.right);
+    || (requiredSides !== 'right' && !leftIsNumeric)
+    || (requiredSides !== 'left' && !rightIsNumeric);
   if (!usesScalarProducer) {
     return buildActiveMatrixRuntimeRequest(
       operation,
       state.matrixValues,
       state.activeMatrixLeftId,
       state.activeMatrixRightId,
+      requiredSides,
     );
   }
   const built = buildActiveScalarMatrixRuntimeRequest(

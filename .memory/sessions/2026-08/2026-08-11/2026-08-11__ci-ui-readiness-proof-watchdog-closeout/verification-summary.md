@@ -44,3 +44,15 @@
 - Production build passed with 4,494 transformed modules.
 - Real-app Playwright passed determinant and cross canaries plus current inline dot, span, and profile paths. The final profile screenshot shows answer, rank-nullity, kernel, image, invertibility, and collapsed RREF cards with no horizontal overflow.
 - Three older named-library visual drivers failed before evaluation on removed grid-descendant selectors; Gate 7 is paused for their classification.
+
+## Expanded Gate 7 evidence
+
+- Numeric projection/routing/action-request tests passed 10/10; established editor dispatch, runtime request, and Linear Algebra worker tests passed 33/33.
+- The exact repaired browser inventory passed 22/22 across 12 specifications, covering profile, SVD, span, independence, Gram-Schmidt, geometric measures, copy, History replay, controlled stops, and overflow/readability.
+- Scalar-substrate, Matrix-symbolic, Matrix-spectral, and Vector-symbolic controls passed after the focused Real-domain controlled-stop alignment.
+- `npx tsc -b --pretty false` and `npm run build` passed with the dedicated E2E TypeScript project.
+- `npm run test:result-contract` passed 18 files and 135 tests with zero compilation fallbacks. Canonical V2 enforcement, MathJSON coverage, and the 24-test Display inversion ratchet passed with all baselines unchanged.
+- The restored checkout path was revalidated from `/home/ahmed/Downloads/Calculator`. After the singular null-space delta, 43 focused routing/runtime/authority tests and all 18 table-shell UI tests passed.
+- `npm run test:result-contract -- --maxWorkers=1` passed 18 files and 136 tests with zero compilation fallbacks. Canonical V2 enforcement and the 24-test Display inversion ratchet passed with all baselines unchanged; the production build transformed 4,496 modules.
+- Focused real-app Playwright passed the singular null-space answer with visible Space Facts and Null Space Proof cards and no horizontal overflow.
+- The final `npm run test:gate` closeout run is intentionally deferred to the separate critical Equation V2/AppMain gate.

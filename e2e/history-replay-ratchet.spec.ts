@@ -68,6 +68,9 @@ async function runWorkspaceCase(page: Page, canary: CanaryCase) {
     await setMathFieldLatex(page, driver.inputLatex);
     await page.getByTestId('editor-runtime-run').click();
   } else {
+    if (driver.kind !== 'table') {
+      throw new Error(`Unsupported History replay driver: ${driver.kind}`);
+    }
     await openTable(page);
     await setMathFieldLatex(page, driver.inputLatex, 'table-primary-editor');
     await fillNamedNumberInput(page, 'Start', driver.range.start);

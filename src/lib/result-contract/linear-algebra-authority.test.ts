@@ -139,4 +139,30 @@ describe('Linear Algebra canonical authority', () => {
     if (outcome.kind !== 'success') throw new Error('Expected rational Matrix spectral success.');
     expect(outcome.canonicalResult?.version).toBe(2);
   });
+
+  it('proves a singular Matrix null space as the span of its native basis', () => {
+    const outcome = runMatrixMode({
+      operation: 'nullSpaceA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[1]],
+      matrixOperandLatexA: '\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}',
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') throw new Error('Expected singular null-space success.');
+    const document = outcome.canonicalResult;
+    expect(document).toMatchObject({
+      version: 2,
+      primary: {
+        kind: 'math',
+        value: {
+          canonicalLatex: '\\operatorname{Null}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}',
+          mathJson: expect.anything(),
+        },
+      },
+    });
+    if (document?.version !== 2) throw new Error('Expected singular null-space V2 authority.');
+    expect(JSON.stringify(document.primary)).toContain('"Null"');
+    expect(JSON.stringify(document.primary)).toContain('"span"');
+  });
 });
