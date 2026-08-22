@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   runEquationAlgebraTransform,
 } from '../equation';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
 
 describe('Equation mode transforms', () => {
   it('runs explicit equation transforms without auto-solving the transformed equation', () => {
@@ -44,6 +45,12 @@ describe('Equation mode transforms', () => {
     }
     expect(asRoot.exactLatex).toBe('\\sqrt{x}=3');
     expect(asRoot.transformBadges).toEqual(['Rewrite as Root']);
+    const finalizedRoot = finalizeEquationCanonicalRuntimeOutcome(asRoot);
+    expect(finalizedRoot.kind).toBe('success');
+    if (finalizedRoot.kind !== 'success') {
+      throw new Error('Expected the root transform to finalize successfully');
+    }
+    expect(finalizedRoot.canonicalResult.version).toBe(2);
 
     expect(asPower.kind).toBe('success');
     if (asPower.kind !== 'success') {

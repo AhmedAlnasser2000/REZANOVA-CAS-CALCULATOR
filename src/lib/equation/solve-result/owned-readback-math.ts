@@ -10,7 +10,10 @@ import {
 } from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
 import type { EquationOwnedMathJsonLeaf } from './math-values';
-import { equationMathValuesFromOwnedLeaves as baseEquationMathValuesFromOwnedLeaves } from './math-values';
+import {
+  equationMathValuesFromOwnedLeaves as baseEquationMathValuesFromOwnedLeaves,
+  inferEquationMathJsonRoute as inferBaseEquationMathJsonRoute,
+} from './math-values';
 
 // Changed Equation producers use this bridge without widening frozen V1 adapters.
 export {
@@ -24,10 +27,17 @@ export type {
 
 type EquationOutcome = Omit<Exclude<ResultProducerDraft, { kind: 'prompt' }>, 'canonicalResult'>;
 type EquationMathJsonRouteId = Extract<MathJsonRouteId, `equation.${string}`>;
-type EquationSuccessWithReadback = EquationOutcome & {
+type EquationSuccessWithReadback = Omit<
+  Extract<ResultProducerDraft, { kind: 'success' }>,
+  'canonicalResult'
+> & {
   answerRows?: DisplayAnswerRowsReadback;
   systemReadback?: DisplaySystemSolutionReadback;
 };
+type EquationSuccessReadback = Omit<
+  EquationSuccessWithReadback,
+  'kind' | 'title' | 'warnings'
+>;
 
 function provenLeaves(input: {
   outcome: EquationOutcome;
@@ -71,38 +81,72 @@ function unproven(canonicalLatex: string) {
   return { canonicalLatex };
 }
 
-export function equationMathValuesWithOwnedReadback(input: {
-  outcome: EquationOutcome;
+function successReadbackMathValues(input: {
+  readback: EquationSuccessReadback;
   routeId: EquationMathJsonRouteId;
   leaves: readonly EquationOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {
-  const values = baseEquationMathValuesFromOwnedLeaves(input);
-  const proven = provenLeaves(input);
-  if (input.outcome.primaryMath?.mathJson !== undefined) {
-    values.primaryMath = proven.get(input.outcome.primaryMath.canonicalLatex)
-      ?? unproven(input.outcome.primaryMath.canonicalLatex);
+  const outcome = input.readback as unknown as EquationOutcome;
+  const values = baseEquationMathValuesFromOwnedLeaves({
+    outcome,
+    routeId: input.routeId,
+    leaves: input.leaves,
+  });
+  const proven = provenLeaves({ outcome, routeId: input.routeId, leaves: input.leaves });
+  if (input.readback.primaryMath?.mathJson !== undefined) {
+    values.primaryMath = proven.get(input.readback.primaryMath.canonicalLatex)
+      ?? unproven(input.readback.primaryMath.canonicalLatex);
   }
-  if (input.outcome.kind !== 'success') return values;
-  const success = input.outcome as EquationSuccessWithReadback;
-  if (success.answerRows) {
+  if (input.readback.answerRows) {
     values.answerRows = {
-      ...(success.answerRows.label ? { label: success.answerRows.label } : {}),
-      rows: success.answerRows.rows.map((row) => ({
+      ...(input.readback.answerRows.label ? { label: input.readback.answerRows.label } : {}),
+      rows: input.readback.answerRows.rows.map((row) => ({
         math: proven.get(row.latex) ?? unproven(row.latex),
         ...(row.label ? { label: row.label } : {}),
       })),
     };
   }
-  if (success.systemReadback) {
+  if (input.readback.systemReadback) {
     values.systemReadback = {
-      variables: success.systemReadback.variablesLatex.map((latex) => proven.get(latex) ?? unproven(latex)),
-      rows: success.systemReadback.rows.map((row) => ({
+      variables: input.readback.systemReadback.variablesLatex.map((latex) =>
+        proven.get(latex) ?? unproven(latex)),
+      rows: input.readback.systemReadback.rows.map((row) => ({
         values: row.valuesLatex.map((latex) => proven.get(latex) ?? unproven(latex)),
         ...(row.approxText ? { approxText: row.approxText } : {}),
       })),
-      ...(success.systemReadback.label ? { label: success.systemReadback.label } : {}),
-      ...(success.systemReadback.source ? { source: success.systemReadback.source } : {}),
+      ...(input.readback.systemReadback.label ? { label: input.readback.systemReadback.label } : {}),
+      ...(input.readback.systemReadback.source ? { source: input.readback.systemReadback.source } : {}),
     };
+  }
+  return values;
+}
+
+export function equationMathValuesForOwnedSuccessReadback(input: {
+  readback: EquationSuccessReadback;
+  leaves: readonly EquationOwnedMathJsonLeaf[];
+}): CanonicalResultProducerMathValuesV1 {
+  const routeId = inferBaseEquationMathJsonRoute(input.readback as unknown as EquationOutcome);
+  return successReadbackMathValues({ ...input, routeId });
+}
+
+export function equationMathValuesWithOwnedReadback(input: {
+  outcome: EquationOutcome;
+  routeId: EquationMathJsonRouteId;
+  leaves: readonly EquationOwnedMathJsonLeaf[];
+}): CanonicalResultProducerMathValuesV1 {
+  if (input.outcome.kind === 'success') {
+    const { kind: _kind, title: _title, warnings: _warnings, ...readback } = input.outcome;
+    return successReadbackMathValues({
+      readback,
+      routeId: input.routeId,
+      leaves: input.leaves,
+    });
+  }
+  const values = baseEquationMathValuesFromOwnedLeaves(input);
+  const proven = provenLeaves(input);
+  if (input.outcome.primaryMath?.mathJson !== undefined) {
+    values.primaryMath = proven.get(input.outcome.primaryMath.canonicalLatex)
+      ?? unproven(input.outcome.primaryMath.canonicalLatex);
   }
   return values;
 }

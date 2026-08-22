@@ -77,6 +77,12 @@ import {
   readEquationStageResultCarrier,
   type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
+import { acceptedPrimaryEvidence } from '../solve-result/accepted-primary-evidence';
+import {
+  equationMathValuesForOwnedSuccessReadback,
+  equationOwnedMathJsonLeavesFromDocument,
+  type EquationOwnedMathJsonLeaf,
+} from '../solve-result/owned-readback-math';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -156,6 +162,7 @@ function recurseComposition(
   extraSupplementLatex: string[] = [],
   extraDetailSections: DisplayDetailSection[] = [],
   periodicFamilyExtras?: Partial<PeriodicFamilyInfo>,
+  mathEvidence: EquationOwnedMathJsonLeaf[] = [],
 ): ResultProducerDraft | null {
   const depthPolicy = resolveCompositionRecursionDepth(
     request.compositionInversionDepth ?? 0,
@@ -354,7 +361,32 @@ function recurseComposition(
   const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
     exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
   });
+  const primaryMath = acceptedPrimaryEvidence({
+    source: mergedCarrier,
+    exactLatex,
+    acceptedLatex: acceptedExactLatex,
+    target: 'x',
+  });
 
+  const readback = {
+    exactLatex,
+    ...(primaryMath ? { primaryMath } : {}),
+    branchReadback,
+    periodicFamily: mergePeriodicFamilyExtras(merged.periodicFamily, periodicFamilyExtras),
+    exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
+    approxText: `x ~= ${validation.accepted.map((value) => formatApproxNumber(value)).join(', ')}`,
+    detailSections: appendExtraneousSolutionsDetailSection(
+      detailSections.length > 0 ? detailSections : undefined,
+      extraneousEvidence,
+    ),
+    ...(mergeSolveSummaries(solveSummary, solveSummaryFromDisplayFields(merged)) ?? solveSummary),
+  } as const;
+  const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
+    mergedCarrier.document,
+    'equation-composition-source-document',
+  );
+  const sourceCanonicalLatex = new Set(sourceLeaves.map((leaf) =>
+    leaf.canonicalLatex.replace(/\s+/gu, '')));
   return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
@@ -376,6 +408,15 @@ function recurseComposition(
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     substitutionDiagnostics: merged.substitutionDiagnostics,
     numericMethod: merged.numericMethod,
+  }, {
+    mathValues: equationMathValuesForOwnedSuccessReadback({
+      readback,
+      leaves: [
+        ...sourceLeaves,
+        ...mathEvidence.filter((leaf) =>
+          !sourceCanonicalLatex.has(leaf.canonicalLatex.replace(/\s+/gu, ''))),
+      ],
+    }),
   });
 }
 
@@ -591,6 +632,7 @@ function compositionSolve(
       transform.exactSupplementLatex,
       transform.detailSections,
       transform.periodicFamilyExtras,
+      transform.mathEvidence,
     );
     if (recursive) {
       return recursive;

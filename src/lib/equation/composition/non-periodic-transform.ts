@@ -15,6 +15,7 @@ import type {
   DisplaySolveSummary,
   PeriodicFamilyInfo,
   PeriodicPiecewiseBranch,
+  SerializableMathJson,
   SolveBadge,
   SolveDomainConstraint,
 } from '../../../types/calculator';
@@ -41,6 +42,7 @@ import {
   type SymbolicFamilyBranch,
 } from './carriers';
 import { profileEquationResult } from '../../display/printer';
+import { validateSerializableMathJson } from '../../display/printer/math-json';
 import {
   mathPart,
   solveSummaryFromParts,
@@ -59,6 +61,11 @@ type ReducedSingleFamilyCarrierKind =
 
 type NonPeriodicTransform = {
   equations: string[];
+  mathEvidence?: Array<{
+    canonicalLatex: string;
+    mathJson: SerializableMathJson;
+    source: string;
+  }>;
   domainConstraints?: SolveDomainConstraint[];
   solveBadges: SolveBadge[];
   unresolvedError: string;
@@ -73,13 +80,33 @@ function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
 }
 
-function inversionSummary(source: string, result: string) {
-  return solveSummaryFromParts([[
-    textPart('Inverted '),
-    mathPart(source),
-    textPart(' into '),
-    mathPart(result),
-  ]]);
+type CompositionMathValue = {
+  canonicalLatex: string;
+  mathJson: SerializableMathJson;
+};
+
+function inversionSummary(input: {
+  source: CompositionMathValue;
+  result: CompositionMathValue;
+}) {
+  return {
+    ...solveSummaryFromParts([[
+      textPart('Inverted '),
+      mathPart(input.source.canonicalLatex),
+      textPart(' into '),
+      mathPart(input.result.canonicalLatex),
+    ]]),
+    mathEvidence: [
+      {
+        ...input.source,
+        source: 'equation-composition-inversion-source',
+      },
+      {
+        ...input.result,
+        source: 'equation-composition-inversion-result',
+      },
+    ],
+  };
 }
 
 function liftedSummary(source: string, branches: string) {
@@ -197,7 +224,6 @@ function matchReducedSingleFamilyPeriodicCarrier(node: unknown): ReducedSingleFa
   if (!dependsOnVariable(normalized, 'x')) {
     return null;
   }
-
   const direct = matchDirectReducedSingleFamilyCarrier(normalized);
   if (direct) {
     return direct;
@@ -454,6 +480,11 @@ function matchNonPeriodicTransform(
   if (!dependsOnVariable(normalized, 'x')) {
     return null;
   }
+  const normalizedValidation = validateSerializableMathJson(normalized);
+  if (!normalizedValidation.ok) {
+    return null;
+  }
+  const normalizedMathJson = normalizedValidation.validated.value;
 
   const inverseTrigKind =
     isNodeArray(normalized) && normalized.length === 2 && typeof normalized[0] === 'string'
@@ -639,10 +670,13 @@ function matchNonPeriodicTransform(
     return {
       equations: buildCompositionBranchSet([buildEquationLatex(normalized[1], invertedTarget.node)]).equations,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=${invertedTarget.latex}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=${invertedTarget.latex}`,
+          mathJson: ['Equal', normalized[1], invertedTarget.node] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized inverse-trig composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -659,10 +693,13 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=e^{${target.latex}}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=e^{${target.latex}}`,
+          mathJson: ['Equal', normalized[1], ['Power', 'ExponentialE', target.node]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -679,10 +716,13 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=10^{${target.latex}}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=10^{${target.latex}}`,
+          mathJson: ['Equal', normalized[1], ['Power', 10, target.node]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -704,10 +744,13 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=${boxLatex(normalized[2])}^{${target.latex}}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=${boxLatex(normalized[2])}^{${target.latex}}`,
+          mathJson: ['Equal', normalized[1], ['Power', normalized[2], target.node]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -723,10 +766,13 @@ function matchNonPeriodicTransform(
     return {
       equations: buildCompositionBranchSet([buildEquationLatex(normalized[1], ['Ln', target.node])]).equations,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=\\ln\\left(${target.latex}\\right)`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=\\ln\\left(${target.latex}\\right)`,
+          mathJson: ['Equal', normalized[1], ['Ln', target.node]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -747,10 +793,13 @@ function matchNonPeriodicTransform(
       return {
         equations: buildCompositionBranchSet([buildEquationLatex(exponent, ['Ln', target.node])]).equations,
         solveBadges: ['Outer Inversion'],
-        ...inversionSummary(
-          boxLatex(normalized),
-          `${boxLatex(exponent)}=\\ln\\left(${target.latex}\\right)`,
-        ),
+        ...inversionSummary({
+          source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+          result: {
+            canonicalLatex: `${boxLatex(exponent)}=\\ln\\left(${target.latex}\\right)`,
+            mathJson: ['Equal', exponent, ['Ln', target.node]] as SerializableMathJson,
+          },
+        }),
         unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
       };
     }
@@ -766,10 +815,13 @@ function matchNonPeriodicTransform(
       return {
         equations: buildCompositionBranchSet([buildEquationLatex(exponent, ['Divide', ['Ln', target.node], ['Ln', base]])]).equations,
         solveBadges: ['Outer Inversion'],
-        ...inversionSummary(
-          boxLatex(normalized),
-          `${boxLatex(exponent)}=\\frac{\\ln\\left(${target.latex}\\right)}{\\ln\\left(${boxLatex(base)}\\right)}`,
-        ),
+        ...inversionSummary({
+          source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+          result: {
+            canonicalLatex: `${boxLatex(exponent)}=\\frac{\\ln\\left(${target.latex}\\right)}{\\ln\\left(${boxLatex(base)}\\right)}`,
+            mathJson: ['Equal', exponent, ['Divide', ['Ln', target.node], ['Ln', base]]] as SerializableMathJson,
+          },
+        }),
         unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
       };
     }
@@ -825,10 +877,13 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, 2])}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, 2])}`,
+          mathJson: ['Equal', normalized[1], ['Power', target.node, 2]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -856,10 +911,13 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      ...inversionSummary(
-        boxLatex(normalized),
-        `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, index.value])}`,
-      ),
+      ...inversionSummary({
+        source: { canonicalLatex: boxLatex(normalized), mathJson: normalizedMathJson },
+        result: {
+          canonicalLatex: `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, index.value])}`,
+          mathJson: ['Equal', normalized[1], ['Power', target.node, index.value]] as SerializableMathJson,
+        },
+      }),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }

@@ -94,64 +94,23 @@ function labeledSupplementPresentationRole(presentationLatex: string) {
   return undefined;
 }
 
-function pairTypedSupplementPresentations(
-  presentations: readonly string[],
-  evidence: readonly SupplementEvidence[],
-) {
-  if (presentations.length === evidence.length) {
-    return evidence.map((entry, index) => ({
-      evidence: entry,
-      presentationLatex: presentations[index],
-    }));
-  }
-  if (presentations.length === 1) {
-    return evidence.map((entry) => ({
-      evidence: entry,
-      presentationLatex: entry.canonicalLatex,
-    }));
-  }
+function containsTarget(node: unknown, target = 'x'): boolean {
+  if (node === target) return true;
+  return Array.isArray(node) && node.slice(1).some((child) => containsTarget(child, target));
+}
 
-  const presentationsByRole = new Map<SupplementEvidence['role'], string[]>();
-  for (const presentationLatex of presentations) {
-    const role = labeledSupplementPresentationRole(presentationLatex);
-    if (!role) return undefined;
-    presentationsByRole.set(role, [
-      ...(presentationsByRole.get(role) ?? []),
-      presentationLatex,
-    ]);
-  }
-  const evidenceByRole = new Map<SupplementEvidence['role'], SupplementEvidence[]>();
-  for (const entry of evidence) {
-    evidenceByRole.set(entry.role, [
-      ...(evidenceByRole.get(entry.role) ?? []),
-      entry,
-    ]);
-  }
-
-  const presentationByEvidence = new Map<SupplementEvidence, string>();
-  for (const [role, roleEvidence] of evidenceByRole) {
-    const rolePresentations = presentationsByRole.get(role) ?? [];
-    if (rolePresentations.length === roleEvidence.length) {
-      roleEvidence.forEach((entry, index) => {
-        presentationByEvidence.set(entry, rolePresentations[index]);
-      });
-      continue;
-    }
-    if (rolePresentations.length === 1 && roleEvidence.length > 1) {
-      roleEvidence.forEach((entry) => {
-        presentationByEvidence.set(entry, entry.canonicalLatex);
-      });
-      continue;
-    }
-    return undefined;
-  }
-  if ([...presentationsByRole.keys()].some((role) => !evidenceByRole.has(role))) {
-    return undefined;
-  }
-  return evidence.map((entry) => ({
-    evidence: entry,
-    presentationLatex: presentationByEvidence.get(entry) ?? entry.canonicalLatex,
-  }));
+function evidenceIdentity(input: {
+  evidence: SupplementEvidence;
+  presentationLatex?: string;
+}) {
+  return [
+    input.evidence.role,
+    normalizedLatex(
+      input.presentationLatex
+      ?? input.evidence.expressionLatex
+      ?? input.evidence.canonicalLatex,
+    ),
+  ].join(':');
 }
 
 function typedSupplements(input: {
@@ -161,28 +120,57 @@ function typedSupplements(input: {
 }) {
   const presentations = input.outcome.exactSupplementLatex ?? [];
   const candidates = input.analysisEvidence
-    .flatMap((entry) => entry.supplementEvidence ? [{
-      evidence: input.routeId === 'equation.trig-exp-log' && entry.latex
-        ? { ...entry.supplementEvidence, canonicalLatex: entry.latex }
-        : entry.supplementEvidence,
+    .flatMap((entry) => entry.supplementEvidence && containsTarget(entry.supplementEvidence.mathJson) ? [{
+      evidence: entry.supplementEvidence,
+      presentationLatex: entry.latex,
       sourceRoute: entry.sourceRoute,
     }] : []);
   const guardedCandidates = candidates.filter((entry) =>
     entry.sourceRoute === 'guarded-domain-constraint');
-  const evidence = (guardedCandidates.length > 0 ? guardedCandidates : candidates)
-    .map((entry) => entry.evidence)
-    .filter((entry, index, all) => all.findIndex((candidate) =>
-      supplementEvidenceKey(candidate) === supplementEvidenceKey(entry)) === index);
-  if (evidence.length === 0) {
+  const eligible = guardedCandidates.length > 0 ? guardedCandidates : candidates;
+  const identities = new Map<string, string>();
+  for (const entry of eligible) {
+    const identity = evidenceIdentity(entry);
+    const tree = JSON.stringify(entry.evidence.mathJson);
+    const existing = identities.get(identity);
+    if (existing && existing !== tree) {
+      throw new Error(`Equation selected conflicting typed V2 supplement evidence for ${identity}.`);
+    }
+    identities.set(identity, tree);
+  }
+  const selected = eligible.filter((entry, index, all) => all.findIndex((candidate) =>
+    supplementEvidenceKey(candidate.evidence) === supplementEvidenceKey(entry.evidence)) === index);
+  if (selected.length === 0) {
     throw new Error('Equation selected typed V2 supplements without producer-owned evidence.');
   }
-  const paired = pairTypedSupplementPresentations(presentations, evidence);
-  if (!paired) {
+  const labeledRoles = new Set(presentations.flatMap((presentation) => {
+    const role = labeledSupplementPresentationRole(presentation);
+    return role ? [role] : [];
+  }));
+  if (labeledRoles.size === 0 && presentations.length !== selected.length) {
     throw new Error(
-      `Equation typed V2 supplement presentation/evidence count mismatch (${presentations.length}/${evidence.length}).`,
+      `Equation typed V2 supplement presentation/evidence count mismatch (${presentations.length}/${selected.length}).`,
     );
   }
-  return paired;
+  const roleCounts = new Map<SupplementEvidence['role'], number>();
+  for (const entry of selected) {
+    roleCounts.set(entry.evidence.role, (roleCounts.get(entry.evidence.role) ?? 0) + 1);
+  }
+  return selected.map((entry, index) => {
+    const cleanPresentation = entry.presentationLatex ?? entry.evidence.canonicalLatex;
+    const onlyEvidence = selected.length === 1 && presentations.length === 1;
+    const presentationLatex = onlyEvidence
+      ? presentations[0]
+      : roleCounts.get(entry.evidence.role) === 1 && labeledRoles.has(entry.evidence.role)
+        ? `${SUPPLEMENT_PRESENTATION_PREFIXES[entry.evidence.role]}${cleanPresentation}`
+        : cleanPresentation;
+    return {
+      evidence: entry.evidence,
+      canonicalLatex: cleanPresentation,
+      presentationLatex,
+      source: `equation-runtime-v2-supplement:${index}`,
+    };
+  });
 }
 
 export function buildEquationRuntimeCanonicalResultDocument(input: {
@@ -204,14 +192,20 @@ export function buildEquationRuntimeCanonicalResultDocument(input: {
       source: 'equation-runtime-v2-primary',
     }]),
     ...equationOwnedMathJsonLeavesFromDocument(input.document, 'equation-runtime-v2-document'),
-    ...(selectedSupplements ?? []).map(({ evidence }, index) => ({
-      canonicalLatex: evidence.canonicalLatex,
+    ...(selectedSupplements ?? []).map(({ canonicalLatex, evidence, source }) => ({
+      canonicalLatex,
       mathJson: evidence.mathJson,
-      source: `equation-runtime-v2-supplement:${index}`,
+      source,
     })),
   ];
   const mathValue: CanonicalResultV2MathResolver = (canonicalLatex, path) => {
-    const leaf = leaves.find((candidate) => normalizedLatex(candidate.canonicalLatex) === normalizedLatex(canonicalLatex));
+    const matching = leaves.filter((candidate) =>
+      normalizedLatex(candidate.canonicalLatex) === normalizedLatex(canonicalLatex));
+    const distinctTrees = new Set(matching.map((candidate) => JSON.stringify(candidate.mathJson)));
+    if (distinctTrees.size > 1) {
+      throw new Error(`Equation selected V2 with conflicting producer MathJSON for ${path}.`);
+    }
+    const leaf = matching[0];
     if (!leaf) throw new Error(`Equation selected V2 without producer MathJSON for ${path}.`);
     return requireProvenCanonicalMathValueV2({
       canonicalLatex,
@@ -222,10 +216,10 @@ export function buildEquationRuntimeCanonicalResultDocument(input: {
     });
   };
   const supplements: CanonicalResultProducerInputV2['supplements'] = selectedSupplements?.map(
-    ({ evidence, presentationLatex }, index) => ({
+    ({ canonicalLatex, evidence, presentationLatex }, index) => ({
       role: evidence.role,
       presentationLatex,
-      math: mathValue(evidence.canonicalLatex, `supplements[${index}].math`),
+      math: mathValue(canonicalLatex, `supplements[${index}].math`),
     }),
   );
   return buildCanonicalResultDocumentV2FromProducerDraft({

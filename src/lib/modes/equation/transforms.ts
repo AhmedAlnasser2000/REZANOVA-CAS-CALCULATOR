@@ -13,6 +13,9 @@ import {
   ensureSafeEquationSuccessOutcome,
 } from './outcomes';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
+import { attachEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import { equationMathValuesForOwnedSuccessReadback } from '../../equation/solve-result/owned-readback-math';
+import type { SerializableMathJson, SolveDomainConstraint } from '../../../types/calculator';
 export {
   EQUATION_USE_STORED_VALUES_ACTION,
   getEquationAlgebraActionLabel,
@@ -24,6 +27,42 @@ type RunEquationAlgebraTransformRequest = {
   equationLatex: string;
   angleUnit: AngleUnit;
 };
+
+function transformConstraintEvidence(constraints: readonly SolveDomainConstraint[] = []) {
+  return constraints.flatMap((constraint, index) => {
+    if (
+      !('expressionLatex' in constraint)
+      || constraint.expressionMathJson === undefined
+    ) return [];
+    const relation = constraint.kind === 'nonzero'
+      ? { operator: 'NotEqual', role: 'exclusion' as const, suffix: '\\ne0' }
+      : constraint.kind === 'positive'
+        ? { operator: 'Greater', role: 'condition' as const, suffix: '>0' }
+        : constraint.kind === 'nonnegative'
+          ? { operator: 'GreaterEqual', role: 'condition' as const, suffix: '\\ge0' }
+          : undefined;
+    if (!relation) return [];
+    const canonicalLatex = `${constraint.expressionLatex}${relation.suffix}`;
+    return [{
+      id: `domain:equation-explicit-transform:x:${constraint.kind}:${index}`,
+      target: 'x',
+      sourceRoute: 'equation-explicit-transform',
+      category: 'domain' as const,
+      confidence: 'proven' as const,
+      latex: canonicalLatex,
+      supplementEvidence: {
+        role: relation.role,
+        expressionLatex: constraint.expressionLatex,
+        canonicalLatex,
+        mathJson: [
+          relation.operator,
+          constraint.expressionMathJson,
+          0,
+        ] as SerializableMathJson,
+      },
+    }];
+  });
+}
 
 export function runEquationAlgebraTransform({
   action,
@@ -108,7 +147,22 @@ export function runEquationAlgebraTransform({
     );
   }
 
-  const outcome = ensureSafeEquationSuccessOutcome(createEquationResultOutcome({
+  const transformReadback = {
+    exactLatex: result.exactLatex,
+    exactSupplementLatex:
+      result.exactSupplementLatex && result.exactSupplementLatex.length > 0
+        ? result.exactSupplementLatex
+        : undefined,
+    transformSummaryText: result.transformSummaryText,
+    transformSummaryLatex: result.transformSummaryLatex,
+    ...(result.exactMathJson === undefined ? {} : {
+      primaryMath: {
+        canonicalLatex: result.exactLatex,
+        mathJson: result.exactMathJson,
+      },
+    }),
+  };
+  let outcome = ensureSafeEquationSuccessOutcome(createEquationResultOutcome({
     kind: 'success',
     title,
     exactLatex: result.exactLatex,
@@ -121,7 +175,21 @@ export function runEquationAlgebraTransform({
     transformBadges: result.transformBadges,
     transformSummaryText: result.transformSummaryText,
     transformSummaryLatex: result.transformSummaryLatex,
+  }, result.exactMathJson === undefined ? undefined : {
+    mathValues: equationMathValuesForOwnedSuccessReadback({
+      readback: transformReadback,
+      leaves: [{
+        canonicalLatex: result.exactLatex,
+        mathJson: result.exactMathJson,
+        source: 'equation-explicit-transform-primary',
+      }],
+    }),
   }));
+
+  outcome = attachEquationAnalysisEvidence(
+    outcome,
+    transformConstraintEvidence(result.domainConstraints),
+  );
 
   return attachEquationRuntimeEnvelope(
     outcome,

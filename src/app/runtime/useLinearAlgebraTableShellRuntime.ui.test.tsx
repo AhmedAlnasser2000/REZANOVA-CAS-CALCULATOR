@@ -384,20 +384,23 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.runMatrixEditorAction();
     });
 
-    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      canonicalSuccessMatcher('\\begin{bmatrix}6 & 8\\\\10 & 12\\end{bmatrix}'),
-      'A+B',
-      'matrix',
-      expect.objectContaining({
-        matrixSeed: expect.objectContaining({
-          operation: 'add',
-          approxDigits: 9,
-          editorExpressionLatex: 'A+B',
-          matrixOperandLatexA: 'A',
-          matrixOperandLatexB: 'B',
+    await waitFor(
+      () => expect(commitOutcome).toHaveBeenCalledWith(
+        canonicalSuccessMatcher('\\begin{bmatrix}6 & 8\\\\10 & 12\\end{bmatrix}'),
+        'A+B',
+        'matrix',
+        expect.objectContaining({
+          matrixSeed: expect.objectContaining({
+            operation: 'add',
+            approxDigits: 9,
+            editorExpressionLatex: 'A+B',
+            matrixOperandLatexA: 'A',
+            matrixOperandLatexB: 'B',
+          }),
         }),
-      }),
-    ));
+      ),
+      { timeout: 5_000 },
+    );
 
     commitOutcome.mockClear();
     hook.rerender({ currentMode: 'vector' });

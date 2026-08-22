@@ -2,6 +2,7 @@ import type { SolveDomainConstraint } from '../../../types/calculator';
 import { boxLatex, isNodeArray } from '../patterns';
 import { normalizeAst } from '../normalize';
 import type { RadicalInfo, RationalValue, SerializedNode } from './types';
+import type { SerializableMathJson } from '../../../types/calculator';
 import { asPositiveInteger, asRational, expressionHasVariable, reduceRational } from './scalars';
 import { serializeNode } from './serialization';
 
@@ -146,6 +147,7 @@ export function radicalConstraints(base: unknown, denominator: number) {
   return [{
     kind: 'nonnegative' as const,
     expressionLatex: boxLatex(base),
+    expressionMathJson: base as SerializableMathJson,
   }];
 }
 

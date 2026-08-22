@@ -219,7 +219,9 @@ test('RAD2 smoke solves bounded sequential radical families', async ({ page }) =
   await expect(page.getByText('Power Lift', { exact: true })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toContainText('x');
   await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
-  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('2x-1');
+  await expect(
+    page.getByTestId('display-outcome-detail-sections').locator('[aria-label="2x-1"]'),
+  ).toBeVisible();
 });
 
 test('POLY2 smoke renders guided quartic exact roots through the bounded factor-first path', async ({ page }) => {
@@ -510,7 +512,7 @@ test('PRL4 smoke solves same-base logarithmic equalities with condition lines', 
   await page.getByTestId('soft-action-solve').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByText('Parameterized Exp/Log Solve', { exact: true })).toBeVisible();
+  await expect(page.getByText('Same-Base Equality', { exact: true })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=4"]')).toBeVisible();
   await expect(
     page.locator('[data-testid^="display-outcome-supplement-"]').filter({ hasText: /2x.?3/ }),

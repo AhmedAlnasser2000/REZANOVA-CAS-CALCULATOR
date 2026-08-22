@@ -25,6 +25,7 @@ import { solutionsToLatex } from '../../display/format';
 import type {
   ResultProducerDraft,
   GuardedSolveRequest,
+  SerializableMathJson,
 } from '../../../types/calculator';
 import {
   UNSUPPORTED_FAMILY_ERROR,
@@ -57,6 +58,34 @@ import { tryProvenCanonicalMathValue } from '../../result-contract';
 
 const ce = new ComputeEngine();
 
+function normalizedCarrierRootNode(node: unknown): SerializableMathJson {
+  if (
+    Array.isArray(node)
+    && node[0] === 'Divide'
+    && node.length === 3
+    && typeof node[2] === 'number'
+    && Number.isInteger(node[2])
+    && node[2] !== 0
+    && Array.isArray(node[1])
+    && node[1][0] === 'Subtract'
+    && node[1].length === 3
+    && typeof node[1][2] === 'number'
+    && Number.isInteger(node[1][2])
+    && Array.isArray(node[1][1])
+    && node[1][1][0] === 'Add'
+    && node[1][1].length === 3
+    && typeof node[1][1][1] === 'number'
+    && Number.isInteger(node[1][1][1])
+  ) {
+    return [
+      'Multiply',
+      ['Rational', 1, node[2]],
+      ['Add', node[1][1][1] - node[1][2], node[1][1][2]],
+    ] as SerializableMathJson;
+  }
+  return node as SerializableMathJson;
+}
+
 function provenCarrierRootLeaves(
   roots: Array<{ latex: string; node?: unknown }>,
   source: string,
@@ -64,15 +93,16 @@ function provenCarrierRootLeaves(
   return roots.flatMap((root, index) => {
     if (root.node === undefined) return [];
     const leafSource = `${source}:${index}`;
+    const mathJson = normalizedCarrierRootNode(root.node);
     const proof = tryProvenCanonicalMathValue({
       canonicalLatex: root.latex,
-      mathJson: root.node,
+      mathJson,
       owner: 'equation',
       routeId: 'equation.polynomial',
       source: leafSource,
     });
     return proof
-      ? [{ canonicalLatex: root.latex, mathJson: root.node, source: leafSource }]
+      ? [{ canonicalLatex: root.latex, mathJson, source: leafSource }]
       : [];
   });
 }
@@ -91,6 +121,31 @@ function provenCarrierCanonicalMath(
     source,
   })
     ? { ...primaryMath, canonicalLatex }
+    : undefined;
+}
+
+function provenAcceptedCarrierCanonicalMath(
+  roots: Array<{ latex: string; node?: unknown }>,
+  canonicalLatex: string | undefined,
+  source: string,
+) {
+  if (!canonicalLatex || roots.length === 0) {
+    return undefined;
+  }
+  const provenRoots = provenCarrierRootLeaves(roots, `${source}:accepted-root`);
+  if (provenRoots.length !== roots.length) return undefined;
+  const nodes = provenRoots.map((root) => root.mathJson);
+  const mathJson: SerializableMathJson = roots.length === 1
+    ? ['Equal', 'x', nodes[0]]
+    : ['Element', 'x', ['Set', ...nodes] as SerializableMathJson];
+  return tryProvenCanonicalMathValue({
+    canonicalLatex,
+    mathJson,
+    owner: 'equation',
+    routeId: 'equation.polynomial',
+    source,
+  })
+    ? { canonicalLatex, mathJson }
     : undefined;
 }
 
@@ -353,26 +408,11 @@ function runBoundedPolynomialSolve(
       const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
         ? solutionsToLatex('x', acceptedLatex)
         : undefined;
-      const rootSet = createRootSet({
-        target: 'x',
-        source: 'equation-polynomial-carrier-candidate-validation',
-        entries: acceptedRoots.map((root) => createExactFiniteRoot(root.latex, {
-          source: 'equation-polynomial-carrier-candidate-validation',
-          ...(root.node !== undefined ? { node: root.node } : {}),
-        })),
-      });
-      const renderedCanonicalMath = rootSetToCanonicalMath(rootSet);
-      const provenAcceptedRoots = provenCarrierRootLeaves(
+      const primaryMath = provenAcceptedCarrierCanonicalMath(
         acceptedRoots,
+        exactLatex,
         'equation-polynomial-carrier-candidate-validation',
       );
-      const primaryMath = provenAcceptedRoots.length === acceptedRoots.length
-        ? provenCarrierCanonicalMath(
-            renderedCanonicalMath,
-            exactLatex,
-            'equation-polynomial-carrier-candidate-validation',
-          )
-        : undefined;
 
       const producerInput: EquationResultProducerInput = {
         kind: 'success',

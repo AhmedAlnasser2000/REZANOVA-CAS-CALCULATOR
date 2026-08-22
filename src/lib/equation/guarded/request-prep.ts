@@ -319,6 +319,10 @@ function attachAlgebraMetadata(
       source,
     });
     if (!proof) return false;
+    if (nativeLeaves.some((leaf) =>
+      leaf.canonicalLatex.replace(/\s+/gu, '') === canonicalLatex.replace(/\s+/gu, ''))) {
+      return true;
+    }
     nativeLeaves.push({ canonicalLatex, mathJson, source });
     return true;
   };
@@ -488,9 +492,27 @@ function validateDirectSymbolicOutcome(
     return null;
   }
 
+  const answerRoot = Array.isArray(symbolic.answerMathJson) ? symbolic.answerMathJson : undefined;
+  const answerNodes: SerializableMathJson[] = answerRoot?.[0] === 'Equal'
+    && answerRoot.length === 3
+      ? [answerRoot[2] as SerializableMathJson]
+      : answerRoot?.[0] === 'Element'
+        && Array.isArray(answerRoot[2])
+        && answerRoot[2][0] === 'Set'
+          ? answerRoot[2].slice(1) as SerializableMathJson[]
+          : [];
+  const rawNodes = symbolic.rawSolutions?.map((solution) =>
+    solution && typeof solution === 'object' && 'json' in solution
+      ? (solution as { json: SerializableMathJson }).json
+      : solution as SerializableMathJson);
+  const solutionMathJson = answerNodes.length === rawSolutionLatex.length
+    ? answerNodes
+    : rawNodes?.length === rawSolutionLatex.length
+      ? rawNodes
+      : [];
   const numericPairs = rawSolutionLatex.flatMap((latex, index) => {
     const value = numericSolutions[index];
-    return value === null ? [] : [{ latex, value }];
+    return value === null ? [] : [{ latex, value, mathJson: solutionMathJson[index] }];
   });
   const finiteSolutions = numericPairs.map((entry) => entry.value);
   if (finiteSolutions.length === 0) {
@@ -503,15 +525,6 @@ function validateDirectSymbolicOutcome(
     );
   }
 
-  const answerRoot = Array.isArray(symbolic.answerMathJson) ? symbolic.answerMathJson : undefined;
-  const solutionMathJson: SerializableMathJson[] = answerRoot?.[0] === 'Equal'
-    && answerRoot.length === 3
-      ? [answerRoot[2] as SerializableMathJson]
-      : answerRoot?.[0] === 'Element'
-        && Array.isArray(answerRoot[2])
-        && answerRoot[2][0] === 'Set'
-          ? answerRoot[2].slice(1) as SerializableMathJson[]
-          : [];
   const candidateLeaves = rawSolutionLatex.flatMap((canonicalLatex, index) =>
     solutionMathJson[index] === undefined
       ? []
@@ -570,8 +583,8 @@ function validateDirectSymbolicOutcome(
     if (matchIndex >= 0) {
       acceptedValues.push(numericPairs[matchIndex].value);
       acceptedLatex.push(numericPairs[matchIndex].latex);
-      if (solutionMathJson[matchIndex] !== undefined) {
-        acceptedMathJson.push(solutionMathJson[matchIndex]);
+      if (numericPairs[matchIndex].mathJson !== undefined) {
+        acceptedMathJson.push(numericPairs[matchIndex].mathJson);
       }
     }
   }

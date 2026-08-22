@@ -7,6 +7,7 @@ import { historyEntryFixture } from './test-utils/history-result-document';
 import { displayedDetailLatex, displayedSupplementLatex, revealDetailSection, revealValidWhenIfCollapsed } from './test/displayResultAssertions';
 import {
   expectMathStaticLatex,
+  openCalculusTool,
   openLauncherApp,
   openEquationSymbolic,
   openGeometrySlope,
@@ -23,16 +24,6 @@ function setViewportWidth(width: number) {
     value: width,
   });
   fireEvent(window, new Event('resize'));
-}
-
-async function openCalculusTool(
-  user: Awaited<ReturnType<typeof renderAppMain>>['user'],
-  ...toolLabels: string[]
-) {
-  await openLauncherApp(user, 'Calculus', 'Calculus');
-  for (const toolLabel of toolLabels) {
-    await user.click(await screen.findByRole('button', { name: new RegExp(toolLabel, 'i') }));
-  }
 }
 
 async function waitForAlgebraTransform(action: string) {
@@ -187,6 +178,12 @@ describe('AppMain UI automation flows', () => {
 
   it('flushes dirty calculator memory on close and reset controls clear the intended state', async () => {
     await renderAppMain();
+
+    await waitFor(() => {
+      fireEvent(window, new Event('beforeunload'));
+      const initializedState = JSON.parse(window.localStorage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}') as { calculatorMemory?: unknown };
+      expect(initializedState.calculatorMemory).toBeTruthy();
+    });
 
     setMathFieldLatex('main-editor', '2+2');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '2+2'));
@@ -696,8 +693,8 @@ describe('AppMain UI automation flows', () => {
 
   it('replays guided Calculus history into the same tool state', async () => {
     const { user } = await renderAppMain();
-
     await openCalculusTool(user, 'Integrals', 'Indefinite');
+    await screen.findByTestId('main-editor');
     setMathFieldLatex('main-editor', '2x');
     await user.click(screen.getByTestId('keypad-execute'));
 
@@ -708,8 +705,9 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('history-toggle'));
     await user.click((await screen.findAllByTestId('history-entry'))[0]);
 
+    const replayedEditor = await screen.findByTestId('main-editor');
     await waitFor(() => {
-      expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '2x');
+      expect(replayedEditor).toHaveAttribute('data-value', '2x');
     });
     expect(screen.getAllByText('Indefinite Integral').length).toBeGreaterThan(0);
   });
@@ -2458,12 +2456,14 @@ describe('AppMain UI automation flows', () => {
 
     await openLauncherApp(user, 'Shape Math', 'Trigonometry');
 
-    expect(await screen.findByRole('button', { name: /identities/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /triangles/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /angle convert/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /functions/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /equations/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /special angles/i })).not.toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector('.trig-menu-list')).not.toBeNull());
+    const trigMenu = document.querySelector('.trig-menu-list') as HTMLElement;
+    expect(within(trigMenu).getByRole('button', { name: /identities/i })).toBeInTheDocument();
+    expect(within(trigMenu).getByRole('button', { name: /triangles/i })).toBeInTheDocument();
+    expect(within(trigMenu).getByRole('button', { name: /angle convert/i })).toBeInTheDocument();
+    expect(within(trigMenu).queryByRole('button', { name: /functions/i })).not.toBeInTheDocument();
+    expect(within(trigMenu).queryByRole('button', { name: /equations/i })).not.toBeInTheDocument();
+    expect(within(trigMenu).queryByRole('button', { name: /special angles/i })).not.toBeInTheDocument();
     expect(screen.getAllByText(/1-4: Open/i).length).toBeGreaterThan(0);
   });
 

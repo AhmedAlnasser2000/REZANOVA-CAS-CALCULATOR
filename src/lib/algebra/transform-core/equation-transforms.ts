@@ -7,6 +7,7 @@ import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { hasAdditiveStructure } from './parsing';
 import { buildTwoSideEquationResult } from './result';
 import type { AlgebraTransformResult, TransformSideResult } from './types';
+import type { SerializableMathJson } from '../../../types/calculator';
 
 function rewriteEquationSideAsRoot(node: unknown): TransformSideResult | null {
   const normalized = normalizeExactPowerLogNode(node, 'rewrite-root');
@@ -16,7 +17,9 @@ function rewriteEquationSideAsRoot(node: unknown): TransformSideResult | null {
 
   return {
     latex: normalized.normalizedLatex,
+    node: normalized.normalizedNode as SerializableMathJson,
     supplement: normalized.exactSupplementLatex,
+    constraints: normalized.conditionConstraints,
   };
 }
 
@@ -28,7 +31,9 @@ function rewriteEquationSideAsPower(node: unknown): TransformSideResult | null {
 
   return {
     latex: normalized.normalizedLatex,
+    node: normalized.normalizedNode as SerializableMathJson,
     supplement: normalized.exactSupplementLatex,
+    constraints: normalized.conditionConstraints,
   };
 }
 
@@ -40,7 +45,9 @@ function changeEquationSideBase(node: unknown): TransformSideResult | null {
 
   return {
     latex: normalized.normalizedLatex,
+    node: normalized.normalizedNode as SerializableMathJson,
     supplement: normalized.exactSupplementLatex,
+    constraints: normalized.conditionConstraints,
   };
 }
 
@@ -56,7 +63,9 @@ function combineEquationSideFractions(node: unknown): TransformSideResult | null
 
   return {
     latex: rational.normalizedLatex,
+    node: rational.normalizedNode as SerializableMathJson,
     supplement: rational.exactSupplementLatex,
+    constraints: rational.exclusionConstraints,
   };
 }
 
@@ -73,7 +82,9 @@ function cancelEquationSideFactors(node: unknown): TransformSideResult | null {
 
   return {
     latex: simplified.normalizedLatex,
+    node: simplified.normalizedNode as SerializableMathJson,
     supplement: simplified.exactSupplementLatex,
+    constraints: simplified.exclusionConstraints,
   };
 }
 
@@ -85,9 +96,11 @@ function rationalizeEquationSide(node: unknown): TransformSideResult | null {
 
   return {
     latex: radical.normalizedLatex,
+    node: radical.normalizedNode as SerializableMathJson,
     supplement: mergeExactSupplementLatex(
       { latex: radical.exactSupplementLatex, source: 'legacy' },
     ),
+    constraints: radical.conditionConstraints,
   };
 }
 
@@ -99,9 +112,11 @@ function conjugateEquationSide(node: unknown): TransformSideResult | null {
 
   return {
     latex: conjugate.normalizedLatex,
+    node: conjugate.normalizedNode as SerializableMathJson,
     supplement: mergeExactSupplementLatex(
       { latex: conjugate.exactSupplementLatex, source: 'legacy' },
     ),
+    constraints: conjugate.conditionConstraints,
   };
 }
 

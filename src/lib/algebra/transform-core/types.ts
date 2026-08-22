@@ -1,4 +1,8 @@
-import type { TransformBadge } from '../../../types/calculator';
+import type {
+  SerializableMathJson,
+  SolveDomainConstraint,
+  TransformBadge,
+} from '../../../types/calculator';
 
 export type AlgebraTransformAction =
   | 'rewriteAsRoot'
@@ -12,7 +16,9 @@ export type AlgebraTransformAction =
 
 export type AlgebraTransformResult = {
   exactLatex: string;
+  exactMathJson?: SerializableMathJson;
   exactSupplementLatex?: string[];
+  domainConstraints?: SolveDomainConstraint[];
   transformBadges: TransformBadge[];
   transformSummaryText: string;
   transformSummaryLatex?: string;
@@ -25,7 +31,9 @@ export type ParsedEquationNode = {
 
 export type TransformSideResult = {
   latex: string;
+  node: SerializableMathJson;
   supplement?: string[];
+  constraints?: SolveDomainConstraint[];
 };
 
 export type TransformDescriptor = {

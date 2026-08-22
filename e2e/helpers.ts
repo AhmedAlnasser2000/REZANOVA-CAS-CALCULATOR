@@ -46,11 +46,13 @@ export async function getMathFieldLatex(page: Page, testId = 'main-editor') {
 export async function closeSidePanelIfOpen(page: Page) {
   const backdrop = page.getByTestId('side-surface-overlay-backdrop');
   if (await backdrop.isVisible()) {
-    if (!await backdrop.isEnabled()) {
-      await expect(backdrop).toBeHidden();
-      return;
+    if (await backdrop.getAttribute('data-motion-phase') !== 'exiting') {
+      try {
+        await backdrop.click({ timeout: 2_000 });
+      } catch (error) {
+        if (await backdrop.isVisible() && await backdrop.isEnabled()) throw error;
+      }
     }
-    await backdrop.click();
     await expect(backdrop).toBeHidden();
   }
 }
