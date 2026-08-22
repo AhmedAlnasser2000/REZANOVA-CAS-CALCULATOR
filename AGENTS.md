@@ -43,7 +43,7 @@
   - `verified_by_agent_family`
   - `attribution_basis`
 - Add `contributors`, `committed_by_agent`, `committed_by_agent_model`, and `committed_by_agent_family` when they materially apply.
-- Allowed agent-family values are lowercase `sol`, `terra`, and `luna`.
+- Allowed agent-family values are lowercase `sol`, `terra`, `luna`, and `k3`.
 - Family fields are prospective from `2026-07-09`. Do not infer or backfill a family for older artifacts.
 - The user-confirmed attribution correction maps exact model-field values `gpt-5` and `gpt-5-codex` to `gpt-5.5`. Explicit `gpt-5.4`, `gpt-5.3-codex`, and lower/versioned historical values are protected and must not be rewritten by that correction.
 - `primary_agent` means milestone owner, not merely the last editor.

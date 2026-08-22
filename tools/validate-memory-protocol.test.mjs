@@ -312,7 +312,7 @@ test('validator rejects unknown prospective family values', async () => {
     useJournalPrefix: true,
     agentFamily: 'orbit',
   });
-  await assert.rejects(() => validateRepo(root), /expected one of sol, terra, luna/);
+  await assert.rejects(() => validateRepo(root), /expected one of sol, terra, luna, k3/);
 });
 
 test('validator fails when current-state.md exceeds the snapshot line cap', async () => {

@@ -58,7 +58,7 @@ const CURRENT_STATE_MILESTONE_HEADING_PATTERN =
 const CURRENT_STATE_LAST_UPDATED_PATTERN = /^Last updated:\s*(\d{4}-\d{2}-\d{2})\s*$/mu;
 const RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS = new Set(['fricas']);
 const AGENT_FAMILY_CUTOFF = '2026-07-09';
-const ALLOWED_AGENT_FAMILIES = new Set(['sol', 'terra', 'luna']);
+const ALLOWED_AGENT_FAMILIES = new Set(['sol', 'terra', 'luna', 'k3']);
 
 function normalizeNewlines(text) {
   return text.replace(/\r\n/g, '\n');

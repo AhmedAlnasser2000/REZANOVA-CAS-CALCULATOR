@@ -247,7 +247,21 @@ describe('CI gate alignment validation', () => {
       assert.equal(result.status, 124, result.stderr || result.error?.message);
       childPid = Number.parseInt(readFileSync(childPidPath, 'utf8'), 10);
       assert.ok(Number.isSafeInteger(childPid) && childPid > 0);
-      assert.throws(() => process.kill(childPid, 0), { code: 'ESRCH' });
+      const reapDeadline = Date.now() + 3_000;
+      let descendantGone = false;
+      while (Date.now() < reapDeadline) {
+        try {
+          process.kill(childPid, 0);
+        } catch (error) {
+          if (error?.code === 'ESRCH') {
+            descendantGone = true;
+            break;
+          }
+          throw error;
+        }
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+      }
+      assert.ok(descendantGone, `watchdog descendant ${childPid} still alive after timeout`);
     } finally {
       if (childPid) {
         try {

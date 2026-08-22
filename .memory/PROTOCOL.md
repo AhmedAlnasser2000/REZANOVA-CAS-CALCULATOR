@@ -22,12 +22,14 @@
   - `codex`
   - `claude`
   - `gemini`
+  - `kimi`
 - Use fuller runtime identifiers for model fields when known:
   - examples: `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`, `gpt-5.6`, `claude-sonnet-4`, `gemini-2.5-pro`
-- Use lowercase family identifiers for Codex family fields:
+- Use lowercase family identifiers for agent family fields:
   - `sol`
   - `terra`
   - `luna`
+  - `k3`
 - Allowed `attribution_basis` values:
   - `live`
   - `historical-user-confirmed`
