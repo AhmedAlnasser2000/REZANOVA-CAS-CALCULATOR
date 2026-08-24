@@ -3235,3 +3235,7 @@
 ## 2026-08-24 - Calculate Textual Nth-Root Input
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Textual `root(index, radicand)` is a Calculate-only input canonicalization into existing structured nth-root notation, not a new solver operator. Accepted indices are integers of at least two or one symbolic letter; malformed calls fail at canonicalization and may never be reparsed through a raw-input fallback.
+
+## 2026-08-24 - CI Runtime Readiness
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] UI tests that exercise known asynchronous Linear Algebra routes may use a bounded route-specific completion wait; global timeout increases, sleeps, and production eager execution remain forbidden. The Calculus linear-integral canary has one canonical expected spelling, `\frac{x^{2}}{2}+C`.

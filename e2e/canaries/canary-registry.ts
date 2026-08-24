@@ -113,7 +113,7 @@ export const WORKSPACE_CANARIES = [
         id: 'calculus-integral-linear',
         settings: EXACT_DEG,
         driver: { kind: 'calculus', tool: 'Integral', inputLatex: 'x' },
-        expectation: { surface: 'answer', rawLatexIncludes: ['\\frac{1}{2}x^2', 'C'] },
+        expectation: { surface: 'answer', rawLatexIncludes: ['\\frac{x^{2}}{2}+C'] },
       },
     ],
   },

@@ -35,6 +35,14 @@
 - Visual screenshots are retained only under ignored `.task_tmp/ci-critical-repair/gate2/`; the temporary Playwright spec was removed.
 - No proof, print, V1 inventory, Canonical Result, or public schema baseline changed.
 
+## Gate 3 Green Evidence
+
+- The Matrix-profile and multi-vector runtime tests passed together, then passed five consecutive stress runs under the four-worker cap.
+- The focused Linear Algebra runtime seam passed 25/25 tests across five files.
+- `npm run test:canary-registry`: 3/3 passed.
+- Real-browser `calculus-integral-linear` canary: 1/1 passed and rendered the single canonical `\frac{x^{2}}{2}+C` spelling.
+- No production file, mathematical output, schema, baseline, or global timeout changed.
+
 ## Hygiene
 
 - `npm run test:memory-protocol`: passed.

@@ -20,7 +20,9 @@
 ## Selective Commits
 
 - `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1` (`backend`) committed as `7f948b33`.
-- `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) is focused-green and approved for its selective commit.
+- `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) committed as `5e9c2201`.
 - Gate 2 scope: Calculate-only textual nth-root canonicalization, fail-closed canonicalization errors, focused result/worker coverage, and durable evidence.
-- The user requested a stop after Gate 2; Gates 3-4 remain unstarted in this continuation.
+- `CI-RUNTIME-READINESS-CANARY-REPAIR1` (`backend`) is focused-green and approved for its selective commit.
+- Gate 3 scope: two bounded route-specific readiness waits, one canonical Calculus canary spelling, and durable evidence. No production code changed.
+- Gate 4 remains pending.
 - No push is authorized.

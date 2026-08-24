@@ -19,8 +19,9 @@
 - Mode: `CRITICAL`, root working alone.
 - Commit plan: four independently verified gates; no push is authorized.
 - Gate 1: `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1` (`backend`) is committed as `7f948b33`.
-- Gate 2: `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) is implementation- and verification-complete with commit approval received.
-- Gates 3-4 remain pending: runtime-readiness/canary repair and Node 24 Actions maintenance. Work stops after Gate 2 at the user's request.
+- Gate 2: `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) is committed as `5e9c2201`.
+- Gate 3: `CI-RUNTIME-READINESS-CANARY-REPAIR1` (`backend`) is implementation- and verification-complete with commit approval received.
+- Gate 4 remains pending: Node 24 Actions maintenance.
 
 ## Gate 1 Implemented
 
@@ -40,6 +41,12 @@
 
 ## Remaining Program Work
 
-- Gate 3: bounded Linear Algebra readiness waits and the approved Calculus canary spelling.
 - Gate 4: Node 24 policy, SHA-pinned Actions v7, Dependabot maintenance, and alignment ratchets.
-- One Node 24 `npm run test:gate` closeout remains reserved until Gates 3-4 are completed in a later continuation.
+- One Node 24 `npm run test:gate` closeout remains reserved until Gate 4 is complete.
+
+## Gate 3 Implemented
+
+- Replaced only the two CI-sensitive Linear Algebra tests' one-second default completion waits with bounded five-second route waits; production runtime behavior and global test timeouts remain unchanged.
+- Stress-ran the Matrix profile and multi-vector routes five consecutive times at four-worker concurrency; both remained green, with the multi-vector route consistently completing just beyond the former one-second boundary.
+- Locked the Calculus integral canary to the current canonical `\frac{x^{2}}{2}+C` output and confirmed it in the real browser canary.
+- Diagnosed, without repairing, two follow-up issues: stale or decorated MathLive textual-root entry can bypass the new plain-input canonicalizer, and recursive Equation carrier solves repeatedly rebuild and re-prove results with fresh Compute Engine instances, producing heavy bootstrap/type-resolution and garbage-collection cost.

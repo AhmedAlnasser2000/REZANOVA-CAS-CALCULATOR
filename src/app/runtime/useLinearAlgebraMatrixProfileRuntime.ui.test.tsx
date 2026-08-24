@@ -55,7 +55,10 @@ describe('useLinearAlgebraTableShellRuntime Matrix linear-map profile', () => {
       hook.result.current.runMatrixEditorAction();
     });
 
-    await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
+    await waitFor(
+      () => expect(commitOutcome).toHaveBeenCalled(),
+      { timeout: 5_000 },
+    );
     const outcome = commitOutcome.mock.calls.at(-1)?.[0] as CanonicalRuntimeOutcome;
     const display = displayResultReadModelFromOutcome(outcome);
     if (!display || display.outcomeKind === 'error') {
