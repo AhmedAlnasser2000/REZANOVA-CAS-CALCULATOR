@@ -18,8 +18,9 @@
 
 - Mode: `CRITICAL`, root working alone.
 - Commit plan: four independently verified gates; no push is authorized.
-- Gate 1: `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1` (`backend`) is implementation-complete and awaiting its selective commit.
-- Gates 2-4 remain pending: Calculate textual nth-root safety, runtime-readiness/canary repair, and Node 24 Actions maintenance.
+- Gate 1: `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1` (`backend`) is committed as `7f948b33`.
+- Gate 2: `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) is implementation- and verification-complete with commit approval received.
+- Gates 3-4 remain pending: runtime-readiness/canary repair and Node 24 Actions maintenance. Work stops after Gate 2 at the user's request.
 
 ## Gate 1 Implemented
 
@@ -29,9 +30,16 @@
 - Separated actual lazy Equation module import failures from worker execution and canonical finalization failures.
 - Restored the three reproduced nested carrier equations to successful V2 output without changing their existing visible mathematical presentation.
 
+## Gate 2 Implemented
+
+- Added a Calculate-only canonicalization boundary for textual `root(index, radicand)` calls, translating accepted calls into the existing structured nth-root notation before semantic planning.
+- Accepted integer indices of at least two and one-letter symbolic indices, including nested textual roots and recursively canonicalizable radicands.
+- Rejected invalid indices, arity, empty arguments, and unbalanced grouping with specific planner-owned controlled guidance.
+- Removed the math-engine's raw-input fallback after canonicalization failure, so invalid textual roots cannot reach the solver as unstructured text.
+- Kept Equation and every non-Calculate workspace outside the textual-root widening; no new solver operator or result schema was added.
+
 ## Remaining Program Work
 
-- Gate 2: Calculate-only `root(index, radicand)` canonicalization and controlled guidance.
 - Gate 3: bounded Linear Algebra readiness waits and the approved Calculus canary spelling.
 - Gate 4: Node 24 policy, SHA-pinned Actions v7, Dependabot maintenance, and alignment ratchets.
-- One Node 24 `npm run test:gate` closeout is reserved until all four focused gates are green.
+- One Node 24 `npm run test:gate` closeout remains reserved until Gates 3-4 are completed in a later continuation.

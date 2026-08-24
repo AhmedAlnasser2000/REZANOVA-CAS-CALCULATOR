@@ -156,6 +156,59 @@ beforeEach(() => {
 });
 
 describe('calculate worker runtime shell', () => {
+  it('preserves textual nth-root results and controlled stops across the worker boundary', async () => {
+    const validRequest: RunCalculateRuntimeRequest = {
+      kind: 'standard',
+      request: {
+        action: 'simplify',
+        latex: 'root(3,sqrt(x))',
+        angleUnit: 'deg',
+        outputStyle: 'both',
+        ansLatex: '0',
+        calculateScreen: 'standard',
+      },
+    };
+    const invalidRequest: RunCalculateRuntimeRequest = {
+      kind: 'standard',
+      request: {
+        ...validRequest.request,
+        latex: 'root(1,sqrt(x))',
+      },
+    };
+
+    const valid = await runCalculateRuntimeWithOoePilot(validRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('complete'),
+    });
+    const invalid = await runCalculateRuntimeWithOoePilot(invalidRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('complete'),
+    });
+
+    expect(valid.payload.kind).toBe('success');
+    if (valid.payload.kind !== 'success') {
+      throw new Error('Expected a successful worker payload');
+    }
+    if (valid.payload.canonicalResult.version !== 1) {
+      throw new Error('Expected the untouched Calculate producer to remain V1');
+    }
+    expect(valid.payload.canonicalResult.primaryMath?.canonicalLatex)
+      .toBe('x^{\\frac{1}{6}}');
+    expect(invalid.payload).toMatchObject({
+      kind: 'error',
+      runtimeAdvisories: {
+        stopReason: { kind: 'planner-hard-stop', source: 'planner' },
+      },
+    });
+    if (invalid.payload.kind !== 'error') {
+      throw new Error('Expected a controlled worker error');
+    }
+    expect(invalid.payload.canonicalResult.error)
+      .toContain('integer index of at least 2');
+    expect(structuredClone(valid.payload)).toEqual(valid.payload);
+    expect(structuredClone(invalid.payload)).toEqual(invalid.payload);
+  });
+
   it('returns worker payloads matching the main-thread Calculate core', async () => {
     for (const request of representativeRequests) {
       const result = await runCalculateRuntimeWithOoePilot(request, {

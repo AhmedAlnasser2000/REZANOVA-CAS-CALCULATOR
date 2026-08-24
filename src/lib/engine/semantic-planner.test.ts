@@ -6,6 +6,46 @@ function compact(source: string) {
 }
 
 describe('planMathExecution', () => {
+  it('plans textual nth roots through the same structured math as nth-root notation', () => {
+    const textual = planMathExecution('root(3,sqrt(x))', {
+      mode: 'calculate',
+      intent: 'calculate-simplify',
+      angleUnit: 'deg',
+      screenHint: 'standard',
+    });
+    const structured = planMathExecution('\\sqrt[3]{\\sqrt{x}}', {
+      mode: 'calculate',
+      intent: 'calculate-simplify',
+      angleUnit: 'deg',
+      screenHint: 'standard',
+    });
+
+    expect(textual.kind).toBe('ready');
+    expect(structured.kind).toBe('ready');
+    if (textual.kind !== 'ready' || structured.kind !== 'ready') {
+      throw new Error('Expected ready planner outcomes');
+    }
+    expect(textual.resolvedMathJson).toEqual(structured.resolvedMathJson);
+  });
+
+  it('blocks invalid textual nth-root indices before solver parsing', () => {
+    const result = planMathExecution('root(-3,x)', {
+      mode: 'calculate',
+      intent: 'calculate-simplify',
+      angleUnit: 'deg',
+      screenHint: 'standard',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'blocked',
+      badges: ['Hard Stop'],
+    });
+    if (result.kind !== 'blocked') {
+      throw new Error('Expected a blocked planner outcome');
+    }
+    expect(result.error).toContain('integer index of at least 2');
+  });
+
   it('reduces embedded derivatives before equation solving', () => {
     const result = planMathExecution('12+\\frac{d}{dx}(5x)+6x=5', {
       mode: 'equation',
@@ -76,4 +116,3 @@ describe('planMathExecution', () => {
     expect(result.badges).toContain('Hard Stop');
   });
 });
-

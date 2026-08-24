@@ -15,6 +15,54 @@ function detailLines(result: ReturnType<typeof runCalculateMode>, index: number)
 }
 
 describe('runCalculateMode', () => {
+  it('evaluates textual nth-root input through the existing structured exact route', () => {
+    const textual = runCalculateMode({
+      action: 'simplify',
+      latex: 'root(3,sqrt(x))',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+    const structured = runCalculateMode({
+      action: 'simplify',
+      latex: '\\sqrt[3]{\\sqrt{x}}',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+
+    expect(textual.kind).toBe('success');
+    expect(structured.kind).toBe('success');
+    if (textual.kind !== 'success' || structured.kind !== 'success') {
+      throw new Error('Expected Calculate successes');
+    }
+    expect(textual.exactLatex).toBe('x^{\\frac{1}{6}}');
+    expect(textual.exactLatex).toBe(structured.exactLatex);
+    expect(textual.primaryMath?.mathJson).toEqual(structured.primaryMath?.mathJson);
+    expect(requireCanonicalResultAuthority(textual, 'Calculate textual root test').canonicalResult)
+      .toBeDefined();
+  });
+
+  it('returns specific controlled guidance for malformed textual roots', () => {
+    const result = runCalculateMode({
+      action: 'simplify',
+      latex: 'root(1,sqrt(x))',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected a controlled error');
+    }
+    expect(result.error).toContain('integer index of at least 2');
+    expect(result.runtimeAdvisories?.stopReason).toEqual({
+      kind: 'planner-hard-stop',
+      source: 'planner',
+    });
+  });
+
   it('profiles proven Calculate answer nodes with canonical payload parity', () => {
     const requests = [
       { action: 'evaluate' as const, latex: '2+3' },

@@ -8,6 +8,49 @@ import {
 } from './input-canonicalization';
 
 describe('canonicalizeMathInput', () => {
+  it('canonicalizes textual nth-root calls only in Calculate', () => {
+    const textual = canonicalizeMathInput('root(3,sqrt(x))', {
+      mode: 'calculate',
+      screenHint: 'standard',
+    });
+    const nested = canonicalizeMathInput('root(n,root(3,x+1))', {
+      mode: 'calculate',
+      screenHint: 'standard',
+    });
+    const equation = canonicalizeMathInput('root(3,sqrt(x))=2', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+
+    expect(textual.ok && textual.canonicalLatex).toBe('\\sqrt[3]{\\sqrt{x}}');
+    expect(nested.ok && nested.canonicalLatex).toBe('\\sqrt[n]{\\sqrt[3]{x+1}}');
+    expect(equation.ok && equation.canonicalLatex).toBe('root(3,\\sqrt{x})=2');
+  });
+
+  it.each([
+    ['root(0,x)', 'integer index of at least 2'],
+    ['root(1,x)', 'integer index of at least 2'],
+    ['root(-3,x)', 'integer index of at least 2'],
+    ['root(2.5,x)', 'integer index of at least 2'],
+    ['root(n+1,x)', 'integer index of at least 2'],
+    ['root(3)', 'exactly two arguments'],
+    ['root(3,x, y)', 'exactly two arguments'],
+    ['root(,x)', 'Both the root index and radicand are required'],
+    ['root(3,)', 'Both the root index and radicand are required'],
+    ['root(3,x', 'missing a closing parenthesis'],
+  ])('rejects invalid Calculate textual nth-root input %s', (latex, message) => {
+    const result = canonicalizeMathInput(latex, {
+      mode: 'calculate',
+      screenHint: 'standard',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected canonicalization to fail');
+    }
+    expect(result.error).toContain(message);
+  });
+
   it('canonicalizes reserved function tokens on open parentheses', () => {
     const result = canonicalizeMathInput('sin(', {
       mode: 'calculate',

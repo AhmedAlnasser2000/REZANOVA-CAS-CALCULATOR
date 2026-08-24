@@ -23,6 +23,7 @@ import {
   normalizeDerivativeShortcuts,
   normalizeDerivativeTokens,
 } from './derivative-token-canonicalization';
+import { canonicalizeCalculateTextualNthRoots } from './calculate-textual-nth-root';
 
 const MATH_SPACING_PATTERN_SOURCE = '(?:\\\\[,;:! ]|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad|~|\\s)+';
 const TRAILING_MATH_SPACING_PATTERN = new RegExp(`${MATH_SPACING_PATTERN_SOURCE}$`);
@@ -880,8 +881,19 @@ export function canonicalizeMathInput(
   }
 
   const changes: CanonicalizationChange[] = [];
+  const textualNthRootNormalized = context.mode === 'calculate'
+    ? canonicalizeCalculateTextualNthRoots(trimmed)
+    : { ok: true as const, latex: trimmed, changes: [] };
+  if (!textualNthRootNormalized.ok) {
+    return {
+      ok: false,
+      originalLatex,
+      error: textualNthRootNormalized.error,
+    };
+  }
+  changes.push(...textualNthRootNormalized.changes);
   const specialFunctionContext = isSpecialFunctionContext(context);
-  const integralBoundsNormalized = normalizeEmptyIntegralBounds(trimmed, changes);
+  const integralBoundsNormalized = normalizeEmptyIntegralBounds(textualNthRootNormalized.latex, changes);
   const integralSpacingNormalized = normalizeIntegralSpacing(integralBoundsNormalized);
   const numericLogBaseNormalized = normalizeNumericLogBaseSyntax(integralSpacingNormalized, changes);
   const splitFunctionsNormalized = normalizeSplitFunctionTokens(numericLogBaseNormalized, changes, {

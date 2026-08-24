@@ -156,6 +156,32 @@ describe('runExpressionAction symbolic simplify', () => {
     expect(awkward.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0']);
   });
 
+  it('treats valid textual nth-root input as the existing structured root form', () => {
+    const textual = runExpressionAction(
+      { ...request, document: { latex: 'root(3,sqrt(x))' } },
+      'simplify',
+    );
+    const structured = runExpressionAction(
+      { ...request, document: { latex: '\\sqrt[3]{\\sqrt{x}}' } },
+      'simplify',
+    );
+
+    expect(textual.error).toBeUndefined();
+    expect(textual.exactLatex).toBe('x^{\\frac{1}{6}}');
+    expect(textual.exactLatex).toBe(structured.exactLatex);
+    expect(textual.normalizedMathJson).toEqual(structured.normalizedMathJson);
+  });
+
+  it('keeps malformed textual nth-root input on a controlled error path', () => {
+    const result = runExpressionAction(
+      { ...request, document: { latex: 'root(1,sqrt(x))' } },
+      'simplify',
+    );
+
+    expect(result.exactLatex).toBeUndefined();
+    expect(result.error).toContain('integer index of at least 2');
+  });
+
   it('normalizes bounded same-base log sums without applying unsupported log identities', () => {
     const sameBase = runExpressionAction(
       { ...request, document: { latex: '\\ln(x)+\\ln(x+1)' } },

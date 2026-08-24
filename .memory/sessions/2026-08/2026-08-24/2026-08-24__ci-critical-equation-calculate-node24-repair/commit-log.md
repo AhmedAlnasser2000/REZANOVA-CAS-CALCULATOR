@@ -17,10 +17,10 @@
 - committed_by_agent_family: sol
 - attribution_basis: live
 
-## Pending Selective Commit
+## Selective Commits
 
-- Gate: `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1`
-- Type: backend.
-- Status: implementation and focused verification complete; user approval received for this and the remaining program gates.
-- Scope: carrier proof preservation, fail-closed V2 finalization, runtime error classification, focused regression coverage, and this gate's durable evidence.
+- `CI-EQUATION-CARRIER-V2-PROOF-REPAIR1` (`backend`) committed as `7f948b33`.
+- `CALCULATE-TEXTUAL-NTH-ROOT-SAFETY1` (`backend`) is focused-green and approved for its selective commit.
+- Gate 2 scope: Calculate-only textual nth-root canonicalization, fail-closed canonicalization errors, focused result/worker coverage, and durable evidence.
+- The user requested a stop after Gate 2; Gates 3-4 remain unstarted in this continuation.
 - No push is authorized.

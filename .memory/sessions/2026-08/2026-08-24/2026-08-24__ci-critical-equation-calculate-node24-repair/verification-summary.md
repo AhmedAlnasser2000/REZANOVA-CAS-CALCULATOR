@@ -25,8 +25,18 @@
 - Real-app Playwright: all three reproduced equations rendered successful exact answer cards; applicable condition rows, detail cards, clipboard results, History replay rows, and horizontal-overflow checks passed. The nested-radical case correctly has no separate condition row.
 - Visual screenshots are retained only under ignored `.task_tmp/ci-critical-repair/`.
 
+## Gate 2 Green Evidence
+
+- Focused canonicalization, semantic-planner, math-engine, Calculate result-authority, and worker-boundary suites: 91/91 tests passed.
+- `npm run test:result-contract -- --maxWorkers=1`: 137/137 passed with no compiled-equality fallback warning.
+- `npm run test:canonical-result-v2-enforcement`: passed, including 12/12 V2/coverage tests and unchanged Display inversion floors (440 producer boundaries, 40 owner assemblies, 92 draft reads, 162 native documents, zero compatibility or legacy reads).
+- `npm run build`: passed.
+- Real-app Playwright: 2/2 passed. `root(3,sqrt(x))` rendered `x^{1/6}` with `x >= 0`, copied the exact result, replayed from History, and remained overflow-safe. `root(1,sqrt(x))` rendered a readable `Hard Stop` with index guidance.
+- Visual screenshots are retained only under ignored `.task_tmp/ci-critical-repair/gate2/`; the temporary Playwright spec was removed.
+- No proof, print, V1 inventory, Canonical Result, or public schema baseline changed.
+
 ## Hygiene
 
 - `npm run test:memory-protocol`: passed.
 - `npm run test:file-sizes`: passed with 2,167 files and five existing caps.
-- Final diff hygiene and staged-diff inspection are performed immediately before commit approval.
+- Final diff hygiene and staged-diff inspection are performed immediately before the approved Gate 2 commit.

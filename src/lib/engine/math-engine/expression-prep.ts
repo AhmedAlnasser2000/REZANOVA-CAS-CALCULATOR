@@ -92,7 +92,16 @@ export function prepareExpressionRequest(
     mode: request.mode,
     screenHint: action === 'solve' ? 'symbolic' : 'standard',
   });
-  const rawLatex = (canonicalized.ok ? canonicalized.canonicalLatex : request.document.latex).trim();
+  if (!canonicalized.ok) {
+    return {
+      kind: 'done',
+      response: {
+        warnings: [],
+        error: canonicalized.error,
+      },
+    };
+  }
+  const rawLatex = canonicalized.canonicalLatex.trim();
   const limitNormalized = action === 'evaluate'
     ? normalizeDirectionalLimitLatex(rawLatex)
     : { latex: rawLatex, directionOverride: undefined };
