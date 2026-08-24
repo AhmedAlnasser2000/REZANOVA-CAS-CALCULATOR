@@ -73,6 +73,45 @@ describe('producer-proven answer MathJSON', () => {
     });
   });
 
+  it('accepts exact producer serialization when nested-radical reparsing is weaker', () => {
+    const root = [
+      'Divide',
+      [
+        'Subtract',
+        -1,
+        [
+          'Sqrt',
+          [
+            'Subtract',
+            ['Power', 1, 2],
+            ['Multiply', 4, ['Subtract', 0, ['Add', ['Divide', ['Sqrt', 5], 2], ['Rational', 1, 2]]]],
+          ],
+        ],
+      ],
+      2,
+    ];
+    const canonicalLatex = String.raw`\frac{1}{2}(-\sqrt{1-4(-(5^{1/2}/2)-1/2)}-1)`;
+
+    expect(proveAnswerMathJson({
+      canonicalLatex,
+      candidate: candidate(root),
+    })).toMatchObject({
+      ok: true,
+      evidence: {
+        mathJson: root,
+        semanticRelation: 'structural',
+      },
+    });
+
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`\frac{1}{2}(-\sqrt{1-4(-(5^{1/2}/2)-1/2)}-2)`,
+      candidate: candidate(root),
+    })).toMatchObject({
+      ok: false,
+      failure: { reason: 'semantic-mismatch' },
+    });
+  });
+
   it('keeps ordinary Calculus function and differential trees on exact comparison', () => {
     expect(proveAnswerMathJson({
       canonicalLatex: String.raw`y\left(1\right)\approx2.71828`,

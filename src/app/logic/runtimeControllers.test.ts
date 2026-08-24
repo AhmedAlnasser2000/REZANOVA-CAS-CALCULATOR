@@ -4,7 +4,10 @@ import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './runtimeControllers';
-import { runEquationModeWithOoePilot } from './equationRuntimeLoader';
+import {
+  EquationRuntimeModuleLoadError,
+  runEquationModeWithOoePilot,
+} from './equationRuntimeLoader';
 import { createCanonicalRuntimeError } from '../../lib/result-contract';
 
 vi.mock('./equationRuntimeLoader', async (importOriginal) => {
@@ -25,6 +28,30 @@ async function waitForCommit(commitOutcome: ReturnType<typeof createCommitOutcom
   await vi.waitFor(() => {
     expect(commitOutcome).toHaveBeenCalled();
   }, { timeout: 5_000 });
+}
+
+function equationControllerForFailure(commitOutcome: ReturnType<typeof createCommitOutcomeSpy>) {
+  return createEquationRuntimeController({
+    equationScreen: 'symbolic',
+    equationLatex: 'x=1',
+    equationInputLatex: 'x=1',
+    quadraticCoefficients: [1, 0, 0],
+    cubicCoefficients: [1, 0, 0, 0],
+    quarticCoefficients: [1, 0, 0, 0, 0],
+    polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+    system2: [[0, 0, 0], [0, 0, 0]],
+    system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+    equationNumericSolvePanel: { enabled: false, start: '0', end: '1', subdivisions: 10 },
+    currentMode: 'equation',
+    displayOutcome: null,
+    ansLatex: '0',
+    settings: { angleUnit: 'deg', outputStyle: 'both' },
+    variableMemory: [],
+    startTransition: (callback) => callback(),
+    commitOutcome,
+    switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+    isSimultaneousEquationScreen: () => false,
+  });
 }
 
 function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeWithOoePilot>> {
@@ -83,6 +110,32 @@ function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeW
 describe('runtimeControllers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('distinguishes Equation module loading from worker execution failures', async () => {
+    const workerFailureCommit = createCommitOutcomeSpy();
+    vi.mocked(runEquationModeWithOoePilot).mockRejectedValueOnce(
+      new Error('Equation worker runtime failed: missing primary proof'),
+    );
+    equationControllerForFailure(workerFailureCommit).runEquationAction();
+    await waitForCommit(workerFailureCommit);
+    expect(workerFailureCommit.mock.calls[0][0]).toMatchObject({
+      kind: 'error',
+      canonicalResult: {
+        error: 'Equation runtime failed: Equation worker runtime failed: missing primary proof',
+      },
+    });
+
+    const loadFailureCommit = createCommitOutcomeSpy();
+    vi.mocked(runEquationModeWithOoePilot).mockRejectedValueOnce(
+      new EquationRuntimeModuleLoadError('Could not load the Equation solve module.'),
+    );
+    equationControllerForFailure(loadFailureCommit).runEquationAction();
+    await waitForCommit(loadFailureCommit);
+    expect(loadFailureCommit.mock.calls[0][0]).toMatchObject({
+      kind: 'error',
+      canonicalResult: { error: 'Could not load the Equation solve module.' },
+    });
   });
 
   it('returns a workbench-specific calculate error before execution when generated input is blank', () => {

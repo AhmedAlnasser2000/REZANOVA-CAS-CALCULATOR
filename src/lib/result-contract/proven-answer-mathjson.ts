@@ -211,6 +211,16 @@ export function proveAnswerMathJson(input: {
     return failure('canonical-latex-invalid', 'Compute Engine rejected the canonical LaTeX proof value.');
   }
 
+  let producerSerializedSame: boolean;
+  try {
+    producerSerializedSame = ce.box(cloned).latex === canonicalLatex;
+  } catch {
+    return failure(
+      'compute-engine-invalid',
+      'Compute Engine could not serialize the answer MathJSON for comparison.',
+    );
+  }
+
   let structurallySame: boolean;
   try {
     structurallySame = answerExpression.isSame(canonicalExpression);
@@ -221,14 +231,21 @@ export function proveAnswerMathJson(input: {
     );
   }
   const formalComparison = compareFormalMathJson(cloned, canonicalExpression.json, canonicalLatex);
-  if (formalComparison.applicable && !structurallySame && !formalComparison.equal) {
+  if (
+    formalComparison.applicable
+    && !producerSerializedSame
+    && !structurallySame
+    && !formalComparison.equal
+  ) {
     return failure(
       'semantic-mismatch',
       'Producer MathJSON does not represent the same formal value as the canonical LaTeX.',
     );
   }
 
-  let directlyEqual = structurallySame || (formalComparison.applicable && formalComparison.equal);
+  let directlyEqual = producerSerializedSame
+    || structurallySame
+    || (formalComparison.applicable && formalComparison.equal);
   let simplifiedSame = false;
   if (!directlyEqual && !formalComparison.applicable) {
     try {
@@ -281,7 +298,7 @@ export function proveAnswerMathJson(input: {
       nodeCount: validation.validated.nodeCount,
       depth: validation.validated.depth,
       byteLength: validation.validated.byteLength,
-      semanticRelation: structurallySame
+      semanticRelation: structurallySame || producerSerializedSame
         ? 'structural'
         : formalComparison.applicable
           ? 'equal'

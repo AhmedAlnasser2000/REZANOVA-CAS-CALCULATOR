@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { runEquationMode } from '../../modes/equation/run';
+import {
+  runEquationMode,
+  runEquationModeForIsolatedWorker,
+} from '../../modes/equation/run';
 import { makeRequest } from '../../modes/equation/test-support';
 import { finalizeEquationCanonicalRuntimeOutcome } from './runtime-producer-adapter';
 
@@ -22,6 +25,61 @@ function finalizedSymbolic(equationLatex: string) {
 }
 
 describe('Equation active typed-supplement V2 routes', () => {
+  it('carries a single accepted native root across the isolated worker boundary', async () => {
+    const result = await runEquationModeForIsolatedWorker({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: String.raw`\sqrt{x+1}=\sqrt{2x-1}+1`,
+      equationSolveTarget: 'x',
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'real',
+      complexExactForm: 'rectangular',
+    });
+
+    expect(result.outcome.kind).toBe('success');
+    if (result.outcome.kind === 'prompt' || result.outcome.canonicalResult.version !== 2) {
+      throw new Error('Expected an isolated Equation V2 result.');
+    }
+    const primary = result.outcome.canonicalResult.primary;
+    expect(primary?.kind).toBe('math');
+    if (!primary || primary.kind !== 'math') {
+      throw new Error('Expected an isolated Equation math primary.');
+    }
+    expect(primary.value.mathJson).toBeDefined();
+  }, 30_000);
+
+  it.each([
+    {
+      equation: String.raw`\sqrt{(x^2+x)^2-(x^2+x)}=1`,
+      branches: 2,
+      badges: ['Radical Isolation', 'Power Lift'],
+    },
+    {
+      equation: String.raw`\sqrt{x^2+\sqrt{5-x^2}}=2`,
+      branches: 2,
+      badges: ['Radical Isolation', 'Power Lift'],
+    },
+    {
+      equation: String.raw`\ln(\sqrt{(x^2+x)^2-5(x^2+x)+4})=0`,
+      branches: 2,
+      badges: ['Outer Inversion', 'Nested Recursion'],
+    },
+  ])('finalizes carrier primary proof for $equation', ({ equation, branches, badges }) => {
+    const { draft, document } = finalizedSymbolic(equation);
+
+    expect(draft.kind).toBe('success');
+    expect(document.primary?.kind).toBe('math');
+    if (!document.primary || document.primary.kind !== 'math') {
+      throw new Error('Expected an Equation math primary.');
+    }
+    expect(document.primary.value.mathJson).toBeDefined();
+    expect(document.branchReadback?.branches).toHaveLength(branches);
+    expect(document.branchReadback?.branches.every((branch) => branch.mathJson !== undefined)).toBe(true);
+    expect(draft.kind === 'success'
+      ? [...(draft.plannerBadges ?? []), ...(draft.solveBadges ?? [])]
+      : []).toEqual(expect.arrayContaining(badges));
+  }, 120_000);
+
   it('keeps PRL4 exact while preserving right-facing producer conditions', () => {
     const { draft, document } = finalizedSymbolic(String.raw`\ln(x+1)=\ln(2x-3)`);
 

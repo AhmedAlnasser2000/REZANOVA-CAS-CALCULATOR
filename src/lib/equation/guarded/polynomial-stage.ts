@@ -57,6 +57,8 @@ import {
 import { tryProvenCanonicalMathValue } from '../../result-contract';
 
 const ce = new ComputeEngine();
+const CARRIER_PROOF_ERROR =
+  'Exact carrier roots were found, but their producer-owned proof was incomplete. The result was not committed.';
 
 function normalizedCarrierRootNode(node: unknown): SerializableMathJson {
   if (
@@ -86,14 +88,26 @@ function normalizedCarrierRootNode(node: unknown): SerializableMathJson {
   return node as SerializableMathJson;
 }
 
+function carrierRootNodeForProof(root: { latex: string; node?: unknown }): SerializableMathJson | undefined {
+  if (root.node === undefined) return undefined;
+  try {
+    if (ce.box(root.node as Parameters<typeof ce.box>[0]).latex === root.latex) {
+      return root.node as SerializableMathJson;
+    }
+  } catch {
+    return undefined;
+  }
+  return normalizedCarrierRootNode(root.node);
+}
+
 function provenCarrierRootLeaves(
   roots: Array<{ latex: string; node?: unknown }>,
   source: string,
 ) {
   return roots.flatMap((root, index) => {
-    if (root.node === undefined) return [];
+    const mathJson = carrierRootNodeForProof(root);
+    if (mathJson === undefined) return [];
     const leafSource = `${source}:${index}`;
-    const mathJson = normalizedCarrierRootNode(root.node);
     const proof = tryProvenCanonicalMathValue({
       canonicalLatex: root.latex,
       mathJson,
@@ -124,13 +138,22 @@ function provenCarrierCanonicalMath(
     : undefined;
 }
 
-function provenAcceptedCarrierCanonicalMath(
+export function provenAcceptedCarrierCanonicalMath(
   roots: Array<{ latex: string; node?: unknown }>,
   canonicalLatex: string | undefined,
   source: string,
 ) {
   if (!canonicalLatex || roots.length === 0) {
     return undefined;
+  }
+  const seen = new Map<string, string>();
+  for (const root of roots) {
+    const node = carrierRootNodeForProof(root);
+    if (node === undefined) return undefined;
+    const serialized = JSON.stringify(node);
+    const existing = seen.get(root.latex);
+    if (existing !== undefined && existing !== serialized) return undefined;
+    seen.set(root.latex, serialized);
   }
   const provenRoots = provenCarrierRootLeaves(roots, `${source}:accepted-root`);
   if (provenRoots.length !== roots.length) return undefined;
@@ -343,6 +366,9 @@ function runBoundedPolynomialSolve(
               'equation-polynomial-carrier',
             )
           : undefined;
+        if (!primaryMath) {
+          return errorOutcome('Solve', CARRIER_PROOF_ERROR);
+        }
         return createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
@@ -404,6 +430,9 @@ function runBoundedPolynomialSolve(
       }
 
       const acceptedRoots = matchAcceptedSolvedRoots(carrierAttempt.roots, validation.accepted);
+      if (acceptedRoots.length !== validation.accepted.length) {
+        return errorOutcome('Solve', CARRIER_PROOF_ERROR);
+      }
       const acceptedLatex = acceptedRoots.map((root) => root.latex);
       const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
         ? solutionsToLatex('x', acceptedLatex)
@@ -413,6 +442,9 @@ function runBoundedPolynomialSolve(
         exactLatex,
         'equation-polynomial-carrier-candidate-validation',
       );
+      if (!primaryMath) {
+        return errorOutcome('Solve', CARRIER_PROOF_ERROR);
+      }
 
       const producerInput: EquationResultProducerInput = {
         kind: 'success',

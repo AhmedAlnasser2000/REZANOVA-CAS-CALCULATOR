@@ -49,6 +49,7 @@ import {
 import { equationReplaySeedFromRequest } from './equationHistorySeed';
 import { createCanonicalRuntimeError } from '../../lib/result-contract/runtime-outcome';
 import {
+  EquationRuntimeModuleLoadError,
   finalizeEquationCanonicalRuntimeOutcome,
   loadEquationAlgebraTransform,
   prepareEquationStoredValueSolveConsent,
@@ -218,6 +219,18 @@ function buildRuntimeLoadError(title: string, error: unknown): CanonicalRuntimeO
     error instanceof Error
       ? `Could not load the ${title} runtime: ${error.message}`
       : `Could not load the ${title} runtime.`,
+  );
+}
+
+function buildEquationRuntimeError(error: unknown): CanonicalRuntimeOutcome {
+  if (error instanceof EquationRuntimeModuleLoadError) {
+    return createCanonicalRuntimeError('Equation', error.message);
+  }
+  return createCanonicalRuntimeError(
+    'Equation',
+    error instanceof Error
+      ? `Equation runtime failed: ${error.message}`
+      : 'Equation runtime failed.',
   );
 }
 
@@ -706,7 +719,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           );
         } catch (error: unknown) {
           deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
-          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+          deps.commitOutcome(buildEquationRuntimeError(error), committedInput, 'equation');
         }
       })();
     });
@@ -754,7 +767,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             'equation',
           );
         } catch (error: unknown) {
-          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
+          deps.commitOutcome(buildEquationRuntimeError(error), committedInput, 'equation');
         }
       })();
     });
@@ -768,7 +781,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       replayedEquationSubstitutionSnapshot: replayedEquationSubstitutionSnapshot,
       shouldSuppressVisibleCommit: (input) => shouldSuppressEquationVisibleCommit(deps, input),
       handleCancelledEnvelope: handleCancelledEquationEnvelope,
-      buildRuntimeLoadError,
+      buildRuntimeLoadError: (_title, error) => buildEquationRuntimeError(error),
     });
   }
 
@@ -783,7 +796,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       replayedEquationSubstitutionSnapshot: replayedEquationSubstitutionSnapshot,
       shouldSuppressVisibleCommit: (input) => shouldSuppressEquationVisibleCommit(deps, input),
       handleCancelledEnvelope: handleCancelledEquationEnvelope,
-      buildRuntimeLoadError,
+      buildRuntimeLoadError: (_title, error) => buildEquationRuntimeError(error),
     });
   }
 
