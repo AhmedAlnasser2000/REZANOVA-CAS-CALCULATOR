@@ -13,7 +13,10 @@ import {
   ensureSafeEquationSuccessOutcome,
 } from './outcomes';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
-import { attachEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import {
+  attachEquationAnalysisEvidence,
+  EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+} from '../../equation/analysis-evidence';
 import { equationMathValuesForOwnedSuccessReadback } from '../../equation/solve-result/owned-readback-math';
 import type { SerializableMathJson, SolveDomainConstraint } from '../../../types/calculator';
 export {
@@ -49,6 +52,7 @@ function transformConstraintEvidence(constraints: readonly SolveDomainConstraint
       sourceRoute: 'equation-explicit-transform',
       category: 'domain' as const,
       confidence: 'proven' as const,
+      classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
       latex: canonicalLatex,
       supplementEvidence: {
         role: relation.role,
@@ -182,7 +186,14 @@ export function runEquationAlgebraTransform({
         canonicalLatex: result.exactLatex,
         mathJson: result.exactMathJson,
         source: 'equation-explicit-transform-primary',
-      }],
+      }, ...(result.transformSummaryLatex === undefined
+        || result.transformSummaryMathJson === undefined
+        ? []
+        : [{
+            canonicalLatex: result.transformSummaryLatex,
+            mathJson: result.transformSummaryMathJson,
+            source: 'equation-explicit-transform-summary',
+          }])],
     }),
   }));
 

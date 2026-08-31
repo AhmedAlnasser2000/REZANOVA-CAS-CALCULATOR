@@ -16,6 +16,7 @@ import type {
 import {
   buildEquationOoeInputRevisionId,
 } from '../../lib/modes/equation/ooe-snapshot';
+import { resolveEquationSolveTarget } from '../../lib/equation/equation-target-resolution';
 import {
   EQUATION_USE_STORED_VALUES_ACTION,
   type EquationAlgebraAction,
@@ -267,7 +268,9 @@ function buildEquationHistoryContext(
     equationDomainIntent: input.equationDomainIntent,
     complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
     ...(input.numericInterval ? { numericInterval: input.numericInterval } : {}),
-    ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
+    ...(input.request.equationSolveTarget
+      ? { equationSolveTarget: input.request.equationSolveTarget }
+      : {}),
     ...(input.historyTicket
       ? {
           historyTicketId: input.historyTicket.id,
@@ -600,7 +603,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           const request: RunEquationModeRequest = {
             equationScreen: deps.equationScreen,
             equationLatex: executionLatex,
-            equationSolveTarget: deps.equationSolveTarget,
+            equationSolveTarget: deps.equationScreen === 'symbolic'
+              ? resolveEquationSolveTarget(executionLatex, deps.equationSolveTarget).selectedTarget
+                ?? deps.equationSolveTarget
+              : deps.equationSolveTarget,
             equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
             equationDomainIntent: deps.settings.equationDomainIntent ?? 'real',
             complexExactForm: deps.settings.complexExactForm ?? 'rectangular',

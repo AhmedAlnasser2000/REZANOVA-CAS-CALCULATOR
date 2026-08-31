@@ -24,9 +24,9 @@ export {
 } from './equation/numeric-shape-classifier';
 export {
   runEquationMode,
-  runEquationModeForIsolatedWorker,
   runEquationModeWithOoePilot,
 } from './equation/run';
+export { runEquationModeForIsolatedWorker } from './equation/runtime-request-adapter';
 export {
   DEFAULT_COMPLEX_BENCHMARK_REGION_BOXES,
   runEquationComplexBenchmarkRegionFallback,

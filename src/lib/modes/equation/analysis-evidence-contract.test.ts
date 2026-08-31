@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import {
+  attachEquationAnalysisEvidence,
+  EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+  getEquationAnalysisEvidence,
+} from '../../equation/analysis-evidence';
 import { runEquationMode } from '../equation';
 import { makeRequest } from './test-support';
 
@@ -17,6 +21,30 @@ function solve(extra: Partial<Parameters<typeof runEquationMode>[0]>) {
 }
 
 describe('Equation analysis evidence contract', () => {
+  it('keeps the first producer-owned supplement selection authoritative during later evidence merges', () => {
+    const result = solve({ equationLatex: String.raw`\sqrt{x+1}=2` });
+    const originalSelection = getEquationAnalysisEvidence(result).find((entry) =>
+      entry.classification === EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION);
+    expect(originalSelection).toBeDefined();
+    attachEquationAnalysisEvidence(result, [{
+      id: 'domain:later:x',
+      target: 'x',
+      sourceRoute: 'symbolic-exact',
+      category: 'domain',
+      confidence: 'proven',
+      classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+      supplementEvidence: {
+        role: 'condition',
+        canonicalLatex: String.raw`x+1\ge0`,
+        mathJson: ['GreaterEqual', ['Add', 'x', 1], 0],
+      },
+    }]);
+
+    const selected = getEquationAnalysisEvidence(result).filter((entry) =>
+      entry.classification === EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION);
+    expect(selected.map((entry) => entry.id)).toEqual([originalSelection?.id]);
+  });
+
   it('attaches internal route evidence for numeric interval solves without leaking into JSON', () => {
     const result = solve({
       equationLatex: String.raw`x^2+\sin(x)=2`,

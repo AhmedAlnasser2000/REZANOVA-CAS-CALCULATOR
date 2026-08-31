@@ -470,7 +470,7 @@ describe('runtimeControllers', () => {
     const getActiveEquationRequest = vi.fn(() => ({
       equationScreen: 'symbolic' as const,
       equationLatex: liveSnapshot.equationLatex,
-      equationSolveTarget: undefined,
+      equationSolveTarget: 'x',
       equationAnswerMode: 'exact' as const,
       equationDomainIntent: 'real' as const,
       complexExactForm: 'rectangular' as const,
@@ -515,7 +515,10 @@ describe('runtimeControllers', () => {
     await waitForCommit(commitOutcome);
     expect(getActiveEquationRequest).toHaveBeenCalledWith('symbolic');
     expect(runEquationModeWithOoePilot).toHaveBeenLastCalledWith(
-      expect.objectContaining({ equationLatex: liveSnapshot.equationLatex }),
+      expect.objectContaining({
+        equationLatex: liveSnapshot.equationLatex,
+        equationSolveTarget: 'x',
+      }),
       expect.objectContaining({
         activeInputRevisionId: expect.any(Function),
         launchTicket: {
@@ -536,6 +539,7 @@ describe('runtimeControllers', () => {
       historyLaunchOrder: 42,
       equationAnswerMode: 'exact',
       equationDomainIntent: 'real',
+      equationSolveTarget: 'x',
     });
   });
 

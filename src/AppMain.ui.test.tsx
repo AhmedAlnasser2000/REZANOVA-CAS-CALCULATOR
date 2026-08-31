@@ -449,8 +449,8 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(displayedDetailLatex()).toContain('a=4'));
 
     await user.click(screen.getByTestId('variables-toggle'));
-    fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'a' } });
-    fireEvent.change(screen.getByTestId('variables-value-input'), { target: { value: '9' } });
+    fireEvent.change(await screen.findByTestId('variables-name-input'), { target: { value: 'a' } });
+    fireEvent.change(await screen.findByTestId('variables-value-input'), { target: { value: '9' } });
     await user.click(screen.getByTestId('variables-set-button'));
     await user.click(within(screen.getByTestId('variables-panel')).getByRole('button', { name: /close/i }));
 
@@ -1725,7 +1725,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
     await revealValidWhenIfCollapsed();
     expect(displayedSupplementLatex()).toContain('2x-3>0');
-    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
+    expect(screen.getByText('Same-Base Equality')).toBeInTheDocument();
   });
 
   it('uses preserved-domain wording when a same-base log equality reduces to an invalid real candidate', async () => {

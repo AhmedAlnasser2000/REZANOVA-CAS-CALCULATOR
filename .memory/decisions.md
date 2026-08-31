@@ -3239,3 +3239,7 @@
 ## 2026-08-24 - CI Runtime Readiness
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] UI tests that exercise known asynchronous Linear Algebra routes may use a bounded route-specific completion wait; global timeout increases, sleeps, and production eager execution remain forbidden. The Calculus linear-integral canary has one canonical expected spelling, `\frac{x^{2}}{2}+C`.
+
+## 2026-08-31 - Equation V2 Supplement Authority
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Equation V2 supplement authority is an explicit producer classification carried with proven role, canonical value, and MathJSON identity. Same-source guarded selections may accumulate across stage merges; later diagnostic routes may not replace or enlarge them. Runtime selection must not recover semantics from presentation counts, target text, or rendered LaTeX.

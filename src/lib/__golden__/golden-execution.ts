@@ -54,6 +54,7 @@ export async function runGoldenCase(goldenCase: GoldenCase): Promise<GoldenExecu
         outcome: (await runEquationModeForIsolatedWorker({
           equationScreen: goldenCase.equationScreen ?? 'symbolic',
           equationLatex: goldenCase.equationLatex,
+          equationSolveTarget: undefined,
           quadraticCoefficients: [1, -5, 6],
           cubicCoefficients: [1, -6, 11, -6],
           quarticCoefficients: [1, 0, -5, 0, 4],

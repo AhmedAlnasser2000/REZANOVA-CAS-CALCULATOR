@@ -42,6 +42,7 @@ import {
   type EquationResultProducerInput,
 } from '../solve-result/producer';
 import {
+  EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
   attachEquationAnalysisEvidence,
   type EquationAnalysisEvidence,
 } from '../analysis-evidence';
@@ -372,6 +373,7 @@ function attachAlgebraMetadata(
             sourceRoute: 'guarded-domain-constraint',
             category: 'domain',
             confidence: 'proven',
+            classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
             latex: relation.latex,
             supplementEvidence: {
               role: constraint.kind === 'nonzero' ? 'exclusion' : 'condition',

@@ -1,6 +1,7 @@
 import { equationInputLatexForScreen } from '../../lib/modes/equation-ui-model';
 import type { RunEquationModeRequest } from '../../lib/modes/equation/types';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
+import { resolveEquationSolveTarget } from '../../lib/equation/equation-target-resolution';
 import type {
   ActiveEquationRuntimeState,
   EquationRequestKind,
@@ -86,7 +87,10 @@ export function buildEquationRequestFromState(
   return {
     equationScreen: active.equationScreen,
     equationLatex: executionLatex,
-    equationSolveTarget: active.equationSolveTarget,
+    equationSolveTarget: resolveEquationSolveTarget(
+      executionLatex,
+      active.equationSolveTarget,
+    ).selectedTarget ?? active.equationSolveTarget,
     equationAnswerMode: kind === 'numeric-interval'
       ? 'exact'
       : active.settings.equationAnswerMode ?? 'exact',

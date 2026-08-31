@@ -11,7 +11,10 @@ import {
   type CanonicalResultV2MathResolver,
 } from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
-import type { EquationAnalysisEvidence } from '../analysis-evidence';
+import {
+  EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+  type EquationAnalysisEvidence,
+} from '../analysis-evidence';
 import {
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
@@ -94,51 +97,49 @@ function labeledSupplementPresentationRole(presentationLatex: string) {
   return undefined;
 }
 
-function containsTarget(node: unknown, target = 'x'): boolean {
-  if (node === target) return true;
-  return Array.isArray(node) && node.slice(1).some((child) => containsTarget(child, target));
-}
-
-function evidenceIdentity(input: {
-  evidence: SupplementEvidence;
-  presentationLatex?: string;
-}) {
-  return [
-    input.evidence.role,
-    normalizedLatex(
-      input.presentationLatex
-      ?? input.evidence.expressionLatex
-      ?? input.evidence.canonicalLatex,
-    ),
-  ].join(':');
-}
-
 function typedSupplements(input: {
   outcome: EquationOutcome;
   analysisEvidence: readonly EquationAnalysisEvidence[];
-  routeId: TypedSupplementRouteId;
 }) {
   const presentations = input.outcome.exactSupplementLatex ?? [];
-  const candidates = input.analysisEvidence
-    .flatMap((entry) => entry.supplementEvidence && containsTarget(entry.supplementEvidence.mathJson) ? [{
+  const selectedEntries = input.analysisEvidence.filter((entry) =>
+    entry.classification === EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION);
+  if (selectedEntries.some((entry) =>
+    entry.category !== 'domain'
+    || entry.confidence !== 'proven'
+    || !entry.supplementEvidence)) {
+    throw new Error('Equation selected unrelated or incomplete canonical supplement evidence.');
+  }
+  const candidates = selectedEntries.flatMap((entry) => entry.supplementEvidence ? [{
       evidence: entry.supplementEvidence,
       presentationLatex: entry.latex,
-      sourceRoute: entry.sourceRoute,
     }] : []);
-  const guardedCandidates = candidates.filter((entry) =>
-    entry.sourceRoute === 'guarded-domain-constraint');
-  const eligible = guardedCandidates.length > 0 ? guardedCandidates : candidates;
-  const identities = new Map<string, string>();
-  for (const entry of eligible) {
-    const identity = evidenceIdentity(entry);
+  const canonicalIdentities = new Map<string, string>();
+  const treeIdentities = new Map<string, string>();
+  for (const entry of candidates) {
+    const canonicalIdentity = [
+      entry.evidence.role,
+      normalizedLatex(entry.evidence.canonicalLatex),
+    ].join(':');
     const tree = JSON.stringify(entry.evidence.mathJson);
-    const existing = identities.get(identity);
-    if (existing && existing !== tree) {
-      throw new Error(`Equation selected conflicting typed V2 supplement evidence for ${identity}.`);
+    const existingTree = canonicalIdentities.get(canonicalIdentity);
+    if (existingTree && existingTree !== tree) {
+      throw new Error(
+        `Equation selected conflicting typed V2 supplement evidence for ${canonicalIdentity}.`,
+      );
     }
-    identities.set(identity, tree);
+    canonicalIdentities.set(canonicalIdentity, tree);
+    const treeIdentity = [entry.evidence.role, tree].join(':');
+    const existingCanonical = treeIdentities.get(treeIdentity);
+    const canonical = normalizedLatex(entry.evidence.canonicalLatex);
+    if (existingCanonical && existingCanonical !== canonical) {
+      throw new Error(
+        `Equation selected ambiguous typed V2 supplement evidence for ${entry.evidence.role}.`,
+      );
+    }
+    treeIdentities.set(treeIdentity, canonical);
   }
-  const selected = eligible.filter((entry, index, all) => all.findIndex((candidate) =>
+  const selected = candidates.filter((entry, index, all) => all.findIndex((candidate) =>
     supplementEvidenceKey(candidate.evidence) === supplementEvidenceKey(entry.evidence)) === index);
   if (selected.length === 0) {
     throw new Error('Equation selected typed V2 supplements without producer-owned evidence.');
@@ -147,11 +148,6 @@ function typedSupplements(input: {
     const role = labeledSupplementPresentationRole(presentation);
     return role ? [role] : [];
   }));
-  if (labeledRoles.size === 0 && presentations.length !== selected.length) {
-    throw new Error(
-      `Equation typed V2 supplement presentation/evidence count mismatch (${presentations.length}/${selected.length}).`,
-    );
-  }
   const roleCounts = new Map<SupplementEvidence['role'], number>();
   for (const entry of selected) {
     roleCounts.set(entry.evidence.role, (roleCounts.get(entry.evidence.role) ?? 0) + 1);
@@ -183,7 +179,7 @@ export function buildEquationRuntimeCanonicalResultDocument(input: {
     return buildExistingEquationV2Document(input);
   }
   const selectedSupplements = selection.selector === 'typedLabeledSupplement'
-    ? typedSupplements({ ...input, routeId: selection.routeId })
+    ? typedSupplements(input)
     : undefined;
   const leaves = [
     ...(input.outcome.primaryMath?.mathJson === undefined ? [] : [{

@@ -61,6 +61,8 @@ export type EquationAnalysisEvidence = {
   };
 };
 
+export const EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION = 'canonical-supplement';
+
 export const EQUATION_ANALYSIS_EVIDENCE = Symbol.for('calcwiz.equation.analysisEvidence');
 
 type EquationEvidenceCarrier = {
@@ -92,9 +94,26 @@ export function attachEquationAnalysisEvidence<T extends ResultProducerDraft>(
   if (evidence.length === 0) {
     return outcome;
   }
+  const existingEvidence = getEquationAnalysisEvidence(outcome);
+  const producerSelectionSources = new Set(existingEvidence.flatMap((entry) =>
+    entry.classification === EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION
+      ? [entry.sourceRoute]
+      : []));
+  const incomingEvidence = producerSelectionSources.size > 0
+    ? evidence.map((entry) => {
+        if (
+          entry.classification !== EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION
+          || producerSelectionSources.has(entry.sourceRoute)
+        ) {
+          return entry;
+        }
+        const { classification: _classification, ...diagnosticEntry } = entry;
+        return diagnosticEntry;
+      })
+    : evidence;
   const merged = uniqueEvidence([
-    ...getEquationAnalysisEvidence(outcome),
-    ...evidence,
+    ...existingEvidence,
+    ...incomingEvidence,
   ]);
   Object.defineProperty(outcome, EQUATION_ANALYSIS_EVIDENCE, {
     value: merged,
@@ -181,6 +200,17 @@ function confidenceForDomainFact(fact: EquationNumericDomainFact): EquationAnaly
   return fact.source === 'sample-probe' ? 'heuristic' : 'proven';
 }
 
+function mathJsonContainsSymbol(node: unknown, symbol: string): boolean {
+  if (node === symbol) return true;
+  if (Array.isArray(node)) {
+    return node.some((child) => mathJsonContainsSymbol(child, symbol));
+  }
+  if (node && typeof node === 'object') {
+    return Object.values(node).some((child) => mathJsonContainsSymbol(child, symbol));
+  }
+  return false;
+}
+
 export function buildEquationDomainFactEvidence(input: {
   facts: readonly EquationNumericDomainFact[];
   target: string;
@@ -204,8 +234,11 @@ export function buildEquationDomainFactEvidence(input: {
       confidence: confidenceForDomainFact(fact),
       latex: latexForDomainFact(fact),
       text: fact.message,
-      ...(fact.relationCanonicalLatex && fact.relationMathJson !== undefined
+      ...(fact.relationCanonicalLatex
+        && fact.relationMathJson !== undefined
+        && mathJsonContainsSymbol(fact.relationMathJson, input.target)
         ? {
+            classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
             supplementEvidence: {
               role: fact.kind === 'denominator-exclusion'
                 || fact.kind === 'solved-denominator-exclusion'

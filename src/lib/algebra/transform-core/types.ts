@@ -22,6 +22,7 @@ export type AlgebraTransformResult = {
   transformBadges: TransformBadge[];
   transformSummaryText: string;
   transformSummaryLatex?: string;
+  transformSummaryMathJson?: SerializableMathJson;
 };
 
 export type ParsedEquationNode = {

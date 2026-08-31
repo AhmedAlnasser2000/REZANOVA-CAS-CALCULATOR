@@ -4,7 +4,10 @@ import type {
   ResultProducerDraft,
   SerializableMathJson,
 } from '../../../types/calculator';
-import type { EquationAnalysisEvidence } from '../analysis-evidence';
+import {
+  EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+  type EquationAnalysisEvidence,
+} from '../analysis-evidence';
 import { buildEquationRuntimeCanonicalResultDocument } from './runtime-producer-v2';
 
 const document: CanonicalResultDocumentV1 = {
@@ -38,6 +41,7 @@ function evidence(
   canonicalLatex: string,
   mathJson: SerializableMathJson = ['Greater', 'x', 0],
   presentationLatex?: string,
+  selected = true,
 ): EquationAnalysisEvidence {
   return {
     id: `domain:guarded-domain-constraint:x:positive:${canonicalLatex}`,
@@ -45,6 +49,7 @@ function evidence(
     sourceRoute: 'guarded-domain-constraint',
     category: 'domain',
     confidence: 'proven',
+    ...(selected ? { classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION } : {}),
     ...(presentationLatex ? { latex: presentationLatex } : {}),
     supplementEvidence: {
       role: 'condition',
@@ -155,15 +160,19 @@ describe('Equation runtime Canonical Result V2 supplements', () => {
     })).toThrow('without producer-owned evidence');
   });
 
-  it('fails closed when one-to-one supplement presentation and evidence counts disagree', () => {
-    expect(() => buildEquationRuntimeCanonicalResultDocument({
+  it('uses producer-selected identities rather than presentation row counts', () => {
+    const runtimeDocument = buildEquationRuntimeCanonicalResultDocument({
       outcome: outcome(['x>0', 'x+1>0']),
       document,
       analysisEvidence: [evidence('x>0')],
-    })).toThrow('presentation/evidence count mismatch (2/1)');
+    });
+
+    expect(runtimeDocument.version).toBe(2);
+    if (runtimeDocument.version !== 2) throw new Error('Expected typed V2 supplements.');
+    expect(runtimeDocument.supplements).toHaveLength(1);
   });
 
-  it('selects target-bearing evidence by identity and preserves producer-facing presentation', () => {
+  it('selects producer-classified identities and preserves producer-facing presentation', () => {
     const runtimeDocument = buildEquationRuntimeCanonicalResultDocument({
       outcome: outcome(['81\\ge0', '\\text{Conditions: } (x+1)^2>0,\\;\\log_{3}((x+1)^2)\\ge0']),
       document,
@@ -178,7 +187,7 @@ describe('Equation runtime Canonical Result V2 supplements', () => {
           ['GreaterEqual', ['Log', ['Power', ['Add', 'x', 1], 2], 3], 0],
           '\\log_{3}((x+1)^2)\\ge0',
         ),
-        evidence('0\\lt3', ['Greater', 3, 0], '3>0'),
+        evidence('0\\lt3', ['Greater', 3, 0], '3>0', false),
       ],
     });
 
@@ -199,6 +208,32 @@ describe('Equation runtime Canonical Result V2 supplements', () => {
         evidence('0\\lt x', ['Greater', 'x', 1], 'x>0'),
       ],
     })).toThrow('conflicting typed V2 supplement evidence');
+  });
+
+  it('fails closed when a selected supplement identity is incomplete or unrelated', () => {
+    expect(() => buildEquationRuntimeCanonicalResultDocument({
+      outcome: outcome(['\\text{Conditions: } x>0']),
+      document,
+      analysisEvidence: [{
+        id: 'diagnostic:selected-without-proof',
+        target: 'x',
+        sourceRoute: 'diagnostic',
+        category: 'diagnostic',
+        confidence: 'reported',
+        classification: EQUATION_CANONICAL_SUPPLEMENT_CLASSIFICATION,
+      }],
+    })).toThrow('unrelated or incomplete canonical supplement evidence');
+  });
+
+  it('fails closed when one proof tree is assigned ambiguous canonical identities', () => {
+    expect(() => buildEquationRuntimeCanonicalResultDocument({
+      outcome: outcome(['\\text{Conditions: } x>0']),
+      document,
+      analysisEvidence: [
+        evidence('x>0', ['Greater', 'x', 0]),
+        evidence('0<x', ['Greater', 'x', 0]),
+      ],
+    })).toThrow('ambiguous typed V2 supplement evidence');
   });
 
   it('fails closed when the selected V2 primary has no producer proof', () => {

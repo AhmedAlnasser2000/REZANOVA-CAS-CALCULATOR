@@ -28,7 +28,11 @@ export async function executeHistoryReplayRequest(
         }),
       };
     case 'equation':
-      return { outcome: (await runEquationModeForIsolatedWorker(request as RunEquationModeRequest)).outcome };
+      return {
+        outcome: (await runEquationModeForIsolatedWorker(
+          request as RunEquationModeRequest,
+        )).outcome,
+      };
     case 'calculus':
       return { outcome: await runCalculusCanonicalRuntimeRequest(request as RunCalculusModeRequest) };
     case 'matrix':

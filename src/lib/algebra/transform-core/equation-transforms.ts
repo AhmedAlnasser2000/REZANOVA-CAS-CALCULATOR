@@ -190,12 +190,19 @@ export function rewriteWithLcdEquation(left: unknown, right: unknown): AlgebraTr
 
   return {
     exactLatex,
+    exactMathJson: [
+      'Equal',
+      rational.numeratorNode,
+      0,
+    ] as SerializableMathJson,
     exactSupplementLatex: rational.exactSupplementLatex,
+    domainConstraints: rational.exclusionConstraints,
     transformBadges: ['Use LCD'],
     transformSummaryText: rational.denominatorLatex
       ? 'Cleared the equation by multiplying through by LCD'
       : 'Cleared the equation with an exact LCD transform',
     transformSummaryLatex: rational.denominatorLatex,
+    transformSummaryMathJson: rational.denominatorNode as SerializableMathJson,
   };
 }
 
