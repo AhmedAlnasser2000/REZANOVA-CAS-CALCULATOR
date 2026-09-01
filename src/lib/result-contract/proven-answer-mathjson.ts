@@ -13,6 +13,11 @@ import {
 import type { CanonicalMathJsonProducerOwner, MathJsonRouteId } from './mathjson-route-registry';
 import { findCustomMathJsonOperator } from './standard-mathjson-operators';
 import { compareFormalMathJson } from './formal-mathjson-comparison';
+import {
+  activeMathJsonProofVerificationSession,
+  mathJsonProofComparisonCacheKey,
+  type MathJsonProofComparisonMode,
+} from './mathjson-proof-verification-session';
 export { findCustomMathJsonOperator } from './standard-mathjson-operators';
 
 declare const producerOwnedCandidateBrand: unique symbol;
@@ -155,10 +160,20 @@ export function declareProducerOwnedAnswerMathJson(input: {
   } as ProducerOwnedAnswerMathJsonCandidate;
 }
 
-export function proveAnswerMathJson(input: {
+type ProveAnswerMathJsonInput = {
   canonicalLatex: string;
   candidate: ProducerOwnedAnswerMathJsonCandidate;
-}): ProvenAnswerMathJsonResult {
+};
+
+type InternalProvenAnswerMathJsonResult = ProvenAnswerMathJsonResult | {
+  ok: false;
+  failure: Extract<ProvenStandardAnswerMathJsonFailure, { reason: 'custom-operator' }>;
+};
+
+function proveAnswerMathJsonForMode(
+  input: ProveAnswerMathJsonInput,
+  comparisonMode: MathJsonProofComparisonMode,
+): InternalProvenAnswerMathJsonResult {
   const canonicalLatex = input.canonicalLatex.trim();
   const { provenance } = input.candidate;
   if (
@@ -187,6 +202,18 @@ export function proveAnswerMathJson(input: {
       `Answer MathJSON uses the private operator ${forbiddenOperator}.`,
     );
   }
+  if (comparisonMode === 'standard') {
+    const customOperator = findCustomMathJsonOperator(validation.validated.value);
+    if (customOperator) {
+      return {
+        ok: false,
+        failure: {
+          reason: 'custom-operator',
+          message: `V2 answer MathJSON uses the non-standard operator ${customOperator}.`,
+        },
+      };
+    }
+  }
 
   let cloned: SerializableMathJson;
   try {
@@ -195,7 +222,34 @@ export function proveAnswerMathJson(input: {
     return failure('clone-failure', 'Answer MathJSON could not cross a structured-clone boundary.');
   }
 
-  const ce = new ComputeEngine();
+  const session = provenance.owner === 'equation'
+    ? activeMathJsonProofVerificationSession()
+    : undefined;
+  const cacheKey = mathJsonProofComparisonCacheKey({
+    canonicalLatex,
+    serializedMathJson: JSON.stringify(cloned),
+    mode: comparisonMode,
+  });
+  const cached = session?.getCachedSuccess(cacheKey);
+  if (cached) {
+    return {
+      ok: true,
+      evidence: {
+        canonicalLatex,
+        mathJson: cloned as ProvenAnswerMathJson,
+        owner: provenance.owner,
+        routeId: provenance.routeId,
+        source: provenance.source,
+        nodeCount: validation.validated.nodeCount,
+        depth: validation.validated.depth,
+        byteLength: validation.validated.byteLength,
+        ...cached,
+      },
+    };
+  }
+
+  const ce = session?.getComputeEngine() ?? new ComputeEngine();
+  session?.recordComparisonExecution();
   let answerExpression: ReturnType<typeof ce.box>;
   let canonicalExpression: ReturnType<typeof ce.parse>;
   try {
@@ -287,6 +341,20 @@ export function proveAnswerMathJson(input: {
     return failure('printer-mismatch', 'Canonical printer changed the producer canonical LaTeX.');
   }
 
+  const cachedSuccess = {
+    semanticRelation: (structurallySame || producerSerializedSame
+      ? 'structural'
+      : formalComparison.applicable
+        ? 'equal'
+      : simplifiedSame
+        ? 'simplified'
+        : 'equal') as ProvenAnswerMathJsonEvidence['semanticRelation'],
+    serializedLatex: printed.serializedLatex ?? printed.canonicalLatex,
+    printerSource: (printed.source === 'math-json'
+      ? 'math-json'
+      : 'compatibility-fallback') as ProvenAnswerMathJsonEvidence['printerSource'],
+  };
+  session?.setCachedSuccess(cacheKey, cachedSuccess);
   return {
     ok: true,
     evidence: {
@@ -298,35 +366,21 @@ export function proveAnswerMathJson(input: {
       nodeCount: validation.validated.nodeCount,
       depth: validation.validated.depth,
       byteLength: validation.validated.byteLength,
-      semanticRelation: structurallySame || producerSerializedSame
-        ? 'structural'
-        : formalComparison.applicable
-          ? 'equal'
-        : simplifiedSame
-          ? 'simplified'
-          : 'equal',
-      serializedLatex: printed.serializedLatex ?? printed.canonicalLatex,
-      printerSource: printed.source === 'math-json' ? 'math-json' : 'compatibility-fallback',
+      ...cachedSuccess,
     },
   };
+}
+
+export function proveAnswerMathJson(input: ProveAnswerMathJsonInput): ProvenAnswerMathJsonResult {
+  return proveAnswerMathJsonForMode(input, 'answer') as ProvenAnswerMathJsonResult;
 }
 
 export function proveStandardAnswerMathJson(input: {
   canonicalLatex: string;
   candidate: ProducerOwnedAnswerMathJsonCandidate;
 }): ProvenStandardAnswerMathJsonResult {
-  const result = proveAnswerMathJson(input);
+  const result = proveAnswerMathJsonForMode(input, 'standard');
   if (!result.ok) return result;
-  const customOperator = findCustomMathJsonOperator(result.evidence.mathJson);
-  if (customOperator) {
-    return {
-      ok: false,
-      failure: {
-        reason: 'custom-operator',
-        message: `V2 answer MathJSON uses the non-standard operator ${customOperator}.`,
-      },
-    };
-  }
   return {
     ok: true,
     evidence: {

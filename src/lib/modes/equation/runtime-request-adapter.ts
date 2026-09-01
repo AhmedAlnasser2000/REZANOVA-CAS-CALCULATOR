@@ -1,5 +1,10 @@
 import { resolveEquationSolveTarget } from '../../equation/equation-target-resolution';
 import {
+  createMathJsonProofVerificationSession,
+  runWithMathJsonProofVerificationSession,
+  type MathJsonProofVerificationSession,
+} from '../../result-contract/mathjson-proof-verification-session';
+import {
   runEquationModeForIsolatedWorker as runFrozenEquationModeForIsolatedWorker,
 } from './run';
 import type {
@@ -27,7 +32,20 @@ export function normalizeEquationRuntimeRequest(
 export function runEquationModeForIsolatedWorker(
   request: RunEquationModeRequest,
 ): Promise<EquationModeIsolatedWorkerRunResult> {
-  return runFrozenEquationModeForIsolatedWorker(
-    normalizeEquationRuntimeRequest(request),
+  return runEquationModeForIsolatedWorkerWithProofSession(
+    request,
+    createMathJsonProofVerificationSession(),
+  );
+}
+
+export function runEquationModeForIsolatedWorkerWithProofSession(
+  request: RunEquationModeRequest,
+  proofSession: MathJsonProofVerificationSession,
+): Promise<EquationModeIsolatedWorkerRunResult> {
+  return runWithMathJsonProofVerificationSession(
+    proofSession,
+    () => runFrozenEquationModeForIsolatedWorker(
+      normalizeEquationRuntimeRequest(request),
+    ),
   );
 }
