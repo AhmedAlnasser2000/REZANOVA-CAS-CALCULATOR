@@ -7,6 +7,7 @@ export {
 } from './runtime-finite-root-producer';
 export * from './math-values';
 export * from './owned-readback-math';
+export * from './finite-branch-authority';
 export * from './native-result';
 export * from './producer';
 export {

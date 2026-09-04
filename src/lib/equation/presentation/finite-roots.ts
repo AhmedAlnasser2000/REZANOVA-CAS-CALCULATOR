@@ -182,7 +182,7 @@ export function normalizeFiniteBranchExpression({
       ...(context?.domainIntent ? { domainIntent: context.domainIntent } : {}),
       ...(presentationContext?.complexExactForm ? { complexExactForm: presentationContext.complexExactForm } : {}),
     },
-  );
+  ).replace(/(?<![A-Za-z\\])(\d+)\^\{1\/2\}/gu, '\\sqrt{$1}');
 }
 
 export function normalizeFiniteBranchExpressions(

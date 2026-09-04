@@ -57,6 +57,7 @@ import { matchNonPeriodicTransform } from './non-periodic-transform';
 import { matchTrigBranches } from './trig-carrier';
 import { solveTrigPeriodicFamily } from './periodic-resolution';
 import type {
+  DisplayBranchReadback,
   DisplayDetailSection,
   ResultProducerDraft,
   DisplaySolveSummary,
@@ -77,12 +78,13 @@ import {
   readEquationStageResultCarrier,
   type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
-import { acceptedPrimaryEvidence } from '../solve-result/accepted-primary-evidence';
 import {
   equationMathValuesForOwnedSuccessReadback,
   equationOwnedMathJsonLeavesFromDocument,
+  inferEquationMathJsonRoute,
   type EquationOwnedMathJsonLeaf,
 } from '../solve-result/owned-readback-math';
+import { resolveEquationFiniteBranchAuthority } from '../solve-result/finite-branch-authority';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -333,24 +335,36 @@ function recurseComposition(
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
-  const exactLatex = acceptedExactLatex.length === validation.accepted.length
+  const candidateExactLatex = acceptedExactLatex.length === validation.accepted.length
     && acceptedExactLatex.length > 0
     && acceptedExactLatex.every((value) => !isApproximateOnlySolutionLatex(value))
       ? solutionsToLatex('x', acceptedExactLatex)
       : undefined;
-  const branchReadback = exactLatex && acceptedExactLatex.length >= 2
-    ? finiteBranchReadbackMetadata({
+  const exactBranchEvidence: DisplayBranchReadback | undefined = candidateExactLatex
+    ? {
       targetLatex: 'x',
-      relationLatex: '\\in',
+      relationLatex: acceptedExactLatex.length === 1 ? '=' : '\\in',
       branchesLatex: acceptedExactLatex,
       source: 'equation-composition-candidate-validation',
-    })
-    : finiteBranchReadbackMetadata({
+    }
+    : undefined;
+  const finiteAuthority = candidateExactLatex && exactBranchEvidence
+    ? resolveEquationFiniteBranchAuthority({
+        primaryMath: mergedCarrier.document.primaryMath,
+        branchReadback: exactBranchEvidence,
+        routeId: inferEquationMathJsonRoute(merged),
+        source: 'equation-composition-candidate-validation',
+      })
+    : undefined;
+  const candidateBranchReadback = finiteAuthority?.branchReadback
+    ?? finiteBranchReadbackMetadata({
       targetLatex: 'x',
       relationLatex: '\\approx',
       branchesLatex: validation.accepted.map((value) => formatApproxNumber(value)),
       source: 'equation-composition-candidate-validation',
     });
+  const exactLatex = finiteAuthority?.exactLatex ?? candidateExactLatex;
+  const branchReadback = finiteAuthority?.branchReadback ?? candidateBranchReadback;
 
   const supplements = mergeExactSupplementLatex(
     { latex: merged.exactSupplementLatex, source: 'legacy' },
@@ -361,12 +375,7 @@ function recurseComposition(
   const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
     exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
   });
-  const primaryMath = acceptedPrimaryEvidence({
-    source: mergedCarrier,
-    exactLatex,
-    acceptedLatex: acceptedExactLatex,
-    target: 'x',
-  });
+  const primaryMath = finiteAuthority?.primaryMath;
 
   const readback = {
     exactLatex,
@@ -381,10 +390,13 @@ function recurseComposition(
     ),
     ...(mergeSolveSummaries(solveSummary, solveSummaryFromDisplayFields(merged)) ?? solveSummary),
   } as const;
-  const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
-    mergedCarrier.document,
-    'equation-composition-source-document',
-  );
+  const sourceLeaves = [
+    ...equationOwnedMathJsonLeavesFromDocument(
+      mergedCarrier.document,
+      'equation-composition-source-document',
+    ),
+    ...(finiteAuthority?.proofLeaves ?? []),
+  ];
   const sourceCanonicalLatex = new Set(sourceLeaves.map((leaf) =>
     leaf.canonicalLatex.replace(/\s+/gu, '')));
   return createEquationResultOutcome({

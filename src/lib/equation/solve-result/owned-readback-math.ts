@@ -14,6 +14,7 @@ import {
   equationMathValuesFromOwnedLeaves as baseEquationMathValuesFromOwnedLeaves,
   inferEquationMathJsonRoute as inferBaseEquationMathJsonRoute,
 } from './math-values';
+import { resolveEquationFiniteBranchAuthority } from './finite-branch-authority';
 
 // Changed Equation producers use this bridge without widening frozen V1 adapters.
 export {
@@ -87,12 +88,24 @@ function successReadbackMathValues(input: {
   leaves: readonly EquationOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {
   const outcome = input.readback as unknown as EquationOutcome;
+  const finiteAuthority = input.readback.primaryMath?.mathJson === undefined
+    ? undefined
+    : resolveEquationFiniteBranchAuthority({
+        primaryMath: input.readback.primaryMath,
+        branchReadback: input.readback.branchReadback,
+        answerRows: input.readback.answerRows,
+        routeId: input.routeId,
+        source: 'equation-owned-finite-readback',
+      });
+  const leaves = finiteAuthority
+    ? [...input.leaves, ...finiteAuthority.proofLeaves]
+    : input.leaves;
   const values = baseEquationMathValuesFromOwnedLeaves({
     outcome,
     routeId: input.routeId,
-    leaves: input.leaves,
+    leaves,
   });
-  const proven = provenLeaves({ outcome, routeId: input.routeId, leaves: input.leaves });
+  const proven = provenLeaves({ outcome, routeId: input.routeId, leaves });
   if (input.readback.primaryMath?.mathJson !== undefined) {
     values.primaryMath = proven.get(input.readback.primaryMath.canonicalLatex)
       ?? unproven(input.readback.primaryMath.canonicalLatex);

@@ -14,10 +14,10 @@ import {
 } from '../candidate/extraneous';
 import { createBranchSet } from '../../algebra/branch-core';
 import type {
+  DisplayBranchReadback,
   ResultProducerDraft,
   EquationExecutionBudget,
   GuardedSolveRequest,
-  SerializableMathJson,
 } from '../../../types/calculator';
 import type {
   GuardedEquationCooperativeCheckpoint,
@@ -42,8 +42,10 @@ import {
   equationMathValuesWithOwnedReadback,
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
+  type EquationMathJsonRouteId,
   type EquationOwnedMathJsonLeaf,
 } from '../solve-result/owned-readback-math';
+import { resolveEquationFiniteBranchAuthority } from '../solve-result/finite-branch-authority';
 import {
   buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
@@ -80,26 +82,23 @@ function acceptedCanonicalEvidence(
   exactLatex: string | undefined,
   acceptedLatex: readonly string[],
   target: string,
+  routeId: EquationMathJsonRouteId,
+  evidenceSource: string,
 ) {
   if (!exactLatex) return undefined;
-  const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
-    source.document,
-    'equation-substitution-accepted-input',
-  );
-  const nodes = acceptedLatex.map((latex) =>
-    sourceLeaves.find((leaf) => leaf.canonicalLatex === latex)?.mathJson);
-  if (nodes.some((node) => node === undefined)) return undefined;
-  const mathJson: SerializableMathJson = nodes.length === 1
-    ? ['Equal', target, nodes[0] as SerializableMathJson]
-    : ['Element', target, ['Set', ...nodes] as SerializableMathJson];
-  return {
-    primaryMath: { canonicalLatex: exactLatex, mathJson },
-    leaves: [{
-      canonicalLatex: exactLatex,
-      mathJson,
-      source: 'equation-substitution-accepted-result',
-    }],
+  const branchReadback: DisplayBranchReadback = {
+    targetLatex: target,
+    relationLatex: acceptedLatex.length === 1 ? '=' : '\\in',
+    branchesLatex: [...acceptedLatex],
+    source: evidenceSource,
   };
+  const authority = resolveEquationFiniteBranchAuthority({
+    primaryMath: source.document.primaryMath,
+    branchReadback,
+    routeId,
+    source: evidenceSource,
+  });
+  return authority ? { ...authority, leaves: authority.proofLeaves } : undefined;
 }
 
 function rejectedCandidateEvidence(
@@ -417,7 +416,7 @@ function substitutionSolve(
     ? acceptedExactLatex
     : [];
   const target = request.solveTarget ?? 'x';
-  const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
+  const candidateExactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex(target, acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
@@ -427,7 +426,15 @@ function substitutionSolve(
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex, target);
+  const acceptedEvidence = acceptedCanonicalEvidence(
+    mergedCarrier,
+    candidateExactLatex,
+    acceptedLatex,
+    target,
+    inferEquationMathJsonRoute(merged),
+    'equation-substitution-candidate-validation',
+  );
+  const exactLatex = acceptedEvidence?.exactLatex ?? candidateExactLatex;
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
@@ -663,7 +670,7 @@ async function substitutionSolveAsync(
     ? acceptedExactLatex
     : [];
   const target = request.solveTarget ?? 'x';
-  const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
+  const candidateExactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex(target, acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
@@ -673,7 +680,15 @@ async function substitutionSolveAsync(
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex, target);
+  const acceptedEvidence = acceptedCanonicalEvidence(
+    mergedCarrier,
+    candidateExactLatex,
+    acceptedLatex,
+    target,
+    inferEquationMathJsonRoute(merged),
+    'equation-substitution-candidate-validation',
+  );
+  const exactLatex = acceptedEvidence?.exactLatex ?? candidateExactLatex;
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
