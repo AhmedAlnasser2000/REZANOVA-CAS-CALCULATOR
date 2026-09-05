@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { evaluateRealNumericExpression } from '../../numeric/real-numeric-eval';
 import { dedupeNumericRoots } from '../candidate-validation';
 import {
-  checkCandidateAgainstConstraints,
+  createPreparedConstraintCheckerAtTarget,
   equationToZeroFormLatex,
   readNumericNode,
 } from '../domain-guards';
@@ -15,7 +15,9 @@ import { isNodeArray } from '../../symbolic-engine/patterns';
 import type {
   AngleUnit,
   CandidateValidationResult,
+  CanonicalMathValueV1,
   ResultProducerDraft,
+  SerializableMathJson,
   SolveDomainConstraint,
 } from '../../../types/calculator';
 
@@ -112,24 +114,26 @@ function rewriteDirectTrigAngles(node: unknown, angleUnit: AngleUnit): unknown {
   return [operator, ...rewrittenOperands];
 }
 
-function evaluateResidualAt(
+function createCompositionResidualEvaluator(
   equationLatex: string,
-  value: number,
   angleUnit: AngleUnit,
 ) {
   const zeroFormLatex = equationToZeroFormLatex(equationLatex);
   const expr = ce.parse(zeroFormLatex);
-  const substituted = expr.subs({ x: value });
-  const rewrittenJson = rewriteDirectTrigAngles(substituted.json, angleUnit);
-  const rewrittenLatex = boxLatex(rewrittenJson);
-  const numeric = evaluateRealNumericExpression(rewrittenJson, rewrittenLatex);
-  if (numeric.kind === 'success') {
-    return numeric.value;
-  }
 
-  const evaluated = ce.box(rewrittenJson as Parameters<typeof ce.box>[0]).evaluate();
-  const fallback = evaluated.N?.() ?? evaluated;
-  return readNumericNode(fallback.json);
+  return (value: number) => {
+    const substituted = expr.subs({ x: value });
+    const rewrittenJson = rewriteDirectTrigAngles(substituted.json, angleUnit);
+    const rewrittenLatex = boxLatex(rewrittenJson);
+    const numeric = evaluateRealNumericExpression(rewrittenJson, rewrittenLatex);
+    if (numeric.kind === 'success') {
+      return numeric.value;
+    }
+
+    const evaluated = ce.box(rewrittenJson as Parameters<typeof ce.box>[0]).evaluate();
+    const fallback = evaluated.N?.() ?? evaluated;
+    return readNumericNode(fallback.json);
+  };
 }
 
 function validateCompositionCandidates(
@@ -140,9 +144,15 @@ function validateCompositionCandidates(
 ) {
   const accepted: number[] = [];
   const rejected: CandidateValidationResult[] = [];
+  const checkConstraints = createPreparedConstraintCheckerAtTarget(
+    'x',
+    constraints,
+    angleUnit,
+  );
+  const evaluateResidual = createCompositionResidualEvaluator(equationLatex, angleUnit);
 
   for (const candidate of dedupeNumericRoots(candidates)) {
-    const violation = checkCandidateAgainstConstraints(candidate, constraints, angleUnit);
+    const violation = checkConstraints(candidate);
     if (violation) {
       rejected.push({
         kind: 'rejected',
@@ -152,7 +162,7 @@ function validateCompositionCandidates(
       continue;
     }
 
-    const residual = evaluateResidualAt(equationLatex, candidate, angleUnit);
+    const residual = evaluateResidual(candidate);
     if (residual === null) {
       rejected.push({
         kind: 'rejected',
@@ -212,10 +222,84 @@ function parseFiniteNumericValue(latex: string): number | null {
   return null;
 }
 
-function matchAcceptedExactSolutions(exactLatex: string | undefined, accepted: number[]) {
+const STRUCTURAL_LATEX_OPTIONS = {
+  prettify: false,
+  invisibleMultiply: '\\cdot',
+  invisiblePlus: '',
+  multiply: '\\cdot',
+} as const;
+
+function nativeFiniteRootCandidates(primaryMath: CanonicalMathValueV1 | undefined) {
+  if (primaryMath?.mathJson === undefined || !Array.isArray(primaryMath.mathJson)) {
+    return [] as Array<{ latex: string; numeric: number }>;
+  }
+  const root = primaryMath.mathJson;
+  const nodes = root[0] === 'Equal' && root.length === 3
+    ? [root[2] as SerializableMathJson]
+    : root[0] === 'Element'
+      && Array.isArray(root[2])
+      && root[2][0] === 'Set'
+        ? root[2].slice(1) as SerializableMathJson[]
+        : [];
+
+  return nodes.flatMap((node) => {
+    try {
+      const boxed = ce.box(node as Parameters<typeof ce.box>[0], { form: 'structural' });
+      const canonical = boxed.canonical;
+      const numeric = readNumericNode((canonical.N?.() ?? canonical).json);
+      return numeric === null
+        ? []
+        : [{
+            latex: boxed.toLatex(STRUCTURAL_LATEX_OPTIONS),
+            numeric,
+          }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+function matchAcceptedCandidates(
+  candidates: Array<{ latex: string; numeric: number }>,
+  accepted: number[],
+) {
+  if (candidates.length === 0) return [] as string[];
+  const used = new Set<number>();
+  const matched: string[] = [];
+
+  for (const acceptedValue of accepted) {
+    const candidateIndex = candidates.findIndex((candidate, index) =>
+      !used.has(index)
+      && Math.abs(candidate.numeric - acceptedValue) <= 1e-6);
+    if (candidateIndex < 0) return [] as string[];
+    used.add(candidateIndex);
+    matched.push(candidates[candidateIndex].latex);
+  }
+
+  return matched;
+}
+
+function matchAcceptedExactSolutions(
+  exactLatex: string | undefined,
+  accepted: number[],
+  primaryMath?: CanonicalMathValueV1,
+  producerBranchesLatex?: readonly string[],
+) {
   if (!exactLatex || accepted.length === 0) {
     return [] as string[];
   }
+
+  if (producerBranchesLatex) {
+    const candidates = producerBranchesLatex
+      .map((latex) => ({ latex, numeric: parseFiniteNumericValue(latex) }))
+      .filter((candidate): candidate is { latex: string; numeric: number } => candidate.numeric !== null);
+    const matchedProducerBranches = matchAcceptedCandidates(candidates, accepted);
+    if (matchedProducerBranches.length === accepted.length) return matchedProducerBranches;
+  }
+
+  const nativeCandidates = nativeFiniteRootCandidates(primaryMath);
+  const matchedNative = matchAcceptedCandidates(nativeCandidates, accepted);
+  if (matchedNative.length === accepted.length) return matchedNative;
 
   const exactCandidates = dedupe(extractExactSolutions(exactLatex))
     .map((latex) => ({
@@ -223,26 +307,7 @@ function matchAcceptedExactSolutions(exactLatex: string | undefined, accepted: n
       numeric: parseFiniteNumericValue(latex),
     }))
     .filter((candidate): candidate is { latex: string; numeric: number } => candidate.numeric !== null);
-
-  if (exactCandidates.length === 0) {
-    return [] as string[];
-  }
-
-  const used = new Set<number>();
-  const matched: string[] = [];
-
-  for (const acceptedValue of accepted) {
-    const candidateIndex = exactCandidates.findIndex((candidate, index) =>
-      !used.has(index)
-      && Math.abs(candidate.numeric - acceptedValue) <= 1e-6);
-    if (candidateIndex < 0) {
-      return [] as string[];
-    }
-    used.add(candidateIndex);
-    matched.push(exactCandidates[candidateIndex].latex);
-  }
-
-  return matched;
+  return matchAcceptedCandidates(exactCandidates, accepted);
 }
 
 function collectOutcomeCandidates(outcome: ResultProducerDraft) {
@@ -250,15 +315,15 @@ function collectOutcomeCandidates(outcome: ResultProducerDraft) {
     return [] as number[];
   }
 
+  if (outcome.kind === 'success' && outcome.candidateValues && outcome.candidateValues.length > 0) {
+    return dedupeNumericRoots(outcome.candidateValues);
+  }
+
   const exact = dedupe(extractExactSolutions(outcome.exactLatex))
     .map((latex) => parseFiniteNumericValue(latex))
     .filter((value): value is number => value !== null);
   if (exact.length > 0) {
     return exact;
-  }
-
-  if (outcome.kind === 'success' && outcome.candidateValues && outcome.candidateValues.length > 0) {
-    return dedupeNumericRoots(outcome.candidateValues);
   }
 
   return dedupe(extractApproxSolutions(outcome.approxText))

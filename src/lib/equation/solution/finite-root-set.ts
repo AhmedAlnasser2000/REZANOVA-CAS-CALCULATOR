@@ -8,14 +8,15 @@ import {
   profileDomainMathValue,
 } from '../../display/printer';
 import {
-  exactLatexForFiniteBranchExpressions,
-  finiteBranchReadbackForFiniteBranchExpressions,
+  finiteRootPresentationMathJson,
   normalizeFiniteBranchExpression,
   uniqueFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
   type EquationPresentationContext,
 } from '../presentation/finite-roots';
 import type { ExactReadbackNormalizationContext } from '../readback/normalization';
+import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
+import { sortEquationBranchLatex } from '../equation-branch-readback';
 
 export type FiniteRootCandidateValidationState =
   | { kind: 'unchecked' }
@@ -54,28 +55,13 @@ export type FiniteRootSetRender = {
 };
 
 function profiledFiniteRootMath(
-  rootSet: FiniteRootSet,
+  targetLatex: string,
   branchesLatex: readonly string[],
   exactLatex: string,
-  options: FiniteRootSetRenderOptions,
+  nodeByLatex: ReadonlyMap<string, SerializableMathJson>,
 ) {
-  if (!/^[A-Za-z]$/.test(rootSet.targetLatex)) {
+  if (!/^[A-Za-z]$/.test(targetLatex)) {
     return { exactLatex };
-  }
-
-  const nodeByLatex = new Map<string, SerializableMathJson>();
-  for (const branch of visibleFiniteRootBranches(rootSet)) {
-    if (branch.node === undefined) continue;
-    const normalizedLatex = normalizeFiniteBranchExpression({
-      latex: branch.latex,
-      node: branch.node,
-      target: rootSet.targetLatex,
-      ...(options.context ? { context: options.context } : {}),
-      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-    });
-    if (!nodeByLatex.has(normalizedLatex)) {
-      nodeByLatex.set(normalizedLatex, branch.node as SerializableMathJson);
-    }
   }
 
   if (branchesLatex.some((branchLatex) => !nodeByLatex.has(branchLatex))) {
@@ -84,8 +70,8 @@ function profiledFiniteRootMath(
 
   const nodes = branchesLatex.map((branchLatex) => nodeByLatex.get(branchLatex)!);
   const answerNode: SerializableMathJson = nodes.length === 1
-    ? ['Equal', rootSet.targetLatex, nodes[0]]
-    : ['Element', rootSet.targetLatex, ['Set', ...nodes]];
+    ? ['Equal', targetLatex, nodes[0]]
+    : ['Element', targetLatex, ['Set', ...nodes]];
   const profiled = profileDomainMathValue(exactLatex, answerNode);
   return profiled
     ? { exactLatex: profiled.canonicalLatex, primaryMath: profiled.primaryMath }
@@ -144,14 +130,32 @@ export function renderFiniteRootSet(
   rootSet: FiniteRootSet,
   options: FiniteRootSetRenderOptions = {},
 ): FiniteRootSetRender {
-  const branches = finiteRootBranchExpressions(rootSet);
-  const branchesLatex = uniqueFiniteBranchExpressions({
-    targetLatex: rootSet.targetLatex,
-    branches,
-    preserveOrder: options.preserveOrder,
-    ...(options.context ? { context: options.context } : {}),
-    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-  });
+  const visibleBranches = visibleFiniteRootBranches(rootSet);
+  const nodeByLatex = new Map<string, SerializableMathJson>();
+  const seen = new Set<string>();
+  const preparedBranchesLatex: string[] = [];
+  for (const branch of visibleBranches) {
+    const normalizedLatex = normalizeFiniteBranchExpression({
+      latex: branch.latex,
+      ...(branch.node !== undefined ? { node: branch.node } : {}),
+      target: rootSet.targetLatex,
+      ...(options.context ? { context: options.context } : {}),
+      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
+    });
+    if (!seen.has(normalizedLatex)) {
+      seen.add(normalizedLatex);
+      preparedBranchesLatex.push(normalizedLatex);
+    }
+    if (branch.node !== undefined && !nodeByLatex.has(normalizedLatex)) {
+      nodeByLatex.set(
+        normalizedLatex,
+        finiteRootPresentationMathJson(branch.node) as SerializableMathJson,
+      );
+    }
+  }
+  const branchesLatex = options.preserveOrder
+    ? preparedBranchesLatex
+    : sortEquationBranchLatex(preparedBranchesLatex);
   const rejectedBranches = rootSet.branches.filter((branch) => branch.validation?.kind === 'rejected');
 
   if (branchesLatex.length === 0) {
@@ -161,27 +165,24 @@ export function renderFiniteRootSet(
     };
   }
 
-  const exactLatex = exactLatexForFiniteBranchExpressions({
-      targetLatex: rootSet.targetLatex,
-      branches,
-      preserveOrder: options.preserveOrder,
-      ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
-      ...(options.context ? { context: options.context } : {}),
-    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-  });
-  const profiledMath = profiledFiniteRootMath(rootSet, branchesLatex, exactLatex, options);
+  const exactLatex = branchesLatex.length === 1
+    ? `${rootSet.targetLatex}=${branchesLatex[0]}`
+    : `${rootSet.targetLatex}\\in\\left\\{${branchesLatex.join(options.setSeparator ?? ',\\ ')}\\right\\}`;
+  const profiledMath = profiledFiniteRootMath(
+    rootSet.targetLatex,
+    branchesLatex,
+    exactLatex,
+    nodeByLatex,
+  );
 
   return {
     exactLatex: profiledMath.exactLatex,
     ...(profiledMath.primaryMath ? { primaryMath: profiledMath.primaryMath } : {}),
-    branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
+    branchReadback: finiteBranchReadbackMetadata({
       targetLatex: rootSet.targetLatex,
-      branches,
+      relationLatex: options.relationLatex,
+      branchesLatex,
       source: rootSet.source,
-      preserveOrder: options.preserveOrder,
-      ...(options.context ? { context: options.context } : {}),
-      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-      ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
       ...(options.label ? { label: options.label } : {}),
     }),
     branchesLatex,

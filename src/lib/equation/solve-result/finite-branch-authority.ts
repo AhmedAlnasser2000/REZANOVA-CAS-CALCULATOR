@@ -1,3 +1,4 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   CanonicalMathValueV1,
   DisplayAnswerRowsReadback,
@@ -5,14 +6,19 @@ import type {
   SerializableMathJson,
 } from '../../../types/calculator';
 import { tryProvenCanonicalMathValue } from '../../result-contract';
+import { compareFormalMathJson } from '../../result-contract/formal-mathjson-comparison';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
+import { printValidatedBoxedMathJson } from '../../display/printer/printer';
 import {
   createFiniteRootSet,
   renderFiniteRootSet,
 } from '../solution/finite-root-set';
+import { normalizeFiniteBranchExpression } from '../presentation/finite-roots';
 import type { EquationOwnedMathJsonLeaf } from './math-values';
 
 type EquationMathJsonRouteId = Extract<MathJsonRouteId, `equation.${string}`>;
+
+const ce = new ComputeEngine();
 
 export type EquationFiniteBranchAuthority = {
   exactLatex: string;
@@ -86,7 +92,123 @@ function uniqueNodeMatches(input: {
   }) ? [index] : []);
 }
 
+function exactSerializationBijection(input: {
+  targetLatex: string;
+  canonicalLatex: readonly string[];
+  nodes: readonly SerializableMathJson[];
+  nodeForProof: (node: SerializableMathJson) => SerializableMathJson;
+  routeId: EquationMathJsonRouteId;
+  source: string;
+}) {
+  const deterministicNodeForEntry = input.canonicalLatex.map((canonicalLatex) => {
+    try {
+      const parsed = ce.parse(canonicalLatex, { form: 'structural' });
+      const matches = input.nodes.flatMap((node, index) => (
+        compareFormalMathJson(input.nodeForProof(node), parsed.json, canonicalLatex).equal
+          ? [index]
+          : []
+      ));
+      return matches.length === 1 ? matches[0] : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+  if (
+    deterministicNodeForEntry.every((index) => index !== undefined)
+    && new Set(deterministicNodeForEntry).size === input.nodes.length
+  ) {
+    const proofResults = deterministicNodeForEntry.map((nodeIndex, entryIndex) => proves({
+      canonicalLatex: comparisonLatex(input.canonicalLatex[entryIndex]),
+      mathJson: input.nodeForProof(input.nodes[nodeIndex!]),
+      routeId: input.routeId,
+      source: `${input.source}:deterministic-entry:${entryIndex}`,
+    }));
+    if (proofResults.every(Boolean)) return deterministicNodeForEntry as number[];
+  }
+
+  const numericValue = (value: ReturnType<typeof ce.box>) => {
+    const json = (value.N?.() ?? value).json;
+    if (typeof json === 'number' && Number.isFinite(json)) return json;
+    if (json && typeof json === 'object' && 'num' in json) {
+      const parsed = Number((json as { num: string }).num);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+  const nodeValues = input.nodes.map((node) => {
+    try {
+      return numericValue(ce.box(input.nodeForProof(node) as Parameters<typeof ce.box>[0]));
+    } catch {
+      return undefined;
+    }
+  });
+  const presentationValues = input.canonicalLatex.map((canonicalLatex) => {
+    try {
+      return numericValue(ce.parse(canonicalLatex));
+    } catch {
+      return undefined;
+    }
+  });
+  const numericNodeForEntry = presentationValues.map((presentationValue) => {
+    if (presentationValue === undefined) return undefined;
+    const matches = nodeValues.flatMap((nodeValue, index) => {
+      if (nodeValue === undefined) return [];
+      const tolerance = 1e-10 * Math.max(1, Math.abs(nodeValue), Math.abs(presentationValue));
+      return Math.abs(nodeValue - presentationValue) <= tolerance ? [index] : [];
+    });
+    return matches.length === 1 ? matches[0] : undefined;
+  });
+  if (
+    numericNodeForEntry.every((index) => index !== undefined)
+    && new Set(numericNodeForEntry).size === input.nodes.length
+  ) {
+    const proofResults = numericNodeForEntry.map((nodeIndex, entryIndex) => proves({
+      canonicalLatex: comparisonLatex(input.canonicalLatex[entryIndex]),
+      mathJson: input.nodeForProof(input.nodes[nodeIndex!]),
+      routeId: input.routeId,
+      source: `${input.source}:numeric-entry:${entryIndex}`,
+    }));
+    if (proofResults.every(Boolean)) return numericNodeForEntry as number[];
+  }
+
+  const serialized = input.nodes.map((node) => {
+    const printed = printValidatedBoxedMathJson({
+      boxedExpression: ce.box(node as Parameters<typeof ce.box>[0], { form: 'structural' }),
+      profile: 'pedagogical-v1',
+      target: 'canonical-latex',
+    });
+    if (!printed.ok) return [] as string[];
+    return [
+      comparisonLatex(printed.canonicalLatex),
+      comparisonLatex(normalizeFiniteBranchExpression({
+        latex: printed.canonicalLatex,
+        node,
+        target: input.targetLatex,
+      })),
+    ];
+  });
+  const nodeForEntry = input.canonicalLatex.map((canonicalLatex) => {
+    const normalized = comparisonLatex(canonicalLatex);
+    const matches = serialized.flatMap((values, index) => values.includes(normalized) ? [index] : []);
+    return matches.length === 1 ? matches[0] : undefined;
+  });
+  if (
+    nodeForEntry.some((index) => index === undefined)
+    || new Set(nodeForEntry).size !== input.nodes.length
+  ) {
+    return undefined;
+  }
+  const proofResults = nodeForEntry.map((nodeIndex, entryIndex) => proves({
+    canonicalLatex: comparisonLatex(input.canonicalLatex[entryIndex]),
+    mathJson: input.nodeForProof(input.nodes[nodeIndex!]),
+    routeId: input.routeId,
+    source: `${input.source}:exact-entry:${entryIndex}`,
+  }));
+  return proofResults.every(Boolean) ? nodeForEntry as number[] : undefined;
+}
+
 function assertUniqueBijection(input: {
+  targetLatex: string;
   canonicalLatex: readonly string[];
   nodes: readonly SerializableMathJson[];
   nodeForProof: (node: SerializableMathJson) => SerializableMathJson;
@@ -96,6 +218,8 @@ function assertUniqueBijection(input: {
   if (input.canonicalLatex.length !== input.nodes.length) {
     throw new Error('Equation exact finite branch evidence has a missing or extra branch.');
   }
+  const exactBijection = exactSerializationBijection(input);
+  if (exactBijection) return exactBijection;
   const nodeForEntry: number[] = [];
   const used = new Set<number>();
   for (const [index, canonicalLatex] of input.canonicalLatex.entries()) {
@@ -148,6 +272,7 @@ export function resolveEquationFiniteBranchAuthority(input: {
   primaryMath: CanonicalMathValueV1 | undefined;
   branchReadback: DisplayBranchReadback | undefined;
   answerRows?: DisplayAnswerRowsReadback;
+  preserveReadbackOrder?: boolean;
   routeId: EquationMathJsonRouteId;
   source: string;
 }): EquationFiniteBranchAuthority | undefined {
@@ -184,12 +309,16 @@ export function resolveEquationFiniteBranchAuthority(input: {
   }
 
   const branchNodeIndexes = assertUniqueBijection({
+    targetLatex: readback.targetLatex,
     canonicalLatex: readback.branchesLatex,
     nodes: native.branches,
     nodeForProof: (node) => node,
     routeId: input.routeId,
     source: `${input.source}:branch`,
   });
+  const renderedNodeIndexes = input.preserveReadbackOrder
+    ? branchNodeIndexes
+    : native.branches.map((_, index) => index);
   const branchForNode = new Map(branchNodeIndexes.map((nodeIndex, branchIndex) => [
     nodeIndex,
     readback.branchesLatex[branchIndex],
@@ -197,9 +326,9 @@ export function resolveEquationFiniteBranchAuthority(input: {
   const rendered = renderFiniteRootSet(createFiniteRootSet({
     targetLatex: readback.targetLatex,
     source: readback.source ?? input.source,
-    branches: native.branches.map((node, index) => ({
-      latex: branchForNode.get(index)!,
-      node,
+    branches: renderedNodeIndexes.map((nodeIndex) => ({
+      latex: branchForNode.get(nodeIndex)!,
+      node: native.branches[nodeIndex],
       source: input.source,
     })),
   }), {
@@ -214,6 +343,10 @@ export function resolveEquationFiniteBranchAuthority(input: {
     || rendered.branchesLatex.length !== native.branches.length
   ) {
     throw new Error('Equation exact finite native roots could not produce complete readback.');
+  }
+  const renderedNative = exactFiniteNodes(rendered.primaryMath, readback.relationLatex);
+  if (!renderedNative || renderedNative.branches.length !== rendered.branchesLatex.length) {
+    throw new Error('Equation exact finite normalized roots could not produce complete proof leaves.');
   }
   const isSingleEquality = readback.relationLatex === '=';
   const preserveProducerPresentation = isSingleEquality
@@ -240,6 +373,7 @@ export function resolveEquationFiniteBranchAuthority(input: {
   if (input.answerRows) {
     const rowBranches = exactAnswerRowBranches(input.answerRows, readback.targetLatex);
     const rowNodeIndexes = assertUniqueBijection({
+      targetLatex: readback.targetLatex,
       canonicalLatex: rowBranches,
       nodes: native.branches,
       nodeForProof: (node) => node,
@@ -256,51 +390,54 @@ export function resolveEquationFiniteBranchAuthority(input: {
           ...(input.answerRows.label ? { label: input.answerRows.label } : {}),
           rows: rendered.branchesLatex.map((branch, index) => ({
             latex: `${readback.targetLatex}=${branch}`,
-            ...(rowForNode.get(index)?.label ? { label: rowForNode.get(index)!.label } : {}),
+            ...(rowForNode.get(renderedNodeIndexes[index])?.label
+              ? { label: rowForNode.get(renderedNodeIndexes[index])!.label }
+              : {}),
           })),
         };
-    input.answerRows.rows.forEach((row, rowIndex) => {
-      const nodeIndex = rowNodeIndexes[rowIndex];
-      rowLeaves.push({
-        canonicalLatex: row.latex,
-        mathJson: ['Equal', native.target, native.branches[nodeIndex]],
-        source: `${input.source}:answer-row:${rowIndex}`,
+    if (preserveProducerPresentation) {
+      input.answerRows.rows.forEach((row, rowIndex) => {
+        const nodeIndex = rowNodeIndexes[rowIndex];
+        rowLeaves.push({
+          canonicalLatex: row.latex,
+          mathJson: ['Equal', native.target, native.branches[nodeIndex]],
+          source: `${input.source}:answer-row:${rowIndex}`,
+        });
       });
-    });
+    } else {
+      answerRows.rows.forEach((row, index) => {
+        rowLeaves.push({
+          canonicalLatex: row.latex,
+          mathJson: ['Equal', renderedNative.target, renderedNative.branches[index]],
+          source: `${input.source}:answer-row:normalized:${index}`,
+        });
+      });
+    }
   }
 
   const proofLeaves = uniqueLeaves([
     {
-      canonicalLatex: input.primaryMath.canonicalLatex,
-      mathJson: input.primaryMath.mathJson,
-      source: `${input.source}:primary:original`,
-    },
-    {
-      canonicalLatex: rendered.exactLatex,
-      mathJson: rendered.primaryMath.mathJson,
-      source: `${input.source}:primary:normalized`,
+      canonicalLatex: resolvedExactLatex,
+      mathJson: resolvedPrimaryMath.mathJson,
+      source: `${input.source}:primary:resolved`,
     },
     {
       canonicalLatex: readback.targetLatex,
-      mathJson: native.target,
+      mathJson: preserveProducerPresentation ? native.target : renderedNative.target,
       source: `${input.source}:target`,
     },
-    ...readback.branchesLatex.map((canonicalLatex, index) => ({
-      canonicalLatex,
-      mathJson: native.branches[branchNodeIndexes[index]],
-      source: `${input.source}:branch:original:${index}`,
-    })),
-    ...rendered.branchesLatex.map((canonicalLatex, index) => ({
-      canonicalLatex,
-      mathJson: native.branches[index],
-      source: `${input.source}:branch:normalized:${index}`,
-    })),
+    ...(preserveProducerPresentation
+      ? readback.branchesLatex.map((canonicalLatex, index) => ({
+          canonicalLatex,
+          mathJson: native.branches[branchNodeIndexes[index]],
+          source: `${input.source}:branch:resolved:${index}`,
+        }))
+      : rendered.branchesLatex.map((canonicalLatex, index) => ({
+          canonicalLatex,
+          mathJson: renderedNative.branches[index],
+          source: `${input.source}:branch:resolved:${index}`,
+        }))),
     ...rowLeaves,
-    ...(answerRows?.rows.map((row, index) => ({
-      canonicalLatex: row.latex,
-      mathJson: ['Equal', native.target, native.branches[index]] as SerializableMathJson,
-      source: `${input.source}:answer-row:normalized:${index}`,
-    })) ?? []),
   ]);
 
   return {

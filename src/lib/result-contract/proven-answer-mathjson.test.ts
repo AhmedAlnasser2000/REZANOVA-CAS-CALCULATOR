@@ -73,6 +73,29 @@ describe('producer-proven answer MathJSON', () => {
     });
   });
 
+  it('accepts non-formal radical forms with identical canonical boxed trees', () => {
+    const result = proveAnswerMathJson({
+      canonicalLatex: String.raw`-\frac{1}{2}-\frac{1}{10}\sqrt{275+50\sqrt{13}}`,
+      candidate: candidate([
+        'Add',
+        ['Rational', -1, 2],
+        [
+          'Multiply',
+          ['Rational', -1, 10],
+          ['Sqrt', ['Add', 275, ['Multiply', 50, ['Sqrt', 13]]]],
+        ],
+      ]),
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      evidence: {
+        semanticRelation: 'structural',
+        printerSource: 'compatibility-fallback',
+      },
+    });
+  });
+
   it('accepts exact producer serialization when nested-radical reparsing is weaker', () => {
     const root = [
       'Divide',
@@ -204,11 +227,45 @@ describe('producer-proven answer MathJSON', () => {
         mathJson: ['Equal', ['Apply', 'cross', ['List', 'u', 'v']], 'w'],
       },
       {
+        canonicalLatex: String.raw`\Delta=(p\cdot p)(q\cdot q)-(p\cdot q)^{2}=4`,
+        mathJson: [
+          'Equal',
+          'Delta',
+          [
+            'Subtract',
+            [
+              'Multiply',
+              ['InvisibleOperator', 'dot', ['Delimiter', ['List', 'p', 'p']]],
+              ['InvisibleOperator', 'dot', ['Delimiter', ['List', 'q', 'q']]],
+            ],
+            ['Power', ['InvisibleOperator', 'dot', ['Delimiter', ['List', 'p', 'q']]], 2],
+          ],
+          4,
+        ],
+      },
+      {
         canonicalLatex: String.raw`P_{B\leftarrow A}=B^{-1}A`,
         mathJson: [
           'Equal',
           ['Subscript', 'P', ['List', 'B', 'A']],
           ['Multiply', ['Power', 'B', -1], 'A'],
+        ],
+      },
+      {
+        canonicalLatex: String.raw`x=\begin{bmatrix}1-t\\t\end{bmatrix}\quad t\in\mathbb{R}`,
+        mathJson: [
+          'Element',
+          [
+            'Equal',
+            'x',
+            [
+              'InvisibleOperator',
+              ['Matrix', ['List', ['List', ['Add', 1, ['Negate', 't']]], ['List', 't']], "'[]'"],
+              ['HorizontalSpacing', 18],
+              't',
+            ],
+          ],
+          'RealNumbers',
         ],
       },
     ] as const;
@@ -260,6 +317,52 @@ describe('producer-proven answer MathJSON', () => {
     expect(proveStandardAnswerMathJson({
       canonicalLatex: eigenspaceLatex,
       candidate: candidate(eigenspace(1)),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+  });
+
+  it('keeps opposite signed imaginary values distinct inside equality and set trees', () => {
+    const negativeImaginary = ['Multiply', -1, 'ImaginaryUnit'];
+    const positiveImaginary = ['Multiply', 1, 'ImaginaryUnit'];
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: 'x=-i',
+      candidate: candidate(['Equal', 'x', negativeImaginary]),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: 'x=i',
+      candidate: candidate(['Equal', 'x', positiveImaginary]),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: 'x=-i',
+      candidate: candidate(['Equal', 'x', positiveImaginary]),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: 'x=i',
+      candidate: candidate(['Equal', 'x', negativeImaginary]),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`x\in\left\{-i,i\right\}`,
+      candidate: candidate(['Element', 'x', ['Set', negativeImaginary, positiveImaginary]]),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`x\in\left\{-i,i\right\}`,
+      candidate: candidate(['Element', 'x', ['Set', positiveImaginary, positiveImaginary]]),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+  });
+
+  it('recognizes reviewed imaginary-unit aliases in deterministic formal trees', () => {
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: 'x=i',
+      candidate: candidate(['Equal', 'x', 'i']),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`x=\imaginaryI`,
+      candidate: candidate(['Equal', 'x', 'ImaginaryUnit']),
+    })).toMatchObject({ ok: true });
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`x=-\imaginaryI`,
+      candidate: candidate(['Equal', 'x', 'ImaginaryUnit']),
     })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
   });
 

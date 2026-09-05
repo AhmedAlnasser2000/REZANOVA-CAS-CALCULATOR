@@ -94,6 +94,7 @@ function isArithmeticScalarNode(node: unknown): boolean {
     && operator !== 'Rational'
     && operator !== 'Complex'
     && operator !== 'Power'
+    && operator !== 'Sqrt'
   ) {
     return false;
   }
@@ -110,6 +111,14 @@ function containsPreservedTranscendental(node: unknown): boolean {
     return true;
   }
   return operands.some(containsPreservedTranscendental);
+}
+
+export function finiteRootPresentationMathJson(node: unknown) {
+  if (hasSymbol(node) || !isArithmeticScalarNode(node)) {
+    return node as MathJson;
+  }
+  const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
+  return ce.box(simplified as Parameters<typeof ce.box>[0]).evaluate().json;
 }
 
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
@@ -137,10 +146,7 @@ function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
       return ce.box(node as Parameters<typeof ce.box>[0]).latex.replace(/\\exponentialE/g, 'e');
     }
 
-    const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
-    const renderNode = hasSymbol(simplified) || !isArithmeticScalarNode(simplified)
-      ? simplified
-      : ce.box(simplified as Parameters<typeof ce.box>[0]).evaluate().json;
+    const renderNode = finiteRootPresentationMathJson(node);
     return ce.box(renderNode as Parameters<typeof ce.box>[0]).latex;
   } catch {
     return null;

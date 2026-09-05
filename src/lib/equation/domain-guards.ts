@@ -205,12 +205,44 @@ function checkConstraint(
   value: number,
   angleUnit: AngleUnit,
   target = 'x',
+  evaluateConstraintLatex?: (expressionLatex: string, point: number) => number | null,
 ): string | null {
   return checkDomainConstraintAtValue(constraint, value, {
-    evaluateLatex: (expressionLatex, point) => target === 'x'
+    evaluateLatex: evaluateConstraintLatex ?? ((expressionLatex, point) => target === 'x'
       ? evaluateLatexAt(expressionLatex, point, angleUnit).value
-      : evaluateLatexAtTarget(expressionLatex, target, point, angleUnit).value,
+      : evaluateLatexAtTarget(expressionLatex, target, point, angleUnit).value),
   })?.message ?? null;
+}
+
+export function createPreparedConstraintCheckerAtTarget(
+  target: string,
+  constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
+) {
+  const evaluators = new Map<string, ReturnType<typeof createLatexTargetEvaluator>>();
+  for (const constraint of constraints) {
+    if (!('expressionLatex' in constraint) || evaluators.has(constraint.expressionLatex)) {
+      continue;
+    }
+    evaluators.set(
+      constraint.expressionLatex,
+      createLatexTargetEvaluator(constraint.expressionLatex, target, angleUnit),
+    );
+  }
+
+  return (value: number): string | null => {
+    for (const constraint of constraints) {
+      const violation = checkConstraint(
+        constraint,
+        value,
+        angleUnit,
+        target,
+        (expressionLatex, point) => evaluators.get(expressionLatex)?.(point).value ?? null,
+      );
+      if (violation) return violation;
+    }
+    return null;
+  };
 }
 
 export function checkCandidateAgainstConstraints(
@@ -292,38 +324,59 @@ export function validateResidualAtTarget(
   constraints: SolveDomainConstraint[] = [],
   angleUnit: AngleUnit = 'rad',
 ): CandidateValidationResult {
-  const constraintViolation = checkCandidateAgainstConstraintsAtTarget(candidate, target, constraints, angleUnit);
-  if (constraintViolation) {
-    return {
-      kind: 'rejected',
-      value: candidate,
-      reason: constraintViolation,
-    };
-  }
+  return createPreparedResidualValidatorAtTarget(
+    zeroFormLatex,
+    target,
+    constraints,
+    angleUnit,
+  )(candidate);
+}
 
-  const evaluated = target === 'x'
-    ? evaluateLatexAt(zeroFormLatex, candidate, angleUnit)
-    : evaluateLatexAtTarget(zeroFormLatex, target, candidate, angleUnit);
-  if (evaluated.value === null) {
-    return {
-      kind: 'rejected',
-      value: candidate,
-      reason: 'produces an undefined or non-real substitution',
-    };
-  }
+export function createPreparedResidualValidatorAtTarget(
+  zeroFormLatex: string,
+  target: string,
+  constraints: SolveDomainConstraint[] = [],
+  angleUnit: AngleUnit = 'rad',
+) {
+  const validateConstraints = createPreparedConstraintCheckerAtTarget(
+    target,
+    constraints,
+    angleUnit,
+  );
+  const evaluateResidual = createLatexTargetEvaluator(zeroFormLatex, target, angleUnit);
 
-  const residual = Math.abs(evaluated.value);
-  if (residual > RESIDUAL_TOLERANCE) {
-    return {
-      kind: 'rejected',
-      value: candidate,
-      reason: 'does not satisfy the original equation after substitution',
-    };
-  }
+  return (candidate: number): CandidateValidationResult => {
+    const constraintViolation = validateConstraints(candidate);
+    if (constraintViolation) {
+      return {
+        kind: 'rejected',
+        value: candidate,
+        reason: constraintViolation,
+      };
+    }
 
-  return {
-    kind: 'accepted',
-    value: candidate,
-    residual,
+    const evaluated = evaluateResidual(candidate);
+    if (evaluated.value === null) {
+      return {
+        kind: 'rejected',
+        value: candidate,
+        reason: 'produces an undefined or non-real substitution',
+      };
+    }
+
+    const residual = Math.abs(evaluated.value);
+    if (residual > RESIDUAL_TOLERANCE) {
+      return {
+        kind: 'rejected',
+        value: candidate,
+        reason: 'does not satisfy the original equation after substitution',
+      };
+    }
+
+    return {
+      kind: 'accepted',
+      value: candidate,
+      residual,
+    };
   };
 }

@@ -9,22 +9,37 @@ import {
   type ProvenCanonicalMathValue,
 } from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
-import type { EquationOwnedMathJsonLeaf } from './math-values';
 import {
+  equationOwnedMathJsonLeavesFromDocument as baseEquationOwnedMathJsonLeavesFromDocument,
   equationMathValuesFromOwnedLeaves as baseEquationMathValuesFromOwnedLeaves,
   inferEquationMathJsonRoute as inferBaseEquationMathJsonRoute,
+  type EquationOwnedMathJsonLeaf as BaseEquationOwnedMathJsonLeaf,
 } from './math-values';
-import { resolveEquationFiniteBranchAuthority } from './finite-branch-authority';
+import {
+  resolveEquationFiniteBranchAuthority,
+  type EquationFiniteBranchAuthority,
+} from './finite-branch-authority';
 
 // Changed Equation producers use this bridge without widening frozen V1 adapters.
 export {
-  equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
 } from './math-values';
 export type {
   EquationMathJsonRouteId,
-  EquationOwnedMathJsonLeaf,
 } from './math-values';
+
+export type EquationOwnedMathJsonLeaf = BaseEquationOwnedMathJsonLeaf & {
+  authority?: 'canonical-document';
+};
+
+export function equationOwnedMathJsonLeavesFromDocument(
+  ...args: Parameters<typeof baseEquationOwnedMathJsonLeavesFromDocument>
+): EquationOwnedMathJsonLeaf[] {
+  return baseEquationOwnedMathJsonLeavesFromDocument(...args).map((leaf) => ({
+    ...leaf,
+    authority: 'canonical-document',
+  }));
+}
 
 type EquationOutcome = Omit<Exclude<ResultProducerDraft, { kind: 'prompt' }>, 'canonicalResult'>;
 type EquationMathJsonRouteId = Extract<MathJsonRouteId, `equation.${string}`>;
@@ -82,13 +97,38 @@ function unproven(canonicalLatex: string) {
   return { canonicalLatex };
 }
 
+function hasMatchingCanonicalDocumentReadback(
+  readback: EquationSuccessReadback,
+  leaves: readonly EquationOwnedMathJsonLeaf[],
+) {
+  if (readback.primaryMath?.mathJson === undefined) return false;
+  const documentLeaves = leaves.filter((leaf) => leaf.authority === 'canonical-document');
+  const primaryMatches = documentLeaves.some((leaf) => (
+    leaf.canonicalLatex === readback.primaryMath?.canonicalLatex
+    && JSON.stringify(leaf.mathJson) === JSON.stringify(readback.primaryMath.mathJson)
+  ));
+  if (!primaryMatches) return false;
+  const requiredReadbackLatex = [
+    ...(readback.branchReadback
+      ? [readback.branchReadback.targetLatex, ...readback.branchReadback.branchesLatex]
+      : []),
+    ...(readback.answerRows?.rows.map((row) => row.latex) ?? []),
+  ];
+  return requiredReadbackLatex.every((canonicalLatex) =>
+    documentLeaves.some((leaf) => leaf.canonicalLatex === canonicalLatex));
+}
+
 function successReadbackMathValues(input: {
   readback: EquationSuccessReadback;
   routeId: EquationMathJsonRouteId;
   leaves: readonly EquationOwnedMathJsonLeaf[];
+  finiteAuthority?: EquationFiniteBranchAuthority;
+  readbackAuthorityAlreadyValidated?: boolean;
 }): CanonicalResultProducerMathValuesV1 {
   const outcome = input.readback as unknown as EquationOutcome;
-  const finiteAuthority = input.readback.primaryMath?.mathJson === undefined
+  const finiteAuthority = input.finiteAuthority ?? (input.readbackAuthorityAlreadyValidated
+    || hasMatchingCanonicalDocumentReadback(input.readback, input.leaves)
+    || input.readback.primaryMath?.mathJson === undefined
     ? undefined
     : resolveEquationFiniteBranchAuthority({
         primaryMath: input.readback.primaryMath,
@@ -96,7 +136,7 @@ function successReadbackMathValues(input: {
         answerRows: input.readback.answerRows,
         routeId: input.routeId,
         source: 'equation-owned-finite-readback',
-      });
+      }));
   const leaves = finiteAuthority
     ? [...input.leaves, ...finiteAuthority.proofLeaves]
     : input.leaves;
@@ -137,6 +177,7 @@ function successReadbackMathValues(input: {
 export function equationMathValuesForOwnedSuccessReadback(input: {
   readback: EquationSuccessReadback;
   leaves: readonly EquationOwnedMathJsonLeaf[];
+  finiteAuthority?: EquationFiniteBranchAuthority;
 }): CanonicalResultProducerMathValuesV1 {
   const routeId = inferBaseEquationMathJsonRoute(input.readback as unknown as EquationOutcome);
   return successReadbackMathValues({ ...input, routeId });
@@ -146,6 +187,7 @@ export function equationMathValuesWithOwnedReadback(input: {
   outcome: EquationOutcome;
   routeId: EquationMathJsonRouteId;
   leaves: readonly EquationOwnedMathJsonLeaf[];
+  readbackAuthorityAlreadyValidated?: boolean;
 }): CanonicalResultProducerMathValuesV1 {
   if (input.outcome.kind === 'success') {
     const { kind: _kind, title: _title, warnings: _warnings, ...readback } = input.outcome;
@@ -153,6 +195,7 @@ export function equationMathValuesWithOwnedReadback(input: {
       readback,
       routeId: input.routeId,
       leaves: input.leaves,
+      readbackAuthorityAlreadyValidated: input.readbackAuthorityAlreadyValidated,
     });
   }
   const values = baseEquationMathValuesFromOwnedLeaves(input);

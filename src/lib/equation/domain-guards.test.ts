@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkCandidateAgainstConstraints,
+  createPreparedConstraintCheckerAtTarget,
+  createPreparedResidualValidatorAtTarget,
   equationToZeroFormLatex,
   exponentialDomainError,
   trigCarrierDomainError,
@@ -42,5 +44,22 @@ describe('equation domain guards', () => {
     expect(validateResidual('\\sin\\left(x\\right)-1', 90, [], 'deg').kind).toBe('accepted');
     expect(validateResidual('\\sin\\left(x\\right)-1', 90, [], 'rad').kind).toBe('rejected');
     expect(validateResidual('\\sin\\left(x\\right)-1', 100, [], 'grad').kind).toBe('accepted');
+  });
+
+  it('reuses prepared non-x constraint and residual evaluators across candidate values', () => {
+    const checkConstraints = createPreparedConstraintCheckerAtTarget('y', [
+      { kind: 'positive', expressionLatex: 'y-1' },
+      { kind: 'nonzero', expressionLatex: 'y-1' },
+    ]);
+    expect(checkConstraints(1)).toContain('non-positive');
+    expect(checkConstraints(2)).toBeNull();
+
+    const validate = createPreparedResidualValidatorAtTarget('y^2-4', 'y');
+    expect(validate(-2)).toEqual({ kind: 'accepted', value: -2, residual: 0 });
+    expect(validate(0)).toEqual({
+      kind: 'rejected',
+      value: 0,
+      reason: 'does not satisfy the original equation after substitution',
+    });
   });
 });

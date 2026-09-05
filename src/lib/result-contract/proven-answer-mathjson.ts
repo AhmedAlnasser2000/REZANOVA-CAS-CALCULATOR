@@ -6,10 +6,10 @@ import type {
 } from '../../types/calculator';
 import {
   printCompatibilityLatex,
-  printMathJson,
   validateSerializableMathJson,
   type MathJsonValidationFailure,
 } from '../display/printer';
+import { printValidatedBoxedMathJson } from '../display/printer/printer';
 import type { CanonicalMathJsonProducerOwner, MathJsonRouteId } from './mathjson-route-registry';
 import { findCustomMathJsonOperator } from './standard-mathjson-operators';
 import { compareFormalMathJson } from './formal-mathjson-comparison';
@@ -101,6 +101,7 @@ export type ProvenStandardAnswerMathJsonResult =
   | { ok: false; failure: ProvenStandardAnswerMathJsonFailure };
 
 const PRIVATE_OPERATOR_PREFIXES = ['Calcwiz', 'Rezanova'] as const;
+const LARGE_DETERMINISTIC_PROOF_NODE_THRESHOLD = 13;
 
 function failure(
   reason: ProvenAnswerMathJsonFailure['reason'],
@@ -141,6 +142,13 @@ function privateOperator(value: unknown): string | undefined {
     }
   }
   return undefined;
+}
+
+function normalizedExactSerialization(latex: string) {
+  return latex
+    .replace(/\s+/gu, '')
+    .replace(/\\left|\\right/gu, '')
+    .replace(/\\lbrace|\\rbrace/gu, (token) => token === '\\lbrace' ? '\\{' : '\\}');
 }
 
 export function declareProducerOwnedAnswerMathJson(input: {
@@ -247,7 +255,6 @@ function proveAnswerMathJsonForMode(
       },
     };
   }
-
   const ce = session?.getComputeEngine() ?? new ComputeEngine();
   session?.recordComparisonExecution();
   let answerExpression: ReturnType<typeof ce.box>;
@@ -265,30 +272,54 @@ function proveAnswerMathJsonForMode(
     return failure('canonical-latex-invalid', 'Compute Engine rejected the canonical LaTeX proof value.');
   }
 
-  let producerSerializedSame: boolean;
-  try {
-    producerSerializedSame = ce.box(cloned).latex === canonicalLatex;
-  } catch {
-    return failure(
-      'compute-engine-invalid',
-      'Compute Engine could not serialize the answer MathJSON for comparison.',
-    );
-  }
-
-  let structurallySame: boolean;
-  try {
-    structurallySame = answerExpression.isSame(canonicalExpression);
-  } catch {
-    return failure(
-      'compute-engine-invalid',
-      'Compute Engine could not compare the answer MathJSON with canonical LaTeX.',
-    );
-  }
   const formalComparison = compareFormalMathJson(cloned, canonicalExpression.json, canonicalLatex);
+  const deterministicallySame = !formalComparison.applicable && formalComparison.equal;
+  const reuseDeterministicCanonical = deterministicallySame
+    && validation.validated.nodeCount >= LARGE_DETERMINISTIC_PROOF_NODE_THRESHOLD;
+  let producerSerializedSame = false;
+  if (!formalComparison.equal || !reuseDeterministicCanonical) {
+    try {
+      const preparedSerialization = printValidatedBoxedMathJson({
+        boxedExpression: answerExpression,
+        profile: 'pedagogical-v1',
+        target: 'canonical-latex',
+      });
+      const canonicalSerialization = normalizedExactSerialization(canonicalLatex);
+      producerSerializedSame = (
+        preparedSerialization.ok
+        && normalizedExactSerialization(preparedSerialization.canonicalLatex)
+          === canonicalSerialization
+      ) || normalizedExactSerialization(answerExpression.latex) === canonicalSerialization;
+    } catch {
+      return failure(
+        'compute-engine-invalid',
+        'Compute Engine could not serialize the answer MathJSON for comparison.',
+      );
+    }
+  }
+  let structurallySame = false;
+  let canonicalSerializationSame = false;
+  let canonicalizedSame = false;
+  if (!formalComparison.applicable && !producerSerializedSame && !deterministicallySame) {
+    try {
+      structurallySame = answerExpression.isSame(canonicalExpression);
+      if (!structurallySame) {
+        const canonicalAnswerExpression = answerExpression.canonical;
+        const canonicalPresentationExpression = canonicalExpression.canonical;
+        canonicalSerializationSame = canonicalAnswerExpression.latex === canonicalLatex;
+        canonicalizedSame = canonicalSerializationSame
+          || canonicalAnswerExpression.isSame(canonicalPresentationExpression);
+      }
+    } catch {
+      return failure(
+        'compute-engine-invalid',
+        'Compute Engine could not compare the answer MathJSON with canonical LaTeX.',
+      );
+    }
+  }
   if (
     formalComparison.applicable
     && !producerSerializedSame
-    && !structurallySame
     && !formalComparison.equal
   ) {
     return failure(
@@ -298,7 +329,10 @@ function proveAnswerMathJsonForMode(
   }
 
   let directlyEqual = producerSerializedSame
-    || structurallySame
+    || canonicalSerializationSame
+    || deterministicallySame
+    || (!formalComparison.applicable && structurallySame)
+    || (!formalComparison.applicable && canonicalizedSame)
     || (formalComparison.applicable && formalComparison.equal);
   let simplifiedSame = false;
   if (!directlyEqual && !formalComparison.applicable) {
@@ -323,13 +357,13 @@ function proveAnswerMathJsonForMode(
     );
   }
 
-  const printed = formalComparison.applicable
+  const printed = formalComparison.applicable || reuseDeterministicCanonical
     ? printCompatibilityLatex(canonicalLatex, {
         profile: 'compatibility-v1',
         target: 'canonical-latex',
       }, 'compatibility-fallback')
-    : printMathJson({
-        mathJson: cloned,
+    : printValidatedBoxedMathJson({
+        boxedExpression: answerExpression,
         compatibilityLatex: canonicalLatex,
         profile: 'compatibility-v1',
         target: 'canonical-latex',
@@ -342,11 +376,14 @@ function proveAnswerMathJsonForMode(
   }
 
   const cachedSuccess = {
-    semanticRelation: (structurallySame || producerSerializedSame
+    semanticRelation: (producerSerializedSame
+      || canonicalSerializationSame
+      || deterministicallySame
+      || (!formalComparison.applicable && structurallySame)
       ? 'structural'
       : formalComparison.applicable
         ? 'equal'
-      : simplifiedSame
+      : canonicalizedSame || simplifiedSame
         ? 'simplified'
         : 'equal') as ProvenAnswerMathJsonEvidence['semanticRelation'],
     serializedLatex: printed.serializedLatex ?? printed.canonicalLatex,

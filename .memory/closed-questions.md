@@ -2,6 +2,21 @@
 
 Resolved or superseded questions moved out of `.memory/open-questions.md` so the open file stays actionable. Historical wording is preserved when useful; closure notes explain what replaced it.
 
+## 2026-09-05 - Signed-Imaginary Formal Comparison
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the 2026-09-04 comparator question. Deterministic formal normalization recognizes `ImaginaryUnit`, `i`, and `\imaginaryI`, including signed unit products in equality and set trees. A deterministic mismatch cannot be overridden by Compute Engine `isSame()`, so `x=-i` and `x=i` fail comparison while correct aliases and established non-formal equivalence remain accepted. Failures remain uncached.
+
 ## 2026-07-03 - Memory Hygiene Pass
 
 - primary_agent: codex

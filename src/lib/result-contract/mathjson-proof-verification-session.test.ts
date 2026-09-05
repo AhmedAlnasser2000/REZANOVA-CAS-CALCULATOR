@@ -74,6 +74,32 @@ describe('request-scoped MathJSON proof verification', () => {
     });
   });
 
+  it('never caches an opposite signed-imaginary formal mismatch', async () => {
+    const session = createMathJsonProofVerificationSession();
+    await runWithMathJsonProofVerificationSession(session, async () => {
+      for (let index = 0; index < 2; index += 1) {
+        const result = proveStandardAnswerMathJson({
+          canonicalLatex: 'x=-i',
+          candidate: candidate(
+            ['Equal', 'x', ['Multiply', 1, 'ImaginaryUnit']],
+            `signed-imaginary-near-miss-${index}`,
+          ),
+        });
+        expect(result).toMatchObject({
+          ok: false,
+          failure: { reason: 'semantic-mismatch' },
+        });
+      }
+    });
+
+    expect(session.diagnostics()).toEqual({
+      computeEngineCreations: 1,
+      comparisonExecutions: 2,
+      cacheHits: 0,
+      cacheWrites: 0,
+    });
+  });
+
   it('does not let overlapping sessions share cached proof', async () => {
     const first = createMathJsonProofVerificationSession();
     const second = createMathJsonProofVerificationSession();

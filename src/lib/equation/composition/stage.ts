@@ -334,7 +334,14 @@ function recurseComposition(
     });
   }
 
-  const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
+  const acceptedExactLatex = matchAcceptedExactSolutions(
+    merged.exactLatex,
+    validation.accepted,
+    mergedCarrier.document.primaryMath,
+    merged.branchReadback?.relationLatex === '=' || merged.branchReadback?.relationLatex === '\\in'
+      ? merged.branchReadback.branchesLatex
+      : undefined,
+  );
   const candidateExactLatex = acceptedExactLatex.length === validation.accepted.length
     && acceptedExactLatex.length > 0
     && acceptedExactLatex.every((value) => !isApproximateOnlySolutionLatex(value))
@@ -352,6 +359,7 @@ function recurseComposition(
     ? resolveEquationFiniteBranchAuthority({
         primaryMath: mergedCarrier.document.primaryMath,
         branchReadback: exactBranchEvidence,
+        preserveReadbackOrder: true,
         routeId: inferEquationMathJsonRoute(merged),
         source: 'equation-composition-candidate-validation',
       })
@@ -390,12 +398,17 @@ function recurseComposition(
     ),
     ...(mergeSolveSummaries(solveSummary, solveSummaryFromDisplayFields(merged)) ?? solveSummary),
   } as const;
+  const finiteAuthorityLeaves = finiteAuthority?.proofLeaves ?? [];
+  const finiteAuthorityCanonicalLatex = new Set(finiteAuthorityLeaves.map((leaf) =>
+    leaf.canonicalLatex.replace(/\s+/gu, '')));
   const sourceLeaves = [
     ...equationOwnedMathJsonLeavesFromDocument(
       mergedCarrier.document,
       'equation-composition-source-document',
-    ),
-    ...(finiteAuthority?.proofLeaves ?? []),
+    ).filter((leaf) => !finiteAuthorityCanonicalLatex.has(
+      leaf.canonicalLatex.replace(/\s+/gu, ''),
+    )),
+    ...finiteAuthorityLeaves,
   ];
   const sourceCanonicalLatex = new Set(sourceLeaves.map((leaf) =>
     leaf.canonicalLatex.replace(/\s+/gu, '')));
@@ -423,6 +436,7 @@ function recurseComposition(
   }, {
     mathValues: equationMathValuesForOwnedSuccessReadback({
       readback,
+      ...(finiteAuthority ? { finiteAuthority } : {}),
       leaves: [
         ...sourceLeaves,
         ...mathEvidence.filter((leaf) =>

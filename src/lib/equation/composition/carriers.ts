@@ -25,6 +25,17 @@ function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
 }
 
+function boxGeneratedBranchLatex(node: unknown) {
+  return ce
+    .box(node as Parameters<typeof ce.box>[0], { form: 'structural' })
+    .toLatex({
+      prettify: false,
+      invisibleMultiply: '\\cdot',
+      invisiblePlus: '',
+      multiply: '\\cdot',
+    });
+}
+
 function parseNumericTarget(node: unknown): NumericTarget | null {
   const normalized = normalizeAst(node);
   try {
@@ -84,7 +95,7 @@ export function buildSymbolicFamilyBranchFromNode(node: unknown, representativeV
   const normalized = normalizeAst(node);
   return {
     node: normalized,
-    latex: boxLatex(normalized),
+    latex: boxGeneratedBranchLatex(normalized),
     representativeValue:
       representativeValue
       ?? evaluateRealNode(normalized)

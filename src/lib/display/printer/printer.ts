@@ -25,6 +25,18 @@ export type MathJsonPrinterRequest = PrinterRequest & {
   compatibilityLatex?: string;
 };
 
+type ValidatedBoxedMathJsonPrinterRequest = PrinterRequest & {
+  boxedExpression: {
+    toLatex: (options: {
+      prettify: false;
+      invisibleMultiply: string;
+      invisiblePlus: string;
+      multiply: string;
+    }) => string;
+  };
+  compatibilityLatex?: string;
+};
+
 export type PrintedMath =
   | {
       ok: true;
@@ -49,6 +61,11 @@ const STRUCTURAL_LATEX_OPTIONS = {
   invisibleMultiply: '',
   invisiblePlus: '',
   multiply: '\\cdot',
+} as const;
+
+const PREPARED_STRUCTURAL_LATEX_OPTIONS = {
+  ...STRUCTURAL_LATEX_OPTIONS,
+  invisibleMultiply: '\\cdot',
 } as const;
 
 function renderTarget(
@@ -93,33 +110,13 @@ export function printCompatibilityLatex(
   };
 }
 
-export function printMathJson(request: MathJsonPrinterRequest): PrintedMath {
-  const validation = validateSerializableMathJson(request.mathJson);
-  if (!validation.ok) {
-    if (request.compatibilityLatex?.trim()) {
-      const fallback = printCompatibilityLatex(
-        request.compatibilityLatex,
-        request,
-        'compatibility-fallback',
-      );
-      return fallback.ok
-        ? { ...fallback, fallbackReason: validation.failure.reason }
-        : fallback;
-    }
-    return {
-      ok: false,
-      profile: request.profile,
-      target: request.target,
-      reason: validation.failure.reason,
-      message: validation.failure.message,
-    };
-  }
-
+function printSerializedMathJson(
+  request: PrinterRequest & { compatibilityLatex?: string },
+  serialize: () => string,
+): PrintedMath {
   let serializedLatex: string;
   try {
-    serializedLatex = ce
-      .box(validation.validated.value, { form: 'structural' })
-      .toLatex(STRUCTURAL_LATEX_OPTIONS);
+    serializedLatex = serialize();
   } catch {
     if (request.compatibilityLatex?.trim()) {
       const fallback = printCompatibilityLatex(
@@ -162,4 +159,43 @@ export function printMathJson(request: MathJsonPrinterRequest): PrintedMath {
     target: request.target,
     source: canonicalLatex === serializedLatex ? 'math-json' : 'compatibility-fallback',
   };
+}
+
+export function printValidatedBoxedMathJson(
+  request: ValidatedBoxedMathJsonPrinterRequest,
+): PrintedMath {
+  return printSerializedMathJson(
+    request,
+    () => request.boxedExpression.toLatex(PREPARED_STRUCTURAL_LATEX_OPTIONS),
+  );
+}
+
+export function printMathJson(request: MathJsonPrinterRequest): PrintedMath {
+  const validation = validateSerializableMathJson(request.mathJson);
+  if (!validation.ok) {
+    if (request.compatibilityLatex?.trim()) {
+      const fallback = printCompatibilityLatex(
+        request.compatibilityLatex,
+        request,
+        'compatibility-fallback',
+      );
+      return fallback.ok
+        ? { ...fallback, fallbackReason: validation.failure.reason }
+        : fallback;
+    }
+    return {
+      ok: false,
+      profile: request.profile,
+      target: request.target,
+      reason: validation.failure.reason,
+      message: validation.failure.message,
+    };
+  }
+
+  return printSerializedMathJson(
+    request,
+    () => ce
+      .box(validation.validated.value, { form: 'structural' })
+      .toLatex(STRUCTURAL_LATEX_OPTIONS),
+  );
 }

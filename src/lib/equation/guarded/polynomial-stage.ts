@@ -42,6 +42,8 @@ import {
   isMathJsonArray,
 } from './request-prep';
 import { profileEquationResult } from '../../display/printer';
+import { printValidatedBoxedMathJson } from '../../display/printer/printer';
+import { compareFormalMathJson } from '../../result-contract/formal-mathjson-comparison';
 import {
   createEquationResultOutcome,
   type EquationResultProducerInput,
@@ -91,7 +93,21 @@ function normalizedCarrierRootNode(node: unknown): SerializableMathJson {
 function carrierRootNodeForProof(root: { latex: string; node?: unknown }): SerializableMathJson | undefined {
   if (root.node === undefined) return undefined;
   try {
-    if (ce.box(root.node as Parameters<typeof ce.box>[0]).latex === root.latex) {
+    const boxed = ce.box(root.node as Parameters<typeof ce.box>[0], { form: 'structural' });
+    const parsed = ce.parse(root.latex, { form: 'structural' });
+    if (compareFormalMathJson(root.node, parsed.json, root.latex).equal) {
+      return root.node as SerializableMathJson;
+    }
+    const printed = printValidatedBoxedMathJson({
+      boxedExpression: boxed,
+      profile: 'pedagogical-v1',
+      target: 'canonical-latex',
+    });
+    if (
+      (printed.ok && printed.canonicalLatex === root.latex)
+      || boxed.latex === root.latex
+      || boxed.canonical.latex === root.latex
+    ) {
       return root.node as SerializableMathJson;
     }
   } catch {

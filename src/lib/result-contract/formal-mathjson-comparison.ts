@@ -27,6 +27,11 @@ const FORMAL_NAME_ALIASES = new Map([
 ]);
 
 function containsFormalProducerNode(value: unknown): boolean {
+  if (typeof value === 'string') {
+    const unquoted = value.replace(/^'/u, '').replace(/'$/u, '');
+    return unquoted === 'ImaginaryUnit'
+      || FORMAL_NAME_ALIASES.get(unquoted) === 'ImaginaryUnit';
+  }
   if (!Array.isArray(value)) return false;
   const head = value[0];
   return head === 'Apply'
@@ -158,9 +163,42 @@ function exactIntegerProduct(value: unknown): { coefficient: number; factors: un
   if (typeof value === 'number' && Number.isInteger(value)) {
     return { coefficient: value, factors: [] };
   }
+  if (
+    Array.isArray(value)
+    && value[0] === 'Rational'
+    && value.length === 3
+    && typeof value[1] === 'number'
+    && Number.isInteger(value[1])
+    && typeof value[2] === 'number'
+    && Number.isInteger(value[2])
+    && value[2] !== 0
+  ) {
+    const sign = Math.sign(value[1]) * Math.sign(value[2]);
+    return {
+      coefficient: sign,
+      factors: sign === 0 ? [] : [['Rational', Math.abs(value[1]), Math.abs(value[2])]],
+    };
+  }
   if (Array.isArray(value) && value[0] === 'Negate' && value.length === 2) {
     const negated = exactIntegerProduct(value[1]);
     return { coefficient: -negated.coefficient, factors: negated.factors };
+  }
+  if (Array.isArray(value) && value[0] === 'Divide' && value.length === 3) {
+    const numerator = exactIntegerProduct(value[1]);
+    const denominator = exactIntegerProduct(value[2]);
+    if (denominator.coefficient !== 0) {
+      const sign = Math.sign(numerator.coefficient) * Math.sign(denominator.coefficient);
+      return {
+        coefficient: sign,
+        factors: sign === 0
+          ? []
+          : [[
+              'Divide',
+              productFromIntegerCoefficient(Math.abs(numerator.coefficient), numerator.factors),
+              productFromIntegerCoefficient(Math.abs(denominator.coefficient), denominator.factors),
+            ]],
+      };
+    }
   }
   if (Array.isArray(value) && value[0] === 'Multiply') {
     return value.slice(1).reduce<{ coefficient: number; factors: unknown[] }>((result, factor) => {
@@ -197,12 +235,28 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
   if (!Array.isArray(value) || typeof value[0] !== 'string') return undefined;
 
   const [head, ...operands] = value;
+  if (head === 'Delimiter' && operands.length >= 1) {
+    return normalizeFormalValue(operands[0]);
+  }
   if (head === 'Rational' && operands.length === 2) {
-    const numerator = normalizeFormalValue(operands[0]);
-    const denominator = normalizeFormalValue(operands[1]);
-    return numerator === undefined || denominator === undefined
-      ? undefined
-      : ['Divide', numerator, denominator];
+    return normalizeFormalValue(['Divide', operands[0], operands[1]]);
+  }
+  if (
+    head === 'Power'
+    && operands.length === 2
+    && (
+      (Array.isArray(operands[1])
+        && operands[1][0] === 'Rational'
+        && operands[1][1] === 1
+        && operands[1][2] === 2)
+      || (Array.isArray(operands[1])
+        && operands[1][0] === 'Divide'
+        && operands[1][1] === 1
+        && operands[1][2] === 2)
+    )
+  ) {
+    const radicand = normalizeFormalValue(operands[0]);
+    return radicand === undefined ? undefined : ['Sqrt', radicand];
   }
   if (head === 'Divide' && operands.length === 2) {
     const numeratorProduct = exactIntegerProduct(operands[0]);
@@ -226,7 +280,11 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
         denominatorProduct.factors,
       ));
       if (numerator !== undefined && denominator !== undefined) {
-        const quotient: FormalComparisonValue = ['Divide', numerator, denominator];
+        const quotient: FormalComparisonValue = Array.isArray(numerator)
+          && typeof denominator === 'number'
+          && denominator > 1
+          ? ['Multiply', ['Divide', 1, denominator], numerator]
+          : ['Divide', numerator, denominator];
         return Math.sign(numeratorCoefficient) === Math.sign(denominatorCoefficient)
           ? quotient
           : ['Negate', quotient];
@@ -239,12 +297,16 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
       ? normalizeFormalCall(operands[0], operands[1])
       : undefined;
     if (call !== undefined) return call;
-    const factors = operands.map((operand) => normalizeFormalValue(
-      Array.isArray(operand) && operand[0] === 'Delimiter' ? operand[1] : operand,
+    const unwrappedOperands = operands.map((operand) => (
+      Array.isArray(operand) && operand[0] === 'Delimiter' ? operand[1] : operand
     ));
-    if (!factors.some((factor) => factor === undefined)) {
-      return ['Multiply', ...(factors as FormalComparisonValue[])];
+    if (unwrappedOperands.some((operand) => exactIntegerProduct(operand).factors.length === 0)) {
+      return normalizeFormalValue(['Multiply', ...unwrappedOperands]);
     }
+    const factors = unwrappedOperands.map(normalizeFormalValue);
+    return factors.some((factor) => factor === undefined)
+      ? undefined
+      : ['Multiply', ...(factors as FormalComparisonValue[])];
   }
   if (head === 'Apply' && operands.length === 2) {
     return normalizeFormalCall(operands[0], operands[1]);
@@ -262,18 +324,27 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
   if (head === 'Subtract' && operands.length === 2) {
     const left = normalizeFormalValue(operands[0]);
     const right = normalizeFormalValue(operands[1]);
-    return left === undefined || right === undefined
-      ? undefined
-      : ['Add', left, ['Negate', right]];
+    if (left === undefined || right === undefined) return undefined;
+    const terms: FormalComparisonValue[] = [left, ['Negate', right]];
+    return [
+      'Add',
+      ...terms.sort((first, second) => JSON.stringify(first).localeCompare(JSON.stringify(second))),
+    ];
   }
   if (head === 'Multiply') {
     const product = exactIntegerProduct(value);
-    if (product.coefficient < 0) {
-      return normalizeFormalValue(productFromIntegerCoefficient(
-        product.coefficient,
-        product.factors,
-      ));
-    }
+    const factors = product.factors.map(normalizeFormalValue);
+    if (factors.some((factor) => factor === undefined)) return undefined;
+    const normalizedFactors = factors as FormalComparisonValue[];
+    const magnitude = Math.abs(product.coefficient);
+    const unsigned: FormalComparisonValue = normalizedFactors.length === 0
+      ? magnitude
+      : magnitude === 1
+        ? normalizedFactors.length === 1
+          ? normalizedFactors[0]
+          : ['Multiply', ...normalizedFactors]
+        : ['Multiply', magnitude, ...normalizedFactors];
+    return product.coefficient < 0 ? ['Negate', unsigned] : unsigned;
   }
   if (head === 'Subscript' && operands.length === 2) {
     const base = normalizeFormalName(operands[0]) ?? normalizeFormalValue(operands[0]);
@@ -308,7 +379,12 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
     const flattened = (normalizedOperands as FormalComparisonValue[]).flatMap((operand) => (
       Array.isArray(operand) && operand[0] === head ? operand.slice(1) : [operand]
     ));
-    return [head, ...flattened];
+    return [
+      head,
+      ...(head === 'Add'
+        ? [...flattened].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+        : flattened),
+    ];
   }
   return [head, ...(normalizedOperands as FormalComparisonValue[])];
 }
@@ -376,10 +452,17 @@ export function compareFormalMathJson(
   producerMathJson: unknown,
   parsedCanonicalMathJson: unknown,
   canonicalLatex: string,
-): { applicable: false } | { applicable: true; equal: boolean } {
-  if (!containsFormalProducerNode(producerMathJson)) return { applicable: false };
+): { applicable: boolean; equal: boolean } {
   const producer = normalizeFormalValue(producerMathJson);
   const parsedCanonical = normalizeFormalValue(parsedCanonicalMathJson);
+  if (!containsFormalProducerNode(producerMathJson)) {
+    return {
+      applicable: false,
+      equal: producer !== undefined
+        && parsedCanonical !== undefined
+        && JSON.stringify(producer) === JSON.stringify(parsedCanonical),
+    };
+  }
   const infixOperatorsMatch = producer !== undefined
     && JSON.stringify(formalInfixOperators(producer))
       === JSON.stringify(canonicalInfixOperators(canonicalLatex));
