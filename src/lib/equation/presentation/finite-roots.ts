@@ -114,11 +114,20 @@ function containsPreservedTranscendental(node: unknown): boolean {
 }
 
 export function finiteRootPresentationMathJson(node: unknown) {
-  if (hasSymbol(node) || !isArithmeticScalarNode(node)) {
-    return node as MathJson;
-  }
   const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
+  if (hasSymbol(simplified) || !isArithmeticScalarNode(simplified)) {
+    return simplified;
+  }
   return ce.box(simplified as Parameters<typeof ce.box>[0]).evaluate().json;
+}
+
+export function renderSimplifiedFiniteRootNodeLatex(node: unknown) {
+  const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
+  try {
+    return ce.box(simplified as Parameters<typeof ce.box>[0]).latex;
+  } catch {
+    return null;
+  }
 }
 
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {

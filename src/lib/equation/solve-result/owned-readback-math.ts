@@ -191,6 +191,9 @@ export function equationMathValuesWithOwnedReadback(input: {
 }): CanonicalResultProducerMathValuesV1 {
   if (input.outcome.kind === 'success') {
     const { kind: _kind, title: _title, warnings: _warnings, ...readback } = input.outcome;
+    void _kind;
+    void _title;
+    void _warnings;
     return successReadbackMathValues({
       readback,
       routeId: input.routeId,

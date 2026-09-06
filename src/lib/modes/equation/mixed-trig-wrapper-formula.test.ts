@@ -103,9 +103,6 @@ describe('Equation Real mixed trig wrapper formulas', () => {
 
   it('solves same-argument mixed sine/cosine wrappers through Real formula cases', () => {
     const cubic = expectSuccess('A\\sin\\left(z^3+z+1\\right)+B\\cos\\left(z^3+z+1\\right)=C');
-    const rationalQuartic = expectSuccess(
-      'A\\sin\\left(\\frac{z^4+z+1}{z-m}\\right)+B\\cos\\left(\\frac{z^4+z+1}{z-m}\\right)=C',
-    );
 
     expectCaseMath(cubic);
     expectDetail(cubic, 'Parameterized Mixed Trig Solve');
@@ -115,6 +112,12 @@ describe('Equation Real mixed trig wrapper formulas', () => {
     expect(cubic.exactSupplementLatex?.some((fact) =>
       fact.includes('\\le C\\le') && fact.includes('\\sqrt{A^2+B^2}'))).toBe(true);
     expect(cubic.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
+  });
+
+  it('solves rational-quartic same-argument mixed sine/cosine wrappers through Real formula cases', () => {
+    const rationalQuartic = expectSuccess(
+      'A\\sin\\left(\\frac{z^4+z+1}{z-m}\\right)+B\\cos\\left(\\frac{z^4+z+1}{z-m}\\right)=C',
+    );
 
     expectCaseMath(rationalQuartic);
     expectDetail(rationalQuartic, 'Parameterized Mixed Trig Solve');

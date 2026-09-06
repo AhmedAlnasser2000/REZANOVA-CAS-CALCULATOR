@@ -108,6 +108,7 @@ export function attachEquationAnalysisEvidence<T extends ResultProducerDraft>(
           return entry;
         }
         const { classification: _classification, ...diagnosticEntry } = entry;
+        void _classification;
         return diagnosticEntry;
       })
     : evidence;

@@ -35,6 +35,7 @@ function containsFormalProducerNode(value: unknown): boolean {
   if (!Array.isArray(value)) return false;
   const head = value[0];
   return head === 'Apply'
+    || head === 'Complex'
     || head === 'InvisibleOperator'
     || head === 'Subscript'
     || (typeof head === 'string' && FORMAL_STANDARD_HEADS.has(head))
@@ -222,6 +223,67 @@ function productFromIntegerCoefficient(coefficient: number, factors: readonly un
   return coefficient < 0 ? ['Negate', unsigned] : unsigned;
 }
 
+function exactRationalParts(value: unknown): { numerator: number; denominator: number } | undefined {
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    return { numerator: value, denominator: 1 };
+  }
+  if (Array.isArray(value) && value[0] === 'Negate' && value.length === 2) {
+    const inner = exactRationalParts(value[1]);
+    return inner ? { numerator: -inner.numerator, denominator: inner.denominator } : undefined;
+  }
+  if (
+    Array.isArray(value)
+    && (value[0] === 'Rational' || value[0] === 'Divide')
+    && value.length === 3
+    && typeof value[1] === 'number'
+    && Number.isInteger(value[1])
+    && typeof value[2] === 'number'
+    && Number.isInteger(value[2])
+    && value[2] !== 0
+  ) {
+    const divisor = greatestCommonDivisor(value[1], value[2]);
+    const denominatorSign = Math.sign(value[2]);
+    return {
+      numerator: (value[1] / divisor) * denominatorSign,
+      denominator: Math.abs(value[2] / divisor),
+    };
+  }
+  return undefined;
+}
+
+function formalExactRational(parts: { numerator: number; denominator: number }): FormalComparisonValue {
+  if (parts.numerator === 0) return 0;
+  const magnitude: FormalComparisonValue = parts.denominator === 1
+    ? Math.abs(parts.numerator)
+    : ['Divide', Math.abs(parts.numerator), parts.denominator];
+  return parts.numerator < 0 ? ['Negate', magnitude] : magnitude;
+}
+
+function normalizeExactComplex(
+  realValue: unknown,
+  imaginaryValue: unknown,
+): FormalComparisonValue | undefined {
+  const realParts = exactRationalParts(realValue);
+  const imaginaryParts = exactRationalParts(imaginaryValue);
+  if (!realParts || !imaginaryParts) return undefined;
+
+  const real = formalExactRational(realParts);
+  const imaginaryMagnitude = formalExactRational({
+    numerator: Math.abs(imaginaryParts.numerator),
+    denominator: imaginaryParts.denominator,
+  });
+  const unsignedImaginary: FormalComparisonValue = imaginaryMagnitude === 1
+    ? 'ImaginaryUnit'
+    : ['Multiply', imaginaryMagnitude, 'ImaginaryUnit'];
+  const imaginary: FormalComparisonValue = imaginaryParts.numerator < 0
+    ? ['Negate', unsignedImaginary]
+    : unsignedImaginary;
+
+  if (imaginaryParts.numerator === 0) return real;
+  if (realParts.numerator === 0) return imaginary;
+  return normalizeFormalValue(['Add', real, imaginary]);
+}
+
 function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined {
   if (typeof value === 'number') {
     return value < 0 ? ['Negate', -value] : value;
@@ -235,6 +297,9 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
   if (!Array.isArray(value) || typeof value[0] !== 'string') return undefined;
 
   const [head, ...operands] = value;
+  if (head === 'Complex' && operands.length === 2) {
+    return normalizeExactComplex(operands[0], operands[1]);
+  }
   if (head === 'Delimiter' && operands.length >= 1) {
     return normalizeFormalValue(operands[0]);
   }
@@ -379,11 +444,16 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
     const flattened = (normalizedOperands as FormalComparisonValue[]).flatMap((operand) => (
       Array.isArray(operand) && operand[0] === head ? operand.slice(1) : [operand]
     ));
+    const identitiesRemoved = head === 'Add'
+      ? flattened.filter((operand) => operand !== 0)
+      : flattened;
+    if (identitiesRemoved.length === 0) return head === 'Add' ? 0 : 1;
+    if (identitiesRemoved.length === 1) return identitiesRemoved[0];
     return [
       head,
       ...(head === 'Add'
-        ? [...flattened].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
-        : flattened),
+        ? [...identitiesRemoved].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)))
+        : identitiesRemoved),
     ];
   }
   return [head, ...(normalizedOperands as FormalComparisonValue[])];

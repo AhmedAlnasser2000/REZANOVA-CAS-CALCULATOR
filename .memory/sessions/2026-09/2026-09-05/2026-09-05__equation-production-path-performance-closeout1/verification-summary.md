@@ -17,7 +17,8 @@
 ## Gate
 
 - gate_type: backend and ui
-- status: verified; selective commit approval pending
+- status: verified, committed, and pushed as `a3e2e5a3`
+- commit_hash: `a3e2e5a3`
 
 ## Correctness Evidence
 

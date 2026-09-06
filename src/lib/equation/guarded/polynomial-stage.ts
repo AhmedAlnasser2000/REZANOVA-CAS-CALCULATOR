@@ -305,6 +305,14 @@ function matchAcceptedSolvedRoots(
   return matched;
 }
 
+function usesQuadraticFormulaScaffolding(root: { node?: unknown }) {
+  if (!Array.isArray(root.node) || root.node[0] !== 'Divide') return false;
+  const numerator = root.node[1];
+  return Array.isArray(numerator)
+    && (numerator[0] === 'Add' || numerator[0] === 'Subtract')
+    && numerator.slice(1).some((term) => Array.isArray(term) && term[0] === 'Sqrt');
+}
+
 function runBoundedPolynomialSolve(
   request: GuardedSolveRequest,
   depth: number,
@@ -359,9 +367,6 @@ function runBoundedPolynomialSolve(
 
       if (!needsValidation) {
         const exactSolutions = carrierAttempt.roots.map((root) => root.latex);
-        const exactLatex = exactSolutions.length > 0 && exactSolutions.every((value) => !isApproximateOnlySolutionLatex(value))
-          ? solutionsToLatex('x', exactSolutions)
-          : undefined;
         const rootSet = createRootSet({
           target: 'x',
           source: 'equation-polynomial-carrier',
@@ -371,6 +376,12 @@ function runBoundedPolynomialSolve(
           })),
         });
         const renderedCanonicalMath = rootSetToCanonicalMath(rootSet);
+        const normalizePresentation = carrierAttempt.roots.some(usesQuadraticFormulaScaffolding);
+        const exactLatex = exactSolutions.length > 0 && exactSolutions.every((value) => !isApproximateOnlySolutionLatex(value))
+          ? normalizePresentation
+            ? renderedCanonicalMath?.canonicalLatex
+            : solutionsToLatex('x', exactSolutions)
+          : undefined;
         const provenRoots = provenCarrierRootLeaves(
           carrierAttempt.roots,
           'equation-polynomial-carrier',
@@ -449,15 +460,40 @@ function runBoundedPolynomialSolve(
       if (acceptedRoots.length !== validation.accepted.length) {
         return errorOutcome('Solve', CARRIER_PROOF_ERROR);
       }
-      const acceptedLatex = acceptedRoots.map((root) => root.latex);
-      const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
-        ? solutionsToLatex('x', acceptedLatex)
+      const acceptedRootLatex = acceptedRoots.map((root) => root.latex);
+      const acceptedRootSet = createRootSet({
+        target: 'x',
+        source: 'equation-polynomial-carrier-candidate-validation',
+        entries: acceptedRoots.map((root) => createExactFiniteRoot(root.latex, {
+          source: 'equation-polynomial-carrier-candidate-validation',
+          ...(root.node !== undefined ? { node: root.node } : {}),
+        })),
+      });
+      const normalizePresentation = acceptedRoots.some(usesQuadraticFormulaScaffolding);
+      const renderedCanonicalMath = normalizePresentation
+        ? rootSetToCanonicalMath(acceptedRootSet)
         : undefined;
-      const primaryMath = provenAcceptedCarrierCanonicalMath(
-        acceptedRoots,
-        exactLatex,
-        'equation-polynomial-carrier-candidate-validation',
-      );
+      const acceptedLatex = normalizePresentation
+        ? rootSetToBranchReadback(acceptedRootSet, {
+            source: 'equation-polynomial-carrier-candidate-validation',
+          })?.branchesLatex ?? acceptedRootLatex
+        : acceptedRootLatex;
+      const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
+        ? normalizePresentation
+          ? renderedCanonicalMath?.canonicalLatex
+          : solutionsToLatex('x', acceptedLatex)
+        : undefined;
+      const primaryMath = normalizePresentation
+        ? provenCarrierCanonicalMath(
+            renderedCanonicalMath,
+            exactLatex,
+            'equation-polynomial-carrier-candidate-validation',
+          )
+        : provenAcceptedCarrierCanonicalMath(
+            acceptedRoots,
+            exactLatex,
+            'equation-polynomial-carrier-candidate-validation',
+          );
       if (!primaryMath) {
         return errorOutcome('Solve', CARRIER_PROOF_ERROR);
       }

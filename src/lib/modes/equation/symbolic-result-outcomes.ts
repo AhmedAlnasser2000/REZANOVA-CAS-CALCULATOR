@@ -6,6 +6,7 @@ import {
   createRootSet,
   rootSetToCanonicalMath,
 } from '../../equation/roots/representation';
+import { renderSimplifiedFiniteRootNodeLatex } from '../../equation/presentation/finite-roots';
 import {
   createEquationResultOutcome,
   equationMathValuesWithOwnedReadback,
@@ -36,7 +37,9 @@ export function createSelectedTargetIsolationOutcome(
 export function createSymbolicPolynomialCarrierOutcome(
   attempt: Extract<PolynomialCarrierSolveAttempt, { kind: 'solved' }>,
 ): ResultProducerDraft {
-  const exactSolutions = attempt.roots.map((root) => root.latex);
+  const exactSolutions = attempt.roots.map((root) => root.node === undefined
+    ? root.latex
+    : renderSimplifiedFiniteRootNodeLatex(root.node) ?? root.latex);
   const exactLatex = exactSolutions.length > 0 ? solutionsToLatex('x', exactSolutions) : undefined;
   const rootSet = createRootSet({
     target: 'x',

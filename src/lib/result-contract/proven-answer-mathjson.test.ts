@@ -351,6 +351,53 @@ describe('producer-proven answer MathJSON', () => {
     })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
   });
 
+  it('normalizes exact Complex nodes without weakening signed-imaginary proof', () => {
+    expect(proveAnswerMathJson({
+      canonicalLatex: 'z=-i',
+      candidate: candidate(['Equal', 'z', ['Complex', 0, -1]]),
+    })).toMatchObject({ ok: true });
+    expect(proveAnswerMathJson({
+      canonicalLatex: 'z=-i',
+      candidate: candidate(['Equal', 'z', ['Complex', 0, 1]]),
+    })).toMatchObject({ ok: false, failure: { reason: 'semantic-mismatch' } });
+    expect(proveAnswerMathJson({
+      canonicalLatex: 'z=1+i',
+      candidate: candidate(['Equal', 'z', ['Complex', 1, 1]]),
+    })).toMatchObject({ ok: true });
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`z=\frac{1}{2}-\frac{3}{2}i`,
+      candidate: candidate([
+        'Equal',
+        'z',
+        ['Complex', ['Rational', 1, 2], ['Rational', -3, 2]],
+      ]),
+    })).toMatchObject({ ok: true });
+  });
+
+  it('normalizes exact Complex nodes inside Matrix trees', () => {
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`\begin{bmatrix}-i&1+i\\\frac{1}{2}-\frac{3}{2}i&0\end{bmatrix}`,
+      candidate: candidate([
+        'Matrix',
+        ['List',
+          ['List', ['Complex', 0, -1], ['Complex', 1, 1]],
+          ['List', ['Complex', ['Rational', 1, 2], ['Rational', -3, 2]], 0]],
+        "'[]'",
+      ]),
+    })).toMatchObject({ ok: true });
+
+    expect(proveStandardAnswerMathJson({
+      canonicalLatex: String.raw`\begin{bmatrix}1&a^\star\\-i&1+i\end{bmatrix}`,
+      candidate: candidate([
+        'Matrix',
+        ['List',
+          ['List', 1, ['ConjugateTranspose', 'a']],
+          ['List', ['Add', 0, ['Multiply', -1, 'ImaginaryUnit']], ['Add', 1, ['Multiply', 1, 'ImaginaryUnit']]]],
+        "'[]'",
+      ]),
+    })).toMatchObject({ ok: true });
+  });
+
   it('recognizes reviewed imaginary-unit aliases in deterministic formal trees', () => {
     expect(proveStandardAnswerMathJson({
       canonicalLatex: 'x=i',

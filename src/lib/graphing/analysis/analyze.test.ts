@@ -100,7 +100,7 @@ describe('Graph analysis authority', () => {
         complexMapping('log-complex', ['Ln', 'z']),
       ], ['complex-zero', 'complex-pole', 'branch-point']),
       complexSearchRegion: { reMin: -2, reMax: 2, imMin: -2, imMax: 2 },
-    });
+    }, undefined, { now: () => 0 });
     expect(result.evidence).toEqual(expect.arrayContaining([
       expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'numeric-validated' }),
       expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'inconclusive',
@@ -113,6 +113,27 @@ describe('Graph analysis authority', () => {
     expect(exactPole?.coordinates?.x).toMatchObject({ value: { mathJson: 0 } });
     expect(exactPole?.coordinates?.y).toMatchObject({ value: { mathJson: 0 } });
     expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
+  });
+
+  it('reports partial evidence when a controlled analysis clock exhausts the time budget', async () => {
+    let tick = 0;
+    const result = await runGraphAnalysisRequest(
+      request([
+        item('first', ['Add', 'x', -1]),
+        item('second', ['Add', 'x', -2]),
+      ], ['root']),
+      undefined,
+      { now: () => tick++ === 0 ? 0 : tick === 2 ? 0 : 501 },
+    );
+
+    expect(result.status).toBe('partial');
+    expect(result.evidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({ itemIds: ['first'], feature: 'root' }),
+    ]));
+    expect(result.evidence.some((entry) => entry.itemIds[0] === 'second')).toBe(false);
+    expect(result.stopReasons).toContainEqual(expect.objectContaining({
+      detailCode: 'time-budget-exceeded',
+    }));
   });
 
   it('fails closed on malformed requests and cooperatively cancels', async () => {

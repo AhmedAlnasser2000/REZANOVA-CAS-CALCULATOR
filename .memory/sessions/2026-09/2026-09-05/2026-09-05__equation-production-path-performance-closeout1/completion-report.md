@@ -19,7 +19,7 @@
 - Checkpoint A: backend; verified.
 - Checkpoint B: backend; verified.
 - Real-app output: ui; verified.
-- Combined selective commit: pending explicit user approval.
+- Combined selective commit: committed and pushed as `a3e2e5a3`.
 
 ## Checkpoint A - Shared Formal-Proof Correctness
 
@@ -40,4 +40,4 @@
 
 - The immutable 57-route V1 inventory, MathJSON exemptions, proof/print/display baselines, public schemas, and frozen producer files remain unchanged.
 - Calculate MathLive-root and Node 24/Actions work remain outside this commit.
-- No push is authorized.
+- The Gate 2 commit was pushed before the separate 2026-09-06 release-blocker repair began.

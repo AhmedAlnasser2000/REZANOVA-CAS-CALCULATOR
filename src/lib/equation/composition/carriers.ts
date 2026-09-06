@@ -33,7 +33,9 @@ function boxGeneratedBranchLatex(node: unknown) {
       invisibleMultiply: '\\cdot',
       invisiblePlus: '',
       multiply: '\\cdot',
-    });
+    })
+    .replace(/(-?\d+)\\cdot k\\cdot\\pi/gu, '$1\\pi k')
+    .replace(/k\\cdot\\pi/gu, '\\pi k');
 }
 
 function parseNumericTarget(node: unknown): NumericTarget | null {

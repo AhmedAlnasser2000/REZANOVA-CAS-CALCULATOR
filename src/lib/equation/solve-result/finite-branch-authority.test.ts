@@ -113,6 +113,30 @@ describe('Equation exact finite branch authority', () => {
     expect(result?.exactLatex).not.toContain('13^{1/2}');
   });
 
+  it('simplifies proven branch spelling while attaching prepared native proof nodes', () => {
+    const negativeFormula: SerializableMathJson = [
+      'Divide',
+      ['Subtract', 0, ['Sqrt', ['Subtract', ['Power', 0, 2], ['Multiply', 4, ['Subtract', 0, 4]]]]],
+      2,
+    ];
+    const positiveFormula: SerializableMathJson = [
+      'Divide',
+      ['Add', 0, ['Sqrt', ['Subtract', ['Power', 0, 2], ['Multiply', 4, ['Subtract', 0, 4]]]]],
+      2,
+    ];
+    const result = resolve({
+      nodes: [negativeFormula, positiveFormula],
+      branches: ['\\frac{-4}{2}', '\\frac{4}{2}'],
+      primaryMath: {
+        canonicalLatex: 'x\\in\\left\\{\\frac{-4}{2}, \\frac{4}{2}\\right\\}',
+        mathJson: ['Element', 'x', ['Set', negativeFormula, positiveFormula]],
+      },
+    });
+
+    expect(result?.exactLatex).toBe('x\\in\\left\\{-2, 2\\right\\}');
+    expect(result?.primaryMath.mathJson).toEqual(['Element', 'x', ['Set', -2, 2]]);
+  });
+
   it('normalizes existing answer rows from the same uniquely matched nodes', () => {
     const result = resolveEquationFiniteBranchAuthority({
       primaryMath: {

@@ -40,6 +40,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:workspace-runtime-contracts'],
   },
   {
+    id: 'feature-probes',
+    label: 'Cross-workspace feature probes',
+    argv: ['npm', 'run', 'test:feature-probes'],
+  },
+  {
     id: 'app-runtime-contracts',
     label: 'App runtime and logic contracts',
     argv: ['npm', 'run', 'test:app-runtime-contracts'],
@@ -398,6 +403,8 @@ export const SEAM_REGISTRY = [
       ),
     ],
     additionalCommandIds: [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
@@ -405,6 +412,7 @@ export const SEAM_REGISTRY = [
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
+      'history-replay',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',
@@ -419,13 +427,20 @@ export const SEAM_REGISTRY = [
     label: 'Equation internal solve-result carrier and compatibility boundary',
     matchers: [
       ...prefix('src/lib/equation/solve-result/'),
-      ...exact('src/lib/equation/equation-solve-result.ts'),
+      ...exact(
+        'src/lib/equation/equation-solve-result.ts',
+        'src/lib/equation/presentation/finite-roots.ts',
+        'src/lib/equation/solution/finite-root-set.ts',
+      ),
     ],
     additionalCommandIds: [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'result-contracts',
       'canonical-result-v2-enforcement',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
+      'history-replay',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',

@@ -21,10 +21,10 @@
 
 - gate_type: backend and ui
 
-## Planned Selective Commit
+## Selective Commit
 
-- Status: explicit user approval received on 2026-09-05 after staged-diff review.
+- Status: committed and pushed as `a3e2e5a3` on 2026-09-05 after explicit user approvals.
 - Message: `EQUATION-PRODUCTION-PATH-PERFORMANCE-CLOSEOUT1 harden formal proof and close latency`
 - Scope: Checkpoint A comparator correctness, Checkpoint B production-path performance, focused tests, and this gate's durable evidence.
 - Excluded: Node 24/Actions, August 24 records, Calculate MathLive-root work, generated profiles/screenshots/traces, and temporary probes.
-- Push: not authorized.
+- Push: completed by the user before the 2026-09-06 release-blocker repair.

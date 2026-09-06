@@ -278,6 +278,7 @@ describe('seam impact selector', () => {
     ]);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'workspace-runtime-contracts',
+      'feature-probes',
       'display-contracts',
       'result-contracts',
       'canonical-result-v2-enforcement',
@@ -288,6 +289,7 @@ describe('seam impact selector', () => {
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
       'clipboard-contracts',
+      'history-replay',
     ]);
   });
 
@@ -302,11 +304,50 @@ describe('seam impact selector', () => {
     ]);
     assert.deepEqual(plan.laneIds, ['equation']);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'result-contracts',
       'canonical-result-v2-enforcement',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
+      'history-replay',
     ]);
+  });
+
+  it('selects runtime, feature, and replay evidence for formal proof comparison', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/result-contract/formal-mathjson-comparison.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'canonical-result-contract',
+    ]);
+    for (const commandId of [
+      'workspace-runtime-contracts',
+      'feature-probes',
+      'history-replay',
+    ]) {
+      assert.equal(plan.additionalCommands.some((entry) => entry.id === commandId), true);
+    }
+  });
+
+  it('selects Equation contract, feature, and replay evidence for finite-root presentation', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/equation/presentation/finite-roots.ts',
+      'src/lib/equation/solution/finite-root-set.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'equation-solve-result-contract',
+    ]);
+    for (const commandId of [
+      'workspace-runtime-contracts',
+      'feature-probes',
+      'history-replay',
+      'equation-solve-result-contracts',
+    ]) {
+      assert.equal(plan.additionalCommands.some((entry) => entry.id === commandId), true);
+    }
   });
 
   it('selects canonical result contracts for the Calculus producer adapter', () => {
@@ -319,6 +360,8 @@ describe('seam impact selector', () => {
     ]);
     assert.deepEqual(plan.laneIds, ['calculus']);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'display-contracts',
       'result-contracts',
       'canonical-result-v2-enforcement',
@@ -326,6 +369,7 @@ describe('seam impact selector', () => {
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
+      'history-replay',
     ]);
   });
 
@@ -347,6 +391,8 @@ describe('seam impact selector', () => {
       'trigonometry',
     ]);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'display-contracts',
       'result-contracts',
       'canonical-result-v2-enforcement',
@@ -354,6 +400,7 @@ describe('seam impact selector', () => {
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
+      'history-replay',
     ]);
   });
 
@@ -368,6 +415,8 @@ describe('seam impact selector', () => {
     ]);
     assert.deepEqual([...plan.laneIds].sort(), ['matrix', 'vector']);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'feature-probes',
       'display-contracts',
       'result-contracts',
       'canonical-result-v2-enforcement',
@@ -375,6 +424,7 @@ describe('seam impact selector', () => {
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
+      'history-replay',
     ]);
   });
 
