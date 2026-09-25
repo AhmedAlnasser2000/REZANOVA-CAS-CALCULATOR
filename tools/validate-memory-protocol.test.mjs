@@ -282,6 +282,17 @@ test('validator fails when a prospective session omits a required family field',
   await assert.rejects(() => validateRepo(root), /verified_by_agent_family/);
 });
 
+test('validator accepts user-approved Astra attribution across prospective artifacts', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-astra-'));
+  await seedRepo(root, {
+    artifactDate: '2026-09-08',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    agentFamily: 'astra',
+  });
+  await assert.doesNotReject(() => validateRepo(root));
+});
+
 test('validator fails when a prospective current state omits a required family field', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-state-'));
   await seedRepo(root, {
@@ -312,7 +323,7 @@ test('validator rejects unknown prospective family values', async () => {
     useJournalPrefix: true,
     agentFamily: 'orbit',
   });
-  await assert.rejects(() => validateRepo(root), /expected one of sol, terra, luna, k3/);
+  await assert.rejects(() => validateRepo(root), /expected one of sol, terra, luna, k3, astra/);
 });
 
 test('validator fails when current-state.md exceeds the snapshot line cap', async () => {

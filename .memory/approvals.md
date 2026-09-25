@@ -123,3 +123,13 @@
   source: chat-2026-08-14-two-gate-commit-approval
   canonical_targets: .memory/sessions/2026-08/2026-08-13/2026-08-13__codex-task-mode-recommendation1/; .memory/sessions/2026-08/2026-08-11/2026-08-11__ci-ui-readiness-proof-watchdog-closeout/
   notes: Approval covers the two named local commits only. No push is authorized; protected test-results remain excluded.
+
+- approved_at_local: 2026-09-08 +03:00
+  approver: user
+  decision: Officially allow astra in attribution metadata and its validator; retain actual model identifiers and all delegated role assignments and permissions.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-6-astra
+  recorded_by_agent_family: astra
+  source: chat-2026-09-08-symbolica-recon-astra-attribution-approval
+  canonical_targets: AGENTS.md; .memory/PROTOCOL.md; tools/validate-memory-protocol.mjs; tools/validate-memory-protocol.test.mjs
+  notes: User answered yes, reserve your seat officially from now on to the attribution-only proposal. No model-assignment migration, spawning authority, commit, or push is approved. Later user explicitly said not to commit.

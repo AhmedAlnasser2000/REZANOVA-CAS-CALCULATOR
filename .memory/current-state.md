@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-07
+Last updated: 2026-09-10
 
 ## Purpose
 
@@ -14,11 +14,11 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - primary_agent_model: gpt-5.6
 - primary_agent_family: sol
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5.6
-- recorded_by_agent_family: sol
+- recorded_by_agent_model: gpt-6-astra
+- recorded_by_agent_family: astra
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5.6
-- verified_by_agent_family: sol
+- verified_by_agent_model: gpt-6-astra
+- verified_by_agent_family: astra
 - attribution_basis: live
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
@@ -221,6 +221,7 @@ Playground remains an incubation/reference system, not product runtime authority
 
 - Stable `src/**` code must not import Playground or source mirrors.
 - Source mirrors live under ignored local mirror paths and are context only.
+- The registry contains 27 mirrors after ten user-approved Julia ecosystem captures on 2026-09-10, excluding Catalyst. All new captures are static-only, shallow, clean, and ignored; Metatheory explicitly uses `ale/3.0`. Exact revisions and the mathematical implementation study are recorded in the julia-symbolics-source-study session and `.memory/research/audits/2026-09-10-julia-symbolics-mathematical-study.md` (owner: codex / gpt-6-astra / astra). Source study covers algorithms, representations, dependencies, selected test evidence, and limits; no product architecture adoption, source reuse, execution, or benchmark is approved. Earlier Symbolica/scientific/Mathics3 captures retain their metadata and terms; Symbolica remains custom source-available, and Wolfram Engine has no public core source mirror.
 - Equation.io is an active pinned graphing research candidate. Its one user-approved install/build/loopback visual audit is recorded as `approved-executable-research`; this does not make it a dependency, execution authority, adoption decision, or reusable source/asset pool.
 - Production source and OOE events must not embed source-mirror paths.
 - Research snapshots that must be preserved verbatim belong under `.memory/sources/` with index metadata.

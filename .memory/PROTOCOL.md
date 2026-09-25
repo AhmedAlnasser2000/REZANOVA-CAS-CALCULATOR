@@ -30,6 +30,7 @@
   - `terra`
   - `luna`
   - `k3`
+  - `astra` (user-approved for attribution from `2026-09-08`; actual model identifier remains explicit)
 - Allowed `attribution_basis` values:
   - `live`
   - `historical-user-confirmed`
