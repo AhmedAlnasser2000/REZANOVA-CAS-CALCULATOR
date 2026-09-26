@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-10
+Last updated: 2026-09-26
 
 ## Purpose
 
@@ -23,6 +23,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
+
+- Integration reconstruction design (2026-09-26; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-RECONSTRUCTION-DESIGN1` records a private TypeScript/native-bigint Q/Q(t) core, shared-consumer protection, exact proof/conversion boundaries, and rational representation/adoption prerequisites. Design, inventory and `INTEGRATION-EXACT-ALGEBRA1` specification are in `docs/architecture/calculus/`; blueprint/roadmap remain revisable. First implementation is unstarted and needs its own approval. Later root-output/contract and mixed/algebraic algorithm questions are explicit. No runtime source change or commit; unrelated Graphing work remains independent. This refresh does not reverify older subsystem postures below.
 
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.
