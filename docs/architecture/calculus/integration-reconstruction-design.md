@@ -4,7 +4,7 @@ Date: 2026-09-26
 Milestone: `INTEGRATION-RECONSTRUCTION-DESIGN1`
 Status: investigated design; implementation not started. Later-stage algorithms and sequencing remain revisable as evidence develops.
 
-The user explicitly approved this CRITICAL, root-only design investigation after approving reconstruction where needed. The standing instruction is **do not commit**. This document chooses the first implementation architecture and records later blockers; it does not claim a finished Risch implementation or authorize a new public result schema.
+The user explicitly approved this CRITICAL, root-only design investigation after approving reconstruction where needed. The initial no-commit instruction was subsequently superseded by explicit user approval for the design and exact-algebra checkpoints; no push is authorized. This document chooses the first implementation architecture and records later blockers; it does not claim a finished Risch implementation or authorize a new public result schema.
 
 Read with the [blueprint](integration-reconstruction-blueprint.md), [replacement inventory](integration-reconstruction-inventory.md), [first implementation specification](integration-exact-algebra1-spec.md), and [updated roadmap](integration-reconstruction-roadmap.md).
 
@@ -131,6 +131,8 @@ Budgets must prevent main-thread fallback from receiving unbounded synchronous w
 Retire legacy integration-local arithmetic/reduction routes only after supported-domain replacement tests, positive/negative proof checks, and browser evidence pass. Do not delete shared scalar helpers still used by other workspaces. Maintain a capability ledger distinguishing backend-complete, product-adopted, heuristic-only and deferred domains.
 
 ## Acceptance and immediate handoff
+
+2026-09-26 implementation update: `INTEGRATION-EXACT-ALGEBRA1` is now backend-verified with mandatory algorithm-boundary checks and 60 focused tests. It remains private and is included in its subsequently user-approved milestone checkpoint; no integration route has adopted it. The user separately authorized committing this earlier design checkpoint as `3c5a292a`. See the implementation specification and milestone dossier for current contracts/evidence.
 
 The first executable scope is fully specified in [INTEGRATION-EXACT-ALGEBRA1](integration-exact-algebra1-spec.md). It requires no algebraic-number factorization, field-tower recognition, new result schema or production dispatch change. Those are explicit later prerequisites.
 

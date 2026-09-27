@@ -9,11 +9,11 @@ The user approved replacing or rebuilding unsuitable foundations. This roadmap r
 
 ## Investigation outcome and immediate next task
 
-The user approved CRITICAL root-only `INTEGRATION-RECONSTRUCTION-DESIGN1`. The investigation is documented in the [design](integration-reconstruction-design.md) and [replacement inventory](integration-reconstruction-inventory.md). “Investigation” was this first design milestone, not an extra preliminary phase. The instruction remains **do not commit**.
+The user approved CRITICAL root-only `INTEGRATION-RECONSTRUCTION-DESIGN1`. The investigation is documented in the [design](integration-reconstruction-design.md) and [replacement inventory](integration-reconstruction-inventory.md). “Investigation” was this first design milestone, not an extra preliminary phase. The user explicitly authorized the earlier design checkpoint and subsequently the exact-algebra implementation checkpoint; no push is authorized.
 
 Decisions for the next implementation: TypeScript/native bigint, private integration core, exact fields Q and Q(t), no new dependency, no replacement of shared scalar helpers in place, and no production dispatch changes in the first gate. The investigation found precision loss in existing scalar multiplication and identified algebraic-root output as a separate contract prerequisite.
 
-Next: **`INTEGRATION-EXACT-ALGEBRA1`**, using the [bounded implementation specification](integration-exact-algebra1-spec.md). It remains unstarted and requires task-specific implementation approval. Design completion does not mean any new integration capability has shipped.
+**`INTEGRATION-EXACT-ALGEBRA1` is backend-verified** under the user-approved [implementation specification](integration-exact-algebra1-spec.md): private Q/Q(t) algebra with mandatory identity checks, shared budgets and 60 focused tests. It has no production integration caller and is included in its user-approved milestone checkpoint. The earlier design checkpoint alone was committed with user approval as `3c5a292a`. Next: plan `INTEGRATION-RATIONAL-REPRESENTATION1`; no execution of that next gate is implied.
 
 ## Updated implementation sequence
 
@@ -21,7 +21,7 @@ The first gate is concrete. Later gates require their own algorithm/prerequisite
 
 | Stage | Milestone | Prerequisites and work | Exit evidence |
 | --- | --- | --- | --- |
-| 1 | `INTEGRATION-EXACT-ALGEBRA1` | Implement bigint rationals, generic polynomials/fractions, GCD/extended GCD, square-free decomposition, rectangular exact linear systems and bounded artifacts; exercise Q(t) coefficients. | Backend: laws, reconstruction/residual identities, precision regressions, resource stops and private isolation. |
+| 1 (backend verified; not adopted) | `INTEGRATION-EXACT-ALGEBRA1` | Implement bigint rationals, generic polynomials/fractions, GCD/extended GCD, square-free decomposition, rectangular exact linear systems and bounded artifacts; exercise Q(t) coefficients. | Backend: laws, reconstruction/residual identities, precision regressions, resource stops and private isolation. |
 | 2 | `INTEGRATION-RATIONAL-REPRESENTATION1` | Stage 1; subresultants/resultants and exact internal algebraic-root-sum/logarithmic representation, including square-free component/unit handling. | Backend: polynomial/subresultant identities and replayable exact semantics; no display-name substitutes for roots. |
 | 3 | `INTEGRATION-RATIONAL-DECISION1` | Stages 1–2; Hermite reduction and LRT logarithmic reconstruction for Q(x). | Backend: exact primitive/decomposition verification over the declared rational domain, with resource stops distinguished from incompleteness. |
 | 4 | `INTEGRATION-RATIONAL-ADOPTION1` | Rational backend plus reviewed result representation; resolve standard-MathJSON encoding versus explicitly approved new contract, and reconcile V4 policy wording before any version widening. | Backend and UI: ordinary and algebraic-log output, conditions, copy/replay, worker cancellation/fallback, authority ratchets and Playwright. |

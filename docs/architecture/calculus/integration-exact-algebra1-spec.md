@@ -1,10 +1,10 @@
 # INTEGRATION-EXACT-ALGEBRA1 — First Implementation Specification
 
 Date: 2026-09-26
-Status: ready for task-specific implementation approval; not implemented by the design milestone.
+Status: implemented and backend-verified on 2026-09-26; private foundation only, not product-adopted. Included in the user-approved INTEGRATION-EXACT-ALGEBRA1 commit checkpoint.
 Gate: backend only, one meaningful milestone. Internal checkpoints are not separate alphabet-suffix commits.
 
-Dependencies: [approved direction and investigated design](integration-reconstruction-design.md), existing TypeScript/Vitest toolchain and native BigInt. No missing factorization, field-tower or canonical-result prerequisite is hidden inside this gate.
+Dependencies: [approved direction and investigated design](integration-reconstruction-design.md), existing TypeScript/Vitest toolchain and native BigInt. No missing factorization, field-tower or canonical-result prerequisite is hidden inside this gate. The user explicitly approved implementation of this plan and selected mandatory execution-time identity verification.
 
 ## Outcome
 
@@ -68,11 +68,24 @@ Run:
 
 No UI gate is claimed because this milestone has no product caller. Every subsequent app-visible adoption requires Playwright evidence. Do not run the whole integration corpus just to test a private arithmetic module.
 
-Before completion, record evidence and update the capability ledger as **backend algebra foundation only**. Before any commit, obtain explicit user approval; the current instruction is no commit. Then proceed to the rational representation/subresultant gate after its scope is approved.
+Completion is recorded as **backend algebra foundation only** in the roadmap and dossier. The earlier design gate was committed as `3c5a292a`; the user subsequently explicitly authorized this implementation checkpoint. No push is authorized. Rational representation/subresultants remain the next separately scoped gate.
 
 ## Stop conditions
 
 Stop and revise the design if generic operations require an unresolved equality oracle, if external dependencies become necessary, if a shared source/schema must change, or if mathematical prerequisites exceed the stated scope. Report the gap; do not insert node-simplifier or floating-point shortcuts. A failed law/identity test blocks the gate.
+
+## Implemented contracts and evidence
+
+- All production modules are private to `src/lib/symbolic-engine/integration/core/`; the production import graph is tested in both directions. Test support contains explicit test profiles, not application defaults.
+- `ExecutionContext` requires finite safe integer work, integer-bit, degree and cumulative-allocation limits. It is immutable externally, its counters are private, and exhaustion is sticky. Work charges cover primitive calls and loops; allocation units conservatively cover slots, records, characters and integer scratch limbs, not measured heap bytes. Nested computations and their verifiers share the same context. Native BigInt operations remain synchronous.
+- `Rational` construction is the only value ingress. Polynomial rings and fraction fields own immutable values with runtime membership checks; equal printed variable names do not confer field identity. Integer strings use canonical decimal notation; signs/GCD of the rational value are normalized.
+- Public division, extended GCD/GCD, square-free decomposition, rational-function construction and linear solves perform mandatory checks before success. Verifiers reconstruct identities and may share checked lower-level arithmetic; computational division helpers remain private. Failures throw `AlgebraError` with a stable `code` and `reason`.
+- Square-free zero input is invalid; a nonzero constant returns itself as scalar with no factors. Factors are monic and grouped by increasing positive multiplicity. Formal differentiation treats all coefficient-field values as constants.
+- Linear input has explicit rows/columns, matrix and RHS. A consistent result returns rank, pivot columns, particular solution and complete canonical nullspace basis; an inconsistent result returns a checked left witness. Both carry frozen row operations and reduced rows. Replay validates invertible operations and echelon shape. Nullspace dimension and free-coordinate identity establish spanning/independence in addition to residual checks. Empty dimensions are supported.
+- The private v1 wire codec supports Q and Q[z] only. It rejects extra fields, accessors, nonenumerable properties, malformed integers, noncanonical fractions, trailing zeros, mismatched variables and resource excess. Decoding binds the polynomial to the explicitly supplied Q ring; it does not transport in-process symbol identity or serialize Q(t) fields. Existing public envelopes receive no new payload.
+- Focused evidence: 7 files / 60 tests pass, including 16 static large-rational fixtures independently generated with Python standard-library `fractions.Fraction` (seed 90173), seeded algebra/system cases, recursive Q(t) square-free and linear operations, certificate mutation and verification-time exhaustion. Python is not a runtime or test dependency.
+- Incremental TypeScript, scoped ESLint, compartment boundaries (36 tests), OOE boundaries (8 tests), memory/file-size checks and diff hygiene pass. The September 27 commit checkpoint also completed repository lint (0 errors, two existing Graphing warnings) and production build. No full suite or app-output gate is claimed.
+- Dossier: `.memory/sessions/2026-09/2026-09-26/2026-09-26__integration-exact-algebra1/`. Reconstruction remains subject to change when necessary.
 
 ## Attribution
 

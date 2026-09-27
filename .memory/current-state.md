@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Purpose
 
@@ -24,7 +24,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 ## Active Context
 
-- Integration reconstruction design (2026-09-26; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-RECONSTRUCTION-DESIGN1` records a private TypeScript/native-bigint Q/Q(t) core, shared-consumer protection, exact proof/conversion boundaries, and rational representation/adoption prerequisites. Design, inventory and `INTEGRATION-EXACT-ALGEBRA1` specification are in `docs/architecture/calculus/`; blueprint/roadmap remain revisable. First implementation is unstarted and needs its own approval. Later root-output/contract and mixed/algebraic algorithm questions are explicit. No runtime source change or commit; unrelated Graphing work remains independent. This refresh does not reverify older subsystem postures below.
+- Integration reconstruction (2026-09-26; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-EXACT-ALGEBRA1` is backend-verified: private TypeScript/BigInt Q/Q(t) arithmetic, mandatory exact identity checks, rectangular systems, bounded artifacts and shared budgets. 60 focused tests, incremental TypeScript, scoped lint and boundary/size/memory checks pass; the September 27 commit checkpoint also records successful repository lint (two existing Graphing warnings) and production build. No production integration caller or app-output adoption. Earlier design gate was separately committed with explicit user approval as `3c5a292a`; the user has now explicitly authorized this implementation checkpoint (see the exact-algebra dossier commit log). Next is planning rational representation/subresultants. Docs in `docs/architecture/calculus/` remain revisable; later root-output/contract and mixed/algebraic prerequisites remain open. Unrelated Graphing/Matrix work is independent; older subsystem postures below are not reverified.
 
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.
