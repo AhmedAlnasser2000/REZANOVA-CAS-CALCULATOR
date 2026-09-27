@@ -17,7 +17,7 @@ export type GraphGpuProgram = GraphGpuProgramV1;
  * `vec2 graphPoint` (world coordinates of the pixel centre) and write
  * `outColor`. `graphFieldValue` helpers are generated per program kind.
  */
-export type GraphGpuShading = { id: string; body: string };
+export type GraphGpuShading = { id: string; body: string; declarations?: string };
 
 /** Writes raw values (real: value, ok; complex: re, im, ok) for read-back. */
 export const GRAPH_GPU_RAW_SHADING: GraphGpuShading = {
@@ -32,6 +32,7 @@ export type GraphGpuFieldUniforms = {
   viewport: Pick<GraphViewportV1, 'xMin' | 'xMax' | 'yMin' | 'yMax'>;
   parameters: readonly number[];
   extra?: Record<string, number | readonly number[]>;
+  integers?: Record<string, number>;
 };
 
 export type GraphGpuFieldLayer = {
@@ -62,6 +63,7 @@ uniform vec4 uViewport;
 uniform vec2 uSize;
 uniform float uGraphParameters[${GRAPH_GPU_MAX_PARAMETERS}];
 out vec4 outColor;
+${shading.declarations ?? ''}
 ${program.kind === 'real' ? GRAPH_GPU_REAL_PRELUDE : GRAPH_GPU_COMPLEX_PRELUDE}
 ${program.glsl}
 ${field}
@@ -150,6 +152,7 @@ export function createGraphGpuFieldLayer(
     const parameters = new Float32Array(GRAPH_GPU_MAX_PARAMETERS);
     parameters.set(uniforms.parameters.slice(0, GRAPH_GPU_MAX_PARAMETERS));
     gl.uniform1fv(location('uGraphParameters[0]'), parameters);
+    for (const [name, value] of Object.entries(uniforms.integers ?? {})) gl.uniform1i(location(name), value);
     for (const [name, value] of Object.entries(uniforms.extra ?? {})) {
       if (typeof value === 'number') gl.uniform1f(location(name), value);
       else if (value.length === 2) gl.uniform2f(location(name), value[0]!, value[1]!);

@@ -1079,3 +1079,37 @@
     animation-duration: 1ms !important;
   }
 }
+
+.graph-complex-viewport canvas.graph-complex-gpu-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.graph-complex-viewport canvas.graph-complex-overlay-canvas {
+  position: relative;
+  z-index: 1;
+}
+
+.graph-complex-toolbar > .graph-complex-renderer {
+  flex: 0 0 auto;
+  margin-left: 0;
+  padding: 2px 8px;
+  border: 1px solid rgba(144, 190, 179, .32);
+  border-radius: 999px;
+  color: #cfe6df;
+  font-size: 10.5px;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.graph-complex-toolbar > .graph-complex-renderer.is-gpu {
+  border-color: rgba(120, 220, 170, .55);
+  color: #a9f0cb;
+}
+
+.graph-viewport-panel.is-both .graph-complex-toolbar > .graph-complex-renderer {
+  display: inline-block;
+  margin-left: auto;
+}

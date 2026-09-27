@@ -55,7 +55,7 @@ async function prepareCalcwiz(page, entry) {
     element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
   }, entry.calcwiz);
   if (entry.pane === 'complex') {
-    const canvas = page.getByTestId('graph-complex-viewport').locator('canvas');
+    const canvas = page.getByTestId('graph-complex-viewport').getByLabel('Complex mapping visualization');
     await canvas.waitFor();
     return canvas;
   }

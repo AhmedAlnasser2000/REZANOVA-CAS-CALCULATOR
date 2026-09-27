@@ -238,6 +238,7 @@ export function ActiveSurfaceHost({
         <Suspense fallback={<div className="graph-page-loading">Loading Graphing…</div>}>
           <GraphWorkspacePageHost
             key={activeInstance.id}
+            gpuRendering={settings.graphGpuRendering}
             onUpdateSession={(state) => onUpdateGraphSurfaceState(activeInstance.id, state)}
             session={activeInstance.surfaceState}
             workspaceContext={workspaceContext}

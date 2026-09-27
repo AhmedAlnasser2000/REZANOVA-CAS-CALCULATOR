@@ -57,6 +57,7 @@ import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
 
 type GraphWorkspacePageProps = {
+  gpuRendering?: 'auto' | 'off';
   session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
   onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
@@ -437,6 +438,7 @@ function GraphRowOrderControls({
 }
 
 export default function GraphWorkspacePage({
+  gpuRendering = 'auto',
   onUpdateSession,
   session: initialSession,
   workspaceContext,
@@ -886,6 +888,7 @@ export default function GraphWorkspacePage({
           {controller.session.surface.viewPolicy.mode !== 'real' ? <GraphComplexViewport
             colorVisionMode={controller.session.surface.appearance.colorVisionMode}
             displayMode={controller.session.surface.complex.displayMode}
+            document={controller.session.document} gpuRendering={gpuRendering}
             onDisplayModeChange={(displayMode) => controller.updateComplexView({ displayMode })}
             onPaneViewChange={(values) => controller.updatePaneView('complex', values)}
             onViewportChange={controller.setViewport}

@@ -33,13 +33,13 @@ test.describe('Graph sampler correctness', () => {
     await enterExpression(page, String.raw`f(z)=\log(z-1)`);
     const complex = page.getByTestId('graph-complex-viewport');
     await expect(complex.getByText(/holomorphic; 1 branch cut in view/u)).toBeVisible();
-    const canvas = complex.getByRole('img', { name: 'Complex mapping visualization' }).or(complex.locator('canvas'));
+    const canvas = complex.getByLabel('Complex mapping visualization');
     await expect(canvas).toHaveAttribute('data-tile-bounds', /.+/u);
     await page.waitForTimeout(900);
     const before = await canvas.getAttribute('data-tile-bounds');
     await page.screenshot({ path: testInfo.outputPath('complex-shifted-log-before.png') });
 
-    await wheel(page, complex.locator('canvas'), -60, 6);
+    await wheel(page, canvas, -60, 6);
     // During the gesture the stale tile is re-placed; no new tile is committed.
     expect(await canvas.getAttribute('data-tile-bounds')).toBe(before);
     await page.screenshot({ path: testInfo.outputPath('complex-shifted-log-mid-gesture.png') });

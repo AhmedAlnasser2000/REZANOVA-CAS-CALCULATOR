@@ -106,7 +106,24 @@ async function runGraphThreeSmoke(session) {
     return meshes > 0 ? { ready: true, surfaceMeshCount: meshes, fallbackVisible: Boolean(fallback) } : null;`), 30_000);
 }
 
-function smokeFailures(probe, graphThree) {
+async function runComplexGpuSmoke(session) {
+  // Continue in the same Graph tab: switch the expression to a complex mapping.
+  await waitFor('complex expression', () => execute(session, `
+    const fields = document.querySelectorAll('math-field');
+    const field = fields[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue('f(z)=\\\\frac{z^3}{z^2+1}');
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  const chip = await waitFor('complex renderer chip', () => execute(session, `
+    const chip = document.querySelector('[data-testid="graph-complex-renderer"]');
+    return chip && !/starting/u.test(chip.title) ? { text: chip.textContent, title: chip.title } : null;`), 30_000);
+  await delay(1500);
+  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
+  return { chip, screenshot };
+}
+
+function smokeFailures(probe, graphThree, complexGpu) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -114,6 +131,7 @@ function smokeFailures(probe, graphThree) {
   const error = probe.fieldShader?.maxAbsError;
   if (typeof error !== 'number' || error > 1e-4) failures.push(`field shader error ${error}`);
   if (graphThree && (!graphThree.ready || graphThree.surfaceMeshCount < 1)) failures.push('Three 3D viewport did not mount a surface');
+  if (complexGpu && complexGpu.chip.text !== 'GPU') failures.push(`complex pane is not GPU-rendered: ${complexGpu.chip.text} (${complexGpu.chip.title})`);
   return failures;
 }
 
@@ -142,14 +160,22 @@ try {
     log('probe captured; running Graph 3D smoke');
     graphThree = await runGraphThreeSmoke(sessionId);
   }
-  const failures = smoke ? smokeFailures(probe, graphThree) : [];
+  let complexGpu = null;
+  if (smoke) {
+    await click(sessionId, 'xpath', "//button[normalize-space(.)='2D']");
+    log('running complex GPU smoke');
+    const complex = await runComplexGpuSmoke(sessionId);
+    complexGpu = { chip: complex.chip };
+    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-complex.png', Buffer.from(complex.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

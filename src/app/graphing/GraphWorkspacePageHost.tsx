@@ -4,10 +4,12 @@ import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-validation';
 
 export default function GraphWorkspacePageHost({
+  gpuRendering,
   onUpdateSession,
   session: rawSession,
   workspaceContext,
 }: {
+  gpuRendering: 'auto' | 'off';
   onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
   session: unknown;
   workspaceContext: WorkspaceInstanceRuntimeContext;
@@ -22,6 +24,7 @@ export default function GraphWorkspacePageHost({
   }
   return (
     <GraphWorkspacePage
+      gpuRendering={gpuRendering}
       onUpdateSession={onUpdateSession}
       session={session}
       workspaceContext={workspaceContext}

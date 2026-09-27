@@ -9,3 +9,4 @@ export * from './piecewise-condition-evidence';
 export * from './runtime-cache';
 export * from './types';
 export { releaseGraphSampleResultBuffers } from './request';
+export * from './complex-trace-loader';

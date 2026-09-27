@@ -1,13 +1,18 @@
 import {
   useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent,
 } from 'react';
-import type {
-  GraphComplexDisplayModeV1,
-  GraphComplexDomainTileRuntimeV1,
-  GraphPaneViewStateV1,
-  GraphViewportV1,
+import {
+  loadGraphComplexTraceEvaluator,
+  type GraphComplexDisplayModeV1,
+  type GraphComplexDomainTileRuntimeV1,
+  type GraphComplexTraceValue,
+  type GraphDocumentV4,
+  type GraphPaneViewStateV1,
+  type GraphViewportV1,
 } from '../../lib/graphing';
+import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
+import { useGraphComplexGpu } from './useGraphComplexGpu';
 
 type Size = { width: number; height: number };
 type TileImage = { canvas: HTMLCanvasElement; label: string | null };
@@ -69,7 +74,8 @@ function buildTileImages(tile: GraphComplexDomainTileRuntimeV1, mode: GraphCompl
 }
 
 /** Places the last complete tile at its true position inside the live viewport. */
-function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1, images: TileImage[], live: GraphViewportV1) {
+function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1, images: TileImage[], live: GraphViewportV1,
+  overlayOnly: boolean) {
   const context = canvas.getContext('2d'); if (!context) return;
   const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
   const bounds = canvas.getBoundingClientRect();
@@ -78,13 +84,15 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
   if (canvas.width !== width) canvas.width = width;
   if (canvas.height !== height) canvas.height = height;
   context.setTransform(1, 0, 0, 1, 0, 0);
-  context.fillStyle = '#081114'; context.fillRect(0, 0, width, height);
+  context.clearRect(0, 0, width, height);
+  if (!overlayOnly) { context.fillStyle = '#081114'; context.fillRect(0, 0, width, height); }
   context.imageSmoothingEnabled = false;
   const spanX = live.xMax - live.xMin; const spanY = live.yMax - live.yMin;
   const quadrant = images.length === 1 ? { width, height } : { width: width / 2, height: height / 2 };
   images.forEach((image, index) => {
     const originX = images.length === 1 ? 0 : index % 2 * quadrant.width;
     const originY = images.length === 1 ? 0 : Math.floor(index / 2) * quadrant.height;
+    if (!overlayOnly) {
     context.save();
     context.beginPath(); context.rect(originX, originY, quadrant.width, quadrant.height); context.clip();
     context.drawImage(image.canvas,
@@ -93,6 +101,7 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
       (tile.bounds.reMax - tile.bounds.reMin) / spanX * quadrant.width,
       (tile.bounds.imMax - tile.bounds.imMin) / spanY * quadrant.height);
     context.restore();
+    }
     if (image.label) {
       const labelY = originY + (index < 2 ? 62 : 8);
       context.fillStyle = 'rgba(4, 13, 16, .8)'; context.fillRect(originX + 8, labelY, 52, 20);
@@ -102,19 +111,29 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
   });
   context.setLineDash([7 * pixelRatio, 5 * pixelRatio]); context.strokeStyle = 'rgba(255,255,255,.86)';
   context.lineWidth = pixelRatio;
-  for (const cut of tile.branchCuts) {
-    context.beginPath();
-    context.moveTo((cut.from.re - live.xMin) / spanX * width, (live.yMax - cut.from.im) / spanY * height);
-    context.lineTo((cut.to.re - live.xMin) / spanX * width, (live.yMax - cut.to.im) / spanY * height);
-    context.stroke();
+  // Cuts are drawn inside every map (each component quadrant shows the whole view).
+  for (let index = 0; index < images.length; index += 1) {
+    const originX = images.length === 1 ? 0 : index % 2 * quadrant.width;
+    const originY = images.length === 1 ? 0 : Math.floor(index / 2) * quadrant.height;
+    context.save();
+    context.beginPath(); context.rect(originX, originY, quadrant.width, quadrant.height); context.clip();
+    for (const cut of tile.branchCuts) {
+      context.beginPath();
+      context.moveTo(originX + (cut.from.re - live.xMin) / spanX * quadrant.width, originY + (live.yMax - cut.from.im) / spanY * quadrant.height);
+      context.lineTo(originX + (cut.to.re - live.xMin) / spanX * quadrant.width, originY + (live.yMax - cut.to.im) / spanY * quadrant.height);
+      context.stroke();
+    }
+    context.restore();
   }
   context.setLineDash([]);
 }
 
-export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneViewChange,
+export function GraphComplexViewport({ displayMode, document, gpuRendering, onDisplayModeChange, onPaneViewChange,
   onViewportChange, paneView, tile, viewport, colorVisionMode }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   displayMode: GraphComplexDisplayModeV1;
+  document: GraphDocumentV4;
+  gpuRendering: 'auto' | 'off';
   onDisplayModeChange: (mode: GraphComplexDisplayModeV1) => void;
   onPaneViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
@@ -134,10 +153,43 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
   const [trace, setTrace] = useState<Trace | null>(null);
   const images = useMemo(() => (tile ? buildTileImages(tile, displayMode, colorVisionMode) : []),
     [colorVisionMode, displayMode, tile]);
+  const item = tile ? document.items.find((entry) => entry.itemId === tile.itemId) : undefined;
+  const mathJson = item?.kind === 'relation' && item.relation.kind === 'complex-mapping' ? item.relation.expression.mathJson : null;
+  const parameters = useMemo(() => graphParameterEnvironment(document), [document]);
+  const tileFacts = useMemo(() => {
+    const scale: [number, number, number] = [1, 1, 1];
+    let finite = false;
+    if (tile) for (let offset = 0; offset < tile.values.length; offset += 4) {
+      const re = tile.values[offset]!;
+      if (!Number.isFinite(re)) continue;
+      finite = true;
+      scale[0] = Math.max(scale[0], Math.abs(re));
+      scale[1] = Math.max(scale[1], Math.abs(tile.values[offset + 1]!));
+      scale[2] = Math.max(scale[2], Math.abs(tile.values[offset + 2]!));
+    }
+    return { scale, finite };
+  }, [tile]);
+  const { canvasRef: gpuCanvasRef, draw: gpuDraw, status: gpuStatus } = useGraphComplexGpu({
+    colorVisionMode, componentScale: tileFacts.scale, cpuSupported: tile ? tileFacts.finite : null, displayMode,
+    enabled: gpuRendering === 'auto' && paneView.dimension === '2d', mathJson, parameters,
+    programKey: tile?.itemId ?? 'complex',
+  });
+  const [traceEvaluator, setTraceEvaluator] = useState<((z: { re: number; im: number }) => GraphComplexTraceValue | null) | null>(null);
+  useEffect(() => {
+    let live = true;
+    // A readout from a previous expression or parameter set is no longer true.
+    queueMicrotask(() => { if (live) setTrace(null); });
+    if (mathJson === null) { queueMicrotask(() => { if (live) setTraceEvaluator(null); }); return () => { live = false; }; }
+    loadGraphComplexTraceEvaluator().then((create) => {
+      if (live) setTraceEvaluator(() => create(mathJson, parameters));
+    }).catch(() => { if (live) setTraceEvaluator(null); });
+    return () => { live = false; };
+  }, [mathJson, parameters]);
   const paintRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
     paintRef.current = () => {
-      if (canvasRef.current && tile) paint(canvasRef.current, tile, images, liveRef.current);
+      const gpuDrawn = gpuDraw(liveRef.current, interactingRef.current);
+      if (canvasRef.current && tile) paint(canvasRef.current, tile, images, liveRef.current, gpuDrawn);
     };
   });
   const requestPaint = useCallback(() => {
@@ -162,8 +214,27 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
     interactingRef.current = true; liveRef.current = next; requestPaint();
   };
   const commitLive = () => {
-    interactingRef.current = false; onViewportChange(liveRef.current);
+    interactingRef.current = false; onViewportChange(liveRef.current); requestPaint();
   };
+  const wheelRef = useRef<(event: WheelEvent) => void>(() => {});
+  useLayoutEffect(() => {
+    wheelRef.current = (event: WheelEvent) => {
+      event.preventDefault(); setTrace(null);
+      const live = liveRef.current; const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY / 500)));
+      const cx = (live.xMin + live.xMax) / 2; const cy = (live.yMin + live.yMax) / 2;
+      const hx = (live.xMax - live.xMin) / 2 * factor; const hy = (live.yMax - live.yMin) / 2 * factor;
+      moveLive({ ...live, xMin: cx - hx, xMax: cx + hx, yMin: cy - hy, yMax: cy + hy });
+      if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+      wheelTimerRef.current = setTimeout(() => { wheelTimerRef.current = null; commitLive(); }, WHEEL_SETTLE_MS);
+    };
+  });
+  useEffect(() => {
+    // React registers wheel listeners as passive; zoom must own the wheel.
+    const canvas = canvasRef.current; if (!canvas) return undefined;
+    const listener = (event: WheelEvent) => wheelRef.current(event);
+    canvas.addEventListener('wheel', listener, { passive: false });
+    return () => canvas.removeEventListener('wheel', listener);
+  }, [paneView.dimension]);
   const status = useMemo(() => {
     if (!tile) return 'Enter f(z), w, or a bare z-expression.';
     const cuts = `${tile.branchCuts.length} branch cut${tile.branchCuts.length === 1 ? '' : 's'} in view`;
@@ -171,9 +242,9 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
       ? `branch geometry not determined; ${cuts}` : `${tile.analyticity}; ${cuts}`;
   }, [tile]);
   const pointer = (event: ReactPointerEvent<HTMLCanvasElement>): Trace | null => {
-    if (!tile) return null;
+    if (!tile || !traceEvaluator) return null;
     const bounds = event.currentTarget.getBoundingClientRect();
-    const components = images.length > 1;
+    const components = displayMode === 'components';
     const localWidth = components ? bounds.width / 2 : bounds.width;
     const localHeight = components ? bounds.height / 2 : bounds.height;
     const localX = (event.clientX - bounds.left) % localWidth;
@@ -181,11 +252,9 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
     const live = liveRef.current;
     const zRe = live.xMin + localX / localWidth * (live.xMax - live.xMin);
     const zIm = live.yMax - localY / localHeight * (live.yMax - live.yMin);
-    const column = Math.floor((zRe - tile.bounds.reMin) / (tile.bounds.reMax - tile.bounds.reMin) * tile.width);
-    const row = Math.floor((tile.bounds.imMax - zIm) / (tile.bounds.imMax - tile.bounds.imMin) * tile.height);
-    if (column < 0 || column >= tile.width || row < 0 || row >= tile.height) return null;
-    const offset = (row * tile.width + column) * 4;
-    return { zRe, zIm, wRe: tile.values[offset]!, wIm: tile.values[offset + 1]!, magnitude: tile.values[offset + 2]!, phase: tile.values[offset + 3]! };
+    // Trace reads the CPU evaluator at the exact point, never GPU pixels.
+    const value = traceEvaluator({ re: zRe, im: zIm });
+    return value ? { zRe, zIm, wRe: value.re, wIm: value.im, magnitude: value.magnitude, phase: value.phase } : null;
   };
   return <section className="graph-complex-viewport" data-testid="graph-complex-viewport">
     <div className="graph-complex-toolbar">
@@ -196,8 +265,14 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
         onClick={() => onDisplayModeChange('domain-coloring')} type="button">Domain color</button>
         <button aria-pressed={displayMode === 'components'} onClick={() => onDisplayModeChange('components')} type="button">2×2 components</button></div>
       <span>{status}; {colorVisionMode === 'color-vision-friendly' ? 'accessible blue-orange phase' : 'standard cyclic phase'}.</span>
+      <span className={`graph-complex-renderer is-${gpuStatus.renderer}`} data-testid="graph-complex-renderer"
+        title={gpuStatus.reason ?? 'Colours are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
+        {gpuStatus.renderer === 'gpu' ? 'GPU' : gpuStatus.reason === 'deep zoom uses precise CPU rendering' ? 'Precise mode' : 'Standard rendering'}
+      </span>
     </div>
-    {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" ref={canvasRef}
+    {paneView.dimension === '2d' ? <canvas aria-hidden="true" className="graph-complex-gpu-canvas" ref={gpuCanvasRef} /> : null}
+    {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" className="graph-complex-overlay-canvas" ref={canvasRef}
+      data-renderer={gpuStatus.renderer}
       data-tile-bounds={tile ? `${tile.bounds.reMin},${tile.bounds.reMax},${tile.bounds.imMin},${tile.bounds.imMax}` : undefined}
       onPointerDown={(event) => { dragRef.current = { x: event.clientX, y: event.clientY, viewport: liveRef.current }; event.currentTarget.setPointerCapture(event.pointerId); }}
       onPointerMove={(event) => {
@@ -215,15 +290,7 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
         if (!drag) return;
         if (interactingRef.current) commitLive(); else setTrace(pointer(event));
       }}
-      onWheel={(event) => {
-        event.preventDefault(); setTrace(null);
-        const live = liveRef.current; const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY / 500)));
-        const cx = (live.xMin + live.xMax) / 2; const cy = (live.yMin + live.yMax) / 2;
-        const hx = (live.xMax - live.xMin) / 2 * factor; const hy = (live.yMax - live.yMin) / 2 * factor;
-        moveLive({ ...live, xMin: cx - hx, xMax: cx + hx, yMin: cy - hy, yMax: cy + hy });
-        if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
-        wheelTimerRef.current = setTimeout(() => { wheelTimerRef.current = null; commitLive(); }, WHEEL_SETTLE_MS);
-      }} />
+/>
       : <div className="graph-complex-3d-placeholder">The 3D Riemann surface view arrives in a later Graphing milestone.</div>}
     {trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
       w = {trace.wRe.toPrecision(4)} {trace.wIm < 0 ? '−' : '+'} {Math.abs(trace.wIm).toPrecision(4)}i · |w| {trace.magnitude.toPrecision(4)} · arg {trace.phase.toPrecision(4)}</output> : null}

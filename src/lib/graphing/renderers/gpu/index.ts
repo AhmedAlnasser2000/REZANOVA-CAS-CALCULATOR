@@ -1,4 +1,5 @@
 export * from './complex-program';
+export * from './complex-shading';
 export * from './field-layer';
 export * from './policy';
 export * from './probe';
