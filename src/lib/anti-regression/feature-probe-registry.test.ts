@@ -20,11 +20,11 @@ const TEST_SOURCES = import.meta.glob('/src/**/*.test.{ts,tsx}', {
 }) as Record<string, string>;
 
 describe('feature probe registry', () => {
-  it('matches the live 25-key Settings contract exactly', () => {
+  it('matches the live 26-key Settings contract exactly', () => {
     const settingsKeys = Object.keys(DEFAULT_SETTINGS).sort();
     const registryKeys = Object.keys(FEATURE_PROBE_REGISTRY).sort();
 
-    expect(settingsKeys).toHaveLength(25);
+    expect(settingsKeys).toHaveLength(26);
     expect(registryKeys).toEqual(settingsKeys);
   });
 

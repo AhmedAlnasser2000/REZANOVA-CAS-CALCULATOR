@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ChartSpline,
   CheckCircle2,
   CircleGauge,
   Database,
@@ -31,7 +32,7 @@ import type {
   Settings,
   SettingsPatch,
 } from '../../types/calculator';
-import { GraphicsDiagnosticsPanel } from './settings/GraphicsDiagnosticsPanel';
+import { GraphingSettingsPanel } from './settings/GraphingSettingsPanel';
 import { NotebookSettingsPanel } from './settings/NotebookSettingsPanel';
 
 type SettingsPageProps = {
@@ -47,6 +48,7 @@ type SettingsCategoryId =
   | 'math'
   | 'runtime'
   | 'notebook'
+  | 'graphing'
   | 'privacy'
   | 'language';
 
@@ -314,6 +316,13 @@ export function SettingsPage({
       id: 'notebook',
       label: 'Notebook',
       value: settings.notebook.newDocuments.defaultViewMode === 'print' ? 'Print layout' : 'Draft view',
+    },
+    {
+      description: 'Rendering and graphics',
+      icon: ChartSpline,
+      id: 'graphing',
+      label: 'Graphing',
+      value: settings.graphGpuRendering === 'off' ? 'GPU off' : 'GPU auto',
     },
     {
       description: 'Local data controls',
@@ -606,7 +615,6 @@ export function SettingsPage({
             <small>Last checked in this session</small>
           </div>
         </SettingsSection>
-        <GraphicsDiagnosticsPanel />
       </>
     );
   }
@@ -711,6 +719,13 @@ export function SettingsPage({
         return renderRuntime();
       case 'notebook':
         return renderNotebook();
+      case 'graphing':
+        return (
+          <GraphingSettingsPanel
+            gpuRendering={settings.graphGpuRendering}
+            onGpuRenderingChange={(graphGpuRendering) => onPatch({ graphGpuRendering })}
+          />
+        );
       case 'privacy':
         return renderPrivacy();
       case 'language':

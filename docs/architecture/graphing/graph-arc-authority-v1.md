@@ -459,7 +459,7 @@ Sampled geometry and its deterministic snapshot contain mathematical geometry on
 
 ```ts
 type GraphRendererCapabilities = {
-  rendererId: 'headless' | 'svg' | 'three-webgl';
+  rendererId: 'headless' | 'svg' | 'three-webgl' | 'gpu-field-webgl';
   interactive: boolean;
   hitTesting: boolean;
   regionFill: boolean;
@@ -544,6 +544,17 @@ The Render Governor owns adapter selection, capability negotiation, current-scen
 
 The headless adapter validates scene semantics and snapshots. SVG is the deterministic reference renderer and vector export path. Three.js is the first production interactive adapter only after those contracts pass. A ratchet permits `three` imports and types solely under `src/lib/graphing/renderers/three/`; public Graph contracts and React page code may know only `InteractiveGraphRenderer`. Context loss switches to the SVG adapter with a visible non-destructive notice; restoration rebuilds from the current renderer-neutral scene. PNG export may use an isolated export surface but must never scrape the interactive canvas as authority.
 
+### GPU visual evaluation (amendment, 2026-09-27)
+
+User-approved with the GPU program (Moves 27-33). **Visual evaluation** is renderer-side numeric evaluation performed only to colour pixels or displace display geometry. It is a distinct category from Graph mathematical authority:
+
+- **Inputs.** A `GraphRendererFieldFrameV1` (`contracts/gpu-types.ts`) carries translated programs for supported routes. Programs are derived on the main thread from the classified structured relation: the real route uses the revision-aware compiled evaluator plan, and the complex route uses a whitelisted translation of the relation MathJSON. No authored LaTeX is ever used. Frames are strictly validated before any GLSL reaches a context. Viewport, camera, and parameters are uniforms, so pan, zoom, and slider changes never recompile a program.
+- **Semantics.** Each translation produces one op list that is consumed by the GLSL emitter and by a float32 reference interpreter. Node parity holds the interpreter to the CPU evaluators on domain and value. Browser read-back parity holds the driver to the interpreter. Operators outside the whitelist are refused.
+- **Authority boundary.** GPU pixels and read-backs never feed trace, Analyze, export, cache keys, sampling decisions, or evidence/unresolved claims. Read-back exists only in tests and diagnostics. The CPU/worker path keeps sampling after settlement for those consumers.
+- **Fallback.** An unsupported operator, a missing or lost WebGL2 context, a float32-unsafe viewport (`graphGpuViewportIsFloat32Safe`), or the Settings `graphGpuRendering: 'off'` choice all return the route to the CPU renderer with a visible, non-destructive notice. A GPU route draws nothing the CPU authority reports as unsupported.
+- **Gestures.** Uniform updates happen every animation frame during gestures. The ban on sampling during a gesture still holds, with one scoped exception: the latest-only explicit/polar/parametric gesture lane defined in Move 31, which uses its own sequence and never touches committed results or caches.
+- **Code placement.** WebGL contexts and GLSL live only under `renderers/gpu/` and `renderers/three/`. GPU code loads only through `renderers/gpu-loader.ts`. `renderers/three/` may import only the pure translator and policy modules. `tools/graphing-boundary-ratchet.mjs` enforces all three rules.
+
 ## Relation support matrix
 
 | Family | First gate | Route | Trace parameter | First supported conditions/evidence | Explicit boundary |
@@ -575,7 +586,7 @@ Sampling work is fair per visible item. Each route first produces a complete coa
 
 Graph-local parameters are document items. Finite scalar definitions such as `a=2` retain their authored source and compile once into a numeric parameter value; slider-created parameters record that distinct origin and begin at `1` over `-3..3` with step `0.1`. All dependent relations consume one parameter environment in `GraphSampleRequestV3`; Graphing never reads calculator Variables and never rewrites relation source. Slider input is latest-only with at most one sampling request in flight, release requests settled refinement, and animation advances only after the current preview is consumed. Hidden dependent curves emit no geometry, while hidden parameter controls retain their document-local binding.
 
-The renderer has separate `setView(GraphRendererViewFrameV1)` and `setScene(GraphRendererSceneFrameV1 | null)` operations. Pan and zoom keep camera state in imperative refs, transform the last complete overscanned scene and regenerate the live grid once per animation frame, and launch no sampling job during the gesture. Settlement commits the viewport once after 180ms wheel quiet or pointer release, then launches one latest-only preview followed by settled refinement after 120ms idle and cancellable silent polish. Pending/status changes never serialize geometry. Revision-old geometry is non-traceable; a failed viewport refinement may retain the transformed scene as visibly pending, while failed changed document/parameter mathematics clears outdated geometry rather than presenting it as current.
+The renderer has separate `setView(GraphRendererViewFrameV1)` and `setScene(GraphRendererSceneFrameV1 | null)` operations. Pan and zoom keep camera state in imperative refs, transform the last complete overscanned scene and regenerate the live grid once per animation frame, and launch no sampling job during the gesture (GPU visual evaluation updates uniforms per frame; see the amendment above). Settlement commits the viewport once after 180ms wheel quiet or pointer release, then launches one latest-only preview followed by settled refinement after 120ms idle and cancellable silent polish. Pending/status changes never serialize geometry. Revision-old geometry is non-traceable; a failed viewport refinement may retain the transformed scene as visibly pending, while failed changed document/parameter mathematics clears outdated geometry rather than presenting it as current.
 
 Known domain facts pre-split or exclude intervals but never disable numeric guards. A non-finite transition opens a segment and requires re-entry validation. No line may bridge a suspected discontinuity merely because both endpoints are finite. Results report budget exhaustion and suspected/inconclusive regions rather than hiding missing geometry.
 
@@ -611,7 +622,7 @@ Preview completes coarse geometry for every visible item before later quality st
 - Analysis cache key: normalized relation hash + document revision + parameter revision + requested features + optional numeric window. Exact evidence is not keyed to viewport; sampled/local evidence is.
 - Export cache key: deterministic scene snapshot hash + export request. Interactive WebGL state is never a cache key.
 - Worker control checkpoints occur at interval/cell batches, analysis feature boundaries, and export chunk boundaries. Cancellation reports terminal evidence and releases transfer buffers/resources.
-- Main thread owns source editing, document/surface state, gestures, trace interaction, active renderer, and commit selection. Workers own classified snapshot evaluation, adaptive sampling/regions, Graph analysis, deterministic snapshot construction, and bounded export encoding.
+- Main thread owns source editing, document/surface state, gestures, trace interaction, active renderer, commit selection, and GPU visual-evaluation program translation. Workers own classified snapshot evaluation, adaptive sampling/regions, Graph analysis, deterministic snapshot construction, and bounded export encoding.
 - OOE diagnostics record capability, Graph compartment, workspace instance, revisions/hashes, selected/fallback host, budgets, terminal status, and stale/commit decision. They must not record entire user expressions by default.
 
 ## Analyze ownership

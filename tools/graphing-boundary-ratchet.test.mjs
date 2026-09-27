@@ -31,6 +31,30 @@ describe('Graphing boundary ratchet', () => {
     assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir }));
   });
 
+  it('confines WebGL contexts and GLSL to the private renderer districts', () => {
+    const leaked = rootWith('src/lib/graphing/scene/draw.ts', "const gl = canvas.getContext('webgl2');\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: leaked }), /creates WebGL contexts or GLSL outside/u);
+    const shader = rootWith('src/lib/graphing/sampling/shader.ts', 'export const source = `#version 300 es`;\n');
+    assert.throws(() => validateGraphingBoundaries({ rootDir: shader }), /creates WebGL contexts or GLSL outside/u);
+    const allowed = rootWith('src/lib/graphing/renderers/gpu/field-layer.ts', "export const gl = (c) => c.getContext('webgl2');\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: allowed }));
+  });
+
+  it('keeps GPU renderer code behind the lazy loader', () => {
+    const eager = rootWith('src/lib/graphing/index.ts', "export * from './renderers/gpu';\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: eager }), /loads GPU renderer code outside the lazy loader/u);
+    const eagerImport = rootWith('src/lib/graphing/scene/assemble.ts', "import { createGraphGpuFieldLayer } from '../renderers/gpu/field-layer';\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: eagerImport }), /outside the lazy loader/u);
+    const typeOnly = rootWith('src/lib/graphing/scene/assemble.ts', "import type { GraphGpuProgram } from '../renderers/gpu/field-layer';\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: typeOnly }));
+    const loader = rootWith('src/lib/graphing/renderers/gpu-loader.ts', "export function load() { return import('./gpu'); }\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: loader }));
+    const threePure = rootWith('src/lib/graphing/renderers/three/surface.ts', "import { translateGraphRealPlan } from '../gpu/real-program';\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: threePure }));
+    const threeWebgl = rootWith('src/lib/graphing/renderers/three/surface.ts', "import { createGraphGpuFieldLayer } from '../gpu/field-layer';\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: threeWebgl }), /outside the lazy loader/u);
+  });
+
   it('rejects app UI and private solver ownership', () => {
     const appRoot = rootWith('src/lib/graphing/runtime.ts', "import { AppMain } from '../../AppMain';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir: appRoot }), /imports app UI state/u);

@@ -162,4 +162,21 @@ describe('SettingsPage', () => {
       }),
     });
   });
+  it('patches Graph GPU rendering from the Graphing category', async () => {
+    const onPatch = vi.fn();
+    render(
+      <SettingsPage
+        settings={{ ...DEFAULT_SETTINGS, graphGpuRendering: 'auto' } satisfies Settings}
+        onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('settings-category-graphing'));
+    const group = screen.getByRole('group', { name: 'GPU rendering' });
+    expect(within(group).getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(group).getByRole('button', { name: 'Off' }));
+    expect(onPatch).toHaveBeenCalledWith({ graphGpuRendering: 'off' });
+    expect(await screen.findByTestId('graphics-diagnostics')).toBeInTheDocument();
+  });
 });

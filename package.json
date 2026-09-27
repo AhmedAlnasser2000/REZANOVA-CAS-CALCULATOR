@@ -32,6 +32,7 @@
     "test:graph-sampling": "vitest run src/lib/graphing/evaluator/*.test.ts src/lib/graphing/sampling/*.test.ts --maxWorkers=4 && node --test tools/graphing-boundary-ratchet.test.mjs && node tools/graphing-boundary-ratchet.mjs",
     "test:graph-scene": "vitest run src/lib/graphing/contracts/scene.test.ts src/lib/graphing/scene/*.test.ts src/lib/graphing/headless/*.test.ts --maxWorkers=4 && node --test tools/graphing-boundary-ratchet.test.mjs && node tools/graphing-boundary-ratchet.mjs",
     "test:graph-ooe": "vitest run src/lib/graphing/sampling/request.test.ts src/lib/graphing/ooe/*.test.ts src/lib/compartments/manifest.test.ts src/lib/ooe/events/event-outbox.test.ts --maxWorkers=4 && node --test tools/graphing-boundary-ratchet.test.mjs tools/validate-ooe-boundaries.test.mjs tools/validate-compartment-boundaries.test.mjs && node tools/graphing-boundary-ratchet.mjs && node tools/validate-ooe-boundaries.mjs && node tools/validate-compartment-boundaries.mjs",
+    "test:graph-gpu": "vitest run src/lib/graphing/renderers/gpu/*.test.ts src/lib/graphing/contracts/gpu-types.test.ts --maxWorkers=4 && node --test tools/graphing-boundary-ratchet.test.mjs && node tools/graphing-boundary-ratchet.mjs",
     "test:graph-bench": "node tools/graph-bench/run.mjs",
     "probe:graph-gpu": "node tools/graph-gpu/browser-probe.mjs",
     "test:desktop-smoke": "node tools/graph-gpu/desktop-probe.mjs --smoke",

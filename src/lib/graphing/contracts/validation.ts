@@ -530,7 +530,7 @@ const surfaceV6Schema: z.ZodType<GraphSurfaceStateV6> = surfaceV5ObjectSchema.ex
 }) as z.ZodType<GraphSurfaceStateV6>;
 
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({
-  rendererId: z.enum(['headless', 'svg', 'three-webgl']),
+  rendererId: z.enum(['headless', 'svg', 'three-webgl', 'gpu-field-webgl']),
   interactive: z.boolean(), hitTesting: z.boolean(), regionFill: z.boolean(),
   polarGrid: z.boolean(), contextRecovery: z.boolean(),
   maximumVertices: z.number().int().positive().max(10_000_000),

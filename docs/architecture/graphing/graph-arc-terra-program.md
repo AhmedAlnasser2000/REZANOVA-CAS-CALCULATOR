@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-28 complete; Move 29 is the active gated milestone
+Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-29 complete; Move 30 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -375,12 +375,14 @@ Status: complete in `1a8c1d7b`.
 
 ## 28. `GRAPHING-SAMPLER-CORRECTNESS1`
 
-Status: implementation and verification complete (2026-09-27).
+Status: complete in `c6caadd9`.
 
 - Terra: High; gate type: ui.
 - Objective: remove false `exact-proved` branch points and operator-name cuts through one affine complex-argument extractor; keep breadth-first partial implicit output on budget exhaustion; subdivide mixed finite/non-finite domain-edge cells; give the complex pane SVG's live-viewport gesture model.
 
 ## 29. `GRAPHING-GPU-FOUNDATION1`
+
+Status: implementation and verification complete (2026-09-27).
 
 - Terra: High; gate type: backend.
 - Objective: amend the authority contract for visual evaluation; add the field frame contract and GPU renderer id; lazily loaded pure GLSL translators for the real RPN plan and the whitelisted complex MathJSON; field-layer governor with context loss, precision guard, and adaptive resolution; boundary ratchet rules; the Rust-persisted GPU setting; Node and browser parity suites.

@@ -1,3 +1,4 @@
+export * from './gpu-types';
 export * from './performance';
 export * from './scene';
 export * from './types';

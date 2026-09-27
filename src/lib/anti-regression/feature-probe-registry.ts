@@ -75,6 +75,11 @@ export const EXECUTABLE_FEATURE_PROBES = {
     testFile: 'src/components/SettingsPanel.ui.test.tsx',
     testName: 'configures calculator memory and exposes reset actions',
   },
+  'graph-gpu-setting-component': {
+    kind: 'component',
+    testFile: 'src/app/shell/SettingsPage.ui.test.tsx',
+    testName: 'patches Graph GPU rendering from the Graphing category',
+  },
   'notebook-settings-component': {
     kind: 'component',
     testFile: 'src/app/shell/SettingsPage.ui.test.tsx',
@@ -171,6 +176,10 @@ export const FEATURE_PROBE_REGISTRY = {
   calculatorMemoryAutosaveIntervalSeconds: {
     policyClass: 'persistence-privacy',
     probes: ['calculator-memory-policy-persistence', 'calculator-memory-settings-component'],
+  },
+  graphGpuRendering: {
+    policyClass: 'shell-accessibility',
+    probes: ['graph-gpu-setting-component'],
   },
   notebook: {
     policyClass: 'persistence-privacy',

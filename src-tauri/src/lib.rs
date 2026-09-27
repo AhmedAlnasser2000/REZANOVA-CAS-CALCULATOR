@@ -95,6 +95,7 @@ struct Settings {
     numeric_notation_mode: String,
     scientific_notation_style: String,
     detailed_facts_enabled: bool,
+    graph_gpu_rendering: String,
 }
 
 impl Default for Settings {
@@ -122,6 +123,7 @@ impl Default for Settings {
             numeric_notation_mode: "decimal".into(),
             scientific_notation_style: "times10".into(),
             detailed_facts_enabled: false,
+            graph_gpu_rendering: "auto".into(),
         }
     }
 }
@@ -151,6 +153,7 @@ struct SettingsPatch {
     numeric_notation_mode: Option<String>,
     scientific_notation_style: Option<String>,
     detailed_facts_enabled: Option<bool>,
+    graph_gpu_rendering: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -507,6 +510,9 @@ fn sanitize_settings(settings: &mut Settings) {
     }
     if settings.calculator_memory_autosave_mode != "interval" {
         settings.calculator_memory_autosave_mode = "settled".into();
+    }
+    if settings.graph_gpu_rendering != "off" {
+        settings.graph_gpu_rendering = "auto".into();
     }
     settings.calculator_memory_autosave_interval_seconds =
         settings.calculator_memory_autosave_interval_seconds.max(20);
@@ -1160,6 +1166,23 @@ mod tests {
     }
 
     #[test]
+    fn defaults_sanitizes_and_patches_graph_gpu_rendering() {
+        let mut settings = Settings::default();
+        assert_eq!(settings.graph_gpu_rendering, "auto");
+        settings.graph_gpu_rendering = "off".into();
+        sanitize_settings(&mut settings);
+        assert_eq!(settings.graph_gpu_rendering, "off");
+        settings.graph_gpu_rendering = "turbo".into();
+        sanitize_settings(&mut settings);
+        assert_eq!(settings.graph_gpu_rendering, "auto");
+
+        let legacy: Settings = serde_json::from_str(r#"{"languageCode":"en"}"#).expect("legacy settings");
+        assert_eq!(legacy.graph_gpu_rendering, "auto");
+        let patch: SettingsPatch = serde_json::from_str(r#"{"graphGpuRendering":"off"}"#).expect("patch");
+        assert_eq!(patch.graph_gpu_rendering.as_deref(), Some("off"));
+    }
+
+    #[test]
     fn defaults_and_sanitizes_equation_domain_intent_settings() {
         let mut settings = Settings::default();
         assert_eq!(settings.language_code, "en");
@@ -1543,6 +1566,13 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
     }
     if let Some(calculator_memory_enabled) = patch.calculator_memory_enabled {
         snapshot.settings.calculator_memory_enabled = calculator_memory_enabled;
+    }
+    if let Some(graph_gpu_rendering) = patch.graph_gpu_rendering {
+        snapshot.settings.graph_gpu_rendering = if graph_gpu_rendering == "off" {
+            "off".into()
+        } else {
+            "auto".into()
+        };
     }
     if let Some(calculator_memory_autosave_mode) = patch.calculator_memory_autosave_mode {
         snapshot.settings.calculator_memory_autosave_mode =

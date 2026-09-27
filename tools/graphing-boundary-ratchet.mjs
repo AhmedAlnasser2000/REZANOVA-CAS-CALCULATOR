@@ -5,6 +5,15 @@ import { fileURLToPath } from 'node:url';
 const GRAPH_ROOT = 'src/lib/graphing';
 const PUBLIC_CONTRACT_ROOT = `${GRAPH_ROOT}/contracts`;
 const THREE_ROOT = `${GRAPH_ROOT}/renderers/three`;
+const GPU_ROOT = `${GRAPH_ROOT}/renderers/gpu`;
+const GPU_LOADER = `${GRAPH_ROOT}/renderers/gpu-loader.ts`;
+// Pure (WebGL-free) GPU program modules that the Three adapter may reuse.
+const GPU_PURE_MODULES = new Set([
+  `${GPU_ROOT}/real-program`,
+  `${GPU_ROOT}/complex-program`,
+  `${GPU_ROOT}/policy`,
+]);
+const WEBGL_SOURCE_PATTERN = /getContext\(\s*['"](?:webgl2?|experimental-webgl)['"]|#version\s+300\s+es/u;
 const OOE_ROOT = `${GRAPH_ROOT}/ooe`;
 const STRUCTURED_RUNTIME_ROOTS = [
   `${GRAPH_ROOT}/evaluator/`,
@@ -74,6 +83,24 @@ export function validateGraphingBoundaries({ rootDir = process.cwd(), files } = 
     if (STRUCTURED_RUNTIME_ROOTS.some((root) => repoPath.startsWith(root))
       && /\bsourceLatex\b/u.test(text)) {
       failures.push(`${repoPath} reads authored LaTeX after GraphRelationIR classification.`);
+    }
+    const inGpu = repoPath.startsWith(`${GPU_ROOT}/`);
+    const inThree = repoPath.startsWith(`${THREE_ROOT}/`);
+    if (WEBGL_SOURCE_PATTERN.test(text) && !inGpu && !inThree) {
+      failures.push(`${repoPath} creates WebGL contexts or GLSL outside the private renderer districts.`);
+    }
+    for (const statement of text.matchAll(/(^|\n)\s*(import(?:\s+type)?\b[^;]*?from\s*['"]([^'"]+)['"]|export\s+(?:type\s+)?[^;]*?from\s*['"]([^'"]+)['"]|[^\n]*import\s*\(\s*['"]([^'"]+)['"])/gu)) {
+      const [, , whole, fromImport, fromExport, dynamic] = statement;
+      const specifier = fromImport ?? fromExport ?? dynamic;
+      if (!specifier) continue;
+      const resolved = resolveImport(repoPath, specifier);
+      if (!resolved.startsWith(`${GPU_ROOT}/`) && resolved !== GPU_ROOT) continue;
+      if (inGpu) continue;
+      const typeOnly = /^\s*(?:import|export)\s+type\b/u.test(whole);
+      if (typeOnly) continue;
+      if (dynamic && repoPath === GPU_LOADER) continue;
+      if (inThree && GPU_PURE_MODULES.has(resolved.replace(/\.ts$/u, ''))) continue;
+      failures.push(`${repoPath} loads GPU renderer code outside the lazy loader via ${specifier}.`);
     }
     for (const specifier of importsFrom(text)) {
       const resolved = resolveImport(repoPath, specifier);

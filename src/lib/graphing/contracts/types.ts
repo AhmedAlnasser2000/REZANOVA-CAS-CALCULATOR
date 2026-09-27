@@ -499,7 +499,7 @@ export type SampledSceneSnapshotV2 = {
 };
 
 export type GraphRendererCapabilities = {
-  rendererId: 'headless' | 'svg' | 'three-webgl';
+  rendererId: 'headless' | 'svg' | 'three-webgl' | 'gpu-field-webgl';
   interactive: boolean;
   hitTesting: boolean;
   regionFill: boolean;

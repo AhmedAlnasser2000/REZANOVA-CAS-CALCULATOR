@@ -967,6 +967,7 @@ export type Settings = {
   numericNotationMode: NumericNotationMode;
   scientificNotationStyle: ScientificNotationStyle;
   detailedFactsEnabled: boolean;
+  graphGpuRendering: 'auto' | 'off';
   notebook: NotebookPreferences;
 };
 
@@ -1045,6 +1046,7 @@ export const DEFAULT_SETTINGS: Settings = {
   numericNotationMode: 'decimal',
   scientificNotationStyle: 'times10',
   detailedFactsEnabled: false,
+  graphGpuRendering: 'auto',
   notebook: DEFAULT_NOTEBOOK_PREFERENCES,
 };
 

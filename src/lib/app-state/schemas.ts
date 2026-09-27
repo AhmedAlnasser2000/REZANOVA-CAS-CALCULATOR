@@ -184,6 +184,7 @@ export const settingsSchema = z.object({
   numericNotationMode: numericNotationModeSchema.default('decimal'),
   scientificNotationStyle: scientificNotationStyleSchema.default('times10'),
   detailedFactsEnabled: z.boolean().default(false),
+  graphGpuRendering: z.enum(['auto', 'off']).default('auto'),
   notebook: notebookPreferencesSchema,
 });
 

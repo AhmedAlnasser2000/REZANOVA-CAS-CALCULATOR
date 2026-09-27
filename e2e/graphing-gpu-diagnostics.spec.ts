@@ -5,7 +5,7 @@ test.describe('Graph GPU diagnostics @gpu', () => {
     await page.goto('/');
     await page.getByTestId('settings-toggle').click();
     await page.getByRole('button', { name: 'Open Full Settings' }).click();
-    await page.getByTestId('settings-category-runtime').click();
+    await page.getByTestId('settings-category-graphing').click();
     const card = page.getByTestId('graphics-diagnostics');
     await card.scrollIntoViewIfNeeded();
     const summary = card.getByTestId('graphics-diagnostics-graphics');
