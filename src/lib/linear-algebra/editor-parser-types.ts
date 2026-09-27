@@ -23,6 +23,7 @@ export type LinearAlgebraNamedValue = string;
 export type LinearAlgebraValueExpression =
   | { kind: 'named'; name: LinearAlgebraNamedValue; displayLatex: string }
   | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][]; displayLatex: string }
+  | { kind: 'symbolicMatrixLiteral'; value: LinearAlgebraScalarWireV1[][]; displayLatex: string }
   | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[]; displayLatex: string }
   | { kind: 'symbolicVectorLiteral'; value: LinearAlgebraScalarWireV1[]; displayLatex: string };
 
@@ -62,6 +63,7 @@ export type LinearAlgebraBinaryOperator =
   | 'add'
   | 'subtract'
   | 'multiply'
+  | 'divide'
   | 'dot'
   | 'cross';
 
@@ -114,4 +116,5 @@ export type LinearAlgebraEditorParseOptions = {
   matrixNamedValues?: readonly string[];
   vectorNamedValues?: readonly string[];
   scalarDomain?: LinearAlgebraScalarDomain;
+  allowDefaultNames?: boolean;
 };

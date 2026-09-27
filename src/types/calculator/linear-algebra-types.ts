@@ -8,6 +8,7 @@ import type {
 } from './display-types';
 
 export type MatrixOperation =
+  | 'editorExpression'
   | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'adjointA' | 'adjointB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'profileA' | 'profileB' | 'definiteA' | 'definiteB' | 'svdA' | 'svdB' | 'pinvA' | 'pinvB' | 'condA' | 'condB' | 'nrankA' | 'nrankB' | 'charpolyA' | 'charpolyB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
@@ -89,6 +90,7 @@ type MatrixRequestCommon = LinearAlgebraRequestContext & {
   matrixPowerExponent?: number;
   systemForm?: MatrixSystemForm;
   editorExpressionLatex?: string;
+  expressionStoredVariables?: VariableSubstitutionSnapshot[];
   matrixOperandLatexA?: string;
   matrixOperandLatexB?: string;
   systemRhsLatex?: string;
@@ -135,6 +137,7 @@ export type MatrixResponse = {
 };
 
 export type VectorOperation =
+  | 'editorExpression'
   | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
   | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV'
   | 'parallel' | 'distance' | 'parallelogramArea' | 'triangleArea' | 'volume'
@@ -145,6 +148,7 @@ type VectorRequestCommon = LinearAlgebraRequestContext & {
   angleUnit: AngleUnit;
   approxDigits?: number;
   editorExpressionLatex?: string;
+  expressionStoredVariables?: VariableSubstitutionSnapshot[];
   vectorOperandLatexA?: string;
   vectorOperandLatexB?: string;
   vectorOperandLatexList?: string[];

@@ -14,6 +14,7 @@ import {
   exactScalarToNumber,
 } from '../algebra/polynomial-core';
 import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../display/format';
+import { typedLinearAlgebraResponse } from './typed-expression';
 import type { ExactVector } from './exact-matrix-core';
 import {
   exactScalarToLatex,
@@ -749,6 +750,18 @@ function runVectorOperationInternal(req: VectorRequest): VectorResponse {
   }
 
   const operation = req.operation;
+  if (operation === 'editorExpression') {
+    return typedLinearAlgebraResponse({
+      mode: 'vector',
+      latex: req.editorExpressionLatex ?? '',
+      domain: req.domain,
+      substitutionMode: req.substitutionMode,
+      storedVariables: req.expressionStoredVariables,
+      vectorValues: req.vectorValues,
+      vectorA: req.vectorA,
+      vectorB: req.vectorB,
+    });
+  }
   if (operation === 'linearCombination') {
     const exact = exactVectorFromWire(req.exactVectorA) ?? exactVectorFromNumeric(req.vectorA);
     const resultLatex = exact ? exactVectorToColumnLatex(exact) : vectorToLatex(req.vectorA);
@@ -854,7 +867,17 @@ export function runVectorOperationWithEvidence(req: VectorReplaySeed): {
   response: VectorResponse;
   evidence: LinearAlgebraCanonicalEvidence;
 } {
-  const response = req.operandEncoding === 'scalar-v1'
+  const response = req.operation === 'editorExpression'
+    ? typedLinearAlgebraResponse({
+      mode: 'vector',
+      latex: req.editorExpressionLatex ?? '',
+      domain: req.domain,
+      substitutionMode: req.substitutionMode,
+      storedVariables: req.expressionStoredVariables,
+      vectorValues: req.vectorValues,
+      ...(req.operandEncoding !== 'scalar-v1' ? { vectorA: req.vectorA, vectorB: req.vectorB } : {}),
+    })
+    : req.operandEncoding === 'scalar-v1'
     ? runSymbolicVectorOperation(req as ScalarVectorRequestV1)
     : runVectorOperationInternal(req);
   return {

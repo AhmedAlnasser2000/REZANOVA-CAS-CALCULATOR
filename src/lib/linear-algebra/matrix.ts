@@ -4,6 +4,7 @@ import type {
   MatrixResponse,
 } from '../../types/calculator';
 import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../display/format';
+import { typedLinearAlgebraResponse } from './typed-expression';
 import {
   determinantExactMatrix,
   inverseExactMatrix,
@@ -921,7 +922,17 @@ export function runMatrixOperationWithEvidence(req: MatrixReplaySeed): {
   response: MatrixResponse;
   evidence: LinearAlgebraCanonicalEvidence;
 } {
-  const response = req.operandEncoding === 'scalar-v1'
+  const response = req.operation === 'editorExpression'
+    ? typedLinearAlgebraResponse({
+      mode: 'matrix',
+      latex: req.editorExpressionLatex ?? '',
+      domain: req.domain,
+      substitutionMode: req.substitutionMode,
+      storedVariables: req.expressionStoredVariables,
+      matrixValues: req.matrixValues,
+      ...(req.operandEncoding !== 'scalar-v1' ? { matrixA: req.matrixA, matrixB: req.matrixB } : {}),
+    })
+    : req.operandEncoding === 'scalar-v1'
     ? runSymbolicMatrixOperation(req)
     : runMatrixOperationInternal(req);
   return {

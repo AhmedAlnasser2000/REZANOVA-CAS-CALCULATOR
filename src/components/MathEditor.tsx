@@ -103,6 +103,38 @@ function configureVirtualKeyboard(layouts: readonly VirtualKeyboardLayout[] | un
   window.mathVirtualKeyboard.editToolbar = 'default';
 }
 
+const configuredLinearAlgebraMenuFields = new WeakSet<MathfieldElement>();
+
+function configureLinearAlgebraMatrixMenu(field: MathfieldElement) {
+  if (configuredLinearAlgebraMenuFields.has(field)) return;
+  const menuItems: MathfieldElement['menuItems'] | undefined = field.menuItems;
+  if (!menuItems) return;
+  const items = menuItems.map((item) => {
+    if (!('submenu' in item) || !('id' in item) || item.id !== 'insert-matrix') return item;
+    return {
+      ...item,
+      submenu: item.submenu.map((cell) => {
+        if (!('onMenuSelect' in cell) || !/^insert-matrix-\d+x\d+$/u.test(cell.id ?? '')) {
+          return cell;
+        }
+        return {
+          ...cell,
+          onMenuSelect: (selection: Parameters<NonNullable<typeof cell.onMenuSelect>>[0]) => {
+            cell.onMenuSelect?.(selection);
+            const range = field.selection.ranges[0];
+            if (range && !field.selectionIsCollapsed) {
+              field.selection = range[0];
+              field.executeCommand('moveToNextPlaceholder');
+            }
+          },
+        };
+      }),
+    };
+  });
+  field.menuItems = items;
+  configuredLinearAlgebraMenuFields.add(field);
+}
+
 const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
   function MathEditorInner(
     {
@@ -145,6 +177,9 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       field.placeholder = placeholder ?? '';
       field.setAttribute('data-placeholder', placeholder ?? '');
       field.mathVirtualKeyboardPolicy = 'auto';
+      if (modeId === 'matrix' || modeId === 'vector') {
+        configureLinearAlgebraMatrixMenu(field);
+      }
 
       const handleInput = () => {
         const rawLatex = field.getValue('latex');

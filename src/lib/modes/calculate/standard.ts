@@ -35,6 +35,7 @@ import {
 } from './titles';
 import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateModeRequest } from './types';
+import { runCalculateInlineLinearAlgebra } from './inline-linear-algebra';
 
 function calculateMathJsonRouteId(input: {
   action: RunCalculateModeRequest['action'];
@@ -68,6 +69,11 @@ export function runCalculateMode({
   storedVariables,
   variableSubstitutionSnapshot,
 }: RunCalculateModeRequest): ResultProducerDraft {
+  const inlineLinearAlgebra = runCalculateInlineLinearAlgebra({
+    action, latex, angleUnit, outputStyle, ansLatex, calculateScreen,
+    limitDirection, limitTargetKind, storedVariables, variableSubstitutionSnapshot,
+  });
+  if (inlineLinearAlgebra) return inlineLinearAlgebra;
   const title = actionTitle(action);
   const directionalLimit = action === 'evaluate'
     ? normalizeDirectionalLimitLatex(latex)

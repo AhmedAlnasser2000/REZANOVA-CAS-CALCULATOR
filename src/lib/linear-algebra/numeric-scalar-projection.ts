@@ -104,6 +104,7 @@ function expressionChildren(expression: LinearAlgebraEditorExpression): LinearAl
       return [expression.coefficients, expression.constants];
     case 'named':
     case 'matrixLiteral':
+    case 'symbolicMatrixLiteral':
     case 'vectorLiteral':
     case 'symbolicVectorLiteral':
     case 'scalar':
@@ -117,7 +118,7 @@ function expressionUsesOnlyNumericNamedValues(
   namedValueIsNumeric: (name: string) => boolean,
 ): boolean {
   if (expression.kind === 'named') return namedValueIsNumeric(expression.name);
-  if (expression.kind === 'symbolicScalar' || expression.kind === 'symbolicVectorLiteral') {
+  if (expression.kind === 'symbolicScalar' || expression.kind === 'symbolicVectorLiteral' || expression.kind === 'symbolicMatrixLiteral') {
     return false;
   }
   return expressionChildren(expression)

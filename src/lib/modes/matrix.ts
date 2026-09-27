@@ -45,6 +45,7 @@ export type RunMatrixModeRequest =
   | (ScalarMatrixRequestV1 & { matrixB: NonNullable<ScalarMatrixRequestV1['matrixB']> });
 
 function matrixResultTitle(request: RunMatrixModeRequest) {
+  if (request.operation === 'editorExpression') return request.editorExpressionLatex ?? 'Matrix expression';
   const usesInlineOperand =
     (request.matrixOperandLatexA !== undefined && request.matrixOperandLatexA !== 'A')
     || (request.matrixOperandLatexB !== undefined && request.matrixOperandLatexB !== 'B')
