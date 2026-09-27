@@ -1166,6 +1166,25 @@ mod tests {
     }
 
     #[test]
+    fn isolates_the_desktop_cache_home_from_shared_user_caches() {
+        use std::ffi::OsString;
+        assert_eq!(
+            isolated_cache_home(Some(OsString::from("/home/u/.cache")), Some(OsString::from("/home/u"))),
+            Some(PathBuf::from("/home/u/.cache/com.ahmed.calcwizdesktop/runtime"))
+        );
+        assert_eq!(
+            isolated_cache_home(None, Some(OsString::from("/home/u"))),
+            Some(PathBuf::from("/home/u/.cache/com.ahmed.calcwizdesktop/runtime"))
+        );
+        // A relative XDG_CACHE_HOME is invalid per the XDG spec and ignored.
+        assert_eq!(
+            isolated_cache_home(Some(OsString::from("relative")), Some(OsString::from("/home/u"))),
+            Some(PathBuf::from("/home/u/.cache/com.ahmed.calcwizdesktop/runtime"))
+        );
+        assert_eq!(isolated_cache_home(None, None), None);
+    }
+
+    #[test]
     fn defaults_sanitizes_and_patches_graph_gpu_rendering() {
         let mut settings = Settings::default();
         assert_eq!(settings.graph_gpu_rendering, "auto");
@@ -1710,8 +1729,40 @@ fn sample_ode_solution(request: NumericOdeRequest) -> Result<NumericOdeResponse,
     solve_numeric_ode(request)
 }
 
+/// Per-app cache root for the desktop webview process tree on Linux.
+///
+/// Newer fontconfig builds bundled by other applications (observed with
+/// Google Chrome 154) rewrite the shared user font cache with `cache-9`
+/// symlinks to their `cache-12` files. The system fontconfig used by
+/// WebKitGTK then hangs the webview before the page loads (a blank window).
+/// Giving Calcwiz its own `XDG_CACHE_HOME` keeps fontconfig, GStreamer, and
+/// shader caches private to the app; only a one-time rebuild is paid.
+fn isolated_cache_home(
+    xdg_cache_home: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<PathBuf> {
+    let base = xdg_cache_home
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| home.map(|home| PathBuf::from(home).join(".cache")))?;
+    Some(base.join("com.ahmed.calcwizdesktop").join("runtime"))
+}
+
+#[cfg(target_os = "linux")]
+fn isolate_linux_runtime_caches() {
+    let Some(cache_home) = isolated_cache_home(std::env::var_os("XDG_CACHE_HOME"), std::env::var_os("HOME")) else {
+        return;
+    };
+    if fs::create_dir_all(&cache_home).is_ok() {
+        // Runs before Tauri, GTK, or WebKit start any threads or child processes.
+        std::env::set_var("XDG_CACHE_HOME", &cache_home);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    isolate_linux_runtime_caches();
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
