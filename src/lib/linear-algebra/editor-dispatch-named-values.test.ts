@@ -4,6 +4,7 @@ import {
   dispatchVectorEditorLatex,
 } from './editor-dispatch';
 import { runVectorOperation } from './vector';
+import { runVectorMode } from '../modes/vector';
 
 const matrixA = [[1, 2], [3, 4]];
 const matrixB = [[5, 6], [7, 8]];
@@ -128,20 +129,21 @@ describe('linear algebra editor dispatch named values', () => {
         vectorOperandLatexA: 'p-q',
       },
     });
-    expect(dispatchVectorEditorLatex({
+    const composedUnit = dispatchVectorEditorLatex({
       latex: 'unit(p+q)',
       vectorA,
       vectorB,
       vectorValues: twoDimensionalVectorValues,
       angleUnit: 'rad',
-    })).toMatchObject({
+    });
+    expect(composedUnit).toMatchObject({
       ok: true,
       request: {
-        operation: 'unitA',
-        vectorA: [2, 1],
-        vectorOperandLatexA: 'p+q',
+        operation: 'editorExpression',
       },
     });
+    if (!composedUnit.ok) throw new Error(composedUnit.message);
+    expect(runVectorMode(composedUnit.request)).toMatchObject({ kind: 'success' });
     expect(dispatchVectorEditorLatex({
       latex: 'gram(p,q)',
       vectorA,

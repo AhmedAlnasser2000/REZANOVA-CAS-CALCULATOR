@@ -298,6 +298,7 @@ export function dispatchSymbolicVectorEditorLatex(
   if (
     expression.kind === 'binary'
     && expression.operator !== 'multiply'
+    && expression.operator !== 'divide'
   ) {
     if (
       (expression.left.kind === 'scalar' || expression.left.kind === 'symbolicScalar')

@@ -17,6 +17,7 @@ function suffixOperand(expression: LinearAlgebraEditorExpression) {
   const formatted = formatLinearAlgebraEditorExpression(expression);
   return expression.kind === 'named'
     || expression.kind === 'matrixLiteral'
+    || expression.kind === 'symbolicMatrixLiteral'
     || expression.kind === 'vectorLiteral'
     || expression.kind === 'symbolicVectorLiteral'
     || expression.kind === 'scalar'
@@ -96,6 +97,8 @@ function binaryToken(operator: LinearAlgebraBinaryOperator) {
     case 'multiply':
     case 'cross':
       return '\\times ';
+    case 'divide':
+      return '/';
     case 'dot':
       return '\\cdot ';
   }
@@ -117,6 +120,7 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
     case 'named':
       return expression.displayLatex;
     case 'matrixLiteral':
+    case 'symbolicMatrixLiteral':
     case 'vectorLiteral':
     case 'symbolicVectorLiteral':
     case 'scalar':

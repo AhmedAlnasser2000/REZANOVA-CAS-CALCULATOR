@@ -53,7 +53,7 @@ import {
 } from './vector-family-dispatch';
 import { dispatchSymbolicVectorEditorLatex } from './symbolic-vector-editor';
 import { dispatchSymbolicMatrixInput } from './editor-symbolic-dispatch';
-
+import { dispatchTypedMatrixExpression, dispatchTypedVectorExpression } from './editor-typed-dispatch';
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
 
@@ -734,6 +734,8 @@ function vectorUnaryRequest(
 
 export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): MatrixEditorDispatchResult {
   const matrixValues = input.matrixValues ?? [];
+  const typed = dispatchTypedMatrixExpression(input);
+  if (typed) return typed;
   const requiresScalarContext = input.domain === 'complex'
     || input.substitutionMode === 'use-stored-values';
   if (requiresScalarContext) {
@@ -946,6 +948,8 @@ export function dispatchVectorEditorLatex(
   input: Omit<VectorEditorDispatchInput, 'domain' | 'substitutionMode' | 'storedVariables' | 'complexExactForm'>,
 ): NumericVectorEditorDispatchResult;
 export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): VectorEditorDispatchResult {
+  const typed = dispatchTypedVectorExpression(input);
+  if (typed) return typed;
   const canDispatchSymbolic = Boolean(
     input.domain
     && input.substitutionMode

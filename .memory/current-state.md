@@ -11,8 +11,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 ## Agent Ownership
 
 - primary_agent: codex
-- primary_agent_model: gpt-5.6
-- primary_agent_family: sol
+- primary_agent_model: gpt-6-astra
+- primary_agent_family: astra
 - recorded_by_agent: codex
 - recorded_by_agent_model: gpt-6-astra
 - recorded_by_agent_family: astra
@@ -24,6 +24,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 ## Active Context
 
+- Matrix/Vector editors compose supported scalar, matrix, and vector expressions with exact/symbolic coefficients and explicit shape, type, divisor, and limit stops. Named values stay in their own Matrix or Vector workspace, while Calculate evaluates inline Matrix/Vector expressions as answers using its own scalar variables. The 8 by 8 Matrix and length-8 Vector editing caps remain. The latest main-based merge snapshot passed 4,554 unit and 607 UI tests, a production build, and two headed Chrome checks. No push is authorized.
 - Integration reconstruction (2026-09-27; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified as private representation and candidate-derivative infrastructure: ring/domain/field capabilities, verified Brown subresultants, square-free quotient units/CRT, exact local-complex root-log primitives, retained conditions and strict private replay. 84 focused tests (all 60 original tests retained), incremental TypeScript, scoped lint, compartment/OOE and memory/size/diff checks pass; evidence is in the representation dossier. No app caller or automatic integration. Earlier exact algebra is committed as `31561aab`, design as `3c5a292a`; the user has authorized this gate's separate integration-only commit checkpoint, including successful repository lint/build (two existing Graphing warnings; see dossier). No push. Next: plan `INTEGRATION-RATIONAL-DECISION1` (Hermite, residues, LRT selection/specialization and construction). Roadmap remains revisable; product branch/display/result adoption is a separate gate. Concurrent Graphing/Matrix work and older subsystem postures below are not reverified.
 
 - Workspace: `Calcwiz`.

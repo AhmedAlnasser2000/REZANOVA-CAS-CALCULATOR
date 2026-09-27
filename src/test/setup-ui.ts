@@ -60,6 +60,7 @@ class MockMathFieldElement extends HTMLElement {
     this.position += value.length;
     this.lastOffset = this.latexValue.length;
     this.setAttribute('data-value', this.latexValue);
+    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   }
 }
 
