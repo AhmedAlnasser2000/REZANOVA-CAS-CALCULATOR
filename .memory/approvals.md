@@ -133,3 +133,12 @@
   source: chat-2026-09-08-symbolica-recon-astra-attribution-approval
   canonical_targets: AGENTS.md; .memory/PROTOCOL.md; tools/validate-memory-protocol.mjs; tools/validate-memory-protocol.test.mjs
   notes: User answered yes, reserve your seat officially from now on to the attribution-only proposal. No model-assignment migration, spawning authority, commit, or push is approved. Later user explicitly said not to commit.
+- approved_at_local: 2026-09-27 +03:00
+  approver: user
+  decision: Approve the CRITICAL Graph GPU visual-evaluation program as inserted Moves 27-33 with renumbered Moves 34-37, root-only execution directly on main, and one commit per verified move without stopping between gates; register attribution family opus-5.5 for claude / claude-opus-5-5.
+  recorded_by_agent: claude
+  recorded_by_agent_model: claude-opus-5-5
+  recorded_by_agent_family: opus-5.5
+  source: chat-2026-09-27-graphing-gpu-program-plan-approval
+  canonical_targets: docs/architecture/graphing/graph-arc-terra-program.md; .memory/sessions/2026-09/2026-09-27/2026-09-27__graphing-gpu-feasibility1/program-plan.md; AGENTS.md; .memory/PROTOCOL.md; tools/validate-memory-protocol.mjs
+  notes: The user approved the plan in plan mode, then said "i allow commiting, so dont stop at each gate". Push remains unapproved. The Move 27 stop condition (no hardware WebGL2 in the packaged app) did not trigger.

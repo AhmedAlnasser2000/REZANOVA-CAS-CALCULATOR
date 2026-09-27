@@ -27,5 +27,13 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
       },
     },
+    {
+      // WebKit proxy for the packaged WebKitGTK webview; runs only @gpu specs.
+      name: 'webkit',
+      grep: /@gpu/,
+      use: {
+        ...devices['Desktop Safari'],
+      },
+    },
   ],
 });

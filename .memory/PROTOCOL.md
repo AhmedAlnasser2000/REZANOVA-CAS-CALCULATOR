@@ -24,13 +24,14 @@
   - `gemini`
   - `kimi`
 - Use fuller runtime identifiers for model fields when known:
-  - examples: `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`, `gpt-5.6`, `claude-sonnet-4`, `gemini-2.5-pro`
+  - examples: `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`, `gpt-5.6`, `claude-sonnet-4`, `claude-opus-5-5`, `gemini-2.5-pro`
 - Use lowercase family identifiers for agent family fields:
   - `sol`
   - `terra`
   - `luna`
   - `k3`
   - `astra` (user-approved for attribution from `2026-09-08`; actual model identifier remains explicit)
+  - `opus-5.5` (user-approved for attribution from `2026-09-27` for agent `claude` with model `claude-opus-5-5`)
 - Allowed `attribution_basis` values:
   - `live`
   - `historical-user-confirmed`

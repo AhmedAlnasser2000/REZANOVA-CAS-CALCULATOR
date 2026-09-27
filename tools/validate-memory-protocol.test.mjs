@@ -293,6 +293,17 @@ test('validator accepts user-approved Astra attribution across prospective artif
   await assert.doesNotReject(() => validateRepo(root));
 });
 
+test('validator accepts user-approved Opus 5.5 attribution across prospective artifacts', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-opus-5-5-'));
+  await seedRepo(root, {
+    artifactDate: '2026-09-27',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    agentFamily: 'opus-5.5',
+  });
+  await assert.doesNotReject(() => validateRepo(root));
+});
+
 test('validator fails when a prospective current state omits a required family field', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-state-'));
   await seedRepo(root, {

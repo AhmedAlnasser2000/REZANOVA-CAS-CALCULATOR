@@ -9,3 +9,4 @@ export * from './sampling';
 export * from './scene';
 export * from './renderers/svg';
 export * from './renderers/three-loader';
+export * from './renderers/gpu-loader';

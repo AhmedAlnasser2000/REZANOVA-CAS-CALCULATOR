@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 30-move implementation program; Moves 1-26 complete; Move 27 is the active gated milestone
+Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-26 complete; Move 27 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -354,32 +354,73 @@ Status: implementation and verification complete; commit pending at write time.
 
 ## 26. `GRAPHING-COMPLEX-MAPPING-SOLVER1`
 
-Status: implementation and verification complete; commit pending at write time.
+Status: complete in `b61969cc`.
 
 - Terra: High; gate type: backend and ui.
 - Objective: add structured `f: C -> C` mappings for `f(z)=...`, `w=...`, and bare z-expressions, continuous domain coloring, synchronized component maps, real-axis-slice Both mode, visible certified principal cuts/branch points, graph-local assumptions, and bounded exact/numeric complex solving inside Analyze.
 - Core mappings include roots, rational/complex powers, logarithms, inverse trig/hyperbolic families, conjugate, Re, Im, magnitude, and argument. Non-holomorphic mappings are explicit. Real-parameterized Argand trajectories remain a separate relation.
 - A reviewed domain-neutral complex evaluation/branch seam may be shared with Equation; Graph never imports Equation-private code or silently reinterprets real `x` expressions.
 
-## 27. `GRAPHING-RIEMANN-SHEETS2D1`
+## GPU visual-evaluation insertion (Moves 27-33)
+
+Approved by the user on 2026-09-27 after the Equation.io/GeoGebra comparison. GPU pixels are visual evaluation only: trace, Analyze, export, cache keys, and evidence/unresolved claims stay CPU/worker authority. Unsupported operators, missing WebGL2, context loss, and float32-unsafe deep zoom fall back to the CPU path with a visible notice. Settings exposes GPU rendering Auto/Off, and each route defaults on only after its move passes. Speed acceptance is structural invariants on every machine, adaptive render resolution while moving, and budgets recorded on the RTX 5070 Ti and SwiftShader reference environments. The working plan is recorded in the Move 27 session dossier.
+
+## 27. `GRAPHING-GPU-FEASIBILITY1`
+
+- Terra: High; gate type: backend stop gate.
+- Objective: verify hardware WebGL2 in the packaged desktop app, Chrome hardware, Chrome SwiftShader, and Playwright WebKit with one shared probe; add the Settings graphics diagnostics readout; commit the non-gating Calcwiz/Equation.io benchmark harness; register Opus 5.5 attribution; renumber this program.
+- Stop the insertion and return to the user if the packaged app lacks hardware WebGL2.
+
+## 28. `GRAPHING-SAMPLER-CORRECTNESS1`
+
+- Terra: High; gate type: ui.
+- Objective: remove false `exact-proved` branch points and operator-name cuts through one affine complex-argument extractor; keep breadth-first partial implicit output on budget exhaustion; subdivide mixed finite/non-finite domain-edge cells; give the complex pane SVG's live-viewport gesture model.
+
+## 29. `GRAPHING-GPU-FOUNDATION1`
+
+- Terra: High; gate type: backend.
+- Objective: amend the authority contract for visual evaluation; add the field frame contract and GPU renderer id; lazily loaded pure GLSL translators for the real RPN plan and the whitelisted complex MathJSON; field-layer governor with context loss, precision guard, and adaptive resolution; boundary ratchet rules; the Rust-persisted GPU setting; Node and browser parity suites.
+
+## 30. `GRAPHING-GPU-COMPLEX2D1`
+
+- Terra: High; gate type: ui.
+- Objective: GPU domain coloring and component maps driven by live-viewport uniforms, CPU-evaluated trace at the cursor, corrected cut overlay, and CPU tiles retained for Analyze and fallback.
+
+## 31. `GRAPHING-GPU-REAL-FIELDS1`
+
+- Terra: High; gate type: ui.
+- Objective: GPU implicit equalities, inequalities, and chained inequalities between split grid and geometry SVG layers, two-pass sign-change contours, presentation parity, suppressed duplicate SVG geometry, and a separate latest-only gesture lane for explicit/polar/parametric curves.
+
+## 32. `GRAPHING-GPU-SURFACES3D1`
+
+- Terra: High; gate type: ui.
+- Objective: vertex-shader `z=f(x,y)` surfaces inside Three with the CPU mesh as pick/trace/export proxy; slider and parameter changes become uniform-only updates.
+
+## 33. `GRAPHING-GPU-CLOSEOUT1`
+
+- Terra: High; gate type: backend closeout.
+- Objective: matched cold/warm comparisons against Equation.io and GeoGebra with correctness reported separately from latency, committed RTX/SwiftShader budget ratchets, and closeout documentation.
+
+## 34. `GRAPHING-RIEMANN-SHEETS2D1`
 
 - Terra: High; gate type: backend and ui.
 - Objective: add a structured `ComplexBranchAddress` vector, finite/all-sheet and bounded infinite-family loading, nearest composed neighbors, a compact sheet strip, certified cut correspondences, and trace-driven analytic continuation.
 - Camera movement never changes sheets; loaded-sheet truncation is explicit; domain coloring and all component maps follow the selected address.
 
-## 28. `GRAPHING-RIEMANN-SURFACES3D1`
+## 35. `GRAPHING-RIEMANN-SURFACES3D1`
 
 - Terra: High; gate type: backend and ui.
 - Objective: add exploratory 3D Riemann meshes for the selected and adjacent connected sheets with Re/Im/magnitude height modes, phase/magnitude color, reduced adjacent-sheet emphasis, truthful paired seams, branch-transition trace readback, bounded neighborhood loading, and precise 2D fallback.
+- Builds on the Move 30 GPU complex evaluator, which is designed 3D-ready but ships no complex 3D view before this move.
 - Real/Complex/Both panes retain independent mode, camera, projection, and navigation state. No fake geometric bridges are drawn for relationships that cannot be truthfully embedded in 3D.
 
-## 29. `GRAPHING-PRESENTATION-EXPORT1`
+## 36. `GRAPHING-PRESENTATION-EXPORT1`
 
 - Terra: High; gate type: ui.
 - Objective: add Graph Presentation Mode and deterministic renderer-neutral SVG/PNG export with explicit viewport policy, visible-item selection, theme/style/grid/annotation options, transparent backgrounds, bounded PNG sizes, and native/browser Save As paths.
 - The live WebGL canvas is never export authority; editable Graph project persistence remains deferred.
 
-## 30. `GRAPHING-ARC-CLOSEOUT1`
+## 37. `GRAPHING-ARC-CLOSEOUT1`
 
 - Terra: High; gate type: backend and ui closeout.
 - Objective: run the complete Graph semantic/runtime/renderer/analysis/surface/complex/Riemann/export/browser evidence, the canonical performance workload, lifecycle and bundle gates, plus one packaged Linux Graph smoke.

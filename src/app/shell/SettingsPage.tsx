@@ -31,6 +31,7 @@ import type {
   Settings,
   SettingsPatch,
 } from '../../types/calculator';
+import { GraphicsDiagnosticsPanel } from './settings/GraphicsDiagnosticsPanel';
 import { NotebookSettingsPanel } from './settings/NotebookSettingsPanel';
 
 type SettingsPageProps = {
@@ -605,6 +606,7 @@ export function SettingsPage({
             <small>Last checked in this session</small>
           </div>
         </SettingsSection>
+        <GraphicsDiagnosticsPanel />
       </>
     );
   }

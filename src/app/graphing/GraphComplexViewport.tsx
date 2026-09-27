@@ -138,7 +138,7 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
         const cx = (viewport.xMin + viewport.xMax) / 2; const cy = (viewport.yMin + viewport.yMax) / 2;
         const hx = (viewport.xMax - viewport.xMin) / 2 * factor; const hy = (viewport.yMax - viewport.yMin) / 2 * factor;
         onViewportChange({ ...viewport, xMin: cx - hx, xMax: cx + hx, yMin: cy - hy, yMax: cy + hy }); }} />
-      : <div className="graph-complex-3d-placeholder">Riemann surface view is prepared for Move 28.</div>}
+      : <div className="graph-complex-3d-placeholder">The 3D Riemann surface view arrives in a later Graphing milestone.</div>}
     {trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
       w = {trace.wRe.toPrecision(4)} {trace.wIm < 0 ? '−' : '+'} {Math.abs(trace.wIm).toPrecision(4)}i · |w| {trace.magnitude.toPrecision(4)} · arg {trace.phase.toPrecision(4)}</output> : null}
   </section>;
