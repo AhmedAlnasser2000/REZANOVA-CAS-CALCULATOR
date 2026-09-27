@@ -2,6 +2,7 @@
 
 Only currently actionable unresolved decisions or verified live risks belong here. Superseded sequencing forks, completed work, discarded speculation, and stale incidents are recorded in `.memory/closed-questions.md`.
 
+- 2026-09-26: Formal implicit Graph proof backend remains unadopted: decide MPFR/GMP WASM only after target test/configuration validation and an LGPL/GMP source, notice, and relinking distribution review for browser and packaged desktop output. Otherwise use a Calcwiz-owned proof core under the same fail-closed evidence contract; do not describe the current sampler as certified.
 - 2026-07-19: The Graph page remains a separate lazy chunk, but the repository-wide eager bundle exceeds its ratchet. Choose a dedicated app-shell lazy-boundary repair before further Graph renderer expansion; do not raise the baseline to hide the regression. Repeat packaged Linux Graph visual smoke outside Snap after the library-path blocker is removed.
 - 2026-07-12: `x^{\frac{1}{2}}` normalizes to `\sqrt{x}` under roots, powers, and auto because Compute Engine canonicalization loses the source half-power. Decide in a dedicated printer-output milestone whether powers mode should retain the half-power.
 - 2026-07-03: Before implementing Guide notebook import/export, decide package shape, author/attribution metadata, tamper/provenance policy, answer/hint visibility, and stable computation/evidence snapshots.
