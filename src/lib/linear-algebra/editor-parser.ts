@@ -144,10 +144,12 @@ function namedValueExpression(name: LinearAlgebraNamedValue): LinearAlgebraValue
 }
 
 function isMatrixName(name: string, options: LinearAlgebraEditorParseOptions) {
+  if (options.allowDefaultNames === false && !options.matrixNamedValues?.length) return false;
   return isMatrixNamedValueName(name, options.matrixNamedValues);
 }
 
 function isVectorName(name: string, options: LinearAlgebraEditorParseOptions) {
+  if (options.allowDefaultNames === false && !options.vectorNamedValues?.length) return false;
   return isVectorNamedValueName(name, options.vectorNamedValues);
 }
 
@@ -517,6 +519,9 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return parseExpression(unwrapped, options);
   }
 
+  const exactScalar = parseScalarExpression(input);
+  if (exactScalar) return exactScalar;
+
   const normArgument = normWrapperArgument(input);
   if (normArgument !== null) {
     return {
@@ -546,7 +551,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return { kind: 'negate', value: parseExpression(input.slice(1), options) };
   }
 
-  if (options.mode === 'vector') {
+  if (options.mode === 'vector' || options.mode === 'matrix') {
     const implicitScale = splitLeadingScalarProduct(input);
     if (implicitScale) {
       return {
@@ -556,7 +561,12 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       };
     }
 
-    const namedScale = [...(options.vectorNamedValues ?? [])]
+    const namedScale = options.mode === 'matrix'
+      && [...input].every((name) => isMatrixName(name, options))
+      ? undefined
+      : [...(options.mode === 'matrix'
+        ? options.matrixNamedValues ?? []
+        : options.vectorNamedValues ?? [])]
       .sort((left, right) => right.length - left.length)
       .find((name) => input.endsWith(name) && input.length > name.length);
     if (namedScale) {
@@ -575,28 +585,24 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
 
     const latexFraction = splitLatexFraction(input);
     if (latexFraction) {
-      const denominator = parseVectorScalarExpression(latexFraction[1], options);
-      if (!denominator) {
-        fail('unsupported-expression', 'Vector division needs a scalar denominator.');
-      }
       const numerator = parseExpression(latexFraction[0], options);
-      if (numerator.kind === 'scalar' || numerator.kind === 'symbolicScalar') {
-        fail('unsupported-expression', 'Scalar-only expressions are not Vector results.');
+      const denominator = parseExpression(latexFraction[1], options);
+      if ((denominator.kind === 'scalar' || denominator.kind === 'symbolicScalar')
+        && numerator.kind !== 'scalar' && numerator.kind !== 'symbolicScalar') {
+        return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
       }
-      return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
+      return { kind: 'binary', operator: 'divide', left: numerator, right: denominator };
     }
 
     const divide = splitTopLevel(input, ['/']);
     if (divide) {
-      const denominator = parseVectorScalarExpression(divide.right, options);
-      const numerator = tryParseExpression(divide.left, options);
-      if (!denominator) {
-        fail('unsupported-expression', 'Vector division needs a scalar denominator.');
+      const numerator = parseExpression(divide.left, options);
+      const denominator = parseExpression(divide.right, options);
+      if ((denominator.kind === 'scalar' || denominator.kind === 'symbolicScalar')
+        && numerator.kind !== 'scalar' && numerator.kind !== 'symbolicScalar') {
+        return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
       }
-      if (!numerator || numerator.kind === 'scalar' || numerator.kind === 'symbolicScalar') {
-        fail('unsupported-expression', 'A scalar cannot be divided by a vector.');
-      }
-      return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
+      return { kind: 'binary', operator: 'divide', left: numerator, right: denominator };
     }
   }
 
@@ -622,6 +628,16 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       operator: options.mode === 'vector' ? 'cross' : 'multiply',
       left: parseExpression(times.left, options),
       right: parseExpression(times.right, options),
+    };
+  }
+
+  const implicitMatrixProduct = /^([A-Z])\((.+)\)$/u.exec(input);
+  if (implicitMatrixProduct && isMatrixName(implicitMatrixProduct[1], options)) {
+    return {
+      kind: 'binary',
+      operator: 'multiply',
+      left: namedValueExpression(implicitMatrixProduct[1]),
+      right: parseExpression(implicitMatrixProduct[2], options),
     };
   }
 
@@ -901,12 +917,12 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
   const symbolicVector = parseSymbolicInlineVector(input, options);
   if (symbolicVector) return symbolicVector;
 
-  const literal = parseMatrixLiteral(input);
+  const literal = parseMatrixLiteral(input, options.scalarDomain);
   if (literal) {
     return literal;
   }
 
-  const plainListLiteral = parsePlainListLiteral(input);
+  const plainListLiteral = parsePlainListLiteral(input, options.scalarDomain);
   if (plainListLiteral) {
     return plainListLiteral;
   }

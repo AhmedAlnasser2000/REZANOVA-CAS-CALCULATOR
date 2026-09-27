@@ -1,5 +1,6 @@
-import type { ExactScalarWire } from '../../types/calculator';
+import type { ExactScalarWire, LinearAlgebraScalarDomain } from '../../types/calculator';
 import { fail } from './editor-parser-errors';
+import { parseLinearAlgebraScalarWire } from './scalar-wire';
 import type { LinearAlgebraValueExpression } from './editor-parser';
 
 const MATRIX_ENVIRONMENTS = ['bmatrix', 'matrix', 'pmatrix', 'Bmatrix', 'vmatrix', 'Vmatrix'] as const;
@@ -260,17 +261,29 @@ function parsePlainVectorCells(input: string): string[] {
   return cells;
 }
 
-function matrixOrVectorFromCells(rowCells: string[][]): LinearAlgebraValueExpression {
+function matrixOrVectorFromCells(
+  rowCells: string[][],
+  domain?: LinearAlgebraScalarDomain,
+): LinearAlgebraValueExpression {
+  const columns = rowCells[0]?.length ?? 0;
+  if (columns === 0 || rowCells.some((row) => row.length !== columns)) {
+    fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
+  }
+  if (domain && rowCells.some((row) => row.some((cell) => !tryParseExactScalarLiteral(cell)))) {
+    const values = rowCells.map((row) => row.map((cell) => {
+      const parsed = parseLinearAlgebraScalarWire(cell, domain);
+      if (!parsed.ok) fail('invalid-matrix-literal', `Invalid Matrix/Vector entry "${cell}": ${parsed.error}`);
+      return parsed.value;
+    }));
+    return columns === 1
+      ? { kind: 'symbolicVectorLiteral', value: values.map((row) => row[0]), displayLatex: vectorCellsToLatex(rowCells) }
+      : { kind: 'symbolicMatrixLiteral', value: values, displayLatex: matrixCellsToLatex(rowCells) };
+  }
   const parsedRows = rowCells.map((row) => row.map((cell) => {
     return parseLatexNumber(cell);
   }));
   const matrix = parsedRows.map((row) => row.map((cell) => cell.value));
   const exactMatrix = parsedRows.map((row) => row.map((cell) => cell.exactValue));
-  const columns = matrix[0]?.length ?? 0;
-  if (columns === 0 || matrix.some((row) => row.length !== columns)) {
-    fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
-  }
-
   return columns === 1
     ? {
         kind: 'vectorLiteral',
@@ -286,7 +299,7 @@ function matrixOrVectorFromCells(rowCells: string[][]): LinearAlgebraValueExpres
       };
 }
 
-export function parsePlainListLiteral(input: string): LinearAlgebraValueExpression | null {
+export function parsePlainListLiteral(input: string, domain?: LinearAlgebraScalarDomain): LinearAlgebraValueExpression | null {
   if (!input.startsWith('[')) {
     return null;
   }
@@ -302,7 +315,7 @@ export function parsePlainListLiteral(input: string): LinearAlgebraValueExpressi
   const items = splitPlainListItems(outer);
   const isMatrix = items.every((item) => item.startsWith('[') && item.endsWith(']'));
   if (isMatrix) {
-    return matrixOrVectorFromCells(items.map(parsePlainVectorCells));
+    return matrixOrVectorFromCells(items.map(parsePlainVectorCells), domain);
   }
 
   if (items.some((item) => item.startsWith('[') || item.endsWith(']'))) {
@@ -310,10 +323,10 @@ export function parsePlainListLiteral(input: string): LinearAlgebraValueExpressi
   }
 
   const rowCells = parsePlainVectorCells(input).map((cell) => [cell]);
-  return matrixOrVectorFromCells(rowCells);
+  return matrixOrVectorFromCells(rowCells, domain);
 }
 
-export function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null {
+export function parseMatrixLiteral(input: string, domain?: LinearAlgebraScalarDomain): LinearAlgebraValueExpression | null {
   const environment = parseWholeMatrixEnvironment(input);
   if (!environment) {
     return null;
@@ -336,5 +349,5 @@ export function parseMatrixLiteral(input: string): LinearAlgebraValueExpression 
       return cell;
     });
   });
-  return matrixOrVectorFromCells(rowCells);
+  return matrixOrVectorFromCells(rowCells, domain);
 }

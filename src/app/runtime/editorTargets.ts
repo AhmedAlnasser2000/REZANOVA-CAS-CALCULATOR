@@ -87,7 +87,6 @@ export function insertLatexIntoEditor(
   const insertTarget = isLatexInsertTarget(field) ? field : null;
   if (insertTarget) {
     insertTarget.insert(latex);
-    insertTarget.dispatchEvent?.(new Event('input', { bubbles: true }));
     return;
   }
 

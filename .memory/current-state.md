@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-10
+Last updated: 2026-09-27
 
 ## Purpose
 
@@ -11,8 +11,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 ## Agent Ownership
 
 - primary_agent: codex
-- primary_agent_model: gpt-5.6
-- primary_agent_family: sol
+- primary_agent_model: gpt-6-astra
+- primary_agent_family: astra
 - recorded_by_agent: codex
 - recorded_by_agent_model: gpt-6-astra
 - recorded_by_agent_family: astra
@@ -24,6 +24,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 ## Active Context
 
+- Matrix/Vector typed-expression work is isolated on branch `codex/matrix-vector-core-combinations` in `/home/ahmed/Documents/Calculator-matrix-vector-core`; the shared `/home/ahmed/Documents/Calculator` checkout is untouched by this lane. Matrix and Vector names stay workspace-local, Calculate evaluates inline literals as answers only, and the existing 8 by 8 editing caps remain. Headed Chrome verified native Matrix/Vector insertion and visible Matrix, Vector, and Calculate answers; the full 4,470-test unit and 607-test UI suites pass. The user approved merging to `main`, but the shared checkout currently has concurrent uncommitted integration, Graphing, and memory edits, so integration must preserve those first.
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.
 - Git posture: local `main` contains the completed Canonical Result V2 and Notebook durable-media/pages/publication programs plus the locally verified `CANONICAL-RESULT-V2-ENFORCEMENT1` ratchet. `CANONICAL-RESULT-V3-ANGLE-QUANTITY1`, `LINEAR-ALGEBRA-CANONICAL-V2-COMPLETION1`, `LINEAR-ALGEBRA-EXACT-DECIMAL-CONTROLS1`, `VECTOR-GRAM-SCHMIDT-N1`, and `VECTOR-GEOMETRIC-MEASURES1` are verified Linear Algebra checkpoints. All seven approved Statistics consolidation gates are verified through `STATISTICS-CONSOLIDATION-POLISH1`. Statistics remains inside the calculator shell, now consumes its full desktop workspace width, and is supported and accepted for PC layouts only. Notebook image authoring is restored with immediate insertion, no forced caption prompt, explicit Picture Format caption/details, point-dimension resizing, stable selected-image handles, no separate loaded-image frame surface, point-sized figure wrappers and shells that no longer fall back to the old percentage-width selection rectangle, a selected image node-view wrapper outline suppression for the final stale-width line, and a source-ratio stretch stage that prevents width-only side-resize letterboxing; selected image handles now support keyboard point resizing, keyboard rotation, floating-image arrow nudging, and aria-live geometry announcements; the pristine writing prompt/template suggestion no longer steals editor clicks. Notebook image assets now preserve optional intrinsic pixel dimensions in the asset metadata envelope, and new image insertion initializes display geometry from returned immutable asset metadata when present. Notebook floating pagination is revalidated around image-free/video-free Schema 14 objects: fixed-page anchors, paragraph anchors, square/top-bottom wrap exclusions, Draft placeholders, oversized structured-object return-to-flow, and wide-stage onboarding containment pass focused Playwright evidence; paragraph-anchored floating objects now repair dead anchors to the nearest surviving paragraph or a page fallback in the same undoable edit; image and structured-block drags into visible Print Layout sheet whitespace now create floating placements through the shared pointer path while preserving flow reorder and Outline moves. Notebook preferences now persist as local app settings and seed existing Notebook UI seams for autosave timing, periodic snapshots, initial view/rails, and initial Objects & Layers mode without rewriting documents. Notebook publication projections now carry derived floating layout fragments; PDF/print uses those paginated coordinates, while Web and DOCX report explicit editable-flow/narrow-screen fallback findings and keep point-sized image geometry where supported. Notebook schema compatibility is consolidated around current Schema 14: `NotebookRichDocument` is the current authoring type, durable Schemas 6-14 share TypeScript/Rust fixture coverage, and Schemas 1-5 remain TypeScript-only best-effort recovery inputs behind the compatibility ingress. Notebook video support is removed from the current authoring/storage/publication contract; legacy video-bearing Schemas 9 through 13 open by converting video figures to plain `Video removed: ...` paragraphs. Untracked `test-results/` stays excluded, and no push is authorized.

@@ -43,6 +43,7 @@ export type RunVectorModeRequest =
   | (ScalarVectorRequestV1 & { vectorB: NonNullable<ScalarVectorRequestV1['vectorB']> });
 
 function vectorResultTitle(request: RunVectorModeRequest) {
+  if (request.operation === 'editorExpression') return request.editorExpressionLatex ?? 'Vector expression';
   if (request.domain === 'complex') {
     if (request.operation === 'angle') return 'Principal line angle';
     if (request.operation === 'cross') return 'Algebraic cross product';
