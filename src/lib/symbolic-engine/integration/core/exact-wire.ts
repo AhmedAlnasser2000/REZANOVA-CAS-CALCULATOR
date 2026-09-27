@@ -45,13 +45,13 @@ export function decodeRational(ctx: ExecutionContext, input: unknown): Rational 
   return decodeScalar(ctx, raw.value);
 }
 export function encodePolynomial(ctx: ExecutionContext, ring: PolynomialRing<Rational>, value: Polynomial<Rational>): ExactWire {
-  demand(ring.field === rationalField, 'domain-mismatch', 'wire supports Q coefficients only');
+  demand(ring.domain === rationalField, 'domain-mismatch', 'wire supports Q coefficients only');
   ring.assert(ctx, value); ctx.allocate(value.coefficients.length + ring.variable.length + 5);
   return Object.freeze({ version: 1, kind: 'polynomial', domain: 'Q', variable: ring.variable,
     coefficients: Object.freeze(value.coefficients.map(c => encodeScalar(ctx, c))) });
 }
 export function decodePolynomial(ctx: ExecutionContext, ring: PolynomialRing<Rational>, input: unknown): Polynomial<Rational> {
-  demand(ring.field === rationalField, 'domain-mismatch', 'wire supports Q coefficients only');
+  demand(ring.domain === rationalField, 'domain-mismatch', 'wire supports Q coefficients only');
   ctx.allocate(5); const raw = record(input, ['version', 'kind', 'domain', 'variable', 'coefficients']);
   demand(raw.version === 1 && raw.kind === 'polynomial' && raw.domain === 'Q' && raw.variable === ring.variable,
     'domain-mismatch', 'polynomial wire version/domain/variable');

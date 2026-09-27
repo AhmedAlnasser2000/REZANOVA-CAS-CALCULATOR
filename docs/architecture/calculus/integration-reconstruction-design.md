@@ -2,7 +2,7 @@
 
 Date: 2026-09-26
 Milestone: `INTEGRATION-RECONSTRUCTION-DESIGN1`
-Status: investigated design; implementation not started. Later-stage algorithms and sequencing remain revisable as evidence develops.
+Status: investigated design with implemented private exact-algebra and rational-representation foundations; see the milestone specifications for verification status. Later-stage algorithms and sequencing remain revisable as evidence develops.
 
 The user explicitly approved this CRITICAL, root-only design investigation after approving reconstruction where needed. The initial no-commit instruction was subsequently superseded by explicit user approval for the design and exact-algebra checkpoints; no push is authorized. This document chooses the first implementation architecture and records later blockers; it does not claim a finished Risch implementation or authorize a new public result schema.
 
@@ -72,7 +72,11 @@ The following are contracts for implementation, not new public application types
 | Object | Required invariant |
 | --- | --- |
 | Rational | Reduced `bigint` numerator/denominator; denominator positive; zero is `0/1`; division by zero is an invalid operation, never a value. |
-| Exact field | Context identity plus zero/one, exact arithmetic, inversion, equality/zero testing and canonical element construction. Only fields with established equality enter this interface. Unresolved front-end objects remain outside it. |
+| Exact ring | Context identity, canonical owned values, integer embedding, addition/subtraction/multiplication and decidable equality/zero testing. Polynomial storage and arithmetic require only this capability. |
+| Exact integral domain | Ring capability plus checked exact division; polynomial coefficient domains enable Q[z][x] without pretending Q[z] is a field. |
+| Exact field | Integral-domain capability plus inversion. Ordinary polynomial division, Euclidean GCD, fraction normalization and Gaussian elimination explicitly require it. Unresolved front-end objects remain outside these interfaces. |
+| Square-free quotient algebra | Reduced owned representatives modulo a monic square-free polynomial. Ring operations, verified unit/nonunit analysis and coprime splitting/CRT; no automatic field claim. |
+| Formal local complex primitive | Rational part plus all-distinct-roots weighted log sums; exact norm/denominator conditions, trace differentiation and checked identity against a separately supplied Q(x) target. No root selection or branch presentation. |
 | Polynomial over K | Active indeterminate and coefficient-domain identity; canonical ascending dense coefficients initially, trailing zero coefficients removed; zero represented consistently. Domain mismatch is rejected. |
 | Rational function over K | Coprime numerator/denominator, denominator monic, zero `0/1`, immutable normalized operands. Preserve original denominator exclusions separately from cancellation. |
 | Algebraic element, later | Reduced basis coefficients modulo the validated defining polynomial; explicit base field and generator identity. Equality and inversion use the field's algorithms, not output text. |
@@ -87,7 +91,7 @@ The kernel owns a bounded execution context for work/bit-size checks. It does no
 
 The selected rational direction is Hermite reduction followed by Lazard–Rioboo–Trager logarithmic reconstruction using subresultants. Backend output can retain a finite algebraic-root sum with its polynomial and log-argument construction; explicit radicals are not a prerequisite. Verify the differentiated result through exact quotient/trace identities, including square-free/component hypotheses. A named alpha plus a prose definition is insufficient. [Bronstein tutorial, rational integration sections](https://www.math.kobe-u.ac.jp/HOME/taka/2007/knx/bronstein-tutorial-issac98.pdf)
 
-Before implementing the rational algorithm, add subresultant/resultant operations and a checked internal root-sum representation. Before product adoption, prove that the representation converts without semantic loss through the output contract. This removes the old roadmap's implicit assumption that rational integration needs only existing partial-fraction display.
+The [rational-representation gate](integration-rational-representation1-spec.md) now supplies verified Brown subresultants/resultants, square-free quotient arithmetic, local-complex root-log sums and candidate-derivative verification. Automatic Hermite reduction and LRT construction remain the next gate. Before product adoption, prove that the representation converts without semantic loss through the output contract. This removes the old roadmap's implicit assumption that rational integration needs only existing partial-fraction display.
 
 For transcendental integration, select recursive differential-field reductions with explicit lower-field RDE, logarithmic-derivative and limited-integration obligations. Degree/denominator bounds must be derived, not guessed from the current ansatz caps. Establish the chosen tower's constant-field hypotheses before asserting negative decisions. Bronstein's book provides the intended detailed reference; the publisher overview/table of contents was checked, but full algorithm pseudocode has not been independently audited in this milestone. [Symbolic Integration I](https://link.springer.com/book/10.1007/b138171)
 

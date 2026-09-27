@@ -87,6 +87,10 @@ Stop and revise the design if generic operations require an unresolved equality 
 - Incremental TypeScript, scoped ESLint, compartment boundaries (36 tests), OOE boundaries (8 tests), memory/file-size checks and diff hygiene pass. The September 27 commit checkpoint also completed repository lint (0 errors, two existing Graphing warnings) and production build. No full suite or app-output gate is claimed.
 - Dossier: `.memory/sessions/2026-09/2026-09-26/2026-09-26__integration-exact-algebra1/`. Reconstruction remains subject to change when necessary.
 
+## 2026-09-27 representation-gate update
+
+The next [representation specification](integration-rational-representation1-spec.md) now separates `ExactRing`, `ExactIntegralDomain` and `ExactField`, and names polynomial coefficients `domain`. Ring arithmetic/storage is generic; field algorithms retain explicit type/runtime guards. Q[x], Q(t)[x], the scalar/polynomial wire format and all 60 original tests are preserved. This supersedes the earlier prospective representation handoff without changing the historical exact-algebra checkpoint evidence.
+
 ## Attribution
 
 - primary_agent: codex

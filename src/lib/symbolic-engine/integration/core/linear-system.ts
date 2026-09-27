@@ -1,5 +1,5 @@
 import { demand, type ExecutionContext } from './execution';
-import type { ExactField } from './field';
+import { requireField, type ExactField } from './field';
 
 export interface LinearSystem<E> {
   readonly rows: number;
@@ -23,6 +23,7 @@ export type LinearSolution<E> = EliminationEvidence<E> & (
 );
 
 function augmented<E>(ctx: ExecutionContext, field: ExactField<E>, system: LinearSystem<E>): E[][] {
+  requireField(field);
   const { rows, columns, matrix, rhs } = system;
   demand(Number.isSafeInteger(rows) && rows >= 0 && Number.isSafeInteger(columns) && columns >= 0,
     'invalid-input', 'matrix dimensions');
