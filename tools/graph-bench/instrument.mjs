@@ -1,12 +1,14 @@
 // Browser-side instrumentation injected before any page script runs. It is
 // renderer-agnostic so the same metrics stay meaningful before and after the
-// GPU moves: SVG geometry rewrites, 2D-canvas image draws, WebGL draws, WebGL
+// GPU moves: SVG geometry rewrites, new complex tiles (`data-tile-bounds`),
+// 2D-canvas image draws, WebGL draws, WebGL
 // shader compiles, rAF frame intervals, and long tasks.
 // Serialized with Function.prototype.toString; keep it free of module scope.
 
 export function installGraphBenchInstrumentation() {
   const state = {
     svgGeometryWrites: [],
+    complexTileUpdates: [],
     canvasImageDraws: [],
     webglDraws: [],
     shaderCompiles: 0,
@@ -42,6 +44,10 @@ export function installGraphBenchInstrumentation() {
       for (const record of records) {
         // Only sampled Graph geometry counts; grid/tick redraws happen every
         // gesture frame and are not a resampled result.
+        if (record.attributeName === 'data-tile-bounds') {
+          state.complexTileUpdates.push(now);
+          continue;
+        }
         const target = record.target instanceof Element ? record.target : record.target.parentElement;
         if (!target?.closest('.graph-svg-sampled-geometry')) continue;
         if (record.attributeName === 'd' || record.type === 'childList') {
@@ -49,7 +55,7 @@ export function installGraphBenchInstrumentation() {
           break;
         }
       }
-    }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['d'] });
+    }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['d', 'data-tile-bounds'] });
   };
   if (document.documentElement) observeGeometry();
   else document.addEventListener('DOMContentLoaded', observeGeometry, { once: true });
@@ -76,6 +82,7 @@ export function installGraphBenchInstrumentation() {
   window.__graphBenchMark = () => ({
     time: performance.now(),
     svgGeometryWrites: state.svgGeometryWrites.length,
+    complexTileUpdates: state.complexTileUpdates.length,
     canvasImageDraws: state.canvasImageDraws.length,
     webglDraws: state.webglDraws.length,
     shaderCompiles: state.shaderCompiles,
@@ -94,6 +101,7 @@ export function installGraphBenchInstrumentation() {
     const longTasks = state.longTasks.slice(mark.longTasks);
     return {
       svgGeometry: channel(state.svgGeometryWrites, mark.svgGeometryWrites),
+      complexTiles: channel(state.complexTileUpdates, mark.complexTileUpdates),
       canvasImage: channel(state.canvasImageDraws, mark.canvasImageDraws),
       webgl: channel(state.webglDraws, mark.webglDraws),
       shaderCompiles: state.shaderCompiles - mark.shaderCompiles,

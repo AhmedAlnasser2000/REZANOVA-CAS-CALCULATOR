@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type {
   GraphComplexDisplayModeV1,
   GraphComplexDomainTileRuntimeV1,
   GraphPaneViewStateV1,
   GraphViewportV1,
 } from '../../lib/graphing';
+import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 
 type Size = { width: number; height: number };
+type TileImage = { canvas: HTMLCanvasElement; label: string | null };
+type Trace = { zRe: number; zIm: number; wRe: number; wIm: number; magnitude: number; phase: number };
+
+const COMPONENT_LABELS = ['Re f', 'Im f', '|f|', 'arg f'];
 
 function scalarColor(value: number, scale: number, phase = false) {
   if (!Number.isFinite(value)) return [8, 17, 20, 255] as const;
@@ -31,58 +38,77 @@ function accessiblePhaseColor(phase: number, magnitude: number) {
     Math.round((208 - 152 * normalized) * ring), 255] as const;
 }
 
-function drawTile(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
-  mode: GraphComplexDisplayModeV1, colorVisionMode: 'standard' | 'color-vision-friendly') {
+/** Rasterizes a tile once per tile/mode/palette; gestures only re-place it. */
+function buildTileImages(tile: GraphComplexDomainTileRuntimeV1, mode: GraphComplexDisplayModeV1,
+  colorVisionMode: 'standard' | 'color-vision-friendly'): TileImage[] {
+  const image = (pixels: Uint8ClampedArray<ArrayBuffer>, label: string | null): TileImage => {
+    const canvas = document.createElement('canvas'); canvas.width = tile.width; canvas.height = tile.height;
+    canvas.getContext('2d')?.putImageData(new ImageData(pixels, tile.width, tile.height), 0, 0);
+    return { canvas, label };
+  };
+  if (mode === 'domain-coloring') {
+    const pixels = colorVisionMode === 'standard' ? new Uint8ClampedArray(tile.rgba) : new Uint8ClampedArray(tile.rgba.length);
+    if (colorVisionMode === 'color-vision-friendly') for (let pixel = 0; pixel < tile.width * tile.height; pixel += 1) {
+      const magnitude = tile.values[pixel * 4 + 2]!; const phase = tile.values[pixel * 4 + 3]!;
+      pixels.set(Number.isFinite(magnitude) && Number.isFinite(phase)
+        ? accessiblePhaseColor(phase, magnitude) : [8, 17, 20, 255], pixel * 4);
+    }
+    return [image(pixels, null)];
+  }
+  return COMPONENT_LABELS.map((label, component) => {
+    const pixels = new Uint8ClampedArray(tile.rgba.length);
+    let scale = 1;
+    if (component < 3) for (let offset = component; offset < tile.values.length; offset += 4) {
+      if (Number.isFinite(tile.values[offset])) scale = Math.max(scale, Math.abs(tile.values[offset]!));
+    }
+    for (let pixel = 0; pixel < tile.width * tile.height; pixel += 1) {
+      pixels.set(scalarColor(tile.values[pixel * 4 + component]!, scale, component === 3), pixel * 4);
+    }
+    return image(pixels, label);
+  });
+}
+
+/** Places the last complete tile at its true position inside the live viewport. */
+function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1, images: TileImage[], live: GraphViewportV1) {
   const context = canvas.getContext('2d'); if (!context) return;
   const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
   const bounds = canvas.getBoundingClientRect();
-  canvas.width = Math.max(1, Math.round(bounds.width * pixelRatio));
-  canvas.height = Math.max(1, Math.round(bounds.height * pixelRatio));
+  const width = Math.max(1, Math.round(bounds.width * pixelRatio));
+  const height = Math.max(1, Math.round(bounds.height * pixelRatio));
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.fillStyle = '#081114'; context.fillRect(0, 0, width, height);
   context.imageSmoothingEnabled = false;
-  const source = document.createElement('canvas'); source.width = tile.width; source.height = tile.height;
-  const sourceContext = source.getContext('2d'); if (!sourceContext) return;
-  if (mode === 'domain-coloring') {
-    const domainPixels = colorVisionMode === 'standard'
-      ? new Uint8ClampedArray(tile.rgba)
-      : new Uint8ClampedArray(tile.rgba.length);
-    if (colorVisionMode === 'color-vision-friendly') for (let pixel = 0; pixel < tile.width * tile.height; pixel += 1) {
-      const magnitude = tile.values[pixel * 4 + 2]!; const phase = tile.values[pixel * 4 + 3]!;
-      domainPixels.set(Number.isFinite(magnitude) && Number.isFinite(phase)
-        ? accessiblePhaseColor(phase, magnitude) : [8, 17, 20, 255], pixel * 4);
-    }
-    sourceContext.putImageData(new ImageData(domainPixels, tile.width, tile.height), 0, 0);
-    context.drawImage(source, 0, 0, canvas.width, canvas.height);
-  } else {
-    const labels = ['Re f', 'Im f', '|f|', 'arg f'];
-    for (let component = 0; component < 4; component += 1) {
-      const pixels = new Uint8ClampedArray(tile.rgba.length);
-      let scale = 1;
-      if (component < 3) {
-        for (let offset = component; offset < tile.values.length; offset += 4) {
-          if (Number.isFinite(tile.values[offset])) scale = Math.max(scale, Math.abs(tile.values[offset]!));
-        }
-      }
-      for (let pixel = 0; pixel < tile.width * tile.height; pixel += 1) {
-        pixels.set(scalarColor(tile.values[pixel * 4 + component]!, scale, component === 3), pixel * 4);
-      }
-      sourceContext.putImageData(new ImageData(pixels, tile.width, tile.height), 0, 0);
-      const x = component % 2 * canvas.width / 2; const y = Math.floor(component / 2) * canvas.height / 2;
-      context.drawImage(source, x, y, canvas.width / 2, canvas.height / 2);
-      const labelY = y + (component < 2 ? 62 : 8);
-      context.fillStyle = 'rgba(4, 13, 16, .8)'; context.fillRect(x + 8, labelY, 52, 20);
+  const spanX = live.xMax - live.xMin; const spanY = live.yMax - live.yMin;
+  const quadrant = images.length === 1 ? { width, height } : { width: width / 2, height: height / 2 };
+  images.forEach((image, index) => {
+    const originX = images.length === 1 ? 0 : index % 2 * quadrant.width;
+    const originY = images.length === 1 ? 0 : Math.floor(index / 2) * quadrant.height;
+    context.save();
+    context.beginPath(); context.rect(originX, originY, quadrant.width, quadrant.height); context.clip();
+    context.drawImage(image.canvas,
+      originX + (tile.bounds.reMin - live.xMin) / spanX * quadrant.width,
+      originY + (live.yMax - tile.bounds.imMax) / spanY * quadrant.height,
+      (tile.bounds.reMax - tile.bounds.reMin) / spanX * quadrant.width,
+      (tile.bounds.imMax - tile.bounds.imMin) / spanY * quadrant.height);
+    context.restore();
+    if (image.label) {
+      const labelY = originY + (index < 2 ? 62 : 8);
+      context.fillStyle = 'rgba(4, 13, 16, .8)'; context.fillRect(originX + 8, labelY, 52, 20);
       context.fillStyle = '#e7f5ef'; context.font = `${12 * pixelRatio}px sans-serif`;
-      context.fillText(labels[component]!, x + 13, labelY + 14);
+      context.fillText(image.label, originX + 13, labelY + 14);
     }
-  }
+  });
   context.setLineDash([7 * pixelRatio, 5 * pixelRatio]); context.strokeStyle = 'rgba(255,255,255,.86)';
   context.lineWidth = pixelRatio;
   for (const cut of tile.branchCuts) {
-    const x1 = (cut.from.re - tile.bounds.reMin) / (tile.bounds.reMax - tile.bounds.reMin) * canvas.width;
-    const y1 = (tile.bounds.imMax - cut.from.im) / (tile.bounds.imMax - tile.bounds.imMin) * canvas.height;
-    const x2 = (cut.to.re - tile.bounds.reMin) / (tile.bounds.reMax - tile.bounds.reMin) * canvas.width;
-    const y2 = (tile.bounds.imMax - cut.to.im) / (tile.bounds.imMax - tile.bounds.imMin) * canvas.height;
-    context.beginPath(); context.moveTo(x1, y1); context.lineTo(x2, y2); context.stroke();
+    context.beginPath();
+    context.moveTo((cut.from.re - live.xMin) / spanX * width, (live.yMax - cut.from.im) / spanY * height);
+    context.lineTo((cut.to.re - live.xMin) / spanX * width, (live.yMax - cut.to.im) / spanY * height);
+    context.stroke();
   }
+  context.setLineDash([]);
 }
 
 export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneViewChange,
@@ -97,24 +123,69 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
   viewport: GraphViewportV1;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Gestures move this live viewport every frame; the committed viewport (and
+  // therefore CPU sampling) changes only on pointer release or wheel settle.
+  const liveRef = useRef<GraphViewportV1>(viewport);
+  const interactingRef = useRef(false);
   const dragRef = useRef<{ x: number; y: number; viewport: GraphViewportV1 } | null>(null);
+  const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const frameRef = useRef<number | null>(null);
   const [size, setSize] = useState<Size>({ width: 1, height: 1 });
-  const [trace, setTrace] = useState<{ zRe: number; zIm: number; wRe: number; wIm: number; magnitude: number; phase: number } | null>(null);
+  const [trace, setTrace] = useState<Trace | null>(null);
+  const images = useMemo(() => (tile ? buildTileImages(tile, displayMode, colorVisionMode) : []),
+    [colorVisionMode, displayMode, tile]);
+  const paintRef = useRef<() => void>(() => {});
+  useLayoutEffect(() => {
+    paintRef.current = () => {
+      if (canvasRef.current && tile) paint(canvasRef.current, tile, images, liveRef.current);
+    };
+  });
+  const requestPaint = useCallback(() => {
+    if (frameRef.current !== null) return;
+    frameRef.current = requestAnimationFrame(() => { frameRef.current = null; paintRef.current(); });
+  }, []);
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return undefined;
     const observer = new ResizeObserver(([entry]) => setSize({ width: entry?.contentRect.width ?? 1, height: entry?.contentRect.height ?? 1 }));
     observer.observe(canvas); return () => observer.disconnect();
+  }, [paneView.dimension]);
+  useEffect(() => {
+    if (!interactingRef.current) liveRef.current = viewport;
+    paintRef.current();
+  }, [images, size, tile, viewport]);
+  useEffect(() => () => {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
   }, []);
-  useEffect(() => { if (canvasRef.current && tile) drawTile(canvasRef.current, tile, displayMode, colorVisionMode); }, [colorVisionMode, displayMode, size, tile]);
-  const status = useMemo(() => tile ? `${tile.analyticity}; ${tile.branchCuts.length} principal cut${tile.branchCuts.length === 1 ? '' : 's'}` : 'Enter f(z), w, or a bare z-expression.', [tile]);
-  const pointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    if (!tile) return null; const bounds = event.currentTarget.getBoundingClientRect();
-    const column = Math.max(0, Math.min(tile.width - 1, Math.floor((event.clientX - bounds.left) / bounds.width * tile.width)));
-    const row = Math.max(0, Math.min(tile.height - 1, Math.floor((event.clientY - bounds.top) / bounds.height * tile.height)));
+
+  const moveLive = (next: GraphViewportV1) => {
+    interactingRef.current = true; liveRef.current = next; requestPaint();
+  };
+  const commitLive = () => {
+    interactingRef.current = false; onViewportChange(liveRef.current);
+  };
+  const status = useMemo(() => {
+    if (!tile) return 'Enter f(z), w, or a bare z-expression.';
+    const cuts = `${tile.branchCuts.length} branch cut${tile.branchCuts.length === 1 ? '' : 's'} in view`;
+    return tile.analyticity === 'unknown'
+      ? `branch geometry not determined; ${cuts}` : `${tile.analyticity}; ${cuts}`;
+  }, [tile]);
+  const pointer = (event: ReactPointerEvent<HTMLCanvasElement>): Trace | null => {
+    if (!tile) return null;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const components = images.length > 1;
+    const localWidth = components ? bounds.width / 2 : bounds.width;
+    const localHeight = components ? bounds.height / 2 : bounds.height;
+    const localX = (event.clientX - bounds.left) % localWidth;
+    const localY = (event.clientY - bounds.top) % localHeight;
+    const live = liveRef.current;
+    const zRe = live.xMin + localX / localWidth * (live.xMax - live.xMin);
+    const zIm = live.yMax - localY / localHeight * (live.yMax - live.yMin);
+    const column = Math.floor((zRe - tile.bounds.reMin) / (tile.bounds.reMax - tile.bounds.reMin) * tile.width);
+    const row = Math.floor((tile.bounds.imMax - zIm) / (tile.bounds.imMax - tile.bounds.imMin) * tile.height);
+    if (column < 0 || column >= tile.width || row < 0 || row >= tile.height) return null;
     const offset = (row * tile.width + column) * 4;
-    return { zRe: tile.bounds.reMin + (column + 0.5) / tile.width * (tile.bounds.reMax - tile.bounds.reMin),
-      zIm: tile.bounds.imMax - (row + 0.5) / tile.height * (tile.bounds.imMax - tile.bounds.imMin),
-      wRe: tile.values[offset]!, wIm: tile.values[offset + 1]!, magnitude: tile.values[offset + 2]!, phase: tile.values[offset + 3]! };
+    return { zRe, zIm, wRe: tile.values[offset]!, wIm: tile.values[offset + 1]!, magnitude: tile.values[offset + 2]!, phase: tile.values[offset + 3]! };
   };
   return <section className="graph-complex-viewport" data-testid="graph-complex-viewport">
     <div className="graph-complex-toolbar">
@@ -127,17 +198,32 @@ export function GraphComplexViewport({ displayMode, onDisplayModeChange, onPaneV
       <span>{status}; {colorVisionMode === 'color-vision-friendly' ? 'accessible blue-orange phase' : 'standard cyclic phase'}.</span>
     </div>
     {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" ref={canvasRef}
-      onPointerDown={(event) => { dragRef.current = { x: event.clientX, y: event.clientY, viewport }; event.currentTarget.setPointerCapture(event.pointerId); }}
-      onPointerMove={(event) => { if (!dragRef.current) { setTrace(pointer(event)); return; }
-        const dx = (event.clientX - dragRef.current.x) / Math.max(1, event.currentTarget.clientWidth) * (viewport.xMax - viewport.xMin);
-        const dy = (event.clientY - dragRef.current.y) / Math.max(1, event.currentTarget.clientHeight) * (viewport.yMax - viewport.yMin);
-        onViewportChange({ ...dragRef.current.viewport, xMin: dragRef.current.viewport.xMin - dx,
-          xMax: dragRef.current.viewport.xMax - dx, yMin: dragRef.current.viewport.yMin + dy, yMax: dragRef.current.viewport.yMax + dy }); }}
-      onPointerUp={(event) => { if (dragRef.current && Math.hypot(event.clientX - dragRef.current.x, event.clientY - dragRef.current.y) < 4) setTrace(pointer(event)); dragRef.current = null; }}
-      onWheel={(event) => { event.preventDefault(); const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY / 500)));
-        const cx = (viewport.xMin + viewport.xMax) / 2; const cy = (viewport.yMin + viewport.yMax) / 2;
-        const hx = (viewport.xMax - viewport.xMin) / 2 * factor; const hy = (viewport.yMax - viewport.yMin) / 2 * factor;
-        onViewportChange({ ...viewport, xMin: cx - hx, xMax: cx + hx, yMin: cy - hy, yMax: cy + hy }); }} />
+      data-tile-bounds={tile ? `${tile.bounds.reMin},${tile.bounds.reMax},${tile.bounds.imMin},${tile.bounds.imMax}` : undefined}
+      onPointerDown={(event) => { dragRef.current = { x: event.clientX, y: event.clientY, viewport: liveRef.current }; event.currentTarget.setPointerCapture(event.pointerId); }}
+      onPointerMove={(event) => {
+        const drag = dragRef.current;
+        if (!drag) { setTrace(pointer(event)); return; }
+        const dx = (event.clientX - drag.x) / Math.max(1, event.currentTarget.clientWidth) * (drag.viewport.xMax - drag.viewport.xMin);
+        const dy = (event.clientY - drag.y) / Math.max(1, event.currentTarget.clientHeight) * (drag.viewport.yMax - drag.viewport.yMin);
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 4 && !interactingRef.current) return;
+        setTrace(null);
+        moveLive({ ...drag.viewport, xMin: drag.viewport.xMin - dx, xMax: drag.viewport.xMax - dx,
+          yMin: drag.viewport.yMin + dy, yMax: drag.viewport.yMax + dy });
+      }}
+      onPointerUp={(event) => {
+        const drag = dragRef.current; dragRef.current = null;
+        if (!drag) return;
+        if (interactingRef.current) commitLive(); else setTrace(pointer(event));
+      }}
+      onWheel={(event) => {
+        event.preventDefault(); setTrace(null);
+        const live = liveRef.current; const factor = Math.exp(Math.max(-1, Math.min(1, event.deltaY / 500)));
+        const cx = (live.xMin + live.xMax) / 2; const cy = (live.yMin + live.yMax) / 2;
+        const hx = (live.xMax - live.xMin) / 2 * factor; const hy = (live.yMax - live.yMin) / 2 * factor;
+        moveLive({ ...live, xMin: cx - hx, xMax: cx + hx, yMin: cy - hy, yMax: cy + hy });
+        if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+        wheelTimerRef.current = setTimeout(() => { wheelTimerRef.current = null; commitLive(); }, WHEEL_SETTLE_MS);
+      }} />
       : <div className="graph-complex-3d-placeholder">The 3D Riemann surface view arrives in a later Graphing milestone.</div>}
     {trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
       w = {trace.wRe.toPrecision(4)} {trace.wIm < 0 ? '−' : '+'} {Math.abs(trace.wIm).toPrecision(4)}i · |w| {trace.magnitude.toPrecision(4)} · arg {trace.phase.toPrecision(4)}</output> : null}

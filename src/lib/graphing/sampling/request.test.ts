@@ -69,8 +69,8 @@ describe('Graph sample request runtime', () => {
     const tile = execution.result.scene.complexTiles[0];
     expect(tile).toMatchObject({ itemId: 'complex-log', analyticity: 'holomorphic', truncated: false });
     expect(tile?.values.length).toBe((tile?.width ?? 0) * (tile?.height ?? 0) * 4);
-    expect(tile?.branchCuts).toHaveLength(1);
-    expect(tile?.branchPoints).toEqual(expect.arrayContaining([expect.objectContaining({ z: { re: 0, im: 0 } })]));
+    expect(tile?.branchCuts).toEqual([expect.objectContaining({ family: 'principal-log-cut', from: { re: 0, im: 0 } })]);
+    expect(tile?.branchPoints).toEqual([expect.objectContaining({ z: { re: 0, im: 0 } })]);
     expect(execution.result.scene.planarScene.paths.map((path) => path.pathId)).toEqual(expect.arrayContaining([
       'complex-log:real-axis-real', 'complex-log:real-axis-imaginary',
     ]));

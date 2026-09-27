@@ -218,6 +218,63 @@ describe('Graph implicit contour and region sampler', () => {
     expect(Math.max(...xs)).toBeLessThanOrEqual(1.000001);
   });
 
+  it('keeps breadth-first partial geometry across the whole view when the budget runs out', () => {
+    const mixedPower = {
+      kind: 'implicit-equality' as const,
+      left: expression(['Multiply', 'x', ['Power', 'y', ['Add', ['Sin', 'x'], ['Negate', ['Cos', 'x']]]]]),
+      right: expression(['Power', 'y', ['Multiply', 3, 'x']]),
+    };
+    const wide = sample(mixedPower, {
+      viewport: { coordinateSystem: 'cartesian', xMin: -20, xMax: 20, yMin: -12, yMax: 12 },
+      cssSize: { width: 1000, height: 600 },
+      limits: { maximumSamples: 47_232, maximumTimeMs: 5_000, maximumVertices: 100_000 },
+    });
+    // This wide view previously returned no geometry at all once the sample
+    // budget ran out; partial output must survive and be reported as such.
+    expect(wide.status).toBe('budget-exhausted');
+    expect(wide.stats.evaluatedSamples).toBeLessThanOrEqual(47_232);
+    const xs = Array.from(wide.boundaries[0]?.coordinates ?? []).filter((_, index) => index % 2 === 0);
+    expect(xs.length).toBeGreaterThan(40);
+    expect(Math.min(...xs)).toBeLessThan(1);
+    expect(Math.max(...xs)).toBeGreaterThan(15);
+
+    const circle = sample({ kind: 'implicit-equality', left: circleLeft, right: expression(4, []) }, {
+      limits: { maximumSamples: 2_000, maximumTimeMs: 5_000, maximumVertices: 20_000 },
+    });
+    expect(circle.status).toBe('budget-exhausted');
+    const quadrants = new Set(points(circle).map((point) => `${point.x >= 0}:${point.y >= 0}`));
+    expect(quadrants.size).toBe(4);
+  });
+
+  it('resolves contours beside real-domain edges instead of dropping mixed cells', () => {
+    const nestedLog = sample({
+      kind: 'implicit-equality',
+      left: expression(['Sin', ['Ln', ['Add', ['Cos', 'y'], 'x']]]),
+      right: expression(0, []),
+    }, {
+      cssSize: { width: 800, height: 800 },
+      limits: { maximumSamples: 47_232, maximumTimeMs: 5_000, maximumVertices: 100_000 },
+    });
+    expect(nestedLog.status).toBe('complete');
+    // Rows (1 CSS px) covered by each branch x + cos(y) = e^(k*pi).
+    const covered = new Map<number, Set<number>>();
+    const boundary = nestedLog.boundaries[0]!;
+    const offsets = [...boundary.segmentOffsets, boundary.coordinates.length / 2];
+    for (let path = 0; path + 1 < offsets.length; path += 1) {
+      for (let vertex = offsets[path]!; vertex + 1 < offsets[path + 1]!; vertex += 1) {
+        const [x0, y0, x1, y1] = [0, 1, 2, 3].map((offset) => boundary.coordinates[vertex * 2 + offset]!);
+        const branch = Math.round(Math.log((x0! + x1!) / 2 + Math.cos((y0! + y1!) / 2)) / Math.PI);
+        const rows = covered.get(branch) ?? new Set<number>();
+        covered.set(branch, rows);
+        for (let row = Math.floor((Math.min(y0!, y1!) + 4) * 100); row <= Math.floor((Math.max(y0!, y1!) + 4) * 100); row += 1) rows.add(row);
+      }
+    }
+    expect((covered.get(0)?.size ?? 0) / 800).toBeGreaterThan(0.99);
+    // x + cos(y) = e^(-pi) runs ~4 px from the undefined region; it was
+    // almost entirely missing before domain-edge cells were subdivided.
+    expect((covered.get(-1)?.size ?? 0) / 800).toBeGreaterThan(0.95);
+  });
+
   it('surfaces non-finite topology and hard budget stops without complete-looking fill', () => {
     const nonFinite = sample({
       kind: 'implicit-equality',

@@ -1,5 +1,6 @@
 import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
 import { complex, complexAbs, complexArg } from '../../numeric/complex';
+import { clipGraphComplexBranchRay, graphComplexBranchGeometry } from './complex-branch-geometry';
 import type {
   GraphComplexDomainTileRuntimeV1,
   GraphRelationIR,
@@ -17,12 +18,6 @@ function operators(node: unknown, output = new Set<string>()) {
   return output;
 }
 
-function hasMultivaluedPower(node: unknown): boolean {
-  if (!Array.isArray(node)) return false;
-  if (node[0] === 'Power' && !(typeof node[2] === 'number' && Number.isInteger(node[2]))) return true;
-  return node.slice(1).some(hasMultivaluedPower);
-}
-
 function hueToRgb(hue: number, saturation: number, lightness: number) {
   const channel = (offset: number) => {
     const k = (offset + hue * 12) % 12;
@@ -38,26 +33,16 @@ function phaseColor(phase: number, magnitude: number) {
   return hueToRgb(hue, 0.78, Math.max(0.24, Math.min(0.72, 0.5 + rings)));
 }
 
-function branchGeometry(kinds: ReadonlySet<string>, node: unknown, viewport: GraphViewportV1) {
+function branchGeometry(node: unknown, viewport: GraphViewportV1, parameters: Record<string, number>) {
+  const geometry = graphComplexBranchGeometry(node, 'z', parameters);
   const branchCuts: GraphComplexDomainTileRuntimeV1['branchCuts'] = [];
-  const branchPoints: GraphComplexDomainTileRuntimeV1['branchPoints'] = [];
-  const principal = ['Ln', 'Log', 'Sqrt', 'Root'].some((operator) => kinds.has(operator)) || hasMultivaluedPower(node);
-  if (principal) {
-    branchPoints.push({ family: 'principal-zero', z: { re: 0, im: 0 } });
-    branchCuts.push({ family: 'principal-negative-real-axis',
-      from: { re: viewport.xMin, im: 0 }, to: { re: Math.min(0, viewport.xMax), im: 0 } });
+  for (const ray of geometry.rays) {
+    const segment = clipGraphComplexBranchRay(ray, viewport);
+    if (segment) branchCuts.push({ family: ray.family, ...segment });
   }
-  if (['Arcsin', 'Arccos'].some((operator) => kinds.has(operator))) {
-    branchPoints.push({ family: 'inverse-trig', z: { re: -1, im: 0 } },
-      { family: 'inverse-trig', z: { re: 1, im: 0 } });
-    branchCuts.push({ family: 'inverse-trig-left', from: { re: viewport.xMin, im: 0 }, to: { re: -1, im: 0 } },
-      { family: 'inverse-trig-right', from: { re: 1, im: 0 }, to: { re: viewport.xMax, im: 0 } });
-  }
-  if (kinds.has('Arctan')) {
-    branchPoints.push({ family: 'inverse-tangent', z: { re: 0, im: -1 } },
-      { family: 'inverse-tangent', z: { re: 0, im: 1 } });
-  }
-  return { branchCuts, branchPoints };
+  const branchPoints: GraphComplexDomainTileRuntimeV1['branchPoints'] = geometry.points
+    .map((point) => ({ family: point.family, z: point.z }));
+  return { branchCuts, branchPoints, unresolved: geometry.unresolvedOperators.length > 0 };
 }
 
 export function sampleComplexMapping(input: {
@@ -100,12 +85,12 @@ export function sampleComplexMapping(input: {
   const kinds = operators(input.relation.expression.mathJson);
   const nonHolomorphic = ['Abs', 'Arg', 'Conjugate', 'ImaginaryPart', 'Real', 'RealPart']
     .some((operator) => kinds.has(operator));
-  const branch = branchGeometry(kinds, input.relation.expression.mathJson, input.viewport);
+  const { unresolved, ...branch } = branchGeometry(input.relation.expression.mathJson, input.viewport, input.parameters);
   const tile: GraphComplexDomainTileRuntimeV1 = {
     tileId: `${input.itemId}:complex:0`, itemId: input.itemId, width, height,
     bounds: { reMin: input.viewport.xMin, reMax: input.viewport.xMax,
       imMin: input.viewport.yMin, imMax: input.viewport.yMax },
-    rgba, values, analyticity: nonHolomorphic ? 'non-holomorphic' : 'holomorphic',
+    rgba, values, analyticity: nonHolomorphic ? 'non-holomorphic' : unresolved ? 'unknown' : 'holomorphic',
     ...branch, truncated: input.isCancelled(),
   };
   const sliceRe: number[] = []; const sliceIm: number[] = [];

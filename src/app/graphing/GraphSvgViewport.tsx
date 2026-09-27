@@ -21,6 +21,7 @@ import {
   type GraphTraceIndex,
   type GraphTraceTarget,
 } from './graph-hit-testing';
+import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | 'real-surface'
@@ -46,7 +47,6 @@ type TraceLock = {
   pathId?: string;
   pointBatchId?: string;
 };
-const WHEEL_SETTLE_MS = 180;
 const CLICK_DISTANCE = 24;
 const RETAIN_DISTANCE = 30;
 

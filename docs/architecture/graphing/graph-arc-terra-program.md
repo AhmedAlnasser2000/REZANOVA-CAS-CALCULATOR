@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-26 complete; Move 27 is the active gated milestone
+Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-28 complete; Move 29 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -367,11 +367,15 @@ Approved by the user on 2026-09-27 after the Equation.io/GeoGebra comparison. GP
 
 ## 27. `GRAPHING-GPU-FEASIBILITY1`
 
+Status: complete in `1a8c1d7b`.
+
 - Terra: High; gate type: backend stop gate.
 - Objective: verify hardware WebGL2 in the packaged desktop app, Chrome hardware, Chrome SwiftShader, and Playwright WebKit with one shared probe; add the Settings graphics diagnostics readout; commit the non-gating Calcwiz/Equation.io benchmark harness; register Opus 5.5 attribution; renumber this program.
 - Stop the insertion and return to the user if the packaged app lacks hardware WebGL2.
 
 ## 28. `GRAPHING-SAMPLER-CORRECTNESS1`
+
+Status: implementation and verification complete (2026-09-27).
 
 - Terra: High; gate type: ui.
 - Objective: remove false `exact-proved` branch points and operator-name cuts through one affine complex-argument extractor; keep breadth-first partial implicit output on budget exhaustion; subdivide mixed finite/non-finite domain-edge cells; give the complex pane SVG's live-viewport gesture model.

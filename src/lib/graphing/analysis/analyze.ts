@@ -18,6 +18,7 @@ import type {
   GraphStopReason,
   GraphViewportV1,
 } from '../contracts';
+import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
 
 export type GraphAnalysisControl = {
@@ -51,30 +52,6 @@ function exactZeroAtOrigin(node: unknown): boolean {
   return node[0] === 'Multiply' && node.slice(1).some(exactZeroAtOrigin);
 }
 
-function branchPointsFor(node: unknown) {
-  const kinds = new Set<string>();
-  let multivaluedPower = false;
-  const visit = (value: unknown) => {
-    if (!Array.isArray(value)) return;
-    if (typeof value[0] === 'string') kinds.add(value[0]);
-    if (value[0] === 'Power' && !(typeof value[2] === 'number' && Number.isInteger(value[2]))) multivaluedPower = true;
-    value.slice(1).forEach(visit);
-  };
-  visit(node);
-  const points: Array<{ re: number; im: number; family: string }> = [];
-  if (['Ln', 'Log', 'Sqrt', 'Root'].some((kind) => kinds.has(kind)) || multivaluedPower) {
-    points.push({ re: 0, im: 0, family: 'principal zero branch point' });
-  }
-  if (kinds.has('Arcsin') || kinds.has('Arccos')) {
-    points.push({ re: -1, im: 0, family: 'inverse-trig branch point' },
-      { re: 1, im: 0, family: 'inverse-trig branch point' });
-  }
-  if (kinds.has('Arctan')) {
-    points.push({ re: 0, im: -1, family: 'inverse-tangent branch point' },
-      { re: 0, im: 1, family: 'inverse-tangent branch point' });
-  }
-  return points;
-}
 
 function analyzeComplexMapping(input: {
   request: GraphAnalysisRequestV1;
@@ -134,11 +111,23 @@ function analyzeComplexMapping(input: {
       ));
     }
   }
-  if (input.requested.has('branch-point')) for (const point of branchPointsFor(expression)) {
-    if (point.re < region.reMin || point.re > region.reMax || point.im < region.imMin || point.im > region.imMax) continue;
-    findings.push(evidence(input.request, 'branch-point', [input.item.itemId], 'exact-proved', input.serial(), {
-      coordinates: complexPoint(point), basis: { source: 'reviewed-public-fact', validator: point.family },
-    }));
+  if (input.requested.has('branch-point')) {
+    // Points are proved only when the multivalued operator's argument is
+    // affine in z; other arguments stay explicitly inconclusive.
+    const branches = graphComplexBranchGeometry(expression, 'z', input.request.parameterEnvironment);
+    for (const { family, z: point } of branches.points) {
+      if (point.re < region.reMin || point.re > region.reMax || point.im < region.imMin || point.im > region.imMax) continue;
+      findings.push(evidence(input.request, 'branch-point', [input.item.itemId], 'exact-proved', input.serial(), {
+        coordinates: complexPoint(point),
+        basis: { source: 'reviewed-public-fact', validator: `${family} of an affine argument` },
+      }));
+    }
+    if (branches.unresolvedOperators.length > 0) {
+      findings.push(evidence(input.request, 'branch-point', [input.item.itemId], 'inconclusive', input.serial(), {
+        basis: { source: 'graph-symbolic', validator: `branch geometry of ${[...new Set(branches.unresolvedOperators)].join(', ')} with a non-affine argument` },
+        stopReason: { code: 'analysis-inconclusive', detailCode: 'branch-geometry-non-affine-argument' },
+      }));
+    }
   }
   return findings;
 }

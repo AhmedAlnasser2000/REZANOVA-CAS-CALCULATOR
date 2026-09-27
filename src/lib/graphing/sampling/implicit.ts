@@ -369,35 +369,42 @@ export function sampleImplicitGraphRelation(
 
   const stopReasons: GraphStopReason[] = [];
   let evaluatedSamples = 0;
-  let status: GraphSampledImplicitRelation['status'] = 'complete';
+  let cancelled = false;
+  let budgetExhausted = false;
   let topologyInconclusive = false;
   const environment: Record<string, number> = { ...input.parameterEnvironment, x: 0, y: 0 };
   const pointCache = new Map<string, SampleVertex | null>();
   const edgeRootCache = new Map<string, SampleVertex | null>();
+  // Refinement may use most of the budget; the remainder is reserved so
+  // contour extraction can still place crossings for every refined leaf.
+  const refinementShare = 0.85;
+  let sampleLimit = Math.floor(input.limits.maximumSamples * refinementShare);
+  let deadline = startedAt + input.limits.maximumTimeMs * refinementShare;
+  const markBudgetExhausted = (detailCode: string) => {
+    if (budgetExhausted) return;
+    budgetExhausted = true;
+    stopReasons.push({ code: 'sampling-budget-exceeded', detailCode });
+  };
 
   const stop = (nextEvaluations = 0) => {
+    if (cancelled) return true;
     if (isCancelled()) {
-      if (status !== 'cancelled') {
-        status = 'cancelled';
-        stopReasons.push({ code: 'sampling-cancelled', detailCode: 'cooperative-implicit-cancellation' });
-      }
+      cancelled = true;
+      stopReasons.push({ code: 'sampling-cancelled', detailCode: 'cooperative-implicit-cancellation' });
       return true;
     }
-    if (evaluatedSamples + nextEvaluations > input.limits.maximumSamples
-      || now() - startedAt >= input.limits.maximumTimeMs) {
-      if (status === 'complete') {
-        status = 'budget-exhausted';
-        stopReasons.push({ code: 'sampling-budget-exceeded', detailCode: 'implicit-adaptive-budget' });
-      }
+    if (evaluatedSamples + nextEvaluations > sampleLimit || now() >= deadline) {
+      markBudgetExhausted('implicit-adaptive-budget');
       return true;
     }
     return false;
   };
 
-  const evaluatePoint = (x: number, y: number): SampleVertex | null => {
+  /** A vertex, `null` for a non-finite value, or `undefined` when out of budget. */
+  const evaluatePoint = (x: number, y: number): SampleVertex | null | undefined => {
     const key = coordinateKey(x, y);
     if (pointCache.has(key)) return pointCache.get(key) ?? null;
-    if (stop(1)) return null;
+    if (stop(1)) return undefined;
     environment.x = x;
     environment.y = y;
     const values: number[] = [];
@@ -407,7 +414,6 @@ export function sampleImplicitGraphRelation(
       if (left.status !== 'finite' || right.status !== 'finite') {
         evaluatedSamples += 1;
         pointCache.set(key, null);
-        topologyInconclusive = true;
         return null;
       }
       values.push(normalizedDifference(clause.operator, left.value, right.value));
@@ -418,7 +424,14 @@ export function sampleImplicitGraphRelation(
     return vertex;
   };
 
-  const makeCell = (x0: number, x1: number, y0: number, y1: number): AdaptiveCell | null => {
+  type CellResult =
+    | { kind: 'full'; cell: AdaptiveCell }
+    | { kind: 'mixed'; bounds: CellBounds }
+    | { kind: 'empty' }
+    | { kind: 'unavailable' };
+  type CellBounds = Pick<AdaptiveCell, 'x0' | 'x1' | 'y0' | 'y1'>;
+
+  const makeCell = (x0: number, x1: number, y0: number, y1: number): CellResult => {
     const xMid = (x0 + x1) / 2;
     const yMid = (y0 + y1) / 2;
     const points = [
@@ -428,13 +441,18 @@ export function sampleImplicitGraphRelation(
       evaluatePoint(xMid, y1), evaluatePoint(x1, yMid),
       evaluatePoint(xMid, y0), evaluatePoint(x0, yMid),
     ];
-    if (status !== 'complete') return null;
-    if (points.some((point) => point === null)) return null;
+    if (points.some((point) => point === undefined)) return { kind: 'unavailable' };
+    const finiteCount = points.filter((point) => point !== null).length;
+    if (finiteCount === 0) return { kind: 'empty' };
+    if (finiteCount < points.length) return { kind: 'mixed', bounds: { x0, x1, y0, y1 } };
     return {
-      x0, x1, y0, y1,
-      corners: [points[0]!, points[1]!, points[2]!, points[3]!],
-      center: points[4]!,
-      edgeMidpoints: [points[5]!, points[6]!, points[7]!, points[8]!],
+      kind: 'full',
+      cell: {
+        x0, x1, y0, y1,
+        corners: [points[0]!, points[1]!, points[2]!, points[3]!],
+        center: points[4]!,
+        edgeMidpoints: [points[5]!, points[6]!, points[7]!, points[8]!],
+      },
     };
   };
 
@@ -446,52 +464,89 @@ export function sampleImplicitGraphRelation(
   const leaves: AdaptiveCell[] = [];
   const boundaryTarget = targetBoundaryPixels(input.quality);
 
-  const refineCell = (cell: AdaptiveCell) => {
-    const size = screenCellSize(input, cell);
+  const needsRefinement = (cell: AdaptiveCell) => {
     const boundaryClauses = compiled.clauses.flatMap((_, clauseIndex) => (
       cellMayContainBoundary(cell, clauseIndex) ? [clauseIndex] : []
     ));
-    const needsCurvedRefinement = boundaryClauses.some((clauseIndex) => (
-      !cellClauseIsAffine(cell, clauseIndex)
-    ));
-    if (boundaryClauses.length === 0
-      || !needsCurvedRefinement
-      || Math.max(size.width, size.height) <= boundaryTarget) {
-      leaves.push(cell);
-      return;
-    }
-    const xMid = (cell.x0 + cell.x1) / 2;
-    const yMid = (cell.y0 + cell.y1) / 2;
-    const children = [
-      makeCell(cell.x0, xMid, yMid, cell.y1),
-      makeCell(xMid, cell.x1, yMid, cell.y1),
-      makeCell(cell.x0, xMid, cell.y0, yMid),
-      makeCell(xMid, cell.x1, cell.y0, yMid),
+    return boundaryClauses.some((clauseIndex) => !cellClauseIsAffine(cell, clauseIndex));
+  };
+  const atTargetSize = (bounds: CellBounds) => {
+    const size = screenCellSize(input, bounds);
+    return Math.max(size.width, size.height) <= boundaryTarget;
+  };
+  const split = (bounds: CellBounds): CellBounds[] => {
+    const xMid = (bounds.x0 + bounds.x1) / 2;
+    const yMid = (bounds.y0 + bounds.y1) / 2;
+    return [
+      { x0: bounds.x0, x1: xMid, y0: yMid, y1: bounds.y1 },
+      { x0: xMid, x1: bounds.x1, y0: yMid, y1: bounds.y1 },
+      { x0: bounds.x0, x1: xMid, y0: bounds.y0, y1: yMid },
+      { x0: xMid, x1: bounds.x1, y0: bounds.y0, y1: yMid },
     ];
-    if (status !== 'complete') return;
-    for (const child of children) {
-      if (child) refineCell(child);
-      else topologyInconclusive = true;
-      if (status !== 'complete') return;
-    }
   };
 
-  for (let row = 0; row < rows && status === 'complete'; row += 1) {
-    for (let column = 0; column < columns && status === 'complete'; column += 1) {
+  // Breadth-first refinement: every base cell is examined before any cell is
+  // refined twice, so an exhausted budget leaves coarse coverage of the whole
+  // view instead of a finished band and a blank remainder.
+  const queue: CellResult[] = [];
+  for (let row = 0; row < rows && !stop(); row += 1) {
+    for (let column = 0; column < columns; column += 1) {
       const cell = makeCell(xAt(column), xAt(column + 1), yAt(row + 1), yAt(row));
-      if (cell) refineCell(cell);
+      if (cell.kind === 'unavailable') break;
+      queue.push(cell);
     }
   }
+  if (budgetExhausted && !cancelled) {
+    // Not even the base grid fit; nothing below would be honest geometry.
+    queue.length = 0;
+  }
+  for (let head = 0; head < queue.length; head += 1) {
+    const entry = queue[head]!;
+    if (entry.kind === 'empty' || entry.kind === 'unavailable') continue;
+    if (cancelled) break;
+    const exhausted = budgetExhausted;
+    if (entry.kind === 'full') {
+      if (exhausted || !needsRefinement(entry.cell) || atTargetSize(entry.cell)) {
+        leaves.push(entry.cell);
+        continue;
+      }
+    } else if (exhausted || atTargetSize(entry.bounds)) {
+      // A domain-edge cell that could not be resolved: its finite part may
+      // hold geometry that is omitted rather than guessed.
+      if (!exhausted) topologyInconclusive = true;
+      continue;
+    }
+    const bounds = entry.kind === 'full' ? entry.cell : entry.bounds;
+    const children = split(bounds).map((child) => makeCell(child.x0, child.x1, child.y0, child.y1));
+    if (children.some((child) => child.kind === 'unavailable')) {
+      if (entry.kind === 'full') leaves.push(entry.cell);
+      continue;
+    }
+    queue.push(...children);
+  }
 
-  if (status !== 'complete') {
+  if (cancelled) {
     return {
       itemId: input.itemId,
-      status,
+      status: 'cancelled',
       boundaries: [],
       stopReasons,
       stats: { evaluatedSamples, emittedVertices: 0, elapsedMs: Math.max(0, now() - startedAt) },
     };
   }
+  sampleLimit = input.limits.maximumSamples;
+  deadline = startedAt + input.limits.maximumTimeMs;
+
+  const interpolate = (first: SampleVertex, second: SampleVertex, clauseIndex: number): SampleVertex => {
+    const firstValue = first.values[clauseIndex]!;
+    const denominator = firstValue - second.values[clauseIndex]!;
+    const ratio = Math.abs(denominator) < 1e-15 ? 0.5 : firstValue / denominator;
+    return {
+      x: first.x + (second.x - first.x) * ratio,
+      y: first.y + (second.y - first.y) * ratio,
+      values: first.values.map((value, index) => value + (second.values[index]! - value) * ratio),
+    };
+  };
 
   const rootOnEdge = (first: SampleVertex, second: SampleVertex, clauseIndex: number) => {
     const key = edgeKey(first, second, clauseIndex);
@@ -517,7 +572,13 @@ export function sampleImplicitGraphRelation(
         low.x + (high.x - low.x) * ratio,
         low.y + (high.y - low.y) * ratio,
       );
-      if (!candidate || status !== 'complete') {
+      if (candidate === undefined) {
+        // Out of budget: fall back to the sign-bracketed linear estimate.
+        const root = interpolate(low, high, clauseIndex);
+        edgeRootCache.set(key, root);
+        return root;
+      }
+      if (candidate === null) {
         edgeRootCache.set(key, null);
         return null;
       }
@@ -539,14 +600,18 @@ export function sampleImplicitGraphRelation(
   const regionVertices: number[] = [];
   const regionIndices: number[] = [];
   let emittedVertices = 0;
+  let geometryBudgetExhausted = false;
   const canEmit = (count: number) => {
     if (emittedVertices + count <= input.limits.maximumVertices) return true;
-    status = 'budget-exhausted';
-    stopReasons.push({ code: 'sampling-budget-exceeded', detailCode: 'implicit-geometry-budget' });
+    if (!geometryBudgetExhausted) {
+      geometryBudgetExhausted = true;
+      stopReasons.push({ code: 'sampling-budget-exceeded', detailCode: 'implicit-geometry-budget' });
+    }
     return false;
   };
 
   for (const cell of leaves) {
+    if (cancelled || geometryBudgetExhausted) break;
     for (let clauseIndex = 0; clauseIndex < compiled.clauses.length; clauseIndex += 1) {
       const code = cell.corners.reduce((value, corner, index) => (
         value | (corner.values[clauseIndex]! <= 0 ? 1 << index : 0)
@@ -559,10 +624,13 @@ export function sampleImplicitGraphRelation(
         const [secondStart, secondEnd] = edgeVertices(cell, secondEdge);
         const first = rootOnEdge(firstStart, firstEnd, clauseIndex);
         const second = rootOnEdge(secondStart, secondEnd, clauseIndex);
-        if (!first || !second || status !== 'complete') continue;
+        if (!first || !second || cancelled) continue;
         const midpoint = evaluatePoint((first.x + second.x) / 2, (first.y + second.y) / 2);
-        if (!midpoint || status !== 'complete') continue;
-        const otherClausesInside = midpoint.values.every((value, index) => (
+        if (midpoint === null) continue;
+        const midpointValues = midpoint
+          ? midpoint.values
+          : first.values.map((value, index) => (value + second.values[index]!) / 2);
+        const otherClausesInside = midpointValues.every((value, index) => (
           index === clauseIndex || value <= 1e-10
         ));
         if (otherClausesInside) segmentsByClause[clauseIndex]!.push({ first, second });
@@ -591,13 +659,12 @@ export function sampleImplicitGraphRelation(
       }
       emittedVertices += polygon.length;
     }
-    if (status !== 'complete') break;
   }
 
-  if (status !== 'complete') {
+  if (cancelled) {
     return {
       itemId: input.itemId,
-      status,
+      status: 'cancelled',
       boundaries: [],
       stopReasons,
       stats: { evaluatedSamples, emittedVertices: 0, elapsedMs: Math.max(0, now() - startedAt) },
@@ -618,22 +685,12 @@ export function sampleImplicitGraphRelation(
     }];
   });
 
-  if (status !== 'complete') {
-    return {
-      itemId: input.itemId,
-      status,
-      boundaries: [],
-      stopReasons,
-      stats: { evaluatedSamples, emittedVertices: 0, elapsedMs: Math.max(0, now() - startedAt) },
-    };
-  }
-
   if (topologyInconclusive) {
     stopReasons.push({ code: 'region-topology-inconclusive', detailCode: 'non-finite-implicit-cell' });
   }
   return {
     itemId: input.itemId,
-    status,
+    status: budgetExhausted || geometryBudgetExhausted ? 'budget-exhausted' : 'complete',
     boundaries,
     ...(regionVertices.length >= 6 && regionIndices.length >= 3
       ? { region: {

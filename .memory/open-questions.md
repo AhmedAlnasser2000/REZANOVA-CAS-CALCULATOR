@@ -2,6 +2,7 @@
 
 Only currently actionable unresolved decisions or verified live risks belong here. Superseded sequencing forks, completed work, discarded speculation, and stale incidents are recorded in `.memory/closed-questions.md`.
 
+- 2026-09-27: Two Graph Playwright checks fail on `main` independent of the GPU program (reproduced on `1a8c1d7b`): `graphing-performance.spec.ts` first preview is ≈233-255 ms against its 150 ms budget under 4x CPU throttle, and `graphing-minimum-visible.spec.ts:599` loses keyboard focus after creating a piecewise item from Add Item. Decide whether the preview budget or the preview path changes, and repair the focus handoff, in a dedicated gate.
 - 2026-09-27: Playwright WebKit (the `@gpu`-only proxy project for WebKitGTK) cannot launch until the host installs `libavif16 libwoff1` (`sudo apt-get install libavif16 libwoff1`); until then GPU specs have Chromium and packaged `test:desktop-smoke` evidence only.
 - 2026-09-26: Formal implicit Graph proof backend remains unadopted: decide MPFR/GMP WASM only after target test/configuration validation and an LGPL/GMP source, notice, and relinking distribution review for browser and packaged desktop output. Otherwise use a Calcwiz-owned proof core under the same fail-closed evidence contract; do not describe the current sampler as certified.
 - 2026-07-19: The Graph page remains a separate lazy chunk, but the repository-wide eager bundle exceeds its ratchet. Choose a dedicated app-shell lazy-boundary repair before further Graph renderer expansion; do not raise the baseline to hide the regression.

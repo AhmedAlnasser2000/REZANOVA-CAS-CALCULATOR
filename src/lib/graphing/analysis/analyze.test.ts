@@ -115,6 +115,25 @@ describe('Graph analysis authority', () => {
     expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
   });
 
+  it('locates branch points from the actual argument and never proves a guessed location', async () => {
+    const result = await runGraphAnalysisRequest({
+      ...request([
+        complexMapping('shifted-log', ['Log', ['Add', 'z', -1]]),
+        complexMapping('nonaffine-log', ['Ln', ['Add', ['Power', 'z', 2], 1]]),
+      ], ['branch-point']),
+      complexSearchRegion: { reMin: -2, reMax: 2, imMin: -2, imMax: 2 },
+    }, undefined, { now: () => 0 });
+    const shifted = result.evidence.filter((entry) => entry.itemIds[0] === 'shifted-log');
+    expect(shifted).toHaveLength(1);
+    expect(shifted[0]).toMatchObject({ feature: 'branch-point', level: 'exact-proved' });
+    expect(shifted[0]?.coordinates?.x).toMatchObject({ value: { mathJson: 1 } });
+    expect(shifted[0]?.coordinates?.y).toMatchObject({ value: { mathJson: 0 } });
+    const nonAffine = result.evidence.filter((entry) => entry.itemIds[0] === 'nonaffine-log');
+    expect(nonAffine).toEqual([expect.objectContaining({ feature: 'branch-point', level: 'inconclusive',
+      stopReason: expect.objectContaining({ detailCode: 'branch-geometry-non-affine-argument' }) })]);
+    expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
+  });
+
   it('reports partial evidence when a controlled analysis clock exhausts the time budget', async () => {
     let tick = 0;
     const result = await runGraphAnalysisRequest(
