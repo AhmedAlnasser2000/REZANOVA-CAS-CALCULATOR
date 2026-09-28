@@ -87,12 +87,15 @@ export function useGraphComplexGpu({ colorVisionMode, componentScale, cpuSupport
 
   const draw = useCallback((live: GraphViewportV1, interacting: boolean): boolean => {
     const canvas = canvasRef.current;
-    if (baseStatus.renderer !== 'gpu' || !canvas || !layer || !program || !gpu) return false;
+    // A refused draw must blank the canvas: its last frame would otherwise stay
+    // on screen after the expression is deleted, changed, or handed to the CPU.
+    const blank = () => { if (canvas && layer) layer.clear({ width: canvas.width, height: canvas.height }); return false; };
+    if (baseStatus.renderer !== 'gpu' || !canvas || !layer || !program || !gpu) return blank();
     const bounds = canvas.getBoundingClientRect();
     const cssSize = { width: Math.max(1, bounds.width), height: Math.max(1, bounds.height) };
     const safe = gpu.graphGpuViewportIsFloat32Safe(live, cssSize);
     if (safe === preciseMode) setPreciseMode(!safe);
-    if (!safe) return false;
+    if (!safe) return blank();
     // Adapt on GPU time, or on the delay from a draw to the next frame; gaps
     // between draws would include idle input time.
     const state = scaleRef.current;

@@ -75,7 +75,7 @@
 
 .graph-analyze-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   padding: 0 12px;
   border-bottom: 1px solid var(--graph-line);
 }
@@ -170,13 +170,6 @@
 .graph-evidence-card dt { color: #789087; font-size: 0.66rem; }
 .graph-evidence-card dd { margin: 0; color: #c5d4cc; font-size: 0.7rem; line-height: 1.35; }
 .graph-analyze-solve { padding: 10px; }
-
-.graph-analyze-style .graph-style-popover {
-  position: static;
-  width: auto;
-  box-shadow: none;
-  background: rgba(18, 35, 38, 0.76);
-}
 
 .graph-analysis-markers { position: absolute; z-index: 7; inset: 0; pointer-events: none; overflow: hidden; }
 .graph-analysis-marker { position: absolute; display: flex; align-items: center; gap: 6px; transform: translate(-6px, -6px); }

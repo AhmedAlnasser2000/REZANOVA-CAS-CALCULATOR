@@ -109,6 +109,7 @@ const relationSchema: z.ZodType<GraphRelationIR> = z.discriminatedUnion('kind', 
     kind: z.literal('explicit-y'),
     rhs: expressionSchema,
     origin: z.enum(['authored-relation', 'bare-expression']),
+    complexValues: z.literal(true).optional(),
   }),
   z.strictObject({ kind: z.literal('explicit-x'), rhs: expressionSchema }),
   z.strictObject({

@@ -30,7 +30,25 @@ import {
 } from './adaptive-policy';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
 import { sampleRealSurface } from './surface';
-import { sampleComplexMapping, sampleComplexTrajectory } from './complex';
+import {
+  sampleComplexMapping, sampleComplexTrajectory, sampleGraphComplexValues, type GraphRealAxisSlice,
+} from './complex';
+
+/** Re (solid) and Im (dashed) paths of a real-axis slice; teaching overlays are never traced. */
+function realAxisSlicePaths(itemId: string, prefix: string, slice: GraphRealAxisSlice): GraphSampledPathSceneInput[] {
+  const vertices = slice.re.length / 2;
+  if (vertices < 2) return [];
+  // Each path owns its buffers: scene buffers are transferred, and a shared one would fail the transfer.
+  return ([['real', slice.re, 'complex-real'], ['imaginary', slice.im, 'complex-imaginary']] as const)
+    .map(([suffix, coordinates, strokeRole]) => ({
+      pathId: `${itemId}:${prefix}-${suffix}`, strokeRole, sample: {
+        itemId, status: 'complete' as const, coordinates,
+        independentValues: new Float64Array(Array.from({ length: vertices }, (_, index) => slice.re[index * 2]!)),
+        segmentOffsets: new Uint32Array(slice.segmentOffsets),
+        stats: { evaluatedSamples: vertices, emittedVertices: vertices, elapsedMs: 0 },
+      },
+    }));
+}
 
 export type GraphSampleRequestControl = {
   now?: () => number;
@@ -244,6 +262,16 @@ export async function runGraphSampleRequest(
       stopReasons.push(cancelledStop('cooperative-request-cancellation'));
       break;
     }
+    if (item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues) {
+      // Opt-in overlay, outside the item's cache entry so a cache hit never repeats it.
+      const values = sampleGraphComplexValues({ mathJson: item.relation.rhs.mathJson, viewport: request.viewport,
+        cssWidth: request.cssSize.width, parameters: request.parameterEnvironment });
+      if (values) {
+        const overlay = realAxisSlicePaths(item.itemId, 'complex-values', values);
+        paths.push(...overlay); sampleCount += values.sampleCount;
+        vertexCount += overlay.reduce((count, path) => count + path.sample.coordinates.length / 2, 0);
+      }
+    }
     const pathStart = paths.length;
     const regionStart = regions.length;
     const pointStart = pointBatches.length;
@@ -257,17 +285,7 @@ export async function runGraphSampleRequest(
         viewport: request.viewport, cssSize: request.cssSize, quality: request.quality,
         parameters: request.parameterEnvironment, isCancelled });
       complexTiles.push(sampled.tile);
-      const makeSlice = (coordinates: Float64Array, suffix: string): GraphSampledPathSceneInput | null => {
-        if (coordinates.length < 4) return null;
-        return { pathId: `${item.itemId}:real-axis-${suffix}`, strokeRole: 'teaching-overlay', sample: {
-          itemId: item.itemId, status: 'complete', coordinates,
-          independentValues: new Float64Array(Array.from({ length: coordinates.length / 2 }, (_, index) => coordinates[index * 2]!)),
-          segmentOffsets: new Uint32Array([0]),
-          stats: { evaluatedSamples: coordinates.length / 2, emittedVertices: coordinates.length / 2, elapsedMs: 0 },
-        } };
-      };
-      const realSlice = makeSlice(sampled.sliceRe, 'real'); const imaginarySlice = makeSlice(sampled.sliceIm, 'imaginary');
-      if (realSlice) paths.push(realSlice); if (imaginarySlice) paths.push(imaginarySlice);
+      paths.push(...realAxisSlicePaths(item.itemId, 'real-axis', sampled.slice));
       sampleCount += sampled.sampleCount; vertexCount += sampled.tile.width * sampled.tile.height;
       if (sampled.invalidCount > 0) stopReasons.push({ code: 'analysis-inconclusive',
         detailCode: `complex-invalid-pixels:${sampled.invalidCount}`, path: item.itemId });

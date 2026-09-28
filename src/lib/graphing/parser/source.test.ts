@@ -79,6 +79,16 @@ describe('Graph MathLive source classifier', () => {
     expect(relation(String.raw`\sqrt{-x}`)).toMatchObject({ kind: 'explicit-y', rhs: { freeSymbols: ['x'] } });
   });
 
+  it.each(['zx=y', 'y=zx', 'x=z+1', 'x^2+z=y', 'y<zx', 'x<z<y', 'z=z+x'])(
+    'rejects z mixed with real coordinates in %s instead of treating z as a parameter',
+    (latex) => {
+      expect(classifyGraphSource(source(latex))).toMatchObject({
+        ok: false,
+        stopReason: { code: 'coordinate-parameter-conflict', detailCode: 'complex-mapping-coordinate-conflict' },
+      });
+    },
+  );
+
   it('preserves inequality semantics including mixed strict/inclusive chains', () => {
     expect(relation('y>x')).toMatchObject({
       kind: 'inequality',

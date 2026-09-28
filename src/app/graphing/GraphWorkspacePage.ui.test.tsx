@@ -684,8 +684,9 @@ describe('GraphWorkspacePage', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }));
     expect(screen.getByText('test proof')).toBeVisible();
-    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
-    expect(screen.getByRole('dialog', { name: 'Curve style' })).toBeVisible();
+    // Style lives on the row swatch only; Analyze has no Style tab, and no Complex solve for a real curve.
+    expect(screen.queryByRole('tab', { name: 'Style' })).toBeNull();
+    expect(screen.queryByText('Complex solve')).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Features' }));
     const viewportBefore = onUpdateSession.mock.calls.at(-1)?.[0].surface.viewportRevision;
     const currentRootCard = screen.getByText('x 2').closest<HTMLElement>('.graph-feature-card')!;

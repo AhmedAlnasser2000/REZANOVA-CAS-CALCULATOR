@@ -1,10 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  normalizeGraphItemPresentation,
-  type GraphItemPresentationV2,
-  type GraphSurfaceStateV5,
-  type GraphViewportV1,
-} from '../../lib/graphing';
+import type { GraphSurfaceStateV5, GraphViewportV1 } from '../../lib/graphing';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { graphItemSourceLatex } from './graph-document';
 import { GraphAnalysisMarkers, GraphAnalyzeOverlay } from './GraphAnalyzeOverlay';
@@ -13,13 +8,12 @@ import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 import { useGraphAnalysis } from './useGraphAnalysis';
 
 export function GraphAnalyzeIntegration({
-  onAddAssumption, onRemoveAssumption, onSetViewport, onUpdateAnalyze, onUpdatePresentation, session, workspaceContext,
+  onAddAssumption, onRemoveAssumption, onSetViewport, onUpdateAnalyze, session, workspaceContext,
 }: {
   onAddAssumption: (sourceLatex: string) => boolean;
   onRemoveAssumption: (assumptionId: string) => void;
   onSetViewport: (viewport: GraphViewportV1) => void;
   onUpdateAnalyze: (values: Partial<GraphSurfaceStateV5['analyze']> & { open?: boolean }) => void;
-  onUpdatePresentation: (itemId: string, presentation: GraphItemPresentationV2) => boolean;
   session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
@@ -37,9 +31,8 @@ export function GraphAnalyzeIntegration({
       activeTab={session.surface.analyze.activeTab}
       analysis={evidence}
       assumptions={session.document.assumptions}
-      colorVisionMode={session.surface.appearance.colorVisionMode}
-      itemPresentation={selectedItem && 'presentation' in selectedItem
-        ? normalizeGraphItemPresentation(selectedItem.presentation) : undefined}
+      complexSolve={selectedItem?.kind === 'relation' && selectedItem.relation.kind === 'complex-mapping'}
+      hasSelection={Boolean(selectedItem)}
       message={analysis.message}
       onClose={() => { setPreview(null); onUpdateAnalyze({ open: false }); }}
       onAddAssumption={onAddAssumption}
@@ -62,14 +55,11 @@ export function GraphAnalyzeIntegration({
           ...(y === undefined ? {} : { yMin: y - height / 2, yMax: y + height / 2 }) });
       }}
       onTabChange={(activeTab) => onUpdateAnalyze({ activeTab })}
-      onUpdatePresentation={selectedItem && 'presentation' in selectedItem
-        ? (presentation) => { onUpdatePresentation(selectedItem.itemId, presentation); } : undefined}
       onWidthChange={(width) => onUpdateAnalyze({ width })}
       pinned={session.surface.analyze.pinnedAnnotations}
       selectedItemLabel={selectedItem && 'source' in selectedItem
         ? graphItemSourceLatex(selectedItem) : 'No item selected'}
       state={analysis.state}
-      theme={session.surface.appearance.theme}
       width={session.surface.analyze.width}
     /> : null}
   </>;

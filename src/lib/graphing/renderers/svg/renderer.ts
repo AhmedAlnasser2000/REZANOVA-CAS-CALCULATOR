@@ -344,6 +344,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       node.style.display = this.suppressedItems.has(itemId)
         || (committed && this.gestureFrame?.itemIds.has(itemId)) ? 'none' : '';
     };
+    // Surfaces drawn as a GPU heat map hide their SVG bands and contours.
+    this.surfaces?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => suppressed(node, false));
     this.regions?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
       suppressed(node);
       const style = this.itemPresentation(node.dataset.itemId ?? '');
@@ -361,8 +363,11 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       setAttribute(node, 'stroke', color);
       node.style.color = color;
       setAttribute(node, 'stroke-opacity', String(style.strokeOpacity));
-      setAttribute(node, 'stroke-width', style.strokeWidth === 'thin' ? '1.5' : style.strokeWidth === 'strong' ? '3' : '2.25');
-      const dashed = style.stroke === 'dashed' || node.dataset.strokeRole === 'strict-boundary';
+      // Re/Im value paths are thin companions of their curve; Im is always dashed.
+      const valuePath = node.dataset.strokeRole === 'complex-real' || node.dataset.strokeRole === 'complex-imaginary';
+      setAttribute(node, 'stroke-width', valuePath || style.strokeWidth === 'thin' ? '1.5' : style.strokeWidth === 'strong' ? '3' : '2.25');
+      const dashed = style.stroke === 'dashed' || node.dataset.strokeRole === 'strict-boundary'
+        || node.dataset.strokeRole === 'complex-imaginary';
       const dotted = style.stroke === 'dotted';
       if (dashed) setAttribute(node, 'stroke-dasharray', '8 6');
       else if (dotted) setAttribute(node, 'stroke-dasharray', '2 5');

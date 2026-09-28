@@ -76,6 +76,36 @@ describe('Graph sample request runtime', () => {
     ]));
   });
 
+  it('draws opt-in complex values of a real curve only where the value is not real', async () => {
+    const curveRequest = request();
+    const curve = curveRequest.items[0]!;
+    if (curve.kind !== 'relation') throw new Error('Expected the default relation item.');
+    const sqrtOfNegative = { mathJson: ['Sqrt', ['Negate', 'x']], freeSymbols: ['x'] } satisfies GraphExpressionIR;
+    curveRequest.items = [{ ...curve, relation: { kind: 'explicit-y', origin: 'bare-expression', rhs: sqrtOfNegative } }];
+    const plain = await runGraphSampleRequest(curveRequest);
+    expect(plain.result.scene.planarScene.paths.some((path) => path.strokeRole === 'complex-imaginary')).toBe(false);
+
+    curveRequest.items = [{ ...curve, relation: { kind: 'explicit-y', origin: 'bare-expression', rhs: sqrtOfNegative,
+      complexValues: true } }];
+    const execution = await runGraphSampleRequest(curveRequest);
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+    const paths = execution.result.scene.planarScene.paths;
+    const real = paths.find((path) => path.pathId === 'curve-1:complex-values-real');
+    const imaginary = paths.find((path) => path.pathId === 'curve-1:complex-values-imaginary');
+    expect(real?.strokeRole).toBe('complex-real');
+    expect(imaginary?.strokeRole).toBe('complex-imaginary');
+    if (!real || !imaginary) throw new Error('Expected Re/Im value paths.');
+    for (let vertex = 0; vertex * 2 < imaginary.coordinates.length; vertex += 1) {
+      const x = imaginary.coordinates[vertex * 2]!;
+      expect(x).toBeGreaterThan(0);
+      expect(imaginary.coordinates[vertex * 2 + 1]).toBeCloseTo(Math.sqrt(x), 9);
+      expect(real.coordinates[vertex * 2 + 1]).toBeCloseTo(0, 9);
+    }
+    // Scene buffers are transferred from the worker: the two paths must not share one.
+    expect(new Set([real.coordinates.buffer, real.segmentOffsets.buffer,
+      imaginary.coordinates.buffer, imaginary.segmentOffsets.buffer]).size).toBe(4);
+  });
+
   it('samples a real-parameterized complex trajectory as an Argand path', async () => {
     const trajectory = request();
     trajectory.items = [{

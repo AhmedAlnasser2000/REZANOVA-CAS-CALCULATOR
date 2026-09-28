@@ -134,7 +134,7 @@ function validateSceneCollections(scene: GraphSceneCollections) {
     if (!hasOnlyKeys(path, ['pathId', 'itemId', 'coordinates', 'segmentOffsets', 'parameterValues', 'closed', 'strokeRole'])
       || !path.pathId || path.pathId.length > MAX_SCENE_ID_LENGTH
       || !path.itemId || path.itemId.length > MAX_SCENE_ID_LENGTH
-      || (path.strokeRole !== undefined && !['default', 'strict-boundary', 'teaching-overlay'].includes(path.strokeRole))
+      || (path.strokeRole !== undefined && !['default', 'strict-boundary', 'teaching-overlay', 'complex-real', 'complex-imaginary'].includes(path.strokeRole))
       || pathIds.has(path.pathId)) return fail('invalid-scene', 'Scene path identity or role is invalid.', base);
     pathIds.add(path.pathId);
     const numbers = validateNumbers(path.coordinates, `${base}.coordinates`, true)

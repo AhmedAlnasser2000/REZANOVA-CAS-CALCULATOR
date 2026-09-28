@@ -25,6 +25,15 @@ import {
 export function migrateGraphWorkspaceSessionState(
   value: unknown,
 ): GraphWorkspaceSessionStateV7 | null {
+  const migrated = migrateSessionVersions(value);
+  // The Analyze Style tab was removed; sessions saved on it reopen on Features.
+  if (migrated?.surface.analyze.activeTab !== 'style') return migrated;
+  return { ...migrated, surface: { ...migrated.surface, analyze: { ...migrated.surface.analyze, activeTab: 'features' } } };
+}
+
+function migrateSessionVersions(
+  value: unknown,
+): GraphWorkspaceSessionStateV7 | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const candidate = value as Partial<GraphWorkspaceSessionStateV1 | GraphWorkspaceSessionStateV2
     | GraphWorkspaceSessionStateV3 | GraphWorkspaceSessionStateV4 | GraphWorkspaceSessionStateV5

@@ -1,5 +1,6 @@
 import { useCallback, type MutableRefObject } from 'react';
 import type { GraphDocumentV4 } from '../../lib/graphing';
+import { setGraphComplexValues } from './graph-document';
 import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 
 interface UseGraphSessionActionsInput {
@@ -114,8 +115,18 @@ export function useGraphSessionActions({
     } }, true);
   }, [commitSession, pushHistory, sessionRef]);
 
+  /** Opt-in Re/Im values for a real curve y = f(x); a mathematics change, so it resamples. */
+  const setComplexValues = useCallback((itemId: string, enabled: boolean) => {
+    const current = sessionRef.current;
+    const document = setGraphComplexValues({ document: current.document, itemId, enabled });
+    if (!document) return;
+    pushHistory(current.document, null);
+    commitSession({ ...current, document }, true);
+  }, [commitSession, pushHistory, sessionRef]);
+
   return {
     addAssumption,
+    setComplexValues,
     removeAssumption,
     toggleRail,
     updateAnalyze,

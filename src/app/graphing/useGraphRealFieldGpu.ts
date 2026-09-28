@@ -14,10 +14,15 @@ import { graphParameterEnvironment } from './graph-controller-support';
 
 type Layer = NonNullable<ReturnType<GraphGpuModule['createGraphGpuFieldLayer']>>;
 type FieldProgram = Extract<ReturnType<GraphGpuModule['buildGraphGpuRealFieldProgram']>, { kind: 'real' }>;
-type Candidate = { itemId: string; program: FieldProgram | null; reason: string | null };
+type Candidate = {
+  itemId: string; program: FieldProgram | null; reason: string | null;
+  /** z = f(x, y) drawn as a height map with the domain it is sampled on. */
+  surface?: { bounds: { xMin: number; xMax: number; yMin: number; yMax: number } | null };
+};
+type SurfaceRange = { minimum: number; maximum: number };
 
 export type GraphRealFieldRendererStatus = {
-  /** Implicit/inequality items in the document. */
+  /** Implicit/inequality items and real surfaces in the document. */
   candidates: number;
   /** Items currently drawn by the GPU. */
   gpuItems: number;
@@ -34,6 +39,10 @@ function clausesOf(relation: Extract<GraphDocumentV4['items'][number], { kind: '
     }));
   }
   return null;
+}
+
+function gpuCandidate(relation: Extract<GraphDocumentV4['items'][number], { kind: 'relation' }>['relation']) {
+  return clausesOf(relation) !== null || relation.kind === 'real-surface';
 }
 
 function cssColorToRgb(color: string): [number, number, number] {
@@ -53,11 +62,13 @@ function cssColorToRgb(color: string): [number, number, number] {
  * that trace, Analyze, export, and "uncertain region" evidence read. Items the
  * GPU cannot draw faithfully stay on the SVG renderer with a stated reason.
  */
-export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation }: {
+export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation, surfaceRanges }: {
   document: GraphDocumentV4 | null;
   enabled: boolean;
   getSlot: () => HTMLElement | null;
   presentation: GraphRendererPresentationFrame;
+  /** z range of each surface's CPU mesh; a surface is drawn only once its mesh exists. */
+  surfaceRanges: ReadonlyMap<string, SurfaceRange>;
 }) {
   const [gpu, setGpu] = useState<GraphGpuModule | null>(null);
   const [layer, setLayer] = useState<Layer | null>(null);
@@ -69,7 +80,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scaleRef = useRef({ scale: 1 });
   const hasCandidates = Boolean(document?.items.some((item) => item.kind === 'relation' && item.visible
-    && clausesOf(item.relation) !== null));
+    && gpuCandidate(item.relation)));
 
   useEffect(() => {
     if (!enabled || !hasCandidates || gpu) return undefined;
@@ -102,9 +113,23 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation 
     if (!document || !gpu) return [];
     return document.items.flatMap((item): Candidate[] => {
       if (item.kind !== 'relation' || !item.visible) return [];
+      const revision = item.source.sourceRevision;
+      if (item.relation.kind === 'real-surface') {
+        const height = compileGraphExpression({ planId: `${item.itemId}.gpu.surface`, sourceRevision: revision, expression: item.relation.z });
+        const zero = compileGraphExpression({ planId: `${item.itemId}.gpu.zero`, sourceRevision: revision, expression: { mathJson: 0, freeSymbols: [] } });
+        const surface = { bounds: item.relation.bounds ?? null };
+        if (!height.ok || !zero.ok) return [{ itemId: item.itemId, program: null, reason: 'the expression could not be compiled for the GPU', surface }];
+        const program = gpu.buildGraphGpuRealFieldProgram([{ left: height.plan, right: zero.plan, operator: '=' }], {
+          key: `${item.itemId}@${revision}:surface`, fillsRegion: false,
+        });
+        if (!('kind' in program)) {
+          return [{ itemId: item.itemId, program: null, reason: `${program.reason.replace('unsupported-operator:', '')} is not supported on the GPU`, surface }];
+        }
+        const unbound = program.parameterNames.find((name) => !(name in parameters));
+        return [{ itemId: item.itemId, program: unbound ? null : program, reason: unbound ? `parameter ${unbound} has no value` : null, surface }];
+      }
       const clauses = clausesOf(item.relation);
       if (!clauses) return [];
-      const revision = item.source.sourceRevision;
       const plans = [];
       for (const [index, clause] of clauses.entries()) {
         const left = compileGraphExpression({ planId: `${item.itemId}.gpu.${index}.left`, sourceRevision: revision, expression: clause.left });
@@ -125,11 +150,12 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation 
 
   const active = enabled && Boolean(layer) && !runtimeReason && !preciseMode;
   const suppressed = useMemo(() => new Set(active
-    ? candidates.filter((candidate) => candidate.program && !drawFailures.has(candidate.program.key))
-      .map((candidate) => candidate.itemId) : []), [active, candidates, drawFailures]);
+    ? candidates.filter((candidate) => candidate.program && !drawFailures.has(candidate.program.key)
+      && (!candidate.surface || surfaceRanges.has(candidate.itemId)))
+      .map((candidate) => candidate.itemId) : []), [active, candidates, drawFailures, surfaceRanges]);
 
   const status: GraphRealFieldRendererStatus = useMemo(() => {
-    const count = document?.items.filter((item) => item.kind === 'relation' && item.visible && clausesOf(item.relation)).length ?? 0;
+    const count = document?.items.filter((item) => item.kind === 'relation' && item.visible && gpuCandidate(item.relation)).length ?? 0;
     const reasons = !enabled ? ['GPU rendering is off in Settings']
       : runtimeReason ? [runtimeReason]
         : preciseMode ? ['deep zoom uses precise CPU rendering']
@@ -185,10 +211,25 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation 
       const program = candidate.program;
       const style = styles.get(candidate.itemId);
       if (!program || !style || drawFailures.has(program.key)) continue;
+      const range = candidate.surface ? surfaceRanges.get(candidate.itemId) : undefined;
+      if (candidate.surface && !range) continue;
       const uniforms = { viewport: live, parameters: program.parameterNames.map((name) => parameters[name] ?? 0) };
       const target = `field:${candidate.itemId}`;
       if (!layer.draw(program, gpu.graphGpuRealFieldValueShading(program.clauseCount), uniforms, size, { target })) {
         failures.set(program.key, layer.lastError ?? 'unknown');
+        continue;
+      }
+      if (candidate.surface && range) {
+        const bounds = candidate.surface.bounds;
+        const heat = layer.draw(program, gpu.GRAPH_GPU_SURFACE_HEAT_SHADING, {
+          ...uniforms,
+          extra: {
+            ...gpu.graphGpuSurfaceHeatUniforms(range),
+            uBounds: bounds ? [bounds.xMin, bounds.xMax, bounds.yMin, bounds.yMax] : [-1e30, 1e30, -1e30, 1e30],
+            uOpacity: 0.82, uPixelRatio: pixelRatio,
+          },
+        }, size, { inputs: { uField: target }, blend: true });
+        if (!heat) failures.set(program.key, layer.lastError ?? 'unknown');
         continue;
       }
       const composited = layer.draw(program, gpu.GRAPH_GPU_REAL_FIELD_SHADING, {
@@ -207,7 +248,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation 
     }
     layer.endFrame();
     if (failures.size > 0) setDrawFailures((current) => new Map([...current, ...failures]));
-  }, [active, candidates, drawFailures, getSlot, gpu, layer, parameters, preciseMode, styles]);
+  }, [active, candidates, drawFailures, getSlot, gpu, layer, parameters, preciseMode, styles, surfaceRanges]);
 
   return { draw, status, suppressed };
 }

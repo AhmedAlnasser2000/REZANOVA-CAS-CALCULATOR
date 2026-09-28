@@ -43,6 +43,8 @@ export type GraphRelationIR =
       kind: 'explicit-y';
       rhs: GraphExpressionIR;
       origin: 'authored-relation' | 'bare-expression';
+      /** User opt-in: also draw principal-branch Re and Im where the value is not real. */
+      complexValues?: true;
     }
   | { kind: 'explicit-x'; rhs: GraphExpressionIR }
   | {
@@ -350,6 +352,10 @@ export type GraphSurfaceStateV3 = Omit<GraphSurfaceStateV2, 'version'> & {
   };
 };
 
+/**
+ * 'style' is a persisted legacy value only: the Style tab was removed, and the
+ * session migration reopens such sessions on 'features'.
+ */
 export type GraphAnalyzeTabV1 = 'features' | 'evidence' | 'style';
 
 export type GraphPinnedAnnotationV1 = {
@@ -450,7 +456,7 @@ export type GraphScenePathRuntimeV2 = {
   segmentOffsets: Uint32Array;
   parameterValues?: Float64Array;
   closed: boolean;
-  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay';
+  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay' | 'complex-real' | 'complex-imaginary';
 };
 
 export type GraphSceneRegionRuntimeV2 = {

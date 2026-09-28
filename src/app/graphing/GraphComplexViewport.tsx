@@ -189,7 +189,9 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   useLayoutEffect(() => {
     paintRef.current = () => {
       const gpuDrawn = gpuDraw(liveRef.current, interactingRef.current);
-      if (canvasRef.current && tile) paint(canvasRef.current, tile, images, liveRef.current, gpuDrawn);
+      const canvas = canvasRef.current;
+      if (canvas && tile) paint(canvas, tile, images, liveRef.current, gpuDrawn);
+      else if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
     };
   });
   const requestPaint = useCallback(() => {
@@ -267,10 +269,10 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
         onClick={() => onDisplayModeChange('domain-coloring')} type="button">Domain color</button>
         <button aria-pressed={displayMode === 'components'} onClick={() => onDisplayModeChange('components')} type="button">2×2 components</button></div>
       <span>{status}; {colorVisionMode === 'color-vision-friendly' ? 'accessible blue-orange phase' : 'standard cyclic phase'}.</span>
-      <span className={`graph-complex-renderer is-${gpuStatus.renderer}`} data-testid="graph-complex-renderer"
+      {tile ? <span className={`graph-complex-renderer is-${gpuStatus.renderer}`} data-testid="graph-complex-renderer"
         title={gpuStatus.reason ?? 'Colours are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
         {gpuStatus.renderer === 'gpu' ? 'GPU' : gpuStatus.reason === 'deep zoom uses precise CPU rendering' ? 'Precise mode' : 'Standard rendering'}
-      </span>
+      </span> : null}
     </div>
     {paneView.dimension === '2d' ? <canvas aria-hidden="true" className="graph-complex-gpu-canvas" ref={gpuCanvasRef} /> : null}
     {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" className="graph-complex-overlay-canvas" ref={canvasRef}

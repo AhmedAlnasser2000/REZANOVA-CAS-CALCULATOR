@@ -5,12 +5,9 @@ import type {
   GraphAuthoredAssumptionV1,
   GraphAnalyzeTabV1,
   GraphFeatureValueV1,
-  GraphItemPresentationV2,
   GraphPinnedAnnotationV2,
   GraphViewportV1,
 } from '../../lib/graphing';
-import { GraphStylePopover } from './GraphAppearanceControls';
-import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 import { graphAnalysisAnnotationId, graphFeatureNumber } from './graph-analysis-overlay-support';
 function featureText(value: GraphFeatureValueV1 | undefined) {
   if (!value) return '—';
@@ -45,15 +42,16 @@ export function GraphAnalysisMarkers({
 }
 
 export function GraphAnalyzeOverlay({
-  activeTab, analysis, assumptions, colorVisionMode, itemPresentation, message, onAddAssumption, onClose, onPin,
-  onPreview, onRecenter, onRemoveAssumption, onTabChange, onUpdatePresentation, onWidthChange,
-  pinned, selectedItemLabel, state, theme, width,
+  activeTab, analysis, assumptions, complexSolve, hasSelection, message, onAddAssumption, onClose, onPin,
+  onPreview, onRecenter, onRemoveAssumption, onTabChange, onWidthChange,
+  pinned, selectedItemLabel, state, width,
 }: {
   activeTab: GraphAnalyzeTabV1;
   analysis: GraphAnalysisEvidenceV1[];
   assumptions: GraphAuthoredAssumptionV1[];
-  colorVisionMode: GraphWorkspaceSessionStateV7['surface']['appearance']['colorVisionMode'];
-  itemPresentation?: GraphItemPresentationV2;
+  /** Zero/pole search and assumptions apply only to a selected complex mapping. */
+  complexSolve: boolean;
+  hasSelection: boolean;
   message: string;
   onAddAssumption: (sourceLatex: string) => boolean;
   onClose: () => void;
@@ -62,12 +60,10 @@ export function GraphAnalyzeOverlay({
   onRemoveAssumption: (assumptionId: string) => void;
   onRecenter: (entry: GraphAnalysisEvidenceV1) => void;
   onTabChange: (tab: GraphAnalyzeTabV1) => void;
-  onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
   onWidthChange: (width: number) => void;
   pinned: GraphPinnedAnnotationV2[];
   selectedItemLabel: string;
   state: 'idle' | 'loading' | 'ready' | 'error';
-  theme: GraphWorkspaceSessionStateV7['surface']['appearance']['theme'];
   width: number;
 }) {
   const [assumptionDraft, setAssumptionDraft] = useState('');
@@ -91,13 +87,13 @@ export function GraphAnalyzeOverlay({
       <button aria-label="Close Analyze" onClick={onClose} type="button"><X size={17} /></button>
     </header>
     <div className="graph-analyze-tabs" role="tablist" aria-label="Analyze sections">
-      {(['features', 'evidence', 'style'] as const).map((tab) => <button aria-selected={activeTab === tab}
+      {(['features', 'evidence'] as const).map((tab) => <button aria-selected={activeTab === tab}
         key={tab} onClick={() => onTabChange(tab)} role="tab" type="button">{label(tab)}</button>)}
     </div>
     <p className={`graph-analyze-status is-${state}`} role="status">{message}</p>
     <div className="graph-analyze-content">
       {activeTab === 'features' ? <>
-        {analysis.length === 0 && state !== 'loading' ? <p className="graph-analyze-empty">No supported findings for this item and current bounded scope.</p> : null}
+        {hasSelection && analysis.length === 0 && state !== 'loading' ? <p className="graph-analyze-empty">No supported findings for this item and current bounded scope.</p> : null}
         {[...grouped.entries()].map(([feature, entries]) => <section className="graph-feature-group" key={feature}>
           <h3>{label(feature)}</h3>
           {entries.map((entry) => {
@@ -125,7 +121,7 @@ export function GraphAnalyzeOverlay({
             </article>;
           })}
         </section>)}
-        <section className="graph-analyze-solve"><h3>Complex solve</h3>
+        {complexSolve ? <section className="graph-analyze-solve"><h3>Complex solve</h3>
           <p>Zeros and poles are searched only inside the visible or locked rectangle. Validated candidates do not imply global completeness.</p>
           <div className="graph-assumption-list">{assumptions.map((entry) => <span key={entry.assumptionId}>
             {entry.sourceLatex}<button aria-label={`Remove assumption ${entry.sourceLatex}`}
@@ -136,7 +132,7 @@ export function GraphAnalyzeOverlay({
               placeholder="Assumption, e.g. z ≠ 0" value={assumptionDraft} />
             <button disabled={!assumptionDraft.trim()} type="submit">Add</button>
           </form>
-        </section>
+        </section> : null}
       </> : null}
       {activeTab === 'evidence' ? analysis.map((entry) => <article className="graph-evidence-card" key={entry.evidenceId}>
         <header><strong>{label(entry.feature)}</strong><span>{entry.level.replaceAll('-', ' ')}</span></header>
@@ -147,11 +143,6 @@ export function GraphAnalyzeOverlay({
               : 'Not eligible for a persistent annotation.'}</dd></div>
           {entry.basis.residualBound !== undefined ? <div><dt>Residual</dt><dd>≤ {entry.basis.residualBound}</dd></div> : null}</dl>
       </article>) : null}
-      {activeTab === 'style' ? <div className="graph-analyze-style">
-        {itemPresentation && onUpdatePresentation ? <GraphStylePopover colorVisionMode={colorVisionMode}
-          onClose={onClose} onUpdate={onUpdatePresentation} presentation={itemPresentation} theme={theme} />
-          : <p className="graph-analyze-empty">Select a styled graph item to edit its appearance.</p>}
-      </div> : null}
     </div>
   </aside>;
 }

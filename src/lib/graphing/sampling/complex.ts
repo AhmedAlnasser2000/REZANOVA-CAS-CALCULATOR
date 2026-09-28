@@ -93,15 +93,49 @@ export function sampleComplexMapping(input: {
     rgba, values, analyticity: nonHolomorphic ? 'non-holomorphic' : unresolved ? 'unknown' : 'holomorphic',
     ...branch, truncated: input.isCancelled(),
   };
-  const sliceRe: number[] = []; const sliceIm: number[] = [];
-  for (let index = 0; index <= Math.min(320, width * 2); index += 1) {
-    const x = input.viewport.xMin + index / Math.min(320, width * 2) * (input.viewport.xMax - input.viewport.xMin);
+  const slice = realAxisSlice(evaluator, input.viewport, Math.min(320, width * 2), false);
+  return { tile, slice, sampleCount, invalidCount };
+}
+
+export type GraphRealAxisSlice = {
+  re: Float64Array; im: Float64Array; segmentOffsets: Uint32Array; sampleCount: number;
+};
+
+/**
+ * Re f(x) and Im f(x) along the real axis, principal branch. Undefined points
+ * break the segment; with `nonRealOnly`, so do points where f(x) is real, so
+ * the result covers exactly the intervals a real plot leaves blank.
+ */
+function realAxisSlice(evaluator: ReturnType<typeof createComplexNumericEvaluator>, viewport: GraphViewportV1,
+  steps: number, nonRealOnly: boolean): GraphRealAxisSlice {
+  const re: number[] = []; const im: number[] = []; const offsets: number[] = [];
+  let open = false;
+  for (let index = 0; index <= steps; index += 1) {
+    const x = viewport.xMin + index / steps * (viewport.xMax - viewport.xMin);
     const result = evaluator.evaluateAt(complex(x, 0));
-    if (result.status !== 'finite' || !result.value) continue;
-    sliceRe.push(x, result.value.re); sliceIm.push(x, result.value.im);
+    const value = result.status === 'finite' ? result.value : undefined;
+    const keep = value && Number.isFinite(value.re) && Number.isFinite(value.im)
+      && (!nonRealOnly || Math.abs(value.im) > 1e-9 * Math.max(1, Math.abs(value.re)));
+    if (!keep) { open = false; continue; }
+    if (!open) { offsets.push(re.length / 2); open = true; }
+    re.push(x, value.re); im.push(x, value.im);
   }
-  return { tile, sliceRe: new Float64Array(sliceRe), sliceIm: new Float64Array(sliceIm),
-    sampleCount, invalidCount };
+  return { re: new Float64Array(re), im: new Float64Array(im), segmentOffsets: new Uint32Array(offsets),
+    sampleCount: steps + 1 };
+}
+
+/** Opt-in complex values of a real explicit curve y = f(x), where f(x) is not real. */
+export function sampleGraphComplexValues(input: {
+  mathJson: unknown; viewport: GraphViewportV1; cssWidth: number; parameters: Record<string, number>;
+}): GraphRealAxisSlice | null {
+  try {
+    const evaluator = createComplexNumericEvaluator({ expressionMathJson: input.mathJson, target: 'x',
+      parameters: input.parameters });
+    return realAxisSlice(evaluator, input.viewport, Math.max(64, Math.min(1200, Math.round(input.cssWidth))), true);
+  } catch {
+    // Operators outside the complex evaluator: the real curve stands alone.
+    return null;
+  }
 }
 
 export function sampleComplexTrajectory(input: {

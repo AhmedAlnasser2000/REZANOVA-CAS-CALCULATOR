@@ -5,6 +5,12 @@ import type {
   SampledSceneRuntimeV2,
 } from '../../lib/graphing';
 
+const UNTRACEABLE_ROLES = new Set(['teaching-overlay', 'complex-real', 'complex-imaginary']);
+/** Teaching overlays and Re/Im value paths are pictures, never trace authority. */
+function traceable(path: { itemId: string; strokeRole?: string }) {
+  return !path.itemId.startsWith('graph-overlay.') && !UNTRACEABLE_ROLES.has(path.strokeRole ?? 'default');
+}
+
 export type GraphTraceTarget = GraphHitResult & {
   kind: 'path' | 'point' | 'surface';
   pathId?: string;
@@ -126,7 +132,7 @@ export function buildGraphTraceIndex(
     }
   });
   scene.paths.forEach((path, pathIndex) => {
-    if (path.itemId.startsWith('graph-overlay.')) return;
+    if (!traceable(path)) return;
     const starts = new Set(path.segmentOffsets);
     for (let vertexIndex = 1; vertexIndex * 2 + 1 < path.coordinates.length; vertexIndex += 1) {
       if (starts.has(vertexIndex)) continue;
@@ -227,7 +233,7 @@ export function hitTestGraphScene(input: {
 
   for (let pathIndex = 0; pathIndex < input.scene.paths.length; pathIndex += 1) {
     const path = input.scene.paths[pathIndex];
-    if (path.itemId.startsWith('graph-overlay.')) continue;
+    if (!traceable(path)) continue;
     if (input.itemId && path.itemId !== input.itemId) continue;
     const segmentStarts = new Set(path.segmentOffsets);
     for (let vertexIndex = 1; vertexIndex * 2 + 1 < path.coordinates.length; vertexIndex += 1) {
@@ -313,7 +319,7 @@ export function traceGraphPathAtPointer(input: {
   pathId?: string;
 }): GraphTraceTarget | null {
   const pathIndex = input.scene.paths.findIndex((path) => (
-    path.itemId === input.itemId && (!input.pathId || path.pathId === input.pathId)
+    path.itemId === input.itemId && traceable(path) && (!input.pathId || path.pathId === input.pathId)
   ));
   const path = input.scene.paths[pathIndex];
   const parameters = path?.parameterValues;
@@ -390,7 +396,7 @@ export function firstGraphTraceTarget(
       distancePixels: 0,
     });
   }
-  const pathIndex = scene.paths.findIndex((path) => !path.itemId.startsWith('graph-overlay.'));
+  const pathIndex = scene.paths.findIndex(traceable);
   return targetAtPathVertex(scene, viewport, size, pathIndex, 0);
 }
 

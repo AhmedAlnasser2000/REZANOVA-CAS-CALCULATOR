@@ -79,6 +79,7 @@ type GraphExpressionRowProps = {
   runtimeWarning?: string;
   onSubmit: () => void;
   onToggle?: () => void;
+  onToggleComplexValues?: () => void;
   onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
   viewport: GraphViewportV1;
   onUpdateSurfaceBounds?: (bounds?: { xMin: number; xMax: number; yMin: number; yMax: number }) => boolean;
@@ -135,7 +136,7 @@ function GraphPiecewiseDraftRow({
       {draft.branches.map((branch, index) => <div className="graph-piecewise-branch" key={branch.branchId}>
         <span className="graph-piecewise-branch-index">{index + 1}</span>
         <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-value-${branch.branchId}`}
-          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'valueLatex', value)} onSubmit={onCommit} placeholder="value"
+          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'valueLatex', value)} onSubmit={onCommit} placeholder={String.raw`\text{value}`}
           shortcutProfile="graphing" value={branch.valueLatex} />
         <span className="graph-piecewise-if">if</span>
         <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-condition-${branch.branchId}`}
@@ -161,6 +162,10 @@ function GraphPiecewiseDraftRow({
     data-testid="graph-piecewise-authoring-draft"><span className="graph-expression-color" aria-hidden="true" />{editor}</div>;
 }
 
+function complexValuesOn(item: GraphItemSpecV1) {
+  return item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues === true;
+}
+
 function GraphExpressionRow({
   errorVisible,
   item,
@@ -176,6 +181,7 @@ function GraphExpressionRow({
   onSettleParameter,
   onSubmit,
   onToggle,
+  onToggleComplexValues,
   onUpdatePresentation,
   onUpdateParameter,
   runtimeWarning,
@@ -261,13 +267,14 @@ function GraphExpressionRow({
           <MathEditor
             className={`graph-expression-editor${item?.kind === 'piecewise' ? ' graph-piecewise-summary-editor' : ''}`}
             dataTestId={`graph-expression-editor-${itemId}`}
-            onBlur={onBlur}
+            // Show the start of a long formula once editing ends.
+            onBlur={() => { if (editorScrollRef.current) editorScrollRef.current.scrollLeft = 0; onBlur(); }}
             onChange={(latex) => {
               onChange(latex);
               requestAnimationFrame(measureEditorOverflow);
             }}
             onSubmit={onSubmit}
-            placeholder={item ? '' : 'Enter an expression…'}
+            placeholder={item ? '' : String.raw`\text{Enter an expression…}`}
             readOnly={piecewiseEditorOpen}
             shortcutProfile="graphing"
             value={item ? graphItemSourceLatex(item) : ''}
@@ -296,6 +303,10 @@ function GraphExpressionRow({
             className="graph-icon-button" onClick={() => setSurfaceExpanded((open) => !open)} type="button">
             {surfaceExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button> : null}
+          {item.kind === 'relation' && item.relation.kind === 'explicit-y' && onToggleComplexValues ? <button
+            aria-label="Show complex values" aria-pressed={item.relation.complexValues === true}
+            className="graph-icon-button graph-complex-values-toggle" onClick={onToggleComplexValues}
+            title="Show complex values where this curve is not real: Re solid, Im dashed" type="button">ℂ</button> : null}
           <button
             aria-label={hidden ? 'Show graph' : 'Hide graph'}
             className="graph-icon-button"
@@ -680,6 +691,13 @@ export default function GraphWorkspacePage({
           <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
             ? `Real · ${controller.session.surface.panes.real.dimension === '3d' ? 'Three interactive' : 'SVG reference'}`
             : controller.session.surface.viewPolicy.mode === 'complex' ? 'Complex · mapping' : 'Real + Complex'}</span>
+          {controller.autoViewNotice ? <span className="graph-view-notice" data-testid="graph-view-notice" role="status"
+            title={controller.autoViewNotice.to === 'complex'
+              ? 'This expression uses z, the complex variable, so the Complex view opened.'
+              : 'No complex map is left, so the view returned to Real.'}>
+            {controller.autoViewNotice.to === 'complex' ? 'Opened Complex for z' : 'Back to Real'}
+            <button onClick={() => controller.updateViewPolicy(controller.autoViewNotice!.from)} type="button">Undo</button>
+          </span> : null}
         </div>
 
         {gridPanelOpen ? (
@@ -804,6 +822,8 @@ export default function GraphWorkspacePage({
                     focusNextRow(itemId);
                   }}
                   onToggle={item ? () => controller.toggleItem(itemId) : undefined}
+                  onToggleComplexValues={item?.kind === 'relation' && item.relation.kind === 'explicit-y'
+                    ? () => controller.setComplexValues(itemId, !complexValuesOn(item)) : undefined}
                   onUpdatePresentation={item && 'presentation' in item
                     ? (presentation) => { controller.updatePresentation(itemId, presentation); }
                     : undefined}
@@ -901,7 +921,7 @@ export default function GraphWorkspacePage({
           /> : null}
           <GraphAnalyzeIntegration onAddAssumption={controller.addAssumption}
             onRemoveAssumption={controller.removeAssumption} onSetViewport={controller.setViewport}
-            onUpdateAnalyze={controller.updateAnalyze} onUpdatePresentation={controller.updatePresentation}
+            onUpdateAnalyze={controller.updateAnalyze}
             session={controller.session} workspaceContext={workspaceContext} />
           {controller.status.kind === 'sampling' || controller.suppressedPiecewiseItems.size > 0 ? (
             <span className="graph-pending-badge">{controller.suppressedPiecewiseItems.size > 0

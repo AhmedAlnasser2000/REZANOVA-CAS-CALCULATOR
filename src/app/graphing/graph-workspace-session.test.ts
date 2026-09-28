@@ -126,6 +126,17 @@ describe('Graph workspace session V7', () => {
     });
   });
 
+  it('reopens sessions saved on the removed Analyze Style tab on Features instead of dropping them', () => {
+    const current = createGraphWorkspaceSessionState('graph.style', 'Graph');
+    const v7 = { ...current, surface: { ...current.surface, analyze: { ...current.surface.analyze, activeTab: 'style' } } };
+    expect(migrateGraphWorkspaceSessionState(v7)?.surface.analyze.activeTab).toBe('features');
+    const v6 = { ...v7, version: 6, document: { ...current.document, version: 3 },
+      surface: { ...v7.surface, version: 5 } };
+    delete (v6.document as { assumptions?: unknown }).assumptions;
+    delete (v6.surface as { complex?: unknown }).complex;
+    expect(migrateGraphWorkspaceSessionState(v6)?.surface.analyze.activeTab).toBe('features');
+  });
+
   it('renames content without advancing mathematics', () => {
     const current = createGraphWorkspaceSessionState('graph.1', 'Graph');
     expect(renameGraphWorkspaceSessionState(current, 'Named graph')).toMatchObject({

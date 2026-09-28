@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphExpressionIR } from '../../contracts';
 import { compileGraphExpression } from '../../evaluator';
-import { buildGraphGpuRealFieldProgram, GRAPH_GPU_MAX_FIELD_CLAUSES, graphGpuRealFieldValueShading } from './real-field';
+import { graphSurfaceContourStep } from '../../sampling/surface-contours';
+import {
+  buildGraphGpuRealFieldProgram, GRAPH_GPU_MAX_FIELD_CLAUSES, GRAPH_GPU_SURFACE_HEAT_SHADING,
+  graphGpuRealFieldValueShading, graphGpuSurfaceHeatUniforms,
+} from './real-field';
 
 function plan(mathJson: GraphExpressionIR['mathJson'], freeSymbols: string[], planId: string) {
   const compiled = compileGraphExpression({ planId, sourceRevision: 1, expression: { mathJson, freeSymbols } });
@@ -47,5 +51,18 @@ describe('Graph GPU real field programs', () => {
     expect(shading.body).toContain('graphOk0 ? clamp(graphValue0, -1e29, 1e29) : 1e30');
     expect(shading.body).toContain('graphOk1 ? clamp(graphValue1, -1e29, 1e29) : 1e30');
     expect(shading.body).toContain(', 0.0, 0.0);');
+  });
+
+  it('draws a surface height map from a one-clause z - 0 program with the CPU ramp and contour step', () => {
+    const program = buildGraphGpuRealFieldProgram([
+      { left: plan(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y'], 'z'), right: plan(0, [], 'zero'), operator: '=' },
+    ], { key: 'surface@1:surface', fillsRegion: false });
+    if (!('kind' in program)) throw new Error(program.reason);
+    expect(program.clauseCount).toBe(1);
+    expect(graphGpuSurfaceHeatUniforms({ minimum: 0, maximum: 8 })).toEqual({ uRange: [0, 8], uContourStep: graphSurfaceContourStep(0, 8) });
+    expect(graphGpuSurfaceHeatUniforms({ minimum: 2, maximum: 2 }).uContourStep).toBe(0);
+    // Undefined points and points outside the sampled bounds stay transparent.
+    expect(GRAPH_GPU_SURFACE_HEAT_SHADING.body).toContain('if (outside || abs(value) >= 1e29 + 1e28) { outColor = vec4(0.0); return; }');
+    expect(GRAPH_GPU_SURFACE_HEAT_SHADING.body).toContain('graphHsl(0.62 - ratio * 0.52, 0.76, 0.5)');
   });
 });

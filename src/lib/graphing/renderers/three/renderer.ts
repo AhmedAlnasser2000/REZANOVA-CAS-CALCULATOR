@@ -240,7 +240,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
         const geometry = new LineGeometry(); geometry.setPositions(positions);
         const material = new LineMaterial({ color: 0xffffff, linewidth: 2.25, worldUnits: false });
         material.resolution.set(this.size.width, this.size.height);
-        if (path.strokeRole === 'strict-boundary') material.dashed = true;
+        if (path.strokeRole === 'strict-boundary' || path.strokeRole === 'complex-imaginary') material.dashed = true;
         const line = new Line2(geometry, material);
         line.computeLineDistances();
         this.registerItem(path.itemId, line);

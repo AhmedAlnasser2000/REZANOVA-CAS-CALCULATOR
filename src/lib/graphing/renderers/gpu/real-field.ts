@@ -1,4 +1,5 @@
 import type { GraphInequalityComparator } from '../../contracts';
+import { graphSurfaceContourStep } from '../../sampling/surface-contours';
 import type { CompiledGraphExpressionPlan } from '../../evaluator/types';
 import type { GraphGpuShading } from './field-layer';
 import { translateGraphRealPlan, type GraphGpuRealProgramV1, type GraphGpuTranslationRefusal } from './real-program';
@@ -183,3 +184,58 @@ vec4 graphFetch(ivec2 pixel, ivec2 size) { return texelFetch(uField, clamp(pixel
   float alpha = stroke + regionAlpha * (1.0 - stroke);
   outColor = vec4(uColor * alpha, alpha);`,
 };
+
+/**
+ * Pass 2 for a real surface z = f(x, y) seen from above: the 3D surface's
+ * height ramp over the CPU mesh's z range, with light iso-contours (as the
+ * SVG fallback draws them) at the CPU contour step. Pass 1 is the one-clause value shading of
+ * z - 0, so undefined points stay transparent. Uniforms: uField, uRange
+ * (min, max), uContourStep (0 disables), uBounds (xMin, xMax, yMin, yMax of the
+ * sampled domain), uOpacity, uPixelRatio.
+ */
+export const GRAPH_GPU_SURFACE_HEAT_SHADING: GraphGpuShading = {
+  id: 'surface-heat-composite-v1',
+  declarations: `
+uniform highp sampler2D uField;
+uniform vec2 uRange;
+uniform float uContourStep;
+uniform vec4 uBounds;
+uniform float uOpacity;
+uniform float uPixelRatio;
+float graphHue(float low, float high, float t) {
+  if (t < 0.0) t += 1.0;
+  if (t > 1.0) t -= 1.0;
+  if (t < 1.0 / 6.0) return low + (high - low) * 6.0 * t;
+  if (t < 0.5) return high;
+  if (t < 2.0 / 3.0) return low + (high - low) * 6.0 * (2.0 / 3.0 - t);
+  return low;
+}
+vec3 graphHsl(float h, float s, float l) {
+  h = h - floor(h);
+  float high = l <= 0.5 ? l * (1.0 + s) : l + s - l * s;
+  float low = 2.0 * l - high;
+  return vec3(graphHue(low, high, h + 1.0 / 3.0), graphHue(low, high, h), graphHue(low, high, h - 1.0 / 3.0));
+}
+`,
+  body: `
+  float value = texelFetch(uField, ivec2(gl_FragCoord.xy), 0).r;
+  bool outside = graphPoint.x < uBounds.x || graphPoint.x > uBounds.y || graphPoint.y < uBounds.z || graphPoint.y > uBounds.w;
+  if (outside || abs(value) >= 1e29 + 1e28) { outColor = vec4(0.0); return; }
+  float ratio = clamp((value - uRange.x) / max(uRange.y - uRange.x, 1e-30), 0.0, 1.0);
+  vec3 color = graphHsl(0.62 - ratio * 0.52, 0.76, 0.5);
+  if (uContourStep > 0.0) {
+    float band = value / uContourStep;
+    float distance = abs(fract(band + 0.5) - 0.5) / max(fwidth(band), 1e-6);
+    float line = 1.0 - clamp(distance - (0.75 * uPixelRatio - 0.5), 0.0, 1.0);
+    color = mix(color, vec3(1.0), 0.55 * line);
+  }
+  outColor = vec4(color * uOpacity, uOpacity);`,
+};
+
+/** Heat-map uniforms from the CPU mesh's z range, so 2D and 3D share ramp and contour levels. */
+export function graphGpuSurfaceHeatUniforms(range: { minimum: number; maximum: number }) {
+  return {
+    uRange: [range.minimum, range.maximum] as const,
+    uContourStep: range.maximum > range.minimum ? graphSurfaceContourStep(range.minimum, range.maximum) : 0,
+  };
+}

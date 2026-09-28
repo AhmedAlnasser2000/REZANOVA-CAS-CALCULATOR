@@ -275,12 +275,16 @@ export function buildVisibleGraphItem(input: {
       || classified.relation.kind === 'real-surface'
       || classified.relation.kind === 'complex-mapping'
       || classified.relation.kind === 'complex-trajectory')) {
+    // Re-typing a curve keeps its opt-in complex values while it stays y = f(x).
+    const keepComplexValues = input.previous?.kind === 'relation'
+      && input.previous.relation.kind === 'explicit-y' && input.previous.relation.complexValues === true;
     return {
       version: 1,
       kind: 'relation',
       itemId: input.itemId,
       source,
-      relation: classified.relation,
+      relation: keepComplexValues && classified.relation.kind === 'explicit-y'
+        ? { ...classified.relation, complexValues: true } : classified.relation,
       visible,
       presentation: previousPresentation,
     };
@@ -419,6 +423,17 @@ export function updateGraphRealSurfaceBounds(input: {
   });
 }
 
+/** Turns the opt-in Re/Im overlay of a real explicit curve on or off. */
+export function setGraphComplexValues(input: { document: GraphDocumentV4; itemId: string; enabled: boolean }) {
+  const item = input.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'relation' }> => (
+    candidate.itemId === input.itemId && candidate.kind === 'relation'
+  ));
+  if (!item || item.relation.kind !== 'explicit-y' || Boolean(item.relation.complexValues) === input.enabled) return null;
+  const relation = { ...item.relation };
+  if (input.enabled) relation.complexValues = true; else delete relation.complexValues;
+  return replaceGraphDocumentItem(input.document, { ...item, relation });
+}
+
 export function replaceGraphDocumentItem(
   document: GraphDocumentV4,
   item: GraphItemSpecV1,
@@ -524,6 +539,9 @@ export function graphDraftMessage(stop: GraphStopReason) {
   }
   if (stop.detailCode?.startsWith('future-')) {
     return 'This relation is recognized, but its plotting route arrives in the next Graphing moves.';
+  }
+  if (stop.detailCode === 'complex-mapping-coordinate-conflict') {
+    return 'z is the complex variable and cannot be mixed with x or y. Use f(z) = … for a complex map, or z = f(x, y) for a surface.';
   }
   if (stop.detailCode === 'dependent-parameter-definition') {
     return 'Dependent parameter definitions are not supported yet. Use a finite numeric value.';

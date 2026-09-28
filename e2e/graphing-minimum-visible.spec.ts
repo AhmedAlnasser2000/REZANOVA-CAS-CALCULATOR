@@ -106,7 +106,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
     await expect(page.getByRole('button', { name: /Analyze/i })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /Export/i })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Complex' })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Complex', exact: true })).toHaveCount(1);
 
     const reciprocalPath = page.getByTestId('graph-scene-paths').locator('path').nth(2);
     await expect.poll(async () => (
@@ -149,7 +149,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await page.goto('/'); await openGraph(page);
     await enterExpression(page, 'f(z)=z^2+1');
 
-    await expect(page.getByRole('button', { name: 'Complex' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Complex', exact: true })).toHaveAttribute('aria-pressed', 'true');
     const complexViewport = page.getByTestId('graph-complex-viewport');
     await expect(complexViewport).toBeVisible();
     await expect(complexViewport.getByText(/holomorphic/u)).toBeVisible();
@@ -994,8 +994,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.locator('.graph-analysis-marker:not(.is-preview)')).toBeVisible();
     await overlay.getByRole('tab', { name: 'Evidence' }).click();
     await expect(overlay.getByText('degree-at-most-two polynomial identity').first()).toBeVisible();
-    await overlay.getByRole('tab', { name: 'Style' }).click();
-    await expect(overlay.getByRole('dialog', { name: 'Curve style' })).toBeVisible();
+    await expect(overlay.getByRole('tab', { name: 'Style' })).toHaveCount(0);
     await overlay.getByRole('tab', { name: 'Features' }).click();
 
     const beforeRecenter = await page.getByTestId('graph-scene-grid').locator('[data-grid-line="axis"]').first().getAttribute('d');

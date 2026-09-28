@@ -54,6 +54,7 @@ import type {
 } from './graph-workspace-controller-types';
 import { graphAutoFitViewport } from './graph-auto-fit';
 import { useGraphSessionActions } from './useGraphSessionActions';
+import { useGraphViewAutoSwitch } from './graph-view-auto-switch';
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
@@ -77,6 +78,7 @@ export function useGraphWorkspaceController({
   const [blankItemId, setBlankItemId] = useState(() => `${workspaceContext.workspaceInstanceId}.item.1`);
   const [historyAvailability, setHistoryAvailability] = useState({ canRedo: false, canUndo: false });
   const sessionRef = useRef(session);
+  const { applyAutoView, autoViewNotice, dismissAutoView, markManualView } = useGraphViewAutoSwitch();
   const resultRef = useRef(sampleResult);
   const retiredResultsRef = useRef<GraphSampleResultV6[]>([]);
   const activeSamplingItemIdRef = useRef<string | null>(null);
@@ -196,17 +198,13 @@ export function useGraphWorkspaceController({
       previous,
     });
     const document = replaceGraphDocumentItem(current.document, item);
-    const authoredComplex = item.kind === 'relation'
-      && (item.relation.kind === 'complex-mapping' || item.relation.kind === 'complex-trajectory');
-    const next = {
+    const next = applyAutoView(current, {
       ...current,
       document,
       surface: previous?.kind === 'parameter' || item.kind === 'parameter'
         ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
-        : authoredComplex && current.surface.viewPolicy.mode === 'real'
-          ? { ...current.surface, viewPolicy: { mode: 'complex' as const, interpretation: 'complex-mapping' as const } }
-          : current.surface,
-    };
+        : current.surface,
+    });
     if (!previous && itemId === blankItemId && sourceLatex.trim()) {
       setBlankItemId(nextItemId());
     }
@@ -219,37 +217,40 @@ export function useGraphWorkspaceController({
     });
     setStatus({ kind: 'editing', label: 'Updating graph…' });
     commitSession(next);
-  }, [blankItemId, commitSession, nextItemId, pushHistory]);
+  }, [applyAutoView, blankItemId, commitSession, nextItemId, pushHistory]);
 
   const removeItem = useCallback((itemId: string) => {
     const current = sessionRef.current;
     const item = current.document.items.find((candidate) => candidate.itemId === itemId);
     if (!item) return;
     pushHistory(current.document, null);
-    const next = {
+    // A deleted item can be neither selected nor the sampling priority.
+    if (activeSamplingItemIdRef.current === itemId) activeSamplingItemIdRef.current = null;
+    const surface = item.kind === 'parameter'
+      ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
+      : current.surface;
+    const next = applyAutoView(current, {
       ...current,
       document: removeGraphDocumentItem(current.document, itemId),
-      surface: item.kind === 'parameter'
-        ? { ...current.surface, parameterRevision: current.surface.parameterRevision + 1 }
-        : current.surface,
-    };
+      surface: surface.selectedItemId === itemId ? { ...surface, selectedItemId: null } : surface,
+    });
     activeInputRevisionRef.current = null;
     commitSession(next, true);
-  }, [commitSession, pushHistory]);
+  }, [applyAutoView, commitSession, pushHistory]);
 
   const blurItem = useCallback((itemId: string) => {
     endTypingTransaction();
     const current = sessionRef.current;
     const item = current.document.items.find((candidate) => candidate.itemId === itemId);
     if (item && !graphItemSourceLatex(item).trim()) {
-      commitSession({
+      commitSession(applyAutoView(current, {
         ...current,
         document: removeGraphDocumentItem(current.document, itemId),
-      }, true);
+      }), true);
       return;
     }
     persistSoon(current, true);
-  }, [commitSession, endTypingTransaction, persistSoon]);
+  }, [applyAutoView, commitSession, endTypingTransaction, persistSoon]);
 
   const addPointSet = useCallback(() => {
     const itemId = blankItemId;
@@ -556,7 +557,7 @@ export function useGraphWorkspaceController({
     history.redo = [...history.redo, { document: current.document, appearance: current.surface.appearance }];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
-    commitSession({
+    commitSession(applyAutoView(current, {
       ...current,
       document: restoredGraphDocument(current.document, snapshot.document),
       surface: {
@@ -566,9 +567,9 @@ export function useGraphWorkspaceController({
           ? current.surface.parameterRevision + 1
           : current.surface.parameterRevision,
       },
-    }, true);
+    }), true);
     publishHistoryAvailability();
-  }, [commitSession, publishHistoryAvailability]);
+  }, [applyAutoView, commitSession, publishHistoryAvailability]);
 
   const redo = useCallback(() => {
     const history = historyRef.current;
@@ -579,7 +580,7 @@ export function useGraphWorkspaceController({
     history.undo = [...history.undo, { document: current.document, appearance: current.surface.appearance }];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
-    commitSession({
+    commitSession(applyAutoView(current, {
       ...current,
       document: restoredGraphDocument(current.document, snapshot.document),
       surface: {
@@ -589,9 +590,9 @@ export function useGraphWorkspaceController({
           ? current.surface.parameterRevision + 1
           : current.surface.parameterRevision,
       },
-    }, true);
+    }), true);
     publishHistoryAvailability();
-  }, [commitSession, publishHistoryAvailability]);
+  }, [applyAutoView, commitSession, publishHistoryAvailability]);
 
   const setViewport = useCallback((viewport: GraphViewportV1) => {
     if (!isFiniteGraphViewport(viewport)) return;
@@ -610,19 +611,23 @@ export function useGraphWorkspaceController({
   const {
     addAssumption,
     removeAssumption,
+    setComplexValues,
     toggleRail,
     updateAnalyze,
     updateAppearance,
     updateComplexView,
     updateGrid,
     updatePaneView,
-    updateViewPolicy,
+    updateViewPolicy: commitViewPolicy,
   } = useGraphSessionActions({
     commitSession,
     pushHistory,
     sessionRef,
     workspaceInstanceId: workspaceContext.workspaceInstanceId,
   });
+  const updateViewPolicy = useCallback((mode: 'real' | 'complex' | 'both') => {
+    markManualView(); commitViewPolicy(mode);
+  }, [commitViewPolicy, markManualView]);
 
   const updatePresentation = useCallback((itemId: string, presentation: GraphItemPresentationV2) => {
     const current = sessionRef.current;
@@ -883,6 +888,8 @@ export function useGraphWorkspaceController({
     beginPiecewiseDraft,
     commitPiecewiseDraft,
     autoFit,
+    autoViewNotice,
+    dismissAutoView,
     blankItemId,
     blurItem,
     canRedo: historyAvailability.canRedo,
@@ -903,6 +910,7 @@ export function useGraphWorkspaceController({
     selectItem,
     session,
     setActiveSamplingItem,
+    setComplexValues,
     setViewport,
     status,
     toggleItem,
@@ -929,6 +937,8 @@ export function useGraphWorkspaceController({
     beginPiecewiseDraft,
     commitPiecewiseDraft,
     autoFit,
+    autoViewNotice,
+    dismissAutoView,
     blankItemId,
     blurItem,
     createParameters,
@@ -948,6 +958,7 @@ export function useGraphWorkspaceController({
     selectItem,
     session,
     setActiveSamplingItem,
+    setComplexValues,
     setViewport,
     status,
     toggleItem,

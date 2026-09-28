@@ -148,8 +148,15 @@ export function GraphSvgViewport({
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [size, setSize] = useState<Size>({ width: 960, height: 600 });
   const getGpuSlot = useCallback(() => rendererRef.current?.getGpuSlot() ?? null, []);
+  const surfaceRanges = useMemo(() => new Map((spatialScene?.surfaceMeshes ?? []).map((mesh) => {
+    let minimum = Infinity; let maximum = -Infinity;
+    for (let index = 2; index < mesh.positions.length; index += 3) {
+      minimum = Math.min(minimum, mesh.positions[index]!); maximum = Math.max(maximum, mesh.positions[index]!);
+    }
+    return [mesh.itemId, { minimum, maximum }] as const;
+  }).filter(([, range]) => Number.isFinite(range.minimum))), [spatialScene]);
   const { draw: gpuDraw, status: gpuStatus, suppressed: gpuSuppressed } = useGraphRealFieldGpu({
-    document, enabled: gpuRendering === 'auto', getSlot: getGpuSlot, presentation,
+    document, enabled: gpuRendering === 'auto', getSlot: getGpuSlot, presentation, surfaceRanges,
   });
   const gpuDrawRef = useRef(gpuDraw);
   const gestureLaneRef = useRef(gestureLane);
@@ -427,6 +434,8 @@ export function GraphSvgViewport({
     || spatialScene.planarScene.paths.some((path) => !path.itemId.startsWith('graph-overlay.'))
     || spatialScene.planarScene.regions.length > 0 || spatialScene.planarScene.pointBatches.length > 0)
     || gpuStatus.gpuItems > 0;
+  const hasComplexValues = spatialScene?.planarScene.paths.some((path) => (
+    path.strokeRole === 'complex-real' || path.strokeRole === 'complex-imaginary')) ?? false;
   const gpuChipText = gpuStatus.gpuItems === 0
     ? (gpuStatus.reasons.includes('deep zoom uses precise CPU rendering') ? 'Precise mode' : 'Standard rendering')
     : gpuStatus.gpuItems === gpuStatus.candidates ? 'GPU' : `GPU ${gpuStatus.gpuItems}/${gpuStatus.candidates}`;
@@ -441,8 +450,13 @@ export function GraphSvgViewport({
     {gpuStatus.candidates > 0 ? <span className={`graph-real-renderer is-${gpuStatus.gpuItems > 0 ? 'gpu' : 'cpu'}`}
       data-testid="graph-real-renderer"
       title={gpuStatus.reasons.length > 0 ? [...new Set(gpuStatus.reasons)].join('; ')
-        : 'Implicit curves and regions are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
+        : 'Implicit curves, regions and surface height maps are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
       {gpuChipText}</span> : null}
+    {hasComplexValues ? <span className="graph-complex-legend" data-testid="graph-complex-legend"
+      title="Where a curve's value is not real: principal-branch real and imaginary parts">
+      <svg aria-hidden="true" height="6" width="22"><line x1="1" x2="21" y1="3" y2="3" /></svg> Re
+      <svg aria-hidden="true" height="6" width="22"><line strokeDasharray="5 4" x1="1" x2="21" y1="3" y2="3" /></svg> Im
+    </span> : null}
     {!hasGeometry ? <div className="graph-viewport-empty" aria-hidden="true"><span>Enter an x-based expression to begin</span><small>Try x² − 4 or sin(x)</small></div> : null}
   </div>;
 }

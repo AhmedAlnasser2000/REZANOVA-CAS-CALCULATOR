@@ -148,7 +148,26 @@ async function runRealFieldGpuSmoke(session) {
   return { chip, screenshot };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu) {
+async function runSurfaceHeatSmoke(session) {
+  // Same row, now a real surface: 2D draws it as a GPU height map over the hidden SVG bands.
+  await waitFor('surface expression', () => execute(session, `
+    const field = document.querySelectorAll('math-field')[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue('z=x^2-y^2');
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  const heat = await waitFor('surface height map', () => execute(session, `
+    const chip = document.querySelector('[data-testid="graph-real-renderer"]');
+    const bands = [...document.querySelectorAll('[data-testid="graph-scene-surfaces"] path')];
+    if (!chip || /starting/u.test(chip.title) || bands.length === 0) return null;
+    return { chip: { text: chip.textContent, title: chip.title },
+      visibleSvgBands: bands.filter((band) => band.style.display !== 'none').length };`), 30_000);
+  await delay(1000);
+  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
+  return { ...heat, screenshot };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -161,6 +180,9 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu) {
   }
   if (complexGpu && complexGpu.chip.text !== 'GPU') failures.push(`complex pane is not GPU-rendered: ${complexGpu.chip.text} (${complexGpu.chip.title})`);
   if (realGpu && realGpu.chip.text !== 'GPU') failures.push(`real fields are not GPU-rendered: ${realGpu.chip.text} (${realGpu.chip.title})`);
+  if (surfaceHeat && (surfaceHeat.chip.text !== 'GPU' || surfaceHeat.visibleSvgBands > 0)) {
+    failures.push(`2D surface is not a GPU height map: ${surfaceHeat.chip.text}, ${surfaceHeat.visibleSvgBands} SVG bands visible`);
+  }
   return failures;
 }
 
@@ -207,14 +229,21 @@ try {
     realGpu = { chip: real.chip };
     if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-real.png', Buffer.from(real.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu) : [];
+  let surfaceHeat = null;
+  if (smoke) {
+    log('running 2D surface height-map smoke');
+    const heat = await runSurfaceHeatSmoke(sessionId);
+    surfaceHeat = { chip: heat.chip, visibleSvgBands: heat.visibleSvgBands };
+    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-heat.png', Buffer.from(heat.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

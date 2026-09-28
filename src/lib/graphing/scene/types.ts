@@ -24,7 +24,7 @@ export type GraphPathSampleSceneInput = {
 export type GraphSampledPathSceneInput = {
   pathId: string;
   sample: GraphPathSampleSceneInput;
-  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay';
+  strokeRole?: 'default' | 'strict-boundary' | 'teaching-overlay' | 'complex-real' | 'complex-imaginary';
   closed?: boolean;
 };
 

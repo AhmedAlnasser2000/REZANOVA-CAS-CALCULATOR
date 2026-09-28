@@ -234,25 +234,56 @@
   display: inline-flex;
   gap: 2px;
   padding: 2px;
-  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  border: 1px solid rgba(191, 208, 198, 0.16);
   border-radius: 9px;
-  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+  background: rgba(4, 13, 16, 0.55);
 }
 
 .graph-domain-switch button,
 .graph-complex-toolbar button {
   min-height: 28px;
   padding: 0 9px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 7px;
-  color: var(--text-muted);
+  color: #9fb3a8;
   background: transparent;
+  cursor: pointer;
+}
+
+.graph-domain-switch button:hover,
+.graph-complex-toolbar button:hover {
+  color: #eaf6ee;
 }
 
 .graph-domain-switch button[aria-pressed='true'],
 .graph-complex-toolbar button[aria-pressed='true'] {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+  /* Same selected state as the 2D/3D switch (graphing-three.css). */
+  border-color: rgba(89, 221, 136, 0.34);
+  color: #eaf6ee;
+  background: rgba(89, 221, 136, 0.13);
+}
+
+.graph-view-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid rgba(89, 221, 136, 0.3);
+  border-radius: 999px;
+  color: #cfe3d7;
+  background: rgba(89, 221, 136, 0.08);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.graph-view-notice button {
+  padding: 2px 9px;
+  border: 1px solid rgba(191, 208, 198, 0.22);
+  border-radius: 999px;
+  color: #eaf6ee;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
 }
 
 .graph-viewport-panel.is-both {
@@ -998,6 +1029,11 @@
   pointer-events: none;
 }
 
+/* Keep the hint centred in the space the Analyze panel leaves visible. */
+.graph-viewport-panel:has(.graph-analyze-overlay) .graph-viewport-empty {
+  padding-right: min(50%, 420px);
+}
+
 .graph-viewport-empty span {
   color: #b9cac0;
   font-size: 0.94rem;
@@ -1148,4 +1184,38 @@
 .graph-real-renderer.is-gpu {
   border-color: rgba(120, 220, 170, .55);
   color: #a9f0cb;
+}
+
+/* Legend for opt-in Re/Im value paths (real curves and z-map axis slices). */
+.graph-complex-legend {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid rgba(144, 190, 179, .32);
+  border-radius: 999px;
+  color: #cfe6df;
+  background: rgba(7, 21, 23, .78);
+  font-size: 11px;
+  pointer-events: auto;
+}
+
+.graph-complex-legend line {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.graph-complex-values-toggle {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.graph-complex-values-toggle[aria-pressed='true'] {
+  border-color: rgba(89, 221, 136, .34);
+  color: #eaf6ee;
+  background: rgba(89, 221, 136, .13);
 }

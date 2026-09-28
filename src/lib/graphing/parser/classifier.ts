@@ -35,6 +35,7 @@ import {
 const CARTESIAN_COORDINATES = new Set(['x', 'y']);
 const POLAR_COORDINATES = new Set(['r', 'theta']);
 const ALL_COORDINATES = new Set([...CARTESIAN_COORDINATES, ...POLAR_COORDINATES, 'z']);
+const COMPLEX_VARIABLE = new Set(['z']);
 const PARAMETRIC_SHORTHAND_SYMBOLS = ['t', 'u', 's'] as const;
 const COMPARISON_OPERATORS = new Set(['Equal', 'Greater', 'GreaterEqual', 'Less', 'LessEqual']);
 const UNSAFE_TOP_LEVEL_OPERATORS = new Set([
@@ -432,6 +433,12 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
     };
   }
 
+  // z is the complex variable. Beside x or y it is never a slider parameter;
+  // the only real use is the surface form z = f(x, y).
+  if (expressionsUseAny([left.expression, right.expression], COMPLEX_VARIABLE)
+    && !(target === 'z' && !right.expression.freeSymbols.includes('z'))) {
+    return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+  }
   if (target === 'y' && !right.expression.freeSymbols.includes('y')) {
     if (expressionUsesAny(right.expression, POLAR_COORDINATES)) {
       return graphParserFailure('coordinate-parameter-conflict', 'explicit-y-coordinate-conflict', path);
@@ -477,6 +484,9 @@ function classifyComparison(input: unknown, path: string): GraphSourceClassifica
   if (!parsed.ok) return parsed;
   if (expressionsUseAny(parsed.chain.operands, POLAR_COORDINATES)) {
     return graphParserFailure('coordinate-parameter-conflict', 'inequality-polar-mix', path);
+  }
+  if (expressionsUseAny(parsed.chain.operands, COMPLEX_VARIABLE)) {
+    return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
   }
   if (!expressionsUseAny(parsed.chain.operands, CARTESIAN_COORDINATES)) {
     return graphParserFailure('unsupported-relation', 'scalar-inequality', path);
