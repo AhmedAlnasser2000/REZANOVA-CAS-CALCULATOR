@@ -139,5 +139,13 @@
 - A universal solver AST or shared mathematical interchange IR requires a dedicated approved architecture milestone with inventories, semantic-loss analysis, branch/assumption/proof requirements, conversion laws, performance evidence, and per-domain migration gates. It must not merge worker, host, capability, OOE, or replay ownership.
 - If a new capability needs result structure not representable by `CanonicalResultDocumentV2` or the approved V3 angle-quantity primary, extend and version the canonical result contract first. Do not smuggle new semantics through titles, prose, detail strings, metadata labels, or canonical LaTeX alone.
 
+## Agent Attention Signals
+- The user does not watch agents while they work. `tools/agent-attention/` reads the end of each agent turn and alerts the user only when their attention is needed. See `docs/workflow/agent-attention-brief.md`.
+- When a decision must not be made by the agent alone, end the turn with a final line `ATTENTION: critical — <one-sentence question>` and stop. Critical means irreversible or destructive actions, data loss, security, credentials, history rewrites, or approval to start a controlled or critical task route.
+- For an ordinary blocking question, such as commit or push approval or a choice between reasonable options, end the turn with `ATTENTION: question — <one-sentence question>` and stop.
+- Decide minor, reversible choices yourself, note them in the handoff, and continue without a marker.
+- Silence is never approval. An unanswered critical question is never treated as consent. Do not continue past it; after expiry the user resumes the agent.
+- A turn without a marker is reported as finished, so put the marker only on turns that truly block.
+
 ## Scope
 - This policy is project-local and should be followed automatically in future sessions for this repository.

@@ -1,6 +1,6 @@
 # REZANOVA Agent Attention — Brief
 
-Status: draft brief (purpose and principles only). Implementation scope, channels, and architecture are not yet specified or approved.
+Status: v1 approved and implemented on branch `rezanova-agent-attention`; sound design and phone replies remain future work.
 
 ## 1. Purpose
 
@@ -142,13 +142,16 @@ The purpose is not to increase communication with agents. The purpose is to make
 
 Being at the PC or away from it should make no difference. The user should be able to study, work, or live normally while agents run in the background, without the constant thought of needing to check on them.
 
-## 5. To Be Specified
+## 5. v1 Decisions (2026-09-28)
 
-These follow from sections 1–4 but still need decisions before any implementation:
+Implemented in [`tools/agent-attention/`](../../tools/agent-attention/README.md).
 
-- Event taxonomy: silent, question, critical decision, failure/crash/unresponsive, completion, and question expiry.
-- Criteria separating "minor reversible" decisions (the agent decides) from decisions that need attention.
-- Notification channels: desktop and mobile, and how each severity is delivered.
-- Safe-block and safe-stop semantics, expiry windows, and what "stop safely" means for uncommitted work.
-- How each agent (Codex, Claude, others) emits events: hooks, wrappers, or log watching.
-- Boundary: a development-side utility only. It must not become a runtime dependency of the calculator app, consistent with `AGENTS.md`.
+- **Notify only.** No reply channel in v1. Replying later goes through SSH over Tailscale into the agent's tmux session. SSH is never exposed publicly.
+- **Agents:** Claude Code (CLI and VS Code) via its hooks, and Codex CLI via its `notify` program. Cloud sessions are out of scope.
+- **Channels:** Pushover on the iPhone, plus Linux desktop notifications.
+- **Signal:** agents end a blocking turn with `ATTENTION: critical — …` or `ATTENTION: question — …`. The rule lives in `AGENTS.md` under "Agent Attention Signals". A turn without a marker is reported as finished.
+- **Critical questions:** re-alert after 30 minutes and expire after 2 hours. On expiry nothing is approved, the agent stays stopped, and a handoff note is written.
+- **Failures and stalls:** `attn launch` runs agents in tmux, reports crashes from their exit status, and flags working sessions with no activity for 30 minutes.
+- **Completion:** alerts with sound, except turns shorter than 60 seconds, where the user was probably watching.
+- **Sounds:** each event type has its own sound. None may be harsh, including critical. The final set is still to be chosen with the user; v1 ships gentle placeholders.
+- **Boundary:** a development-side utility, installed into user-level agent config. The calculator app never depends on it.

@@ -3343,3 +3343,13 @@
 ## 2026-09-28 - Graph GPU surfaces
 
 - [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] Real surfaces in the 3D pane are drawn by a vertex-shader grid over the CPU sampler's domain (relation bounds, else the sampled viewport) as display only. The CPU mesh stays in the scene, hidden, for picking, trace, bounds, focus and export. The GPU height ramp and contour levels use its range and may lag a parameter move until settlement. Grid density adapts to the second-frame interval after a render; a compile failure returns the item to its CPU mesh with a visible reason.
+
+## 2026-09-28 - Agent Attention v1
+
+- [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] REZANOVA Agent Attention v1 is a development-side, notify-only tool under `tools/agent-attention/` on branch `rezanova-agent-attention`. It covers:
+  - agents: local Claude Code (hooks) and Codex CLI (`notify`);
+  - channels: Pushover on the iPhone plus Linux desktop;
+  - signal: agents mark blocking turns with `ATTENTION: critical|question — …`;
+  - timing: critical questions re-alert at 30 min and expire at 2 h. Expiry never implies approval.
+
+  Hooks install into user-level config only, never into repo `.codex/config.toml`. Phone replies, if added later, go through SSH over Tailscale into the agent's tmux session; no bespoke reply channel. Sounds must be gentle, including for critical alerts.
