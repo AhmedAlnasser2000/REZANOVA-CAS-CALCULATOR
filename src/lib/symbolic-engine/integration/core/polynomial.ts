@@ -1,5 +1,6 @@
 import { demand, type ExecutionContext } from './execution';
-import type { ExactField, ExactRing } from './field';
+import { OwnedValidation } from './owned-validation';
+import { rationalField, type ExactField, type ExactRing } from './field';
 
 export interface Polynomial<E, D extends ExactRing<E> = ExactField<E>> {
   readonly ring: PolynomialRing<E, D>;
@@ -11,6 +12,7 @@ export class PolynomialRing<E, D extends ExactRing<E> = ExactField<E>> {
   readonly domain: D;
   readonly variable: string;
   #values = new WeakSet<object>();
+  #validation = new OwnedValidation();
   constructor(domain: D & ExactRing<E>, variable: string) {
     demand(domain.characteristic === 0, 'domain-mismatch', 'requires characteristic zero');
     demand(typeof variable === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(variable),
@@ -21,8 +23,14 @@ export class PolynomialRing<E, D extends ExactRing<E> = ExactField<E>> {
   assert(ctx: ExecutionContext, a: Polynomial<E, D>): void {
     ctx.tick();
     demand(typeof a === 'object' && a !== null && this.#values.has(a), 'domain-mismatch', 'polynomial ring');
-    ctx.degree(a.coefficients.length - 1);
-    for (const c of a.coefficients) this.domain.assert(ctx, c);
+    const validate = () => {
+      ctx.degree(a.coefficients.length - 1);
+      for (const c of a.coefficients) this.domain.assert(ctx, c);
+    };
+    // Only Q coefficients have a closed, immutable scalar representation here.
+    // Custom ring implementations may own values with mutable nested state.
+    if (Object.is(this.domain, rationalField)) this.#validation.check(ctx, a, validate);
+    else validate();
   }
   make(ctx: ExecutionContext, coefficients: readonly E[]): Polynomial<E, D> {
     demand(Array.isArray(coefficients), 'invalid-input', 'coefficient array');

@@ -1,7 +1,9 @@
 import { demand, type ExecutionContext } from './execution';
+import { OwnedValidation } from './owned-validation';
 
 export interface Rational { readonly numerator: bigint; readonly denominator: bigint }
 const values = new WeakSet<object>();
+const validation = new OwnedValidation();
 export type IntegerInput = bigint | string | number;
 
 export function integerInput(ctx: ExecutionContext, input: IntegerInput): bigint {
@@ -18,7 +20,9 @@ export function integerInput(ctx: ExecutionContext, input: IntegerInput): bigint
 }
 
 export function integerGcd(ctx: ExecutionContext, a: bigint, b: bigint): bigint {
-  ctx.integer(a); ctx.integer(b);
+  const ab = ctx.integer(a), bb = ctx.integer(b);
+  if (a < 0n) ctx.allocate(Math.ceil(ab / 64));
+  if (b < 0n) ctx.allocate(Math.ceil(bb / 64));
   a = a < 0n ? -a : a; b = b < 0n ? -b : b;
   while (b !== 0n) { const r = ctx.remainder(a, b); a = b; b = r; }
   return a;
@@ -38,7 +42,7 @@ export function rational(ctx: ExecutionContext, numerator: IntegerInput, denomin
 export function assertRational(ctx: ExecutionContext, value: Rational): void {
   ctx.tick();
   demand(typeof value === 'object' && value !== null && values.has(value), 'domain-mismatch', 'unowned rational');
-  ctx.integer(value.numerator); ctx.integer(value.denominator);
+  validation.check(ctx, value, () => { ctx.integer(value.numerator); ctx.integer(value.denominator); });
 }
 export function rationalEqual(ctx: ExecutionContext, a: Rational, b: Rational): boolean {
   assertRational(ctx, a); assertRational(ctx, b);

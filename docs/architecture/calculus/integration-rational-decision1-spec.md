@@ -95,3 +95,7 @@ The next adoption gate must explicitly settle input lowering and original-expres
 - verified_by_agent_model: gpt-6-astra
 - verified_by_agent_family: astra
 - attribution_basis: live
+
+## 2026-09-28 performance follow-up
+
+The decision milestone is committed as `3a96622c`. [INTEGRATION-RATIONAL-PROOF-PERFORMANCE1](integration-rational-proof-performance1-spec.md) accelerates construction and replay with operation-local checked reuse and shared-denominator proof arithmetic. The mathematical and version-1 artifact contracts above are unchanged. Its same-machine acceptance results and preserved baseline artifact are recorded separately; historical decision-gate timings remain evidence of that original implementation.

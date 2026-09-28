@@ -1,7 +1,8 @@
 # Elementary Integration Reconstruction Roadmap
 
 Date: 2026-09-27
-Status: exact algebra, rational representation and automatic normalized-Q(x) integration with replayable derivations are backend-verified private capabilities. Later-stage details and sequencing remain provisional and subject to change when necessary.
+Updated: 2026-09-28
+Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are backend-verified private capabilities. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
 
@@ -17,18 +18,21 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **`INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified and committed as `89cbc176`**, with 84 focused tests at its checkpoint. The [representation specification](integration-rational-representation1-spec.md) records the ring/integral-domain/field distinction, verified Brown subresultants, square-free quotient units/CRT, exact local-complex root-log primitives, trace differentiation, retained conditions and private replay.
 
-**`INTEGRATION-RATIONAL-DECISION1` is implemented under its approved CRITICAL root-only plan**, with 122 focused core tests and the required TypeScript, scoped lint, boundary, memory, size and diff checks passing. The [decision specification](integration-rational-decision1-spec.md) records deterministic Hermite reduction, verified indexed LRT selection through degree-loss splits, automatic normalized-Q(x) primitives and complete replayable derivations. There is no application caller. The user subsequently authorized this separate integration-only commit checkpoint; no push. Next: review rational adoption, including lowering/original exclusions, result authority and branch/display semantics; generic quintic verification is still expensive (about 42 seconds in the recorded test).
+**`INTEGRATION-RATIONAL-DECISION1` is backend-verified and committed as `3a96622c`**, with 122 focused tests at that checkpoint. The [decision specification](integration-rational-decision1-spec.md) records automatic normalized-Q(x) primitives, exact conditions and full replayable Hermite/LRT derivations. There is no application caller.
+
+**`INTEGRATION-RATIONAL-PROOF-PERFORMANCE1` is implemented and benchmark-verified**, with 138 focused tests, preserved v1 artifacts and mandatory exact proofs. Same-machine quintic medians improve complete integration 42.961 s → 3.215 s (13.36x), fresh verification 8.295 s → 0.059 s (140.14x), and decoding 8.952 s → 0.273 s (32.81x). All corpus operations pass the regression threshold. The [performance specification](integration-rational-proof-performance1-spec.md) records bounded operation-local caches, checked shared-denominator proof arithmetic and reproducible evidence. The user subsequently authorized this integration-only milestone commit; no push. Next: separately review rational adoption, including lowering/original exclusions, result authority and branch/display semantics.
 
 
 ## Updated implementation sequence
 
-The first three backend gates are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
+The first three foundation gates and their proof-performance follow-up are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
 
 | Stage | Milestone | Prerequisites and work | Exit evidence |
 | --- | --- | --- | --- |
 | 1 (backend verified; not adopted) | `INTEGRATION-EXACT-ALGEBRA1` | Implement bigint rationals, generic polynomials/fractions, GCD/extended GCD, square-free decomposition, rectangular exact linear systems and bounded artifacts; exercise Q(t) coefficients. | Backend: laws, reconstruction/residual identities, precision regressions, resource stops and private isolation. |
 | 2 (backend verified; not adopted) | `INTEGRATION-RATIONAL-REPRESENTATION1` | Stage 1; ring/domain separation, Brown subresultants, square-free quotient units/CRT, formal root-log primitives, trace differentiation and private codec. | Backend: independent determinant oracles, checked candidate derivatives, retained conditions, mutation/resource/replay evidence; no app adoption. |
 | 3 (backend verified; not adopted) | `INTEGRATION-RATIONAL-DECISION1` | Stages 1–2; Hermite reduction, residue extraction, LRT subresultant selection and specialization rules, automatic primitive construction for Q(x). | Backend: exact primitive/decomposition verification, full certificate replay, degree-loss/coverage mutations and shared-budget stops over normalized Q(x). |
+| 3 follow-up (backend verified; not adopted) | `INTEGRATION-RATIONAL-PROOF-PERFORMANCE1` | Exact validation, operation-scoped immutable proof reuse and shared-denominator checking; preserve certificates and all limits. | Backend: both 5x targets exceeded, no material corpus regression, fresh v1 replay and adversarial trust/resource checks. |
 | 4 | `INTEGRATION-RATIONAL-ADOPTION1` | Rational backend plus reviewed result representation; resolve standard-MathJSON encoding versus explicitly approved new contract, and reconcile V4 policy wording before any version widening. | Backend and UI: ordinary and algebraic-log output, conditions, copy/replay, worker cancellation/fallback, authority ratchets and Playwright. |
 | 5 | `INTEGRATION-DIFFERENTIAL-FIELD1` | Exact fields and valid defining relations; generic parameter fields, derivations, relation-aware towers, constant-field hypotheses and input conversion. Pull algebraic arithmetic forward where required. | Backend: derivation/conversion laws, dependent generators, preserved exclusions and truthful unknown decisions. |
 | 6 | `INTEGRATION-TRANSCENDENTAL-DECISION1` | Validated towers and required lower-field algorithms; recursive RDE bounds, limited integration, logarithmic derivatives and Liouville reductions. | Backend and UI on adoption: checked positive/negative certificates with explicit domain hypotheses. |

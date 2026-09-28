@@ -37,7 +37,7 @@ function array(ctx: ExecutionContext, input: unknown): readonly unknown[] {
   }
   return input;
 }
-export function encodePrimitive(ctx: ExecutionContext, candidate: FormalPrimitive): PrimitiveWire {
+function encodePrimitiveWithin(ctx: ExecutionContext, candidate: FormalPrimitive): PrimitiveWire {
   const owner = candidate.owner; owner.assert(ctx, candidate); owner.verifyConditions(ctx, candidate, candidate.conditions);
   ctx.allocate(candidate.terms.length * 4 + owner.x.variable.length + owner.z.variable.length + 10);
   const terms = candidate.terms.map(term => {
@@ -51,7 +51,7 @@ export function encodePrimitive(ctx: ExecutionContext, candidate: FormalPrimitiv
       logNorms: Object.freeze(candidate.conditions.logNorms.map(p => encodePolynomial(ctx, owner.x, p))) }) });
 }
 /** Reconstruct fresh domain ownership; stored proof authority is never accepted. */
-export function decodePrimitive(ctx: ExecutionContext, input: unknown, expected: { readonly variable: string; readonly residueVariable: string }): FormalPrimitive {
+function decodePrimitiveWithin(ctx: ExecutionContext, input: unknown, expected: { readonly variable: string; readonly residueVariable: string }): FormalPrimitive {
   ctx.allocate(expected.variable.length + expected.residueVariable.length + 20);
   return decodePrimitiveInDomain(ctx, new FormalPrimitiveDomain(expected.variable, expected.residueVariable), input);
 }
@@ -85,4 +85,11 @@ export function decodePrimitiveInDomain(ctx: ExecutionContext, owner: FormalPrim
   owner.verifyConditions(ctx, result, { rationalDenominator: decodePolynomial(ctx, owner.x, conditions.rationalDenominator),
     logNorms: array(ctx, conditions.logNorms).map(c => decodePolynomial(ctx, owner.x, c)) });
   return result;
+}
+
+export function encodePrimitive(ctx: ExecutionContext, candidate: FormalPrimitive): PrimitiveWire {
+  return ctx.operation(() => encodePrimitiveWithin(ctx, candidate));
+}
+export function decodePrimitive(ctx: ExecutionContext, input: unknown, expected: { readonly variable: string; readonly residueVariable: string }): FormalPrimitive {
+  return ctx.operation(() => decodePrimitiveWithin(ctx, input, expected));
 }

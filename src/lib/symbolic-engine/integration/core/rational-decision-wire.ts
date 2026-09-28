@@ -6,7 +6,7 @@ import { SquareFreeQuotientAlgebra } from './quotient-algebra';
 import type { HermiteCertificate } from './hermite-reduction';
 import type { LrtCertificate, LrtComponent, LrtGroup, ResiduePartitionNode } from './lrt-reduction';
 import type { PrimitiveDerivativeCertificate } from './primitive-verification';
-import { verifyRationalDecision, type DecisionConditions, type RationalDecision } from './rational-decision';
+import { verifyRationalDecisionWithin, type DecisionConditions, type RationalDecision } from './rational-decision-internal';
 import { array, record, structure, list, integer, optional, scalar, polynomial, fraction, division, bezout, squareFreeEvidence,
   prsEvidence, quotientElement, unitEvidence, type EvidenceCodec } from './decision-wire-algebra';
 
@@ -96,8 +96,8 @@ function derivativeCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain, pr
   };
 }
 /** Saves every certificate, including norm PRS and inverse/trace evidence. */
-export function encodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
-  verifyRationalDecision(ctx, owner, decision.input, decision);
+function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
+  verifyRationalDecisionWithin(ctx, owner, decision.input, decision);
   const c = codecs(ctx, owner); ctx.allocate(11 + owner.x.variable.length + owner.z.variable.length + decision.primitive.terms.length);
   return Object.freeze({ kind: 'rational-integration-decision', version: 1, variable: owner.x.variable, residueVariable: owner.z.variable,
     input: c.f.encode(decision.input), primitive: encodePrimitive(ctx, decision.primitive),
@@ -106,7 +106,7 @@ export function encodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimi
     derivative: derivativeCodec(ctx, owner, decision.primitive).encode(decision.derivative), conditions: c.decisionConditions.encode(decision.conditions) });
 }
 /** Explicit expected input is mandatory. Replay never invokes the integration producers. */
-export function decodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimitiveDomain, expected: QRationalFunction, value: unknown): RationalDecision {
+function decodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, expected: QRationalFunction, value: unknown): RationalDecision {
   owner.fractions.assert(ctx, expected);
   const raw = record(ctx, value, ['kind', 'version', 'variable', 'residueVariable', 'input', 'primitive', 'normEvidence', 'hermite', 'lrt', 'derivative', 'conditions']);
   demand(raw.kind === 'rational-integration-decision' && raw.version === 1 && raw.variable === owner.x.variable && raw.residueVariable === owner.z.variable,
@@ -118,5 +118,14 @@ export function decodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimi
   const hermite = c.hermite.decode(raw.hermite), lrt = optional(lrtCodec(ctx, owner, primitive)).decode(raw.lrt);
   const derivative = derivativeCodec(ctx, owner, primitive).decode(raw.derivative), conditions = c.decisionConditions.decode(raw.conditions);
   ctx.allocate(6); const decision = Object.freeze({ input, primitive, hermite, lrt, derivative, conditions });
-  verifyRationalDecision(ctx, owner, expected, decision); return decision;
+  verifyRationalDecisionWithin(ctx, owner, expected, decision); return decision;
+}
+
+// Public operations always receive fresh validation state.
+export function encodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
+  return ctx.operation(() => encodeRationalDecisionWithin(ctx, owner, decision));
+}
+
+export function decodeRationalDecision(ctx: ExecutionContext, owner: FormalPrimitiveDomain, expected: QRationalFunction, value: unknown): RationalDecision {
+  return ctx.operation(() => decodeRationalDecisionWithin(ctx, owner, expected, value));
 }
