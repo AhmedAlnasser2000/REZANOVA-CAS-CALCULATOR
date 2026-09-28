@@ -21,6 +21,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:agent-attention": "node --test tools/agent-attention/agent-attention.test.mjs",
     "test:memory-protocol": "node --test tools/validate-memory-protocol.test.mjs && node tools/validate-memory-protocol.mjs",
     "test:codex-agent-workflow": "node --test tools/validate-codex-agent-workflow.test.mjs && node tools/validate-codex-agent-workflow.mjs",
     "test:canonical-result-v2-enforcement": "node --test tools/canonical-result-v2-enforcement.test.mjs && node tools/canonical-result-v2-enforcement.mjs && vitest run src/lib/result-contract/v2-contract.test.ts src/lib/result-contract/mathjson-coverage.test.ts && npm run test:display-contract-inversion",

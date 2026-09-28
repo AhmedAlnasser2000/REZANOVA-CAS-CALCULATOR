@@ -3358,3 +3358,13 @@
   - every switch shows a short notice with Undo; the automatic flag is not persisted.
 - [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] Analyze has Features and Evidence only; per-item style lives on the row swatch. Persisted `activeTab: 'style'` stays schema-valid and migrates to `'features'`. Complex solve is shown only for a selected complex mapping.
 - [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] In the 2D pane, `z = f(x, y)` draws as a GPU height map (visual evaluation only) with the 3D ramp and shared contour step. The SVG bands are the fallback, and the CPU mesh remains the trace authority.
+
+## 2026-09-28 - Agent Attention v1
+
+- [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] REZANOVA Agent Attention v1 is a development-side, notify-only tool under `tools/agent-attention/` on branch `rezanova-agent-attention`. It covers:
+  - agents: local Claude Code (hooks) and Codex CLI (`notify`);
+  - channels: Pushover on the iPhone plus Linux desktop;
+  - signal: agents mark blocking turns with `ATTENTION: critical|question — …`;
+  - timing: critical questions re-alert at 30 min and expire at 2 h. Expiry never implies approval.
+
+  Hooks install into user-level config only, never into repo `.codex/config.toml`. Phone replies, if added later, go through SSH over Tailscale into the agent's tmux session; no bespoke reply channel. Sounds must be gentle, including for critical alerts.

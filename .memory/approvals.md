@@ -142,3 +142,12 @@
   source: chat-2026-09-27-graphing-gpu-program-plan-approval
   canonical_targets: docs/architecture/graphing/graph-arc-terra-program.md; .memory/sessions/2026-09/2026-09-27/2026-09-27__graphing-gpu-feasibility1/program-plan.md; AGENTS.md; .memory/PROTOCOL.md; tools/validate-memory-protocol.mjs
   notes: The user approved the plan in plan mode, then said "i allow commiting, so dont stop at each gate". Push remains unapproved. The Move 27 stop condition (no hardware WebGL2 in the packaged app) did not trigger.
+- approved_at_local: 2026-09-28
+  approver: user
+  decision: Approve the REZANOVA Agent Attention v1 plan, including the new AGENTS.md "Agent Attention Signals" workflow section, developed on branch rezanova-agent-attention rather than main.
+  recorded_by_agent: claude
+  recorded_by_agent_model: claude-opus-5-5
+  recorded_by_agent_family: opus-5.5
+  source: chat-2026-09-28-agent-attention-plan-approval
+  canonical_targets: AGENTS.md; tools/agent-attention/; docs/workflow/agent-attention-brief.md
+  notes: Decided by questionnaire: notify-only, Claude Code plus Codex CLI, Pushover on the iPhone, re-alert 30 min / stop 2 h, the marker plus AGENTS.md rule, a tmux launcher, user-level hook install. Sound design is deferred at the user's request.
