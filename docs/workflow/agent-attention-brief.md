@@ -1,6 +1,6 @@
 # REZANOVA Agent Attention — Brief
 
-Status: v1 approved and implemented on branch `rezanova-agent-attention`; sound design and phone replies remain future work.
+Status: v1 approved, implemented and merged to `main` (developed on `rezanova-agent-attention`). Sound design and phone replies remain future work.
 
 ## 1. Purpose
 

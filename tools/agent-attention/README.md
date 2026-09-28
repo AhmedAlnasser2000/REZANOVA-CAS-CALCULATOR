@@ -21,10 +21,10 @@ An answer is detected automatically for Claude Code (your next prompt or tool ap
 
 ## Setup (Linux PC)
 
-1. **Install from a dedicated checkout.** The hooks point at this file's path, so it must stay present even when your main checkout switches branches:
+1. **Pull `main` and add an alias.** The hooks point at this file inside your checkout, so keep that checkout on a branch that contains `tools/agent-attention/`. `main` does.
    ```bash
-   git worktree add ~/agent-attention rezanova-agent-attention
-   alias attn="node ~/agent-attention/tools/agent-attention/attn.mjs"   # add to ~/.bashrc
+   git pull
+   alias attn="node \"$PWD/tools/agent-attention/attn.mjs\""   # run from the repo root; add the expanded line to ~/.bashrc
    ```
 2. **Pushover on the iPhone:** install the Pushover app (one-time purchase after the trial). Create an application at pushover.net to get an **API token**; your **user key** is on the pushover.net dashboard.
 3. **Install:**
