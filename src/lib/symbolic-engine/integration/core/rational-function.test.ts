@@ -42,3 +42,21 @@ describe('recursive Q(t) coefficients', () => {
     expect(() => f.add(c, t, other.fromInteger(c, 1n))).toThrowError(/domain-mismatch/);
   });
 });
+
+describe('verified rational arithmetic shortcuts', () => {
+  it('preserves exact identities, immutability and ownership for zero, one and shared denominators', () => {
+    const c = context(), r = rationalRing(), f = new RationalFunctionField(r);
+    const a = f.make(c, poly(c, r, [1, 2]), poly(c, r, [3, 0, 1]));
+    const zero = f.fromInteger(c, 0n), one = f.fromInteger(c, 1n);
+    expect(f.add(c, a, zero)).toBe(a); expect(f.add(c, zero, a)).toBe(a);
+    expect(f.multiply(c, a, one)).toBe(a); expect(f.multiply(c, one, a)).toBe(a);
+    expect(f.multiply(c, a, zero)).toBe(zero); expect(f.multiply(c, zero, a)).toBe(zero);
+    const double = f.make(c, poly(c, r, [2, 4]), poly(c, r, [3, 0, 1]));
+    expect(f.equal(c, f.add(c, a, a), double)).toBe(true);
+    expect(Object.isFrozen(a)).toBe(true); expect(Object.isFrozen(a.numerator.coefficients)).toBe(true);
+    const foreign = new RationalFunctionField(r).fromInteger(c, 0n);
+    expect(() => f.add(c, one, foreign)).toThrow(/domain-mismatch/);
+    expect(() => f.multiply(c, zero, foreign)).toThrow(/domain-mismatch/);
+    expect(() => f.multiply(context({ work: 0 }), one, a)).toThrow(/resource-limit/);
+  });
+});

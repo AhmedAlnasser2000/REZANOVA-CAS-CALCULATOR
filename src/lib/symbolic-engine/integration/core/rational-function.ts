@@ -25,12 +25,20 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
     const r = this.ring;
     r.assert(ctx, numerator); r.assert(ctx, denominator);
     demand(!r.isZero(ctx, denominator), 'division-by-zero', 'rational function denominator');
-    const gcd = polynomialGcd(ctx, r, numerator, denominator);
-    let n = exactDivide(ctx, r, numerator, gcd), d = exactDivide(ctx, r, denominator, gcd);
-    const inverse = r.domain.inverse(ctx, r.leading(ctx, d));
-    n = r.scale(ctx, n, inverse); d = r.scale(ctx, d, inverse);
+    let n: Polynomial<E>, d: Polynomial<E>;
+    if (r.degree(ctx, denominator) === 0) {
+      // A nonzero constant is a unit: normalization needs no Euclidean algorithm.
+      n = r.scale(ctx, numerator, r.domain.inverse(ctx, r.leading(ctx, denominator))); d = r.one(ctx);
+    } else if (r.isZero(ctx, numerator)) { n = r.zero(ctx); d = r.one(ctx); }
+    else {
+      const gcd = polynomialGcd(ctx, r, numerator, denominator);
+      n = exactDivide(ctx, r, numerator, gcd); d = exactDivide(ctx, r, denominator, gcd);
+      const inverse = r.domain.inverse(ctx, r.leading(ctx, d));
+      n = r.scale(ctx, n, inverse); d = r.scale(ctx, d, inverse);
+    }
     demand(r.domain.equal(ctx, r.leading(ctx, d), r.domain.fromInteger(ctx, 1n)), 'verification-failed', 'fraction denominator not monic');
-    demand(r.equal(ctx, polynomialGcd(ctx, r, n, d), r.one(ctx)), 'verification-failed', 'fraction not coprime');
+    // Monic degree-zero denominator is exactly one, hence coprime to every numerator.
+    demand(r.degree(ctx, d) === 0 || r.equal(ctx, polynomialGcd(ctx, r, n, d), r.one(ctx)), 'verification-failed', 'fraction not coprime');
     demand(r.equal(ctx, r.multiply(ctx, n, denominator), r.multiply(ctx, numerator, d)), 'verification-failed', 'fraction normalization changed value');
     ctx.allocate(3);
     const value = Object.freeze({ field: this, numerator: n, denominator: d });
@@ -46,12 +54,19 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
   negate(ctx: ExecutionContext, a: RationalFunction<E>) { this.assert(ctx, a); return this.make(ctx, this.ring.negate(ctx, a.numerator), a.denominator); }
   add(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) {
     this.assert(ctx, a); this.assert(ctx, b); const r = this.ring;
+    if (r.isZero(ctx, a.numerator)) return b;
+    if (r.isZero(ctx, b.numerator)) return a;
+    if (r.equal(ctx, a.denominator, b.denominator)) return this.make(ctx, r.add(ctx, a.numerator, b.numerator), a.denominator);
     const g = polynomialGcd(ctx, r, a.denominator, b.denominator);
     const ad = exactDivide(ctx, r, a.denominator, g), bd = exactDivide(ctx, r, b.denominator, g);
     return this.make(ctx, r.add(ctx, r.multiply(ctx, a.numerator, bd), r.multiply(ctx, b.numerator, ad)), r.multiply(ctx, ad, b.denominator));
   }
   multiply(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) {
     this.assert(ctx, a); this.assert(ctx, b); const r = this.ring;
+    if (r.isZero(ctx, a.numerator)) return a;
+    if (r.isZero(ctx, b.numerator)) return b;
+    if (r.equal(ctx, a.numerator, a.denominator)) return b;
+    if (r.equal(ctx, b.numerator, b.denominator)) return a;
     const g = polynomialGcd(ctx, r, a.numerator, b.denominator), h = polynomialGcd(ctx, r, b.numerator, a.denominator);
     return this.make(ctx,
       r.multiply(ctx, exactDivide(ctx, r, a.numerator, g), exactDivide(ctx, r, b.numerator, h)),

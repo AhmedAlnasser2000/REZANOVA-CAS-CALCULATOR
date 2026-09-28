@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 ## Purpose
 
@@ -26,7 +26,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 ## Active Context
 
 - Matrix/Vector editors compose supported scalar, matrix, and vector expressions with exact/symbolic coefficients and explicit shape, type, divisor, and limit stops. Named values stay in their own Matrix or Vector workspace, while Calculate evaluates inline Matrix/Vector expressions as answers using its own scalar variables. The 8 by 8 Matrix and length-8 Vector editing caps remain. The latest main-based merge snapshot passed 4,554 unit and 607 UI tests, a production build, and two headed Chrome checks. No push is authorized.
-- Integration reconstruction (2026-09-27; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified as private representation and candidate-derivative infrastructure: ring/domain/field capabilities, verified Brown subresultants, square-free quotient units/CRT, exact local-complex root-log primitives, retained conditions and strict private replay. 84 focused tests (all 60 original tests retained), incremental TypeScript, scoped lint, compartment/OOE and memory/size/diff checks pass; evidence is in the representation dossier. No app caller or automatic integration. Earlier exact algebra is committed as `31561aab`, design as `3c5a292a`; the user has authorized this gate's separate integration-only commit checkpoint, including successful repository lint/build (two existing Graphing warnings; see dossier). No push. Next: plan `INTEGRATION-RATIONAL-DECISION1` (Hermite, residues, LRT selection/specialization and construction). Roadmap remains revisable; product branch/display/result adoption is a separate gate. Concurrent Graphing/Matrix work and older subsystem postures below are not reverified.
+- Integration reconstruction (2026-09-28 commit checkpoint; codex / gpt-6-astra / astra): user-approved CRITICAL root-only `INTEGRATION-RATIONAL-DECISION1` now implements automatic normalized-Q(x) integration with Hermite reduction, indexed LRT selection through verified component splits, retained denominator/norm conditions and complete certificate replay. All 122 focused core tests pass (all 84 prior tests retained); incremental TypeScript, scoped lint and compartment/OOE checks pass. Memory/size/diff checks also pass; evidence is in the decision dossier. Generic quintic cost is about 42 seconds, localized by stage profiling to derivative evidence/checking (~33 s) and final replay (~8 s); Hermite/LRT are ~0.21 s. No app caller. The user subsequently authorized this milestone commit; no push. Earlier representation is committed as `89cbc176`. Next: separately review rational adoption, input lowering/original exclusions, result authority and branch/display semantics. Roadmap remains revisable; concurrent Graphing/Matrix work is preserved and not reverified.
 
 - Workspace: `Calcwiz`.
 - Live checkout: `/home/ahmed/Downloads/Calculator`.

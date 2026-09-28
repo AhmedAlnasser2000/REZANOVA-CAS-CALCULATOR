@@ -1,6 +1,6 @@
 import { demand, type ExecutionContext } from './execution';
 import { decodePolynomial, encodePolynomial, type ExactWire } from './exact-wire';
-import { FormalPrimitiveDomain, type FormalPrimitive } from './formal-primitive';
+import { FormalPrimitiveDomain, type FormalPrimitive, type RootLogTerm } from './formal-primitive';
 
 interface TermWire {
   readonly modulus: ExactWire;
@@ -52,23 +52,30 @@ export function encodePrimitive(ctx: ExecutionContext, candidate: FormalPrimitiv
 }
 /** Reconstruct fresh domain ownership; stored proof authority is never accepted. */
 export function decodePrimitive(ctx: ExecutionContext, input: unknown, expected: { readonly variable: string; readonly residueVariable: string }): FormalPrimitive {
-  const raw = record(ctx, input, ['kind', 'version', 'variable', 'residueVariable', 'rationalPart', 'terms', 'conditions']);
-  demand(raw.kind === 'formal-local-complex-primitive' && raw.version === 1 && raw.variable === expected.variable
-    && raw.residueVariable === expected.residueVariable, 'domain-mismatch', 'representation version/variables');
   ctx.allocate(expected.variable.length + expected.residueVariable.length + 20);
-  const owner = new FormalPrimitiveDomain(expected.variable, expected.residueVariable);
+  return decodePrimitiveInDomain(ctx, new FormalPrimitiveDomain(expected.variable, expected.residueVariable), input);
+}
+/** Bind existing wire structure to a caller-owned domain; optionally replay saved norm certificates. */
+export function decodePrimitiveInDomain(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: unknown,
+  normEvidence?: readonly RootLogTerm['normEvidence'][]): FormalPrimitive {
+  const raw = record(ctx, input, ['kind', 'version', 'variable', 'residueVariable', 'rationalPart', 'terms', 'conditions']);
+  demand(raw.kind === 'formal-local-complex-primitive' && raw.version === 1 && raw.variable === owner.x.variable
+    && raw.residueVariable === owner.z.variable, 'domain-mismatch', 'representation version/variables');
   const fraction = record(ctx, raw.rationalPart, ['numerator', 'denominator']);
   const numerator = decodePolynomial(ctx, owner.x, fraction.numerator), denominator = decodePolynomial(ctx, owner.x, fraction.denominator);
   const rationalPart = owner.fractions.make(ctx, numerator, denominator);
   demand(owner.x.equal(ctx, numerator, rationalPart.numerator) && owner.x.equal(ctx, denominator, rationalPart.denominator),
     'invalid-input', 'noncanonical rational-function artifact');
-  const terms = array(ctx, raw.terms).map(inputTerm => {
+  const rawTerms = array(ctx, raw.terms);
+  demand(normEvidence === undefined || normEvidence.length === rawTerms.length, 'invalid-input', 'norm evidence coverage');
+  const terms = rawTerms.map((inputTerm, i) => {
     const term = record(ctx, inputTerm, ['modulus', 'weight', 'argument']);
     const modulus = decodePolynomial(ctx, owner.z, term.modulus), weight = decodePolynomial(ctx, owner.z, term.weight);
     const coefficients = array(ctx, term.argument); ctx.degree(coefficients.length - 1);
     const argument = owner.arguments.make(ctx, coefficients.map(c => decodePolynomial(ctx, owner.z, c)));
     demand(argument.coefficients.length === coefficients.length, 'invalid-input', 'noncanonical argument trailing zero');
-    const result = owner.term(ctx, modulus, weight, argument);
+    const result = normEvidence === undefined ? owner.term(ctx, modulus, weight, argument)
+      : owner.termFromEvidence(ctx, modulus, weight, argument, normEvidence[i]);
     demand(owner.z.equal(ctx, result.weight, weight) && owner.arguments.equal(ctx, result.argument, argument),
       'invalid-input', 'unreduced representation coefficients');
     return result;

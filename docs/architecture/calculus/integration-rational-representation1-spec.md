@@ -102,3 +102,7 @@ Next: `INTEGRATION-RATIONAL-DECISION1` owns Hermite reduction, residue extractio
 - verified_by_agent_model: gpt-6-astra
 - verified_by_agent_family: astra
 - attribution_basis: live
+
+## 2026-09-27 decision-gate handoff
+
+The [rational decision gate](integration-rational-decision1-spec.md) now builds automatic normalized-Q(x) primitives on these representations. It adds a separate full-derivation codec, factors primitive domain binding into `decodePrimitiveInDomain`, and supports replaying supplied norm evidence through `termFromEvidence`. Existing wire formats and this milestone's original candidate-verification contract remain unchanged. Ring-only monic division does not widen field division or turn quotient algebras into fields.

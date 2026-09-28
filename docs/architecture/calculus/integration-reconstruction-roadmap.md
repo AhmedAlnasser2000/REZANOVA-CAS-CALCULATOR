@@ -1,7 +1,7 @@
 # Elementary Integration Reconstruction Roadmap
 
 Date: 2026-09-27
-Status: exact algebra and rational representation are backend-verified private foundations. Later-stage details and sequencing remain provisional and subject to change when necessary.
+Status: exact algebra, rational representation and automatic normalized-Q(x) integration with replayable derivations are backend-verified private capabilities. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
 
@@ -15,17 +15,20 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **`INTEGRATION-EXACT-ALGEBRA1` is backend-verified and committed as `31561aab`** under its [specification](integration-exact-algebra1-spec.md), following the earlier design checkpoint `3c5a292a`.
 
-**`INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified under the user-approved CRITICAL root-only plan**, with 84 focused tests and the required TypeScript, lint, boundary, memory, size and diff checks passing. The [representation specification](integration-rational-representation1-spec.md) records the ring/integral-domain/field distinction, verified Brown subresultants, square-free quotient units and CRT, exact local-complex root-log primitives, trace differentiation, retained conditions and private replay. There is no app caller or automatic integration. The user subsequently authorized this milestone commit; no push. Next: plan `INTEGRATION-RATIONAL-DECISION1` for Hermite reduction, residue extraction and LRT selection/construction.
+**`INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified and committed as `89cbc176`**, with 84 focused tests at its checkpoint. The [representation specification](integration-rational-representation1-spec.md) records the ring/integral-domain/field distinction, verified Brown subresultants, square-free quotient units/CRT, exact local-complex root-log primitives, trace differentiation, retained conditions and private replay.
+
+**`INTEGRATION-RATIONAL-DECISION1` is implemented under its approved CRITICAL root-only plan**, with 122 focused core tests and the required TypeScript, scoped lint, boundary, memory, size and diff checks passing. The [decision specification](integration-rational-decision1-spec.md) records deterministic Hermite reduction, verified indexed LRT selection through degree-loss splits, automatic normalized-Q(x) primitives and complete replayable derivations. There is no application caller. The user subsequently authorized this separate integration-only commit checkpoint; no push. Next: review rational adoption, including lowering/original exclusions, result authority and branch/display semantics; generic quintic verification is still expensive (about 42 seconds in the recorded test).
+
 
 ## Updated implementation sequence
 
-The first two backend gates are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
+The first three backend gates are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
 
 | Stage | Milestone | Prerequisites and work | Exit evidence |
 | --- | --- | --- | --- |
 | 1 (backend verified; not adopted) | `INTEGRATION-EXACT-ALGEBRA1` | Implement bigint rationals, generic polynomials/fractions, GCD/extended GCD, square-free decomposition, rectangular exact linear systems and bounded artifacts; exercise Q(t) coefficients. | Backend: laws, reconstruction/residual identities, precision regressions, resource stops and private isolation. |
 | 2 (backend verified; not adopted) | `INTEGRATION-RATIONAL-REPRESENTATION1` | Stage 1; ring/domain separation, Brown subresultants, square-free quotient units/CRT, formal root-log primitives, trace differentiation and private codec. | Backend: independent determinant oracles, checked candidate derivatives, retained conditions, mutation/resource/replay evidence; no app adoption. |
-| 3 | `INTEGRATION-RATIONAL-DECISION1` | Stages 1–2; Hermite reduction, residue extraction, LRT subresultant selection and specialization rules, automatic primitive construction for Q(x). | Backend: exact primitive/decomposition verification over the declared rational domain, with resource stops distinguished from incompleteness. |
+| 3 (backend verified; not adopted) | `INTEGRATION-RATIONAL-DECISION1` | Stages 1–2; Hermite reduction, residue extraction, LRT subresultant selection and specialization rules, automatic primitive construction for Q(x). | Backend: exact primitive/decomposition verification, full certificate replay, degree-loss/coverage mutations and shared-budget stops over normalized Q(x). |
 | 4 | `INTEGRATION-RATIONAL-ADOPTION1` | Rational backend plus reviewed result representation; resolve standard-MathJSON encoding versus explicitly approved new contract, and reconcile V4 policy wording before any version widening. | Backend and UI: ordinary and algebraic-log output, conditions, copy/replay, worker cancellation/fallback, authority ratchets and Playwright. |
 | 5 | `INTEGRATION-DIFFERENTIAL-FIELD1` | Exact fields and valid defining relations; generic parameter fields, derivations, relation-aware towers, constant-field hypotheses and input conversion. Pull algebraic arithmetic forward where required. | Backend: derivation/conversion laws, dependent generators, preserved exclusions and truthful unknown decisions. |
 | 6 | `INTEGRATION-TRANSCENDENTAL-DECISION1` | Validated towers and required lower-field algorithms; recursive RDE bounds, limited integration, logarithmic derivatives and Liouville reductions. | Backend and UI on adoption: checked positive/negative certificates with explicit domain hypotheses. |
@@ -49,7 +52,7 @@ Parameters, branch interpretation, exact proof verification and mixed-field repr
 
 ## Decisions remaining before later gates
 
-- Stage 3–4: automatic rational integration and product-facing algebraic-root/log-sum output; local-complex internal semantics are fixed in Stage 2, while branch/display policy and a standard encoding proof or explicit new result-contract approval remain prerequisites. The existing V4 governance wording also needs reconciliation before widening.
+- Stage 4: input lowering/original exclusions and product-facing algebraic-root/log-sum output; local-complex internal semantics are fixed in Stage 2, while branch/display policy and a standard encoding proof or explicit new result-contract approval remain prerequisites. The existing V4 governance wording also needs reconciliation before widening.
 - Stage 5–6: effective constant-extension and dependency algorithms beyond Q and generic rational parameter fields; theorem hypotheses and complete lower-field RDE/limited-integration obligations.
 - Stage 7–9: concrete integral-basis/local/divisor implementations and their effective-field requirements. General algorithms must not be replaced by genus-specific templates while retaining a completeness claim.
 - Adoption/closeout: exceptional parameter partitions and bounded main-thread fallback behavior; decide exact runtime budgets using measured workloads.

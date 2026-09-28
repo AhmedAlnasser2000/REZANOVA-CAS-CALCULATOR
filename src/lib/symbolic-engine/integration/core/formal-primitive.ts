@@ -82,9 +82,18 @@ export class FormalPrimitiveDomain {
     ctx.allocate(argument.coefficients.length + 6);
     const reducedArgument = this.arguments.make(ctx, argument.coefficients.map(c => polynomialDivide(ctx, this.z, c, modulus).remainder));
     const normEvidence = subresultants(ctx, this.elimination, this.liftModulusForNorm(ctx, modulus), this.transpose(ctx, reducedArgument));
+    return this.termFromEvidence(ctx, modulus, reducedWeight, reducedArgument, normEvidence);
+  }
+  /** Restore an owned term by replaying supplied norm evidence, without generating a PRS. */
+  termFromEvidence(ctx: ExecutionContext, modulus: QPolynomial, weight: QPolynomial, argument: BivariatePolynomial,
+    normEvidence: RootLogTerm['normEvidence']): RootLogTerm {
+    this.z.assert(ctx, modulus); this.z.assert(ctx, weight); this.arguments.assert(ctx, argument);
+    new SquareFreeQuotientAlgebra(ctx, this.z, modulus);
     const norm = normEvidence.resultant;
     demand(!this.x.isZero(ctx, norm), 'invalid-input', 'log argument identically zero on a component');
-    const term = Object.freeze({ owner: this, modulus, weight: reducedWeight, argument: reducedArgument, norm, normEvidence });
+    ctx.allocate(6);
+    const term = Object.freeze({ owner: this, modulus, weight, argument, norm, normEvidence });
+    // Registration is private and the candidate cannot escape before verification.
     this.#terms.add(term); this.verifyTerm(ctx, term); return term;
   }
   assertTerm(ctx: ExecutionContext, term: RootLogTerm) {
