@@ -31,8 +31,16 @@ function glslFloat(value: number) {
 export function translateGraphRealPlan(
   plan: CompiledGraphExpressionPlan,
   coordinates: { x: string; y: string } = { x: 'x', y: 'y' },
+  options: {
+    /** GLSL function name; relations with several expressions need distinct names. */
+    functionName?: string;
+    /** Shared parameter slots when several expressions feed one shader. */
+    parameterNames?: string[];
+  } = {},
 ): GraphGpuRealProgramV1 | GraphGpuTranslationRefusal {
-  const parameterNames: string[] = [];
+  const functionName = options.functionName ?? 'graphReal';
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(functionName)) return { ok: false, reason: 'invalid-function-name' };
+  const parameterNames: string[] = options.parameterNames ?? [];
   const ops: GraphGpuRealOp[] = [];
   for (const instruction of plan.instructions) {
     if (instruction.kind === 'literal') {
@@ -53,7 +61,7 @@ export function translateGraphRealPlan(
       ops.push({ kind: 'operator', operator: instruction.operator, arity: instruction.arity });
     }
   }
-  const glsl = emitRealGlsl(ops);
+  const glsl = emitRealGlsl(ops, functionName);
   if (!glsl.ok) return glsl;
   return { kind: 'real', key: `${plan.planId}@${plan.sourceRevision}`, ops, parameterNames, glsl: glsl.source };
 }
@@ -73,7 +81,7 @@ float graphJsRoot(float a, float n, inout bool ok) {
 }
 `;
 
-function emitRealGlsl(ops: GraphGpuRealOp[]): { ok: true; source: string } | GraphGpuTranslationRefusal {
+function emitRealGlsl(ops: GraphGpuRealOp[], functionName: string): { ok: true; source: string } | GraphGpuTranslationRefusal {
   const lines: string[] = [];
   const stack: string[] = [];
   let next = 0;
@@ -140,7 +148,7 @@ function emitRealGlsl(ops: GraphGpuRealOp[]): { ok: true; source: string } | Gra
   }
   return {
     ok: true,
-    source: `float graphReal(vec2 p, out bool ok) {\n  ok = true;\n${lines.join('\n')}\n  return ${stack[0]};\n}\n`,
+    source: `float ${functionName}(vec2 p, out bool ok) {\n  ok = true;\n${lines.join('\n')}\n  return ${stack[0]};\n}\n`,
   };
 }
 

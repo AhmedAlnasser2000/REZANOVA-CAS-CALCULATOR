@@ -48,3 +48,26 @@ export function nextGraphGpuRenderScale(
   if (frameMs < budgetMs * 0.6) return Math.min(1, state.scale * 1.1);
   return state.scale;
 }
+
+/** Display period assumed when the GPU cannot be timed directly (60 Hz). */
+const DISPLAY_FRAME_MS = 1000 / 60;
+
+/**
+ * Frame cost fed to the adaptive scale. Timer queries measure the GPU frame
+ * directly. Without them (WebKitGTK, SwiftShader, most browsers) the delay
+ * from submitting a frame to the next animation frame stands in: a GPU that
+ * keeps up returns at the next vsync, a slower one pushes that frame back.
+ * Missing a 60 Hz frame reads as over budget, landing on vsync as cheap, and
+ * the band between holds the scale steady.
+ */
+export function graphGpuFrameCostMs(
+  gpuFrameMs: number | null,
+  presentLatencyMs: number | null,
+  budgetMs = 16.7,
+): number {
+  if (gpuFrameMs !== null && Number.isFinite(gpuFrameMs)) return gpuFrameMs;
+  if (presentLatencyMs === null || !Number.isFinite(presentLatencyMs)) return Number.NaN;
+  if (presentLatencyMs > DISPLAY_FRAME_MS * 1.25) return budgetMs * 1.5;
+  if (presentLatencyMs < DISPLAY_FRAME_MS * 1.1) return budgetMs * 0.5;
+  return budgetMs;
+}

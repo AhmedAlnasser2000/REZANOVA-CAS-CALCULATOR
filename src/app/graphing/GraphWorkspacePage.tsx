@@ -55,6 +55,7 @@ import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
 import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
 import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
+import { useGraphGestureSampling } from './useGraphGestureSampling';
 
 type GraphWorkspacePageProps = {
   gpuRendering?: 'auto' | 'off';
@@ -565,6 +566,7 @@ export default function GraphWorkspacePage({
   const hasPolarRelation = controller.session.document.items.some((item) => (
     item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
   ));
+  const gestureLane = useGraphGestureSampling({ cssSize: viewportSize, document: controller.session.document, workspaceContext });
   const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
     ?? scene?.complexTiles[0] ?? null;
 
@@ -871,6 +873,7 @@ export default function GraphWorkspacePage({
 
         <section className={`graph-viewport-panel is-${controller.session.surface.viewPolicy.mode}`} aria-label="Graph viewport">
           {controller.session.surface.viewPolicy.mode !== 'complex' ? <GraphViewportHost
+            document={controller.session.document} gestureLane={gestureLane} gpuRendering={gpuRendering}
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}

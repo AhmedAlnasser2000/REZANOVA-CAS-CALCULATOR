@@ -120,6 +120,11 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
 
   private size: Size = { width: 1, height: 1 };
   private svg: SVGSVGElement | null = null;
+  private geometrySvg: SVGSVGElement | null = null;
+  private gpuSlot: HTMLDivElement | null = null;
+  private suppressedItems: ReadonlySet<string> = new Set();
+  private gesturePaths: SVGGElement | null = null;
+  private gestureFrame: { sourceViewport: GraphViewportV1; projectionSize: Size; itemIds: Set<string> } | null = null;
   private gridLines: SVGGElement | null = null;
   private gridCircles: SVGGElement | null = null;
   private labels: SVGGElement | null = null;
@@ -137,9 +142,16 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
 
   mount(target: HTMLElement) {
     this.dispose();
+    // Grid SVG, GPU field slot, geometry SVG: GPU-drawn fields sit above the
+    // grid and below CPU curves, points, and markers.
     const svg = svgElement('svg');
-    svg.classList.add('graph-svg-canvas', 'graph-svg-geometry-canvas');
+    svg.classList.add('graph-svg-canvas', 'graph-svg-grid-canvas');
     svg.setAttribute('aria-hidden', 'true');
+    const geometrySvg = svgElement('svg');
+    geometrySvg.classList.add('graph-svg-canvas', 'graph-svg-geometry-canvas');
+    geometrySvg.setAttribute('aria-hidden', 'true');
+    const gpuSlot = document.createElement('div');
+    gpuSlot.className = 'graph-svg-gpu-slot';
     const grid = svgElement('g'); grid.classList.add('graph-svg-grid'); grid.dataset.testid = 'graph-scene-grid';
     const gridLines = svgElement('g'); const gridCircles = svgElement('g');
     grid.append(gridLines, gridCircles);
@@ -149,8 +161,11 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     const regions = svgElement('g'); regions.classList.add('graph-svg-regions'); regions.dataset.testid = 'graph-scene-regions';
     const paths = svgElement('g'); paths.classList.add('graph-svg-paths'); paths.dataset.testid = 'graph-scene-paths';
     const points = svgElement('g'); points.classList.add('graph-svg-points'); points.dataset.testid = 'graph-scene-points';
-    geometry.append(surfaces, regions, paths, points); svg.append(grid, labels, geometry); target.replaceChildren(svg);
-    Object.assign(this, { svg, gridLines, gridCircles, labels, geometry, surfaces, regions, paths, points });
+    const gesturePaths = svgElement('g'); gesturePaths.classList.add('graph-svg-gesture-paths');
+    gesturePaths.dataset.testid = 'graph-scene-gesture-paths';
+    geometry.append(surfaces, regions, paths, points); svg.append(grid, labels); geometrySvg.append(geometry, gesturePaths);
+    target.replaceChildren(svg, gpuSlot, geometrySvg);
+    Object.assign(this, { svg, geometrySvg, gpuSlot, gesturePaths, gridLines, gridCircles, labels, geometry, surfaces, regions, paths, points });
     this.resize(this.size.width, this.size.height, 1);
   }
 
@@ -158,6 +173,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     void devicePixelRatio;
     this.size = { width: Math.max(1, cssWidth), height: Math.max(1, cssHeight) };
     this.svg?.setAttribute('viewBox', `0 0 ${this.size.width} ${this.size.height}`);
+    this.geometrySvg?.setAttribute('viewBox', `0 0 ${this.size.width} ${this.size.height}`);
   }
 
   clientToScreen(clientX: number, clientY: number): GraphRendererScreenPoint | null {
@@ -263,7 +279,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       },
     })));
     syncKeyed<SVGCircleElement>(this.points, pointValues, 'circle');
-    this.svg?.setAttribute('data-scene-quality', policy.quality);
+    this.geometrySvg?.setAttribute('data-scene-quality', policy.quality);
     this.applyPresentation();
     this.updateGeometryTransform();
   }
@@ -272,8 +288,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.presentation = new Map(frame.items.map((item) => [item.itemId, item.presentation]));
     this.theme = frame.version === 2 ? frame.theme : 'technical';
     this.colorVisionMode = frame.version === 2 ? frame.colorVisionMode : 'standard';
-    this.svg?.setAttribute('data-content-revision', String(frame.contentRevision));
-    this.svg?.setAttribute('data-graph-theme', this.theme);
+    this.geometrySvg?.setAttribute('data-content-revision', String(frame.contentRevision));
+    this.geometrySvg?.setAttribute('data-graph-theme', this.theme);
     this.applyPresentation();
   }
 
@@ -282,13 +298,64 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     return normalizeGraphItemPresentation(this.presentation.get(itemId) ?? fallback);
   }
 
+  /** Element that hosts the GPU field canvas between grid and geometry. */
+  getGpuSlot(): HTMLDivElement | null {
+    return this.gpuSlot;
+  }
+
+  /**
+   * Items drawn by the GPU field layer. Their CPU regions and boundaries stay
+   * in the scene (trace and hit testing read the scene) but are not painted.
+   */
+  setSuppressedItems(itemIds: ReadonlySet<string>) {
+    this.suppressedItems = itemIds;
+    this.applyPresentation();
+  }
+
+  /**
+   * Gesture-lane curves: preview-quality explicit/polar/parametric paths
+   * sampled at the live viewport during a gesture. While present they replace
+   * the stretched committed paths of the same items; the next committed scene
+   * clears them. Visual only; trace keeps reading the committed scene.
+   */
+  setGestureScene(frame: { paths: GraphScenePathRuntimeV2[]; sourceViewport: GraphViewportV1 } | null) {
+    if (!this.gesturePaths) return;
+    if (!frame) {
+      this.gestureFrame = null;
+      this.gesturePaths.replaceChildren();
+      this.applyPresentation();
+      return;
+    }
+    this.gestureFrame = { sourceViewport: frame.sourceViewport, projectionSize: { ...this.size },
+      itemIds: new Set(frame.paths.map((path) => path.itemId)) };
+    syncKeyed<SVGPathElement>(this.gesturePaths, frame.paths.map((path) => ({ id: path.pathId, update: (node) => {
+      node.dataset.pathId = path.pathId; node.dataset.itemId = path.itemId;
+      node.dataset.strokeRole = path.strokeRole ?? 'default';
+      node.setAttribute('d', pathData(path, frame.sourceViewport, this.size));
+      node.setAttribute('fill', 'none'); node.setAttribute('vector-effect', 'non-scaling-stroke');
+    } })), 'path');
+    this.applyPresentation();
+    this.updateGeometryTransform();
+  }
+
   private applyPresentation() {
+    const suppressed = (node: SVGElement, committed = true) => {
+      const itemId = node.dataset.itemId ?? '';
+      node.style.display = this.suppressedItems.has(itemId)
+        || (committed && this.gestureFrame?.itemIds.has(itemId)) ? 'none' : '';
+    };
     this.regions?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
+      suppressed(node);
       const style = this.itemPresentation(node.dataset.itemId ?? '');
       setAttribute(node, 'fill', resolveGraphPresentationColor(style, this.colorVisionMode));
       setAttribute(node, 'fill-opacity', String(style.regionOpacity));
     });
-    this.paths?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
+    const pathNodes = [
+      ...(this.paths?.querySelectorAll<SVGPathElement>('[data-item-id]') ?? []),
+      ...(this.gesturePaths?.querySelectorAll<SVGPathElement>('[data-item-id]') ?? []),
+    ];
+    pathNodes.forEach((node) => {
+      suppressed(node, node.parentNode === this.paths);
       const style = this.itemPresentation(node.dataset.itemId ?? '');
       const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'stroke', color);
@@ -312,6 +379,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   }
 
   private updateGeometryTransform() {
+    this.updateGestureTransform();
     if (!this.geometry || !this.view || !this.scene) return;
     const source = this.scene.sourceViewport; const live = this.view.viewport;
     const sx = (source.xMax - source.xMin) / (live.xMax - live.xMin)
@@ -323,11 +391,23 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.geometry.setAttribute('transform', `matrix(${sx} 0 0 ${sy} ${tx} ${ty})`);
   }
 
+  private updateGestureTransform() {
+    if (!this.gesturePaths || !this.view || !this.gestureFrame) return;
+    const source = this.gestureFrame.sourceViewport; const live = this.view.viewport;
+    const projection = this.gestureFrame.projectionSize;
+    const sx = (source.xMax - source.xMin) / (live.xMax - live.xMin) * this.size.width / projection.width;
+    const sy = (source.yMax - source.yMin) / (live.yMax - live.yMin) * this.size.height / projection.height;
+    const tx = (source.xMin - live.xMin) / (live.xMax - live.xMin) * this.size.width;
+    const ty = (live.yMax - source.yMax) / (live.yMax - live.yMin) * this.size.height;
+    this.gesturePaths.setAttribute('transform', `matrix(${sx} 0 0 ${sy} ${tx} ${ty})`);
+  }
+
   hitTest(clientX: number, clientY: number): GraphHitResult | null { void clientX; void clientY; return null; }
   handleContextRestored() {}
   clear() { this.setScene(null); }
   dispose() {
-    this.svg?.remove();
+    this.svg?.remove(); this.geometrySvg?.remove(); this.gpuSlot?.remove();
+    this.geometrySvg = null; this.gpuSlot = null; this.gesturePaths = null; this.gestureFrame = null;
     this.svg = this.gridLines = this.gridCircles = this.labels = this.geometry = this.surfaces = this.regions = this.paths = this.points = null;
     this.view = null; this.scene = null;
     this.presentation.clear();

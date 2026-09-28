@@ -35,12 +35,39 @@ export type GraphGpuFieldUniforms = {
   integers?: Record<string, number>;
 };
 
+export type GraphGpuDrawOptions = {
+  /** Render into a cached float target (created on demand) instead of the canvas. */
+  target?: string;
+  /** Sampler uniforms bound to previously rendered float targets. */
+  inputs?: Record<string, string>;
+  /** Premultiplied-alpha blending onto what is already drawn. */
+  blend?: boolean;
+};
+
 export type GraphGpuFieldLayer = {
   readonly gl: WebGL2RenderingContext;
   readonly floatTargets: boolean;
   compile(program: GraphGpuProgram, shading: GraphGpuShading): { ok: true } | { ok: false; reason: string };
   draw(program: GraphGpuProgram, shading: GraphGpuShading, uniforms: GraphGpuFieldUniforms,
-    size: { width: number; height: number }): boolean;
+    size: { width: number; height: number }, options?: GraphGpuDrawOptions): boolean;
+  /** Clears the visible canvas to transparent. */
+  clear(size: { width: number; height: number }): void;
+  /**
+   * Brackets one frame's draws with a GPU timer query when the driver
+   * exposes EXT_disjoint_timer_query_webgl2 (WebKitGTK does not); otherwise
+   * endFrame measures the delay until the next animation frame.
+   */
+  beginFrame(): void;
+  endFrame(): void;
+  /** Latest measured GPU time for a frame in ms, or null when unmeasured. */
+  readonly gpuFrameMs: number | null;
+  /**
+   * Without timer queries: ms from the last endFrame to the next animation
+   * frame. The browser holds that frame back while the GPU is still busy.
+   */
+  readonly presentLatencyMs: number | null;
+  /** Why the most recent draw failed (compile log, missing targets), or null. */
+  readonly lastError: string | null;
   /** Test/diagnostic read-back of raw values into a float target; never math authority. */
   readRaw(program: GraphGpuProgram, uniforms: GraphGpuFieldUniforms,
     size: { width: number; height: number }): Float32Array | null;
@@ -77,17 +104,44 @@ ${shading.body}
 export function createGraphGpuFieldLayer(
   canvas: HTMLCanvasElement | OffscreenCanvas,
   callbacks: { onContextLost?: () => void; onContextRestored?: () => void } = {},
+  options: {
+    /**
+     * Multi-pass layers (offscreen target, then canvas) must preserve the
+     * drawing buffer: WebKitGTK 2.52 otherwise presents nothing for them.
+     */
+    preserveDrawingBuffer?: boolean;
+  } = {},
 ): GraphGpuFieldLayer | null {
-  const gl = canvas.getContext('webgl2', { antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: false }) as WebGL2RenderingContext | null;
+  const gl = canvas.getContext('webgl2', {
+    antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: options.preserveDrawingBuffer ?? false,
+  }) as WebGL2RenderingContext | null;
   if (!gl) return null;
   const floatTargets = Boolean(gl.getExtension('EXT_color_buffer_float'));
   const programs = new Map<string, { program: WebGLProgram; uniforms: Map<string, WebGLUniformLocation | null> }>();
+  const timer = gl.getExtension('EXT_disjoint_timer_query_webgl2') as
+    { TIME_ELAPSED_EXT: number; GPU_DISJOINT_EXT: number } | null;
+  let pendingQuery: WebGLQuery | null = null;
+  let queryOpen = false;
+  let gpuFrameMs: number | null = null;
+  let lastError: string | null = null;
+  let presentLatencyMs: number | null = null;
+  let floatTargetVerified = false;
+  let latencyFrame = 0;
+  const pollQuery = () => {
+    if (!timer || !pendingQuery || queryOpen) return;
+    if (!gl.getQueryParameter(pendingQuery, gl.QUERY_RESULT_AVAILABLE)) return;
+    const disjoint = gl.getParameter(timer.GPU_DISJOINT_EXT) as boolean;
+    if (!disjoint) gpuFrameMs = (gl.getQueryParameter(pendingQuery, gl.QUERY_RESULT) as number) / 1e6;
+    gl.deleteQuery(pendingQuery);
+    pendingQuery = null;
+  };
+  const targets = new Map<string, { texture: WebGLTexture; framebuffer: WebGLFramebuffer; width: number; height: number }>();
   let buffer: WebGLBuffer | null = null;
   let vertexArray: WebGLVertexArrayObject | null = null;
   let lost = false;
   // The lost event arrives asynchronously; the context reports loss at once.
   const unavailable = () => lost || gl.isContextLost();
-  const onLost = (event: Event) => { event.preventDefault(); lost = true; programs.clear(); buffer = null; vertexArray = null; callbacks.onContextLost?.(); };
+  const onLost = (event: Event) => { event.preventDefault(); lost = true; floatTargetVerified = false; programs.clear(); targets.clear(); pendingQuery = null; queryOpen = false; buffer = null; vertexArray = null; callbacks.onContextLost?.(); };
   const onRestored = () => { lost = false; callbacks.onContextRestored?.(); };
   canvas.addEventListener('webglcontextlost', onLost as EventListener);
   canvas.addEventListener('webglcontextrestored', onRestored as EventListener);
@@ -112,23 +166,29 @@ export function createGraphGpuFieldLayer(
       return { ok: true as const, entry: cached };
     }
     if (program.parameterNames.length > GRAPH_GPU_MAX_PARAMETERS) return { ok: false as const, reason: 'too-many-parameters' };
+    let compileLog = '';
     const shader = (type: number, source: string) => {
       const handle = gl.createShader(type);
       if (!handle) return null;
       gl.shaderSource(handle, source);
       gl.compileShader(handle);
-      return gl.getShaderParameter(handle, gl.COMPILE_STATUS) ? handle : null;
+      if (gl.getShaderParameter(handle, gl.COMPILE_STATUS)) return handle;
+      compileLog = (gl.getShaderInfoLog(handle) ?? '').trim().slice(0, 300);
+      gl.deleteShader(handle);
+      return null;
     };
     const vertex = shader(gl.VERTEX_SHADER, VERTEX_SHADER);
     const fragment = shader(gl.FRAGMENT_SHADER, fragmentSource(program, shading));
-    if (!vertex || !fragment) return { ok: false as const, reason: 'shader-compile-failed' };
+    if (!vertex || !fragment) return { ok: false as const, reason: `shader-compile-failed: ${compileLog}` };
     const handle = gl.createProgram();
     if (!handle) return { ok: false as const, reason: 'program-create-failed' };
     gl.attachShader(handle, vertex); gl.attachShader(handle, fragment);
     gl.bindAttribLocation(handle, 0, 'aPosition');
     gl.linkProgram(handle);
     gl.deleteShader(vertex); gl.deleteShader(fragment);
-    if (!gl.getProgramParameter(handle, gl.LINK_STATUS)) return { ok: false as const, reason: 'program-link-failed' };
+    if (!gl.getProgramParameter(handle, gl.LINK_STATUS)) {
+      return { ok: false as const, reason: `program-link-failed: ${(gl.getProgramInfoLog(handle) ?? '').trim().slice(0, 300)}` };
+    }
     const entry = { program: handle, uniforms: new Map<string, WebGLUniformLocation | null>() };
     programs.set(key, entry);
     while (programs.size > PROGRAM_CACHE_LIMIT) {
@@ -171,15 +231,87 @@ export function createGraphGpuFieldLayer(
       const compiled = compileEntry(program, shading);
       return compiled.ok ? { ok: true } : compiled;
     },
-    draw(program, shading, uniforms, size) {
-      if (unavailable()) return false;
+    draw(program, shading, uniforms, size, options = {}) {
+      if (unavailable()) { lastError = 'context-lost'; return false; }
       const compiled = compileEntry(program, shading);
-      if (!compiled.ok) return false;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (!compiled.ok) { lastError = compiled.reason; return false; }
+      lastError = null;
+      if (options.target) {
+        if (!floatTargets) { lastError = 'float-render-targets-unavailable'; return false; }
+        let target = targets.get(options.target);
+        if (!target || target.width !== size.width || target.height !== size.height) {
+          if (target) { gl.deleteTexture(target.texture); gl.deleteFramebuffer(target.framebuffer); }
+          const texture = gl.createTexture(); const framebuffer = gl.createFramebuffer();
+          if (!texture || !framebuffer) return false;
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, size.width, size.height, 0, gl.RGBA, gl.FLOAT, null);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+          // A synchronous round trip: verify float targets once per context, not on every resize.
+          if (!floatTargetVerified) {
+            if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) { lastError = 'float-target-incomplete'; return false; }
+            floatTargetVerified = true;
+          }
+          target = { texture, framebuffer, width: size.width, height: size.height };
+          targets.set(options.target, target);
+        }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+      } else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      }
       bind(compiled.entry, uniforms, size);
+      let unit = 0;
+      for (const [sampler, key] of Object.entries(options.inputs ?? {})) {
+        const input = targets.get(key);
+        if (!input) return false;
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        gl.bindTexture(gl.TEXTURE_2D, input.texture);
+        gl.uniform1i(gl.getUniformLocation(compiled.entry.program, sampler), unit);
+        unit += 1;
+      }
+      if (options.blend) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      } else {
+        gl.disable(gl.BLEND);
+      }
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.disable(gl.BLEND);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       return true;
     },
+    clear(size) {
+      if (unavailable()) return;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, size.width, size.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    },
+    beginFrame() {
+      if (unavailable() || !timer) return;
+      pollQuery();
+      if (pendingQuery) return;
+      pendingQuery = gl.createQuery();
+      if (!pendingQuery) return;
+      gl.beginQuery(timer.TIME_ELAPSED_EXT, pendingQuery);
+      queryOpen = true;
+    },
+    endFrame() {
+      if (timer) {
+        if (!queryOpen) return;
+        gl.endQuery(timer.TIME_ELAPSED_EXT);
+        queryOpen = false;
+        return;
+      }
+      if (latencyFrame || typeof requestAnimationFrame !== 'function') return;
+      const submitted = performance.now();
+      latencyFrame = requestAnimationFrame(() => { latencyFrame = 0; presentLatencyMs = performance.now() - submitted; });
+    },
+    get gpuFrameMs() { pollQuery(); return gpuFrameMs; },
+    get presentLatencyMs() { return presentLatencyMs; },
+    get lastError() { return lastError; },
     readRaw(program, uniforms, size) {
       if (unavailable() || !floatTargets) return null;
       const compiled = compileEntry(program, GRAPH_GPU_RAW_SHADING);
@@ -208,12 +340,17 @@ export function createGraphGpuFieldLayer(
     dispose() {
       canvas.removeEventListener('webglcontextlost', onLost as EventListener);
       canvas.removeEventListener('webglcontextrestored', onRestored as EventListener);
+      if (latencyFrame) cancelAnimationFrame(latencyFrame);
+      latencyFrame = 0;
       if (!lost) {
         programs.forEach((entry) => gl.deleteProgram(entry.program));
+        targets.forEach((target) => { gl.deleteTexture(target.texture); gl.deleteFramebuffer(target.framebuffer); });
+        if (pendingQuery) gl.deleteQuery(pendingQuery);
         if (buffer) gl.deleteBuffer(buffer);
         if (vertexArray) gl.deleteVertexArray(vertexArray);
       }
       programs.clear();
+      targets.clear();
     },
   };
 }

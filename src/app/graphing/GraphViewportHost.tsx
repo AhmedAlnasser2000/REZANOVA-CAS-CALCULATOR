@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  type GraphDocumentV4,
   type GraphGridPolicyV1,
   type GraphPaneViewStateV1,
   type GraphRendererPresentationFrame,
@@ -8,8 +9,12 @@ import {
 } from '../../lib/graphing';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphThreeViewport } from './GraphThreeViewport';
+import type { GraphGestureLane } from './useGraphGestureSampling';
 
 type Props = {
+  document?: GraphDocumentV4 | null;
+  gestureLane?: GraphGestureLane | null;
+  gpuRendering?: 'auto' | 'off';
   grid: GraphGridPolicyV1;
   itemRoutes: Readonly<Record<string, GraphTraceRouteKind>>;
   onPaneViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
@@ -26,7 +31,7 @@ type Props = {
 };
 
 export function GraphViewportHost({
-  grid, itemRoutes, onPaneViewChange, onSelectItem, onSizeChange, onViewportChange,
+  document, gestureLane, gpuRendering, grid, itemRoutes, onPaneViewChange, onSelectItem, onSizeChange, onViewportChange,
   paneView, pending, presentation, scene, sceneViewport, selectedItemId, viewport,
 }: Props) {
   const [fallbackReason, setFallbackReason] = useState<'context-lost' | 'unavailable' | null>(null);
@@ -58,6 +63,9 @@ export function GraphViewportHost({
       viewport={viewport}
     /> : null}
     {useSvg ? <GraphSvgViewport
+      document={document}
+      gestureLane={gestureLane}
+      gpuRendering={gpuRendering}
       grid={grid}
       itemRoutes={itemRoutes}
       onSizeChange={onSizeChange}

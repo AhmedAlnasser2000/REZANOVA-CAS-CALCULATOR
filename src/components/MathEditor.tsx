@@ -157,6 +157,12 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
   ) {
     const elementRef = useRef<MathfieldElement | null>(null);
     const hasSyncedValueRef = useRef(false);
+    // Callers pass inline callbacks; reading them through a ref keeps a parent
+    // re-render from reconfiguring the field, which makes MathLive re-typeset.
+    const callbacksRef = useRef({ keyboardLayouts, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit });
+    useLayoutEffect(() => {
+      callbacksRef.current = { keyboardLayouts, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit };
+    });
 
     useImperativeHandle(forwardedRef, () => elementRef.current as MathfieldElement, []);
 
@@ -183,23 +189,23 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
       const handleInput = () => {
         const rawLatex = field.getValue('latex');
-        onChange(normalizeLiveInputOperatorLatex(rawLatex, modeId ? {
+        callbacksRef.current.onChange(normalizeLiveInputOperatorLatex(rawLatex, modeId ? {
           mode: modeId,
           screenHint,
         } : undefined));
       };
 
       const handleFocus = () => {
-        configureVirtualKeyboard(keyboardLayouts);
-        onFocus?.(field);
+        configureVirtualKeyboard(callbacksRef.current.keyboardLayouts);
+        callbacksRef.current.onFocus?.(field);
       };
 
-      const handleBlur = () => onBlur?.();
+      const handleBlur = () => callbacksRef.current.onBlur?.();
 
       const handleKeydown = (event: KeyboardEvent) => {
         if (shouldHandlePlainEnter(event)) {
           event.preventDefault();
-          onSubmit?.();
+          callbacksRef.current.onSubmit?.();
           return;
         }
 
@@ -224,6 +230,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
         const hasCanonicalEnvelope = readResult.ok && readResult.source !== 'text';
         let nextLatex = text;
+        const { onPasteCanonicalize } = callbacksRef.current;
         if (!hasCanonicalEnvelope && onPasteCanonicalize) {
           const canonicalized = onPasteCanonicalize(text);
           if (canonicalized instanceof Promise) {
@@ -263,7 +270,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [keyboardLayouts, modeId, onBlur, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint, shortcutProfile]);
+    }, [modeId, placeholder, readOnly, screenHint, shortcutProfile]);
 
     useEffect(() => {
       const field = elementRef.current;

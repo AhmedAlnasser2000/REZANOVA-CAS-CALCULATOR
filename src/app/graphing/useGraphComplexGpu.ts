@@ -37,7 +37,8 @@ export function useGraphComplexGpu({ colorVisionMode, componentScale, cpuSupport
   const [gpu, setGpu] = useState<GraphGpuModule | null>(null);
   const [layer, setLayer] = useState<Layer | null>(null);
   const [runtimeReason, setRuntimeReason] = useState<string | null>(null);
-  const scaleRef = useRef({ scale: 1, lastDrawAt: 0 });
+  const [drawFailure, setDrawFailure] = useState<{ key: string; reason: string } | null>(null);
+  const scaleRef = useRef({ scale: 1 });
 
   useEffect(() => {
     if (!enabled || gpu) return undefined;
@@ -77,7 +78,9 @@ export function useGraphComplexGpu({ colorVisionMode, componentScale, cpuSupport
         : unboundParameter ? { renderer: 'cpu', reason: `parameter ${unboundParameter} has no value` }
           : cpuSupported === false ? { renderer: 'cpu', reason: 'the expression is not supported by the complex evaluator' }
             : !layer || !program || cpuSupported === null ? { renderer: 'cpu', reason: 'starting the GPU renderer' }
-              : { renderer: 'gpu', reason: null };
+              : drawFailure && drawFailure.key === program.key
+                ? { renderer: 'cpu', reason: `GPU draw failed (${drawFailure.reason})` }
+                : { renderer: 'gpu', reason: null };
   const [preciseMode, setPreciseMode] = useState(false);
   const status: GraphComplexRendererStatus = baseStatus.renderer === 'gpu' && preciseMode
     ? { renderer: 'cpu', reason: 'deep zoom uses precise CPU rendering' } : baseStatus;
@@ -90,22 +93,26 @@ export function useGraphComplexGpu({ colorVisionMode, componentScale, cpuSupport
     const safe = gpu.graphGpuViewportIsFloat32Safe(live, cssSize);
     if (safe === preciseMode) setPreciseMode(!safe);
     if (!safe) return false;
-    const now = performance.now();
+    // Adapt on GPU time, or on the delay from a draw to the next frame; gaps
+    // between draws would include idle input time.
     const state = scaleRef.current;
     state.scale = gpu.nextGraphGpuRenderScale({ scale: state.scale, interacting },
-      interacting && state.lastDrawAt > 0 ? now - state.lastDrawAt : Number.NaN);
-    state.lastDrawAt = interacting ? now : 0;
+      gpu.graphGpuFrameCostMs(layer.gpuFrameMs, layer.presentLatencyMs, 12), 12);
     const pixelRatio = Math.min(2, window.devicePixelRatio || 1) * state.scale;
     const width = Math.max(1, Math.round(cssSize.width * pixelRatio));
     const height = Math.max(1, Math.round(cssSize.height * pixelRatio));
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
-    return layer.draw(program, gpu.GRAPH_GPU_COMPLEX_SHADING, {
+    layer.beginFrame();
+    const drawn = layer.draw(program, gpu.GRAPH_GPU_COMPLEX_SHADING, {
       viewport: live,
       parameters: program.parameterNames.map((name) => parameters[name] ?? 0),
       integers: { uMode: displayMode === 'components' ? 1 : 0, uPalette: colorVisionMode === 'color-vision-friendly' ? 1 : 0 },
       extra: { uComponentScale: componentScale },
     }, { width, height });
+    layer.endFrame();
+    if (!drawn) setDrawFailure({ key: program.key, reason: layer.lastError ?? 'unknown' });
+    return drawn;
   }, [baseStatus.renderer, colorVisionMode, componentScale, displayMode, gpu, layer, parameters, preciseMode, program]);
 
   return { canvasRef, draw, status };

@@ -6,6 +6,7 @@ import {
 import {
   buildGraphGridScene,
   GraphSvgReferenceRenderer,
+  type GraphDocumentV4,
   type GraphGridPolicyV1,
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
@@ -22,6 +23,8 @@ import {
   type GraphTraceTarget,
 } from './graph-hit-testing';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
+import type { GraphGestureLane } from './useGraphGestureSampling';
+import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | 'real-surface'
@@ -29,6 +32,11 @@ export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | { kind: 'parametric-curve'; parameterSymbol: string };
 
 type Props = {
+  /** Document for GPU visual evaluation of implicit/inequality relations. */
+  document?: GraphDocumentV4 | null;
+  /** Latest-only preview lane that refreshes formula curves during gestures. */
+  gestureLane?: GraphGestureLane | null;
+  gpuRendering?: 'auto' | 'off';
   grid?: GraphGridPolicyV1;
   pending: boolean;
   presentation?: GraphRendererPresentationFrame;
@@ -49,6 +57,7 @@ type TraceLock = {
 };
 const CLICK_DISTANCE = 24;
 const RETAIN_DISTANCE = 30;
+const GESTURE_LANE_INTERVAL_MS = 100;
 
 function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null) {
   return scene && 'planarScene' in scene ? scene
@@ -102,7 +111,7 @@ function surfaceTargetAtScreen(
 
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
-  itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
+  document = null, gestureLane = null, gpuRendering = 'auto', itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
   presentation = { version: 1, contentRevision: 0, items: [] }, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
@@ -138,6 +147,13 @@ export function GraphSvgViewport({
   const wheelRef = useRef<{ scale: number; x: number; y: number; viewport: GraphViewportV1 } | null>(null);
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [size, setSize] = useState<Size>({ width: 960, height: 600 });
+  const getGpuSlot = useCallback(() => rendererRef.current?.getGpuSlot() ?? null, []);
+  const { draw: gpuDraw, status: gpuStatus, suppressed: gpuSuppressed } = useGraphRealFieldGpu({
+    document, enabled: gpuRendering === 'auto', getSlot: getGpuSlot, presentation,
+  });
+  const gpuDrawRef = useRef(gpuDraw);
+  const gestureLaneRef = useRef(gestureLane);
+  const gestureRequestAtRef = useRef(0);
 
   const renderView = useCallback((liveViewport: GraphViewportV1) => {
     liveViewportRef.current = liveViewport;
@@ -147,6 +163,14 @@ export function GraphSvgViewport({
     rendererRef.current?.setView({ version: 1, viewport: liveViewport, grid: gridScene,
       policy: { quality: 'interactive-preview', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: 250_000, maximumLabels: 250, pixelRatioCap: 2 } });
+    // GPU fields follow the live viewport every frame (visual evaluation only).
+    const interacting = hostRef.current?.dataset.interacting === 'true';
+    gpuDrawRef.current(liveViewport, interacting);
+    const now = performance.now();
+    if (interacting && gestureLaneRef.current && now - gestureRequestAtRef.current >= GESTURE_LANE_INTERVAL_MS) {
+      gestureRequestAtRef.current = now;
+      gestureLaneRef.current.request(liveViewport);
+    }
   }, []);
 
   const requestView = useCallback((next: GraphViewportV1) => {
@@ -180,6 +204,7 @@ export function GraphSvgViewport({
 
   useLayoutEffect(() => {
     const renderer = rendererRef.current; if (!renderer) return;
+    if (hostRef.current?.dataset.interacting !== 'true') gestureLaneRef.current?.clear();
     renderer.setScene(spatialScene && sceneViewport ? { version: 3, scene: spatialScene, sourceViewport: sceneViewport,
       policy: { quality: 'settled', reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 } } : null);
@@ -188,6 +213,21 @@ export function GraphSvgViewport({
   useLayoutEffect(() => {
     rendererRef.current?.setPresentation(presentation);
   }, [presentation]);
+
+  useLayoutEffect(() => {
+    rendererRef.current?.setSuppressedItems(gpuSuppressed);
+  }, [gpuSuppressed]);
+
+  useLayoutEffect(() => {
+    gestureLaneRef.current = gestureLane;
+    rendererRef.current?.setGestureScene(gestureLane?.getScene() ?? null);
+    return gestureLane?.subscribe((next) => rendererRef.current?.setGestureScene(next));
+  }, [gestureLane]);
+
+  useLayoutEffect(() => {
+    gpuDrawRef.current = gpuDraw;
+    requestView(liveViewportRef.current);
+  }, [gpuDraw, requestView]);
 
   const hideTrace = useCallback(() => {
     if (traceMarkerRef.current) {
@@ -261,6 +301,7 @@ export function GraphSvgViewport({
       if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
       wheelTimerRef.current = setTimeout(() => {
         const settled = liveViewportRef.current; wheelRef.current = null; delete host.dataset.interacting;
+        gestureLaneRef.current?.freeze();
         viewportRef.current = settled; onViewportChange(settled);
       }, WHEEL_SETTLE_MS);
     };
@@ -332,7 +373,10 @@ export function GraphSvgViewport({
   const finishPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current; if (!drag || drag.pointerId !== event.pointerId) return;
     dragRef.current = null; delete event.currentTarget.dataset.interacting;
-    if (Math.hypot(drag.clientDx, drag.clientDy) > 4) { const settled = liveViewportRef.current; viewportRef.current = settled; onViewportChange(settled); return; }
+    if (Math.hypot(drag.clientDx, drag.clientDy) > 4) {
+      gestureLaneRef.current?.freeze();
+      const settled = liveViewportRef.current; viewportRef.current = settled; onViewportChange(settled); return;
+    }
     const screen = clientToScreen(event.clientX, event.clientY);
     const currentScene = sceneRef.current?.planarScene; const index = traceIndexRef.current;
     const spatialScene = sceneRef.current;
@@ -378,7 +422,11 @@ export function GraphSvgViewport({
 
   const hasGeometry = spatialScene !== null && (spatialScene.surfaceMeshes.length > 0
     || spatialScene.planarScene.paths.some((path) => !path.itemId.startsWith('graph-overlay.'))
-    || spatialScene.planarScene.regions.length > 0 || spatialScene.planarScene.pointBatches.length > 0);
+    || spatialScene.planarScene.regions.length > 0 || spatialScene.planarScene.pointBatches.length > 0)
+    || gpuStatus.gpuItems > 0;
+  const gpuChipText = gpuStatus.gpuItems === 0
+    ? (gpuStatus.reasons.includes('deep zoom uses precise CPU rendering') ? 'Precise mode' : 'Standard rendering')
+    : gpuStatus.gpuItems === gpuStatus.candidates ? 'GPU' : `GPU ${gpuStatus.gpuItems}/${gpuStatus.candidates}`;
   return <div className="graph-svg-viewport" data-scene-pending={pending ? 'true' : 'false'} data-testid="graph-viewport"
     aria-describedby="graph-trace-instructions" aria-label={`Interactive ${grid.kind} graph. Press Enter to start keyboard tracing.`}
     role="region" onKeyDown={handleKeyDown} onPointerCancel={finishPointer} onPointerDown={handlePointerDown}
@@ -387,6 +435,11 @@ export function GraphSvgViewport({
     <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
     <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />
     <span className="graph-trace-instructions" id="graph-trace-instructions">Click a curve or point to trace it. Move to sweep, use arrows to step, and Escape to clear.</span>
+    {gpuStatus.candidates > 0 ? <span className={`graph-real-renderer is-${gpuStatus.gpuItems > 0 ? 'gpu' : 'cpu'}`}
+      data-testid="graph-real-renderer"
+      title={gpuStatus.reasons.length > 0 ? [...new Set(gpuStatus.reasons)].join('; ')
+        : 'Implicit curves and regions are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
+      {gpuChipText}</span> : null}
     {!hasGeometry ? <div className="graph-viewport-empty" aria-hidden="true"><span>Enter an x-based expression to begin</span><small>Try x² − 4 or sin(x)</small></div> : null}
   </div>;
 }

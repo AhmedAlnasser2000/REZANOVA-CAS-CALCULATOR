@@ -49,7 +49,7 @@ export function installGraphBenchInstrumentation() {
           continue;
         }
         const target = record.target instanceof Element ? record.target : record.target.parentElement;
-        if (!target?.closest('.graph-svg-sampled-geometry')) continue;
+        if (!target?.closest('.graph-svg-sampled-geometry, .graph-svg-gesture-paths')) continue;
         if (record.attributeName === 'd' || record.type === 'childList') {
           state.svgGeometryWrites.push(now);
           break;
