@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GraphViewportV1, SampledSceneRuntimeV2 } from '../../lib/graphing';
 import { GraphSvgViewport } from './GraphSvgViewport';
@@ -149,6 +150,25 @@ describe('GraphSvgViewport', () => {
       yMin: expect.any(Number),
       yMax: expect.any(Number),
     });
+  });
+
+  it('keeps redrawing the live view during a drag under StrictMode remounts', async () => {
+    render(
+      <StrictMode>
+        <GraphSvgViewport itemRoutes={{}} onSizeChange={vi.fn()} onViewportChange={vi.fn()}
+          pending={false} scene={scene} viewport={viewport} />
+      </StrictMode>,
+    );
+    const host = screen.getByTestId('graph-viewport');
+    Object.defineProperty(host, 'setPointerCapture', { configurable: true, value: vi.fn() });
+    const geometry = () => document.querySelector('.graph-svg-sampled-geometry')?.getAttribute('transform');
+    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+    const before = geometry();
+    fireEvent.pointerDown(host, { button: 0, clientX: 100, clientY: 100, pointerId: 3 });
+    fireEvent.pointerMove(host, { clientX: 160, clientY: 130, pointerId: 3 });
+    // A frame id left set by the StrictMode cleanup used to swallow every live redraw.
+    await waitFor(() => expect(geometry()).not.toBe(before));
+    fireEvent.pointerUp(host, { clientX: 160, clientY: 130, pointerId: 3 });
   });
 
   it('coalesces a realistic wheel burst into one settled viewport commit', () => {

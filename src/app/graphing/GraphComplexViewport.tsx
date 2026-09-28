@@ -208,6 +208,8 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   useEffect(() => () => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+    // StrictMode remounts reuse refs; a stale frame id would block requestPaint.
+    frameRef.current = null; wheelTimerRef.current = null;
   }, []);
 
   const moveLive = (next: GraphViewportV1) => {

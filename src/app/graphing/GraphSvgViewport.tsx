@@ -309,10 +309,13 @@ export function GraphSvgViewport({
     return () => { host.removeEventListener('wheel', wheel); host.removeEventListener('dragstart', prevent); host.removeEventListener('selectstart', prevent); };
   }, [clearTrace, clientToScreen, onViewportChange, requestView]);
 
+  // Reset the refs as well: StrictMode remounts reuse them, and a cancelled
+  // but still-set frame id would make every later requestView a no-op.
   useEffect(() => () => {
     if (viewFrameRef.current !== null) cancelAnimationFrame(viewFrameRef.current);
     if (traceFrameRef.current !== null) cancelAnimationFrame(traceFrameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+    viewFrameRef.current = null; traceFrameRef.current = null; wheelTimerRef.current = null;
   }, []);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
