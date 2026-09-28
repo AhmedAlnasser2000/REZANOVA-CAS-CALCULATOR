@@ -48,7 +48,9 @@ export function GraphViewportHost({
       }} type="button">3D</button>
     </div>
     {paneView.dimension === '3d' ? <GraphThreeViewport
+      document={document}
       fallback={fallbackReason !== null}
+      gpuRendering={gpuRendering}
       grid={grid}
       key={retrySequence}
       onFallbackChange={onFallbackChange}

@@ -10,11 +10,14 @@ import {
 import {
   buildGraphGridScene,
   createGraphThreeRenderer,
+  type GraphDocumentV4,
   type GraphGridPolicyV1,
   type GraphPaneViewStateV1,
   type GraphRendererPresentationFrame,
   type GraphViewportV1,
+  type GraphRendererFieldStatusV1,
   type InteractiveGraph3dRenderer,
+  type InteractiveGraphFieldRenderer,
   type GraphSpatialSceneRuntimeV2,
 } from '../../lib/graphing';
 import {
@@ -24,9 +27,12 @@ import {
   snapGraphCamera,
   zoomGraphCamera,
 } from './graph-camera';
+import { useGraphSurfaceGpu } from './useGraphSurfaceGpu';
 
 type Props = {
+  document?: GraphDocumentV4 | null;
   fallback: boolean;
+  gpuRendering?: 'auto' | 'off';
   grid: GraphGridPolicyV1;
   onFallbackChange: (reason: 'context-lost' | 'unavailable' | null) => void;
   onSelectItem: (itemId: string | null) => void;
@@ -49,12 +55,12 @@ type DragState = {
 };
 
 export function GraphThreeViewport({
-  fallback, grid, onFallbackChange, onSelectItem, onSizeChange, onViewChange,
+  document = null, fallback, gpuRendering = 'auto', grid, onFallbackChange, onSelectItem, onSizeChange, onViewChange,
   presentation, scene, sceneViewport, selectedItemId, view, viewport,
 }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
-  const rendererRef = useRef<InteractiveGraph3dRenderer | null>(null);
+  const rendererRef = useRef<(InteractiveGraph3dRenderer & Partial<InteractiveGraphFieldRenderer>) | null>(null);
   const selectedPivotRef = useRef<{ itemId: string; world: { x: number; y: number; z: number } } | null>(null);
   const cameraRef = useRef(view.camera3d);
   const dragRef = useRef<DragState | null>(null);
@@ -62,6 +68,8 @@ export function GraphThreeViewport({
   const [trace, setTrace] = useState<{ itemId: string; x: number; y: number; z: number } | null>(null);
   const [size, setSize] = useState({ width: 960, height: 600 });
   const [camera, setCamera] = useState(view.camera3d);
+  const surfaceGpu = useGraphSurfaceGpu({ document, enabled: gpuRendering === 'auto', viewport });
+  const [fieldStatus, setFieldStatus] = useState<GraphRendererFieldStatusV1>({ drawnItemIds: [], failures: {} });
 
   const publishCamera = useCallback((next: typeof camera) => {
     cameraRef.current = next;
@@ -155,6 +163,17 @@ export function GraphThreeViewport({
         maximumVertices: renderer.capabilities.maximumVertices, maximumLabels: 250, pixelRatioCap: 2 },
     } : null);
   }, [ready, scene, sceneViewport]);
+
+  // GPU surfaces follow the field frame; a slider move is a uniform update.
+  const surfaceFrame = surfaceGpu.frame;
+  useLayoutEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer || !ready || typeof renderer.setFieldFrame !== 'function') return;
+    renderer.setFieldFrame(surfaceFrame);
+    const next = renderer.getFieldStatus?.() ?? { drawnItemIds: [], failures: {} };
+    queueMicrotask(() => setFieldStatus((current) => (
+      JSON.stringify(current) === JSON.stringify(next) ? current : next)));
+  }, [ready, scene, surfaceFrame]);
 
   useEffect(() => {
     const mesh = scene?.surfaceMeshes[0];
@@ -284,10 +303,17 @@ export function GraphThreeViewport({
     publishCamera(next); rendererRef.current?.showPivot(next.target); onViewChange({ camera3d: next });
   };
 
+  const gpuSurfaces = fieldStatus.drawnItemIds.length;
+  const surfaceReasons = [...new Set([...surfaceGpu.reasons,
+    ...Object.values(fieldStatus.failures).map((reason) => `GPU draw failed (${reason})`)])];
+  const surfaceChip = surfaceGpu.candidates === 0 || (gpuSurfaces === 0 && surfaceReasons.length === 0) ? null
+    : gpuSurfaces === 0 ? (surfaceGpu.preciseMode ? 'Precise mode' : 'Standard rendering')
+      : gpuSurfaces === surfaceGpu.candidates ? 'GPU' : `GPU ${gpuSurfaces}/${surfaceGpu.candidates}`;
+
   return <div aria-label="3D graph viewport" aria-hidden={fallback} className={`graph-three-viewport${fallback ? ' is-fallback' : ''}`}
     data-camera-orientation={camera.orientation} data-camera-position={`${camera.position.x},${camera.position.y},${camera.position.z}`}
     data-camera-projection={camera.projection} data-camera-target={`${camera.target.x},${camera.target.y},${camera.target.z}`}
-    data-surface-mesh-count={scene?.surfaceMeshes.length ?? 0}
+    data-surface-mesh-count={scene?.surfaceMeshes.length ?? 0} data-gpu-surfaces={gpuSurfaces}
     data-ready={ready ? 'true' : 'false'} data-testid="graph-three-viewport" onContextMenu={(event) => event.preventDefault()}
     onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
     onPointerCancel={onPointerCancel} onPointerUp={onPointerUp} ref={hostRef} tabIndex={fallback ? -1 : 0}>
@@ -315,6 +341,11 @@ export function GraphThreeViewport({
         flythroughEnabled: !view.flythroughEnabled,
       })} type="button">Fly</button>
     </div>
+    {surfaceChip ? <span className={`graph-real-renderer graph-surface-renderer is-${gpuSurfaces > 0 ? 'gpu' : 'cpu'}`}
+      data-testid="graph-surface-renderer"
+      title={surfaceReasons.length > 0 ? surfaceReasons.join('; ')
+        : 'Surfaces are drawn on the GPU; picking, trace, and Analyze use the precise CPU mesh.'}>
+      {surfaceChip}</span> : null}
     <span className="graph-three-help">MMB pan · Alt+LMB orbit · wheel or Alt+RMB zoom · F focus · Home reset</span>
     {trace ? <output aria-label="Surface trace" className="graph-three-trace">
       ({Number(trace.x.toPrecision(6))}, {Number(trace.y.toPrecision(6))}, {Number(trace.z.toPrecision(6))})

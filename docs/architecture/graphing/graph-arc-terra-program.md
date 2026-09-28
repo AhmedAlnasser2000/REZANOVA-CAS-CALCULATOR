@@ -1,6 +1,6 @@
 # REZANOVA Graphing dependency-driven Terra program
 
-Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-31 complete; Move 32 is the active gated milestone
+Status: revised 37-move implementation program (GPU visual-evaluation Moves 27-33 inserted on 2026-09-27); Moves 1-32 complete; Move 33 is the active gated milestone
 Parent contract: `docs/architecture/graphing/graph-arc-authority-v1.md`
 Rule: one named milestone is one reviewed, verified commit unless the user explicitly approves another split.
 
@@ -396,12 +396,14 @@ Status: complete in `fb1222a1`.
 
 ## 31. `GRAPHING-GPU-REAL-FIELDS1`
 
-Status: implementation and verification complete (2026-09-28).
+Status: complete in `36d7a6d8`.
 
 - Terra: High; gate type: ui.
 - Objective: GPU implicit equalities, inequalities, and chained inequalities between split grid and geometry SVG layers, two-pass sign-change contours, presentation parity, suppressed duplicate SVG geometry, and a separate latest-only gesture lane for explicit/polar/parametric curves.
 
 ## 32. `GRAPHING-GPU-SURFACES3D1`
+
+Status: implementation and verification complete (2026-09-28).
 
 - Terra: High; gate type: ui.
 - Objective: vertex-shader `z=f(x,y)` surfaces inside Three with the CPU mesh as pick/trace/export proxy; slider and parameter changes become uniform-only updates.

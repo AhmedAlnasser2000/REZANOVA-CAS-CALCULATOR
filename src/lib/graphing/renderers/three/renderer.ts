@@ -8,20 +8,33 @@ import type {
   GraphItemPresentation,
   GraphRendererCameraFrameV1,
   GraphRendererCapabilities,
+  GraphRendererFieldFrameV1,
+  GraphRendererFieldStatusV1,
   GraphRendererLifecycleCallbacksV1,
   GraphRendererPresentationFrame,
   GraphRendererSceneFrame,
   GraphRendererViewFrameV1,
   GraphVector3V1,
   InteractiveGraph3dRenderer,
+  InteractiveGraphFieldRenderer,
 } from '../../contracts';
+import { validateGraphRendererFieldFrame } from '../../contracts';
 import {
   defaultGraphItemPresentation,
   normalizeGraphItemPresentation,
   resolveGraphPresentationColor,
 } from '../../presentation';
+import { createGraphGpuSurface, graphGpuSurfaceKey, type GraphGpuSurface, type GraphGpuSurfaceRange } from './gpu-surface';
 
 type Size = { width: number; height: number };
+
+const SURFACE_DETAIL = [1, 2 / 3, 1 / 2, 1 / 3, 1 / 4];
+const SLOW_FRAME_MS = (1000 / 60) * 1.25;
+const FAST_FRAME_MS = (1000 / 60) * 1.1;
+
+function surfaceResolution(maximum: number, level: number) {
+  return Math.max(32, Math.round(maximum * SURFACE_DETAIL[level]!));
+}
 type Camera = THREE.PerspectiveCamera | THREE.OrthographicCamera;
 
 function asVector3(value: GraphVector3V1) {
@@ -45,7 +58,7 @@ function disposeObject(root: THREE.Object3D) {
   root.removeFromParent();
 }
 
-export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
+export class GraphThreeRenderer implements InteractiveGraph3dRenderer, InteractiveGraphFieldRenderer {
   readonly capabilities: GraphRendererCapabilities = {
     rendererId: 'three-webgl', interactive: true, hitTesting: true, regionFill: true,
     polarGrid: false, contextRecovery: true, maximumVertices: 350_000,
@@ -57,7 +70,21 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
   private contextLostListener: ((event: Event) => void) | null = null;
   private contextRestoredListener: (() => void) | null = null;
   private geometryRoot = new THREE.Group();
+  private gpuSurfaceRoot = new THREE.Group();
+  private gpuSurfaces = new Map<string, GraphGpuSurface>();
+  private gpuSurfaceMarkers = new Map<string, string>();
+  private gpuSurfaceSequence = 0;
+  private fieldFrame: GraphRendererFieldFrameV1 | null = null;
+  private fieldFailures = new Map<string, string>();
+  private surfaceRanges = new Map<string, GraphGpuSurfaceRange>();
+  // Adaptive surface detail: a fraction of the frame's grid resolution,
+  // lowered when frames arrive late (software or weak GPUs).
+  private surfaceDetailLevel = 0;
+  private surfaceFrameProbe = 0;
+  private slowSurfaceFrames = 0;
+  private fastSurfaceFrames = 0;
   private gridRoot = new THREE.Group();
+  private gridSignature = '';
   private itemObjects = new Map<string, THREE.Object3D[]>();
   private pivot = new THREE.Mesh(
     new THREE.SphereGeometry(0.09, 16, 10),
@@ -79,9 +106,10 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     this.callbacks = callbacks;
     this.geometryRoot.name = 'graph-geometry';
     this.gridRoot.name = 'graph-grid';
+    this.gpuSurfaceRoot.name = 'graph-gpu-surfaces';
     this.pivot.name = 'graph-camera-pivot';
     this.pivot.visible = false;
-    this.scene.add(this.gridRoot, this.geometryRoot, this.pivot);
+    this.scene.add(this.gridRoot, this.geometryRoot, this.gpuSurfaceRoot, this.pivot);
     const ambient = new THREE.HemisphereLight(0xddeeff, 0x182628, 1.2);
     const key = new THREE.DirectionalLight(0xffffff, 1.4);
     key.position.set(5, -4, 8);
@@ -100,6 +128,15 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     renderer.setAnimationLoop(null);
     renderer.shadowMap.enabled = false;
     renderer.setClearColor(themeBackground(this.theme), 1);
+    // A GPU surface whose program fails on this device returns to its CPU mesh.
+    renderer.debug.onShaderError = (gl, program, vertexShader, fragmentShader) => {
+      const marker = /\/\/ graph-surface:(\S+)/u.exec(gl.getShaderSource(vertexShader) ?? '')?.[1];
+      const log = [gl.getShaderInfoLog(vertexShader), gl.getShaderInfoLog(fragmentShader), gl.getProgramInfoLog(program)]
+        .map((entry) => entry?.trim()).find(Boolean)?.slice(0, 300) ?? 'shader-compile-failed';
+      const itemId = marker ? this.gpuSurfaceMarkers.get(marker) : undefined;
+      if (itemId) this.fieldFailures.set(itemId, log);
+      else console.error('THREE.WebGLProgram: shader error', log);
+    };
     const onLost = (event: Event) => { event.preventDefault(); this.callbacks.onContextLost(); };
     const onRestored = () => { this.handleContextRestored(); this.callbacks.onContextRestored(); };
     canvas.addEventListener('webglcontextlost', onLost);
@@ -134,9 +171,13 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
 
   setScene(frame: GraphRendererSceneFrame | null) {
     this.sceneFrame = frame;
-    this.geometryRoot.children.slice().forEach(disposeObject);
+    // Old objects are disposed only after the new scene has rendered: Three
+    // deletes a shader program when its last material goes, so disposing
+    // first would relink every program on every scene update.
+    const retired = this.geometryRoot.children.slice();
+    retired.forEach((object) => object.removeFromParent());
     this.itemObjects.clear();
-    if (!frame) { this.render(); return; }
+    if (!frame) { this.render(); retired.forEach(disposeObject); return; }
     const planarScene = frame.version === 1 ? frame.scene : frame.scene.planarScene;
     const surfaceMeshes = frame.version === 1 ? [] : frame.scene.surfaceMeshes;
     for (const surface of surfaceMeshes) {
@@ -215,9 +256,38 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
       const points = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 7, sizeAttenuation: false }));
       this.registerItem(batch.itemId, points);
     }
+    this.surfaceRanges.clear();
+    for (const surface of surfaceMeshes) {
+      let minimum = Infinity; let maximum = -Infinity;
+      for (let index = 2; index < surface.positions.length; index += 3) {
+        minimum = Math.min(minimum, surface.positions[index]!); maximum = Math.max(maximum, surface.positions[index]!);
+      }
+      if (Number.isFinite(minimum) && Number.isFinite(maximum)) this.surfaceRanges.set(surface.itemId, { minimum, maximum });
+    }
+    this.syncGpuSurfaces();
     this.applyPresentation();
     this.applyVerticalExaggeration();
-    this.render();
+    this.renderFields();
+    retired.forEach(disposeObject);
+  }
+
+  setFieldFrame(frame: GraphRendererFieldFrameV1 | null) {
+    const validation = frame ? validateGraphRendererFieldFrame(frame) : null;
+    if (frame && validation && !validation.ok) {
+      frame.items.forEach((item) => this.fieldFailures.set(item.itemId, `invalid field frame (${validation.reason})`));
+      this.fieldFrame = null;
+    } else this.fieldFrame = frame;
+    this.syncGpuSurfaces();
+    this.applyPresentation();
+    this.applyVerticalExaggeration();
+    this.renderFields();
+  }
+
+  getFieldStatus(): GraphRendererFieldStatusV1 {
+    return {
+      drawnItemIds: [...this.gpuSurfaces.values()].filter((surface) => surface.mesh.visible).map((surface) => surface.itemId),
+      failures: Object.fromEntries(this.fieldFailures),
+    };
   }
 
   setPresentation(frame: GraphRendererPresentationFrame) {
@@ -299,6 +369,10 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
 
   dispose() {
     if (this.pivotTimer) clearTimeout(this.pivotTimer);
+    if (this.surfaceFrameProbe) cancelAnimationFrame(this.surfaceFrameProbe);
+    this.surfaceFrameProbe = 0;
+    this.gpuSurfaces.forEach((surface) => surface.dispose());
+    this.gpuSurfaces.clear();
     this.geometryRoot.children.slice().forEach(disposeObject);
     this.gridRoot.children.slice().forEach(disposeObject);
     this.pivot.geometry.dispose();
@@ -307,6 +381,57 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
     this.camera = null;
     this.sceneFrame = null;
     this.itemObjects.clear();
+  }
+
+  /**
+   * Reconciles GPU surfaces with the field frame. A surface draws once its
+   * CPU mesh has supplied the height range; its CPU mesh and contour lines
+   * are then hidden but stay in place as the pick, trace, and bounds proxy.
+   */
+  private syncGpuSurfaces() {
+    const items = new Map((this.fieldFrame?.items ?? [])
+      .filter((item) => item.route === 'real-surface' && item.program.kind === 'real' && item.surface)
+      .map((item) => [item.itemId, item]));
+    for (const [itemId, surface] of this.gpuSurfaces) {
+      const item = items.get(itemId);
+      if (item?.program.kind === 'real' && item.surface && !this.fieldFailures.has(itemId)
+        && surface.key === graphGpuSurfaceKey(item.program)) continue;
+      surface.dispose();
+      this.gpuSurfaces.delete(itemId);
+    }
+    for (const [itemId, item] of items) {
+      if (item.program.kind !== 'real' || !item.surface || this.fieldFailures.has(itemId)) continue;
+      let surface = this.gpuSurfaces.get(itemId);
+      if (!surface) {
+        this.gpuSurfaceSequence += 1;
+        const marker = `s${this.gpuSurfaceSequence}`;
+        this.gpuSurfaceMarkers.set(marker, itemId);
+        surface = createGraphGpuSurface({ itemId, marker, program: item.program,
+          resolution: surfaceResolution(item.surface.resolution, this.surfaceDetailLevel) });
+        this.gpuSurfaceRoot.add(surface.mesh);
+        this.gpuSurfaces.set(itemId, surface);
+      }
+      surface.setResolution(surfaceResolution(item.surface.resolution, this.surfaceDetailLevel));
+      const parameters = this.fieldFrame?.parameters ?? {};
+      const range = this.surfaceRanges.get(itemId) ?? null;
+      surface.update({ domain: item.surface.domain, range,
+        parameters: item.program.parameterNames.map((name) => parameters[name] ?? 0) });
+      surface.mesh.visible = range !== null;
+    }
+    if (this.canvas) this.canvas.dataset.gpuSurfaceResolution = [...this.gpuSurfaces.values()].map((surface) => surface.resolution).join(',');
+    for (const [itemId, objects] of this.itemObjects) {
+      const gpuDrawn = this.gpuSurfaces.get(itemId)?.mesh.visible === true;
+      for (const object of objects) object.visible = !gpuDrawn;
+    }
+  }
+
+  /** Renders, then returns any surface whose program just failed to its CPU mesh. */
+  private renderFields() {
+    const failuresBefore = this.fieldFailures.size;
+    this.render();
+    if (this.fieldFailures.size === failuresBefore) return;
+    this.syncGpuSurfaces();
+    this.render();
   }
 
   private registerItem(itemId: string, object: THREE.Object3D) {
@@ -335,9 +460,22 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
 
   private applyVerticalExaggeration() {
     this.geometryRoot.scale.z = this.cameraFrame?.verticalExaggeration ?? 1;
+    this.gpuSurfaceRoot.scale.z = this.geometryRoot.scale.z;
   }
 
   private applyPresentation() {
+    for (const [itemId, surface] of this.gpuSurfaces) {
+      const style = normalizeGraphItemPresentation(this.presentation.get(itemId) ?? defaultGraphItemPresentation(0));
+      const selected = this.cameraFrame?.selectedItemId === itemId;
+      const color = new THREE.Color(resolveGraphPresentationColor(style, this.colorVisionMode));
+      surface.mesh.material.wireframe = this.cameraFrame?.wireframe ?? false;
+      surface.mesh.material.emissive.set(selected ? color : 0x000000);
+      surface.mesh.material.emissiveIntensity = selected ? 0.16 : 0;
+      // Same stroke as the CPU contour lines (LineMaterial widths are CSS pixels).
+      surface.setContourStyle({ color, opacity: style.strokeOpacity,
+        widthPixels: ((style.strokeWidth === 'thin' ? 1.5 : style.strokeWidth === 'strong' ? 3 : 2.25) + (selected ? 1.25 : 0))
+          * (this.renderer?.getPixelRatio() ?? 1) });
+    }
     for (const [itemId, objects] of this.itemObjects) {
       const style = normalizeGraphItemPresentation(
         this.presentation.get(itemId) ?? defaultGraphItemPresentation(0),
@@ -373,13 +511,19 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
   }
 
   private rebuildGrid() {
-    this.gridRoot.children.slice().forEach(disposeObject);
-    if (!this.viewFrame || this.viewFrame.grid.kind === 'none') return;
-    const viewport = this.viewFrame.viewport;
-    const span = Math.max(viewport.xMax - viewport.xMin, viewport.yMax - viewport.yMin);
+    const viewport = this.viewFrame?.viewport;
+    const visible = Boolean(viewport && this.viewFrame?.grid.kind !== 'none');
+    const span = viewport ? Math.max(viewport.xMax - viewport.xMin, viewport.yMax - viewport.yMin) : 0;
     const size = Math.max(2, Math.ceil(span / 2) * 2);
     const divisions = Math.min(80, Math.max(4, Math.round(size * 2)));
     const paper = this.theme === 'paper';
+    // Presentation and view frames arrive on every parameter change; keep the
+    // grid (and its shader program) unless it actually changes.
+    const signature = visible ? `${size}:${divisions}:${paper}` : 'none';
+    if (signature === this.gridSignature && this.gridRoot.children.length === (visible ? 2 : 0)) return;
+    this.gridSignature = signature;
+    this.gridRoot.children.slice().forEach(disposeObject);
+    if (!visible) return;
     const grid = new THREE.GridHelper(size, divisions, paper ? 0x66716c : 0x678078, paper ? 0xb7beb7 : 0x173033);
     grid.rotateX(Math.PI / 2);
     const materials = Array.isArray(grid.material) ? grid.material : [grid.material];
@@ -393,6 +537,37 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer {
   private render() {
     if (!this.renderer || !this.camera) return;
     this.renderer.render(this.scene, this.camera);
+    this.probeSurfaceFrame();
+  }
+
+  /**
+   * The browser holds animation frames back while the GPU is still busy, so
+   * the interval between the first and second frames after a render measures
+   * GPU surface cost without timer queries. (Render-to-next-frame alone would
+   * read as on time whenever a render lands late in a frame.) Late frames
+   * lower the grid; a long run of on-time frames raises it again.
+   */
+  private probeSurfaceFrame() {
+    if (this.surfaceFrameProbe || typeof requestAnimationFrame !== 'function') return;
+    if (![...this.gpuSurfaces.values()].some((surface) => surface.mesh.visible)) return;
+    this.surfaceFrameProbe = requestAnimationFrame(() => {
+      const presented = performance.now();
+      this.surfaceFrameProbe = requestAnimationFrame(() => this.recordSurfaceFrame(performance.now() - presented));
+    });
+  }
+
+  private recordSurfaceFrame(interval: number) {
+    this.surfaceFrameProbe = 0;
+    if (interval > SLOW_FRAME_MS) { this.slowSurfaceFrames += 1; this.fastSurfaceFrames = 0; }
+    else if (interval < FAST_FRAME_MS) { this.fastSurfaceFrames += 1; this.slowSurfaceFrames = 0; }
+    let level = this.surfaceDetailLevel;
+    if (this.slowSurfaceFrames >= 2 && level < SURFACE_DETAIL.length - 1) level += 1;
+    else if (this.fastSurfaceFrames >= 90 && level > 0) level -= 1;
+    if (level === this.surfaceDetailLevel) return;
+    this.surfaceDetailLevel = level;
+    this.slowSurfaceFrames = 0; this.fastSurfaceFrames = 0;
+    this.syncGpuSurfaces();
+    this.render();
   }
 
   private disposeRenderer() {

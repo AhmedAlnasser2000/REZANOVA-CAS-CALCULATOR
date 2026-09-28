@@ -44,14 +44,30 @@ export type GraphGpuProgramV1 = GraphGpuRealProgramV1 | GraphGpuComplexProgramV1
 
 export type GraphGpuFieldRouteV1 = 'complex-domain' | 'real-implicit' | 'real-inequality' | 'real-surface';
 
+/** Grid a vertex-shader surface is evaluated on; required for `real-surface`. */
+export type GraphGpuSurfaceGridV1 = {
+  /** The CPU sampler's domain: the relation's bounds, else the sampled viewport. */
+  domain: { xMin: number; xMax: number; yMin: number; yMax: number };
+  /** Vertices per side. */
+  resolution: number;
+};
+
 export type GraphRendererFieldFrameV1 = {
   version: 1;
-  items: Array<{ itemId: string; route: GraphGpuFieldRouteV1; program: GraphGpuProgramV1 }>;
+  items: Array<{ itemId: string; route: GraphGpuFieldRouteV1; program: GraphGpuProgramV1; surface?: GraphGpuSurfaceGridV1 }>;
   parameters: Record<string, number>;
+};
+
+export type GraphRendererFieldStatusV1 = {
+  /** Items the renderer currently draws from their field programs. */
+  drawnItemIds: string[];
+  /** Items whose program failed on this device, with the reason; they stay on the CPU geometry. */
+  failures: Record<string, string>;
 };
 
 export interface InteractiveGraphFieldRenderer {
   setFieldFrame(frame: GraphRendererFieldFrameV1 | null): void;
+  getFieldStatus(): GraphRendererFieldStatusV1;
 }
 
 export const GRAPH_GPU_FIELD_LIMITS = {
@@ -59,6 +75,8 @@ export const GRAPH_GPU_FIELD_LIMITS = {
   maximumOps: 512,
   maximumParameters: 16,
   maximumGlslLength: 65_536,
+  minimumSurfaceResolution: 2,
+  maximumSurfaceResolution: 512,
 } as const;
 
 const finite = z.number().finite();
@@ -98,6 +116,11 @@ const fieldFrameSchema = z.strictObject({
     itemId: z.string().min(1).max(256),
     route: z.enum(['complex-domain', 'real-implicit', 'real-inequality', 'real-surface']),
     program: z.discriminatedUnion('kind', [realProgram, complexProgram]),
+    surface: z.strictObject({
+      domain: z.strictObject({ xMin: finite, xMax: finite, yMin: finite, yMax: finite }),
+      resolution: z.number().int().min(GRAPH_GPU_FIELD_LIMITS.minimumSurfaceResolution)
+        .max(GRAPH_GPU_FIELD_LIMITS.maximumSurfaceResolution),
+    }).optional(),
   })).max(GRAPH_GPU_FIELD_LIMITS.maximumItems),
   parameters: z.record(identifier, finite),
 }) as z.ZodType<GraphRendererFieldFrameV1>;
@@ -120,6 +143,13 @@ export function validateGraphRendererFieldFrame(input: unknown): GraphRendererFi
     const expectedKind = item.route === 'complex-domain' ? 'complex' : 'real';
     if (item.program.kind !== expectedKind) {
       return { ok: false, reason: `route ${item.route} requires a ${expectedKind} program`, path: `$.items.${index}.program.kind` };
+    }
+    if ((item.route === 'real-surface') !== Boolean(item.surface)) {
+      return { ok: false, reason: 'surface grids belong to real-surface items only', path: `$.items.${index}.surface` };
+    }
+    const domain = item.surface?.domain;
+    if (domain && !(domain.xMax > domain.xMin && domain.yMax > domain.yMin)) {
+      return { ok: false, reason: 'surface domain must have positive extent', path: `$.items.${index}.surface.domain` };
     }
     const outOfRange = item.program.ops.findIndex((op) => op.kind === 'parameter' && op.index >= item.program.parameterNames.length);
     if (outOfRange >= 0) return { ok: false, reason: 'parameter index outside parameterNames', path: `$.items.${index}.program.ops.${outOfRange}` };

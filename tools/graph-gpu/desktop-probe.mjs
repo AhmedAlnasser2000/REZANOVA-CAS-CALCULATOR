@@ -98,12 +98,21 @@ async function runGraphThreeSmoke(session) {
     field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
     return true;`));
   await click(session, 'xpath', "//button[normalize-space(.)='3D']");
-  return waitFor('three viewport with surface', () => execute(session, `
+  const mounted = await waitFor('three viewport with surface', () => execute(session, `
     const viewport = document.querySelector('[data-testid="graph-three-viewport"]');
     if (!viewport || viewport.dataset.ready !== 'true') return null;
     const meshes = Number(viewport.dataset.surfaceMeshCount ?? 0);
     const fallback = document.querySelector('.graph-renderer-fallback');
     return meshes > 0 ? { ready: true, surfaceMeshCount: meshes, fallbackVisible: Boolean(fallback) } : null;`), 30_000);
+  // The vertex-shader surface draws once the CPU mesh has supplied its height range.
+  const chip = await waitFor('surface renderer chip', () => execute(session, `
+    const chip = document.querySelector('[data-testid="graph-surface-renderer"]');
+    const viewport = document.querySelector('[data-testid="graph-three-viewport"]');
+    return chip ? { text: chip.textContent, title: chip.title, gpuSurfaces: Number(viewport?.dataset.gpuSurfaces ?? 0),
+      resolution: document.querySelector('canvas.graph-three-canvas')?.dataset.gpuSurfaceResolution ?? '' } : null;`), 30_000);
+  await delay(1000);
+  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
+  return { ...mounted, chip, screenshot };
 }
 
 async function runComplexGpuSmoke(session) {
@@ -147,6 +156,9 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu) {
   const error = probe.fieldShader?.maxAbsError;
   if (typeof error !== 'number' || error > 1e-4) failures.push(`field shader error ${error}`);
   if (graphThree && (!graphThree.ready || graphThree.surfaceMeshCount < 1)) failures.push('Three 3D viewport did not mount a surface');
+  if (graphThree && (graphThree.chip?.text !== 'GPU' || graphThree.chip.gpuSurfaces < 1)) {
+    failures.push(`surface is not GPU-rendered: ${graphThree.chip?.text} (${graphThree.chip?.title})`);
+  }
   if (complexGpu && complexGpu.chip.text !== 'GPU') failures.push(`complex pane is not GPU-rendered: ${complexGpu.chip.text} (${complexGpu.chip.title})`);
   if (realGpu && realGpu.chip.text !== 'GPU') failures.push(`real fields are not GPU-rendered: ${realGpu.chip.text} (${realGpu.chip.title})`);
   return failures;
@@ -175,7 +187,9 @@ try {
   let graphThree = null;
   if (smoke) {
     log('probe captured; running Graph 3D smoke');
-    graphThree = await runGraphThreeSmoke(sessionId);
+    const three = await runGraphThreeSmoke(sessionId);
+    graphThree = { ready: three.ready, surfaceMeshCount: three.surfaceMeshCount, fallbackVisible: three.fallbackVisible, chip: three.chip };
+    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-surface.png', Buffer.from(three.screenshot, 'base64'));
   }
   let complexGpu = null;
   if (smoke) {

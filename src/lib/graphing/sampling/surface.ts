@@ -6,6 +6,7 @@ import type {
   GraphViewportV1,
 } from '../contracts';
 import { createGraphExpressionEvaluator, type GraphExpressionPlanCache } from '../evaluator';
+import { graphSurfaceContourStep } from './surface-contours';
 
 type SurfaceRelation = Extract<GraphRelationIR, { kind: 'real-surface' }>;
 type Corner = { x: number; y: number; z: number };
@@ -28,11 +29,7 @@ const QUALITY = {
 
 function contourLevels(minimum: number, maximum: number) {
   if (!(maximum > minimum)) return [minimum];
-  const span = maximum - minimum;
-  const raw = span / 6;
-  const magnitude = 10 ** Math.floor(Math.log10(Math.max(raw, Number.EPSILON)));
-  const normalized = raw / magnitude;
-  const step = (normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10) * magnitude;
+  const step = graphSurfaceContourStep(minimum, maximum);
   const levels: number[] = [];
   for (let value = Math.ceil(minimum / step) * step; value <= maximum && levels.length < 11; value += step) {
     levels.push(Math.abs(value) < step * 1e-9 ? 0 : value);

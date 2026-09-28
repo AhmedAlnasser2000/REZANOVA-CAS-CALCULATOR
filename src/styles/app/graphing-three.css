@@ -92,6 +92,8 @@
   pointer-events: none;
 }
 
+.graph-three-viewport .graph-surface-renderer { bottom: 44px; }
+
 .graph-renderer-fallback {
   position: absolute;
   z-index: 9;
