@@ -136,11 +136,11 @@ function GraphPiecewiseDraftRow({
       {draft.branches.map((branch, index) => <div className="graph-piecewise-branch" key={branch.branchId}>
         <span className="graph-piecewise-branch-index">{index + 1}</span>
         <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-value-${branch.branchId}`}
-          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'valueLatex', value)} onSubmit={onCommit} placeholder={String.raw`\text{value}`}
+          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'valueLatex', value)} onSubmit={onCommit} placeholder="value"
           shortcutProfile="graphing" value={branch.valueLatex} />
         <span className="graph-piecewise-if">if</span>
         <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-condition-${branch.branchId}`}
-          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'conditionLatex', value)} onSubmit={onCommit} placeholder={index === 0 ? 'x < 0' : 'x ≥ 0'}
+          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'conditionLatex', value)} onSubmit={onCommit} placeholderLatex={index === 0 ? 'x < 0' : String.raw`x\geq 0`}
           shortcutProfile="graphing" value={branch.conditionLatex} />
         {draft.branches.length > 2 ? <div className="graph-piecewise-branch-actions">
           <button aria-label={`Remove branch ${index + 1}`} onClick={() => onMutate('remove', branch.branchId)} type="button"><Trash2 size={13} /></button>
@@ -274,7 +274,7 @@ function GraphExpressionRow({
               requestAnimationFrame(measureEditorOverflow);
             }}
             onSubmit={onSubmit}
-            placeholder={item ? '' : String.raw`\text{Enter an expression…}`}
+            placeholder={item ? '' : 'Enter an expression…'}
             readOnly={piecewiseEditorOpen}
             shortcutProfile="graphing"
             value={item ? graphItemSourceLatex(item) : ''}

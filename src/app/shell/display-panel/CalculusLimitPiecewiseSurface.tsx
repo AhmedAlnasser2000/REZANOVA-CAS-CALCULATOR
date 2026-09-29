@@ -13,7 +13,7 @@ type CalculusLimitEditorHostProps = {
   mainFieldRef: any;
   onChange: (latex: string) => void;
   onSubmit?: () => void;
-  placeholder: string;
+  placeholderLatex: string;
   requestLatex: string;
   screenHint: string;
 };
@@ -24,7 +24,7 @@ export function CalculusLimitEditorHost({
   mainFieldRef,
   onChange,
   onSubmit,
-  placeholder,
+  placeholderLatex,
   requestLatex,
   screenHint,
 }: CalculusLimitEditorHostProps) {
@@ -55,7 +55,7 @@ export function CalculusLimitEditorHost({
       onFocus={(field) => {
         activeFieldRef.current = field;
       }}
-      placeholder={placeholder}
+      placeholderLatex={placeholderLatex}
     />
   );
 }

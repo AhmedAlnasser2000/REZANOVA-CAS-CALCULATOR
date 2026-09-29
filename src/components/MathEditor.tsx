@@ -24,6 +24,7 @@ import {
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
 import { useEditorAnalysisControl } from '../lib/editor/editor-analysis-control';
 import { readMathClipboardEvent } from '../lib/clipboard';
+import { mathFieldPlaceholder } from './math-field-placeholder';
 
 type MathEditorProps = {
   value: string;
@@ -34,7 +35,10 @@ type MathEditorProps = {
   className?: string;
   dataTestId?: string;
   readOnly?: boolean;
+  /** Readable words, shown as text. Never LaTeX. */
   placeholder?: string;
+  /** A math example such as `x^2`, or `\text{…}` mixed with math. */
+  placeholderLatex?: string;
   keyboardLayouts?: readonly VirtualKeyboardLayout[];
   modeId?: ModeId;
   shortcutProfile?: 'default' | 'graphing';
@@ -147,6 +151,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       dataTestId,
       readOnly = false,
       placeholder,
+      placeholderLatex,
       keyboardLayouts,
       modeId,
       shortcutProfile,
@@ -180,8 +185,9 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         profile: shortcutProfile,
         screenHint,
       });
-      field.placeholder = placeholder ?? '';
-      field.setAttribute('data-placeholder', placeholder ?? '');
+      const shownPlaceholder = mathFieldPlaceholder({ text: placeholder, latex: placeholderLatex });
+      field.placeholder = shownPlaceholder.latex;
+      field.setAttribute('data-placeholder', shownPlaceholder.readable);
       field.mathVirtualKeyboardPolicy = 'auto';
       if (modeId === 'matrix' || modeId === 'vector') {
         configureLinearAlgebraMatrixMenu(field);
@@ -270,7 +276,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [modeId, placeholder, readOnly, screenHint, shortcutProfile]);
+    }, [modeId, placeholder, placeholderLatex, readOnly, screenHint, shortcutProfile]);
 
     useEffect(() => {
       const field = elementRef.current;

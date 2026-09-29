@@ -422,7 +422,7 @@ export function CalculusWorkspace({
               onChange={(bodyLatex) => setCalculusFiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="\\frac{\\sin(x)}{x}"
+              placeholderLatex={String.raw`\frac{\sin(x)}{x}`}
             />
             <VariableHintStrip
               compact
@@ -482,7 +482,7 @@ export function CalculusWorkspace({
               onChange={(bodyLatex) => setCalculusInfiniteLimit((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="\\frac{3x^2+1}{2x^2-5}"
+              placeholderLatex={String.raw`\frac{3x^2+1}{2x^2-5}`}
             />
             <VariableHintStrip
               compact
@@ -525,7 +525,7 @@ export function CalculusWorkspace({
               }}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder={screen === 'maclaurin' ? '\\sin(x)' : 'x^3+2x'}
+              placeholderLatex={screen === 'maclaurin' ? String.raw`\sin(x)` : 'x^3+2x'}
             />
             <VariableHintStrip
               compact
@@ -629,7 +629,7 @@ export function CalculusWorkspace({
               onChange={(lhsLatex) => setFirstOrderOdeState((currentState) => ({ ...currentState, lhsLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="\\frac{dy}{dx}"
+              placeholderLatex={String.raw`\frac{dy}{dx}`}
             />
             <VariableHintStrip
               compact
@@ -649,7 +649,7 @@ export function CalculusWorkspace({
               onChange={(rhsLatex) => setFirstOrderOdeState((currentState) => ({ ...currentState, rhsLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="xy"
+              placeholderLatex="xy"
             />
             <VariableHintStrip
               compact
@@ -711,7 +711,7 @@ export function CalculusWorkspace({
               onChange={(forcingLatex) => setSecondOrderOdeState((currentState) => ({ ...currentState, forcingLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="0"
+              placeholderLatex="0"
             />
             <VariableHintStrip
               compact
@@ -760,7 +760,7 @@ export function CalculusWorkspace({
               onChange={(bodyLatex) => setNumericIvpState((currentState) => ({ ...currentState, bodyLatex }))}
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="x+y"
+              placeholderLatex="x+y"
             />
             <VariableHintStrip
               compact

@@ -154,6 +154,9 @@ jobs:
       - name: Validate source file sizes
         run: npm run test:file-sizes
 
+      - name: Validate math-field placeholders
+        run: npm run test:mathfield-placeholders
+
       - name: Validate workspace canary registry
         run: npm run test:canary-registry
 

@@ -80,7 +80,7 @@ test.describe('Graph input and view consistency', () => {
 
   test('a real curve can show its complex values, labelled Re and Im', async ({ page }) => {
     await openGraph(page);
-    await expect(page.locator('math-field').last()).toHaveAttribute('data-placeholder', String.raw`\text{Enter an expression…}`);
+    await expect(page.locator('math-field').last()).toHaveAttribute('data-placeholder', 'Enter an expression…');
     await enterExpression(page, String.raw`\sqrt{-x}`);
     const toggle = page.getByRole('button', { name: 'Show complex values' });
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');

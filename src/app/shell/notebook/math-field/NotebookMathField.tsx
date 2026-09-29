@@ -13,6 +13,7 @@ import {
   useNotebookMathFieldController,
   type NotebookMathFieldRole,
 } from './notebookMathFieldContext';
+import { mathFieldTextPlaceholder } from '../../../../components/math-field-placeholder';
 
 type NotebookMathFieldProps = {
   className?: string;
@@ -21,6 +22,7 @@ type NotebookMathFieldProps = {
   onChange: (latex: string) => void;
   onFocus?: () => void;
   onSubmit?: () => void;
+  /** Readable words, shown as text. Never LaTeX. */
   placeholder?: string;
   readOnly?: boolean;
   role: NotebookMathFieldRole;
@@ -60,7 +62,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
       field.readOnly = readOnly;
       field.smartFence = true;
       field.smartSuperscript = false;
-      field.placeholder = placeholder ?? '';
+      field.placeholder = mathFieldTextPlaceholder(placeholder ?? '');
       field.setAttribute('data-placeholder', placeholder ?? '');
       field.mathVirtualKeyboardPolicy = 'manual';
       const suppressNativeMenu = () => {

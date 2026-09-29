@@ -160,20 +160,21 @@ export function DisplayEditorSurface({
       : calculusScreen === 'partialDerivative'
       ? `f(${calculusMainEditorTargetLatex}, ...)`
       : `f(${calculusMainEditorTargetLatex})`;
-  const calculusMainEditorPlaceholder =
+  // Words go in \text{}; the rest is real math (see the Math Editor Placeholder Policy).
+  const calculusMainEditorPlaceholderLatex =
     calculusScreen === 'laplace'
-      ? 'Enter f(t)'
+      ? String.raw`\text{Enter }f(t)`
       : calculusScreen === 'limit'
-        ? '\\text{Enter a limit expression}'
+        ? String.raw`\text{Enter a limit expression}`
       : calculusScreen === 'implicitDerivative'
-        ? `Enter relation in ${implicitIndependentLatex} and ${implicitDependentLatex}`
+        ? String.raw`\text{Enter a relation in }${implicitIndependentLatex}\text{ and }${implicitDependentLatex}`
       : calculusScreen === 'partialDerivative'
-        ? 'Enter ∂/∂z(f(x,z))'
+        ? String.raw`\text{Enter }\frac{\partial}{\partial z}\left(f(x,z)\right)`
       : calculusScreen === 'derivative' || calculusScreen === 'derivativePoint'
-        ? 'Enter d/dz(f(z))'
+        ? String.raw`\text{Enter }\frac{d}{dz}\left(f(z)\right)`
       : calculusMainEditorContextLabel
-        ? `Enter ${calculusMainEditorFunctionHint}`
-        : 'Enter an integrand in x';
+        ? String.raw`\text{Enter }${calculusMainEditorFunctionHint}`
+        : String.raw`\text{Enter an integrand in }x`;
   const calculusDerivativeRailActive = calculusScreen === 'derivative'
     || calculusScreen === 'derivativePoint'
     || calculusScreen === 'partialDerivative';
@@ -550,7 +551,7 @@ export function DisplayEditorSurface({
                   onFocus={(field) => {
                     activeFieldRef.current = field;
                   }}
-                  placeholder={calculusMainEditorPlaceholder}
+                  placeholderLatex={calculusMainEditorPlaceholderLatex}
                 />
               )}
             >
@@ -560,7 +561,7 @@ export function DisplayEditorSurface({
                 mainFieldRef={mainFieldRef}
                 onChange={setCalculusMainEditorLatex}
                 onSubmit={onRunEditor}
-                placeholder={calculusMainEditorPlaceholder}
+                placeholderLatex={calculusMainEditorPlaceholderLatex}
                 requestLatex={calculusMainEditorLatex}
                 screenHint={calculusScreen}
               />
@@ -579,7 +580,7 @@ export function DisplayEditorSurface({
               onFocus={(field) => {
                 activeFieldRef.current = field;
               }}
-              placeholder={calculusMainEditorPlaceholder}
+              placeholderLatex={calculusMainEditorPlaceholderLatex}
             />
           )}
           {calculusDerivativeRailActive ? (

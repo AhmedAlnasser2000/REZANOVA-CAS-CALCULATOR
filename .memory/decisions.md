@@ -3368,3 +3368,7 @@
   - timing: critical questions re-alert at 30 min and expire at 2 h. Expiry never implies approval.
 
   Hooks install into user-level config only, never into repo `.codex/config.toml`. Phone replies, if added later, go through SSH over Tailscale into the agent's tmux session; no bespoke reply channel. Sounds must be gentle, including for critical alerts.
+
+## 2026-09-29 - Math editor placeholders
+
+- [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | verified_by_agent: claude | verified_by_agent_model: claude-opus-5-5 | verified_by_agent_family: opus-5.5 | attribution_basis: live] Math editors take readable placeholder words through `placeholder` (the component wraps them in `\text{}`) and math or mixed prompts through `placeholderLatex`. Direct placeholder writes on math fields outside the two components are forbidden, enforced by `test:mathfield-placeholders` and the AGENTS.md Math Editor Placeholder Policy.

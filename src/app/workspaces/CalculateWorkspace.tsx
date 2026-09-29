@@ -202,7 +202,7 @@ export function CalculateWorkspace({
               }
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="x^3+2x"
+              placeholderLatex="x^3+2x"
             />
             <VariableHintStrip
               compact
@@ -241,7 +241,7 @@ export function CalculateWorkspace({
               }
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="x^2"
+              placeholderLatex="x^2"
             />
             <VariableHintStrip
               compact
@@ -313,7 +313,7 @@ export function CalculateWorkspace({
               }
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="x^2"
+              placeholderLatex="x^2"
             />
             <VariableHintStrip
               compact
@@ -433,7 +433,7 @@ export function CalculateWorkspace({
               }
               keyboardLayouts={keyboardLayouts}
               onFocus={onRegisterActiveField}
-              placeholder="\\frac{\\sin(x)}{x}"
+              placeholderLatex={String.raw`\frac{\sin(x)}{x}`}
             />
             <VariableHintStrip
               compact

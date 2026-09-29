@@ -18,6 +18,7 @@ export const STATIC_GATE_COMMANDS = [
   'npm run test:ooe-boundaries',
   'npm run test:compartments-boundaries',
   'npm run test:file-sizes',
+  'npm run test:mathfield-placeholders',
   'npm run test:canary-registry',
   'npm run test:runtime-probes',
 ];

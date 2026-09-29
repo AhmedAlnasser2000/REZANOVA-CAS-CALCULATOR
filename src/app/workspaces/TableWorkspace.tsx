@@ -66,7 +66,7 @@ function TableWorkspace({
             onFocus={(field) => {
               activeFieldRef.current = field;
             }}
-            placeholder="x^2"
+            placeholderLatex="x^2"
           />
           <VariableHintStrip
             compact
@@ -92,7 +92,7 @@ function TableWorkspace({
                 onFocus={(field) => {
                   activeFieldRef.current = field;
                 }}
-                placeholder="x+1"
+                placeholderLatex="x+1"
               />
               <VariableHintStrip
                 compact

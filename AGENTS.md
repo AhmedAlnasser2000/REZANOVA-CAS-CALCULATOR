@@ -115,6 +115,12 @@
 - When a large file shrinks, run `node tools/validate-file-sizes.mjs --update-baseline` so the cap lowers in the same change.
 - Do not bypass the ratchet by moving active code into generated-looking files or excluded paths unless the milestone explicitly creates generated output.
 
+## Math Editor Placeholder Policy
+- MathLive parses a math-field placeholder as LaTeX. Plain words written as LaTeX render as italic math with their spaces removed (for example "Enteranexpression").
+- Pass readable words through `placeholder` on `MathEditor` or `NotebookMathField`; the component wraps them in `\text{}`. Pass a math example (such as `x^2`) or words mixed with math (such as `\text{Enter }\frac{d}{dz}f(z)`) through `placeholderLatex`.
+- Never put LaTeX in `placeholder`, never put words outside `\text{}` in `placeholderLatex`, and never set a math field's `placeholder` or `data-placeholder` directly outside those two components. Write LaTeX in JSX as ``{String.raw`…`}``, not as a `"\\…"` attribute string, which passes a literal double backslash.
+- `npm run test:mathfield-placeholders` enforces this in CI. Check a changed placeholder in Playwright, because the UI-test math-field stub does not render placeholders.
+
 ## Architecture Drift Guardrails
 - Do not turn cleanup, slimming, deduplication, or glue extraction into a new architecture unless the milestone explicitly asks for it.
 - Before implementing or widening a nontrivial algorithm, declare the prerequisite infrastructure and logic it depends on, such as representation, symbolic primitives, facts/assumptions, validation, route evidence, readback/presentation, and tests. Those prerequisites must already exist, be built in a prior milestone, or be built in parallel inside the same approved milestone. If a prerequisite is missing, stop and document the gap instead of embedding route-local mini-infrastructure that later algorithms will duplicate.
