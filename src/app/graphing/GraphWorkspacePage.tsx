@@ -56,6 +56,7 @@ import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
 import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
 import { useGraphGestureSampling } from './useGraphGestureSampling';
+import { useGraphEqualAxes } from './useGraphEqualAxes';
 
 type GraphWorkspacePageProps = {
   gpuRendering?: 'auto' | 'off';
@@ -466,6 +467,12 @@ export default function GraphWorkspacePage({
     onPersistSession: onUpdateSession,
     workspaceContext,
   });
+  const { equalAxes, reportSize: reportPaneSize, setEqualAxes } = useGraphEqualAxes({
+    setViewport: controller.setViewport, viewport: controller.session.surface.viewport,
+  });
+  const handleRealPaneSize = useCallback((size: { width: number; height: number }) => {
+    setViewportSize(size); reportPaneSize(size);
+  }, [reportPaneSize]);
   const piecewiseDrafts = useMemo(
     () => controller.session.authoring?.piecewiseDrafts ?? [],
     [controller.session.authoring?.piecewiseDrafts],
@@ -702,6 +709,10 @@ export default function GraphWorkspacePage({
               {mode[0].toUpperCase() + mode.slice(1)}
             </button>)}
           </div>
+          <button aria-label="Equal axes" aria-pressed={equalAxes} className="graph-toolbar-button"
+            onClick={() => setEqualAxes((current) => !current)}
+            title="Equal axes: one unit is the same length on x and y, so circles are round" type="button">
+            <span>1:1</span></button>
           {/* The auto-switch notice names the view while it shows, so the context chip steps aside. */}
           {controller.autoViewNotice ? null : <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
             ? `Real · ${controller.session.surface.panes.real.dimension === '3d' ? 'Three interactive' : 'SVG reference'}`
@@ -912,7 +923,7 @@ export default function GraphWorkspacePage({
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}
-            onSizeChange={setViewportSize}
+            onSizeChange={handleRealPaneSize}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
             paneView={controller.session.surface.panes.real}
@@ -929,6 +940,7 @@ export default function GraphWorkspacePage({
             document={controller.session.document} gpuRendering={gpuRendering}
             onDisplayModeChange={(displayMode) => controller.updateComplexView({ displayMode })}
             onPaneViewChange={(values) => controller.updatePaneView('complex', values)}
+            onSizeChange={controller.session.surface.viewPolicy.mode === 'complex' ? reportPaneSize : undefined}
             onViewportChange={controller.setViewport}
             paneView={controller.session.surface.panes.complex}
             planeItems={complexPlaneItems}

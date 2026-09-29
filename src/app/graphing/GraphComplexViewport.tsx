@@ -154,13 +154,15 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
 }
 
 export function GraphComplexViewport({ displayMode, document, gpuRendering, onDisplayModeChange, onPaneViewChange,
-  onViewportChange, paneView, planeItems = [], tile, viewport, colorVisionMode }: {
+  onSizeChange, onViewportChange, paneView, planeItems = [], tile, viewport, colorVisionMode }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   displayMode: GraphComplexDisplayModeV1;
   document: GraphDocumentV4;
   gpuRendering: 'auto' | 'off';
   onDisplayModeChange: (mode: GraphComplexDisplayModeV1) => void;
   onPaneViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
+  /** Called with the pane's size whenever it changes. */
+  onSizeChange?: (size: Size) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
   paneView: GraphPaneViewStateV1;
   planeItems?: readonly GraphComplexPlaneInput[];
@@ -254,9 +256,12 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   }, []);
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return undefined;
-    const observer = new ResizeObserver(([entry]) => setSize({ width: entry?.contentRect.width ?? 1, height: entry?.contentRect.height ?? 1 }));
+    const observer = new ResizeObserver(([entry]) => {
+      const next = { width: entry?.contentRect.width ?? 1, height: entry?.contentRect.height ?? 1 };
+      setSize(next); onSizeChange?.(next);
+    });
     observer.observe(canvas); return () => observer.disconnect();
-  }, [paneView.dimension]);
+  }, [onSizeChange, paneView.dimension]);
   useEffect(() => {
     if (!interactingRef.current) liveRef.current = viewport;
     paintRef.current();

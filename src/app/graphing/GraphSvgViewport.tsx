@@ -180,6 +180,7 @@ export function GraphSvgViewport({
 
   const renderView = useCallback((liveViewport: GraphViewportV1) => {
     liveViewportRef.current = liveViewport;
+    if (hostRef.current) hostRef.current.dataset.viewport = `${liveViewport.xMin},${liveViewport.xMax},${liveViewport.yMin},${liveViewport.yMax}`;
     const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
       policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
     gridHysteresisRef.current = gridScene.hysteresisKey;

@@ -18,6 +18,18 @@ async function enterExpression(page: Page, latex: string) {
   }, latex);
 }
 
+/** Graph coordinates to client pixels from the live viewport (Equal axes squares the view to the pane). */
+async function graphScreen(viewport: Locator) {
+  const bounds = await viewport.boundingBox();
+  const view = (await viewport.getAttribute('data-viewport'))?.split(',').map(Number);
+  if (!bounds || !view || view.length !== 4) throw new Error('Graph viewport did not have layout bounds.');
+  const [xMin, xMax, yMin, yMax] = view as [number, number, number, number];
+  return (x: number, y: number) => ({
+    x: bounds.x + (x - xMin) / (xMax - xMin) * bounds.width,
+    y: bounds.y + (yMax - y) / (yMax - yMin) * bounds.height,
+  });
+}
+
 test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
   test('keeps one uninterrupted MathLive session when a trailing row is promoted', async ({ page }) => {
     await page.goto('/');
@@ -253,12 +265,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.locator('.graph-status')).toContainText('Ready');
 
     const viewport = page.getByTestId('graph-viewport');
-    const bounds = await viewport.boundingBox();
-    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
-    const screen = (x: number, y: number) => ({
-      x: bounds.x + (x + 10) / 20 * bounds.width,
-      y: bounds.y + (6 - y) / 12 * bounds.height,
-    });
+    const screen = await graphScreen(viewport);
 
     const firstPoint = screen(1, 2);
     await page.mouse.move(firstPoint.x, firstPoint.y);
@@ -296,12 +303,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
 
     const viewport = page.getByTestId('graph-viewport');
-    const bounds = await viewport.boundingBox();
-    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
-    const screen = (x: number, y: number) => ({
-      x: bounds.x + (x + 10) / 20 * bounds.width,
-      y: bounds.y + (6 - y) / 12 * bounds.height,
-    });
+    const screen = await graphScreen(viewport);
     const rows = page.getByTestId('graph-expression-row');
     const sineItemId = await rows.nth(0).getAttribute('data-graph-item-id');
     if (!sineItemId) throw new Error('Sine row did not expose its item identity.');
@@ -533,12 +535,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-scene-points').locator('circle').first())
       .toHaveAttribute('fill', '#071517');
     const viewport = page.getByTestId('graph-viewport');
-    const bounds = await viewport.boundingBox();
-    if (!bounds) throw new Error('Graph viewport did not have layout bounds.');
-    const screen = (x: number, y: number) => ({
-      x: bounds.x + (x + 10) / 20 * bounds.width,
-      y: bounds.y + (6 - y) / 12 * bounds.height,
-    });
+    const screen = await graphScreen(viewport);
     const traceStart = screen(4, 2);
     await page.mouse.move(traceStart.x, traceStart.y);
     await expect(page.locator('.graph-trace-callout')).toBeHidden();
