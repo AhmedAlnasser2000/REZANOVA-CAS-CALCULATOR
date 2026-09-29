@@ -1123,6 +1123,19 @@
   pointer-events: none;
 }
 
+.graph-complex-viewport .graph-complex-locus-gpu-slot {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.graph-complex-viewport .graph-complex-locus-gpu-slot canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .graph-complex-viewport canvas.graph-complex-overlay-canvas {
   position: relative;
   z-index: 1;

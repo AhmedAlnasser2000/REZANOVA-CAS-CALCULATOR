@@ -180,6 +180,22 @@ async function runComplexLocusSmoke(session) {
     const status = document.querySelector('.graph-complex-toolbar > span')?.textContent ?? '';
     return /locus/u.test(status) ? { mode: pressed, status } : null;`), 30_000);
   await delay(1000);
+  // The locus is drawn by the GPU and composited into the Complex pane's canvas: the circle |z-1| = 2 must show
+  // as coloured pixels at 3, -1, 1+2i and 1-2i (the Argand plane itself is grey or near black).
+  const painted = await execute(session, `
+    const canvas = document.querySelector('canvas.graph-complex-overlay-canvas');
+    const [xMin, xMax, yMin, yMax] = (canvas?.dataset.viewport ?? '').split(',').map(Number);
+    const context = canvas?.getContext('2d');
+    if (!context || ![xMin, xMax, yMin, yMax].every(Number.isFinite)) return null;
+    const strength = (re, im) => {
+      const px = Math.round((re - xMin) / (xMax - xMin) * canvas.width); const py = Math.round((yMax - im) / (yMax - yMin) * canvas.height);
+      const data = context.getImageData(px - 4, py - 4, 9, 9).data;
+      let best = 0;
+      for (let index = 0; index < data.length; index += 4) best = Math.max(best, data[index + 2] - data[index]);
+      return best;
+    };
+    return [strength(3, 0), strength(-1, 0), strength(1, 2), strength(1, -2)];`);
+  locus.circlePixels = painted;
   const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
   return { ...locus, screenshot };
 }
@@ -201,6 +217,9 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
     failures.push(`2D surface is not a GPU height map: ${surfaceHeat.chip.text}, ${surfaceHeat.visibleSvgBands} SVG bands visible`);
   }
   if (complexLocus && complexLocus.mode !== 'Complex') failures.push(`a locus did not open the Complex view (${complexLocus.mode})`);
+  if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
+    failures.push(`the locus circle is not painted in the Complex pane (${JSON.stringify(complexLocus.circlePixels)})`);
+  }
   return failures;
 }
 
@@ -258,7 +277,7 @@ try {
   if (smoke) {
     log('running complex locus smoke');
     const locus = await runComplexLocusSmoke(sessionId);
-    complexLocus = { mode: locus.mode, status: locus.status };
+    complexLocus = { mode: locus.mode, status: locus.status, circlePixels: locus.circlePixels };
     if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-locus.png', Buffer.from(locus.screenshot, 'base64'));
   }
   const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus) : [];

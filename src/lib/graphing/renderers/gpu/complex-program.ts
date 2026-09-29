@@ -36,11 +36,18 @@ function numericLeaf(node: unknown): number | null {
 
 export function translateGraphComplexMapping(
   mathJson: unknown,
-  options: { key: string; symbol?: string },
+  options: {
+    key: string;
+    symbol?: string;
+    /** GLSL function name (default `graphComplex`); loci emit one function per side. */
+    functionName?: string;
+    /** Shared slider names, so several sides index one `uGraphParameters` array. */
+    parameterNames?: string[];
+  },
 ): GraphGpuComplexProgramV1 | GraphGpuTranslationRefusal {
   const symbol = options.symbol ?? 'z';
   const ops: GraphGpuComplexOp[] = [];
-  const parameterNames: string[] = [];
+  const parameterNames: string[] = options.parameterNames ?? [];
   const visit = (node: unknown): string | null => {
     if (ops.length > MAX_OPS) return 'expression-budget-exceeded';
     if (node === symbol) { ops.push({ kind: 'z' }); return null; }
@@ -99,7 +106,7 @@ export function translateGraphComplexMapping(
   };
   const failure = visit(mathJson);
   if (failure) return { ok: false, reason: failure };
-  return { kind: 'complex', key: options.key, ops, parameterNames, glsl: emitComplexGlsl(ops) };
+  return { kind: 'complex', key: options.key, ops, parameterNames, glsl: emitComplexGlsl(ops, options.functionName ?? 'graphComplex') };
 }
 
 export const GRAPH_GPU_COMPLEX_PRELUDE = `
@@ -145,7 +152,7 @@ vec2 cRoot(vec2 a, float n) {
 }
 `;
 
-function emitComplexGlsl(ops: GraphGpuComplexOp[]): string {
+function emitComplexGlsl(ops: GraphGpuComplexOp[], functionName: string): string {
   const lines: string[] = [];
   const stack: string[] = [];
   let next = 0;
@@ -220,7 +227,7 @@ function emitComplexGlsl(ops: GraphGpuComplexOp[]): string {
     }
   }
   const result = stack[0] ?? 'vec2(0.0)';
-  return `vec2 graphComplex(vec2 z, out bool ok) {\n  ok = true;\n${lines.join('\n')}\n  vec2 graphResult = cSnap(${result});\n  ok = ok && abs(graphResult.x) < 3e38 && abs(graphResult.y) < 3e38;\n  return graphResult;\n}\n`;
+  return `vec2 ${functionName}(vec2 z, out bool ok) {\n  ok = true;\n${lines.join('\n')}\n  vec2 graphResult = cSnap(${result});\n  ok = ok && abs(graphResult.x) < 3e38 && abs(graphResult.y) < 3e38;\n  return graphResult;\n}\n`;
 }
 
 /** Float32 reference interpreter with the GLSL program's exact rules. */

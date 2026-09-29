@@ -10,11 +10,13 @@ import {
   type GraphComplexTraceValue,
   type GraphDocumentV4,
   type GraphPaneViewStateV1,
+  type GraphRendererPresentationFrame,
   type GraphViewportV1,
 } from '../../lib/graphing';
 import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import { useGraphComplexGpu } from './useGraphComplexGpu';
+import { useGraphComplexLocusGpu } from './useGraphComplexLocusGpu';
 import {
   complexPlaneRootAt, complexPlaneRootText, paintArgandPlane, paintComplexPlaneItems,
   type GraphComplexPlaneItem, type GraphComplexPlanePath, type GraphComplexPlaneRegion, type GraphComplexPlaneRoot,
@@ -154,7 +156,7 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
 }
 
 export function GraphComplexViewport({ displayMode, document, gpuRendering, onDisplayModeChange, onPaneViewChange,
-  onSizeChange, onViewportChange, paneView, planeItems = [], tile, viewport, colorVisionMode }: {
+  onSizeChange, onViewportChange, paneView, planeItems = [], presentation, tile, viewport, colorVisionMode }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   displayMode: GraphComplexDisplayModeV1;
   document: GraphDocumentV4;
@@ -166,6 +168,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   onViewportChange: (viewport: GraphViewportV1) => void;
   paneView: GraphPaneViewStateV1;
   planeItems?: readonly GraphComplexPlaneInput[];
+  presentation: GraphRendererPresentationFrame;
   tile: GraphComplexDomainTileRuntimeV1 | null;
   viewport: GraphViewportV1;
 }) {
@@ -205,6 +208,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     enabled: gpuRendering === 'auto' && paneView.dimension === '2d', mathJson, parameters,
     programKey: tile?.itemId ?? 'complex',
   });
+  const { paintInto: paintLocusGpu, slotRef: locusSlotRef, suppressed: locusSuppressed } = useGraphComplexLocusGpu({ document, enabled: gpuRendering === 'auto' && paneView.dimension === '2d', presentation });
   const [traceEvaluator, setTraceEvaluator] = useState<((z: { re: number; im: number }) => GraphComplexTraceValue | null) | null>(null);
   useEffect(() => {
     let live = true;
@@ -231,6 +235,10 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   const plane: GraphComplexPlaneItem[] = useMemo(() => planeItems.map((entry) => ({
     itemId: entry.itemId, color: entry.color, paths: entry.paths, regions: entry.regions, roots: solvedRoots.get(entry.itemId) ?? [],
   })), [planeItems, solvedRoots]);
+  // A locus the GPU draws is composited from its canvas; the CPU geometry is kept only for the others.
+  const cpuPlane = useMemo(() => (locusSuppressed.size === 0 ? plane
+    : plane.map((entry) => (locusSuppressed.has(entry.itemId) ? { ...entry, paths: [], regions: [] } : entry))),
+  [locusSuppressed, plane]);
   const paintRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
     paintRef.current = () => {
@@ -246,7 +254,8 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
       // Without a z-map the pane is a plain Argand plane; loci and roots draw on either.
       if (!tile) { context.clearRect(0, 0, width, height); if (plane.length) paintArgandPlane(context, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio); }
       if (plane.length && (!tile || displayMode === 'domain-coloring')) {
-        paintComplexPlaneItems(context, plane, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio);
+        paintLocusGpu(context, liveRef.current, interactingRef.current, width, height);
+        paintComplexPlaneItems(context, cpuPlane, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio);
       }
     };
   });
@@ -265,7 +274,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   useEffect(() => {
     if (!interactingRef.current) liveRef.current = viewport;
     paintRef.current();
-  }, [images, plane, size, tile, viewport]);
+  }, [cpuPlane, images, paintLocusGpu, plane, size, tile, viewport]);
   useEffect(() => () => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
@@ -352,6 +361,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
       </span> : null}
     </div>
     {paneView.dimension === '2d' ? <canvas aria-hidden="true" className="graph-complex-gpu-canvas" ref={gpuCanvasRef} /> : null}
+    {paneView.dimension === '2d' ? <div aria-hidden="true" className="graph-complex-locus-gpu-slot" ref={locusSlotRef} /> : null}
     {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" className="graph-complex-overlay-canvas" ref={canvasRef}
       data-renderer={gpuStatus.renderer}
       data-tile-bounds={tile ? `${tile.bounds.reMin},${tile.bounds.reMax},${tile.bounds.imMin},${tile.bounds.imMax}` : undefined}

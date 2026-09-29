@@ -13,7 +13,10 @@ import {
 import { graphParameterEnvironment } from './graph-controller-support';
 
 type Layer = NonNullable<ReturnType<GraphGpuModule['createGraphGpuFieldLayer']>>;
-type FieldProgram = Extract<ReturnType<GraphGpuModule['buildGraphGpuRealFieldProgram']>, { kind: 'real' }>;
+type RealFieldProgram = Extract<ReturnType<GraphGpuModule['buildGraphGpuRealFieldProgram']>, { kind: 'real' }>;
+type LocusFieldProgram = Extract<ReturnType<GraphGpuModule['buildGraphGpuComplexLocusProgram']>, { kind: 'complex' }>;
+/** Real implicit fields and complex loci share the same two passes; only the clause function differs. */
+type FieldProgram = RealFieldProgram | LocusFieldProgram;
 type Candidate = {
   itemId: string; program: FieldProgram | null; reason: string | null;
   /** z = f(x, y) drawn as a height map with the domain it is sampled on. */
@@ -38,10 +41,15 @@ function clausesOf(relation: Extract<GraphDocumentV4['items'][number], { kind: '
       left: relation.operands[index]!, operator, right: relation.operands[index + 1]!,
     }));
   }
+  if (relation.kind === 'complex-locus') return relation.clauses.map((clause) => ({ left: clause.left, operator: clause.operator, right: clause.right }));
   return null;
 }
 
-function gpuCandidate(relation: Extract<GraphDocumentV4['items'][number], { kind: 'relation' }>['relation']) {
+/** `real` draws implicit fields, surfaces and loci (the Real pane shows loci at x = Re z, y = Im z); `complex-plane` draws loci only. */
+export type GraphRealFieldGpuScope = 'real' | 'complex-plane';
+
+function gpuCandidate(relation: Extract<GraphDocumentV4['items'][number], { kind: 'relation' }>['relation'], scope: GraphRealFieldGpuScope) {
+  if (scope === 'complex-plane') return relation.kind === 'complex-locus';
   return clausesOf(relation) !== null || relation.kind === 'real-surface';
 }
 
@@ -62,11 +70,12 @@ function cssColorToRgb(color: string): [number, number, number] {
  * that trace, Analyze, export, and "uncertain region" evidence read. Items the
  * GPU cannot draw faithfully stay on the SVG renderer with a stated reason.
  */
-export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation, surfaceRanges }: {
+export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation, scope = 'real', surfaceRanges }: {
   document: GraphDocumentV4 | null;
   enabled: boolean;
   getSlot: () => HTMLElement | null;
   presentation: GraphRendererPresentationFrame;
+  scope?: GraphRealFieldGpuScope;
   /** z range of each surface's CPU mesh; a surface is drawn only once its mesh exists. */
   surfaceRanges: ReadonlyMap<string, SurfaceRange>;
 }) {
@@ -80,7 +89,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation,
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scaleRef = useRef({ scale: 1 });
   const hasCandidates = Boolean(document?.items.some((item) => item.kind === 'relation' && item.visible
-    && gpuCandidate(item.relation)));
+    && gpuCandidate(item.relation, scope)));
 
   useEffect(() => {
     if (!enabled || !hasCandidates || gpu) return undefined;
@@ -112,8 +121,21 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation,
   const candidates = useMemo((): Candidate[] => {
     if (!document || !gpu) return [];
     return document.items.flatMap((item): Candidate[] => {
-      if (item.kind !== 'relation' || !item.visible) return [];
+      if (item.kind !== 'relation' || !item.visible || !gpuCandidate(item.relation, scope)) return [];
       const revision = item.source.sourceRevision;
+      if (item.relation.kind === 'complex-locus') {
+        // Loci are real functions of z = x + iy, so their sides compile with the complex translator.
+        const clauses = item.relation.clauses;
+        const program = gpu.buildGraphGpuComplexLocusProgram(
+          clauses.map((clause) => ({ left: clause.left.mathJson, right: clause.right.mathJson, operator: clause.operator })),
+          { key: `${item.itemId}@${revision}:locus`, fillsRegion: clauses.some((clause) => clause.operator !== '=') },
+        );
+        if (!('kind' in program)) {
+          return [{ itemId: item.itemId, program: null, reason: `${program.reason.replace('unsupported-operator:', '')} is not supported on the GPU` }];
+        }
+        const unbound = program.parameterNames.find((name) => !(name in parameters));
+        return [{ itemId: item.itemId, program: unbound ? null : program, reason: unbound ? `parameter ${unbound} has no value` : null }];
+      }
       if (item.relation.kind === 'real-surface') {
         const height = compileGraphExpression({ planId: `${item.itemId}.gpu.surface`, sourceRevision: revision, expression: item.relation.z });
         const zero = compileGraphExpression({ planId: `${item.itemId}.gpu.zero`, sourceRevision: revision, expression: { mathJson: 0, freeSymbols: [] } });
@@ -146,7 +168,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation,
       const unbound = program.parameterNames.find((name) => !(name in parameters));
       return [{ itemId: item.itemId, program: unbound ? null : program, reason: unbound ? `parameter ${unbound} has no value` : null }];
     });
-  }, [document, gpu, parameters]);
+  }, [document, gpu, parameters, scope]);
 
   const active = enabled && Boolean(layer) && !runtimeReason && !preciseMode;
   const suppressed = useMemo(() => new Set(active
@@ -155,7 +177,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation,
       .map((candidate) => candidate.itemId) : []), [active, candidates, drawFailures, surfaceRanges]);
 
   const status: GraphRealFieldRendererStatus = useMemo(() => {
-    const count = document?.items.filter((item) => item.kind === 'relation' && item.visible && gpuCandidate(item.relation)).length ?? 0;
+    const count = document?.items.filter((item) => item.kind === 'relation' && item.visible && gpuCandidate(item.relation, scope)).length ?? 0;
     const reasons = !enabled ? ['GPU rendering is off in Settings']
       : runtimeReason ? [runtimeReason]
         : preciseMode ? ['deep zoom uses precise CPU rendering']
@@ -165,7 +187,7 @@ export function useGraphRealFieldGpu({ document, enabled, getSlot, presentation,
               ...[...drawFailures.values()].map((reason) => `GPU draw failed (${reason})`),
             ];
     return { candidates: count, gpuItems: suppressed.size, reasons };
-  }, [candidates, document, drawFailures, enabled, layer, preciseMode, runtimeReason, suppressed]);
+  }, [candidates, document, drawFailures, enabled, layer, preciseMode, runtimeReason, scope, suppressed]);
 
   const styles = useMemo(() => {
     const byItem = new Map(presentation.items.map((entry) => [entry.itemId, entry.presentation]));

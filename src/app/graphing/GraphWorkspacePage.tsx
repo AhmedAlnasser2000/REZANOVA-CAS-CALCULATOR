@@ -944,6 +944,7 @@ export default function GraphWorkspacePage({
             onViewportChange={controller.setViewport}
             paneView={controller.session.surface.panes.complex}
             planeItems={complexPlaneItems}
+            presentation={presentation}
             tile={activeComplexTile}
             viewport={controller.session.surface.viewport}
           /> : null}

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createComplexNumericEvaluator } from '../../../equation/complex-domain-public';
 import type { GraphExpressionIR } from '../../contracts';
 import { compileGraphExpression, createGraphExpressionEvaluator } from '../../evaluator';
+import { compileGraphComplexPlan } from '../../evaluator/complex-plan';
+import { buildGraphGpuComplexLocusProgram, GRAPH_GPU_COMPLEX_LOCUS_MAX_CLAUSES } from './complex-locus';
 import { interpretGraphComplexProgramF32, translateGraphComplexMapping } from './complex-program';
 import { interpretGraphRealProgramF32, translateGraphRealPlan } from './real-program';
 
@@ -131,5 +133,56 @@ describe('Graph GPU complex program parity', () => {
   it('refuses unsupported complex operators', () => {
     expect(translateGraphComplexMapping(['Gamma', 'z'], { key: 'g' })).toEqual({ ok: false, reason: 'unsupported-operator:Gamma' });
     expect(translateGraphComplexMapping(['Root', 'z', 'a'], { key: 'r' })).toEqual({ ok: false, reason: 'unsupported-root-degree' });
+  });
+});
+
+// Loci: the sides of a clause are compiled by the same translator, so their float32
+// values must match the CPU locus authority (`compileGraphComplexPlan`), and the
+// composed clause function must carry the operator direction and the jump guard.
+const LOCUS_SIDES: Array<[string, unknown]> = [
+  ['distance', ['Abs', ['Add', 'z', -1]]],
+  ['bisector', ['Abs', ['Add', 'z', ['Complex', 0, 1]]]],
+  ['argument', ['Arg', 'z']],
+  ['real part of a square', ['Real', ['Power', 'z', 2]]],
+  ['imaginary part with a slider', ['Multiply', 'a', ['ImaginaryPart', 'z']]],
+  ['modulus of a conjugate product', ['Abs', ['Multiply', 'z', ['Conjugate', 'z']]]],
+];
+
+describe('Graph GPU complex locus programs', () => {
+  it.each(LOCUS_SIDES)('%s side matches the CPU locus evaluator', (name, mathJson) => {
+    const program = translateGraphComplexMapping(mathJson, { key: `locus:${name}` });
+    if (!('kind' in program)) throw new Error(program.reason);
+    const cpu = compileGraphComplexPlan(mathJson, { a: 1.5 });
+    if (!cpu.ok) throw new Error(cpu.reason);
+    for (const point of COMPLEX_POINTS) {
+      const reference = cpu.plan.evaluate(point);
+      const gpu = interpretGraphComplexProgramF32(program, point, program.parameterNames.map(() => 1.5));
+      expect(gpu === null, `domain at ${point.re}+${point.im}i`).toBe(reference === null);
+      if (reference && gpu) {
+        expect(Math.abs(gpu.re - reference.re), `value at ${point.re}+${point.im}i`).toBeLessThanOrEqual(5e-5 * Math.max(1, Math.abs(reference.re)));
+      }
+    }
+  });
+
+  it('builds one clause function per clause with the operator direction and shared sliders', () => {
+    const program = buildGraphGpuComplexLocusProgram([
+      { left: ['Abs', 'z'], operator: '<', right: 'a' },
+      { left: 'a', operator: '>=', right: ['Real', 'z'] },
+    ], { key: 'locus', fillsRegion: true });
+    if (!('kind' in program)) throw new Error(program.reason);
+    expect(program).toMatchObject({ kind: 'complex', clauseCount: 2, strict: [true, false], fillsRegion: true, parameterNames: ['a'] });
+    expect(program.glsl).toContain('float graphClause0(vec2 p, out bool ok)');
+    expect(program.glsl).toContain('float graphClause1(vec2 p, out bool ok)');
+    expect(program.glsl).toContain('return l.x - r.x;');
+    expect(program.glsl).toContain('return r.x - l.x;');
+    expect(program.glsl).toContain('vec2 graphComplex(vec2 z, out bool ok)');
+  });
+
+  it('refuses unsupported operators, empty clause lists and too many clauses', () => {
+    expect(buildGraphGpuComplexLocusProgram([{ left: ['Gamma', 'z'], operator: '=', right: 1 }], { key: 'g', fillsRegion: false }))
+      .toEqual({ ok: false, reason: 'unsupported-operator:Gamma' });
+    expect(buildGraphGpuComplexLocusProgram([], { key: 'none', fillsRegion: false })).toEqual({ ok: false, reason: 'no-clauses' });
+    const clauses = Array.from({ length: GRAPH_GPU_COMPLEX_LOCUS_MAX_CLAUSES + 1 }, () => ({ left: ['Abs', 'z'], operator: '<' as const, right: 3 }));
+    expect(buildGraphGpuComplexLocusProgram(clauses, { key: 'many', fillsRegion: true })).toEqual({ ok: false, reason: 'too-many-clauses' });
   });
 });

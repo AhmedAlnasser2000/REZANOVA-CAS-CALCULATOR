@@ -1,3 +1,4 @@
+export * from './complex-locus';
 export * from './complex-program';
 export * from './complex-shading';
 export * from './field-layer';
