@@ -17,6 +17,8 @@ export const DEFAULT_CONFIG = Object.freeze({
     stallMinutes: 30,
     // Turns shorter than this skip the completion alert: the user is likely watching.
     minTurnSecondsForCompletion: 60,
+    // Alerts arriving together are sent at least this far apart, so none is missed.
+    alertSpacingSeconds: 3,
     daemonTickSeconds: 30,
   },
   events: {

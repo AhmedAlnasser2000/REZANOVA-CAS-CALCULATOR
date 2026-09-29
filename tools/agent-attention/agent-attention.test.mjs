@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fromClaudeHook, fromCodexNotify, lastAssistantText } from './core/adapters.mjs';
 import { classifyClaudeNotification, classifyTurnEnd, formatAlert, parseMarker } from './core/classify.mjs';
 import { DEFAULT_CONFIG, resolveConfig } from './core/config.mjs';
-import { dispatch } from './core/dispatch.mjs';
+import { dispatch, reserveAlertSlot } from './core/dispatch.mjs';
 import { applyEvent, applyTick, handleEvent, runTick } from './core/events.mjs';
 import { addClaudeHooks, addCodexNotify, removeClaudeHooks, removeCodexNotify, systemdUnit } from './core/install.mjs';
 import { buildLaunchArgs, exitEvent, guessAgent, shellQuote, watchPanes } from './core/launch.mjs';
@@ -136,6 +136,27 @@ test('dispatch never throws and honours dry run', async () => {
   const dry = await dispatch(event, { config: { ...config, dryRun: true }, stateDir: dir });
   assert.equal(dry[0].channel, 'dry-run');
   assert.equal(dry[0].alert.sound, 'falling');
+});
+
+test('alerts that fire together are spaced apart and keep their order', async () => {
+  const dir = tmpDir();
+  assert.equal(reserveAlertSlot(dir, 3_000, 1_000), 1_000);
+  assert.equal(reserveAlertSlot(dir, 3_000, 1_000), 4_000);
+  assert.equal(reserveAlertSlot(dir, 3_000, 2_000), 7_000);
+  assert.equal(reserveAlertSlot(dir, 3_000, 60_000), 60_000);
+  assert.equal(reserveAlertSlot(dir, 0, 60_500), 60_500);
+
+  const config = resolveConfig({});
+  const waits = []; const sent = [];
+  const channels = { phone: async (alert) => { sent.push(alert.sound); return { sent: true }; } };
+  const event = (type) => ({ type, agent: 'claude', sessionId: 's', cwd: '/p', text: type });
+  const other = tmpDir();
+  for (const type of ['critical', 'question', 'complete']) {
+    await dispatch(event(type), { config, stateDir: other, channels, sleep: async (ms) => { waits.push(ms); } });
+  }
+  assert.deepEqual(sent, ['cosmic', 'magic', 'bike']);
+  assert.equal(waits.length, 2);
+  for (const ms of waits) assert.ok(ms > 2_000 && ms <= 3_000 * 2, `unexpected wait ${ms}`);
 });
 
 test('handleEvent and runTick persist state and write an expiry handoff', async () => {

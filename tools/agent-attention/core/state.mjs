@@ -5,7 +5,7 @@ const LOCK_STALE_MS = 10_000;
 const LOCK_WAIT_MS = 3_000;
 
 export function emptyState() {
-  return { version: 1, sessions: {}, pending: {}, daemonBeatAt: null };
+  return { version: 1, sessions: {}, pending: {}, daemonBeatAt: null, lastAlertAt: null };
 }
 
 export function readState(dir) {
