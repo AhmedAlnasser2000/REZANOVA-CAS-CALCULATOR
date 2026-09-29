@@ -53,6 +53,18 @@ test.describe('Graph complex loci and roots', () => {
     expect(errors).toEqual([]);
   });
 
+  test('finds the root points of a conjugate equation', async ({ page }) => {
+    await openGraph(page);
+    await enterExpression(page, String.raw`\overline{z}=z^2`);
+    await expect(page.locator('.graph-domain-switch [aria-pressed="true"]')).toHaveText('Complex');
+    await expect(page.locator('.graph-complex-toolbar > span').first()).toContainText('4 root points');
+    await expect.poll(async () => {
+      const point = await complexPoint(page, -0.5, Math.sqrt(3) / 2);
+      await page.mouse.move(point.x, point.y);
+      return page.getByTestId('graph-complex-root-readout').textContent().catch(() => null);
+    }, { timeout: 8_000 }).toMatch(/^z ≈ −0\.5 \+ 0\.866025i · numeric/u);
+  });
+
   test('labels a traced complex value of a real curve as the complex part', async ({ page }) => {
     await openGraph(page);
     await enterExpression(page, String.raw`\sqrt{-x}`);

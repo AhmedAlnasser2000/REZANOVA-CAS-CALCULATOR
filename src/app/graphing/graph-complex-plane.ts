@@ -144,5 +144,5 @@ export function complexPlaneRootText(root: GraphComplexPlaneRoot) {
   const multiplicity = root.multiplicity > 1 ? ` · multiplicity ${root.multiplicity}` : '';
   if (root.exact && root.label) return `z = ${root.label} · exact${multiplicity}`;
   const im = formatPart(Math.abs(root.im));
-  return `z ≈ ${formatPart(root.re)} ${root.im < 0 && im !== '0' ? '−' : '+'} ${im}i · ${root.exact ? 'exact' : 'numeric'}${multiplicity}`;
+  return `z ≈ ${formatPart(root.re).replace('-', '−')} ${root.im < 0 && im !== '0' ? '−' : '+'} ${im}i · ${root.exact ? 'exact' : 'numeric'}${multiplicity}`;
 }

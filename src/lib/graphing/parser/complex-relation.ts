@@ -46,3 +46,14 @@ function usesSymbol(node: unknown, symbol: string): boolean {
   if (node === symbol) return true;
   return Array.isArray(node) && node.slice(1).some((child) => usesSymbol(child, symbol));
 }
+
+/** Operators with no complex derivative: a Newton step in z is meaningless for them. */
+const NON_HOLOMORPHIC = new Set(['Conjugate', 'Real', 'ImaginaryPart', 'Abs', 'Arg']);
+
+/** True when a non-holomorphic operator is applied to something that depends on z (\overline{z} = z^2). */
+export function isNonHolomorphicInZ(node: unknown): boolean {
+  if (!Array.isArray(node)) return false;
+  const [head, ...operands] = node;
+  if (typeof head === 'string' && NON_HOLOMORPHIC.has(head) && operands.some((operand) => usesSymbol(operand, 'z'))) return true;
+  return operands.some(isNonHolomorphicInZ);
+}

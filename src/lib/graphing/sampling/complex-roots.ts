@@ -5,6 +5,8 @@ import {
 import { complex, complexAbs, complexAdd, complexDiv, complexMul, complexSub, type ComplexValue } from '../../numeric/complex';
 import type { GraphExpressionIR, GraphViewportV1 } from '../contracts';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';
+import { isNonHolomorphicInZ } from '../parser/complex-relation';
+import { findGraphPlaneRoots } from './complex-plane-newton';
 import {
   deflateExact, exactGraphPolynomial, G0, gDiv, gIsZero, gNeg, gToComplex, qIsZero, qMul, qSub, qToNumber, qAdd, qDiv,
   rational, Q0, Q1, type GraphExactPolynomial, type GraphGaussian, type GraphRational,
@@ -290,6 +292,15 @@ export function solveGraphComplexRoots(input: {
   const evaluator = fastEvaluator(zeroForm, input.parameters);
   if (!evaluator) return { roots: [], complete: false, degree: null };
   const { xMin, xMax, yMin, yMax } = input.viewport;
+  if (isNonHolomorphicInZ(substituted)) {
+    // Conjugates, Re, Im, |.| and arg have no complex derivative: solve the real 2-D system instead.
+    const points = findGraphPlaneRoots((z) => evaluator.evaluateAt(z).value, { xMin, xMax, yMin, yMax });
+    return {
+      roots: points.map((point) => ({ re: point.re, im: point.im, exact: false, label: null, multiplicity: 1 })),
+      complete: false,
+      degree: null,
+    };
+  }
   const found = findComplexNewtonCandidates({
     evaluator, region: { reMin: xMin, reMax: xMax, imMin: yMin, imMax: yMax }, gridSize: 9, lowDiscrepancySeedCount: 16,
   });

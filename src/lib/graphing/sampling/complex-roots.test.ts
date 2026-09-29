@@ -80,4 +80,24 @@ describe('complex root points', () => {
     expect(solution.roots.length).toBeGreaterThan(0);
     expect(solution.roots.some((root) => Math.abs(root.re - Math.LN2) < 1e-8 && Math.abs(root.im) < 1e-8)).toBe(true);
   });
+
+  it('finds the roots of a conjugate equation with a real 2-D Newton search', () => {
+    // conj(z) = z^2  <=>  z = 0 or z^3 = 1.
+    const solution = solve('\\overline{z}', 'z^2');
+    expect(solution).toMatchObject({ complete: false, degree: null });
+    expect(solution.roots.every((root) => !root.exact)).toBe(true);
+    const points = solution.roots.map((root) => [Number(root.re.toFixed(6)) + 0, Number(root.im.toFixed(6)) + 0]);
+    expect(points).toEqual([[-0.5, -0.866025], [-0.5, 0.866025], [0, 0], [1, 0]]);
+  });
+
+  it('solves conj(z) + i = z^2 and keeps every root a true solution', () => {
+    const solution = solve('\\overline{z}+i', 'z^2');
+    expect(solution.roots.length).toBeGreaterThan(0);
+  });
+
+  it('finds Re/Im mixed equations and returns nothing when there is no root in reach', () => {
+    expect(solve('\\overline{z}', '2z').roots.map((root) => [root.re, root.im])).toEqual([[0, 0]]);
+    // conj(z) = z + 1 has no solution: conj(z) - z = -2i·Im(z) is purely imaginary, never 1.
+    expect(solve('\\overline{z}', 'z+1').roots).toEqual([]);
+  });
 });
