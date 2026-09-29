@@ -6,6 +6,8 @@ import {
 import {
   buildGraphGridScene,
   GraphSvgReferenceRenderer,
+  loadGraphComplexTraceEvaluator,
+  type GraphComplexTraceValue,
   type GraphDocumentV4,
   type GraphGridPolicyV1,
   type GraphRendererPresentationFrame,
@@ -16,12 +18,14 @@ import {
 import {
   buildGraphTraceIndex,
   firstGraphTraceTarget,
+  graphComplexValuePart,
   hitTestGraphTraceIndex,
   stepGraphTraceTarget,
   traceGraphPathAtPointer,
   type GraphTraceIndex,
   type GraphTraceTarget,
 } from './graph-hit-testing';
+import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import type { GraphGestureLane } from './useGraphGestureSampling';
 import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
@@ -66,6 +70,16 @@ function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV
 
 function formatTraceNumber(value: number) {
   return String(Math.abs(value) < 1e-10 ? 0 : Number(value.toPrecision(6)));
+}
+
+/** Two callout lines for a real curve's Re/Im path: which part it is, then the whole value. */
+function complexPartCallout(part: 'real' | 'imaginary', x: number, value: GraphComplexTraceValue) {
+  const at = formatTraceNumber(x);
+  const imaginary = formatTraceNumber(Math.abs(value.im));
+  return [
+    `Complex part · ${part === 'imaginary' ? 'Im' : 'Re'} f(${at}) = ${formatTraceNumber(part === 'imaginary' ? value.im : value.re)}`,
+    `f(${at}) = ${formatTraceNumber(value.re)} ${value.im < 0 && imaginary !== '0' ? '−' : '+'} ${imaginary}i`,
+  ];
 }
 
 function zoomViewport(base: GraphViewportV1, scale: number, x: number, y: number, size: Size) {
@@ -121,6 +135,8 @@ export function GraphSvgViewport({
   const traceMarkerRef = useRef<HTMLDivElement | null>(null);
   const traceLabelRef = useRef<HTMLDivElement | null>(null);
   const traceRef = useRef<GraphTraceTarget | null>(null);
+  // Exact complex evaluators for curves showing their complex values (ℂ), by item.
+  const complexTraceRef = useRef(new Map<string, (z: { re: number; im: number }) => GraphComplexTraceValue | null>());
   const traceLockRef = useRef<TraceLock | null>(null);
   const tracePointerRef = useRef<{ x: number; y: number } | null>(null);
   const traceIndexRef = useRef<GraphTraceIndex | null>(null);
@@ -260,15 +276,46 @@ export function GraphSvgViewport({
     const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
     marker.hidden = false; marker.style.transform = `translate3d(${target.screen.x - 6}px,${target.screen.y - 6}px,0)`;
     marker.dataset.traceItemId = target.itemId;
-    const lx = Math.max(8, Math.min(sizeRef.current.width - 150, target.screen.x + 12));
+    const labelWidth = graphComplexValuePart(target.pathId) ? 240 : 150;
+    const lx = Math.max(8, Math.min(sizeRef.current.width - labelWidth, target.screen.x + 12));
     const ly = Math.max(8, Math.min(sizeRef.current.height - 38, target.screen.y - 36));
     label.hidden = false; label.style.transform = `translate3d(${lx}px,${ly}px,0)`;
     label.dataset.traceItemId = target.itemId;
+    const part = graphComplexValuePart(target.pathId);
+    const complexValue = part ? complexTraceRef.current.get(target.itemId)?.({ re: target.world.x, im: 0 }) : null;
+    if (part && complexValue) {
+      // Label the Re/Im path as the complex part and show the whole value, evaluated exactly at x.
+      const lines = complexPartCallout(part, target.world.x, complexValue);
+      label.classList.add('is-complex-part');
+      label.textContent = lines.join('\n');
+      if (announce) label.setAttribute('aria-label', `Trace point, ${lines.join('; ')}`); else label.removeAttribute('aria-label');
+      return;
+    }
+    label.classList.remove('is-complex-part');
     const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
     label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
   }, [hideTrace, onTraceItemChange]);
+
+  useEffect(() => {
+    const curves = (document?.items ?? []).flatMap((item) => (item.kind === 'relation' && item.relation.kind === 'explicit-y'
+      && item.relation.complexValues ? [{ itemId: item.itemId, mathJson: item.relation.rhs.mathJson }] : []));
+    const evaluators = complexTraceRef.current;
+    if (curves.length === 0) { evaluators.clear(); return undefined; }
+    let live = true;
+    const parameters = document ? graphParameterEnvironment(document) : {};
+    void loadGraphComplexTraceEvaluator().then((create) => {
+      if (!live) return;
+      evaluators.clear();
+      for (const curve of curves) {
+        try { evaluators.set(curve.itemId, create(curve.mathJson, parameters, { target: 'x' })); } catch {
+          // Operators outside the complex evaluator: the callout falls back to (x, y).
+        }
+      }
+    });
+    return () => { live = false; };
+  }, [document]);
 
   useEffect(() => {
     sceneRef.current = spatialScene; routesRef.current = itemRoutes; pendingRef.current = pending;

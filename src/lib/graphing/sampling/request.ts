@@ -21,6 +21,8 @@ import { createGraphExpressionEvaluator } from '../evaluator';
 import { compileExplicitGraphRelation } from './compile';
 import { sampleExplicitGraphRelation } from './explicit';
 import { sampleImplicitGraphRelation } from './implicit';
+import { buildGraphComplexLocusClauses, graphComplexLocusShape } from './complex-locus';
+import { solveGraphComplexRoots } from './complex-roots';
 import { sampleGraphPiecewise } from './piecewise';
 import { sampleParametricGraphRelation } from './parametric';
 import {
@@ -264,8 +266,12 @@ export async function runGraphSampleRequest(
     }
     if (item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues) {
       // Opt-in overlay, outside the item's cache entry so a cache hit never repeats it.
+      const realPlan = planCache.getOrCompile({ planId: `${item.itemId}:complex-values-real-curve`,
+        sourceRevision: item.source.sourceRevision, expression: item.relation.rhs });
+      const realCurve = realPlan.ok ? createGraphExpressionEvaluator(realPlan.plan) : null;
       const values = sampleGraphComplexValues({ mathJson: item.relation.rhs.mathJson, viewport: request.viewport,
-        cssWidth: request.cssSize.width, parameters: request.parameterEnvironment });
+        cssWidth: request.cssSize.width, parameters: request.parameterEnvironment,
+        realDefined: (x) => realCurve?.evaluate({ ...request.parameterEnvironment, x }).status === 'finite' });
       if (values) {
         const overlay = realAxisSlicePaths(item.itemId, 'complex-values', values);
         paths.push(...overlay); sampleCount += values.sampleCount;
@@ -296,6 +302,24 @@ export async function runGraphSampleRequest(
         refinable: !sampled.tile.truncated && request.quality !== 'polish' });
       await control.yieldBetweenItems?.();
       if (sampled.tile.truncated) { cancelled = true; break; }
+      continue;
+    }
+    if (item.kind === 'relation' && item.relation.kind === 'complex-roots') {
+      // Solutions of an equation in z: points at (Re z, Im z). Polynomials give all
+      // roots; other equations only those Newton finds in view.
+      const solution = solveGraphComplexRoots({ left: item.relation.left, right: item.relation.right,
+        parameters: request.parameterEnvironment, viewport: request.viewport });
+      if (solution.roots.length > 0) {
+        pointBatches.push({ pointBatchId: `${item.itemId}:roots:0`, itemId: item.itemId,
+          coordinates: new Float64Array(solution.roots.flatMap((root) => [root.re, root.im])) });
+        vertexCount += solution.roots.length;
+      }
+      itemEvidence.push({ itemId: item.itemId, route: 'complex-roots',
+        achievedQuality: request.quality === 'polish' ? 'polished' : request.quality === 'settled' ? 'settled' : 'coarse',
+        estimatedMaximumErrorPixels: 0, cache: 'miss', refinable: false,
+        ...(solution.complete ? {} : { stopReason: { code: 'analysis-inconclusive' as const,
+          detailCode: 'complex-roots-in-view-only', path: item.itemId } }) });
+      await control.yieldBetweenItems?.();
       continue;
     }
     if (item.kind === 'relation' && item.relation.kind === 'complex-trajectory') {
@@ -514,7 +538,15 @@ export async function runGraphSampleRequest(
     }
     if (item.relation.kind === 'implicit-equality'
       || item.relation.kind === 'inequality'
-      || item.relation.kind === 'chained-inequality') {
+      || item.relation.kind === 'chained-inequality'
+      || item.relation.kind === 'complex-locus') {
+      // A complex locus is an implicit relation in (Re z, Im z) with prebuilt z = x + iy clauses.
+      const locus = item.relation.kind === 'complex-locus'
+        ? buildGraphComplexLocusClauses(item.relation, request.parameterEnvironment) : null;
+      if (locus && !locus.ok) {
+        stopReasons.push({ ...locus.stopReason, path: item.itemId });
+        continue;
+      }
       const policy = deriveGraphAdaptiveQualityPolicy({
         quality: request.quality,
         cssSize: request.cssSize,
@@ -524,7 +556,8 @@ export async function runGraphSampleRequest(
       const sampled = sampleImplicitGraphRelation({
         itemId: item.itemId,
         sourceRevision: item.source.sourceRevision,
-        relation: item.relation,
+        relation: item.relation.kind === 'complex-locus' ? graphComplexLocusShape(item.relation) : item.relation,
+        ...(locus?.ok ? { prebuilt: { clauses: locus.clauses, fillsRegion: locus.fillsRegion } } : {}),
         viewport: overscannedGraphViewport(request.viewport, request.movement, true),
         cssSize: request.cssSize,
         parameterEnvironment: request.parameterEnvironment,

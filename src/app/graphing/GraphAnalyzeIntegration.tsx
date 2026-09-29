@@ -31,7 +31,7 @@ export function GraphAnalyzeIntegration({
       activeTab={session.surface.analyze.activeTab}
       analysis={evidence}
       assumptions={session.document.assumptions}
-      complexSolve={selectedItem?.kind === 'relation' && selectedItem.relation.kind === 'complex-mapping'}
+      complexSolve={selectedItem?.kind === 'relation' && (selectedItem.relation.kind === 'complex-mapping' || selectedItem.relation.kind === 'complex-roots')}
       hasSelection={Boolean(selectedItem)}
       message={analysis.message}
       onClose={() => { setPreview(null); onUpdateAnalyze({ open: false }); }}

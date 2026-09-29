@@ -10,17 +10,20 @@ export type GraphViewAutoSwitch = {
   reason: 'complex-mapping-added' | 'complex-mapping-removed';
 };
 
+/** Items drawn in the complex plane: z-maps, loci such as |z-1| = 2, and root points. */
+const COMPLEX_PLANE_KINDS = new Set(['complex-mapping', 'complex-locus', 'complex-roots']);
+
 function complexMappingIds(document: GraphDocumentV4) {
   return new Set(document.items.flatMap((item) => (
-    item.kind === 'relation' && item.relation.kind === 'complex-mapping' ? [item.itemId] : [])));
+    item.kind === 'relation' && COMPLEX_PLANE_KINDS.has(item.relation.kind) ? [item.itemId] : [])));
 }
 
 /**
- * The view follows complex mappings (z-expressions) only: a newly authored
- * mapping opens the Complex pane from Real, and removing the last mapping
+ * The view follows complex-plane items (z-maps, loci, roots) only: a newly
+ * authored one opens the Complex pane from Real, and removing the last one
  * returns to Real only when Complex was opened automatically. Trajectories
  * f(t) draw in the Real pane and never switch. A user's explicit mode choice
- * is never overridden for a mapping that already existed.
+ * is never overridden for an item that already existed.
  */
 export function graphViewAutoSwitch({ previous, next, mode, autoSwitched }: {
   previous: GraphDocumentV4;

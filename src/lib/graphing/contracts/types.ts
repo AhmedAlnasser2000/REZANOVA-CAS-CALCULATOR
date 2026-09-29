@@ -98,7 +98,27 @@ export type GraphRelationIR =
       parameterSymbol: string;
       value: GraphExpressionIR;
       domain?: GraphConditionIR;
+    }
+  | {
+      /** Real-valued conditions on z alone (|z-1| = 2, Re(z^2) < 1): curves and regions in the complex plane. */
+      kind: 'complex-locus';
+      clauses: GraphComplexLocusClauseIR[];
+    }
+  | {
+      /** An equation in z alone whose sides are complex-valued (z^2 + z = 3): its solutions as points. */
+      kind: 'complex-roots';
+      left: GraphExpressionIR;
+      right: GraphExpressionIR;
     };
+
+export type GraphComplexLocusClauseIR = {
+  left: GraphExpressionIR;
+  operator: GraphComparator;
+  right: GraphExpressionIR;
+};
+
+/** At most four chained comparisons, like real chained inequalities on the GPU. */
+export const GRAPH_COMPLEX_LOCUS_MAX_CLAUSES = 4;
 
 export type GraphPiecewiseSpecV1 = {
   version: 1;

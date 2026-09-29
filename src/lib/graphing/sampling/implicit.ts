@@ -19,11 +19,17 @@ type ImplicitRelation = Extract<GraphRelationIR, {
   kind: 'implicit-equality' | 'inequality' | 'chained-inequality';
 }>;
 
-type CompiledClause = {
+export type GraphImplicitClause = {
   left: GraphExpressionEvaluator;
   right: GraphExpressionEvaluator;
   operator: GraphInequalityComparator | '=';
+  /**
+   * Reject sign changes that are jumps, not roots: arg(z) = c flips sign by
+   * 2π across the negative real axis without ever crossing zero there.
+   */
+  rejectJumps?: boolean;
 };
+type CompiledClause = GraphImplicitClause;
 
 type SampleVertex = {
   x: number;
@@ -73,6 +79,8 @@ export type GraphImplicitSamplingInput = {
   itemId: string;
   sourceRevision: number;
   relation: ImplicitRelation;
+  /** Ready-made clauses (complex loci, evaluated at z = x + iy); `relation` then only names the shape. */
+  prebuilt?: { clauses: GraphImplicitClause[]; fillsRegion: boolean };
   viewport: GraphViewportV1;
   cssSize: { width: number; height: number };
   parameterEnvironment: Readonly<Record<string, number>>;
@@ -102,6 +110,7 @@ function relationClauses(relation: ImplicitRelation) {
 }
 
 function compileImplicitRelation(input: GraphImplicitSamplingInput): CompileResult {
+  if (input.prebuilt) return { ok: true, ...input.prebuilt };
   const cache = input.cache ?? new GraphExpressionPlanCache(16);
   const clauses: CompiledClause[] = [];
   for (const [index, clause] of relationClauses(input.relation).entries()) {
@@ -124,6 +133,20 @@ function compileImplicitRelation(input: GraphImplicitSamplingInput): CompileResu
     });
   }
   return { ok: true, clauses, fillsRegion: input.relation.kind !== 'implicit-equality' };
+}
+
+/**
+ * A root keeps its slope as bisection narrows the bracket; a jump keeps its
+ * gap, so its slope grows with every halving. Undecidable brackets pass.
+ */
+function isJump(first: SampleVertex, second: SampleVertex, low: SampleVertex, high: SampleVertex,
+  lowValue: number, highValue: number, clauseIndex: number) {
+  const initialLength = Math.hypot(second.x - first.x, second.y - first.y);
+  const finalLength = Math.hypot(high.x - low.x, high.y - low.y);
+  if (!(finalLength > 0) || finalLength > initialLength / 4) return false;
+  const initialSlope = Math.abs(second.values[clauseIndex]! - first.values[clauseIndex]!) / initialLength;
+  const finalSlope = Math.abs(highValue - lowValue) / finalLength;
+  return finalSlope > 8 * initialSlope;
 }
 
 function normalizedDifference(operator: CompiledClause['operator'], left: number, right: number) {
@@ -351,7 +374,7 @@ function stitchSegments(segments: ContourSegment[]) {
 export function sampleImplicitGraphRelation(
   input: GraphImplicitSamplingInput,
 ): GraphSampledImplicitRelation {
-  const directed = sampleDirectedInequality(input);
+  const directed = input.prebuilt ? null : sampleDirectedInequality(input);
   if (directed) return directed;
   const now = input.control?.now ?? (() => performance.now());
   const isCancelled = input.control?.isCancelled ?? (() => false);
@@ -590,6 +613,10 @@ export function sampleImplicitGraphRelation(
         high = candidate;
         highValue = value;
       }
+    }
+    if (compiled.clauses[clauseIndex]!.rejectJumps && isJump(first, second, low, high, lowValue, highValue, clauseIndex)) {
+      edgeRootCache.set(key, null);
+      return null;
     }
     const root = Math.abs(lowValue) <= Math.abs(highValue) ? low : high;
     edgeRootCache.set(key, root);

@@ -1,6 +1,7 @@
 import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
 import { complex, complexAbs, complexArg } from '../../numeric/complex';
 import { clipGraphComplexBranchRay, graphComplexBranchGeometry } from './complex-branch-geometry';
+import { graphRealLogConvention } from './real-log-convention';
 import type {
   GraphComplexDomainTileRuntimeV1,
   GraphRelationIR,
@@ -93,7 +94,7 @@ export function sampleComplexMapping(input: {
     rgba, values, analyticity: nonHolomorphic ? 'non-holomorphic' : unresolved ? 'unknown' : 'holomorphic',
     ...branch, truncated: input.isCancelled(),
   };
-  const slice = realAxisSlice(evaluator, input.viewport, Math.min(320, width * 2), false);
+  const slice = realAxisSlice(evaluator, input.viewport, Math.min(320, width * 2));
   return { tile, slice, sampleCount, invalidCount };
 }
 
@@ -103,19 +104,17 @@ export type GraphRealAxisSlice = {
 
 /**
  * Re f(x) and Im f(x) along the real axis, principal branch. Undefined points
- * break the segment; with `nonRealOnly`, so do points where f(x) is real, so
- * the result covers exactly the intervals a real plot leaves blank.
+ * break the segment, and so do points `skip` rejects.
  */
 function realAxisSlice(evaluator: ReturnType<typeof createComplexNumericEvaluator>, viewport: GraphViewportV1,
-  steps: number, nonRealOnly: boolean): GraphRealAxisSlice {
+  steps: number, skip?: (x: number) => boolean): GraphRealAxisSlice {
   const re: number[] = []; const im: number[] = []; const offsets: number[] = [];
   let open = false;
   for (let index = 0; index <= steps; index += 1) {
     const x = viewport.xMin + index / steps * (viewport.xMax - viewport.xMin);
     const result = evaluator.evaluateAt(complex(x, 0));
     const value = result.status === 'finite' ? result.value : undefined;
-    const keep = value && Number.isFinite(value.re) && Number.isFinite(value.im)
-      && (!nonRealOnly || Math.abs(value.im) > 1e-9 * Math.max(1, Math.abs(value.re)));
+    const keep = value && Number.isFinite(value.re) && Number.isFinite(value.im) && !skip?.(x);
     if (!keep) { open = false; continue; }
     if (!open) { offsets.push(re.length / 2); open = true; }
     re.push(x, value.re); im.push(x, value.im);
@@ -124,14 +123,20 @@ function realAxisSlice(evaluator: ReturnType<typeof createComplexNumericEvaluato
     sampleCount: steps + 1 };
 }
 
-/** Opt-in complex values of a real explicit curve y = f(x), where f(x) is not real. */
+/**
+ * Opt-in complex values of a real explicit curve y = f(x), only where the real
+ * curve itself is undefined (`realDefined` false): a real odd root such as
+ * the cube root of -8 stays the real curve's, never a second Re/Im pair.
+ */
 export function sampleGraphComplexValues(input: {
   mathJson: unknown; viewport: GraphViewportV1; cssWidth: number; parameters: Record<string, number>;
+  realDefined: (x: number) => boolean;
 }): GraphRealAxisSlice | null {
   try {
-    const evaluator = createComplexNumericEvaluator({ expressionMathJson: input.mathJson, target: 'x',
-      parameters: input.parameters });
-    return realAxisSlice(evaluator, input.viewport, Math.max(64, Math.min(1200, Math.round(input.cssWidth))), true);
+    const evaluator = createComplexNumericEvaluator({ expressionMathJson: graphRealLogConvention(input.mathJson),
+      target: 'x', parameters: input.parameters });
+    return realAxisSlice(evaluator, input.viewport, Math.max(64, Math.min(1200, Math.round(input.cssWidth))),
+      input.realDefined);
   } catch {
     // Operators outside the complex evaluator: the real curve stands alone.
     return null;

@@ -6,6 +6,10 @@ function source(sourceLatex: string, sourceRevision = 0): GraphSourceV1 {
   return { sourceKind: 'mathlive-latex', sourceLatex, sourceRevision };
 }
 
+function classifySource(sourceLatex: string) {
+  return classifyGraphSource(source(sourceLatex));
+}
+
 function relation(sourceLatex: string) {
   const result = classifyGraphSource(source(sourceLatex));
   expect(result.ok).toBe(true);
@@ -77,6 +81,43 @@ describe('Graph MathLive source classifier', () => {
     expect(relation(String.raw`f(t)=\exp(it)`)).toMatchObject({ kind: 'complex-trajectory', parameterSymbol: 't' });
     expect(relation(String.raw`\ln(-x)`)).toMatchObject({ kind: 'explicit-y', rhs: { freeSymbols: ['x'] } });
     expect(relation(String.raw`\sqrt{-x}`)).toMatchObject({ kind: 'explicit-y', rhs: { freeSymbols: ['x'] } });
+  });
+
+  it.each([
+    [String.raw`|z-1|=2`, ['='], 'Abs'],
+    [String.raw`|z-1|=|z+i|`, ['='], 'Abs'],
+    [String.raw`\operatorname{Re}(z^2)=1`, ['='], 'Real'],
+    [String.raw`\Re(z)=1`, ['='], 'Real'],
+    [String.raw`\Im(z)>0`, ['>'], 'ImaginaryPart'],
+    [String.raw`\arg(z)=\frac{\pi}{4}`, ['='], 'Arg'],
+    [String.raw`|z|<2`, ['<'], 'Abs'],
+    [String.raw`1<|z|\le 2`, ['<', '<='], 'Abs'],
+  ])('classifies %s as a complex locus', (latex, operators, carrier) => {
+    const locus = relation(latex);
+    expect(locus.kind).toBe('complex-locus');
+    if (locus.kind !== 'complex-locus') throw new Error('Expected a complex locus.');
+    expect(locus.clauses.map((clause) => clause.operator)).toEqual(operators);
+    expect(JSON.stringify(locus.clauses)).toContain(`"${carrier}"`);
+  });
+
+  it.each([String.raw`z^2+z=3`, 'z^3=1', String.raw`e^z=2`, 'z=1+i', 'z=2i', String.raw`\overline{z}=z^2`])(
+    'classifies %s as complex roots',
+    (latex) => {
+      expect(relation(latex)).toMatchObject({ kind: 'complex-roots' });
+    },
+  );
+
+  it('keeps z = real number and z = f(x, y) as surfaces', () => {
+    expect(relation('z=2')).toMatchObject({ kind: 'real-surface' });
+    expect(relation('z=x^2-y^2')).toMatchObject({ kind: 'real-surface' });
+  });
+
+  it.each([
+    ['|z|=z', 'complex-mixed-sides'],
+    ['z<1', 'complex-inequality-not-real'],
+    [String.raw`z^2>|z|`, 'complex-inequality-not-real'],
+  ])('rejects %s with guidance', (latex, detailCode) => {
+    expect(classifySource(latex)).toMatchObject({ ok: false, stopReason: { detailCode } });
   });
 
   it.each(['zx=y', 'y=zx', 'x=z+1', 'x^2+z=y', 'y<zx', 'x<z<y', 'z=z+x'])(

@@ -578,6 +578,20 @@ export default function GraphWorkspacePage({
     item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
   ));
   const gestureLane = useGraphGestureSampling({ cssSize: viewportSize, document: controller.session.document, workspaceContext });
+  // Loci and root points drawn in the Complex pane, with their sampled geometry and item colour.
+  const complexPlaneItems = useMemo(() => controller.session.document.items.flatMap((item) => {
+    if (item.kind !== 'relation' || !item.visible
+      || (item.relation.kind !== 'complex-locus' && item.relation.kind !== 'complex-roots')) return [];
+    const planar = scene?.planarScene;
+    return [{
+      itemId: item.itemId,
+      color: resolveGraphPresentationColor(normalizeGraphItemPresentation(item.presentation), controller.session.surface.appearance.colorVisionMode),
+      paths: (planar?.paths ?? []).filter((path) => path.itemId === item.itemId)
+        .map((path) => ({ coordinates: path.coordinates, segmentOffsets: path.segmentOffsets, strict: path.strokeRole === 'strict-boundary' })),
+      regions: (planar?.regions ?? []).filter((region) => region.itemId === item.itemId),
+      roots: item.relation.kind === 'complex-roots' ? { left: item.relation.left, right: item.relation.right } : null,
+    }];
+  }), [controller.session.document.items, controller.session.surface.appearance.colorVisionMode, scene]);
   const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
     ?? scene?.complexTiles[0] ?? null;
 
@@ -688,9 +702,10 @@ export default function GraphWorkspacePage({
               {mode[0].toUpperCase() + mode.slice(1)}
             </button>)}
           </div>
-          <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
+          {/* The auto-switch notice names the view while it shows, so the context chip steps aside. */}
+          {controller.autoViewNotice ? null : <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
             ? `Real · ${controller.session.surface.panes.real.dimension === '3d' ? 'Three interactive' : 'SVG reference'}`
-            : controller.session.surface.viewPolicy.mode === 'complex' ? 'Complex · mapping' : 'Real + Complex'}</span>
+            : controller.session.surface.viewPolicy.mode === 'complex' ? 'Complex · mapping' : 'Real + Complex'}</span>}
           {controller.autoViewNotice ? <span className="graph-view-notice" data-testid="graph-view-notice" role="status"
             title={controller.autoViewNotice.to === 'complex'
               ? 'This expression uses z, the complex variable, so the Complex view opened.'
@@ -916,6 +931,7 @@ export default function GraphWorkspacePage({
             onPaneViewChange={(values) => controller.updatePaneView('complex', values)}
             onViewportChange={controller.setViewport}
             paneView={controller.session.surface.panes.complex}
+            planeItems={complexPlaneItems}
             tile={activeComplexTile}
             viewport={controller.session.surface.viewport}
           /> : null}

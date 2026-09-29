@@ -274,7 +274,9 @@ export function buildVisibleGraphItem(input: {
       || classified.relation.kind === 'parametric-curve'
       || classified.relation.kind === 'real-surface'
       || classified.relation.kind === 'complex-mapping'
-      || classified.relation.kind === 'complex-trajectory')) {
+      || classified.relation.kind === 'complex-trajectory'
+      || classified.relation.kind === 'complex-locus'
+      || classified.relation.kind === 'complex-roots')) {
     // Re-typing a curve keeps its opt-in complex values while it stays y = f(x).
     const keepComplexValues = input.previous?.kind === 'relation'
       && input.previous.relation.kind === 'explicit-y' && input.previous.relation.complexValues === true;
@@ -539,6 +541,16 @@ export function graphDraftMessage(stop: GraphStopReason) {
   }
   if (stop.detailCode?.startsWith('future-')) {
     return 'This relation is recognized, but its plotting route arrives in the next Graphing moves.';
+  }
+  if (stop.detailCode === 'complex-mixed-sides') {
+    return 'One side is real and the other complex. Compare real quantities such as |z| or Re(z), or complex expressions on both sides.';
+  }
+  if (stop.detailCode === 'complex-inequality-not-real') {
+    return 'Complex numbers have no order. Compare real quantities such as |z|, Re(z), Im(z) or arg(z).';
+  }
+  if (stop.detailCode === 'complex-locus-too-many-clauses') return 'Use at most four comparisons in one chain.';
+  if (stop.code === 'unsupported-operator' && stop.detailCode === 'Mean') {
+    return 'For the complex conjugate write \\overline{z}; a bar accent is read as a mean.';
   }
   if (stop.detailCode === 'complex-mapping-coordinate-conflict') {
     return 'z is the complex variable and cannot be mixed with x or y. Use f(z) = … for a complex map, or z = f(x, y) for a surface.';

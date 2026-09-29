@@ -19,6 +19,7 @@ import type {
   GraphViewportV1,
 } from '../contracts';
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
+import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
 
 export type GraphAnalysisControl = {
@@ -43,6 +44,36 @@ function complexPoleExpression(node: unknown) {
   if (node[0] === 'Divide' && node.length === 3) return node[2];
   if (node[0] === 'Power' && typeof node[2] === 'number' && node[2] < 0) return node[1];
   return undefined;
+}
+
+/**
+ * Solutions of an equation in z, from the same solver that draws the root
+ * points. Exact roots are proved (their exact form is in the method), numeric
+ * ones validated by residual; only polynomials claim a complete list.
+ */
+function analyzeComplexRoots(
+  request: GraphAnalysisRequestV1,
+  itemId: string,
+  relation: Extract<GraphRelationIR, { kind: 'complex-roots' }>,
+  serial: () => number,
+) {
+  const viewport = request.numericWindow ?? { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
+  const solution = solveGraphComplexRoots({ left: relation.left, right: relation.right,
+    parameters: request.parameterEnvironment, viewport });
+  const findings = solution.roots.map((root) => evidence(request, 'complex-zero', [itemId],
+    root.exact ? 'exact-proved' : 'numeric-validated', serial(), {
+      coordinates: complexPoint(root, root.exact ? 1e-12 : 1e-9),
+      basis: root.exact
+        ? { source: 'graph-symbolic', validator: `exact root ${root.label ?? ''}${root.multiplicity > 1 ? ` (multiplicity ${root.multiplicity})` : ''}`.trim() }
+        : { source: 'numeric-validator', validator: solution.complete ? 'polynomial root, Aberth iteration' : 'complex Newton search in view' },
+    }));
+  if (!solution.complete) {
+    findings.push(evidence(request, 'complex-zero', [itemId], 'inconclusive', serial(), {
+      basis: { source: 'numeric-validator', validator: 'roots found in the visible region only' },
+      stopReason: { code: 'analysis-inconclusive', detailCode: 'bounded-complex-search-does-not-prove-global-completeness' },
+    }));
+  }
+  return findings;
 }
 
 function exactZeroAtOrigin(node: unknown): boolean {
@@ -389,6 +420,11 @@ export async function runGraphAnalysisRequest(
         request, item: snapshot, run, window, requested, serial: () => serial++,
         onEvaluation: () => { evaluatedPointCount += 1; },
       }));
+      await control.yieldBetweenItems?.();
+      continue;
+    }
+    if (snapshot.relation.kind === 'complex-roots') {
+      if (requested.has('complex-zero')) findings.push(...analyzeComplexRoots(request, snapshot.itemId, snapshot.relation, () => serial++));
       await control.yieldBetweenItems?.();
       continue;
     }

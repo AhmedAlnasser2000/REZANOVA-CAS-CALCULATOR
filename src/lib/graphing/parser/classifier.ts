@@ -1,6 +1,7 @@
 import { validateSerializableMathJson } from '../../display/printer/math-json';
 import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
 import type {
+  GraphComplexLocusClauseIR,
   GraphConditionIR,
   GraphExpressionIR,
   GraphInequalityComparator,
@@ -8,9 +9,11 @@ import type {
   GraphRelationIR,
 } from '../contracts';
 import {
+  GRAPH_COMPLEX_LOCUS_MAX_CLAUSES,
   validateGraphPiecewise,
   validateGraphRelation,
 } from '../contracts';
+import { isComplexRealValued, isNonRealConstant } from './complex-relation';
 import { parseGraphComparatorChain, parseGraphConditionMathJson } from './conditions';
 import {
   adaptGraphExpressionMathJson,
@@ -36,6 +39,7 @@ const CARTESIAN_COORDINATES = new Set(['x', 'y']);
 const POLAR_COORDINATES = new Set(['r', 'theta']);
 const ALL_COORDINATES = new Set([...CARTESIAN_COORDINATES, ...POLAR_COORDINATES, 'z']);
 const COMPLEX_VARIABLE = new Set(['z']);
+const NON_COMPLEX_COORDINATES = new Set(['x', 'y', 'r', 'theta', 'w']);
 const PARAMETRIC_SHORTHAND_SYMBOLS = ['t', 'u', 's'] as const;
 const COMPARISON_OPERATORS = new Set(['Equal', 'Greater', 'GreaterEqual', 'Less', 'LessEqual']);
 const UNSAFE_TOP_LEVEL_OPERATORS = new Set([
@@ -434,10 +438,18 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   }
 
   // z is the complex variable. Beside x or y it is never a slider parameter;
-  // the only real use is the surface form z = f(x, y).
-  if (expressionsUseAny([left.expression, right.expression], COMPLEX_VARIABLE)
-    && !(target === 'z' && !right.expression.freeSymbols.includes('z'))) {
-    return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+  // the only real use is the surface form z = f(x, y). In z alone, an equation
+  // is a locus (real sides) or roots (complex sides), and z = 1 + i is a point.
+  if (expressionsUseAny([left.expression, right.expression], COMPLEX_VARIABLE)) {
+    const zOnly = !expressionsUseAny([left.expression, right.expression], NON_COMPLEX_COORDINATES);
+    const surfaceForm = target === 'z' && !right.expression.freeSymbols.includes('z');
+    if (surfaceForm && zOnly && isNonRealConstant(right.expression.mathJson)) {
+      return complexRootsRelation(left.expression, right.expression);
+    }
+    if (!surfaceForm) {
+      if (!zOnly) return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+      return classifyComplexEquation(left.expression, right.expression, path);
+    }
   }
   if (target === 'y' && !right.expression.freeSymbols.includes('y')) {
     if (expressionUsesAny(right.expression, POLAR_COORDINATES)) {
@@ -478,6 +490,32 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   return classifyImplicitEquality(left.expression, right.expression, path);
 }
 
+function complexRootsRelation(left: GraphExpressionIR, right: GraphExpressionIR): GraphSourceClassificationV1 {
+  const relation = validatedRelation({ kind: 'complex-roots', left, right });
+  return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+}
+
+function complexLocusRelation(clauses: GraphComplexLocusClauseIR[], path: string): GraphSourceClassificationV1 {
+  if (clauses.length > GRAPH_COMPLEX_LOCUS_MAX_CLAUSES) {
+    return graphParserFailure('unsupported-relation', 'complex-locus-too-many-clauses', path);
+  }
+  const relation = validatedRelation({ kind: 'complex-locus', clauses });
+  return relation.ok ? { ok: true, itemKind: 'relation', relation: relation.relation } : relation;
+}
+
+/**
+ * An equation in z alone: sides that are real functions of z (|z-1|, Re z)
+ * draw a locus, complex ones (z^2 + z) draw roots. A side without z is just a
+ * number and fits either; a real function of z against a complex one is mixed.
+ */
+function classifyComplexEquation(left: GraphExpressionIR, right: GraphExpressionIR, path: string) {
+  const sides = [left, right].map((side) => (!side.freeSymbols.includes('z') ? 'number'
+    : isComplexRealValued(side.mathJson) ? 'real' : 'complex'));
+  if (!sides.includes('complex')) return complexLocusRelation([{ left, operator: '=', right }], path);
+  if (!sides.includes('real')) return complexRootsRelation(left, right);
+  return graphParserFailure('unsupported-relation', 'complex-mixed-sides', path);
+}
+
 function classifyComparison(input: unknown, path: string): GraphSourceClassificationV1 {
   if (graphNodeOperator(input) === 'Equal') return classifyEquality(input, path);
   const parsed = parseGraphComparatorChain(input, path);
@@ -486,7 +524,16 @@ function classifyComparison(input: unknown, path: string): GraphSourceClassifica
     return graphParserFailure('coordinate-parameter-conflict', 'inequality-polar-mix', path);
   }
   if (expressionsUseAny(parsed.chain.operands, COMPLEX_VARIABLE)) {
-    return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+    if (expressionsUseAny(parsed.chain.operands, NON_COMPLEX_COORDINATES)) {
+      return graphParserFailure('coordinate-parameter-conflict', 'complex-mapping-coordinate-conflict', path);
+    }
+    // Complex numbers have no order: only real quantities such as |z| or Re(z) compare.
+    if (!parsed.chain.operands.every((operand) => isComplexRealValued(operand.mathJson))) {
+      return graphParserFailure('unsupported-relation', 'complex-inequality-not-real', path);
+    }
+    return complexLocusRelation(parsed.chain.operators.map((operator, index) => ({
+      left: parsed.chain.operands[index]!, operator, right: parsed.chain.operands[index + 1]!,
+    })), path);
   }
   if (!expressionsUseAny(parsed.chain.operands, CARTESIAN_COORDINATES)) {
     return graphParserFailure('unsupported-relation', 'scalar-inequality', path);

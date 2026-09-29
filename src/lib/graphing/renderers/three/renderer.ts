@@ -580,6 +580,9 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
     this.contextRestoredListener = null;
     this.renderer?.setAnimationLoop(null);
     this.renderer?.dispose();
+    // Free the context immediately (browsers cap live WebGL contexts); the
+    // context-lost listener was removed above, so this never triggers fallback.
+    this.renderer?.forceContextLoss();
     this.canvas?.remove();
     this.renderer = null;
     this.canvas = null;

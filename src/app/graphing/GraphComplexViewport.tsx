@@ -2,7 +2,9 @@ import {
   useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
+  loadGraphComplexRootsSolver,
   loadGraphComplexTraceEvaluator,
+  type GraphExpressionIR,
   type GraphComplexDisplayModeV1,
   type GraphComplexDomainTileRuntimeV1,
   type GraphComplexTraceValue,
@@ -13,6 +15,29 @@ import {
 import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import { useGraphComplexGpu } from './useGraphComplexGpu';
+import {
+  complexPlaneRootAt, complexPlaneRootText, paintArgandPlane, paintComplexPlaneItems,
+  type GraphComplexPlaneItem, type GraphComplexPlanePath, type GraphComplexPlaneRegion, type GraphComplexPlaneRoot,
+} from './graph-complex-plane';
+
+/** A locus or root item for the complex plane: its sampled geometry, or the equation to solve. */
+export type GraphComplexPlaneInput = {
+  itemId: string;
+  color: string;
+  paths: GraphComplexPlanePath[];
+  regions: GraphComplexPlaneRegion[];
+  roots: { left: GraphExpressionIR; right: GraphExpressionIR } | null;
+};
+
+function canvasFrame(canvas: HTMLCanvasElement) {
+  const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
+  const bounds = canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.round(bounds.width * pixelRatio));
+  const height = Math.max(1, Math.round(bounds.height * pixelRatio));
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  return { pixelRatio, width, height };
+}
 
 type Size = { width: number; height: number };
 type TileImage = { canvas: HTMLCanvasElement; label: string | null };
@@ -129,7 +154,7 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
 }
 
 export function GraphComplexViewport({ displayMode, document, gpuRendering, onDisplayModeChange, onPaneViewChange,
-  onViewportChange, paneView, tile, viewport, colorVisionMode }: {
+  onViewportChange, paneView, planeItems = [], tile, viewport, colorVisionMode }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   displayMode: GraphComplexDisplayModeV1;
   document: GraphDocumentV4;
@@ -138,6 +163,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   onPaneViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
   paneView: GraphPaneViewStateV1;
+  planeItems?: readonly GraphComplexPlaneInput[];
   tile: GraphComplexDomainTileRuntimeV1 | null;
   viewport: GraphViewportV1;
 }) {
@@ -151,6 +177,9 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   const frameRef = useRef<number | null>(null);
   const [size, setSize] = useState<Size>({ width: 1, height: 1 });
   const [trace, setTrace] = useState<Trace | null>(null);
+  const [rootReadout, setRootReadout] = useState<string | null>(null);
+  // Root points come from the solver the worker samples with, so labels and dots always agree.
+  const [solvedRoots, setSolvedRoots] = useState<ReadonlyMap<string, GraphComplexPlaneRoot[]>>(new Map());
   const images = useMemo(() => (tile ? buildTileImages(tile, displayMode, colorVisionMode) : []),
     [colorVisionMode, displayMode, tile]);
   const item = tile ? document.items.find((entry) => entry.itemId === tile.itemId) : undefined;
@@ -185,13 +214,38 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     }).catch(() => { if (live) setTraceEvaluator(null); });
     return () => { live = false; };
   }, [mathJson, parameters]);
+  const rootEquations = useMemo(() => planeItems.flatMap((entry) => (entry.roots ? [{ itemId: entry.itemId, ...entry.roots }] : [])),
+    [planeItems]);
+  useEffect(() => {
+    let live = true;
+    if (rootEquations.length === 0) { queueMicrotask(() => { if (live) setSolvedRoots(new Map()); }); return () => { live = false; }; }
+    loadGraphComplexRootsSolver().then((solve) => {
+      if (!live) return;
+      setSolvedRoots(new Map(rootEquations.map((equation) => [equation.itemId,
+        solve({ left: equation.left, right: equation.right, parameters, viewport }).roots])));
+    }).catch(() => { if (live) setSolvedRoots(new Map()); });
+    return () => { live = false; };
+  }, [parameters, rootEquations, viewport]);
+  const plane: GraphComplexPlaneItem[] = useMemo(() => planeItems.map((entry) => ({
+    itemId: entry.itemId, color: entry.color, paths: entry.paths, regions: entry.regions, roots: solvedRoots.get(entry.itemId) ?? [],
+  })), [planeItems, solvedRoots]);
   const paintRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
     paintRef.current = () => {
       const gpuDrawn = gpuDraw(liveRef.current, interactingRef.current);
       const canvas = canvasRef.current;
-      if (canvas && tile) paint(canvas, tile, images, liveRef.current, gpuDrawn);
-      else if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+      if (!canvas) return;
+      const live = liveRef.current;
+      canvas.dataset.viewport = `${live.xMin},${live.xMax},${live.yMin},${live.yMax}`;
+      if (tile) paint(canvas, tile, images, liveRef.current, gpuDrawn);
+      const { pixelRatio, width, height } = canvasFrame(canvas);
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      // Without a z-map the pane is a plain Argand plane; loci and roots draw on either.
+      if (!tile) { context.clearRect(0, 0, width, height); if (plane.length) paintArgandPlane(context, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio); }
+      if (plane.length && (!tile || displayMode === 'domain-coloring')) {
+        paintComplexPlaneItems(context, plane, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio);
+      }
     };
   });
   const requestPaint = useCallback(() => {
@@ -206,7 +260,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   useEffect(() => {
     if (!interactingRef.current) liveRef.current = viewport;
     paintRef.current();
-  }, [images, size, tile, viewport]);
+  }, [images, plane, size, tile, viewport]);
   useEffect(() => () => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
@@ -240,13 +294,31 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     return () => canvas.removeEventListener('wheel', listener);
   }, [paneView.dimension]);
   const status = useMemo(() => {
+    if (!tile && plane.length) {
+      const roots = plane.flatMap((entry) => entry.roots);
+      const loci = plane.filter((entry) => entry.paths.length || entry.regions.length).length;
+      const exact = roots.filter((root) => root.exact).length;
+      const rootText = roots.length === 0 ? '' : `${roots.length} root point${roots.length === 1 ? '' : 's'}`
+        + (exact === roots.length ? ' · all exact' : exact ? ` · ${exact} exact` : ' · numeric');
+      return [loci ? `${loci} ${loci === 1 ? 'locus' : 'loci'}` : '', rootText].filter(Boolean).join('; ') || 'Complex plane';
+    }
     if (!tile) return 'Enter f(z), w, or a bare z-expression.';
     const cuts = `${tile.branchCuts.length} branch cut${tile.branchCuts.length === 1 ? '' : 's'} in view`;
     return tile.analyticity === 'unknown'
       ? `branch geometry not determined; ${cuts}` : `${tile.analyticity}; ${cuts}`;
-  }, [tile]);
+  }, [plane, tile]);
+  /** A root under the pointer takes the readout; otherwise the z-map trace. */
+  const hoverRoot = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const live = liveRef.current;
+    const re = live.xMin + (event.clientX - bounds.left) / bounds.width * (live.xMax - live.xMin);
+    const im = live.yMax - (event.clientY - bounds.top) / bounds.height * (live.yMax - live.yMin);
+    const root = displayMode === 'components' && tile ? null : complexPlaneRootAt(plane, re, im, live, bounds.width, bounds.height);
+    setRootReadout(root ? complexPlaneRootText(root) : null);
+    return root !== null;
+  };
   const pointer = (event: ReactPointerEvent<HTMLCanvasElement>): Trace | null => {
-    if (!tile || !traceEvaluator) return null;
+    if (hoverRoot(event) || !tile || !traceEvaluator) return null;
     const bounds = event.currentTarget.getBoundingClientRect();
     const components = displayMode === 'components';
     const localWidth = components ? bounds.width / 2 : bounds.width;
@@ -268,7 +340,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
       <div aria-label="Complex map display" role="group"><button aria-pressed={displayMode === 'domain-coloring'}
         onClick={() => onDisplayModeChange('domain-coloring')} type="button">Domain color</button>
         <button aria-pressed={displayMode === 'components'} onClick={() => onDisplayModeChange('components')} type="button">2×2 components</button></div>
-      <span>{status}; {colorVisionMode === 'color-vision-friendly' ? 'accessible blue-orange phase' : 'standard cyclic phase'}.</span>
+      <span>{status}{tile ? `; ${colorVisionMode === 'color-vision-friendly' ? 'accessible blue-orange phase' : 'standard cyclic phase'}` : ''}.</span>
       {tile ? <span className={`graph-complex-renderer is-${gpuStatus.renderer}`} data-testid="graph-complex-renderer"
         title={gpuStatus.reason ?? 'Colours are drawn on the GPU; trace and Analyze use the precise CPU evaluation.'}>
         {gpuStatus.renderer === 'gpu' ? 'GPU' : gpuStatus.reason === 'deep zoom uses precise CPU rendering' ? 'Precise mode' : 'Standard rendering'}
@@ -296,7 +368,8 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
       }}
 />
       : <div className="graph-complex-3d-placeholder">The 3D Riemann surface view arrives in a later Graphing milestone.</div>}
-    {trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
+    {rootReadout ? <output className="graph-complex-trace" data-testid="graph-complex-root-readout">{rootReadout}</output> : null}
+    {!rootReadout && trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
       w = {trace.wRe.toPrecision(4)} {trace.wIm < 0 ? '−' : '+'} {Math.abs(trace.wIm).toPrecision(4)}i · |w| {trace.magnitude.toPrecision(4)} · arg {trace.phase.toPrecision(4)}</output> : null}
   </section>;
 }

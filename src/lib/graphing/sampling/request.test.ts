@@ -9,6 +9,7 @@ import {
   runGraphSampleRequest,
 } from './request';
 import { GraphSamplingRuntimeCache } from './runtime-cache';
+import { classifyGraphSource } from '../parser/source';
 
 function request(): GraphSampleRequestV6 {
   return {
@@ -101,9 +102,58 @@ describe('Graph sample request runtime', () => {
       expect(imaginary.coordinates[vertex * 2 + 1]).toBeCloseTo(Math.sqrt(x), 9);
       expect(real.coordinates[vertex * 2 + 1]).toBeCloseTo(0, 9);
     }
+    // log x keeps the real curve's base 10: log(-x0) = log10(x0) + i*pi/ln 10.
+    curveRequest.items = [{ ...curve, relation: { kind: 'explicit-y', origin: 'bare-expression',
+      rhs: { mathJson: ['Log', 'x'], freeSymbols: ['x'] }, complexValues: true } }];
+    const logPaths = (await runGraphSampleRequest(curveRequest)).result.scene.planarScene.paths;
+    const logReal = logPaths.find((path) => path.pathId === 'curve-1:complex-values-real')!;
+    const logImaginary = logPaths.find((path) => path.pathId === 'curve-1:complex-values-imaginary')!;
+    for (let vertex = 0; vertex * 2 < logReal.coordinates.length; vertex += 1) {
+      const x = logReal.coordinates[vertex * 2]!;
+      expect(x).toBeLessThan(0);
+      expect(logReal.coordinates[vertex * 2 + 1]).toBeCloseTo(Math.log10(-x), 9);
+      expect(logImaginary.coordinates[vertex * 2 + 1]).toBeCloseTo(Math.PI / Math.LN10, 9);
+    }
+    // A real odd root is already a real curve for x < 0: no second Re/Im pair.
+    curveRequest.items = [{ ...curve, relation: { kind: 'explicit-y', origin: 'bare-expression',
+      rhs: { mathJson: ['Root', 'x', 3], freeSymbols: ['x'] }, complexValues: true } }];
+    const rootPaths = (await runGraphSampleRequest(curveRequest)).result.scene.planarScene.paths;
+    expect(rootPaths.some((path) => path.pathId.includes(':complex-values-'))).toBe(false);
     // Scene buffers are transferred from the worker: the two paths must not share one.
     expect(new Set([real.coordinates.buffer, real.segmentOffsets.buffer,
       imaginary.coordinates.buffer, imaginary.segmentOffsets.buffer]).size).toBe(4);
+  });
+
+  it('draws complex loci as curves and regions in the (Re z, Im z) plane', async () => {
+    const locusRequest = (latex: string) => {
+      const classified = classifyGraphSource({ sourceKind: 'mathlive-latex', sourceLatex: latex, sourceRevision: 1 });
+      if (!classified.ok || classified.itemKind !== 'relation') throw new Error(`classify ${latex}`);
+      const next = request();
+      next.quality = 'settled';
+      next.viewport = { coordinateSystem: 'cartesian', xMin: -4, xMax: 4, yMin: -4, yMax: 4 };
+      next.cssSize = { width: 600, height: 600 };
+      next.items = [{ version: 1, kind: 'relation', itemId: 'locus', visible: true,
+        source: { sourceKind: 'mathlive-latex', sourceLatex: latex, sourceRevision: 1 }, relation: classified.relation }];
+      return next;
+    };
+    const points = (paths: { coordinates: Float64Array }[]) => paths.flatMap((path) => Array.from(
+      { length: path.coordinates.length / 2 }, (_, index) => [path.coordinates[index * 2]!, path.coordinates[index * 2 + 1]!]));
+
+    const circle = (await runGraphSampleRequest(locusRequest(String.raw`|z-1|=2`))).result;
+    const circlePoints = points(circle.scene.planarScene.paths);
+    expect(circlePoints.length).toBeGreaterThan(40);
+    for (const [x, y] of circlePoints) expect(Math.abs(Math.hypot(x - 1, y) - 2)).toBeLessThan(0.05);
+    expect(circle.itemEvidence[0]?.route).toBe('complex-locus');
+
+    const ray = (await runGraphSampleRequest(locusRequest(String.raw`\arg(z)=\frac{\pi}{4}`))).result;
+    const rayPoints = points(ray.scene.planarScene.paths);
+    expect(rayPoints.length).toBeGreaterThan(10);
+    // On the ray y = x, x > 0, and no false edge where arg jumps across the negative real axis.
+    for (const [x, y] of rayPoints) { expect(Math.abs(y - x)).toBeLessThan(0.05); expect(x).toBeGreaterThan(-0.05); }
+
+    const disk = (await runGraphSampleRequest(locusRequest(String.raw`|z|<2`))).result;
+    expect(disk.scene.planarScene.regions).toHaveLength(1);
+    expect(disk.scene.planarScene.paths[0]?.strokeRole).toBe('strict-boundary');
   });
 
   it('samples a real-parameterized complex trajectory as an Argand path', async () => {

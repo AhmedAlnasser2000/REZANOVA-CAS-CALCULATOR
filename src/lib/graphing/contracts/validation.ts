@@ -39,7 +39,7 @@ import type {
   GraphViewportV1,
   SampledSceneSnapshotV2,
 } from './types';
-import { GRAPH_ANALYSIS_FEATURES } from './types';
+import { GRAPH_ANALYSIS_FEATURES, GRAPH_COMPLEX_LOCUS_MAX_CLAUSES } from './types';
 
 export const GRAPH_DOCUMENT_MAX_ITEMS = 100;
 export const GRAPH_POINT_SET_MAX_POINTS = 2_000;
@@ -167,6 +167,16 @@ const relationSchema: z.ZodType<GraphRelationIR> = z.discriminatedUnion('kind', 
     parameterSymbol: idSchema,
     value: expressionSchema,
     domain: conditionSchema.optional(),
+  }),
+  z.strictObject({
+    kind: z.literal('complex-locus'),
+    clauses: z.array(z.strictObject({ left: expressionSchema, operator: comparatorSchema, right: expressionSchema }))
+      .min(1).max(GRAPH_COMPLEX_LOCUS_MAX_CLAUSES),
+  }),
+  z.strictObject({
+    kind: z.literal('complex-roots'),
+    left: expressionSchema,
+    right: expressionSchema,
   }),
 ]);
 
@@ -296,7 +306,7 @@ const legacyItemSchema = itemSchema.refine((item) => (
 ), { message: 'Real surfaces require Graph document V3.' });
 const itemV2Schema = z.union([legacyItemSchema, noteSchema]);
 const itemV3RelationSchema = itemSchema.refine((item) => (
-  item.kind !== 'relation' || !['complex-mapping', 'complex-trajectory'].includes(item.relation.kind)
+  item.kind !== 'relation' || !['complex-mapping', 'complex-trajectory', 'complex-locus', 'complex-roots'].includes(item.relation.kind)
 ), { message: 'Complex mappings require Graph document V4.' });
 const itemV3Schema = z.union([itemV3RelationSchema, noteSchema]);
 const itemV4Schema = z.union([itemSchema, noteSchema]);
@@ -320,7 +330,7 @@ const samplingItemV4Schema = samplingItemSchema.refine((item) => (
   item.kind !== 'relation' || item.relation.kind !== 'real-surface'
 ), { message: 'Real surfaces require Graph sample request V5.' });
 const samplingItemV5Schema = samplingItemSchema.refine((item) => (
-  item.kind !== 'relation' || !['complex-mapping', 'complex-trajectory'].includes(item.relation.kind)
+  item.kind !== 'relation' || !['complex-mapping', 'complex-trajectory', 'complex-locus', 'complex-roots'].includes(item.relation.kind)
 ), { message: 'Complex mappings require Graph sample request V6.' });
 
 const viewportSchema: z.ZodType<GraphViewportV1> = z.strictObject({

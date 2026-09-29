@@ -351,6 +351,9 @@ export function createGraphGpuFieldLayer(
       }
       programs.clear();
       targets.clear();
+      // Release the context now instead of at garbage collection: browsers cap
+      // live WebGL contexts, and every 2D/3D switch or pane change makes one.
+      if (!lost) gl.getExtension('WEBGL_lose_context')?.loseContext();
     },
   };
 }

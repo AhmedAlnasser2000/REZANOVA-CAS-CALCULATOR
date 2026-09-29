@@ -167,7 +167,24 @@ async function runSurfaceHeatSmoke(session) {
   return { ...heat, screenshot };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat) {
+async function runComplexLocusSmoke(session) {
+  // Same row, now a locus in z: the view opens Complex and draws it on the Argand plane.
+  await waitFor('locus expression', () => execute(session, `
+    const field = document.querySelectorAll('math-field')[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue('|z-1|=2');
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  const locus = await waitFor('complex locus', () => execute(session, `
+    const pressed = document.querySelector('.graph-domain-switch [aria-pressed="true"]')?.textContent ?? '';
+    const status = document.querySelector('.graph-complex-toolbar > span')?.textContent ?? '';
+    return /locus/u.test(status) ? { mode: pressed, status } : null;`), 30_000);
+  await delay(1000);
+  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
+  return { ...locus, screenshot };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -183,6 +200,7 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat) {
   if (surfaceHeat && (surfaceHeat.chip.text !== 'GPU' || surfaceHeat.visibleSvgBands > 0)) {
     failures.push(`2D surface is not a GPU height map: ${surfaceHeat.chip.text}, ${surfaceHeat.visibleSvgBands} SVG bands visible`);
   }
+  if (complexLocus && complexLocus.mode !== 'Complex') failures.push(`a locus did not open the Complex view (${complexLocus.mode})`);
   return failures;
 }
 
@@ -236,14 +254,21 @@ try {
     surfaceHeat = { chip: heat.chip, visibleSvgBands: heat.visibleSvgBands };
     if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-heat.png', Buffer.from(heat.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat) : [];
+  let complexLocus = null;
+  if (smoke) {
+    log('running complex locus smoke');
+    const locus = await runComplexLocusSmoke(sessionId);
+    complexLocus = { mode: locus.mode, status: locus.status };
+    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-locus.png', Buffer.from(locus.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

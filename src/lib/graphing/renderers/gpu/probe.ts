@@ -42,11 +42,13 @@ export function runWebglProbe(): GraphWebglProbeResultV1 {
     fieldShader: null,
     error: null,
   };
+  let context: WebGL2RenderingContext | null = null;
   try {
     const canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
     const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+    context = gl;
     if (!gl) {
       result.error = 'webgl2-context-unavailable';
       return result;
@@ -152,9 +154,11 @@ void main() {
       field.maxAbsError = maxError;
     }
     result.fieldShader = field;
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
+  } finally {
+    // Browsers cap live WebGL contexts; a failed probe must not keep one.
+    context?.getExtension('WEBGL_lose_context')?.loseContext();
   }
   return result;
 }

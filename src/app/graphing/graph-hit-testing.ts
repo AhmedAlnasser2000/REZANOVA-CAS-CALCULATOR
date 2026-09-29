@@ -6,9 +6,26 @@ import type {
 } from '../../lib/graphing';
 
 const UNTRACEABLE_ROLES = new Set(['teaching-overlay', 'complex-real', 'complex-imaginary']);
-/** Teaching overlays and Re/Im value paths are pictures, never trace authority. */
-function traceable(path: { itemId: string; strokeRole?: string }) {
-  return !path.itemId.startsWith('graph-overlay.') && !UNTRACEABLE_ROLES.has(path.strokeRole ?? 'default');
+
+/** A real curve's opt-in Re/Im path (ℂ toggle); `complexPart` names which part. */
+export function graphComplexValuePart(pathId: string | undefined): 'real' | 'imaginary' | null {
+  if (!pathId?.includes(':complex-values-')) return null;
+  return pathId.endsWith('-imaginary') ? 'imaginary' : 'real';
+}
+
+/**
+ * Teaching overlays and a z-map's real-axis slices are pictures, never trace
+ * targets. A real curve's Re/Im paths are traceable: the callout labels them as
+ * the complex part and shows the exact complex value.
+ */
+function traceable(path: { itemId: string; pathId?: string; strokeRole?: string }) {
+  if (path.itemId.startsWith('graph-overlay.')) return false;
+  return graphComplexValuePart(path.pathId) !== null || !UNTRACEABLE_ROLES.has(path.strokeRole ?? 'default');
+}
+
+/** Real paths come first: a Re/Im path is reached only by clicking it. */
+function primaryTraceable(path: { itemId: string; pathId?: string; strokeRole?: string }) {
+  return traceable(path) && graphComplexValuePart(path.pathId) === null;
 }
 
 export type GraphTraceTarget = GraphHitResult & {
@@ -319,7 +336,7 @@ export function traceGraphPathAtPointer(input: {
   pathId?: string;
 }): GraphTraceTarget | null {
   const pathIndex = input.scene.paths.findIndex((path) => (
-    path.itemId === input.itemId && traceable(path) && (!input.pathId || path.pathId === input.pathId)
+    path.itemId === input.itemId && (input.pathId ? path.pathId === input.pathId && traceable(path) : primaryTraceable(path))
   ));
   const path = input.scene.paths[pathIndex];
   const parameters = path?.parameterValues;
@@ -396,7 +413,7 @@ export function firstGraphTraceTarget(
       distancePixels: 0,
     });
   }
-  const pathIndex = scene.paths.findIndex(traceable);
+  const pathIndex = scene.paths.findIndex(primaryTraceable);
   return targetAtPathVertex(scene, viewport, size, pathIndex, 0);
 }
 

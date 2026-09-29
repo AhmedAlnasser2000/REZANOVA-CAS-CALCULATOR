@@ -151,6 +151,25 @@ function inspectCanonicalExpression(
   return { ok: true, freeSymbols: [...freeSymbols].sort() };
 }
 
+/**
+ * Compute Engine spells the complex carriers several ways depending on the
+ * LaTeX (\Re z, \operatorname{Re}(z), \Im, \arg, \overline{z}, conj(z)).
+ * Graphing uses one name each: Real, ImaginaryPart, Arg, Conjugate.
+ */
+const COMPLEX_OPERATOR_ALIASES: ReadonlyMap<string, string> = new Map([
+  ['Re', 'Real'], ['RealPart', 'Real'],
+  ['Im', 'ImaginaryPart'], ['Imaginary', 'ImaginaryPart'],
+  ['Argument', 'Arg'], ['arg', 'Arg'],
+  ['OverBar', 'Conjugate'], ['conj', 'Conjugate'], ['Conj', 'Conjugate'], ['Superstar', 'Conjugate'],
+]);
+
+function withComplexOperatorAliases(node: SerializableMathJson): SerializableMathJson {
+  if (!Array.isArray(node)) return node;
+  const [head, ...operands] = node;
+  const name = typeof head === 'string' ? COMPLEX_OPERATOR_ALIASES.get(head) ?? head : head;
+  return [name, ...operands.map((operand) => withComplexOperatorAliases(operand as SerializableMathJson))] as SerializableMathJson;
+}
+
 export type GraphExpressionAdapterResult =
   | { ok: true; expression: GraphExpressionIR }
   | GraphParserFailure;
@@ -179,7 +198,7 @@ export function adaptGraphExpressionMathJson(
     if (!boxed.isValid) {
       return graphParserFailure('unsupported-relation', 'incomplete-or-invalid-source', path);
     }
-    canonical = boxed.json as SerializableMathJson;
+    canonical = withComplexOperatorAliases(boxed.json as SerializableMathJson);
   } catch {
     return graphParserFailure('unsafe-expression', 'compute-engine-box-failed', path);
   }

@@ -3,6 +3,7 @@ import type { SampledSceneRuntimeV2 } from '../../lib/graphing';
 import {
   buildGraphTraceIndex,
   firstGraphTraceTarget,
+  graphComplexValuePart,
   hitTestGraphScene,
   hitTestGraphTraceIndex,
   stepGraphTraceTarget,
@@ -109,6 +110,30 @@ describe('Graph scene hit testing and tracing', () => {
     expect(stepGraphTraceTarget({ scene, viewport, size, current: first, delta: 1 })).toMatchObject({
       kind: 'point', pointIndex: 1, world: { x: -2, y: -3 },
     });
+  });
+
+  it('traces a curve\'s Re/Im paths when chosen but keeps the real curve first', () => {
+    const imaginary = {
+      pathId: 'explicit-y:complex-values-imaginary', itemId: 'explicit-y', strokeRole: 'complex-imaginary' as const,
+      coordinates: new Float64Array([1, 4, 3, 4]), parameterValues: new Float64Array([1, 3]),
+      segmentOffsets: new Uint32Array([0]), closed: false,
+    };
+    const slice = { ...imaginary, pathId: 'z-map:real-axis-imaginary', itemId: 'z-map' };
+    const withComplex = { ...scene, paths: [imaginary, slice, ...scene.paths], pointBatches: [] };
+    expect(graphComplexValuePart(imaginary.pathId)).toBe('imaginary');
+    expect(graphComplexValuePart('explicit-y:complex-values-real')).toBe('real');
+    expect(graphComplexValuePart(slice.pathId)).toBeNull();
+    // Keyboard entry and the default sweep start on the real curve, not the Re/Im path listed before it.
+    expect(firstGraphTraceTarget(withComplex, viewport, size)).toMatchObject({ pathId: 'explicit-y.path' });
+    expect(traceGraphPathAtPointer({ scene: withComplex, viewport, size, itemId: 'explicit-y',
+      relationKind: 'explicit-y', screen: { x: 750, y: 20 } })).toMatchObject({ pathId: 'explicit-y.path' });
+    // A click near the Im path traces it; the z-map slice never is.
+    expect(hitTestGraphScene({ scene: withComplex, viewport, size, screen: { x: 700, y: 100 } }))
+      .toMatchObject({ pathId: imaginary.pathId });
+    expect(traceGraphPathAtPointer({ scene: withComplex, viewport, size, itemId: 'explicit-y',
+      relationKind: 'explicit-y', pathId: imaginary.pathId, screen: { x: 700, y: 100 } }))
+      .toMatchObject({ pathId: imaginary.pathId, world: { x: 2, y: 4 } });
+    expect(buildGraphTraceIndex(withComplex, viewport, size).segments.some((segment) => segment.pathIndex === 1)).toBe(false);
   });
 
   it('keeps teaching overlays outside pointer and keyboard trace authority', () => {

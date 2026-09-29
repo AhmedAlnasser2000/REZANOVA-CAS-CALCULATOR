@@ -1219,3 +1219,8 @@
   color: #eaf6ee;
   background: rgba(89, 221, 136, .13);
 }
+
+/* A real curve's Re/Im trace: which complex part, then the whole value. */
+.graph-trace-callout.is-complex-part {
+  white-space: pre-line;
+}
