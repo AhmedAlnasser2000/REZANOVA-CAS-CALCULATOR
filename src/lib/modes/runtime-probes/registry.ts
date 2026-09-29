@@ -5,6 +5,8 @@ import type {
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
 import type { OoeRuntimeMetadata } from '../../ooe/runtime-control/runtime-envelope';
 import type { OoeRuntimeShellEvidence } from '../../ooe/runtime-control/runtime-shell-contract';
+import { INTEGRATION_CAPABILITY, INTEGRATION_HOST, runIntegrationJob } from '../../calculus/new-integration/runtime';
+import { DEFAULT_INTEGRATION_LIMITS } from '../../calculus/new-integration/types';
 import {
   buildCalculateRuntimeOoeSnapshot,
   runCalculateRuntimeWithOoePilot,
@@ -46,6 +48,24 @@ import {
 } from '../table';
 
 export type RuntimeProbeWorkspaceId = Exclude<LauncherLeafId, 'labs'>;
+
+// Worker-required workspaces have no fallback host or History launch ticket.
+// Their successful worker path is covered by the workspace tests and browser probes.
+const integrationRequest = { request: { source: '\\int x\\,dx', limits: DEFAULT_INTEGRATION_LIMITS } };
+export const WORKER_REQUIRED_RUNTIME_PROBES = [{
+  workspace: 'new-integration',
+  capabilityId: INTEGRATION_CAPABILITY,
+  primaryHostId: INTEGRATION_HOST,
+  request: integrationRequest,
+  requestSnapshot: {instanceId: 'runtime-probe-new-integration', revision: 3},
+  executeUnavailable: (stale: boolean) => runIntegrationJob(integrationRequest, {
+    workspaceInstanceId: 'runtime-probe-new-integration',
+    workspaceInstanceLabel: 'New Integration probe',
+    workspaceInstanceRevision: 3,
+    compartmentId: 'calculus',
+  }, 3, () => stale ? 4 : 3, () => true, new AbortController().signal,
+  () => { throw new Error('Worker execution is unavailable.'); }),
+}] as const;
 
 export type RuntimeProbeExecution = {
   payload: unknown;

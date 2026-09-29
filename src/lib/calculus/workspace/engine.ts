@@ -68,7 +68,7 @@ import {
   limitVariableMismatchError,
 } from '../limit-variable-analysis';
 import { integralVariableOrDefault } from './integral-variable';
-import { runCalculateMode } from '../../modes/calculate';
+import { runScalarCalculateMode as runCalculateMode } from '../../modes/calculate';
 import {
   canonicalResultVersionForProducer,
   requireCanonicalResultAuthority,

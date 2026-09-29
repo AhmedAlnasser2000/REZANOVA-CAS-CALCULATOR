@@ -3,7 +3,7 @@ import {
   type MathJsonRouteId,
 } from './mathjson-route-registry';
 
-export type CanonicalResultProducerVersion = 1 | 2 | 3 | 4;
+export type CanonicalResultProducerVersion = 1 | 2 | 3 | 4 | 5;
 
 export type CanonicalResultProducerVersionPolicy = {
   defaultVersion: CanonicalResultProducerVersion;
@@ -106,7 +106,7 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
 export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
   {
     'calculus.derivatives': ['derivativePoint'],
-    'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
+    'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error', 'newIntegration:standard', 'newIntegration:error'],
     'equation.linear': ['nativeSystem'],
     'equation.polynomial': ['directPolynomialSystem'],
     'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
@@ -151,6 +151,7 @@ export const CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY = Object.freeze(
         selectorVersions: Object.freeze(Object.fromEntries([
           ...(v2Selectors[routeId] ?? []).map((selector) => [selector, 2] as const),
           ...(v3Selectors[routeId] ?? []).map((selector) => [selector, 3] as const),
+          ...(routeId === 'calculus.integrals' ? [['newIntegration:root-log', 5] as const] : []),
           ...(v4Selectors[routeId] ?? []).map((selector) => [selector, 4] as const),
         ])),
       },

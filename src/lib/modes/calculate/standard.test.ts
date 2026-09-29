@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { requireCanonicalResultAuthority } from '../../result-contract';
-import { runCalculateMode } from '../calculate';
+import { runCalculateMode } from './standard';
 
 function canonicalDocument(result: ReturnType<typeof runCalculateMode>) {
   if (result.kind === 'prompt' || !result.canonicalResult) {

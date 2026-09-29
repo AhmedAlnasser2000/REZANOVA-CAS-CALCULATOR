@@ -186,6 +186,16 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Calculus,
+        capability_id: "calculus.new-integration",
+        host_id: "new-integration-worker-runtime",
+        entrypoint: "runNewIntegrationWorker",
+        description: "Verify a rational integral through the isolated New Integration worker.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Trigonometry,
         capability_id: "trigonometry.evaluate",
         host_id: "trigonometry-worker-runtime",
@@ -355,6 +365,7 @@ mod tests {
         "equation-direct-symbolic-worker-runtime",
         "calculus-runtime",
         "calculus-worker-runtime",
+        "new-integration-worker-runtime",
         "editor-analysis-runtime",
         "geometry-runtime",
         "geometry-worker-runtime",
@@ -404,6 +415,7 @@ mod tests {
                 "editor.previewRender",
                 "table.build",
                 "calculus.evaluate",
+                "calculus.new-integration",
                 "trigonometry.evaluate",
                 "statistics.evaluate",
                 "geometry.evaluate",
@@ -531,6 +543,7 @@ mod tests {
                 node.capability_id.as_str(),
                 "table.build"
                     | "calculus.evaluate"
+                    | "calculus.new-integration"
                     | "trigonometry.evaluate"
                     | "statistics.evaluate"
                     | "geometry.evaluate"

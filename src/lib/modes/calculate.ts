@@ -20,3 +20,6 @@ export type {
   RunCalculateModeRequest,
   RunCalculateRuntimeRequest,
 } from './calculate/types';
+
+// Scalar derivative consumers use the existing standard producer, not inline matrix dispatch.
+export { runCalculateMode as runScalarCalculateMode } from './calculate/standard';

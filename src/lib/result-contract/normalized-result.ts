@@ -532,5 +532,6 @@ function normalizeModern(
 export function normalizeCanonicalResultDocument(
   document: CanonicalResultDocument,
 ): NormalizedCanonicalResult {
+  if (document.version === 5) throw new Error('V5 requires the rational-antiderivative read model.');
   return document.version === 1 ? normalizeV1(document) : normalizeModern(document);
 }

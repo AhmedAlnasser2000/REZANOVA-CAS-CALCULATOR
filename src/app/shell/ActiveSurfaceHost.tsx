@@ -1,3 +1,4 @@
+import type { NewIntegrationRuntime } from '../runtime/useNewIntegrationRuntime';
 import {
   lazy,
   Suspense,
@@ -32,6 +33,7 @@ import type {
 } from '../../lib/notebook';
 import type { GraphWorkspaceSessionStateV7 } from '../graphing/graph-workspace-session';
 
+const NewIntegrationPage = lazy(() => import('../new-integration/NewIntegrationPage'));
 const GraphWorkspacePageHost = lazy(() => import('../graphing/GraphWorkspacePageHost'));
 const FormulaViewerPage = lazy(() => import('./FormulaViewerPage').then((module) => ({
   default: module.FormulaViewerPage,
@@ -58,6 +60,7 @@ function PageSurfaceSuspense({ children, label }: { children: ReactNode; label: 
 }
 
 type ActiveSurfaceHostProps = {
+  newIntegrationRuntime?: NewIntegrationRuntime;
   activeInstance: WorkspaceInstance | null | undefined;
   guide: GuideWorkspaceProps;
   history: HistoryEntry[];
@@ -83,6 +86,7 @@ type ActiveSurfaceHostProps = {
 };
 
 export function ActiveSurfaceHost({
+  newIntegrationRuntime,
   activeInstance,
   guide,
   history,
@@ -129,6 +133,12 @@ export function ActiveSurfaceHost({
         {renderCalculatorSurface()}
       </section>
     );
+  }
+
+  if (surfaceDescriptor.pageKind === 'new-integration' && activeInstance && newIntegrationRuntime) {
+    return <section className={pageSurfaceClassName} data-surface-kind="new-integration" data-testid="active-surface-page" style={pageSurfaceStyle}>
+      <PageSurfaceSuspense label="New Integration"><NewIntegrationPage key={activeInstance.id} instance={activeInstance} runtime={newIntegrationRuntime} /></PageSurfaceSuspense>
+    </section>;
   }
 
   if (surfaceDescriptor.pageKind === SETTINGS_PAGE_WORKSPACE_KIND) {

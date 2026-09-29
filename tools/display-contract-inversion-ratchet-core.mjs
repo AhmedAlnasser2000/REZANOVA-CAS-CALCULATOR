@@ -178,7 +178,7 @@ function typeIncludesDisplayOutcome(type, displayType, checker) {
   }
   const nonNullable = checker.getNonNullableType(type);
   if (nonNullable.flags & ts.TypeFlags.Never) return false;
-  if (nonNullable === displayType || nonNullable.aliasSymbol?.name === 'ResultProducerDraft') {
+  if (nonNullable === displayType || ['ResultProducerDraft', 'VersionedResultProducerDraft'].includes(nonNullable.aliasSymbol?.name)) {
     return true;
   }
   if (nonNullable.aliasSymbol) return false;

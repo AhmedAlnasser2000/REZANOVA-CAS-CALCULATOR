@@ -218,7 +218,7 @@ describe('Canonical Result V2 contract', () => {
     });
   });
 
-  it('routes only active V1 through V4 documents and preserves their source version', () => {
+  it('routes active V1 through V5 documents and preserves their source version', () => {
     const v1: CanonicalResultDocumentV1 = {
       version: 1,
       outcomeKind: 'success',
@@ -253,7 +253,7 @@ describe('Canonical Result V2 contract', () => {
       validated: { value: { version: 4 } },
     });
     expect(validateCanonicalResultDocumentVersioned({
-      version: 5,
+      version: 6,
       outcomeKind: 'success',
       title: 'Future',
       warnings: [],
@@ -369,7 +369,7 @@ describe('Canonical Result V2 contract', () => {
       ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
-      'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error'],
+      'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error', 'newIntegration:standard', 'newIntegration:error'],
       'equation.linear': ['nativeSystem'],
       'equation.polynomial': ['directPolynomialSystem'],
       'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
@@ -415,6 +415,9 @@ describe('Canonical Result V2 contract', () => {
               'indefiniteIntegral:standard': 2,
               'indefiniteIntegral:error': 2,
               'indefiniteIntegral:special-function': 4,
+              'newIntegration:root-log': 5,
+              'newIntegration:standard': 2,
+              'newIntegration:error': 2,
             }
         : routeId === 'equation.domain-boundary'
           ? { typedLabeledSupplement: 2, directLocus: 2 }

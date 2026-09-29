@@ -257,6 +257,23 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.vector.forwarder, 0);
   });
 
+  it('keeps versioned producer unions visible to the authority inventory', () => {
+    const rootDir = fixture({
+      'src/lib/modes/vector/versioned.ts': `
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        type VersionedResultProducerDraft = ResultProducerDraft | {kind: 'success'; title: string; warnings: string[]; canonicalResult: {version: 2}};
+        declare function attachCanonicalResultV2ToProducerDraft(document: {version: 2}, draft: object): VersionedResultProducerDraft;
+        export function produce(): VersionedResultProducerDraft {
+          return attachCanonicalResultV2ToProducerDraft({version: 2}, {kind: 'success', title: 'V2', warnings: []});
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({rootDir});
+    assert.equal(report.lanes.vector['native-document'], 1);
+    assert.equal(report.summary.compatibilityProjectionCount, 0);
+    assert.equal(report.violations.length, 0);
+  });
+
   it('separates registered Equation owner assembly from its canonical rebuild wrapper', () => {
     const rootDir = fixture({
       'src/lib/equation/guarded/substitution-stage.ts': `
@@ -531,11 +548,12 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 444);
-    assert.equal(report.summary.consumerCount, 58);
+    assert.equal(report.summary.producerCount, 445);
+    // New Integration adds three canonical adapter authority reads and its page read model.
+    assert.equal(report.summary.consumerCount, 62);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
-    assert.equal(report.summary.producerDraftReadCount, 92);
+    assert.equal(report.summary.producerDraftReadCount, 94);
     assert.equal(report.summary.nativeDocumentCount, 165);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);

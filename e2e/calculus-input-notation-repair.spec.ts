@@ -63,7 +63,7 @@ test('keeps one smart-fence pair for physical and keypad opening parentheses acr
   }
 });
 
-test('uses complete derivative notation as the target authority in the real app', async ({ page }) => {
+test('uses complete derivative notation as the target authority in the real app', async ({ page }, testInfo) => {
   const derivativeCases = [
     { input: 'd/dz(z^3+az)', output: '3z^2+a' },
     { input: 'd/dc(c\\sin x)', output: '\\sin(x)' },
@@ -81,6 +81,7 @@ test('uses complete derivative notation as the target authority in the real app'
       .toHaveAttribute('data-raw-latex', derivativeCase.output);
     await expect(page.getByText('Derivative Steps', { exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(outcome);
+    await page.screenshot({path: testInfo.outputPath(`derivative-${derivativeCases.indexOf(derivativeCase)}.png`), fullPage: true});
   }
 
   await openAdvancedCalcTool(page, 'Derivatives', 'Partial Derivative');

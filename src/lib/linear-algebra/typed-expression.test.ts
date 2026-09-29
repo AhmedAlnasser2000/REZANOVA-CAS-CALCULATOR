@@ -112,11 +112,11 @@ describe('typed Linear Algebra expressions', () => {
       outputStyle: 'both' as const, ansLatex: '0' };
     expect(runCalculateMode({
       ...request, latex: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\times\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-    })).toMatchObject({ kind: 'success', exactLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}' });
+    })).toMatchObject({ kind: 'success', canonicalResult: {version: 2}, exactLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}' });
     expect(runCalculateMode({
       ...request,
       latex: 'A\\times\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
       storedVariables: [{ name: 'A', valueLatex: '2', numericValue: 2 }],
-    })).toMatchObject({ kind: 'success', exactLatex: '\\begin{bmatrix}2&4\\\\6&8\\end{bmatrix}' });
+    })).toMatchObject({ kind: 'success', canonicalResult: {version: 2}, exactLatex: '\\begin{bmatrix}2&4\\\\6&8\\end{bmatrix}' });
   });
 });

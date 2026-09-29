@@ -161,6 +161,16 @@ const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
         description: "Isolated Web Worker host for active Calculus evaluation.",
     },
     OoeBuiltinHostDefinition {
+        host_id: "new-integration-worker-runtime",
+        host_kind: OoeHostKind::WebWorker,
+        thread_safety: OoeThreadSafety::WorkerSafe,
+        supported_task_classes: EXPLICIT_ONLY,
+        budget_policy: OoeHostBudgetPolicy::Isolated,
+        cancellation_policy: OoeCancellationPolicy::HardStop,
+        default_result_stability: OoeResultStability::Draft,
+        description: "Isolated Web Worker host for active New Integration evaluation.",
+    },
+    OoeBuiltinHostDefinition {
         host_id: "trigonometry-runtime",
         host_kind: OoeHostKind::MainThreadTypeScript,
         thread_safety: OoeThreadSafety::MainThreadOnly,
@@ -363,6 +373,7 @@ mod tests {
             BTreeSet::from([
                 "calculus-runtime".to_string(),
                 "calculus-worker-runtime".to_string(),
+                "new-integration-worker-runtime".to_string(),
                 "calculate-runtime".to_string(),
                 "calculate-worker-runtime".to_string(),
                 "editor-analysis-runtime".to_string(),

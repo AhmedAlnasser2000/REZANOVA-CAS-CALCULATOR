@@ -418,7 +418,7 @@ export type LauncherLaunchTarget =
   | { mode: 'matrix' }
   | { mode: 'vector' }
   | { mode: 'table' }
-  | { mode: 'calculus'; calculusScreen?: CalculusScreen }
+  | { mode: 'calculus'; calculusScreen?: CalculusScreen; workspace?: 'new-integration' }
   | { mode: 'trigonometry'; trigScreen?: TrigScreen }
   | { mode: 'statistics'; statisticsScreen?: StatisticsScreen }
   | { mode: 'geometry'; geometryScreen?: GeometryScreen }
@@ -1248,6 +1248,7 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
         hotkey: '1',
         launch: { mode: 'calculus', calculusScreen: 'home' },
       },
+      {id: 'new-integration', label: 'New Integration', description: 'Verified exact rational integration with editable integral notation', hotkey: '2', launch: {mode: 'calculus', workspace: 'new-integration'}},
     ],
   },
   {

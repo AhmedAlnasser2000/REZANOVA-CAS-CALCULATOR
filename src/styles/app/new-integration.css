@@ -1,0 +1,20 @@
+.new-integration-page {width: min(100%, 1120px); margin: 0 auto; padding: 24px; box-sizing: border-box; overflow: auto; color: var(--text-primary, inherit);}
+.new-integration-page header {display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px;}
+.new-integration-page h1 {margin: 0 0 8px; font-size: 1.65rem;}
+.new-integration-page h2 {font-size: 1.2rem;}
+.new-integration-page p {line-height: 1.6; opacity: .85;}
+.ni-panel, .ni-editor {padding: 20px; border: 1px solid #64748b55; border-radius: 12px; margin-bottom: 20px; min-width: 0;}
+.ni-editor math-field {display: block; width: 100%; min-height: 80px; font-size: 1.5rem; box-sizing: border-box;}
+.ni-actions {display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0;}
+.new-integration-page button {padding: 8px 14px; border: 1px solid #64748b66; border-radius: 7px; cursor: pointer;}
+.new-integration-page button:disabled {opacity: .45; cursor: default;}
+.new-integration-page .ni-primary {background: #275dad; color: white;}
+.ni-limits {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;}
+.ni-limits label {display: flex; flex-direction: column; gap: 8px;}
+.ni-limits input {min-width: 0; padding: 8px;}
+.ni-result details {border-top: 1px solid #64748b44; padding: 14px 0;}
+.ni-result summary, .ni-panel summary {cursor: pointer; font-weight: 600;}
+.ni-formal-answer, .ni-term, .ni-condition {min-width: 0;}
+.ni-term {margin: 20px 0; border-top: 1px solid #64748b44; padding-top: 16px;}
+.ni-result .ni-math {max-width: 100%; overflow-x: auto; padding: 8px 0;}
+@media (max-width: 640px) {.new-integration-page {padding: 12px;} .ni-panel, .ni-editor {padding: 12px;} .new-integration-page header {align-items: flex-start;}}

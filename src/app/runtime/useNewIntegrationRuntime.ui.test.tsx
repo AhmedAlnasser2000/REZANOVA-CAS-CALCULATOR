@@ -1,0 +1,38 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, expect, it, vi } from 'vitest';
+import { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
+import { useNewIntegrationRuntime } from './useNewIntegrationRuntime';
+import { readIntegrationDraft } from './new-integration-drafts';
+import { runIntegrationJob } from '../../lib/calculus/new-integration/runtime';
+import type { IntegrationResponse } from '../../lib/calculus/new-integration/types';
+import { integrationError } from '../../lib/calculus/new-integration/error';
+vi.mock('../../lib/calculus/new-integration/runtime', () => ({runIntegrationJob: vi.fn()}));
+beforeEach(() => {localStorage.clear(); vi.mocked(runIntegrationJob).mockReset();});
+function hook() {return renderHook(() => {const workspaces = useWorkspaceInstancesRuntime(); const integration = useNewIntegrationRuntime(workspaces); return {workspaces, integration};});}
+it('keeps tabs independent, restores drafts and limits, and does not restore proof status', async () => {
+  const h = hook(); act(() => h.result.current.integration.open());
+  const first = h.result.current.workspaces.activeInstanceId;
+  const draft = readIntegrationDraft(null); draft.source = '\\int x\\,dx'; draft.limits.work = 1234;
+  act(() => h.result.current.integration.change(first, draft));
+  act(() => h.result.current.integration.open());
+  const second = h.result.current.workspaces.activeInstanceId; expect(first).not.toBe(second);
+  expect(readIntegrationDraft(h.result.current.workspaces.activeInstance?.surfaceState).source).toBe('');
+  act(() => h.result.current.workspaces.focusInstance(first));
+  expect(readIntegrationDraft(h.result.current.workspaces.activeInstance?.surfaceState)).toEqual(draft);
+  h.unmount(); const restored = hook(); act(() => restored.result.current.integration.open());
+  expect(restored.result.current.workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-integration')).toHaveLength(2);
+  expect(restored.result.current.integration.views).toEqual({}); expect(runIntegrationJob).not.toHaveBeenCalled();
+});
+it('switching leaves work running; editing or closing aborts and drops late replies', async () => {
+  const pending: {signal: AbortSignal; resolve: (v: IntegrationResponse) => void}[] = [];
+  vi.mocked(runIntegrationJob).mockImplementation((_j, _w, _r, _c, _o, signal) => new Promise(resolve => pending.push({signal, resolve})));
+  const h = hook(); act(() => h.result.current.integration.open()); const first = h.result.current.workspaces.activeInstanceId;
+  act(() => {void h.result.current.integration.run(first);});
+  act(() => h.result.current.integration.open()); expect(pending[0].signal.aborted).toBe(false);
+  act(() => h.result.current.integration.change(first, {...readIntegrationDraft(null), source: 'changed'}));
+  expect(pending[0].signal.aborted).toBe(true);
+  await act(async () => pending[0].resolve({document: integrationError('Late'), request: readIntegrationDraft(null), elapsedMs: 1, usage: {work: 1, allocation: 1}, checks: []}));
+  expect(h.result.current.integration.views[first]?.response).toBeUndefined();
+  act(() => {void h.result.current.integration.run(first);}); act(() => h.result.current.workspaces.closeInstance(first));
+  await waitFor(() => expect(pending[1].signal.aborted).toBe(true));
+});

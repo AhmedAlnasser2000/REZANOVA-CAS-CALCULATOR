@@ -1,3 +1,4 @@
+export const NEW_INTEGRATION_PAGE_WORKSPACE_KIND = 'new-integration' as const;
 export const SETTINGS_PAGE_WORKSPACE_KIND = 'settings' as const;
 export const HISTORY_PAGE_WORKSPACE_KIND = 'history' as const;
 export const GUIDE_PAGE_WORKSPACE_KIND = 'guide-page' as const;
@@ -5,6 +6,7 @@ export const NOTEBOOK_PAGE_WORKSPACE_KIND = 'notebook' as const;
 export const GRAPHING_PAGE_WORKSPACE_KIND = 'graphing' as const;
 
 export type AppPageWorkspaceKind =
+  | typeof NEW_INTEGRATION_PAGE_WORKSPACE_KIND
   | typeof SETTINGS_PAGE_WORKSPACE_KIND
   | typeof HISTORY_PAGE_WORKSPACE_KIND
   | typeof GUIDE_PAGE_WORKSPACE_KIND
@@ -17,6 +19,7 @@ export type SingletonAppPageWorkspaceKind =
   | typeof GUIDE_PAGE_WORKSPACE_KIND;
 
 export const APP_PAGE_WORKSPACE_KINDS: readonly AppPageWorkspaceKind[] = [
+  NEW_INTEGRATION_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
   GUIDE_PAGE_WORKSPACE_KIND,
@@ -33,7 +36,8 @@ export const SINGLETON_APP_PAGE_WORKSPACE_KINDS: readonly SingletonAppPageWorksp
 export function isAppPageWorkspaceKind(
   workspaceKind: unknown,
 ): workspaceKind is AppPageWorkspaceKind {
-  return workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND
+  return workspaceKind === NEW_INTEGRATION_PAGE_WORKSPACE_KIND
+    || workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND
     || workspaceKind === HISTORY_PAGE_WORKSPACE_KIND
     || workspaceKind === GUIDE_PAGE_WORKSPACE_KIND
     || workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND
@@ -49,6 +53,7 @@ export function isSingletonAppPageWorkspaceKind(
 }
 
 export function appPageWorkspaceTitle(workspaceKind: AppPageWorkspaceKind) {
+  if (workspaceKind === NEW_INTEGRATION_PAGE_WORKSPACE_KIND) return 'New Integration';
   if (workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND) {
     return 'Settings';
   }

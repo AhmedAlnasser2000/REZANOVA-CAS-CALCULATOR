@@ -1,3 +1,4 @@
+import { useNewIntegrationRuntime } from './app/runtime/useNewIntegrationRuntime';
 import {
   lazy, Suspense,
   useCallback,
@@ -159,7 +160,6 @@ import {
 } from './types/calculator';
 import { formatMathTextForDisplay, getDisplayLatex, latexToVisibleText } from './lib/display/math-notation';
 import type { NotebookWorkspaceTarget } from './lib/notebook/types';
-
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
     default: module.CalculusWorkspace,
@@ -210,7 +210,6 @@ const OoeDiagnosticsPanel = lazy(() =>
     default: module.OoeDiagnosticsPanel,
   })),
 );
-
 const SettingsPanel = lazy(() =>
   import('./components/SettingsPanel').then((module) => ({
     default: module.SettingsPanel,
@@ -221,7 +220,6 @@ const VariablesPanel = lazy(() =>
     default: module.VariablesPanel,
   })),
 );
-
 function LazyWorkspaceFallback() {
   return (
     <section className="workspace-panel">
@@ -288,6 +286,7 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
+  const newIntegrationRuntime = useNewIntegrationRuntime(workspaceInstancesRuntime);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
@@ -433,6 +432,7 @@ export default function App() {
     onCloseHistoryPanel: closeHistoryPanel,
     previousNonGuideMode,
     onLaunchApp: (entry, intent) => launchWorkspaceEntryFromLauncher(entry, intent, {
+      openNewIntegration: newIntegrationRuntime.open,
       clearDisplayOutcome: () => setDisplayOutcome(null),
       clearEquationSolveTarget: () => setEquationSolveTarget(null),
       commitVisibleModeSelection,
@@ -2744,7 +2744,7 @@ export default function App() {
       >
         <WorkspaceTabs {...workspaceTabsRuntime} />
         <ActiveSurfaceHost
-          activeInstance={workspaceInstancesRuntime.activeInstance}
+          newIntegrationRuntime={newIntegrationRuntime} activeInstance={workspaceInstancesRuntime.activeInstance}
           guide={{
             article: guideArticle ?? null,
             currentSelectionIndex: currentGuideSelectionIndex,

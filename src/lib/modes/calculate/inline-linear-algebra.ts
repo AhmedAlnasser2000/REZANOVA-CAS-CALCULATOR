@@ -1,4 +1,4 @@
-import type { ResultProducerDraft } from '../../../types/calculator';
+import type { VersionedResultProducerDraft } from '../../../types/calculator';
 import {
   attachCanonicalResultV2ToProducerDraft,
   buildCanonicalResultDocumentV2,
@@ -12,7 +12,7 @@ const INLINE_LINEAR_ALGEBRA_LITERAL = /\\begin\{(?:[bBpvV]?matrix|array)\}|\[[^[
 
 export function runCalculateInlineLinearAlgebra(
   input: RunCalculateModeRequest,
-): ResultProducerDraft | null {
+): VersionedResultProducerDraft | null {
   if (input.action !== 'evaluate' || !INLINE_LINEAR_ALGEBRA_LITERAL.test(input.latex)) return null;
   const storedVariables = input.variableSubstitutionSnapshot ?? input.storedVariables;
   const result = evaluateTypedLinearAlgebraExpression({

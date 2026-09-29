@@ -11,6 +11,7 @@ import {
 import { canonicalizeOoeJobSnapshot } from '../../ooe/job-launch/job-contract';
 import {
   WORKSPACE_RUNTIME_PROBES,
+  WORKER_REQUIRED_RUNTIME_PROBES,
   type RuntimeProbeWorkspaceId,
   type WorkspaceRuntimeProbe,
 } from './registry';
@@ -58,22 +59,45 @@ describe('workspace runtime probe registry', () => {
       .map((entry) => entry.id)
       .filter((id): id is RuntimeProbeWorkspaceId => id !== 'labs')
       .sort();
-    const registeredWorkspaces = registry.map((entry) => entry.workspace).sort();
+    const registeredWorkspaces = [...registry, ...WORKER_REQUIRED_RUNTIME_PROBES].map((entry) => entry.workspace).sort();
 
     expect(registeredWorkspaces).toEqual(launcherWorkspaces);
     expect(new Set(registeredWorkspaces).size).toBe(registeredWorkspaces.length);
-    expect(runtimeProbeFloor).toEqual({ version: 1, workspaceCount: 9 });
-    expect(registry.length).toBe(runtimeProbeFloor.workspaceCount);
+    expect(runtimeProbeFloor).toEqual({ version: 1, workspaceCount: 10 });
+    expect(registeredWorkspaces.length).toBe(runtimeProbeFloor.workspaceCount);
   });
 
   it('keeps capability identities unique and request snapshots explicit', () => {
-    expect(new Set(registry.map((entry) => entry.capabilityId)).size).toBe(registry.length);
+    const allProbes = [...registry, ...WORKER_REQUIRED_RUNTIME_PROBES];
+    expect(new Set(allProbes.map((entry) => entry.capabilityId)).size).toBe(allProbes.length);
+    for (const probe of WORKER_REQUIRED_RUNTIME_PROBES) {
+      expect(Object.keys(probe.request).length).toBeGreaterThan(0);
+      expect(canonicalizeOoeJobSnapshot(probe.requestSnapshot)).not.toBe('{}');
+    }
     for (const probe of registry) {
       expect(Object.keys(probe.request).length).toBeGreaterThan(0);
       expect(canonicalizeOoeJobSnapshot(probe.requestSnapshot)).not.toBe('{}');
       expect(probe.primaryHostId).not.toBe(probe.fallbackHostId);
     }
   });
+
+  for (const probe of WORKER_REQUIRED_RUNTIME_PROBES) {
+    it(`${probe.workspace} preserves worker-only execution and drops stale errors`, async () => {
+      const response = await probe.executeUnavailable(false);
+      expect(response?.document.outcomeKind).toBe('error');
+      expect(response?.document.error).toBe('Worker execution is unavailable.');
+      expect(listRecentOoeJobs()[0]).toMatchObject({
+        capabilityId: probe.capabilityId,
+        hostId: probe.primaryHostId,
+        workspaceInstanceId: 'runtime-probe-new-integration',
+        status: 'completed',
+      });
+      const diagnostic = listOoeDiagnostics().find(record => record.job.hostId === probe.primaryHostId);
+      expect(diagnostic?.commitAssessment?.commitDecision).toBe('committed');
+      expect(await probe.executeUnavailable(true)).toBeNull();
+      expect(listOoeDiagnostics().some(record => record.commitAssessment?.commitDecision === 'staleDropped')).toBe(true);
+    });
+  }
 
   for (const probe of registry) {
     it(`${probe.workspace} executes its native OOE shell with commit and history evidence`, async () => {

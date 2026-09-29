@@ -1,3 +1,4 @@
+import { collectCanonicalResultMathValuesV5 } from './validation-v5';
 import type {
   CanonicalResultDocument,
 } from '../../types/calculator';
@@ -160,6 +161,11 @@ function addSpecialExpressionLeaves(
 export function collectCanonicalMathLeaves(
   input: CanonicalResultDocument | Pick<NormalizedCanonicalResult, 'sourceVersion' | 'semantics'>,
 ): CanonicalMathLeafReference[] {
+  if ('version' in input && input.version === 5) {
+    const {primary: _primary, ...common} = input; void _primary;
+    return [...collectCanonicalResultMathValuesV5(input).map(v => ({...v, leafPath: 'primary.rationalPrimitive[*]' as const})),
+      ...collectCanonicalMathLeaves({...common, version: 2})];
+  }
   const result = 'semantics' in input ? input : normalizeCanonicalResultDocument(input);
   const { semantics } = result;
   const references: CanonicalMathLeafReference[] = [];

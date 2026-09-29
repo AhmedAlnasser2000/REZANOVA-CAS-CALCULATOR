@@ -108,7 +108,7 @@ export function resolveWorkspaceSurfaceDescriptor(
       allowsQuickInspectors: false,
       pageKind: workspaceKind,
       surfaceKind: 'page',
-      tabActionPolicy: workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND
+      tabActionPolicy: (workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND || workspaceKind === 'new-integration')
         ? GRAPH_PAGE_TAB_ACTION_POLICY
         : APP_PAGE_TAB_ACTION_POLICY,
     };

@@ -1,3 +1,4 @@
+import type { CanonicalResultDocumentV5 } from './canonical-result-v5-types';
 import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
 import type {
   CanonicalMathValueV2,
@@ -103,7 +104,8 @@ export type CanonicalRuntimeVersionedResultOutcome =
   | CanonicalRuntimeResultOutcome
   | CanonicalRuntimeResultOutcomeV2
   | CanonicalRuntimeResultOutcomeV3
-  | CanonicalRuntimeResultOutcomeV4;
+  | CanonicalRuntimeResultOutcomeV4
+  | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5; actions?: never; runtimeAdvisories?: RuntimeAdvisories};
 
 export type CanonicalRuntimeAction =
   | CanonicalRuntimeActionV1

@@ -58,7 +58,9 @@ describe('useLauncherRuntime', () => {
     const hook = renderLauncherRuntime({ onCloseHistoryPanel: closeHistoryPanel });
 
     await waitFor(() => {
-      expect(hook.result.current.launcherCategories).toBe(loadedCategories);
+      expect(hook.result.current.launcherCategories[0]).toBe(loadedCategories[0]);
+      expect(hook.result.current.launcherCategories.find(category => category.id === 'calculus')?.entries)
+        .toContainEqual(expect.objectContaining({ id: 'new-integration' }));
     });
 
     act(() => {

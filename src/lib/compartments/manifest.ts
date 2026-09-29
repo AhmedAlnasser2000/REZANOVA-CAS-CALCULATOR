@@ -320,6 +320,9 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/modes/calculus.ts',
     ],
     publicSeams: [
+      'src/lib/calculus/new-integration/types.ts',
+      'src/lib/calculus/new-integration/runtime.ts',
+      'src/lib/calculus/new-integration/error.ts',
       'src/lib/calculus/calculus-identity.ts',
       'src/lib/calculus/calculus-workbench.ts',
       'src/lib/calculus/calculus-strategy.ts',

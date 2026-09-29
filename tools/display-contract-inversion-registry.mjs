@@ -27,7 +27,7 @@ export const DISPLAY_CONTRACT_LANES = [
   },
   {
     id: 'app-shell',
-    matchers: prefix('src/app/shell/', 'src/app/workspaces/', 'src/components/'),
+    matchers: [...prefix('src/app/shell/', 'src/app/workspaces/', 'src/components/'), ...exact('src/app/new-integration/NewIntegrationPage.tsx')],
   },
   {
     id: 'result-contract',

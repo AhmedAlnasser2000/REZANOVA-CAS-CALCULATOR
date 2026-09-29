@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn list_command_helper_returns_builtin_descriptors() {
-        assert_eq!(list_builtin_plans_for_command().len(), 20);
+        assert_eq!(list_builtin_plans_for_command().len(), 22);
     }
 
     #[test]
@@ -116,6 +116,7 @@ mod tests {
         let expected_host_ids = [
             "calculus-runtime",
             "calculus-worker-runtime",
+            "new-integration-worker-runtime",
             "calculate-runtime",
             "calculate-worker-runtime",
             "editor-analysis-runtime",
@@ -125,6 +126,8 @@ mod tests {
             "expression-runtime",
             "geometry-runtime",
             "geometry-worker-runtime",
+            "graph-analysis-runtime",
+            "graph-analysis-worker-runtime",
             "graph-sampling-runtime",
             "graph-sampling-worker-runtime",
             "matrix-runtime",

@@ -7,7 +7,7 @@ import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
 } from '../worker-clients/calculate-worker-client';
-import type { CanonicalRuntimeOutcome, ResultProducerDraft } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome, ResultProducerDraft, VersionedResultProducerDraft } from '../../../types/calculator';
 import {
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
@@ -29,10 +29,14 @@ type RunCalculateRuntimeWithOoePilotOptions = OoeJobContextOptions & {
   createWorker?: CreateCalculateWorker;
 };
 
+function isUnownedError(outcome: VersionedResultProducerDraft): outcome is Extract<ResultProducerDraft, {kind: 'error'}> {
+  return outcome.kind === 'error' && outcome.canonicalResult === undefined;
+}
+
 export function runCalculateRuntimeRequest(
   request: RunCalculateRuntimeRequest,
-): ResultProducerDraft {
-  let outcome: ResultProducerDraft;
+): VersionedResultProducerDraft {
+  let outcome: VersionedResultProducerDraft;
   switch (request.kind) {
     case 'standard':
     case 'legacyWorkbench':
@@ -42,7 +46,7 @@ export function runCalculateRuntimeRequest(
       outcome = runCalculateAlgebraTransform(request.request);
       break;
   }
-  const ownedOutcome = outcome.kind === 'error' && outcome.canonicalResult === undefined
+  const ownedOutcome = isUnownedError(outcome)
     ? createCalculateErrorResultOutcome(outcome)
     : outcome;
   return requireCanonicalResultAuthority(ownedOutcome, 'Calculate');

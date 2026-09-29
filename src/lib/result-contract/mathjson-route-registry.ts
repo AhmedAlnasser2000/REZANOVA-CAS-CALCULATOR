@@ -4,6 +4,7 @@ export type CanonicalMathJsonProducerOwner = HistoryReplayWorkspace | 'graphing'
 
 export const CANONICAL_MATH_LEAF_PATHS = [
   'primaryMath',
+  'primary.rationalPrimitive[*]',
   'primary.value',
   'primary.normalizedEquation',
   'primary.period',

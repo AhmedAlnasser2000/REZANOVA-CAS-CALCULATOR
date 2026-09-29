@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import coverageBaseline from '../../../tools/mathjson-coverage-baseline.json';
-import type { CanonicalResultDocumentV1 } from '../../types/calculator';
+import type { CanonicalResultDocumentV1, CanonicalResultDocumentV5 } from '../../types/calculator';
 import { goldenCases } from '../__golden__/golden-cases';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import {
@@ -174,9 +174,18 @@ function completeVersionedSemanticInputs(): Array<Parameters<typeof collectCanon
   ];
 }
 
+function formalPrimitiveDocument(): CanonicalResultDocumentV5 {
+  const value = {canonicalLatex: '1', mathJson: 1};
+  return {version: 5, outcomeKind: 'success', title: 'Formal primitive', warnings: [], primary: {
+    kind: 'rational-antiderivative', semantics: 'formal-local-complex', variable: 'x', integrationConstant: 'C', rationalPart: value,
+    terms: [{rootVariable: 'a', modulus: {canonicalLatex: 'a', mathJson: 'a'}, weight: value, argument: value, norm: value}],
+    conditions: {sourceExclusions: [value], inputDenominator: value, rationalDenominator: value, logNorms: [value]},
+  }};
+}
+
 describe('MathJSON coverage registry', () => {
   it('enumerates every canonical math leaf path exactly once', () => {
-    const paths = [completeDocument(), ...completeVersionedSemanticInputs()].flatMap((document) =>
+    const paths = [completeDocument(), formalPrimitiveDocument(), ...completeVersionedSemanticInputs()].flatMap((document) =>
       collectCanonicalMathLeaves(document).map((entry) => entry.leafPath));
     expect([...new Set(paths)].sort()).toEqual([...CANONICAL_MATH_LEAF_PATHS].sort());
   });

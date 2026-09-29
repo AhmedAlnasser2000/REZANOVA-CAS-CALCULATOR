@@ -14,7 +14,7 @@ export type {
 } from './normalized-result';
 
 export type CanonicalResultConsumerFailure = {
-  reason: 'prompt-outcome' | 'missing-document' | 'invalid-document';
+  reason: 'prompt-outcome' | 'missing-document' | 'invalid-document' | 'unsupported-semantics';
   message: string;
 };
 
@@ -74,6 +74,7 @@ export function resolveCanonicalResultForConsumer(
       },
     };
   }
+  if (validation.validated.value.version === 5) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the rational-antiderivative V5 read model; generic answer reuse is unsupported.'}};
   const normalized = normalizeCanonicalResultDocument(validation.validated.value);
   return {
     ok: true,

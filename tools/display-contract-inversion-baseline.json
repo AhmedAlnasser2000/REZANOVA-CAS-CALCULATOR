@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CALCULATE-INLINE-LINEAR-ALGEBRA-V2: inline matrix/vector producer moved to V2 and its entry forwarded through calculate/mode.ts so frozen standard.ts is restored; no legacy or compatibility growth.",
-  "registryDigest": "4acc4143f00f75fcb940",
+  "acceptedReason": "New Integration V5 and workspace adoption, including Calculate versioned-result type repair: retain native coverage for VersionedResultProducerDraft and inventory existing Statistics/Trigonometry versioned forwarders; zero legacy reads or compatibility projections.",
+  "registryDigest": "e9622195ae9f83dcd1a7",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -605,9 +605,6 @@
         "e32dd8c2257d3c8c1c8a:1",
         "97cc5e676b0d29e2ca33:1"
       ],
-      "src/lib/modes/calculate/mode.ts": [
-        "cd051ca03c4fb36690df:1"
-      ],
       "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
         "95a241ce5b421ca0383d:1",
         "436eb59b7cab8f3ad8fe:1"
@@ -758,6 +755,9 @@
         "65262d7ef9fa07e8dc72:1",
         "1ae33380a7063d0377fe:1"
       ],
+      "src/lib/statistics/runtime-run.ts": [
+        "b57fa6106228daccb420:1"
+      ],
       "src/lib/trigonometry/core.ts": [
         "76685e604035a5c820ce:1",
         "88b7864d332d4368ffbe:1",
@@ -767,6 +767,9 @@
         "2d14a11de1170c8e603e:1",
         "3c22f0804629cecd288b:1",
         "519b0ad46ea11b72a784:1"
+      ],
+      "src/lib/trigonometry/runtime-run.ts": [
+        "2e674a69a0ca35c35c19:1"
       ]
     },
     "control-outcome": {
@@ -954,7 +957,7 @@
         "a07c624d1c1b7cbf1d6e:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
-        "9b33de4b4edbc123e47b:1"
+        "ce5e3bd009964e660c9d:1"
       ],
       "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
         "3ab363edde4fa065931b:1",
@@ -1029,8 +1032,12 @@
       "src/lib/modes/matrix.ts": [
         "1bb5d7f3cc1baa4fbf6f:1"
       ],
+      "src/lib/result-contract/runtime-outcome.ts": [
+        "471508583714f25a682e:1"
+      ],
       "src/lib/statistics/runtime-run.ts": [
-        "55a57bd2347c84eb1362:1"
+        "55a57bd2347c84eb1362:1",
+        "19586e524e75ad776fa0:1"
       ],
       "src/lib/trigonometry/core.ts": [
         "16b32bf03eb438f111e0:1",
@@ -1046,6 +1053,9 @@
       ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "630f3af4b7b731062433:1"
+      ],
+      "src/app/new-integration/NewIntegrationPage.tsx": [
+        "a7ddc828fa96fc1de011:1"
       ],
       "src/app/runtime/equation-explicit-numeric-panels.ts": [
         "7e94924f98dcbf4c617d:1"
@@ -1071,6 +1081,13 @@
       ],
       "src/lib/__golden__/print-hygiene-baseline.ts": [
         "64570c39e2fee23b334e:1"
+      ],
+      "src/lib/calculus/new-integration/error.ts": [
+        "fb3cfa814e863abf23e9:1"
+      ],
+      "src/lib/calculus/new-integration/result.ts": [
+        "10bd9c3c95350989e398:1",
+        "6ee017c523ec4472e260:1"
       ],
       "src/lib/calculus/workspace/engine.ts": [
         "d16a586960bc0b56a0c0:1",
@@ -1119,7 +1136,7 @@
         "5aece0872029f7f135eb:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
-        "3e62e124dc2411e55dec:1"
+        "675cb2ca9c0f41afd0fc:1"
       ],
       "src/lib/modes/equation/outcomes.ts": [
         "e5988247af86aae7347d:1",

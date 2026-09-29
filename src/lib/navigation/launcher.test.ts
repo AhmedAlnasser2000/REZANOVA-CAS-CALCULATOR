@@ -1,3 +1,4 @@
+import { ensureNewIntegrationLauncherEntry } from './launcher';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
@@ -54,10 +55,10 @@ describe('launcher helpers', () => {
     expect(getLauncherAppByHotkey(dataCategory, '1')?.id).toBe('statistics');
   });
 
-  it('exposes a single visible Calculus launcher app', () => {
+  it('exposes Calculus and the independent New Integration workspace', () => {
     const calculusCategory = DEFAULT_LAUNCHER_CATEGORIES.find((category) => category.id === 'calculus');
 
-    expect(calculusCategory?.entries.map((entry) => entry.id)).toEqual(['calculus']);
+    expect(calculusCategory?.entries.map((entry) => entry.id)).toEqual(['calculus', 'new-integration']);
     expect(calculusCategory?.entries[0]?.launch).toEqual({
       mode: 'calculus',
       calculusScreen: 'home',
@@ -114,4 +115,11 @@ describe('launcher helpers', () => {
     expect(equationEntry && canOpenLauncherEntryInNewTab(equationEntry)).toBe(true);
     expect(labsEntry && canOpenLauncherEntryInNewTab(labsEntry)).toBe(false);
   });
+});
+
+it('retains the client-owned New Integration entry with older host launcher catalogs', () => {
+  const old = DEFAULT_LAUNCHER_CATEGORIES.map(c => ({...c, entries: c.entries.filter(e => e.id !== 'new-integration')}));
+  const merged = ensureNewIntegrationLauncherEntry(old);
+  expect(merged.find(c => c.id === 'calculus')?.entries.map(e => e.id)).toEqual(['calculus', 'new-integration']);
+  expect(ensureNewIntegrationLauncherEntry(merged)).toBe(merged);
 });

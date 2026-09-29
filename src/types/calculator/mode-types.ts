@@ -20,6 +20,7 @@ export type LauncherCategoryId =
   | 'labs';
 
 export type LauncherLeafId =
+  | 'new-integration'
   | 'calculate'
   | 'equation'
   | 'matrix'

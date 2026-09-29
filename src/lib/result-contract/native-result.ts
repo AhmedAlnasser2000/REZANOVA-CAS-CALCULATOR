@@ -4,6 +4,7 @@ import type {
   CanonicalResultDocumentV2,
   CanonicalResultDocumentV3,
   CanonicalResultDocumentV4,
+  CanonicalResultDocumentV5,
   ResultProducerDraft,
   ResultProducerDraftV2,
   ResultProducerDraftV3,
@@ -12,6 +13,7 @@ import type {
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
 
+export function requireCanonicalResultAuthority(outcome: {kind: 'success'; canonicalResult: CanonicalResultDocumentV5}, owner: string): {kind: 'success'; canonicalResult: CanonicalResultDocumentV5};
 export function requireCanonicalResultAuthority<
   Outcome extends Exclude<ResultProducerDraft, { kind: 'prompt' }>,
 >(
@@ -55,9 +57,9 @@ export function requireCanonicalResultAuthority(
   owner: string,
 ): VersionedResultProducerDraft;
 export function requireCanonicalResultAuthority(
-  outcome: VersionedResultProducerDraft,
+  outcome: VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5},
   owner: string,
-): VersionedResultProducerDraft {
+): VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5} {
   if (outcome.kind === 'prompt') return outcome;
   if (!outcome.canonicalResult) {
     throw new Error(`${owner} ${outcome.kind} is missing native canonical result authority.`);

@@ -53,6 +53,15 @@ export function ensureLauncherLabsCategory(
   return [...categories, LABS_LAUNCHER_CATEGORY];
 }
 
+/** This page is client-owned; older desktop launcher catalogs cannot hide it. */
+export function ensureNewIntegrationLauncherEntry(categories: LauncherCategory[]): LauncherCategory[] {
+  const current = categories.find(c => c.id === 'calculus');
+  if (current?.entries.some(e => e.id === 'new-integration')) return categories;
+  const standard = DEFAULT_LAUNCHER_CATEGORIES.find(c => c.id === 'calculus')!;
+  const entry = standard.entries.find(e => e.id === 'new-integration')!;
+  return current ? categories.map(c => c.id === 'calculus' ? {...c, entries: [...c.entries, entry]} : c) : [...categories, standard];
+}
+
 function categoryForLeafId(id: LauncherLeafId): LauncherCategoryId {
   switch (id) {
     case 'calculate':
