@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "EQUATION-SYSTEMS-LOCUS-READBACK-REPAIR adds Equation system/locus owner assembly and Trigonometry equation V2 bridge with zero compatibility debt.",
+  "acceptedReason": "CALCULATE-INLINE-LINEAR-ALGEBRA-V2: inline matrix/vector producer moved to V2 and its entry forwarded through calculate/mode.ts so frozen standard.ts is restored; no legacy or compatibility growth.",
   "registryDigest": "4acc4143f00f75fcb940",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -31,7 +31,7 @@
     "calculate": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 6
+      "nativeDocument": 9
     },
     "calculus": {
       "compatibilityProjection": 0,
@@ -255,6 +255,11 @@
       "src/lib/geometry/runtime-run.ts": [
         "001328740af0a1c57d3f:1",
         "551b7c657b95f84d05fd:1"
+      ],
+      "src/lib/modes/calculate/inline-linear-algebra.ts": [
+        "086bb9bb202365950d27:1",
+        "59d7717ae1a7ae333bcc:1",
+        "0c91106b2843991c40b8:1"
       ],
       "src/lib/modes/calculate/result-document.ts": [
         "78520e92fc97c65e11c6:1"
@@ -599,6 +604,9 @@
         "5219ff45b9a3ca890105:1",
         "e32dd8c2257d3c8c1c8a:1",
         "97cc5e676b0d29e2ca33:1"
+      ],
+      "src/lib/modes/calculate/mode.ts": [
+        "cd051ca03c4fb36690df:1"
       ],
       "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
         "95a241ce5b421ca0383d:1",

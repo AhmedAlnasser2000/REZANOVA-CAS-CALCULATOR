@@ -32,6 +32,7 @@
   - `k3`
   - `astra` (user-approved for attribution from `2026-09-08`; actual model identifier remains explicit)
   - `opus-5.5` (user-approved for attribution from `2026-09-27` for agent `claude` with model `claude-opus-5-5`)
+  - `sonnet-5.5` (user-approved for attribution from `2026-09-29` for agent `claude` with model `claude-sonnet-5-5`)
 - Allowed `attribution_basis` values:
   - `live`
   - `historical-user-confirmed`

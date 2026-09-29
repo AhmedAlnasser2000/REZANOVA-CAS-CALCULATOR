@@ -16,7 +16,7 @@ import {
   buildCalculateRuntimeOoeSnapshot,
   calculateCapabilityIdForRuntimeRequest,
 } from './ooe-snapshot';
-import { runCalculateMode } from './standard';
+import { runCalculateMode } from './mode';
 import { runCalculateAlgebraTransform } from './transforms';
 import { createCalculateErrorResultOutcome } from './result-document';
 import type {

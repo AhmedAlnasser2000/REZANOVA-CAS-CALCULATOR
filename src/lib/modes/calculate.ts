@@ -13,7 +13,7 @@ export {
   runCalculateRuntimeRequest,
   runCalculateRuntimeWithOoePilot,
 } from './calculate/runtime';
-export { runCalculateMode } from './calculate/standard';
+export { runCalculateMode } from './calculate/mode';
 export { runCalculateAlgebraTransform } from './calculate/transforms';
 export type {
   RunCalculateAlgebraTransformRequest,

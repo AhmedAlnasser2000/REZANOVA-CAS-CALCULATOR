@@ -531,16 +531,17 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 440);
+    assert.equal(report.summary.producerCount, 444);
     assert.equal(report.summary.consumerCount, 58);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 92);
-    assert.equal(report.summary.nativeDocumentCount, 162);
+    assert.equal(report.summary.nativeDocumentCount, 165);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);
-    assert.equal(report.lanes.calculate['native-document'], 6);
+    // Inline matrix/vector producer adds a V2 document and its error/attach wrappers.
+    assert.equal(report.lanes.calculate['native-document'], 9);
     assert.equal(report.lanes['app-display']['legacy-read'], 0);
     assert.equal(report.lanes['app-shell']?.['legacy-read'] ?? 0, 0);
     assert.equal(report.lanes['display-read-model']['legacy-read'], 0);

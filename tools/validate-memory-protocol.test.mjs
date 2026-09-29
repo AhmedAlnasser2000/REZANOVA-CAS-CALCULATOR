@@ -304,6 +304,17 @@ test('validator accepts user-approved Opus 5.5 attribution across prospective ar
   await assert.doesNotReject(() => validateRepo(root));
 });
 
+test('validator accepts user-approved Sonnet 5.5 attribution across prospective artifacts', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-sonnet-5-5-'));
+  await seedRepo(root, {
+    artifactDate: '2026-09-29',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    agentFamily: 'sonnet-5.5',
+  });
+  await assert.doesNotReject(() => validateRepo(root));
+});
+
 test('validator fails when a prospective current state omits a required family field', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-state-'));
   await seedRepo(root, {

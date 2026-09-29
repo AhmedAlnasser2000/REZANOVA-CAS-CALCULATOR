@@ -43,9 +43,10 @@
   - `verified_by_agent_family`
   - `attribution_basis`
 - Add `contributors`, `committed_by_agent`, `committed_by_agent_model`, and `committed_by_agent_family` when they materially apply.
-- Allowed agent-family values are lowercase `sol`, `terra`, `luna`, `k3`, `astra`, and `opus-5.5`.
+- Allowed agent-family values are lowercase `sol`, `terra`, `luna`, `k3`, `astra`, `opus-5.5`, and `sonnet-5.5`.
 - `astra` is approved for attribution from 2026-09-08; record the actual model identifier (for example, `gpt-6-astra`). This does not change delegated role assignments or spawning authority.
 - `opus-5.5` is approved for attribution from 2026-09-27 for agent `claude` with model `claude-opus-5-5`. It likewise does not change delegated role assignments or spawning authority.
+- `sonnet-5.5` is approved for attribution from 2026-09-29 for agent `claude` with model `claude-sonnet-5-5`. It likewise does not change delegated role assignments or spawning authority.
 - Family fields are prospective from `2026-07-09`. Do not infer or backfill a family for older artifacts.
 - The user-confirmed attribution correction maps exact model-field values `gpt-5` and `gpt-5-codex` to `gpt-5.5`. Explicit `gpt-5.4`, `gpt-5.3-codex`, and lower/versioned historical values are protected and must not be rewritten by that correction.
 - `primary_agent` means milestone owner, not merely the last editor.

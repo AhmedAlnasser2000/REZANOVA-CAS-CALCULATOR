@@ -1,8 +1,11 @@
 import type { ResultProducerDraft } from '../../../types/calculator';
-import { attachCanonicalResultToProducerDraft } from '../../result-contract';
+import {
+  attachCanonicalResultV2ToProducerDraft,
+  buildCanonicalResultDocumentV2,
+  requireProvenCanonicalMathValueV2,
+} from '../../result-contract';
 import { evaluateTypedLinearAlgebraExpression } from '../../linear-algebra/typed-expression';
-import { calculateMathValuesFromOwnedLeaves } from './math-values';
-import { buildCalculateResultDocument, createCalculateErrorResultOutcome } from './result-document';
+import { createCalculateErrorResultOutcome } from './result-document';
 import type { RunCalculateModeRequest } from './types';
 
 const INLINE_LINEAR_ALGEBRA_LITERAL = /\\begin\{(?:[bBpvV]?matrix|array)\}|\[[^[\]]*(?:,|\\)/u;
@@ -28,22 +31,22 @@ export function runCalculateInlineLinearAlgebra(
       sourceMode: 'calculate',
     });
   }
-  const mathValues = calculateMathValuesFromOwnedLeaves({
-    routeId: 'calculate.arithmetic',
-    exactLatex: result.latex,
-    leaves: [{
-      canonicalLatex: result.latex,
-      mathJson: result.mathJson,
-      source: 'calculate.inline-linear-algebra.typed-expression',
-    }],
-  });
-  const canonicalResult = buildCalculateResultDocument({
+  const canonicalResult = buildCanonicalResultDocumentV2({
     outcomeKind: 'success',
     title: 'Calculate',
-    exactLatex: result.latex,
+    primary: {
+      kind: 'math',
+      value: requireProvenCanonicalMathValueV2({
+        canonicalLatex: result.latex,
+        mathJson: result.mathJson,
+        owner: 'calculate',
+        routeId: 'calculate.arithmetic',
+        source: 'calculate.inline-linear-algebra.typed-expression',
+      }),
+    },
     warnings: [],
-  }, { mathValues });
-  return attachCanonicalResultToProducerDraft(canonicalResult, {
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, {
     kind: 'success',
     title: 'Calculate',
     exactLatex: result.latex,
