@@ -1,8 +1,8 @@
 import { inspectExactArtifact as inspect } from './artifact-bounds';
 import { demand, type ExecutionContext } from './execution';
-import { DifferentialField, checkDifferentialBounds, type DifferentialBounds, type DifferentialElement as E } from './differential-field';
+import { DifferentialField, assertDifferentialFieldOwner, checkDifferentialBounds, type DifferentialBounds, type DifferentialElement as E } from './differential-field';
 import { verifyDerivative, type DerivativeEvidence } from './differential-derivative';
-import { verifyAdmission, type FunctionAdmission } from './differential-admission';
+import { requireRationalVariable, verifyAdmission, type FunctionAdmission } from './differential-admission';
 import { rational } from './rational';
 import type { Polynomial } from './polynomial';
 import type { SquareFreeDecomposition } from './polynomial-square-free';
@@ -96,8 +96,8 @@ export function encodeDifferentialArtifact(ctx: ExecutionContext, owner: Differe
 }
 
 /** Rebuild owned values and replay claims. No differentiation or admission producers. */
-export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: DifferentialField, data: unknown,
-  bounds: DifferentialBounds): DifferentialArtifactReplay {
+function decode(ctx: ExecutionContext, expected: DifferentialField, data: unknown,
+  bounds: DifferentialBounds, bindBase: boolean): DifferentialArtifactReplay {
   return ctx.operation(() => {
     checkDifferentialBounds(ctx, bounds); inspect(ctx, bounds, data);
     const root = record(data, ['tag', 'version', 'construction', 'elements', 'derivatives']);
@@ -105,6 +105,10 @@ export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: Diff
     const descriptors = array(root.construction), owners: DifferentialField[] = [];
     if (descriptors.length > bounds.towerHeight + 1) ctx.exhaust('tower-height');
     demand(descriptors.length > 0, 'invalid-input', 'empty field construction'); ctx.allocate(descriptors.length);
+    if (bindBase) {
+      assertDifferentialFieldOwner(ctx, expected); requireRationalVariable(ctx, expected);
+      demand(descriptors.length === 3, 'domain-mismatch', 'one extension over Q(x) required');
+    }
     const element = (v: unknown, expectedLevel?: number): E => {
       demand(v !== null && typeof v === 'object', 'invalid-input', 'artifact element');
       const r = record(v, Object.hasOwn(v, 'scalar') ? ['level', 'scalar'] : ['level', 'numerator', 'denominator']);
@@ -170,13 +174,17 @@ export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: Diff
       ctx.tick();
       if (i === 0) {
         const r = record(descriptors[i], ['kind']); demand(r.kind === 'rational', 'invalid-input', 'base field descriptor');
-        owners.push(DifferentialField.rationals(ctx, bounds)); continue;
+        owners.push(bindBase ? expected.parent! : DifferentialField.rationals(ctx, bounds)); continue;
       }
       const r = record(descriptors[i], ['kind', 'variable', 'rule', 'admission']), parent = owners[i - 1];
       const cs = array(r.rule); ctx.degree(cs.length - 1); ctx.allocate(cs.length);
       const rule = cs.map(c => element(c, i - 1)), variable = text(r.variable);
       let field: DifferentialField;
-      if (r.kind === 'variable') {
+      if (bindBase && i === 1) {
+        demand(r.kind === 'variable' && r.admission === null && variable === expected.fractions!.ring.variable,
+          'domain-mismatch', 'bound differential base');
+        field = expected;
+      } else if (r.kind === 'variable') {
         demand(r.admission === null, 'invalid-input', 'variable admission');
         field = DifferentialField.rationalFunctions(ctx, parent, variable, bounds);
       } else {
@@ -191,7 +199,8 @@ export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: Diff
     // Compare the explicitly expected construction, never just printed names.
     const expectedWire = writer(ctx, tower(ctx, expected, bounds), bounds).construction();
     const expectedBytes = inspect(ctx, bounds, expectedWire);
-    const actualWire = writer(ctx, owners, bounds).construction(), actualBytes = inspect(ctx, bounds, actualWire);
+    if (bindBase) ctx.allocate(2);
+    const actualWire = writer(ctx, bindBase ? owners.slice(0, 2) : owners, bounds).construction(), actualBytes = inspect(ctx, bounds, actualWire);
     ctx.allocate(expectedBytes + actualBytes);
     demand(JSON.stringify(expectedWire) === JSON.stringify(actualWire), 'domain-mismatch', 'unexpected differential construction');
     const es = array(root.elements), ds = array(root.derivatives); ctx.allocate(es.length + ds.length + 3);
@@ -199,4 +208,16 @@ export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: Diff
     for (const d of derivatives) verifyDerivative(ctx, d.input.owner, d.input, d);
     return Object.freeze({ owner: owners.at(-1)!, elements, derivatives });
   });
+}
+
+/** Existing decoder retains its fully fresh tower and expected-construction check. */
+export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: DifferentialField, data: unknown,
+  bounds: DifferentialBounds): DifferentialArtifactReplay {
+  return decode(ctx, expected, data, bounds, false);
+}
+/** Private composition boundary: replay one new extension over the supplied Q(x).
+ * The calling decision verifier must bind that extension to its expected function. */
+export function decodeDifferentialArtifactOverBase(ctx: ExecutionContext, base: DifferentialField, data: unknown,
+  bounds: DifferentialBounds): DifferentialArtifactReplay {
+  return decode(ctx, base, data, bounds, true);
 }

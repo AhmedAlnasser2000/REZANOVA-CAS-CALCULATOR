@@ -23,6 +23,10 @@ export type DifferentialElement = Readonly<{ owner: DifferentialField } & (
 
 const constructionKey = Symbol('owned differential construction');
 const owners = new WeakSet<object>();
+/** Reject prototype-forged contexts before invoking private instance methods. */
+export function assertDifferentialFieldOwner(ctx: ExecutionContext, owner: unknown): asserts owner is DifferentialField {
+  ctx.tick(); demand(owner instanceof DifferentialField && owners.has(owner), 'domain-mismatch', 'differential field owner');
+}
 
 /** A wrapper makes recursive coefficients explicit without erasing their types. */
 export class DifferentialField implements ExactField<DifferentialElement> {

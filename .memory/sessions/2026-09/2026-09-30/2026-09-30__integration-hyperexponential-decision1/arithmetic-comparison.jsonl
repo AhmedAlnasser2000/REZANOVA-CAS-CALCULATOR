@@ -1,0 +1,9 @@
+{"node":"v24.19.0","limits":{"work":20000000000,"allocation":1000000000000,"integerBits":2048,"degree":256},"bounds":{"towerHeight":8,"artifactDepth":64,"artifactNodes":100000,"artifactBytes":16777216},"warmups":1,"measured":3}
+{"name":"exp(x)","op":"integrate","medianMs":9.490985000000364,"minMs":8.975994999998875,"maxMs":16.352285000000848,"work":453494,"allocation":3878790,"deterministicCounters":true}
+{"name":"exp(x)","op":"verify","medianMs":5.487224000000424,"minMs":4.021173999999519,"maxMs":14.975413000000117,"work":154272,"allocation":1223221,"deterministicCounters":true}
+{"name":"exp(x)","op":"encode","medianMs":6.808912000000419,"minMs":6.662296999998944,"maxMs":6.964069999999992,"work":306073,"allocation":2316105,"deterministicCounters":true}
+{"name":"exp(x)","op":"decode","medianMs":10.71818600000006,"minMs":8.422043000000485,"maxMs":15.925305999999182,"work":366163,"allocation":2799970,"deterministicCounters":true}
+{"name":"exp(-x)","op":"integrate","medianMs":83.34288899999956,"minMs":79.10081799999898,"maxMs":92.05380400000104,"work":3272647,"allocation":27693545,"deterministicCounters":true}
+{"name":"exp(-x)","op":"verify","medianMs":42.481464999998934,"minMs":32.696719999999914,"maxMs":44.27231799999936,"work":1533397,"allocation":12929462,"deterministicCounters":true}
+{"name":"exp(-x)","op":"encode","medianMs":69.17274300000099,"minMs":67.93431199999941,"maxMs":78.04421899999943,"work":2705913,"allocation":22589580,"deterministicCounters":true}
+{"name":"exp(-x)","op":"decode","medianMs":90.16503299999931,"minMs":79.03664200000094,"maxMs":92.42405500000132,"work":3274024,"allocation":27459786,"deterministicCounters":true}
