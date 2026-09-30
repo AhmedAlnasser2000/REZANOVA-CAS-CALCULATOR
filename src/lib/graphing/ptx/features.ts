@@ -213,10 +213,15 @@ function leafSymbols(node: unknown, into = new Set<string>()) {
 }
 
 /** Every expression that divides something (a denominator or a base with a negative power). */
+// tan u = sin u / cos u and friends: their poles are the zeros of these hidden denominators.
+const HIDDEN_DENOMINATOR: Record<string, string> = { Tan: 'Cos', Sec: 'Cos', Cot: 'Sin', Csc: 'Sin' };
+
 export function ptxDenominators(node: unknown): unknown[] {
   if (!Array.isArray(node)) return [];
+  const hidden = typeof node[0] === 'string' ? HIDDEN_DENOMINATOR[node[0]] : undefined;
   const own = node[0] === 'Divide' && node.length === 3 ? [node[2]]
-    : node[0] === 'Power' && node.length === 3 && typeof node[2] === 'number' && node[2] < 0 ? [node[1]] : [];
+    : node[0] === 'Power' && node.length === 3 && typeof node[2] === 'number' && node[2] < 0 ? [node[1]]
+      : hidden && node.length === 2 ? [[hidden, node[1]]] : [];
   return [...own, ...node.slice(1).flatMap(ptxDenominators)];
 }
 
@@ -259,6 +264,34 @@ export function ptxRealDiscontinuities(f: PtxRealFunction, mathJson: unknown, va
     if (Math.abs(highValue - lowValue) < 0.5 * here) continue;
     const at = (low + high) / 2;
     candidates.push(Math.abs(at) < 1e-12 * span ? 0 : Number(at.toPrecision(12)));
+  }
+  // Poles the expression does not spell as a division: a sign flip between huge values, or a spike in |f|,
+  // narrowed to where |f| grows; roots and smooth peaks are rejected by the growth test below.
+  for (let index = 0; index + 1 < xs.length; index += 1) {
+    if (options.isCancelled?.()) break;
+    const a = values[index]; const b = values[index + 1];
+    if (a === undefined || b === undefined) continue;
+    if (Math.sign(a) !== Math.sign(b) && Math.min(Math.abs(a), Math.abs(b)) > 1) {
+      let low = xs[index]!; let high = xs[index + 1]!; const lowSign = Math.sign(a);
+      for (let pass = 0; pass < 60; pass += 1) {
+        const middle = (low + high) / 2; const value = f(middle);
+        if (value === undefined) break;
+        if (Math.sign(value) === lowSign) low = middle; else high = middle;
+      }
+      candidates.push((low + high) / 2);
+    }
+    const c = values[index + 2];
+    if (index + 2 < xs.length && c !== undefined && Math.abs(b) > 8 * Math.max(Math.abs(a), Math.abs(c), 1e-12)) {
+      // Narrow the spike by ternary search on |f| over the two cells around it.
+      let low = xs[index]!; let high = xs[index + 2]!;
+      for (let pass = 0; pass < 80; pass += 1) {
+        const m1 = low + (high - low) / 3; const m2 = high - (high - low) / 3;
+        const v1 = f(m1); const v2 = f(m2);
+        if (v1 === undefined || v2 === undefined) break;
+        if (Math.abs(v1) < Math.abs(v2)) low = m1; else high = m2;
+      }
+      candidates.push((low + high) / 2);
+    }
   }
   const found: PtxDiscontinuity[] = [];
   const seen: number[] = [];

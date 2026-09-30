@@ -254,9 +254,14 @@ async function runPtx2Smoke(session) {
   const asymptotes = await waitFor('asymptote labels', () => execute(session, `
     const labels = [...document.querySelectorAll('[data-testid="graph-ptx-asymptotes"] text')].map((label) => label.textContent);
     return labels.length === 2 ? labels : null;`), 30_000);
+  // tan x has no written denominator; its poles still give lines, named as multiples of π (ASYMPTOTE-FIX1).
+  await setRow(String.raw`\tan x`);
+  const tan = await waitFor('tan asymptotes', () => execute(session, `
+    const labels = [...document.querySelectorAll('[data-testid="graph-ptx-asymptotes"] text')].map((label) => label.textContent);
+    return labels.includes('x = π/2') ? labels : null;`), 30_000);
   await delay(800);
   const image = await screenshot(session);
-  return { hole, asymptotes, screenshot: image };
+  return { hole, asymptotes, tan, screenshot: image };
 }
 
 function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) {
@@ -280,6 +285,7 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
     failures.push(`piecewise jump is not drawn with one open and one filled end circle (${JSON.stringify(piecewise)})`);
   }
   if (ptx2 && ptx2.hole.join(',') !== 'open') failures.push(`the removable gap is not an open circle (${JSON.stringify(ptx2.hole)})`);
+  if (ptx2 && !(ptx2.tan?.includes('x = −π/2') && ptx2.tan?.includes('x = π/2'))) failures.push(`tan x is missing its asymptotes (${JSON.stringify(ptx2.tan)})`);
   if (ptx2 && ptx2.asymptotes.join(',') !== 'x = 1,y = 1') failures.push(`asymptotes are not x = 1 and y = 1 (${JSON.stringify(ptx2.asymptotes)})`);
   if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
     failures.push(`the locus circle is not painted in the Complex pane (${JSON.stringify(complexLocus.circlePixels)})`);
@@ -355,7 +361,7 @@ try {
   if (smoke) {
     log('running holes and asymptotes smoke');
     const run = await runPtx2Smoke(sessionId);
-    ptx2 = { hole: run.hole, asymptotes: run.asymptotes };
+    ptx2 = { hole: run.hole, asymptotes: run.asymptotes, tan: run.tan };
     if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-asymptotes.png', Buffer.from(run.screenshot, 'base64'));
   }
   const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) : [];

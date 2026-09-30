@@ -9,6 +9,7 @@ import type {
   GraphViewportV1,
 } from '../../lib/graphing';
 import { graphAnalysisAnnotationId, graphFeatureNumber } from './graph-analysis-overlay-support';
+import { asymptoteLabelNumber } from './ptx/ptx-asymptote-layer';
 function featureText(value: GraphFeatureValueV1 | undefined) {
   if (!value) return '—';
   return value.kind === 'exact' ? value.value.canonicalLatex : `≈ ${Number(value.value.toPrecision(7))}`;
@@ -45,7 +46,8 @@ export function GraphAnalysisMarkers({
 function asymptoteEquation(entry: GraphAnalysisEvidenceV1) {
   const number = (value: GraphFeatureValueV1 | undefined) => (value ? graphFeatureNumber(value) : undefined);
   const text = (value: number) => String(Number(value.toPrecision(6))).replace('-', '−');
-  if (entry.feature === 'vertical-asymptote') { const x = number(entry.coordinates?.x); return x === undefined ? null : `x = ${text(x)}`; }
+  // Same wording as the lines on the graph: tan x reads x = π/2, not x = 1.5708.
+  if (entry.feature === 'vertical-asymptote') { const x = number(entry.coordinates?.x); return x === undefined ? null : `x = ${asymptoteLabelNumber(x)}`; }
   if (entry.feature === 'horizontal-asymptote') { const y = number(entry.coordinates?.y); return y === undefined ? null : `y = ${text(y)}`; }
   if (entry.feature === 'oblique-asymptote') {
     const slope = number(entry.relationValue); const intercept = number(entry.coordinates?.y);

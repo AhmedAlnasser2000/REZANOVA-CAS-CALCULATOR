@@ -8,6 +8,21 @@ import {
 } from '../../../lib/graphing';
 import type { PtxAsymptoteLine } from './usePtxPointsOfInterest';
 
+/** A label number: an exact multiple of π reads as one (tan x has poles at x = π/2 + kπ), anything else to six digits. */
+export function asymptoteLabelNumber(value: number) {
+  const turns = value / Math.PI;
+  for (let denominator = 1; denominator <= 12 && value !== 0; denominator += 1) {
+    const numerator = Math.round(turns * denominator);
+    if (numerator === 0 || Math.abs(turns * denominator - numerator) > 1e-9 * Math.max(1, Math.abs(numerator))) continue;
+    const divisor = gcd(Math.abs(numerator), denominator); const p = numerator / divisor; const q = denominator / divisor;
+    const top = `${p < 0 ? '−' : ''}${Math.abs(p) === 1 ? '' : Math.abs(p)}π`;
+    return q === 1 ? top : `${top}/${q}`;
+  }
+  return ptxNumber(value).replace('-', '−');
+}
+
+function gcd(a: number, b: number): number { return b === 0 ? a : gcd(b, a % b); }
+
 const SVG = 'http://www.w3.org/2000/svg';
 
 function colourOf(itemId: string, presentation: GraphRendererPresentationFrame) {
@@ -45,13 +60,16 @@ export function placeAsymptotes(layer: SVGSVGElement | null, lines: readonly Ptx
     const label = document.createElementNS(SVG, 'text');
     label.textContent = ptxAsymptoteLabel(line.kind === 'vertical' ? { kind: 'vertical', x: line.value, sides: [-1, 1], level: line.level }
       : line.kind === 'horizontal' ? { kind: 'horizontal', y: line.value, sides: [-1, 1], level: line.level }
-        : { kind: 'oblique', slope: line.slope, intercept: line.value, sides: [-1, 1], level: line.level }, (value) => ptxNumber(value).replace('-', '−'));
+        : { kind: 'oblique', slope: line.slope, intercept: line.value, sides: [-1, 1], level: line.level }, asymptoteLabelNumber);
     // Vertical labels sit near the top, others near the right edge above their line.
-    const labelX = line.kind === 'vertical' ? x1 + 6 : size.width - 8;
+    // A vertical label near the right edge goes on the line's left so it is never cut off (11px monospace ≈ 6.7px a character).
+    const flip = line.kind === 'vertical' && x1 + 6 + 6.7 * (label.textContent?.length ?? 0) > size.width;
+    const labelX = line.kind === 'vertical' ? (flip ? x1 - 6 : x1 + 6) : size.width - 8;
     const labelY = line.kind === 'vertical' ? 58 : Math.max(14, Math.min(size.height - 8, y2 - 6));
     label.setAttribute('x', String(labelX)); label.setAttribute('y', String(labelY));
-    label.setAttribute('text-anchor', line.kind === 'vertical' ? 'start' : 'end');
-    label.setAttribute('fill', colour); label.dataset.testid = 'graph-ptx-asymptote-label';
+    label.setAttribute('text-anchor', line.kind === 'vertical' && !flip ? 'start' : 'end');
+    // The line carries the curve's colour; its equation is neutral text so it reads on any curve colour.
+    label.dataset.itemId = line.itemId; label.dataset.testid = 'graph-ptx-asymptote-label';
     children.push(label);
   }
   layer.replaceChildren(...children);

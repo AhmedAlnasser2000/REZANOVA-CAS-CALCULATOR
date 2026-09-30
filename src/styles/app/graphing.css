@@ -1350,6 +1350,7 @@
 }
 
 .graph-ptx-asymptotes text {
+  fill: var(--graph-text, #eef7f1);
   font: 600 11px ui-monospace, monospace;
   paint-order: stroke;
   stroke: #081114;

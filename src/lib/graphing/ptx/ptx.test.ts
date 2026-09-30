@@ -213,4 +213,15 @@ describe('PTX asymptotes', () => {
     expect(lines(['Add', ['Divide', ['Sin', 'x'], 'x'], 1])).toEqual(['y = 1 -1,1 numeric-validated']);
     expect(lines(['Power', 'x', 2])).toEqual([]);
   });
+
+  it('finds the poles of tan, sec and cot, which have no written denominator, and none for smooth curves', () => {
+    const halfPi = (k: number) => `x = ${Number((k * Math.PI / 2).toFixed(9))} -1,1 numeric-validated`;
+    expect(lines(['Tan', 'x'])).toEqual([-5, -3, -1, 1, 3, 5].map(halfPi));
+    expect(lines(['Sec', 'x'])).toEqual([-5, -3, -1, 1, 3, 5].map(halfPi));
+    expect(lines(['Cot', 'x'])).toHaveLength(7);
+    expect(lines(['Tan', ['Multiply', 3, 'x']])).toHaveLength(20);
+    expect(lines(['Sin', 'x'])).toEqual([]);
+    const f = port.realFunction(expression(['Floor', 'x']), 'x', {})!;
+    expect(ptxRealDiscontinuities(f, ['Floor', 'x'], 'x', -10.4, 10.4, port, {}).every((item) => item.kind === 'jump')).toBe(true);
+  });
 });

@@ -104,4 +104,14 @@ test.describe('PTX2', () => {
     await expect(labels).toHaveCount(2);
     await page.screenshot({ path: testInfo.outputPath('ptx2-details.png') });
   });
+
+  test('draws the asymptotes of tan x, which has no written denominator, named as multiples of π', async ({ page }, testInfo) => {
+    await openGraph(page);
+    await enterExpression(page, String.raw`\tan x`);
+    const onCurve = await realPoint(page, 0.5, Math.tan(0.5));
+    await page.mouse.click(onCurve.x, onCurve.y);
+    const labels = page.getByTestId('graph-ptx-asymptotes').locator('text');
+    await expect(labels).toContainText(['x = −3π/2', 'x = −π/2', 'x = π/2', 'x = 3π/2'], { timeout: 8_000 });
+    await page.screenshot({ path: testInfo.outputPath('asymptote-fix1-tan.png') });
+  });
 });
