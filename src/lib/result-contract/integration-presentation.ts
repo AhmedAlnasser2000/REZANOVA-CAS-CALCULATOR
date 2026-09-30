@@ -74,7 +74,7 @@ export function readIntegrationPresentation(document: CanonicalResultDocumentV2 
     compact = [...prefix, ...terms.map((_, i) => `L_{${i + 1}}`), constant].join('+');
     let cached: string | undefined;
     expanded = () => cached ??= aligned([...prefix, ...formatted.map(t =>
-      `\\sum_{\\textstyle ${t.root}:\\,${t.modulus}=0}${t.weight}\\log\\left(${t.argument}\\right)`), constant]);
+      `\\sum_{${t.root}:\\,${t.modulus}=0}${t.weight}\\log\\left(${t.argument}\\right)`), constant]);
     p.conditions.sourceExclusions.forEach(v => addCondition(v, 'Source exclusion', [p.variable]));
     addCondition(p.conditions.inputDenominator, 'Input denominator', [p.variable]);
     addCondition(p.conditions.rationalDenominator, 'Primitive denominator', [p.variable]);

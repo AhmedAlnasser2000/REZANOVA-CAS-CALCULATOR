@@ -27,3 +27,7 @@ Evidence is recorded in the 2026-09-30 presentation dossier. It includes seeded 
 Required closeout: focused core/printer/result/UI suites with two workers, incremental TypeScript, scoped lint, authority/display/isolation/compartment/OOE/memory/file-size gates, diff hygiene, and npm-dev Playwright inspection. No full suite or production build is required until a separately authorized commit.
 
 Verified 2026-09-30: 170 core/printer/draft tests, 157 result-contract tests, 3 runtime UI tests, targeted formatting deltas and six npm-dev Playwright scenarios. See the milestone dossier for exact runs and final hygiene evidence.
+
+## 2026-09-30 user-requested sigma spacing correction
+
+The expanded root-sum condition now uses the normal mathematical subscript style rather than forcing full-size textstyle. This avoids an oversized operator box separating sigma from its logarithmic summand, especially for 1/(x^2+1). The complete root condition is preserved. Screen and copy continue to share the same presentation model; authority, derivations and mathematical semantics are unchanged. Real npm-run-dev Playwright evidence is in the differential-arithmetic-performance1 dossier.

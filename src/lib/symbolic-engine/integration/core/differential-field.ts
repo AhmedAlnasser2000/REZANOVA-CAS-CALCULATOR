@@ -3,6 +3,7 @@ import { rationalField, type ExactField } from './field';
 import { copyAdmission, verifyAdmission, type FunctionAdmission } from './differential-admission';
 import { rational, type Rational } from './rational';
 import { PolynomialRing, type Polynomial } from './polynomial';
+import { OwnedValidation } from './owned-validation';
 import { RationalFunctionField, type RationalFunction } from './rational-function';
 
 export interface DifferentialBounds {
@@ -41,6 +42,7 @@ export class DifferentialField implements ExactField<DifferentialElement> {
   readonly kind: 'rational' | 'variable' | 'formal';
   readonly constantField: 'Q' | 'unestablished';
   #values = new WeakSet<object>();
+  #validation = new OwnedValidation();
   private constructor(key: symbol, parent?: DifferentialField, fractions?: RationalFunctionField<DifferentialElement>,
     rule?: Polynomial<DifferentialElement>, kind: 'rational' | 'variable' | 'formal' = 'rational', admission?: FunctionAdmission) {
     demand(key === constructionKey, 'domain-mismatch', 'private differential constructor');
@@ -52,7 +54,7 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     Object.freeze(this);
   }
   static rationals(ctx: ExecutionContext, bounds: DifferentialBounds): DifferentialField {
-    checkDifferentialBounds(ctx, bounds); ctx.allocate(8); return new DifferentialField(constructionKey);
+    checkDifferentialBounds(ctx, bounds); ctx.allocate(10); return new DifferentialField(constructionKey);
   }
   static rationalFunctions(ctx: ExecutionContext, base: DifferentialField, variable: string,
     bounds: DifferentialBounds): DifferentialField {
@@ -68,7 +70,7 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     const formal = DifferentialField.formal(ctx, parent, variable, rule, bounds);
     const admission = copyAdmission(ctx, evidence);
     verifyAdmission(ctx, formal, admission);
-    ctx.allocate(8);
+    ctx.allocate(10);
     return new DifferentialField(constructionKey, parent, formal.fractions, formal.rule, 'formal', admission);
   }
   private static extend(ctx: ExecutionContext, parent: DifferentialField, variable: string,
@@ -76,15 +78,19 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     checkDifferentialBounds(ctx, bounds);
     demand(parent instanceof DifferentialField && owners.has(parent), 'domain-mismatch', 'differential parent');
     if (parent.height >= bounds.towerHeight) ctx.exhaust('tower-height');
-    ctx.degree(coefficients.length - 1); ctx.allocate(10);
+    ctx.degree(coefficients.length - 1); ctx.allocate(12);
     const ring = new PolynomialRing(parent, variable), fractions = new RationalFunctionField(ring);
     return new DifferentialField(constructionKey, parent, fractions, ring.make(ctx, coefficients), kind);
   }
   assert(ctx: ExecutionContext, a: DifferentialElement): void {
     ctx.tick();
     demand(a !== null && typeof a === 'object' && this.#values.has(a), 'domain-mismatch', 'differential element owner');
-    if (a.kind === 'scalar') rationalField.assert(ctx, a.value);
-    else this.fractions!.assert(ctx, a.value);
+    // All registered values recursively contain only owned immutable values.
+    // Membership is checked above; custom coefficient domains cannot opt in.
+    this.#validation.check(ctx, a, () => {
+      if (a.kind === 'scalar') rationalField.assert(ctx, a.value);
+      else this.fractions!.assert(ctx, a.value);
+    });
   }
   scalar(ctx: ExecutionContext, value: Rational): DifferentialElement {
     demand(this.kind === 'rational', 'domain-mismatch', 'scalar requires Q owner');
