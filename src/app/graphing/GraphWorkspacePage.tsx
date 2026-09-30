@@ -57,6 +57,9 @@ import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
 import { useGraphGestureSampling } from './useGraphGestureSampling';
 import { useGraphEqualAxes } from './useGraphEqualAxes';
+import { useGraphComplexPlaneItems } from './useGraphComplexPlaneItems';
+import { usePtxPointsOfInterest } from './ptx/usePtxPointsOfInterest';
+import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 
 type GraphWorkspacePageProps = {
   gpuRendering?: 'auto' | 'off';
@@ -585,20 +588,9 @@ export default function GraphWorkspacePage({
     item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
   ));
   const gestureLane = useGraphGestureSampling({ cssSize: viewportSize, document: controller.session.document, workspaceContext });
-  // Loci and root points drawn in the Complex pane, with their sampled geometry and item colour.
-  const complexPlaneItems = useMemo(() => controller.session.document.items.flatMap((item) => {
-    if (item.kind !== 'relation' || !item.visible
-      || (item.relation.kind !== 'complex-locus' && item.relation.kind !== 'complex-roots')) return [];
-    const planar = scene?.planarScene;
-    return [{
-      itemId: item.itemId,
-      color: resolveGraphPresentationColor(normalizeGraphItemPresentation(item.presentation), controller.session.surface.appearance.colorVisionMode),
-      paths: (planar?.paths ?? []).filter((path) => path.itemId === item.itemId)
-        .map((path) => ({ coordinates: path.coordinates, segmentOffsets: path.segmentOffsets, strict: path.strokeRole === 'strict-boundary' })),
-      regions: (planar?.regions ?? []).filter((region) => region.itemId === item.itemId),
-      roots: item.relation.kind === 'complex-roots' ? { left: item.relation.left, right: item.relation.right } : null,
-    }];
-  }), [controller.session.document.items, controller.session.surface.appearance.colorVisionMode, scene]);
+  const complexPlaneItems = useGraphComplexPlaneItems(controller.session.document, scene, controller.session.surface.appearance.colorVisionMode);
+  const ptxDots = usePtxPointsOfInterest({ session: controller.session, workspaceContext });
+  const [complexTraced, setComplexTraced] = useState<PtxTracedPoint>(null);
   const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
     ?? scene?.complexTiles[0] ?? null;
 
@@ -923,7 +915,8 @@ export default function GraphWorkspacePage({
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}
-            onSizeChange={handleRealPaneSize}
+            onSizeChange={handleRealPaneSize} ptxDots={ptxDots}
+            ptxMirror={controller.session.surface.viewPolicy.mode === 'both' ? complexTraced : null}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
             paneView={controller.session.surface.panes.real}
@@ -943,8 +936,8 @@ export default function GraphWorkspacePage({
             onSizeChange={controller.session.surface.viewPolicy.mode === 'complex' ? reportPaneSize : undefined}
             onViewportChange={controller.setViewport}
             paneView={controller.session.surface.panes.complex}
-            planeItems={complexPlaneItems}
-            presentation={presentation}
+            planeItems={complexPlaneItems} presentation={presentation} ptxDots={ptxDots}
+            onSelectItem={controller.selectItem} onTracedPointChange={setComplexTraced}
             tile={activeComplexTile}
             viewport={controller.session.surface.viewport}
           /> : null}

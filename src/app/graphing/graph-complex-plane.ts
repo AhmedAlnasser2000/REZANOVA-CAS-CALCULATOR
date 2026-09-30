@@ -146,3 +146,27 @@ export function complexPlaneRootText(root: GraphComplexPlaneRoot) {
   const im = formatPart(Math.abs(root.im));
   return `z ≈ ${formatPart(root.re).replace('-', '−')} ${root.im < 0 && im !== '0' ? '−' : '+'} ${im}i · ${root.exact ? 'exact' : 'numeric'}${multiplicity}`;
 }
+
+/** Points of interest as grey dots (intersections of loci), like Desmos. */
+export function paintPtxDots(context: CanvasRenderingContext2D, dots: ReadonlyArray<{ x: number; y: number }>,
+  live: GraphViewportV1, frame: Frame, pixelRatio: number) {
+  context.setLineDash([]);
+  for (const dot of dots) {
+    const point = toScreen(dot.x, dot.y, live, frame);
+    context.beginPath();
+    context.arc(point.x, point.y, 4.5 * pixelRatio, 0, Math.PI * 2);
+    context.fillStyle = '#9aa7a1'; context.fill();
+    context.lineWidth = 1.5 * pixelRatio; context.strokeStyle = '#081114'; context.stroke();
+  }
+}
+
+/** The trace marker: a ring in the item colour around a light centre. */
+export function paintPtxMarker(context: CanvasRenderingContext2D, point: { x: number; y: number }, color: string,
+  live: GraphViewportV1, frame: Frame, pixelRatio: number) {
+  const at = toScreen(point.x, point.y, live, frame);
+  context.setLineDash([]);
+  context.beginPath();
+  context.arc(at.x, at.y, 6 * pixelRatio, 0, Math.PI * 2);
+  context.fillStyle = '#f4fbf6'; context.fill();
+  context.lineWidth = 3 * pixelRatio; context.strokeStyle = color; context.stroke();
+}

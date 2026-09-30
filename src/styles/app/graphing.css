@@ -1237,3 +1237,35 @@
 .graph-trace-callout.is-complex-part {
   white-space: pre-line;
 }
+
+/* PTX: certainty badges on trace readouts, and the Complex pane's traced point mirrored in the Real pane. */
+.graph-ptx-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font: 600 10px/16px system-ui, sans-serif;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.graph-ptx-badge.is-exact {
+  color: #0b1a12;
+  background: #7fd8a4;
+}
+
+.graph-ptx-badge.is-verified {
+  color: #0b1420;
+  background: #8fc2ff;
+}
+
+.graph-ptx-badge.is-numeric {
+  color: #eaf6f2;
+  background: rgba(191, 208, 198, .22);
+}
+
+.graph-ptx-mirror {
+  background: #f2b84b;
+  box-shadow: 0 0 0 3px rgba(242, 184, 75, 0.28);
+}

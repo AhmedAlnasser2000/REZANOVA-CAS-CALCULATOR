@@ -17,8 +17,11 @@ import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import { useGraphComplexGpu } from './useGraphComplexGpu';
 import { useGraphComplexLocusGpu } from './useGraphComplexLocusGpu';
+import { ptxBadge, ptxComplexReadout, ptxComplexTracePoint, ptxNearBranchCut, type PtxComplexTrace } from './ptx/ptx-complex-trace';
+import { usePtxComplexTrace, type PtxPaneFrame, type PtxTracedPoint } from './ptx/usePtxComplexTrace';
+import type { PtxDot } from './ptx/usePtxPointsOfInterest';
 import {
-  complexPlaneRootAt, complexPlaneRootText, paintArgandPlane, paintComplexPlaneItems,
+  complexPlaneRootAt, complexPlaneRootText, paintArgandPlane, paintComplexPlaneItems, paintPtxDots, paintPtxMarker,
   type GraphComplexPlaneItem, type GraphComplexPlanePath, type GraphComplexPlaneRegion, type GraphComplexPlaneRoot,
 } from './graph-complex-plane';
 
@@ -42,6 +45,7 @@ function canvasFrame(canvas: HTMLCanvasElement) {
 }
 
 type Size = { width: number; height: number };
+const NO_DOTS: readonly PtxDot[] = [];
 type TileImage = { canvas: HTMLCanvasElement; label: string | null };
 type Trace = { zRe: number; zIm: number; wRe: number; wIm: number; magnitude: number; phase: number };
 
@@ -156,13 +160,19 @@ function paint(canvas: HTMLCanvasElement, tile: GraphComplexDomainTileRuntimeV1,
 }
 
 export function GraphComplexViewport({ displayMode, document, gpuRendering, onDisplayModeChange, onPaneViewChange,
-  onSizeChange, onViewportChange, paneView, planeItems = [], presentation, tile, viewport, colorVisionMode }: {
+  onSelectItem, onSizeChange, onTracedPointChange, onViewportChange, paneView, planeItems = [], presentation, ptxDots = NO_DOTS, tile, viewport,
+  colorVisionMode }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   displayMode: GraphComplexDisplayModeV1;
   document: GraphDocumentV4;
   gpuRendering: 'auto' | 'off';
   onDisplayModeChange: (mode: GraphComplexDisplayModeV1) => void;
   onPaneViewChange: (values: Partial<GraphPaneViewStateV1>) => void;
+  onSelectItem?: (itemId: string) => void;
+  /** The PTX-traced point (for the Real pane's mirror marker in Both). */
+  onTracedPointChange?: (point: PtxTracedPoint) => void;
+  /** Points of interest of the selected item. */
+  ptxDots?: readonly PtxDot[];
   /** Called with the pane's size whenever it changes. */
   onSizeChange?: (size: Size) => void;
   onViewportChange: (viewport: GraphViewportV1) => void;
@@ -239,6 +249,10 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   const cpuPlane = useMemo(() => (locusSuppressed.size === 0 ? plane
     : plane.map((entry) => (locusSuppressed.has(entry.itemId) ? { ...entry, paths: [], regions: [] } : entry))),
   [locusSuppressed, plane]);
+  const probeSource = tile && mathJson !== null ? JSON.stringify([tile.itemId, mathJson, parameters]) : null;
+  const ptx = usePtxComplexTrace({ document, dots: ptxDots, onSelectItem, onTracedPointChange, parameters, plane, probeSource });
+  const complexDots = useMemo(() => ptxDots.filter((dot) => dot.plane === 'complex'), [ptxDots]);
+  const ptxReadout = ptx.trace ? ptxComplexReadout(ptx.trace) : null;
   const paintRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
     paintRef.current = () => {
@@ -257,6 +271,13 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
         paintLocusGpu(context, liveRef.current, interactingRef.current, width, height);
         paintComplexPlaneItems(context, cpuPlane, liveRef.current, { originX: 0, originY: 0, width, height }, pixelRatio);
       }
+      if (!tile || displayMode === 'domain-coloring') {
+        const frame = { originX: 0, originY: 0, width, height };
+        paintPtxDots(context, complexDots, liveRef.current, frame, pixelRatio);
+        const traced = ptx.trace; const point = traced ? ptxComplexTracePoint(traced) : null;
+        const color = traced && traced.kind !== 'probe' ? plane.find((entry) => entry.itemId === traced.itemId)?.color : undefined;
+        if (point) paintPtxMarker(context, point, color ?? '#f2b84b', liveRef.current, frame, pixelRatio);
+      }
     };
   });
   const requestPaint = useCallback(() => {
@@ -274,7 +295,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   useEffect(() => {
     if (!interactingRef.current) liveRef.current = viewport;
     paintRef.current();
-  }, [cpuPlane, images, paintLocusGpu, plane, size, tile, viewport]);
+  }, [complexDots, cpuPlane, images, paintLocusGpu, plane, ptx.trace, size, tile, viewport]);
   useEffect(() => () => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
@@ -346,6 +367,23 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     const value = traceEvaluator({ re: zRe, im: zIm });
     return value ? { zRe, zIm, wRe: value.re, wIm: value.im, magnitude: value.magnitude, phase: value.phase } : null;
   };
+  /** The pane's frame and the plane point under the pointer, for PTX. */
+  const eventFrame = (event: { clientX: number; clientY: number; currentTarget: Element }) => {
+    const bounds = event.currentTarget.getBoundingClientRect(); const live = liveRef.current;
+    const frame: PtxPaneFrame = { live, width: bounds.width, height: bounds.height };
+    return { frame, at: { x: live.xMin + (event.clientX - bounds.left) / bounds.width * (live.xMax - live.xMin),
+      y: live.yMax - (event.clientY - bounds.top) / bounds.height * (live.yMax - live.yMin) } };
+  };
+  /** A click on a z-map with nothing to trace pins the probe, flagging a nearby branch cut. */
+  const pinProbe = (event: ReactPointerEvent<HTMLCanvasElement>) => (): Extract<PtxComplexTrace, { kind: 'probe' }> | null => {
+    const probe = pointer(event);
+    if (!probe) return null;
+    const { frame: { live, width, height } } = eventFrame(event);
+    const toScreen = (x: number, y: number) => ({ x: (x - live.xMin) / (live.xMax - live.xMin) * width, y: (live.yMax - y) / (live.yMax - live.yMin) * height });
+    const nearCut = ptxNearBranchCut({ x: probe.zRe, y: probe.zIm }, tile?.branchCuts ?? [], toScreen);
+    return { kind: 'probe', z: { re: probe.zRe, im: probe.zIm }, w: { re: probe.wRe, im: probe.wIm },
+      magnitude: probe.magnitude, phase: probe.phase, warnings: nearCut ? ['near-branch-cut'] : [] };
+  };
   return <section className="graph-complex-viewport" data-testid="graph-complex-viewport">
     <div className="graph-complex-toolbar">
       <div aria-label="Complex graph dimension" role="group"><button aria-pressed={paneView.dimension === '2d'}
@@ -363,12 +401,24 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     {paneView.dimension === '2d' ? <canvas aria-hidden="true" className="graph-complex-gpu-canvas" ref={gpuCanvasRef} /> : null}
     {paneView.dimension === '2d' ? <div aria-hidden="true" className="graph-complex-locus-gpu-slot" ref={locusSlotRef} /> : null}
     {paneView.dimension === '2d' ? <canvas aria-label="Complex mapping visualization" className="graph-complex-overlay-canvas" ref={canvasRef}
-      data-renderer={gpuStatus.renderer}
+      data-ptx-dots={complexDots.length} data-renderer={gpuStatus.renderer} tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') { ptx.clear(); return; }
+        const direction = event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? -1 : 0;
+        if (!direction || !ptx.trace) return;
+        event.preventDefault();
+        const bounds = event.currentTarget.getBoundingClientRect();
+        ptx.step(direction, { live: liveRef.current, width: bounds.width, height: bounds.height });
+      }}
       data-tile-bounds={tile ? `${tile.bounds.reMin},${tile.bounds.reMax},${tile.bounds.imMin},${tile.bounds.imMax}` : undefined}
       onPointerDown={(event) => { dragRef.current = { x: event.clientX, y: event.clientY, viewport: liveRef.current }; event.currentTarget.setPointerCapture(event.pointerId); }}
       onPointerMove={(event) => {
         const drag = dragRef.current;
-        if (!drag) { setTrace(pointer(event)); return; }
+        if (!drag) {
+          const { frame, at } = eventFrame(event);
+          if (ptx.sweep(at, frame)) return;
+          setTrace(pointer(event)); return;
+        }
         const dx = (event.clientX - drag.x) / Math.max(1, event.currentTarget.clientWidth) * (drag.viewport.xMax - drag.viewport.xMin);
         const dy = (event.clientY - drag.y) / Math.max(1, event.currentTarget.clientHeight) * (drag.viewport.yMax - drag.viewport.yMin);
         if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 4 && !interactingRef.current) return;
@@ -379,12 +429,20 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
       onPointerUp={(event) => {
         const drag = dragRef.current; dragRef.current = null;
         if (!drag) return;
-        if (interactingRef.current) commitLive(); else setTrace(pointer(event));
+        if (interactingRef.current) { commitLive(); return; }
+        const { frame, at } = eventFrame(event);
+        ptx.acquire(at, frame, tile && traceEvaluator && displayMode === 'domain-coloring' ? pinProbe(event) : null);
+        setTrace(pointer(event));
       }}
 />
       : <div className="graph-complex-3d-placeholder">The 3D Riemann surface view arrives in a later Graphing milestone.</div>}
-    {rootReadout ? <output className="graph-complex-trace" data-testid="graph-complex-root-readout">{rootReadout}</output> : null}
-    {!rootReadout && trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
+    {ptxReadout ? <output className="graph-complex-trace graph-ptx-readout" data-ptx-level={ptxReadout.level}
+      data-testid="graph-complex-ptx-readout" title={ptxReadout.detail}>
+      {ptxReadout.lines.map((line, index) => <span key={line}>{index > 0 ? <br /> : null}{line}
+        {index === 0 ? <b className={`graph-ptx-badge is-${ptxBadge(ptxReadout.level)}`}>{ptxBadge(ptxReadout.level)}</b> : null}</span>)}
+    </output> : null}
+    {!ptxReadout && rootReadout ? <output className="graph-complex-trace" data-testid="graph-complex-root-readout">{rootReadout}</output> : null}
+    {!ptxReadout && !rootReadout && trace && Number.isFinite(trace.wRe) ? <output className="graph-complex-trace">z = {trace.zRe.toPrecision(4)} {trace.zIm < 0 ? '−' : '+'} {Math.abs(trace.zIm).toPrecision(4)}i<br />
       w = {trace.wRe.toPrecision(4)} {trace.wIm < 0 ? '−' : '+'} {Math.abs(trace.wIm).toPrecision(4)}i · |w| {trace.magnitude.toPrecision(4)} · arg {trace.phase.toPrecision(4)}</output> : null}
   </section>;
 }

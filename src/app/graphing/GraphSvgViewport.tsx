@@ -29,6 +29,8 @@ import { graphParameterEnvironment } from './graph-controller-support';
 import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import type { GraphGestureLane } from './useGraphGestureSampling';
 import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
+import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
+import type { PtxDot } from './ptx/usePtxPointsOfInterest';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | 'real-surface'
@@ -44,6 +46,10 @@ type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
   presentation?: GraphRendererPresentationFrame;
+  /** Points of interest of the selected item. */
+  ptxDots?: readonly PtxDot[];
+  /** A point traced in the Complex pane, marked here at (Re z, Im z). */
+  ptxMirror?: PtxTracedPoint;
   scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null;
   sceneViewport?: GraphViewportV1 | null;
   viewport: GraphViewportV1;
@@ -66,6 +72,15 @@ const GESTURE_LANE_INTERVAL_MS = 100;
 function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null) {
   return scene && 'planarScene' in scene ? scene
     : scene ? { version: 2 as const, planarScene: scene, surfaceMeshes: [], complexTiles: [] } : null;
+}
+
+/** Positions the Complex pane's traced point in this pane (x = Re z, y = Im z), hidden when off-screen. */
+function placeMirror(element: HTMLDivElement | null, point: PtxTracedPoint | undefined, live: GraphViewportV1, size: Size) {
+  if (!element) return;
+  const x = point ? (point.x - live.xMin) / (live.xMax - live.xMin) * size.width : NaN;
+  const y = point ? (live.yMax - point.y) / (live.yMax - live.yMin) * size.height : NaN;
+  element.hidden = !(x >= 0 && x <= size.width && y >= 0 && y <= size.height);
+  if (!element.hidden) element.style.transform = `translate3d(${x - 6}px,${y - 6}px,0)`;
 }
 
 function formatTraceNumber(value: number) {
@@ -126,8 +141,10 @@ function surfaceTargetAtScreen(
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
   document = null, gestureLane = null, gpuRendering = 'auto', itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
-  presentation = { version: 1, contentRevision: 0, items: [] }, scene, viewport, sceneViewport = viewport,
+  presentation = { version: 1, contentRevision: 0, items: [] }, ptxMirror = null, scene, viewport, sceneViewport = viewport,
 }: Props) {
+  const mirrorRef = useRef<HTMLDivElement | null>(null);
+  const mirrorPointRef = useRef(ptxMirror);
   const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
@@ -180,6 +197,7 @@ export function GraphSvgViewport({
 
   const renderView = useCallback((liveViewport: GraphViewportV1) => {
     liveViewportRef.current = liveViewport;
+    placeMirror(mirrorRef.current, mirrorPointRef.current, liveViewport, sizeRef.current);
     if (hostRef.current) hostRef.current.dataset.viewport = `${liveViewport.xMin},${liveViewport.xMax},${liveViewport.yMin},${liveViewport.yMax}`;
     const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
       policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
@@ -247,6 +265,11 @@ export function GraphSvgViewport({
     rendererRef.current?.setGestureScene(gestureLane?.getScene() ?? null);
     return gestureLane?.subscribe((next) => rendererRef.current?.setGestureScene(next));
   }, [gestureLane]);
+
+  useLayoutEffect(() => {
+    mirrorPointRef.current = ptxMirror;
+    placeMirror(mirrorRef.current, ptxMirror, liveViewportRef.current, sizeRef.current);
+  }, [ptxMirror]);
 
   useLayoutEffect(() => {
     gpuDrawRef.current = gpuDraw;
@@ -493,6 +516,7 @@ export function GraphSvgViewport({
     onPointerMove={handlePointerMove} onPointerUp={finishPointer} ref={hostRef} tabIndex={0}>
     <div className="graph-svg-renderer-host" ref={rendererHostRef} />
     <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
+    <div className="graph-trace-marker graph-ptx-mirror" data-testid="graph-ptx-mirror" hidden ref={mirrorRef} />
     <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />
     <span className="graph-trace-instructions" id="graph-trace-instructions">Click a curve or point to trace it. Move to sweep, use arrows to step, and Escape to clear.</span>
     {gpuStatus.candidates > 0 ? <span className={`graph-real-renderer is-${gpuStatus.gpuItems > 0 ? 'gpu' : 'cpu'}`}

@@ -7,6 +7,8 @@ import {
   type GraphViewportV1,
   type GraphSpatialSceneRuntimeV2,
 } from '../../lib/graphing';
+import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
+import type { PtxDot } from './ptx/usePtxPointsOfInterest';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphThreeViewport } from './GraphThreeViewport';
 import type { GraphGestureLane } from './useGraphGestureSampling';
@@ -24,6 +26,10 @@ type Props = {
   paneView: GraphPaneViewStateV1;
   pending: boolean;
   presentation: GraphRendererPresentationFrame;
+  /** Points of interest of the selected item, drawn as dots. */
+  ptxDots?: readonly PtxDot[];
+  /** A point traced in the Complex pane, marked here at (Re z, Im z) in Both. */
+  ptxMirror?: PtxTracedPoint;
   scene: GraphSpatialSceneRuntimeV2 | null;
   sceneViewport: GraphViewportV1 | null;
   selectedItemId: string | null;
@@ -32,7 +38,7 @@ type Props = {
 
 export function GraphViewportHost({
   document, gestureLane, gpuRendering, grid, itemRoutes, onPaneViewChange, onSelectItem, onSizeChange, onViewportChange,
-  paneView, pending, presentation, scene, sceneViewport, selectedItemId, viewport,
+  paneView, pending, presentation, ptxDots, ptxMirror, scene, sceneViewport, selectedItemId, viewport,
 }: Props) {
   const [fallbackReason, setFallbackReason] = useState<'context-lost' | 'unavailable' | null>(null);
   const [retrySequence, setRetrySequence] = useState(0);
@@ -75,6 +81,8 @@ export function GraphViewportHost({
       onViewportChange={onViewportChange}
       pending={pending}
       presentation={presentation}
+      ptxDots={ptxDots}
+      ptxMirror={ptxMirror}
       scene={scene}
       sceneViewport={sceneViewport}
       viewport={viewport}
