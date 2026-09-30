@@ -1,5 +1,5 @@
 import type { ComplexValue } from '../../numeric/complex';
-import type { GraphExpressionIR, GraphPiecewiseSpecV1, GraphViewportV1 } from '../contracts';
+import type { GraphExpressionIR, GraphPiecewiseSpecV1, GraphRelationIR, GraphViewportV1 } from '../contracts';
 import type { PtxWindow } from './types';
 
 // Everything PTX needs from evaluators and solvers goes through this port, so
@@ -9,6 +9,8 @@ import type { PtxWindow } from './types';
 export type PtxRealFunction = (value: number) => number | undefined;
 export type PtxPlaneFunction = (x: number, y: number) => number | undefined;
 export type PtxComplexFunction = (z: ComplexValue) => ComplexValue | null;
+/** The point of a parametric or polar curve at parameter t (θ for polar; `radius` is r(θ)). */
+export type PtxCurvePoint = (t: number) => { x: number; y: number; radius?: number } | undefined;
 
 /** Solutions of an equation in z: `complete` when these are all of them (polynomials). */
 export type PtxComplexRootsSolution = {
@@ -23,6 +25,15 @@ export type PtxSolverPort = {
   readonly id: string;
   /** f(variable) for an expression in x (or y), sliders fixed; null when it cannot be compiled. */
   realFunction(expression: GraphExpressionIR, variable: string, parameters: Readonly<Record<string, number>>): PtxRealFunction | null;
+  /** A parametric curve (x(t), y(t)) or polar curve r(θ) as its point at a parameter value. */
+  curvePoint(relation: GraphRelationIR, parameters: Readonly<Record<string, number>>): PtxCurvePoint | null;
+  /**
+   * End behaviour of a rational function in `variable`, exactly: a horizontal
+   * asymptote y = c, an oblique one y = mx + b, or none; null when the
+   * expression is not a ratio of polynomials (or is a polynomial).
+   */
+  rationalEndBehaviour(mathJson: unknown, variable: string, parameters: Readonly<Record<string, number>>):
+    { kind: 'horizontal'; y: number } | { kind: 'oblique'; slope: number; intercept: number } | { kind: 'none' } | null;
   /** A piecewise curve as one function: the first branch whose condition holds (or `otherwise`); undefined where none does. */
   piecewiseFunction(piecewise: GraphPiecewiseSpecV1, variable: string, parameters: Readonly<Record<string, number>>): PtxRealFunction | null;
   /** F(x, y) = left − right for a real relation in x and y. */

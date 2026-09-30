@@ -18,6 +18,7 @@ import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import { useGraphComplexGpu } from './useGraphComplexGpu';
 import { useGraphComplexLocusGpu } from './useGraphComplexLocusGpu';
 import { ptxBadge, ptxComplexReadout, ptxComplexTracePoint, ptxNearBranchCut, type PtxComplexTrace } from './ptx/ptx-complex-trace';
+import { ptxComplexText } from '../../lib/graphing';
 import { usePtxComplexTrace, type PtxPaneFrame, type PtxTracedPoint } from './ptx/usePtxComplexTrace';
 import type { PtxDot } from './ptx/usePtxPointsOfInterest';
 import {
@@ -349,8 +350,12 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
     const re = live.xMin + (event.clientX - bounds.left) / bounds.width * (live.xMax - live.xMin);
     const im = live.yMax - (event.clientY - bounds.top) / bounds.height * (live.yMax - live.yMin);
     const root = displayMode === 'components' && tile ? null : complexPlaneRootAt(plane, re, im, live, bounds.width, bounds.height);
-    setRootReadout(root ? complexPlaneRootText(root) : null);
-    return root !== null;
+    // A z-map's zeros and poles (dots and rings) read out like roots when the pointer is on them.
+    const dot = root || (displayMode === 'components' && tile) ? null : complexDots.find((candidate) => Math.hypot(
+      (candidate.x - re) / (live.xMax - live.xMin) * bounds.width, (candidate.y - im) / (live.yMax - live.yMin) * bounds.height) <= 8);
+    const dotText = dot ? `${dot.feature === 'complex-pole' ? 'Pole' : dot.feature === 'complex-zero' ? 'Zero' : 'Intersection'} · z = ${ptxComplexText(dot.x, dot.y, dot.errorBound)}` : null;
+    setRootReadout(root ? complexPlaneRootText(root) : dotText);
+    return root !== null || dot !== undefined && dot !== null;
   };
   const pointer = (event: ReactPointerEvent<HTMLCanvasElement>): Trace | null => {
     if (hoverRoot(event) || !tile || !traceEvaluator) return null;
@@ -378,6 +383,8 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
   const pinProbe = (event: ReactPointerEvent<HTMLCanvasElement>) => (): Extract<PtxComplexTrace, { kind: 'probe' }> | null => {
     const probe = pointer(event);
     if (!probe) return null;
+    // Pinning a probe selects its map, so the map's zeros and poles show as dots and rings.
+    if (tile) onSelectItem?.(tile.itemId);
     const { frame: { live, width, height } } = eventFrame(event);
     const toScreen = (x: number, y: number) => ({ x: (x - live.xMin) / (live.xMax - live.xMin) * width, y: (live.yMax - y) / (live.yMax - live.yMin) * height });
     const nearCut = ptxNearBranchCut({ x: probe.zRe, y: probe.zIm }, tile?.branchCuts ?? [], toScreen);

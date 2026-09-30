@@ -5,28 +5,13 @@ import type {
   GraphFeatureValueV1,
   GraphViewportV1,
 } from '../contracts';
-import { defaultPtxSolverPort, ptxNumber, ptxRealExtrema, ptxRealRoots, type PtxRealFunction } from '../ptx';
+import { defaultPtxSolverPort, ptxNumber, ptxOneSidedLimit as oneSidedLimit, ptxRealExtrema, ptxRealRoots, type PtxRealFunction } from '../ptx';
 import { graphPiecewiseForm } from '../sampling/piecewise';
 import { buildGraphPiecewiseConditionPartition } from '../sampling/piecewise-condition-evidence';
 
 type Piecewise = Extract<GraphClassifiedItemSnapshotV2, { kind: 'piecewise' }>;
 type Evidence = (feature: GraphAnalysisFeature, itemIds: string[], level: GraphAnalysisEvidenceV1['level'],
   extra?: Partial<GraphAnalysisEvidenceV1>) => GraphAnalysisEvidenceV1;
-
-/**
- * The one-sided limit of f at `at` from `side`: values at shrinking distances
- * must settle; the last value is the estimate and its last change the error.
- */
-function oneSidedLimit(f: PtxRealFunction, at: number, side: 1 | -1, span: number) {
-  let previous: number | undefined; let change = Infinity;
-  for (let power = 4; power <= 12; power += 1) {
-    const value = f(at + side * span * 10 ** -power);
-    if (value === undefined) return undefined;
-    if (previous !== undefined) change = Math.abs(value - previous);
-    previous = value;
-  }
-  return previous !== undefined && change <= 1e-8 * Math.max(1, Math.abs(previous)) ? { value: previous, error: Math.max(change, 1e-15) } : undefined;
-}
 
 const close = (a: number, b: number) => Math.abs(a - b) <= 1e-7 * Math.max(1, Math.abs(a), Math.abs(b));
 

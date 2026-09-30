@@ -8,6 +8,8 @@ const document = { items: [
   { kind: 'relation', itemId: 'sine', visible: true, relation: { kind: 'explicit-y', rhs: expression(['Sin', 'x'], ['x']) } },
   { kind: 'relation', itemId: 'circle', visible: true, relation: { kind: 'implicit-equality',
     left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), right: expression(9, []) } },
+  { kind: 'relation', itemId: 'disc', visible: true, relation: { kind: 'inequality', operator: '<=',
+    left: expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]], ['x', 'y']), right: expression(9, []) } },
 ] } as unknown as GraphDocumentV4;
 const viewport = { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -6, yMax: 6 };
 const size = { width: 1000, height: 600 };
@@ -25,6 +27,12 @@ describe('PTX Real tracing', () => {
   it('projects implicit curves onto the true curve', () => {
     const point = ptxRefineRealTrace(refiners.get('circle'), 'circle', { x: 2.12, y: 2.13 }, viewport, size, []);
     expect(Math.abs(Math.hypot(point.x, point.y) - 3)).toBeLessThan(1e-10);
+  });
+
+  it('puts a region trace on its boundary curve', () => {
+    const point = ptxRefineRealTrace(refiners.get('disc'), 'disc', { x: 3.004, y: 1e-15 }, viewport, size, []);
+    expect(Math.abs(Math.hypot(point.x, point.y) - 3)).toBeLessThan(1e-10);
+    expect(ptxRealTraceText(point)).toBe('(3, 0)');
   });
 
   it('snaps to a dot only on arrival and names it', () => {

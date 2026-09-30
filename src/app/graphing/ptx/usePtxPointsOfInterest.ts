@@ -16,7 +16,7 @@ export type PtxDot = {
   key: string;
   plane: 'real' | 'complex';
   /** `endpoint` and `hole` are a piecewise branch's filled and open end circles (from the scene, not Analyze). */
-  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'endpoint' | 'hole';
+  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'endpoint' | 'hole' | 'complex-zero' | 'complex-pole';
   itemIds: string[];
   x: number;
   y: number;
@@ -24,7 +24,21 @@ export type PtxDot = {
   errorBound: number;
 };
 
-const FEATURES = ['root', 'extremum', 'intersection', 'y-intercept'] as const;
+const FEATURES = ['root', 'extremum', 'intersection', 'y-intercept', 'complex-zero', 'complex-pole'] as const;
+const LINE_FEATURES = ['vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote'] as const;
+
+/** An asymptote line of a curve: x = a, y = b, or y = slope·x + intercept. */
+export type PtxAsymptoteLine = {
+  key: string;
+  itemId: string;
+  kind: 'vertical' | 'horizontal' | 'oblique';
+  /** x for vertical lines, y for horizontal ones, the intercept for oblique ones. */
+  value: number;
+  slope: number;
+  level: PtxLevel;
+};
+
+export type GraphAsymptoteMode = 'auto' | 'always' | 'off';
 const DOT_LEVELS = new Set<GraphAnalysisEvidenceV1['level']>(['exact-proved', 'numeric-validated', 'sampled-estimate']);
 // Its own worker, so dots never cancel (or wait behind) the Analyze panel.
 const pointsHost = new GraphAnalysisApplicationHost();
@@ -49,20 +63,47 @@ export function ptxDotsFromEvidence(evidence: readonly GraphAnalysisEvidenceV1[]
   });
 }
 
+/** Evidence to asymptote lines, for the items whose lines are showing. */
+export function ptxAsymptotesFromEvidence(evidence: readonly GraphAnalysisEvidenceV1[], showing: ReadonlySet<string>): PtxAsymptoteLine[] {
+  return evidence.flatMap((entry): PtxAsymptoteLine[] => {
+    const itemId = entry.itemIds[0];
+    if (!itemId || !showing.has(itemId) || !DOT_LEVELS.has(entry.level)) return [];
+    const level = entry.level as PtxLevel;
+    if (entry.feature === 'vertical-asymptote') {
+      const x = numberOf(entry.coordinates?.x); return x ? [{ key: entry.evidenceId, itemId, kind: 'vertical', value: x.value, slope: 0, level }] : [];
+    }
+    if (entry.feature === 'horizontal-asymptote') {
+      const y = numberOf(entry.coordinates?.y); return y ? [{ key: entry.evidenceId, itemId, kind: 'horizontal', value: y.value, slope: 0, level }] : [];
+    }
+    if (entry.feature === 'oblique-asymptote') {
+      const intercept = numberOf(entry.coordinates?.y); const slope = numberOf(entry.relationValue);
+      return intercept && slope ? [{ key: entry.evidenceId, itemId, kind: 'oblique', value: intercept.value, slope: slope.value, level }] : [];
+    }
+    return [];
+  });
+}
+
 /**
- * Points of interest for the selected item (Desmos-style dots), computed by the
- * PTX finders in the analysis worker after the view settles.
+ * Points of interest for the selected item (Desmos-style dots) and asymptote
+ * lines (the selected item's unless its mode is Off, plus every item set to
+ * Always), computed by the PTX finders in the analysis worker after the view settles.
  */
 export function usePtxPointsOfInterest({ session, workspaceContext }: {
   session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
 }) {
   const [dots, setDots] = useState<PtxDot[]>([]);
+  const [asymptotes, setAsymptotes] = useState<PtxAsymptoteLine[]>([]);
   const sessionRef = useRef(session);
   const contextRef = useRef(workspaceContext);
   const sequence = useRef(0);
   useEffect(() => { sessionRef.current = session; contextRef.current = workspaceContext; });
   const selectedItemId = session.surface.selectedItemId;
+  const modeOf = (item: (typeof session.document.items)[number]): GraphAsymptoteMode => (
+    'presentation' in item && item.presentation.version === 2 ? item.presentation.asymptotes ?? 'auto' : 'auto');
+  // Which items show lines depends on presentation, which does not bump the mathematics revision.
+  const showingKey = session.document.items.filter((item) => item.kind === 'relation' || item.kind === 'piecewise')
+    .map((item) => `${item.itemId}:${modeOf(item)}`).join('|');
   useEffect(() => {
     let live = true;
     const timer = window.setTimeout(() => {
@@ -70,8 +111,13 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
       const context = contextRef.current;
       const items = classifiedGraphItems(snapshot.document).filter((item) => item.visible);
       const selected = items.find((item) => item.itemId === selectedItemId);
-      if (!selectedItemId || !selected || (selected.kind !== 'relation' && selected.kind !== 'piecewise')) { if (live) setDots([]); return; }
-      const plane = selected.kind === 'relation' && selected.relation.kind === 'complex-locus' ? 'complex' : 'real';
+      const showing = new Set(snapshot.document.items.flatMap((item) => {
+        const mode = modeOf(item);
+        return mode === 'always' || (mode === 'auto' && item.itemId === selectedItemId) ? [item.itemId] : [];
+      }));
+      const selectable = selected && (selected.kind === 'relation' || selected.kind === 'piecewise');
+      if (!selectable && showing.size === 0) { if (live) { setDots([]); setAsymptotes([]); } return; }
+      const plane = selected?.kind === 'relation' && (selected.relation.kind === 'complex-locus' || selected.relation.kind === 'complex-mapping') ? 'complex' : 'real';
       const request = {
         version: 1 as const,
         requestId: `${context.workspaceInstanceId}.ptx-points.${++sequence.current}`,
@@ -81,7 +127,7 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
         items,
         parameterEnvironment: graphParameterEnvironment(snapshot.document),
         assumptions: snapshot.document.assumptions,
-        features: [...FEATURES],
+        features: [...FEATURES, ...LINE_FEATURES],
         numericWindow: snapshot.surface.viewport,
         maximumTimeMs: 400,
       };
@@ -92,11 +138,13 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
         host: pointsHost,
       }).then((envelope) => {
         if (!live || envelope.ooe.commitAssessment.commitDecision !== 'committed') return;
-        setDots(ptxDotsFromEvidence(envelope.payload.evidence, selectedItemId, plane));
-      }).catch(() => { if (live) setDots([]); });
+        setDots(selectable && selectedItemId ? ptxDotsFromEvidence(envelope.payload.evidence, selectedItemId, plane) : []);
+        setAsymptotes(ptxAsymptotesFromEvidence(envelope.payload.evidence, showing));
+      }).catch(() => { if (live) { setDots([]); setAsymptotes([]); } });
     }, 260);
     return () => { live = false; window.clearTimeout(timer); pointsHost.cancelActive('Points of interest input changed.'); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- showingKey carries the presentation modes.
   }, [selectedItemId, session.document.mathematicsRevision, session.surface.parameterRevision,
-    session.surface.viewportRevision, workspaceContext.workspaceInstanceId]);
-  return selectedItemId ? dots : [];
+    session.surface.viewportRevision, showingKey, workspaceContext.workspaceInstanceId]);
+  return { dots: selectedItemId ? dots : [], asymptotes };
 }

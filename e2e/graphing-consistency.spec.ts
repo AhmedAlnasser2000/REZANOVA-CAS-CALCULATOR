@@ -82,6 +82,8 @@ test.describe('Graph input and view consistency', () => {
     await openGraph(page);
     await expect(page.locator('math-field').last()).toHaveAttribute('data-placeholder', 'Enter an expression…');
     await enterExpression(page, String.raw`\sqrt{-x}`);
+    // ℂ lives in the row's details (the > expander) since PTX2.
+    await page.getByRole('button', { name: 'Show item options' }).first().click();
     const toggle = page.getByRole('button', { name: 'Show complex values' });
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await toggle.click();

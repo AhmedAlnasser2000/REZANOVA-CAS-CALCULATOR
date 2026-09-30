@@ -199,6 +199,8 @@ export type GraphItemPresentationV2 = {
   halo: 'none' | 'soft';
   markers: 'semantic' | 'none';
   label: 'auto' | 'always' | 'never';
+  /** Asymptote lines: while selected (auto, the default), always, or never. */
+  asymptotes?: 'auto' | 'always' | 'off';
 };
 
 export type GraphItemPresentation = GraphItemPresentationV1 | GraphItemPresentationV2;

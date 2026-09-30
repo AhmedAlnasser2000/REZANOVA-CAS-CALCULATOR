@@ -41,6 +41,21 @@ export function GraphAnalysisMarkers({
   </div>;
 }
 
+/** An asymptote card reads as its line: x = 1, y = 2, or y = mx + b (slope in the relation value). */
+function asymptoteEquation(entry: GraphAnalysisEvidenceV1) {
+  const number = (value: GraphFeatureValueV1 | undefined) => (value ? graphFeatureNumber(value) : undefined);
+  const text = (value: number) => String(Number(value.toPrecision(6))).replace('-', '−');
+  if (entry.feature === 'vertical-asymptote') { const x = number(entry.coordinates?.x); return x === undefined ? null : `x = ${text(x)}`; }
+  if (entry.feature === 'horizontal-asymptote') { const y = number(entry.coordinates?.y); return y === undefined ? null : `y = ${text(y)}`; }
+  if (entry.feature === 'oblique-asymptote') {
+    const slope = number(entry.relationValue); const intercept = number(entry.coordinates?.y);
+    if (slope === undefined || intercept === undefined) return null;
+    const m = slope === 1 ? '' : slope === -1 ? '−' : text(slope);
+    return `y = ${m}x${intercept === 0 ? '' : ` ${intercept < 0 ? '−' : '+'} ${text(Math.abs(intercept))}`}`;
+  }
+  return null;
+}
+
 export function GraphAnalyzeOverlay({
   activeTab, analysis, assumptions, complexSolve, hasSelection, message, onAddAssumption, onClose, onPin,
   onPreview, onRecenter, onRemoveAssumption, onTabChange, onWidthChange,
@@ -107,8 +122,8 @@ export function GraphAnalyzeOverlay({
             return <article className="graph-feature-card" key={entry.evidenceId} onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget)) onPreview(null);
             }} onFocus={() => onPreview(entry)} onMouseEnter={() => onPreview(entry)} onMouseLeave={() => onPreview(null)} tabIndex={0}>
-              <div><strong>{complexCoordinate ?? (entry.coordinates?.x ? `x ${featureText(entry.coordinates.x)}` : label(entry.feature))}</strong>
-                {!complexCoordinate && entry.coordinates?.y ? <span>y {featureText(entry.coordinates.y)}</span> : null}</div>
+              <div><strong>{asymptoteEquation(entry) ?? complexCoordinate ?? (entry.coordinates?.x ? `x ${featureText(entry.coordinates.x)}` : label(entry.feature))}</strong>
+                {!asymptoteEquation(entry) && !complexCoordinate && entry.coordinates?.y ? <span>y {featureText(entry.coordinates.y)}</span> : null}</div>
               {entry.coordinates?.z ? <span className="graph-feature-z">z {featureText(entry.coordinates.z)}</span> : null}
               <span className={`graph-evidence-badge is-${entry.level}`}>{entry.level.replaceAll('-', ' ')}</span>
               <div className="graph-feature-actions">

@@ -148,15 +148,17 @@ export function complexPlaneRootText(root: GraphComplexPlaneRoot) {
 }
 
 /** Points of interest as grey dots (intersections of loci), like Desmos. */
-export function paintPtxDots(context: CanvasRenderingContext2D, dots: ReadonlyArray<{ x: number; y: number }>,
+export function paintPtxDots(context: CanvasRenderingContext2D, dots: ReadonlyArray<{ x: number; y: number; feature?: string }>,
   live: GraphViewportV1, frame: Frame, pixelRatio: number) {
   context.setLineDash([]);
   for (const dot of dots) {
     const point = toScreen(dot.x, dot.y, live, frame);
     context.beginPath();
     context.arc(point.x, point.y, 4.5 * pixelRatio, 0, Math.PI * 2);
-    context.fillStyle = '#9aa7a1'; context.fill();
-    context.lineWidth = 1.5 * pixelRatio; context.strokeStyle = '#081114'; context.stroke();
+    // A pole is not a point of the map: an open ring, as with holes on real curves.
+    const pole = dot.feature === 'complex-pole';
+    context.fillStyle = pole ? '#081114' : '#9aa7a1'; context.fill();
+    context.lineWidth = (pole ? 2.25 : 1.5) * pixelRatio; context.strokeStyle = pole ? '#f4fbf6' : '#081114'; context.stroke();
   }
 }
 

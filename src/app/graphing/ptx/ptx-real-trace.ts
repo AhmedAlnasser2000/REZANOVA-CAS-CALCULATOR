@@ -5,7 +5,9 @@ import {
   ptxPointDetail,
   ptxProjectToCurve,
   ptxRefineExplicit,
+  ptxRefineParametric,
   type GraphDocumentV4,
+  type PtxCurvePoint,
   type GraphViewportV1,
   type PtxLevel,
   type PtxPlaneFunction,
@@ -20,9 +22,22 @@ import type { PtxDot } from './usePtxPointsOfInterest';
 
 export type PtxRealRefiner =
   | { kind: 'explicit-y' | 'explicit-x'; f: PtxRealFunction }
-  | { kind: 'implicit'; F: PtxPlaneFunction };
+  | { kind: 'implicit'; F: PtxPlaneFunction }
+  /** A parametric curve in `symbol`, or a polar curve in θ. */
+  | { kind: 'curve'; curve: PtxCurvePoint; symbol: string; polar: boolean };
 
-export type PtxRealTracePoint = { x: number; y: number; level: PtxLevel; errorBound: number; residual: number; dot: PtxDot | null };
+export type PtxRealTracePoint = {
+  x: number; y: number; level: PtxLevel; errorBound: number; residual: number; dot: PtxDot | null;
+  /** The parameter of a parametric or polar point (and r for polar). */
+  parameter?: { symbol: string; value: number; radius?: number };
+};
+
+function polarCurve(r: PtxRealFunction): PtxCurvePoint {
+  return (theta) => {
+    const radius = r(theta);
+    return radius === undefined ? undefined : { x: radius * Math.cos(theta), y: radius * Math.sin(theta), radius };
+  };
+}
 
 /** Exact evaluators for the items PTX can refine; everything else keeps its sampled trace. */
 export function ptxRealRefiners(document: GraphDocumentV4 | null, parameters: Readonly<Record<string, number>>) {
@@ -36,6 +51,9 @@ export function ptxRealRefiners(document: GraphDocumentV4 | null, parameters: Re
       if (kind === 'explicit-y' || kind === 'explicit-x') {
         const f = port.piecewiseFunction(item.piecewise, kind === 'explicit-y' ? 'x' : 'y', parameters);
         if (f) refiners.set(item.itemId, { kind, f });
+      } else if (kind === 'polar-radius') {
+        const r = port.piecewiseFunction(item.piecewise, 'theta', parameters);
+        if (r) refiners.set(item.itemId, { kind: 'curve', curve: polarCurve(r), symbol: 'θ', polar: true });
       }
       continue;
     }
@@ -44,9 +62,14 @@ export function ptxRealRefiners(document: GraphDocumentV4 | null, parameters: Re
     if (relation.kind === 'explicit-y' || relation.kind === 'explicit-x') {
       const f = port.realFunction(relation.rhs, relation.kind === 'explicit-y' ? 'x' : 'y', parameters);
       if (f) refiners.set(item.itemId, { kind: relation.kind, f });
-    } else if (relation.kind === 'implicit-equality') {
+    } else if (relation.kind === 'implicit-equality' || relation.kind === 'inequality') {
+      // A region's boundary is its left = right curve.
       const F = port.planeFunction(relation.left, relation.right, parameters);
       if (F) refiners.set(item.itemId, { kind: 'implicit', F });
+    } else if (relation.kind === 'parametric-curve' || relation.kind === 'polar-radius') {
+      const curve = port.curvePoint(relation, parameters);
+      if (curve) refiners.set(item.itemId, { kind: 'curve', curve, polar: relation.kind === 'polar-radius',
+        symbol: relation.kind === 'polar-radius' ? 'θ' : relation.parameterSymbol });
     }
   }
   return refiners;
@@ -63,12 +86,23 @@ function frame(viewport: GraphViewportV1, size: { width: number; height: number 
  * arrived at, if any.
  */
 export function ptxRefineRealTrace(refiner: PtxRealRefiner | undefined, itemId: string, world: { x: number; y: number },
-  viewport: GraphViewportV1, size: { width: number; height: number }, dots: readonly PtxDot[]): PtxRealTracePoint {
+  viewport: GraphViewportV1, size: { width: number; height: number }, dots: readonly PtxDot[],
+  /** For parametric and polar curves: the sampled parameter and how far around it to search. */
+  sampledParameter?: { value: number; span: number }, pointer?: { x: number; y: number }): PtxRealTracePoint {
   const { units, toScreen } = frame(viewport, size);
+  if (refiner?.kind === 'curve' && sampledParameter) {
+    const curvePoint = ptxRefineParametric(refiner.curve, sampledParameter.value, sampledParameter.span, pointer ?? world, units);
+    if (curvePoint) {
+      const parameter = { symbol: refiner.symbol, value: curvePoint.t, ...(curvePoint.radius !== undefined ? { radius: curvePoint.radius } : {}) };
+      const dot = ptxSnapOnArrival(curvePoint, dots, toScreen, itemId);
+      return dot ? { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot }
+        : { x: curvePoint.x, y: curvePoint.y, level: curvePoint.level, errorBound: curvePoint.errorBound, residual: 0, dot: null, parameter };
+    }
+  }
   const refined = refiner?.kind === 'explicit-y' ? ptxRefineExplicit(refiner.f, world.x, 'y-of-x')
     : refiner?.kind === 'explicit-x' ? ptxRefineExplicit(refiner.f, world.y, 'x-of-y')
       : refiner?.kind === 'implicit' ? ptxProjectToCurve(refiner.F, world, units, 6) : null;
-  // Items PTX cannot refine yet (piecewise, parametric, polar) keep their sampled point; NaN marks "not refined".
+  // Items PTX cannot refine keep their sampled point; NaN marks "not refined".
   const point = refined ?? { x: world.x, y: world.y, level: 'sampled-estimate' as const, errorBound: Number.NaN, residual: 0 };
   const dot = ptxSnapOnArrival(point, dots, toScreen, itemId);
   return dot ? { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot } : { ...point, dot: null };
@@ -76,6 +110,7 @@ export function ptxRefineRealTrace(refiner: PtxRealRefiner | undefined, itemId: 
 
 const DOT_NAMES: Record<PtxDot['feature'], string> = {
   root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept', endpoint: 'Endpoint', hole: 'Hole',
+  'complex-zero': 'Zero', 'complex-pole': 'Pole',
 };
 
 /** A piecewise item's end circles from the scene, as snap targets: filled ends and open ones (holes). */
@@ -92,11 +127,17 @@ export function ptxEndpointDots(pointBatches: ReadonlyArray<{ pointBatchId: stri
 }
 
 /** "(x, y)" to the reliable digits, named when it is a point of interest. */
-export function ptxRealTraceText(point: Pick<PtxRealTracePoint, 'x' | 'y' | 'errorBound' | 'dot'>) {
+export function ptxRealTraceText(point: Pick<PtxRealTracePoint, 'x' | 'y' | 'errorBound' | 'dot' | 'parameter'>) {
   // An open circle is not on the graph: its x has no value, only a limit.
   if (point.dot?.feature === 'hole') return `(${ptxNumber(point.x, point.errorBound)}, undefined) · limit ${ptxNumber(point.y, point.errorBound)}`;
   const text = `(${ptxNumber(point.x, point.errorBound)}, ${ptxNumber(point.y, point.errorBound)})`;
-  return point.dot ? `${DOT_NAMES[point.dot.feature]} ${text}` : text;
+  if (point.dot) return `${DOT_NAMES[point.dot.feature]} ${text}`;
+  const parameter = point.parameter;
+  if (!parameter) return text;
+  // The parameter is chosen to match the pointer, so it is shown to the usual six digits.
+  return parameter.radius !== undefined
+    ? `${text} · r = ${ptxNumber(parameter.radius, point.errorBound)} · θ = ${ptxNumber(parameter.value)}`
+    : `${text} · ${parameter.symbol} = ${ptxNumber(parameter.value)}`;
 }
 
 export function ptxRealTraceBadge(point: Pick<PtxRealTracePoint, 'level' | 'errorBound' | 'residual'>) {

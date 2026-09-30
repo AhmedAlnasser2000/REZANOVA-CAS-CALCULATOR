@@ -5,6 +5,7 @@ import { compileGraphCondition } from '../sampling/condition';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';
 import { findGraphPlaneRoots } from '../sampling/complex-plane-newton';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
+import { exactGraphPolynomial, gIsZero, qDiv, qIsZero, qMul, qSub, qToNumber, type GraphExactPolynomial } from '../sampling/complex-polynomial';
 import type { PtxRealFunction, PtxSolverPort } from './solver-port';
 
 // The current adapter: Graphing's own evaluators and root solvers (which reach
@@ -35,6 +36,11 @@ function rationalLabelValue(label: string | null) {
   return match[1] ? -value : value;
 }
 
+function substituteParameters(node: unknown, parameters: Readonly<Record<string, number>>): unknown {
+  if (typeof node === 'string' && node in parameters) return parameters[node];
+  return Array.isArray(node) ? node.map((child, index) => (index === 0 ? child : substituteParameters(child, parameters))) : node;
+}
+
 function usesSymbol(node: unknown, symbol: string): boolean {
   return node === symbol || (Array.isArray(node) && node.slice(1).some((child) => usesSymbol(child, symbol)));
 }
@@ -42,6 +48,44 @@ function usesSymbol(node: unknown, symbol: string): boolean {
 export const currentPtxSolverPort: PtxSolverPort = {
   id: 'graphing-current',
   realFunction,
+  rationalEndBehaviour(mathJson, variable, parameters) {
+    const node = substituteParameters(mathJson, parameters);
+    const [numeratorNode, denominatorNode] = Array.isArray(node) && node[0] === 'Divide' && node.length === 3 ? [node[1], node[2]] : [node, 1];
+    const trim = (poly: GraphExactPolynomial | null) => {
+      if (!poly || poly.some((coefficient) => !qIsZero(coefficient.im))) return null;
+      const trimmed = [...poly]; while (trimmed.length > 1 && gIsZero(trimmed.at(-1)!)) trimmed.pop();
+      return trimmed.map((coefficient) => coefficient.re);
+    };
+    const p = trim(exactGraphPolynomial(numeratorNode, variable)); const q = trim(exactGraphPolynomial(denominatorNode, variable));
+    if (!p || !q || q.length === 0 || (q.length === 1 && qIsZero(q[0]!))) return null;
+    const n = p.length - 1; const d = q.length - 1;
+    // A polynomial (d = 0) is its own end behaviour, not an asymptote.
+    if (d === 0) return null;
+    if (n < d || (n === 0 && qIsZero(p[0]!))) return { kind: 'horizontal', y: 0 };
+    if (n === d) return { kind: 'horizontal', y: qToNumber(qDiv(p[n]!, q[d]!)) };
+    if (n === d + 1) {
+      const slope = qDiv(p[n]!, q[d]!);
+      const intercept = qDiv(qSub(p[n - 1]!, qMul(slope, q[d - 1]!)), q[d]!);
+      return { kind: 'oblique', slope: qToNumber(slope), intercept: qToNumber(intercept) };
+    }
+    return { kind: 'none' };
+  },
+  curvePoint(relation, parameters) {
+    if (relation.kind === 'polar-radius') {
+      const r = realFunction(relation.radius, 'theta', parameters);
+      return r ? (theta) => {
+        const radius = r(theta);
+        return radius === undefined ? undefined : { x: radius * Math.cos(theta), y: radius * Math.sin(theta), radius };
+      } : null;
+    }
+    if (relation.kind !== 'parametric-curve') return null;
+    const x = realFunction(relation.x, relation.parameterSymbol, parameters);
+    const y = realFunction(relation.y, relation.parameterSymbol, parameters);
+    return x && y ? (t) => {
+      const px = x(t); const py = y(t);
+      return px === undefined || py === undefined ? undefined : { x: px, y: py };
+    } : null;
+  },
   piecewiseFunction(piecewise, variable, parameters) {
     const cache = new GraphExpressionPlanCache(4 * piecewise.branches.length + 4);
     const valueOf = (relation: (typeof piecewise.branches)[number]['relation']) => (

@@ -30,7 +30,8 @@ import { WHEEL_SETTLE_MS } from './graph-gesture-timing';
 import type { GraphGestureLane } from './useGraphGestureSampling';
 import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
-import type { PtxDot } from './ptx/usePtxPointsOfInterest';
+import type { PtxAsymptoteLine, PtxDot } from './ptx/usePtxPointsOfInterest';
+import { placeAsymptotes } from './ptx/ptx-asymptote-layer';
 import { ptxEndpointDots, ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
 import { PTX_SNAP_RADIUS_PIXELS } from './ptx/ptx-snap';
 
@@ -48,6 +49,8 @@ type Props = {
   grid?: GraphGridPolicyV1;
   pending: boolean;
   presentation?: GraphRendererPresentationFrame;
+  /** Asymptote lines to draw. */
+  ptxAsymptotes?: readonly PtxAsymptoteLine[];
   /** Points of interest of the selected item. */
   ptxDots?: readonly PtxDot[];
   /** A point traced in the Complex pane, marked here at (Re z, Im z). */
@@ -77,6 +80,15 @@ function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV
 }
 
 const NO_DOTS: readonly PtxDot[] = [];
+const NO_LINES: readonly PtxAsymptoteLine[] = [];
+
+/** How far around a sampled parameter to search: a few sample steps of the path. */
+function parameterSearchSpan(values: Float64Array | undefined) {
+  if (!values || values.length < 2) return 0.05;
+  let low = Infinity; let high = -Infinity;
+  for (const value of values) { if (value < low) low = value; if (value > high) high = value; }
+  return Math.max(1e-9, 4 * (high - low) / (values.length - 1));
+}
 
 /** Draws the selected item's points of interest as grey dots at their graph positions. */
 function placeDots(layer: HTMLDivElement | null, dots: readonly PtxDot[], live: GraphViewportV1, size: Size) {
@@ -161,11 +173,13 @@ function surfaceTargetAtScreen(
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
   document = null, gestureLane = null, gpuRendering = 'auto', itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
-  presentation = { version: 1, contentRevision: 0, items: [] }, ptxDots = NO_DOTS, ptxMirror = null, scene, viewport, sceneViewport = viewport,
+  presentation = { version: 1, contentRevision: 0, items: [] }, ptxAsymptotes = NO_LINES, ptxDots = NO_DOTS, ptxMirror = null, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const mirrorPointRef = useRef(ptxMirror);
   const dotsLayerRef = useRef<HTMLDivElement | null>(null);
+  const asymptoteLayerRef = useRef<SVGSVGElement | null>(null);
+  const asymptotesRef = useRef({ lines: ptxAsymptotes, presentation });
   const dotsRef = useRef(ptxDots);
   // What a trace can snap to: the drawn dots plus piecewise end circles already in the scene.
   const snapDotsRef = useRef<readonly PtxDot[]>(ptxDots);
@@ -224,6 +238,7 @@ export function GraphSvgViewport({
     liveViewportRef.current = liveViewport;
     placeMirror(mirrorRef.current, mirrorPointRef.current, liveViewport, sizeRef.current);
     placeDots(dotsLayerRef.current, dotsRef.current, liveViewport, sizeRef.current);
+    placeAsymptotes(asymptoteLayerRef.current, asymptotesRef.current.lines, asymptotesRef.current.presentation, liveViewport, sizeRef.current);
     if (hostRef.current) hostRef.current.dataset.viewport = `${liveViewport.xMin},${liveViewport.xMax},${liveViewport.yMin},${liveViewport.yMax}`;
     const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
       policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
@@ -293,6 +308,11 @@ export function GraphSvgViewport({
   }, [gestureLane]);
 
   useLayoutEffect(() => {
+    asymptotesRef.current = { lines: ptxAsymptotes, presentation };
+    placeAsymptotes(asymptoteLayerRef.current, ptxAsymptotes, presentation, liveViewportRef.current, sizeRef.current);
+  }, [presentation, ptxAsymptotes]);
+
+  useLayoutEffect(() => {
     dotsRef.current = ptxDots;
     snapDotsRef.current = [...ptxDots, ...ptxEndpointDots(spatialScene?.planarScene.pointBatches ?? [])];
     placeDots(dotsLayerRef.current, ptxDots, liveViewportRef.current, sizeRef.current);
@@ -331,8 +351,17 @@ export function GraphSvgViewport({
   const publishTrace = useCallback((target: GraphTraceTarget | null, announce = false) => {
     if (!target) { traceRef.current = null; hideTrace(); return; }
     // PTX: a path point is put on the true curve (and onto a dot it has arrived at) before it is shown.
+    // Parametric and polar curves are searched in t near the sampled t, toward the pointer.
+    const sampledParameter = target.parameterValue !== undefined ? {
+      value: target.parameterValue, span: parameterSearchSpan(sceneRef.current?.planarScene.paths.find((path) => path.pathId === target?.pathId)?.parameterValues),
+    } : undefined;
+    const pointerScreen = tracePointerRef.current; const vpNow = viewportRef.current; const sizeNow = sizeRef.current;
+    // Only a sweep follows the pointer; clicks and arrow steps refine around the picked point itself.
+    const pointerWorld = !announce && pointerScreen ? { x: vpNow.xMin + pointerScreen.x / sizeNow.width * (vpNow.xMax - vpNow.xMin),
+      y: vpNow.yMax - pointerScreen.y / sizeNow.height * (vpNow.yMax - vpNow.yMin) } : undefined;
     const certified = target.kind === 'path' && !graphComplexValuePart(target.pathId)
-      ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, snapDotsRef.current)
+      ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, snapDotsRef.current,
+        sampledParameter, pointerWorld)
       : null;
     if (certified) {
       const vp = viewportRef.current; const size = sizeRef.current;
@@ -367,7 +396,8 @@ export function GraphSvgViewport({
     const text = certified ? ptxRealTraceText(certified)
       : `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
-    label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
+    label.textContent = text + (!certified?.parameter && target.parameterValue !== undefined && typeof route === 'object'
+      ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
   }, [hideTrace, onTraceItemChange]);
 
@@ -602,6 +632,7 @@ export function GraphSvgViewport({
     onPointerMove={handlePointerMove} onPointerUp={finishPointer} ref={hostRef} tabIndex={0}>
     <div className="graph-svg-renderer-host" ref={rendererHostRef} />
     <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
+    <svg aria-hidden="true" className="graph-ptx-asymptotes" data-testid="graph-ptx-asymptotes" ref={asymptoteLayerRef} />
     <div className="graph-ptx-dots" ref={dotsLayerRef} />
     <div className="graph-ptx-mirror" data-testid="graph-ptx-mirror" hidden ref={mirrorRef} />
     <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />

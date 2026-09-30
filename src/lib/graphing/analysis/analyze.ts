@@ -21,7 +21,7 @@ import type {
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
-import { defaultPtxSolverPort, ptxPlaneIntersections, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from '../ptx';
+import { defaultPtxSolverPort, ptxAsymptotes, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from '../ptx';
 import type { PtxPlaneFunction } from '../ptx';
 import { analyzeGraphPiecewise } from './piecewise-analysis';
 
@@ -490,27 +490,36 @@ export async function runGraphAnalysisRequest(
       }
     }
     const node = expression.mathJson;
-    if (Array.isArray(node) && node[0] === 'Divide') {
-      const numerator = polynomial(node[1]); const denominator = polynomial(node[2]);
-      if (denominator) for (const x of polynomialRoots(denominator)) {
-        const numeratorValue = numerator ? numerator[0] + numerator[1] * x + numerator[2] * x * x : undefined;
-        const removable = numeratorValue === 0;
-        if (removable && requested.has('hole')) findings.push(evidence(request, 'hole', [snapshot.itemId], 'exact-proved', serial++, { coordinates: { x: exact(x) } }));
-        if (!removable) for (const feature of ['pole', 'vertical-asymptote', 'domain-boundary'] as const) if (requested.has(feature)) {
-          findings.push(evidence(request, feature, [snapshot.itemId], feature === 'domain-boundary' ? 'exact-proved' : 'numeric-validated', serial++, {
-            coordinates: { x: exact(x) },
-            basis: feature === 'domain-boundary'
-              ? { source: 'graph-symbolic', validator: 'denominator exclusion' }
-              : { source: 'numeric-validator', validator: 'nonzero numerator at denominator root', residualBound: 1e-8 },
-          }));
-        }
+    // Holes, poles and asymptotes from the PTX finders: exact lines for rational functions, numeric otherwise.
+    if (['hole', 'pole', 'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote', 'domain-boundary'].some((feature) => requested.has(feature as GraphAnalysisFeature))) {
+      const itemIds = [snapshot.itemId];
+      // In a ratio of polynomials a hole sits at an exact root of the denominator.
+      const rational = ptx.rationalEndBehaviour(node, 'x', request.parameterEnvironment) !== null;
+      for (const hole of ptxRealDiscontinuities(run, node, 'x', window.xMin, window.xMax, ptx, request.parameterEnvironment, finder)) {
+        if (hole.kind === 'hole' && requested.has('hole')) findings.push(evidence(request, 'hole', itemIds, rational ? 'exact-proved' : 'numeric-validated', serial++, {
+          coordinates: { x: rational ? exact(hole.x) : approximate(hole.x, 1e-12 * Math.max(1, Math.abs(hole.x))), y: approximate(hole.limit, 1e-8 * Math.max(1, Math.abs(hole.limit))) },
+          basis: rational ? { source: 'graph-symbolic', validator: 'common root of numerator and denominator' }
+            : { source: 'numeric-validator', validator: 'both one-sided limits agree where the curve has no value' },
+        }));
       }
-      if (requested.has('horizontal-asymptote') && numerator && denominator) {
-        const numeratorDegree = numerator[2] !== 0 ? 2 : numerator[1] !== 0 ? 1 : 0;
-        const denominatorDegree = denominator[2] !== 0 ? 2 : denominator[1] !== 0 ? 1 : 0;
-        if (numeratorDegree <= denominatorDegree) {
-          const y = numeratorDegree < denominatorDegree ? 0 : numerator[numeratorDegree] / denominator[denominatorDegree];
-          findings.push(evidence(request, 'horizontal-asymptote', [snapshot.itemId], 'exact-proved', serial++, { coordinates: { y: exact(y) } }));
+      for (const line of ptxAsymptotes(run, node, 'x', window.xMin, window.xMax, ptx, request.parameterEnvironment, finder)) {
+        const sides = line.sides.length === 2 ? 'both sides' : line.sides[0] === 1 ? (line.kind === 'vertical' ? 'the right' : 'x → +∞') : (line.kind === 'vertical' ? 'the left' : 'x → −∞');
+        const basis = line.level === 'exact-proved'
+          ? { source: 'graph-symbolic' as const, validator: `exact rational function (${sides})` }
+          : { source: 'numeric-validator' as const, validator: `values settle or grow without bound (${sides})` };
+        const value = (number: number) => (line.level === 'exact-proved' ? exact(number) : approximate(number, 1e-6 * Math.max(1, Math.abs(number))));
+        if (line.kind === 'vertical') {
+          // One-sided edges (ln x at 0) are domain boundaries already reported by the log and root rule below.
+          for (const feature of ['vertical-asymptote', 'pole', ...(line.sides.length === 2 ? ['domain-boundary' as const] : [])] as const) if (requested.has(feature)) {
+            findings.push(evidence(request, feature, itemIds, line.level, serial++, { coordinates: { x: value(line.x) }, basis }));
+          }
+        } else if (line.kind === 'horizontal' && requested.has('horizontal-asymptote')) {
+          findings.push(evidence(request, 'horizontal-asymptote', itemIds, line.level, serial++, { coordinates: { y: value(line.y) }, basis }));
+        } else if (line.kind === 'oblique' && requested.has('oblique-asymptote')) {
+          // The line y = mx + b: its y-intercept (0, b) as coordinates and its slope m as the relation value.
+          findings.push(evidence(request, 'oblique-asymptote', itemIds, line.level, serial++, {
+            coordinates: { x: exact(0), y: value(line.intercept) }, relationValue: value(line.slope), basis,
+          }));
         }
       }
     }

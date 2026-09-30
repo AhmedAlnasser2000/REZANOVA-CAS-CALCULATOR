@@ -1,4 +1,4 @@
-import type { PtxPlaneFunction, PtxRealFunction } from './solver-port';
+import type { PtxCurvePoint, PtxPlaneFunction, PtxRealFunction } from './solver-port';
 import type { PtxLevel } from './types';
 
 // Putting a picked point onto the true object. Explicit curves are evaluated at
@@ -82,6 +82,35 @@ export function ptxProjectToCurve(F: PtxPlaneFunction, start: { x: number; y: nu
   return bracketed
     ? { x, y, level: 'numeric-validated', errorBound: probe, residual: Math.abs(value) }
     : { x, y, level: 'sampled-estimate', errorBound: Math.max(distanceToCurve, 1e-3 * Math.min(units.x, units.y)), residual: Math.abs(value) };
+}
+
+const GOLDEN = (Math.sqrt(5) - 1) / 2;
+
+/**
+ * The point of a parametric or polar curve nearest the pointer on screen,
+ * searched over t near the sampled guess (golden section on ± `tSpan`). The
+ * point is evaluated exactly at that t, so it lies on the curve; only the
+ * choice of t is approximate.
+ */
+export function ptxRefineParametric(curve: PtxCurvePoint, tGuess: number, tSpan: number, pointer: { x: number; y: number },
+  units: PtxPixelUnits): (PtxRefinedPoint & { t: number; radius?: number }) | null {
+  const distance = (t: number) => {
+    const point = curve(t);
+    return point ? Math.hypot((point.x - pointer.x) / units.x, (point.y - pointer.y) / units.y) : Infinity;
+  };
+  let low = tGuess - tSpan; let high = tGuess + tSpan;
+  let c = high - GOLDEN * (high - low); let d = low + GOLDEN * (high - low);
+  let fc = distance(c); let fd = distance(d);
+  for (let iteration = 0; iteration < 80 && high - low > 1e-14 * (1 + Math.abs(low)); iteration += 1) {
+    if (fc <= fd) { high = d; d = c; fd = fc; c = high - GOLDEN * (high - low); fc = distance(c); }
+    else { low = c; c = d; fc = fd; d = low + GOLDEN * (high - low); fd = distance(d); }
+  }
+  const t = (low + high) / 2;
+  const point = curve(t);
+  if (!point) return null;
+  const errorBound = 8 * Number.EPSILON * Math.max(1, Math.abs(point.x), Math.abs(point.y));
+  return { x: point.x, y: point.y, t, ...(point.radius !== undefined ? { radius: point.radius } : {}),
+    level: 'numeric-validated', errorBound, residual: 0 };
 }
 
 /** Moves `pixels` along the curve (sign picks the direction) and projects back onto it. */

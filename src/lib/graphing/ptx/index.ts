@@ -1,3 +1,4 @@
+export * from './asymptotes';
 export * from './certify';
 export * from './features';
 export * from './refine';

@@ -55,7 +55,8 @@ describe('Graph analysis authority', () => {
     ], ['hole', 'pole', 'vertical-asymptote', 'domain-boundary', 'horizontal-asymptote']));
     expect(result.evidence).toEqual(expect.arrayContaining([
       expect.objectContaining({ itemIds: ['pole'], feature: 'domain-boundary', level: 'exact-proved' }),
-      expect.objectContaining({ itemIds: ['pole'], feature: 'pole', level: 'numeric-validated' }),
+      // A rational function's pole is an exact root of its denominator (PTX2).
+      expect.objectContaining({ itemIds: ['pole'], feature: 'pole', level: 'exact-proved' }),
       expect.objectContaining({ itemIds: ['hole'], feature: 'hole', level: 'exact-proved' }),
     ]));
     expect(result.evidence.some((entry) => entry.itemIds[0] === 'hole' && entry.feature === 'pole')).toBe(false);

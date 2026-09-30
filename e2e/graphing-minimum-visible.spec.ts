@@ -887,9 +887,10 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await viewport.focus();
     await page.keyboard.press('Escape');
     await page.keyboard.press('Enter');
-    await expect(page.locator('.graph-trace-callout')).toContainText('theta=');
+    // PTX2: a polar point is refined on r(θ) and reads its radius and angle.
+    await expect(page.locator('.graph-trace-callout')).toContainText(/ · r = [-\d.e]+ · θ = /u);
     await page.keyboard.press('ArrowRight');
-    await expect(page.locator('.graph-trace-callout')).toContainText('theta=');
+    await expect(page.locator('.graph-trace-callout')).toContainText(/ · r = [-\d.e]+ · θ = /u);
     await expect(page.getByRole('tab', { name: /Untitled Graph/ })).not.toContainText('running');
 
     await page.screenshot({

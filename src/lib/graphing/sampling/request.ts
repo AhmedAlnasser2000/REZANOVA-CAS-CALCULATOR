@@ -23,6 +23,7 @@ import { sampleExplicitGraphRelation } from './explicit';
 import { sampleImplicitGraphRelation } from './implicit';
 import { buildGraphComplexLocusClauses, graphComplexLocusShape } from './complex-locus';
 import { solveGraphComplexRoots } from './complex-roots';
+import { graphExplicitDiscontinuityBatches } from './explicit-discontinuities';
 import { sampleGraphPiecewise } from './piecewise';
 import { sampleParametricGraphRelation } from './parametric';
 import {
@@ -746,6 +747,10 @@ export async function runGraphSampleRequest(
         pathId: `${item.itemId}:path:0`,
         sample: sampled,
       });
+    }
+    // Holes and jumps get Desmos-style circles (open where the curve has no point), once the view has settled.
+    if (request.quality !== 'preview' && !cancelled) {
+      pointBatches.push(...graphExplicitDiscontinuityBatches(item.itemId, item.relation, request.viewport, request.parameterEnvironment, isCancelled));
     }
     const explicitEvidence: GraphSamplingItemEvidenceV1 = {
       itemId: item.itemId,

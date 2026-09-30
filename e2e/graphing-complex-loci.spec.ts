@@ -68,6 +68,8 @@ test.describe('Graph complex loci and roots', () => {
   test('labels a traced complex value of a real curve as the complex part', async ({ page }) => {
     await openGraph(page);
     await enterExpression(page, String.raw`\sqrt{-x}`);
+    // ℂ lives in the row's details (the > expander) since PTX2.
+    await page.getByRole('button', { name: 'Show item options' }).first().click();
     await page.getByRole('button', { name: 'Show complex values' }).click();
     const imaginary = page.getByTestId('graph-scene-paths').locator('path[data-stroke-role="complex-imaginary"]');
     await expect(imaginary).toBeAttached();

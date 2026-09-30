@@ -53,12 +53,13 @@ import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
 import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
+import { GraphItemDetails } from './GraphItemDetails';
 import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
 import { useGraphGestureSampling } from './useGraphGestureSampling';
 import { useGraphEqualAxes } from './useGraphEqualAxes';
 import { useGraphComplexPlaneItems } from './useGraphComplexPlaneItems';
-import { graphItemTraceRoutes } from './graph-item-routes';
+import { graphItemDisplayOptions, graphItemTraceRoutes } from './graph-item-routes';
 import { graphMenuKeyDown } from './graph-menu-keys';
 import { usePtxPointsOfInterest } from './ptx/usePtxPointsOfInterest';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
@@ -200,6 +201,7 @@ function GraphExpressionRow({
   const [piecewiseCollapsed, setPiecewiseCollapsed] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [editorOverflowing, setEditorOverflowing] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
   const measureEditorOverflow = useCallback(() => {
@@ -240,6 +242,11 @@ function GraphExpressionRow({
     : item?.kind === 'parameter' ? 'graph-violet' : item ? undefined : 'graph-blue';
   const hidden = item ? !item.visible : false;
   const branchEditable = graphPiecewiseUsesBranchEditor(item);
+  const displayOptions = graphItemDisplayOptions(item);
+  const details = item && 'presentation' in item && (displayOptions.asymptotes || displayOptions.complexValues) ? <GraphItemDetails
+    complexValues={item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues === true}
+    onToggleComplexValues={onToggleComplexValues} onUpdatePresentation={onUpdatePresentation} options={displayOptions}
+    presentation={normalizeGraphItemPresentation(item.presentation)} /> : null;
   const piecewiseEditorOpen = branchEditable
     && Boolean(piecewiseDraft)
     && !piecewiseCollapsed;
@@ -310,10 +317,12 @@ function GraphExpressionRow({
             className="graph-icon-button" onClick={() => setSurfaceExpanded((open) => !open)} type="button">
             {surfaceExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button> : null}
-          {item.kind === 'relation' && item.relation.kind === 'explicit-y' && onToggleComplexValues ? <button
-            aria-label="Show complex values" aria-pressed={item.relation.complexValues === true}
-            className="graph-icon-button graph-complex-values-toggle" onClick={onToggleComplexValues}
-            title="Show complex values where this curve is not real: Re solid, Im dashed" type="button">ℂ</button> : null}
+          {/* Display choices (asymptotes, ℂ) live behind this expander; piecewise and surface rows use theirs. */}
+          {details ? <button aria-expanded={detailsOpen}
+            aria-label={detailsOpen ? 'Hide item options' : 'Show item options'} className="graph-icon-button"
+            onClick={() => setDetailsOpen((open) => !open)} type="button">
+            {detailsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button> : null}
           <button
             aria-label={hidden ? 'Show graph' : 'Hide graph'}
             className="graph-icon-button"
@@ -348,6 +357,7 @@ function GraphExpressionRow({
               }} onMutate={onMutatePiecewiseDraft} />
           </div>
         ) : null}
+      {detailsOpen ? details : null}
       {item?.kind === 'parameter' && onUpdateParameter && onSettleParameter ? (
         <GraphParameterControls
           item={item}
@@ -570,7 +580,7 @@ export default function GraphWorkspacePage({
   ));
   const gestureLane = useGraphGestureSampling({ cssSize: viewportSize, document: controller.session.document, workspaceContext });
   const complexPlaneItems = useGraphComplexPlaneItems(controller.session.document, scene, controller.session.surface.appearance.colorVisionMode);
-  const ptxDots = usePtxPointsOfInterest({ session: controller.session, workspaceContext });
+  const { dots: ptxDots, asymptotes: ptxAsymptotes } = usePtxPointsOfInterest({ session: controller.session, workspaceContext });
   const [complexTraced, setComplexTraced] = useState<PtxTracedPoint>(null);
   const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
     ?? scene?.complexTiles[0] ?? null;
@@ -901,7 +911,7 @@ export default function GraphWorkspacePage({
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}
-            onSizeChange={handleRealPaneSize} ptxDots={ptxDots}
+            onSizeChange={handleRealPaneSize} ptxAsymptotes={ptxAsymptotes} ptxDots={ptxDots}
             ptxMirror={controller.session.surface.viewPolicy.mode === 'both' ? complexTraced : null}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}

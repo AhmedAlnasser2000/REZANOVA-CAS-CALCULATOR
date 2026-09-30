@@ -227,6 +227,7 @@ const presentationV2Schema: z.ZodType<GraphItemPresentationV2> = z.strictObject(
   halo: z.enum(['none', 'soft']),
   markers: z.enum(['semantic', 'none']),
   label: z.enum(['auto', 'always', 'never']),
+  asymptotes: z.enum(['auto', 'always', 'off']).optional(),
 });
 
 const presentationSchema: z.ZodType<GraphItemPresentation> = z.union([

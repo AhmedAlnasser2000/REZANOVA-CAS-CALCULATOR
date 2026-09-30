@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphExpressionIR } from '../contracts';
+import { ptxAsymptoteLabel, ptxAsymptotes } from './asymptotes';
 import { ptxBadge, ptxComplexText, ptxNumber, ptxSignificantDigits } from './certify';
-import { ptxPlaneIntersections, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from './features';
-import { ptxProjectToCurve, ptxRefineExplicit, ptxStepAlongCurve } from './refine';
+import { ptxDiscontinuityMarkers, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from './features';
+import { ptxProjectToCurve, ptxRefineExplicit, ptxRefineParametric, ptxStepAlongCurve } from './refine';
 import type { PtxPlaneFunction, PtxSolverPort } from './solver-port';
 import { currentPtxSolverPort } from './solver-port-current';
 
 function symbols(node: unknown): string[] {
-  if (typeof node === 'string') return /^[a-z]$/u.test(node) ? [node] : [];
+  if (typeof node === 'string') return /^(?:[a-z]|theta)$/u.test(node) ? [node] : [];
   return Array.isArray(node) ? [...new Set(node.slice(1).flatMap(symbols))] : [];
 }
 const expression = (mathJson: unknown): GraphExpressionIR => ({ mathJson, freeSymbols: symbols(mathJson) } as GraphExpressionIR);
@@ -144,5 +145,72 @@ describe('PTX solver port', () => {
     };
     ptxPlaneIntersections(locus(['Abs', 'z'], 1), locus(['Real', 'z'], 0), { xMin: -2, xMax: 2, yMin: -2, yMax: 2 }, fake);
     expect(calls).toEqual(['planeSystemRoots']);
+  });
+});
+
+describe('PTX parametric and polar refinement', () => {
+  it('puts a traced parametric point exactly on (cos t, sin t), nearest the pointer', () => {
+    const curve = port.curvePoint({ kind: 'parametric-curve', parameterSymbol: 't', x: expression(['Cos', 't']), y: expression(['Sin', 't']) }, {})!;
+    const point = ptxRefineParametric(curve, 1, 0.2, { x: 0.66, y: 0.88 }, units)!;
+    expect(Math.abs(Math.hypot(point.x, point.y) - 1)).toBeLessThan(1e-12);
+    expect(point.t).toBeCloseTo(Math.atan2(0.88, 0.66), 6);
+  });
+
+  it('reads r and θ on a polar curve', () => {
+    const curve = port.curvePoint({ kind: 'polar-radius', angleSymbol: 'theta', radius: expression(['Multiply', 2, ['Cos', ['Multiply', 2, 'theta']]]) }, {})!;
+    const point = ptxRefineParametric(curve, 0.3, 0.1, { x: 1.2, y: 0.4 }, units)!;
+    expect(point.radius).toBeCloseTo(2 * Math.cos(2 * point.t), 12);
+    expect(Math.hypot(point.x, point.y)).toBeCloseTo(Math.abs(point.radius!), 12);
+  });
+});
+
+describe('PTX holes, jumps and poles', () => {
+  const find = (mathJson: unknown, minimum = -3.3, maximum = 3.3) => {
+    const f = port.realFunction(expression(mathJson), 'x', {})!;
+    return ptxRealDiscontinuities(f, mathJson, 'x', minimum, maximum, port, {});
+  };
+  const rounded = (points: Array<{ x: number; y: number }>) => points.map((point) => [Number(point.x.toFixed(9)) + 0, Number(point.y.toFixed(9)) + 0]);
+
+  it('finds the hole of (x² − 1)/(x − 1) at (1, 2)', () => {
+    const found = find(['Divide', ['Add', ['Power', 'x', 2], -1], ['Add', 'x', -1]]);
+    expect(found.map((item) => item.kind)).toEqual(['hole']);
+    expect(rounded(ptxDiscontinuityMarkers(found).open)).toEqual([[1, 2]]);
+  });
+
+  it('marks floor steps filled where the value is and open where it is not', () => {
+    const markers = ptxDiscontinuityMarkers(find(['Floor', 'x']));
+    expect(rounded(markers.filled)).toEqual([[-3, -3], [-2, -2], [-1, -1], [0, 0], [1, 1], [2, 2], [3, 3]]);
+    expect(rounded(markers.open)).toEqual([[-3, -4], [-2, -3], [-1, -2], [0, -1], [1, 0], [2, 1], [3, 2]]);
+  });
+
+  it('leaves both ends of |x|/x open at 0 and draws no circle at the pole of 1/x', () => {
+    const jump = ptxDiscontinuityMarkers(find(['Divide', ['Abs', 'x'], 'x']));
+    expect(rounded(jump.open)).toEqual([[0, -1], [0, 1]]);
+    expect(jump.filled).toEqual([]);
+    const pole = find(['Divide', 1, 'x']);
+    expect(pole.map((item) => item.kind)).toEqual(['pole']);
+    expect(ptxDiscontinuityMarkers(pole)).toEqual({ open: [], filled: [] });
+    expect(find(['Sin', 'x'])).toEqual([]);
+  });
+});
+
+describe('PTX asymptotes', () => {
+  const lines = (mathJson: unknown) => {
+    const f = port.realFunction(expression(mathJson), 'x', {})!;
+    return ptxAsymptotes(f, mathJson, 'x', -10, 10, port, {})
+      .map((line) => `${ptxAsymptoteLabel(line, (value) => String(Number(value.toFixed(9))))} ${line.sides.join(',')} ${line.level}`);
+  };
+
+  it('finds exact lines for rational functions', () => {
+    expect(lines(['Divide', 'x', ['Add', 'x', -1]])).toEqual(['x = 1 -1,1 exact-proved', 'y = 1 -1,1 exact-proved']);
+    expect(lines(['Divide', ['Add', ['Power', 'x', 2], 1], 'x'])).toEqual(['x = 0 -1,1 exact-proved', 'y = x -1,1 exact-proved']);
+    expect(lines(['Divide', ['Add', ['Multiply', 2, ['Power', 'x', 2]], -3], ['Add', 'x', 1]])).toEqual(['x = -1 -1,1 exact-proved', 'y = 2x − 2 -1,1 exact-proved']);
+  });
+
+  it('finds one-sided and numeric lines for other functions', () => {
+    expect(lines(['Ln', 'x'])).toEqual(['x = 0 1 numeric-validated']);
+    expect(lines(['Exp', 'x'])).toEqual(['y = 0 -1 numeric-validated']);
+    expect(lines(['Add', ['Divide', ['Sin', 'x'], 'x'], 1])).toEqual(['y = 1 -1,1 numeric-validated']);
+    expect(lines(['Power', 'x', 2])).toEqual([]);
   });
 });

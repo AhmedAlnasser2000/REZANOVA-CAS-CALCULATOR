@@ -39,10 +39,11 @@ Object.assign(cleanEnv, extraEnv);
 const base = `http://127.0.0.1:${port}`;
 const verbose = args.includes('--verbose');
 const log = (message) => { if (verbose) process.stderr.write(`[desktop-probe] ${message}\n`); };
-async function webdriver(method, route, body) {
+async function webdriver(method, route, body, timeoutMs = 60_000) {
+  log(`${method} ${route}${typeof body?.script === 'string' ? ` ${body.script.trim().slice(0, 60).replace(/\s+/gu, ' ')}` : ''}`);
   const response = await fetch(`${base}${route}`, {
     method,
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(timeoutMs),
     headers: { 'content-type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
@@ -84,6 +85,18 @@ async function click(session, using, value) {
   await webdriver('POST', `/session/${session}/element/${id}/click`, {});
 }
 
+// Screenshots are evidence, not assertions: WebKit paints no frame while the desktop is locked,
+// so a screenshot that does not arrive is recorded as missing instead of failing the smoke.
+let screenshotsMissing = 0;
+async function screenshot(session) {
+  try {
+    return await webdriver('GET', `/session/${session}/screenshot`, undefined, 15_000);
+  } catch {
+    screenshotsMissing += 1;
+    return null;
+  }
+}
+
 const execute = (session, script, scriptArgs = []) => webdriver('POST', `/session/${session}/execute/sync`, { script, args: scriptArgs });
 
 async function runGraphThreeSmoke(session) {
@@ -111,8 +124,8 @@ async function runGraphThreeSmoke(session) {
     return chip ? { text: chip.textContent, title: chip.title, gpuSurfaces: Number(viewport?.dataset.gpuSurfaces ?? 0),
       resolution: document.querySelector('canvas.graph-three-canvas')?.dataset.gpuSurfaceResolution ?? '' } : null;`), 30_000);
   await delay(1000);
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { ...mounted, chip, screenshot };
+  const image = await screenshot(session);
+  return { ...mounted, chip, screenshot: image };
 }
 
 async function runComplexGpuSmoke(session) {
@@ -128,8 +141,8 @@ async function runComplexGpuSmoke(session) {
     const chip = document.querySelector('[data-testid="graph-complex-renderer"]');
     return chip && !/starting/u.test(chip.title) ? { text: chip.textContent, title: chip.title } : null;`), 30_000);
   await delay(1500);
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { chip, screenshot };
+  const image = await screenshot(session);
+  return { chip, screenshot: image };
 }
 
 async function runRealFieldGpuSmoke(session) {
@@ -144,8 +157,8 @@ async function runRealFieldGpuSmoke(session) {
     const chip = document.querySelector('[data-testid="graph-real-renderer"]');
     return chip && !/starting/u.test(chip.title) ? { text: chip.textContent, title: chip.title } : null;`), 30_000);
   await delay(1000);
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { chip, screenshot };
+  const image = await screenshot(session);
+  return { chip, screenshot: image };
 }
 
 async function runSurfaceHeatSmoke(session) {
@@ -163,8 +176,8 @@ async function runSurfaceHeatSmoke(session) {
     return { chip: { text: chip.textContent, title: chip.title },
       visibleSvgBands: bands.filter((band) => band.style.display !== 'none').length };`), 30_000);
   await delay(1000);
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { ...heat, screenshot };
+  const image = await screenshot(session);
+  return { ...heat, screenshot: image };
 }
 
 async function runComplexLocusSmoke(session) {
@@ -196,8 +209,8 @@ async function runComplexLocusSmoke(session) {
     };
     return [strength(3, 0), strength(-1, 0), strength(1, 2), strength(1, -2)];`);
   locus.circlePixels = painted;
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { ...locus, screenshot };
+  const image = await screenshot(session);
+  return { ...locus, screenshot: image };
 }
 
 async function runPiecewiseSmoke(session) {
@@ -214,11 +227,39 @@ async function runPiecewiseSmoke(session) {
     const markers = circles.map((circle) => circle.dataset.marker).sort();
     return markers.length === 2 ? { markers, paths: document.querySelectorAll('[data-testid="graph-scene-paths"] path[data-item-id]').length } : null;`), 30_000);
   await delay(800);
-  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
-  return { ...piecewise, screenshot };
+  const image = await screenshot(session);
+  return { ...piecewise, screenshot: image };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise) {
+async function runPtx2Smoke(session) {
+  // A removable gap draws an open circle; a rational curve set to "Always" draws its exact asymptotes.
+  const setRow = (latex) => waitFor(`expression ${latex}`, () => execute(session, `
+    const field = document.querySelectorAll('math-field')[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue(${JSON.stringify(latex)});
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  await setRow(String.raw`\frac{x^2-1}{x-1}`);
+  const hole = await waitFor('hole circle', () => execute(session, `
+    const markers = [...document.querySelectorAll('[data-testid="graph-scene-points"] [data-marker]')].map((circle) => circle.dataset.marker);
+    return markers.length === 1 ? markers : null;`), 30_000);
+  await setRow(String.raw`\frac{x}{x-1}`);
+  await waitFor('Always asymptotes', () => execute(session, `
+    const toggle = document.querySelector('[aria-label="Show item options"]');
+    if (toggle) toggle.click();
+    const always = [...document.querySelectorAll('.graph-item-details button')].find((button) => button.textContent.trim() === 'Always');
+    if (!always) return false;
+    always.click();
+    return true;`));
+  const asymptotes = await waitFor('asymptote labels', () => execute(session, `
+    const labels = [...document.querySelectorAll('[data-testid="graph-ptx-asymptotes"] text')].map((label) => label.textContent);
+    return labels.length === 2 ? labels : null;`), 30_000);
+  await delay(800);
+  const image = await screenshot(session);
+  return { hole, asymptotes, screenshot: image };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -238,6 +279,8 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
   if (piecewise && (piecewise.markers.join(',') !== 'filled,open' || piecewise.paths !== 2)) {
     failures.push(`piecewise jump is not drawn with one open and one filled end circle (${JSON.stringify(piecewise)})`);
   }
+  if (ptx2 && ptx2.hole.join(',') !== 'open') failures.push(`the removable gap is not an open circle (${JSON.stringify(ptx2.hole)})`);
+  if (ptx2 && ptx2.asymptotes.join(',') !== 'x = 1,y = 1') failures.push(`asymptotes are not x = 1 and y = 1 (${JSON.stringify(ptx2.asymptotes)})`);
   if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
     failures.push(`the locus circle is not painted in the Complex pane (${JSON.stringify(complexLocus.circlePixels)})`);
   }
@@ -269,7 +312,7 @@ try {
     log('probe captured; running Graph 3D smoke');
     const three = await runGraphThreeSmoke(sessionId);
     graphThree = { ready: three.ready, surfaceMeshCount: three.surfaceMeshCount, fallbackVisible: three.fallbackVisible, chip: three.chip };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-surface.png', Buffer.from(three.screenshot, 'base64'));
+    if (outFile && three.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-surface.png', Buffer.from(three.screenshot, 'base64'));
   }
   let complexGpu = null;
   if (smoke) {
@@ -277,7 +320,7 @@ try {
     log('running complex GPU smoke');
     const complex = await runComplexGpuSmoke(sessionId);
     complexGpu = { chip: complex.chip };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-complex.png', Buffer.from(complex.screenshot, 'base64'));
+    if (outFile && complex.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-complex.png', Buffer.from(complex.screenshot, 'base64'));
   }
   let realGpu = null;
   if (smoke) {
@@ -285,37 +328,44 @@ try {
     log('running real-field GPU smoke');
     const real = await runRealFieldGpuSmoke(sessionId);
     realGpu = { chip: real.chip };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-real.png', Buffer.from(real.screenshot, 'base64'));
+    if (outFile && real.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-real.png', Buffer.from(real.screenshot, 'base64'));
   }
   let surfaceHeat = null;
   if (smoke) {
     log('running 2D surface height-map smoke');
     const heat = await runSurfaceHeatSmoke(sessionId);
     surfaceHeat = { chip: heat.chip, visibleSvgBands: heat.visibleSvgBands };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-heat.png', Buffer.from(heat.screenshot, 'base64'));
+    if (outFile && heat.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-heat.png', Buffer.from(heat.screenshot, 'base64'));
   }
   let complexLocus = null;
   if (smoke) {
     log('running complex locus smoke');
     const locus = await runComplexLocusSmoke(sessionId);
     complexLocus = { mode: locus.mode, status: locus.status, circlePixels: locus.circlePixels };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-locus.png', Buffer.from(locus.screenshot, 'base64'));
+    if (outFile && locus.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-locus.png', Buffer.from(locus.screenshot, 'base64'));
   }
   let piecewise = null;
   if (smoke) {
     log('running piecewise smoke');
     const run = await runPiecewiseSmoke(sessionId);
     piecewise = { markers: run.markers, paths: run.paths };
-    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-piecewise.png', Buffer.from(run.screenshot, 'base64'));
+    if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-piecewise.png', Buffer.from(run.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise) : [];
+  let ptx2 = null;
+  if (smoke) {
+    log('running holes and asymptotes smoke');
+    const run = await runPtx2Smoke(sessionId);
+    ptx2 = { hole: run.hole, asymptotes: run.asymptotes };
+    if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-asymptotes.png', Buffer.from(run.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, screenshotsMissing, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

@@ -8,7 +8,7 @@ import {
   type GraphSpatialSceneRuntimeV2,
 } from '../../lib/graphing';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
-import type { PtxDot } from './ptx/usePtxPointsOfInterest';
+import type { PtxAsymptoteLine, PtxDot } from './ptx/usePtxPointsOfInterest';
 import { GraphSvgViewport, type GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphThreeViewport } from './GraphThreeViewport';
 import type { GraphGestureLane } from './useGraphGestureSampling';
@@ -26,6 +26,8 @@ type Props = {
   paneView: GraphPaneViewStateV1;
   pending: boolean;
   presentation: GraphRendererPresentationFrame;
+  /** Asymptote lines to draw (dashed, labelled at the pane edge). */
+  ptxAsymptotes?: readonly PtxAsymptoteLine[];
   /** Points of interest of the selected item, drawn as dots. */
   ptxDots?: readonly PtxDot[];
   /** A point traced in the Complex pane, marked here at (Re z, Im z) in Both. */
@@ -38,7 +40,7 @@ type Props = {
 
 export function GraphViewportHost({
   document, gestureLane, gpuRendering, grid, itemRoutes, onPaneViewChange, onSelectItem, onSizeChange, onViewportChange,
-  paneView, pending, presentation, ptxDots, ptxMirror, scene, sceneViewport, selectedItemId, viewport,
+  paneView, pending, presentation, ptxAsymptotes, ptxDots, ptxMirror, scene, sceneViewport, selectedItemId, viewport,
 }: Props) {
   const [fallbackReason, setFallbackReason] = useState<'context-lost' | 'unavailable' | null>(null);
   const [retrySequence, setRetrySequence] = useState(0);
@@ -81,6 +83,7 @@ export function GraphViewportHost({
       onViewportChange={onViewportChange}
       pending={pending}
       presentation={presentation}
+      ptxAsymptotes={ptxAsymptotes}
       ptxDots={ptxDots}
       ptxMirror={ptxMirror}
       scene={scene}

@@ -146,8 +146,8 @@ test.describe('PTX points of interest in the Real pane', () => {
     await page.mouse.click(start.x, start.y);
     await expect(callout).toBeVisible();
     await page.waitForTimeout(900);
-    // Approaching x = 0 (a removable gap, not a point of interest), the readout is f at the pointer each step.
-    for (const x of [0.6, 0.3, 0.12]) {
+    // Approaching the hole at x = 0 (its ring is a point of interest), the readout is f at the pointer each step.
+    for (const x of [0.6, 0.4, 0.25]) {
       const point = await realPoint(page, x, Math.sin(x) / x);
       await page.mouse.move(point.x, point.y);
       await expect.poll(async () => {
@@ -155,5 +155,9 @@ test.describe('PTX points of interest in the Real pane', () => {
         return match ? Math.abs(Number(match[2]) - Math.sin(Number(match[1])) / Number(match[1])) : 1;
       }).toBeLessThan(1e-5);
     }
+    // Only on the ring itself does the trace take the hole: no value there, only the limit.
+    const hole = await realPoint(page, 0.01, 1);
+    await page.mouse.move(hole.x, hole.y);
+    await expect(callout).toHaveText(/^\(0, undefined\) · limit 1$/u);
   });
 });

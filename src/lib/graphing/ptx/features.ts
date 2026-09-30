@@ -164,3 +164,131 @@ export function ptxPlaneIntersections(F: PtxPlaneFunction, G: PtxPlaneFunction, 
     errorBound: 1e-9 * (1 + Math.hypot(point.x, point.y)),
   }));
 }
+
+/**
+ * The one-sided limit of f at `at` from `side`: values at shrinking distances
+ * must settle; the last value is the estimate and its last change the error.
+ */
+export function ptxOneSidedLimit(f: PtxRealFunction, at: number, side: 1 | -1, span: number) {
+  let previous: number | undefined; let change = Infinity;
+  for (let power = 4; power <= 12; power += 1) {
+    const value = f(at + side * span * 10 ** -power);
+    if (value === undefined) return undefined;
+    if (previous !== undefined) change = Math.abs(value - previous);
+    previous = value;
+  }
+  return previous !== undefined && change <= 1e-8 * Math.max(1, Math.abs(previous)) ? { value: previous, error: Math.max(change, 1e-15) } : undefined;
+}
+
+/**
+ * Whether |f| grows without bound toward `at` from `side` (a pole, or a
+ * logarithmic edge like ln x at 0): over shrinking distances |f| keeps rising
+ * and its rises do not die away (a settling function's would).
+ */
+export function ptxGrowsToward(f: PtxRealFunction, at: number, side: 1 | -1, span: number) {
+  const magnitudes: number[] = [];
+  for (let power = 3; power <= 12; power += 1) {
+    const value = f(at + side * span * 10 ** -power);
+    if (value === undefined) return false;
+    magnitudes.push(Math.abs(value));
+  }
+  const rises = magnitudes.slice(1).map((value, index) => value - magnitudes[index]!);
+  return rises.every((rise) => rise > 0) && rises.at(-1)! >= 0.5 * rises[0]! && magnitudes.at(-1)! > magnitudes[0]! + 1;
+}
+
+export type PtxDiscontinuity =
+  /** Both sides approach `limit`; the curve has no value there, or a different one (`value`). */
+  | { kind: 'hole'; x: number; limit: number; value?: number }
+  /** The sides approach different values; `value` is f there when it has one. */
+  | { kind: 'jump'; x: number; left: number; right: number; value?: number }
+  /** |f| grows on the given sides. */
+  | { kind: 'pole'; x: number; sides: Array<1 | -1> };
+
+const CONSTANT_SYMBOLS = new Set(['Pi', 'ExponentialE', 'ImaginaryUnit', 'Nothing', 'True', 'False']);
+
+function leafSymbols(node: unknown, into = new Set<string>()) {
+  if (typeof node === 'string') { if (!CONSTANT_SYMBOLS.has(node)) into.add(node); return into; }
+  if (Array.isArray(node)) node.slice(1).forEach((child) => leafSymbols(child, into));
+  return into;
+}
+
+/** Every expression that divides something (a denominator or a base with a negative power). */
+export function ptxDenominators(node: unknown): unknown[] {
+  if (!Array.isArray(node)) return [];
+  const own = node[0] === 'Divide' && node.length === 3 ? [node[2]]
+    : node[0] === 'Power' && node.length === 3 && typeof node[2] === 'number' && node[2] < 0 ? [node[1]] : [];
+  return [...own, ...node.slice(1).flatMap(ptxDenominators)];
+}
+
+/**
+ * Holes, jumps and poles of y = f(x) inside the window. Candidates are the
+ * zeros of every denominator (exact for polynomials) plus steps found on the
+ * sample grid (a gap that does not shrink when its bracket is halved); each is
+ * classified from its one-sided limits and the value there.
+ */
+export function ptxRealDiscontinuities(f: PtxRealFunction, mathJson: unknown, variable: string, minimum: number, maximum: number,
+  port: PtxSolverPort, parameters: Readonly<Record<string, number>>, options: PtxFinderOptions = {}): PtxDiscontinuity[] {
+  const span = maximum - minimum;
+  const candidates: number[] = [];
+  for (const denominator of ptxDenominators(mathJson)) {
+    const symbols = [...leafSymbols(denominator)];
+    if (!symbols.includes(variable)) continue;
+    const g = port.realFunction({ mathJson: denominator, freeSymbols: symbols } as never, variable, parameters);
+    if (!g) continue;
+    for (const root of ptxRealRoots(g, minimum, maximum, options, port.realPolynomialRoots(denominator, variable, parameters))) candidates.push(root.x);
+  }
+  // Steps: a sample gap far larger than its neighbours that keeps its size when the bracket is halved.
+  const steps = options.steps ?? 400;
+  const xs = Array.from({ length: steps + 1 }, (_, index) => minimum + span * index / steps);
+  const values = xs.map((x) => f(x));
+  const gap = (index: number) => {
+    const a = values[index]; const b = values[index + 1];
+    return a === undefined || b === undefined ? 0 : Math.abs(b - a);
+  };
+  for (let index = 1; index + 2 < xs.length; index += 1) {
+    if (options.isCancelled?.()) break;
+    const here = gap(index);
+    if (!(here > 1e-9 && here > 20 * Math.max(gap(index - 1), gap(index + 1), 1e-12))) continue;
+    let low = xs[index]!; let high = xs[index + 1]!;
+    let lowValue = values[index]!; let highValue = values[index + 1]!;
+    for (let pass = 0; pass < 60 && high - low > 4 * Number.EPSILON * (1 + Math.abs(low)); pass += 1) {
+      const middle = (low + high) / 2; const value = f(middle);
+      if (value === undefined) break;
+      if (Math.abs(value - lowValue) >= Math.abs(highValue - value)) { high = middle; highValue = value; } else { low = middle; lowValue = value; }
+    }
+    if (Math.abs(highValue - lowValue) < 0.5 * here) continue;
+    const at = (low + high) / 2;
+    candidates.push(Math.abs(at) < 1e-12 * span ? 0 : Number(at.toPrecision(12)));
+  }
+  const found: PtxDiscontinuity[] = [];
+  const seen: number[] = [];
+  for (const x of candidates.sort((a, b) => a - b)) {
+    if (x <= minimum || x >= maximum || seen.some((other) => Math.abs(other - x) <= 1e-9 * (1 + Math.abs(x)))) continue;
+    seen.push(x);
+    const left = ptxOneSidedLimit(f, x, -1, span); const right = ptxOneSidedLimit(f, x, 1, span); const value = f(x);
+    const sides = ([-1, 1] as const).filter((side) => ptxGrowsToward(f, x, side, span));
+    if (sides.length) { found.push({ kind: 'pole', x, sides: [...sides] }); continue; }
+    if (!left || !right) continue;
+    const same = Math.abs(left.value - right.value) <= 1e-7 * Math.max(1, Math.abs(left.value));
+    if (same && value !== undefined && Math.abs(value - left.value) <= 1e-7 * Math.max(1, Math.abs(value))) continue;
+    found.push(same ? { kind: 'hole', x, limit: left.value, ...(value !== undefined ? { value } : {}) }
+      : { kind: 'jump', x, left: left.value, right: right.value, ...(value !== undefined ? { value } : {}) });
+  }
+  return found;
+}
+
+/** Circles for holes and jumps: open where the curve has no point, filled where it does. */
+export function ptxDiscontinuityMarkers(discontinuities: readonly PtxDiscontinuity[]) {
+  const open: Array<{ x: number; y: number }> = []; const filled: Array<{ x: number; y: number }> = [];
+  const same = (a: number, b: number) => Math.abs(a - b) <= 1e-7 * Math.max(1, Math.abs(a));
+  for (const item of discontinuities) {
+    if (item.kind === 'hole') {
+      open.push({ x: item.x, y: item.limit });
+      if (item.value !== undefined) filled.push({ x: item.x, y: item.value });
+    } else if (item.kind === 'jump') {
+      for (const side of [item.left, item.right]) (item.value !== undefined && same(item.value, side) ? filled : open).push({ x: item.x, y: side });
+      if (item.value !== undefined && !same(item.value, item.left) && !same(item.value, item.right)) filled.push({ x: item.x, y: item.value });
+    }
+  }
+  return { open, filled };
+}

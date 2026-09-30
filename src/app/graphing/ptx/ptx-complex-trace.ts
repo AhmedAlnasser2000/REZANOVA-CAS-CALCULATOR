@@ -115,7 +115,8 @@ export function ptxComplexReadout(trace: PtxComplexTrace): PtxReadout {
     if (trace.snapped) {
       const dot = trace.snapped;
       const level = dot.level;
-      return { lines: [`Intersection · z = ${ptxComplexText(dot.x, dot.y, dot.errorBound)}`, polarLine(dot.x, dot.y, dot.errorBound)],
+      const name = dot.feature === 'complex-zero' ? 'Zero' : dot.feature === 'complex-pole' ? 'Pole' : 'Intersection';
+      return { lines: [`${name} · z = ${ptxComplexText(dot.x, dot.y, dot.errorBound)}`, polarLine(dot.x, dot.y, dot.errorBound)],
         level, detail: ptxPointDetail({ level, residual: 0, errorBound: dot.errorBound, warnings: [] }) };
     }
     const { point } = trace;
