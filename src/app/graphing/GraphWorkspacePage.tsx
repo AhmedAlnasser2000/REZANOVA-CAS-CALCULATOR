@@ -47,7 +47,6 @@ import {
   graphItemSourceLatex,
   graphPiecewiseDraftBranchFeedback,
 } from './graph-document';
-import type { GraphTraceRouteKind } from './GraphSvgViewport';
 import { GraphViewportHost } from './GraphViewportHost';
 import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
@@ -58,6 +57,7 @@ import { GraphComplexViewport } from './GraphComplexViewport';
 import { useGraphGestureSampling } from './useGraphGestureSampling';
 import { useGraphEqualAxes } from './useGraphEqualAxes';
 import { useGraphComplexPlaneItems } from './useGraphComplexPlaneItems';
+import { graphItemTraceRoutes } from './graph-item-routes';
 import { usePtxPointsOfInterest } from './ptx/usePtxPointsOfInterest';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 
@@ -530,13 +530,6 @@ export default function GraphWorkspacePage({
       } else if (evidence.achievedQuality === 'reduced-detail') {
         warnings.set(evidence.itemId, 'Reduced detail at this zoom.');
       }
-      if (!warnings.has(evidence.itemId)
-        && evidence.piecewiseCondition?.uncoveredGaps.length) {
-        const item = controller.session.document.items.find((candidate) => candidate.itemId === evidence.itemId);
-        if (item?.kind === 'piecewise' && !item.piecewise.otherwise) {
-          warnings.set(evidence.itemId, 'Piecewise branches leave gaps in the current view; gaps are allowed.');
-        }
-      }
     }
     for (const reason of controller.sampleResult?.stopReasons ?? []) {
       if (!reason.path || warnings.has(reason.path)) continue;
@@ -547,9 +540,9 @@ export default function GraphWorkspacePage({
         );
       } else if (reason.code === 'sampling-budget-exceeded') {
         if (!warnings.has(reason.path)) warnings.set(reason.path, 'Reduced detail at this zoom.');
-      } else if (reason.detailCode?.startsWith('piecewise-overlap:')) {
-        const scope = reason.detailCode.includes(':global:') ? 'globally' : 'in the current view';
-        warnings.set(reason.path, `Piecewise branches overlap ${scope}; all matching branches are drawn.`);
+      } else if (reason.detailCode?.startsWith('piecewise-shadowed:')) {
+        const [earlier, later] = (reason.detailCode.split(':')[2] ?? '').split(',').map((id) => id.replace('branch.', ''));
+        warnings.set(reason.path, `Branch ${later} is partly covered by branch ${earlier}; the first matching branch is drawn.`);
       } else if (reason.detailCode?.startsWith('piecewise-impossible:')) {
         const scope = reason.detailCode.includes('impossible-global') ? 'for every input' : 'in the current view';
         warnings.set(reason.path, `One piecewise branch cannot apply ${scope}.`);
@@ -558,32 +551,17 @@ export default function GraphWorkspacePage({
         warnings.set(reason.path, 'A piecewise condition boundary could not be resolved in this view.');
       }
     }
-    return warnings;
-  }, [controller.sampleResult, controller.session.document.items]);
-  const itemRoutes = useMemo(() => {
-    const routes: Record<string, GraphTraceRouteKind> = {};
-    for (const item of controller.session.document.items) {
-      if (item.kind === 'point-set') {
-        routes[item.itemId] = 'point-set';
-        continue;
-      }
-      if (item.kind === 'relation'
-        && (item.relation.kind === 'explicit-y'
-          || item.relation.kind === 'explicit-x')) {
-        routes[item.itemId] = item.relation.kind;
-      } else if (item.kind === 'relation' && item.relation.kind === 'polar-radius') {
-        routes[item.itemId] = { kind: 'polar-radius', parameterSymbol: 'theta' };
-      } else if (item.kind === 'relation' && item.relation.kind === 'parametric-curve') {
-        routes[item.itemId] = {
-          kind: 'parametric-curve',
-          parameterSymbol: item.relation.parameterSymbol,
-        };
-      } else if (item.kind === 'relation' && item.relation.kind === 'real-surface') {
-        routes[item.itemId] = 'real-surface';
+    // Gaps are only worth a note for multi-branch cases; a restriction such as x^2{x>0} has them by design.
+    for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
+      const item = controller.session.document.items.find((candidate) => candidate.itemId === evidence.itemId);
+      if (!warnings.has(evidence.itemId) && evidence.piecewiseCondition?.uncoveredGaps.length
+        && item?.kind === 'piecewise' && !item.piecewise.otherwise && item.piecewise.branches.length > 1) {
+        warnings.set(evidence.itemId, 'Piecewise branches leave gaps in the current view; gaps are allowed.');
       }
     }
-    return routes;
-  }, [controller.session.document.items]);
+    return warnings;
+  }, [controller.sampleResult, controller.session.document.items]);
+  const itemRoutes = useMemo(() => graphItemTraceRoutes(controller.session.document.items), [controller.session.document.items]);
   const hasPolarRelation = controller.session.document.items.some((item) => (
     item.kind === 'relation' && item.visible && item.relation.kind === 'polar-radius'
   ));

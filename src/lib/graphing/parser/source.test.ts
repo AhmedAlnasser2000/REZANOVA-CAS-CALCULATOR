@@ -327,4 +327,23 @@ describe('Graph MathLive source classifier', () => {
       stopReason: { code: 'expression-budget-exceeded', detailCode: 'source-length' },
     });
   });
+
+  it('classifies restriction braces, polar piecewise, or and ≠ conditions (PIECEWISE-CORE1)', () => {
+    const kinds = (latex: string) => {
+      const result = classifySource(latex);
+      if (!result.ok) return `fail:${result.stopReason.detailCode}`;
+      if (result.itemKind === 'piecewise') return `piecewise:${result.piecewise.branches.map((branch) => `${branch.relation.kind}/${branch.condition.kind}`).join(',')}`;
+      return result.itemKind === 'relation' ? `relation:${result.relation.kind}` : result.itemKind;
+    };
+    expect(kinds(String.raw`x^2\{x>0\}`)).toBe('piecewise:explicit-y/comparison');
+    expect(kinds(String.raw`y=x^2\{x>0\}`)).toBe('piecewise:explicit-y/comparison');
+    expect(kinds(String.raw`x=y^2\{y>0\}`)).toBe('piecewise:explicit-x/comparison');
+    expect(kinds(String.raw`x^2\{x\ne1\}`)).toBe('piecewise:explicit-y/not-equal');
+    expect(kinds(String.raw`(\cos t,\sin t)\{0<t<\pi\}`)).toBe('relation:parametric-curve');
+    expect(kinds(String.raw`r=\begin{cases}1&\theta<1\\2&\theta\ge1\end{cases}`)).toBe('piecewise:polar-radius/comparison,polar-radius/comparison');
+    expect(kinds(String.raw`\begin{cases}1&x<-1\lor x>1\\0&\text{otherwise}\end{cases}`)).toBe('piecewise:explicit-y/or');
+    expect(kinds(String.raw`x^2+y^2=1\{x>0\}`)).toBe('fail:domain-restriction-route');
+    expect(kinds(String.raw`y=\begin{cases}(t,t)&x<0\\1&x\ge0\end{cases}`)).toBe('fail:piecewise-parametric-branch');
+    expect(kinds(String.raw`y=x^2\{y>0\}`)).toBe('fail:piecewise-condition-coordinate-conflict');
+  });
 });

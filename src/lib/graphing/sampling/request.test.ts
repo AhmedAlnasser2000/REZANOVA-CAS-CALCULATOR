@@ -374,10 +374,8 @@ describe('Graph sample request runtime', () => {
       'piecewise-1:branch:negative',
       'piecewise-1:branch:nonnegative',
     ]);
-    expect(execution.result.scene.planarScene.pointBatches.map((batch) => batch.marker).sort()).toEqual([
-      'filled',
-      'open',
-    ]);
+    // The branches meet at (0, 0): the included end's filled circle covers the other's open one (Desmos-style).
+    expect(execution.result.scene.planarScene.pointBatches.map((batch) => batch.marker).sort()).toEqual(['filled']);
     expect(execution.result.scene.planarScene.pointBatches.flatMap((batch) => [...batch.coordinates]))
       .toEqual(expect.arrayContaining([0, 0]));
     expect(execution.result.itemEvidence[0]?.piecewiseCondition).toMatchObject({
@@ -392,6 +390,26 @@ describe('Graph sample request runtime', () => {
     expect(execution.result.stopReasons).not.toContainEqual(expect.objectContaining({
       detailCode: 'piecewise-overlap',
     }));
+    expect(validateGraphSampleResult(execution.result).ok).toBe(true);
+  });
+
+  it('samples a polar piecewise curve into a valid result (θ is its independent variable)', async () => {
+    const polar = request();
+    polar.items = [{
+      version: 1, kind: 'piecewise', itemId: 'polar-piecewise',
+      source: { sourceKind: 'mathlive-latex', sourceLatex: 'r=cases', sourceRevision: 1 },
+      piecewise: { version: 1, branches: [
+        { branchId: 'branch.1', relation: { kind: 'polar-radius', angleSymbol: 'theta', radius: { mathJson: 1, freeSymbols: [] } },
+          condition: { kind: 'comparison', left: { mathJson: 'theta', freeSymbols: ['theta'] }, operator: '<', right: { mathJson: 3, freeSymbols: [] } } },
+        { branchId: 'branch.2', relation: { kind: 'polar-radius', angleSymbol: 'theta', radius: { mathJson: 2, freeSymbols: [] } },
+          condition: { kind: 'comparison', left: { mathJson: 'theta', freeSymbols: ['theta'] }, operator: '>=', right: { mathJson: 3, freeSymbols: [] } } },
+      ] },
+      visible: true,
+    }];
+    const execution = await runGraphSampleRequest(polar);
+    expect(execution.result.scene.planarScene.paths.map((path) => path.pathId))
+      .toEqual(['polar-piecewise:branch:branch.1', 'polar-piecewise:branch:branch.2']);
+    expect(execution.result.itemEvidence[0]?.piecewiseCondition?.independentSymbol).toBe('theta');
     expect(validateGraphSampleResult(execution.result).ok).toBe(true);
   });
 

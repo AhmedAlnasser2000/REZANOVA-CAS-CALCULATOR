@@ -68,7 +68,12 @@ describe('Graph standard MathJSON adapter', () => {
         maximumInclusive: true,
       },
     });
+    // `or` and `≠` are structured conditions too (PIECEWISE-CORE1); other Boolean operators stay unsupported.
     expect(parseGraphConditionMathJson(['Or', ['Less', 'x', 0], ['Greater', 'x', 1]])).toMatchObject({
+      ok: true, condition: { kind: 'or', clauses: [{ kind: 'comparison', operator: '<' }, { kind: 'comparison', operator: '>' }] },
+    });
+    expect(parseGraphConditionMathJson(['NotEqual', 'x', 1])).toMatchObject({ ok: true, condition: { kind: 'not-equal' } });
+    expect(parseGraphConditionMathJson(['Xor', ['Less', 'x', 0], ['Greater', 'x', 1]])).toMatchObject({
       ok: false,
       stopReason: { code: 'invalid-condition', detailCode: 'unsupported-condition-operator' },
     });

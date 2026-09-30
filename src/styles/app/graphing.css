@@ -977,6 +977,16 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* An open circle is a point the graph leaves out: a ring in the curve's colour (set by the renderer), as in Desmos. */
+.graph-svg-points circle[data-marker="open"] {
+  stroke-width: 2.25;
+}
+
+/* The trace marker on a hole stays a ring, so it never looks like a point that exists. */
+.graph-trace-marker.is-open {
+  background: #071517;
+}
+
 .graph-trace-marker,
 .graph-trace-callout {
   position: absolute;

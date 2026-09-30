@@ -156,6 +156,29 @@ function parseConditionInternal(
     return { ok: true, condition: { kind: 'constant', value: symbol === 'True' } };
   }
   const operator = graphNodeOperator(input);
+  if (operator === 'NotEqual') {
+    const operands = graphNodeOperands(input);
+    if (operands.length !== 2) return graphParserFailure('invalid-condition', 'not-equal-arity', path);
+    const left = adaptGraphExpressionMathJson(operands[0], `${path}.left`);
+    if (!left.ok) return left;
+    const right = adaptGraphExpressionMathJson(operands[1], `${path}.right`);
+    if (!right.ok) return right;
+    return { ok: true, condition: { kind: 'not-equal', left: left.expression, right: right.expression } };
+  }
+  if (operator === 'Or') {
+    const operands = graphNodeOperands(input);
+    if (operands.length === 0 || operands.length > 64) {
+      return graphParserFailure('condition-budget-exceeded', 'condition-clause-count', path);
+    }
+    const clauses: GraphConditionIR[] = [];
+    for (let index = 0; index < operands.length; index += 1) {
+      const clause = parseConditionInternal(operands[index], `${path}.clauses[${index}]`, depth + 1);
+      if (!clause.ok) return clause;
+      if (clause.condition.kind === 'or') clauses.push(...clause.condition.clauses);
+      else clauses.push(clause.condition);
+    }
+    return { ok: true, condition: { kind: 'or', clauses } };
+  }
   if (operator === 'And') {
     const operands = graphNodeOperands(input);
     if (operands.length === 0 || operands.length > 64) {

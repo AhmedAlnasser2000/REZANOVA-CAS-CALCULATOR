@@ -31,7 +31,7 @@ import type { GraphGestureLane } from './useGraphGestureSampling';
 import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 import type { PtxDot } from './ptx/usePtxPointsOfInterest';
-import { ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
+import { ptxEndpointDots, ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
 import { PTX_SNAP_RADIUS_PIXELS } from './ptx/ptx-snap';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
@@ -167,6 +167,8 @@ export function GraphSvgViewport({
   const mirrorPointRef = useRef(ptxMirror);
   const dotsLayerRef = useRef<HTMLDivElement | null>(null);
   const dotsRef = useRef(ptxDots);
+  // What a trace can snap to: the drawn dots plus piecewise end circles already in the scene.
+  const snapDotsRef = useRef<readonly PtxDot[]>(ptxDots);
   const refinersRef = useRef<ReturnType<typeof ptxRealRefiners>>(new Map());
   const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -292,8 +294,9 @@ export function GraphSvgViewport({
 
   useLayoutEffect(() => {
     dotsRef.current = ptxDots;
+    snapDotsRef.current = [...ptxDots, ...ptxEndpointDots(spatialScene?.planarScene.pointBatches ?? [])];
     placeDots(dotsLayerRef.current, ptxDots, liveViewportRef.current, sizeRef.current);
-  }, [ptxDots]);
+  }, [ptxDots, spatialScene]);
   useEffect(() => {
     refinersRef.current = ptxRealRefiners(document, document ? graphParameterEnvironment(document) : {});
   }, [document]);
@@ -329,7 +332,7 @@ export function GraphSvgViewport({
     if (!target) { traceRef.current = null; hideTrace(); return; }
     // PTX: a path point is put on the true curve (and onto a dot it has arrived at) before it is shown.
     const certified = target.kind === 'path' && !graphComplexValuePart(target.pathId)
-      ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, dotsRef.current)
+      ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, snapDotsRef.current)
       : null;
     if (certified) {
       const vp = viewportRef.current; const size = sizeRef.current;
@@ -340,6 +343,7 @@ export function GraphSvgViewport({
     if (announce) onTraceItemChange?.(target.itemId);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
     marker.hidden = false; marker.style.transform = `translate3d(${target.screen.x - 6}px,${target.screen.y - 6}px,0)`;
+    marker.classList.toggle('is-open', certified?.dot?.feature === 'hole');
     marker.dataset.traceItemId = target.itemId;
     const labelWidth = graphComplexValuePart(target.pathId) ? 240 : 150;
     const lx = Math.max(8, Math.min(sizeRef.current.width - labelWidth, target.screen.x + 12));
@@ -528,7 +532,7 @@ export function GraphSvgViewport({
   /** Hovering a point of interest (with no trace running) shows what it is, like Desmos. */
   const hoverDot = (screen: { x: number; y: number }) => {
     const vp = viewportRef.current; const size = sizeRef.current;
-    const dot = dotsRef.current.find((candidate) => Math.hypot(
+    const dot = snapDotsRef.current.find((candidate) => Math.hypot(
       (candidate.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width - screen.x,
       (vp.yMax - candidate.y) / (vp.yMax - vp.yMin) * size.height - screen.y) <= PTX_SNAP_RADIUS_PIXELS + 2);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current;
@@ -536,6 +540,7 @@ export function GraphSvgViewport({
     if (!dot) { if (label.dataset.hoverDot) { delete label.dataset.hoverDot; hideTrace(); } return; }
     const x = (dot.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width; const y = (vp.yMax - dot.y) / (vp.yMax - vp.yMin) * size.height;
     marker.hidden = false; marker.style.transform = `translate3d(${x - 6}px,${y - 6}px,0)`;
+    marker.classList.toggle('is-open', dot.feature === 'hole');
     label.hidden = false; label.dataset.hoverDot = dot.key; label.classList.remove('is-complex-part');
     label.style.transform = `translate3d(${Math.max(8, Math.min(size.width - 190, x + 12))}px,${Math.max(8, Math.min(size.height - 38, y - 36))}px,0)`;
     const point = { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot };

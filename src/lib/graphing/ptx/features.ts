@@ -79,8 +79,8 @@ export function ptxRealRoots(f: PtxRealFunction, minimum: number, maximum: numbe
         if (fm === 0) { a = middle; b = middle; fa = 0; fb = 0; break; }
         if (fa * fm < 0) { b = middle; fb = fm; } else { a = middle; fa = fm; }
       }
-      // Across a pole the bracket's values grow as it shrinks; across a root they fall.
-      if (Math.min(Math.abs(fa), Math.abs(fb)) <= Math.min(Math.abs(value), Math.abs(next))) {
+      // Across a root the bracket's values fall to ~0 as it shrinks; across a pole they grow, across a jump they stay.
+      if (Math.min(Math.abs(fa), Math.abs(fb)) <= 1e-6 * Math.max(Math.abs(value), Math.abs(next))) {
         const x = Math.abs(fa) <= Math.abs(fb) ? a : b;
         roots.push({ x, level: 'numeric-validated', errorBound: Math.max(b - a, Number.EPSILON * (1 + Math.abs(x))), residual: Math.min(Math.abs(fa), Math.abs(fb)), label: null });
       }
@@ -96,6 +96,22 @@ export function ptxRealRoots(f: PtxRealFunction, minimum: number, maximum: numbe
     }
   }
   return unique(roots);
+}
+
+/**
+ * A step between samples (a piecewise jump, floor) also looks like an
+ * extremum; at a true extremum the gap to a neighbour shrinks as the probe
+ * distance shrinks, at a jump it stays.
+ */
+function isJumpAt(f: PtxRealFunction, x: number, y: number, distance: number) {
+  const scale = 1e-9 * Math.max(1, Math.abs(y));
+  for (const side of [-1, 1]) {
+    const far = f(x + side * distance); const near = f(x + side * distance / 10);
+    if (far === undefined || near === undefined) return true;
+    const farGap = Math.abs(far - y); const nearGap = Math.abs(near - y);
+    if (nearGap > scale && nearGap > 0.5 * farGap) return true;
+  }
+  return false;
 }
 
 /** Local minima and maxima of f strictly inside the window, refined by golden-section search. */
@@ -115,6 +131,7 @@ export function ptxRealExtrema(f: PtxRealFunction, minimum: number, maximum: num
     if (x === null || y === undefined) continue;
     // A pole between samples looks like a maximum of huge height; a real extremum stays near its neighbours.
     if (Math.abs(y) > 1e3 * Math.max(1, Math.abs(previous), Math.abs(next))) continue;
+    if (isJumpAt(run, x, y, (maximum - minimum) * 1e-6)) continue;
     // Error in x from rounding: the flat top hides x to about sqrt(eps · |f| / |f''|).
     const h = (maximum - minimum) * 1e-4;
     const left = run(x - h); const right = run(x + h);

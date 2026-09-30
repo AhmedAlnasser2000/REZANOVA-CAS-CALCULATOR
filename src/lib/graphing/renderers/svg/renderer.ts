@@ -379,6 +379,8 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'fill', node.dataset.marker === 'open' ? '#071517' : color);
       setAttribute(node, 'stroke', color); setAttribute(node, 'stroke-width', '2');
+      // Open circles keep the curve's colour over the stylesheet's light outline.
+      node.style.stroke = node.dataset.marker === 'open' ? color : '';
       node.style.display = style.markers === 'none' ? 'none' : '';
     });
   }

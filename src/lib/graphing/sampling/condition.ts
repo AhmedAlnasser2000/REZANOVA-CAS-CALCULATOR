@@ -51,6 +51,22 @@ export function compileGraphCondition(input: {
     condition: GraphConditionIR,
   ): ((environment: GraphEvaluationEnvironment) => boolean | null) | GraphStopReason => {
     if (condition.kind === 'constant') return () => condition.value;
+    if (condition.kind === 'or') {
+      const clauses = condition.clauses.map(build);
+      const failure = clauses.find((clause): clause is GraphStopReason => typeof clause !== 'function');
+      if (failure) return failure;
+      const compiledClauses = clauses as Array<(environment: GraphEvaluationEnvironment) => boolean | null>;
+      // True if any clause is true; unknown (null) only when none is true and some is unknown.
+      return (environment) => {
+        let unknown = false;
+        for (const clause of compiledClauses) {
+          const value = clause(environment);
+          if (value === true) return true;
+          if (value === null) unknown = true;
+        }
+        return unknown ? null : false;
+      };
+    }
     if (condition.kind === 'and') {
       const clauses = condition.clauses.map(build);
       const failure = clauses.find((clause): clause is GraphStopReason => typeof clause !== 'function');
@@ -67,7 +83,7 @@ export function compileGraphCondition(input: {
         return true;
       };
     }
-    const expressions = condition.kind === 'comparison'
+    const expressions = condition.kind === 'comparison' || condition.kind === 'not-equal'
       ? [condition.left, condition.right]
       : condition.kind === 'chain'
         ? condition.operands
@@ -83,6 +99,7 @@ export function compileGraphCondition(input: {
       if (values.some((value) => value.status !== 'finite')) return null;
       const finite = values.map((value) => value.status === 'finite' ? value.value : Number.NaN);
       if (condition.kind === 'comparison') return compare(finite[0], condition.operator, finite[1]);
+      if (condition.kind === 'not-equal') return finite[0] !== finite[1];
       if (condition.kind === 'chain') {
         return condition.operators.every((operator, index) => (
           compare(finite[index], operator, finite[index + 1])

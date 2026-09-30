@@ -15,7 +15,8 @@ import type { GraphWorkspaceSessionStateV7 } from '../graph-workspace-session';
 export type PtxDot = {
   key: string;
   plane: 'real' | 'complex';
-  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept';
+  /** `endpoint` and `hole` are a piecewise branch's filled and open end circles (from the scene, not Analyze). */
+  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'endpoint' | 'hole';
   itemIds: string[];
   x: number;
   y: number;
@@ -69,8 +70,8 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
       const context = contextRef.current;
       const items = classifiedGraphItems(snapshot.document).filter((item) => item.visible);
       const selected = items.find((item) => item.itemId === selectedItemId);
-      if (!selectedItemId || !selected || selected.kind !== 'relation') { if (live) setDots([]); return; }
-      const plane = selected.relation.kind === 'complex-locus' ? 'complex' : 'real';
+      if (!selectedItemId || !selected || (selected.kind !== 'relation' && selected.kind !== 'piecewise')) { if (live) setDots([]); return; }
+      const plane = selected.kind === 'relation' && selected.relation.kind === 'complex-locus' ? 'complex' : 'real';
       const request = {
         version: 1 as const,
         requestId: `${context.workspaceInstanceId}.ptx-points.${++sequence.current}`,

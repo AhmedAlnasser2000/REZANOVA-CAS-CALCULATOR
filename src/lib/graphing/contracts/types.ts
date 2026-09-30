@@ -28,6 +28,9 @@ export type GraphConditionIR =
       operators: GraphInequalityComparator[];
     }
   | { kind: 'and'; clauses: GraphConditionIR[] }
+  | { kind: 'or'; clauses: GraphConditionIR[] }
+  /** left ≠ right: everywhere except where they are equal. */
+  | { kind: 'not-equal'; left: GraphExpressionIR; right: GraphExpressionIR }
   | {
       kind: 'interval-membership';
       value: GraphExpressionIR;
@@ -690,13 +693,15 @@ export type GraphSamplingMovementHintV1 = {
 
 export type GraphPiecewiseConditionEvidenceV1 = {
   version: 1;
-  independentSymbol: 'x' | 'y';
+  independentSymbol: 'x' | 'y' | 'theta';
   basis: 'exact-global' | 'adaptive-current-viewport' | 'mixed' | 'unresolved';
   validatedInterval: { minimum: number; maximum: number; tolerancePixels: number };
   branchApplicability: Array<{
     branchId: string;
     status: 'applicable-global' | 'applicable-current-viewport' | 'offscreen'
-      | 'impossible-global' | 'impossible-current-viewport' | 'unresolved';
+      | 'impossible-global' | 'impossible-current-viewport' | 'unresolved'
+      /** Its condition holds in view, but earlier branches cover all of it (first match wins). */
+      | 'shadowed';
   }>;
   overlapBranchPairs: Array<{
     branchIds: [string, string];

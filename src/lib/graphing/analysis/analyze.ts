@@ -23,6 +23,7 @@ import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
 import { defaultPtxSolverPort, ptxPlaneIntersections, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from '../ptx';
 import type { PtxPlaneFunction } from '../ptx';
+import { analyzeGraphPiecewise } from './piecewise-analysis';
 
 export type GraphAnalysisControl = {
   isCancelled?: () => boolean;
@@ -385,7 +386,8 @@ export async function runGraphAnalysisRequest(
   const stopReasons: GraphStopReason[] = [];
   const window = request.numericWindow ?? { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
   const requested = new Set(request.features);
-  const explicitItems: Array<{ item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>; run: Evaluator; expression: GraphExpressionIR }> = [];
+  // y = f(x) curves (piecewise ones too, with no single expression) that can meet each other.
+  const explicitItems: Array<{ item: GraphClassifiedItemSnapshotV2; run: Evaluator; expression: GraphExpressionIR | null }> = [];
   const locusItems: Array<{ itemId: string; curve: PtxPlaneFunction }> = [];
   const ptx = defaultPtxSolverPort();
 
@@ -396,10 +398,14 @@ export async function runGraphAnalysisRequest(
       break;
     }
     if (snapshot.kind !== 'relation') {
-      if (snapshot.kind === 'piecewise' && requested.has('piecewise-continuity')) {
-        findings.push(evidence(request, 'piecewise-continuity', [snapshot.itemId], 'inconclusive', serial++, {
-          stopReason: { code: 'analysis-inconclusive', detailCode: 'branch-limit-proof-required' },
-        }));
+      if (snapshot.kind === 'piecewise') {
+        const piecewise = analyzeGraphPiecewise({
+          snapshot, window, parameters: request.parameterEnvironment, requested,
+          evidence: (feature, itemIds, level, extra) => evidence(request, feature, itemIds, level, serial++, extra),
+          approximate, exact, finder: { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 1; } },
+        });
+        findings.push(...piecewise.findings);
+        if (piecewise.run) explicitItems.push({ item: snapshot, run: piecewise.run, expression: null });
       }
       await control.yieldBetweenItems?.();
       continue;
@@ -519,7 +525,8 @@ export async function runGraphAnalysisRequest(
     const finder = { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 2; } };
     for (let first = 0; first < explicitItems.length; first += 1) for (let second = first + 1; second < explicitItems.length; second += 1) {
       const a = explicitItems[first]; const b = explicitItems[second];
-      const exactDifference = ptx.realPolynomialRoots(['Add', a.expression.mathJson, ['Negate', b.expression.mathJson]], 'x', request.parameterEnvironment);
+      const exactDifference = a.expression && b.expression
+        ? ptx.realPolynomialRoots(['Add', a.expression.mathJson, ['Negate', b.expression.mathJson]], 'x', request.parameterEnvironment) : null;
       for (const point of ptxRealIntersections(a.run, b.run, window.xMin, window.xMax, finder, exactDifference)) {
         const proved = point.level === 'exact-proved';
         findings.push(evidence(request, 'intersection', [a.item.itemId, b.item.itemId], point.level, serial++, {

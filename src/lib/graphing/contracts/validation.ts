@@ -92,6 +92,11 @@ const conditionSchema: z.ZodType<GraphConditionIR> = z.lazy(() => z.discriminate
     clauses: z.array(conditionSchema).min(1).max(GRAPH_CONDITION_MAX_CLAUSES),
   }),
   z.strictObject({
+    kind: z.literal('or'),
+    clauses: z.array(conditionSchema).min(1).max(GRAPH_CONDITION_MAX_CLAUSES),
+  }),
+  z.strictObject({ kind: z.literal('not-equal'), left: expressionSchema, right: expressionSchema }),
+  z.strictObject({
     kind: z.literal('interval-membership'),
     value: expressionSchema,
     minimum: expressionSchema.optional(),
@@ -598,7 +603,7 @@ export type GraphContractValidationResult<T> =
   | { ok: false; failure: GraphContractValidationFailure | StructuredValueInspectionFailure };
 
 function conditionMetrics(condition: GraphConditionIR): { depth: number; clauses: number } {
-  if (condition.kind !== 'and') return { depth: 1, clauses: 1 };
+  if (condition.kind !== 'and' && condition.kind !== 'or') return { depth: 1, clauses: 1 };
   const children = condition.clauses.map(conditionMetrics);
   return {
     depth: 1 + Math.max(0, ...children.map((child) => child.depth)),
@@ -608,7 +613,7 @@ function conditionMetrics(condition: GraphConditionIR): { depth: number; clauses
 
 function collectConditions(value: unknown, output: GraphConditionIR[] = []): GraphConditionIR[] {
   if (!value || typeof value !== 'object') return output;
-  if ('kind' in value && ['comparison', 'chain', 'and', 'interval-membership', 'constant'].includes(String(value.kind))) {
+  if ('kind' in value && ['comparison', 'chain', 'and', 'or', 'not-equal', 'interval-membership', 'constant'].includes(String(value.kind))) {
     output.push(value as GraphConditionIR);
   }
   for (const child of Object.values(value)) {

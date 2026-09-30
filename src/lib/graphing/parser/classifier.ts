@@ -60,7 +60,7 @@ function expressionsUseAny(
 
 function conditionExpressions(condition: GraphConditionIR): GraphExpressionIR[] {
   if (condition.kind === 'constant') return [];
-  if (condition.kind === 'comparison') return [condition.left, condition.right];
+  if (condition.kind === 'comparison' || condition.kind === 'not-equal') return [condition.left, condition.right];
   if (condition.kind === 'chain') return condition.operands;
   if (condition.kind === 'interval-membership') {
     return [
@@ -141,6 +141,37 @@ function attachPolarDomain(
   return validatedRelation({ ...relation, domain: condition.condition });
 }
 
+/**
+ * A restriction brace on a curve, f(x)\{x>0\} or x = g(y)\{…\}: a y = f(x) or
+ * x = f(y) curve becomes a one-branch piecewise (drawn only where the condition
+ * holds, with exact endpoint circles); a polar curve keeps it as its domain.
+ */
+function restrictClassification(
+  base: GraphSourceClassificationV1,
+  conditionNode: unknown,
+  path: string,
+): GraphSourceClassificationV1 {
+  if (!base.ok || base.itemKind !== 'relation') return base;
+  const relation = base.relation;
+  if (relation.kind === 'polar-radius') {
+    const restricted = attachPolarDomain(relation, conditionNode, path);
+    return restricted.ok ? { ok: true, itemKind: 'relation', relation: restricted.relation } : restricted;
+  }
+  if (relation.kind !== 'explicit-y' && relation.kind !== 'explicit-x') {
+    return graphParserFailure('unsupported-relation', 'domain-restriction-route', path);
+  }
+  const condition = parseGraphConditionMathJson(conditionNode, `${path}.domain`);
+  if (!condition.ok) return condition;
+  if (!conditionAllowedForTarget(relation.kind === 'explicit-y' ? 'y' : 'x', condition.condition)) {
+    return graphParserFailure('coordinate-parameter-conflict', 'piecewise-condition-coordinate-conflict', path);
+  }
+  const validation = validateGraphPiecewise({
+    version: 1, branches: [{ branchId: 'branch.1', relation, condition: condition.condition }],
+  });
+  if (!validation.ok) return graphParserFailure('invalid-condition', validation.failure.reason, path);
+  return { ok: true, itemKind: 'piecewise', piecewise: validation.validated.value };
+}
+
 function conditionAllowedForTarget(
   target: 'x' | 'y' | 'r',
   condition: GraphConditionIR,
@@ -168,6 +199,9 @@ function classifyPiecewise(
     const conditionNode = operands[index];
     const valueNode = operands[index + 1];
     const branchNumber = index / 2 + 1;
+    if (graphTupleOperands(valueNode)) {
+      return graphParserFailure('unsupported-relation', 'piecewise-parametric-branch', `${path}.values[${branchNumber - 1}]`);
+    }
     const expression = adaptGraphExpressionMathJson(valueNode, `${path}.values[${branchNumber - 1}]`);
     if (!expression.ok) return expression;
     const relation = relationForTarget(
@@ -370,6 +404,10 @@ function classifyEquality(input: unknown, path: string): GraphSourceClassificati
   const [leftNode, authoredRightNode] = operands;
   const restrictedRight = splitDomainRestriction(authoredRightNode);
   const rightNode = restrictedRight?.expressionNode ?? authoredRightNode;
+  const restrictedTarget = graphSymbolName(leftNode);
+  if (restrictedRight && (restrictedTarget === 'y' || restrictedTarget === 'x')) {
+    return restrictClassification(classifyEquality(['Equal', leftNode, rightNode], path), restrictedRight.conditionNode, path);
+  }
   if (COMPARISON_OPERATORS.has(graphNodeOperator(leftNode) ?? '')
     || COMPARISON_OPERATORS.has(graphNodeOperator(rightNode) ?? '')) {
     return graphParserFailure('unsupported-relation', 'equality-chain', path);
@@ -607,7 +645,7 @@ export function classifyGraphMathJson(input: unknown): GraphSourceClassification
   if (restricted) {
     return graphTupleOperands(restricted.expressionNode)
       ? classifyTuple(restricted.expressionNode, '$.tuple', restricted.conditionNode)
-      : graphParserFailure('unsupported-relation', 'domain-restriction-route');
+      : restrictClassification(classifyBareExpression(restricted.expressionNode, '$'), restricted.conditionNode, '$');
   }
   if (operator === 'Which') return classifyPiecewise(node, 'y', 'bare-expression', '$.piecewise');
   if (graphTupleOperands(node)) return classifyTuple(node, '$.tuple');

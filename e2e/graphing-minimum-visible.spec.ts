@@ -539,9 +539,10 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
 
     await enterExpression(page, 'y=\\begin{cases}x^2&x<0\\\\\\sqrt{x}&x\\ge0\\end{cases}');
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
-    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    // The branches meet at (0, 0): the included end's filled circle stands for both (PIECEWISE-CORE1).
+    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(1);
     await expect(page.getByTestId('graph-scene-points').locator('circle').first())
-      .toHaveAttribute('fill', '#071517');
+      .toHaveAttribute('data-marker', 'filled');
     const viewport = page.getByTestId('graph-viewport');
     const screen = await graphScreen(viewport);
     const traceStart = screen(4, 2);
@@ -689,7 +690,9 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByTestId('graph-piecewise-authoring-draft')).toHaveCount(0);
     await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
-    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(2);
+    // Both branches exclude x = 0 and meet there: one open circle marks the missing point.
+    await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(1);
+    await expect(page.getByTestId('graph-scene-points').locator('circle').first()).toHaveAttribute('data-marker', 'open');
     const piecewiseRow = page.locator('[data-testid="graph-expression-row"][data-piecewise-state]');
     const piecewiseSummary = page.getByTestId('graph-piecewise-summary');
     const expand = page.getByRole('button', { name: 'Expand piecewise branches' });

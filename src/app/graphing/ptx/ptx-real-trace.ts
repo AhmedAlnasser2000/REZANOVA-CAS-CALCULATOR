@@ -29,7 +29,17 @@ export function ptxRealRefiners(document: GraphDocumentV4 | null, parameters: Re
   const port = defaultPtxSolverPort();
   const refiners = new Map<string, PtxRealRefiner>();
   for (const item of document?.items ?? []) {
-    if (item.kind !== 'relation' || !item.visible) continue;
+    if (item.kind === 'note' || !item.visible) continue;
+    if (item.kind === 'piecewise') {
+      // The first-match function of all branches, so a sweep reads the branch drawn at each input.
+      const kind = item.piecewise.branches[0]?.relation.kind;
+      if (kind === 'explicit-y' || kind === 'explicit-x') {
+        const f = port.piecewiseFunction(item.piecewise, kind === 'explicit-y' ? 'x' : 'y', parameters);
+        if (f) refiners.set(item.itemId, { kind, f });
+      }
+      continue;
+    }
+    if (item.kind !== 'relation') continue;
     const relation = item.relation;
     if (relation.kind === 'explicit-y' || relation.kind === 'explicit-x') {
       const f = port.realFunction(relation.rhs, relation.kind === 'explicit-y' ? 'x' : 'y', parameters);
@@ -65,11 +75,26 @@ export function ptxRefineRealTrace(refiner: PtxRealRefiner | undefined, itemId: 
 }
 
 const DOT_NAMES: Record<PtxDot['feature'], string> = {
-  root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept',
+  root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept', endpoint: 'Endpoint', hole: 'Hole',
 };
+
+/** A piecewise item's end circles from the scene, as snap targets: filled ends and open ones (holes). */
+export function ptxEndpointDots(pointBatches: ReadonlyArray<{ pointBatchId: string; itemId: string; coordinates: Float64Array; marker?: 'filled' | 'open' }>): PtxDot[] {
+  return pointBatches.flatMap((batch) => {
+    if (!batch.marker || !batch.pointBatchId.includes(':endpoint:')) return [];
+    const dots: PtxDot[] = [];
+    for (let index = 0; index + 1 < batch.coordinates.length; index += 2) {
+      dots.push({ key: `${batch.pointBatchId}:${index}`, plane: 'real', feature: batch.marker === 'open' ? 'hole' : 'endpoint', itemIds: [batch.itemId],
+        x: batch.coordinates[index]!, y: batch.coordinates[index + 1]!, level: batch.marker === 'open' ? 'sampled-estimate' : 'numeric-validated', errorBound: 1e-9 });
+    }
+    return dots;
+  });
+}
 
 /** "(x, y)" to the reliable digits, named when it is a point of interest. */
 export function ptxRealTraceText(point: Pick<PtxRealTracePoint, 'x' | 'y' | 'errorBound' | 'dot'>) {
+  // An open circle is not on the graph: its x has no value, only a limit.
+  if (point.dot?.feature === 'hole') return `(${ptxNumber(point.x, point.errorBound)}, undefined) · limit ${ptxNumber(point.y, point.errorBound)}`;
   const text = `(${ptxNumber(point.x, point.errorBound)}, ${ptxNumber(point.y, point.errorBound)})`;
   return point.dot ? `${DOT_NAMES[point.dot.feature]} ${text}` : text;
 }

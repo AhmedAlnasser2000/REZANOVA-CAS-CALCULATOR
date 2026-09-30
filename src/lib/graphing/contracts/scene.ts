@@ -405,7 +405,7 @@ function validPiecewiseConditionEvidence(input: unknown) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
   const evidence = input as GraphSampleResultV6['itemEvidence'][number]['piecewiseCondition'];
   if (!evidence || evidence.version !== 1
-    || !['x', 'y'].includes(evidence.independentSymbol)
+    || !['x', 'y', 'theta'].includes(evidence.independentSymbol)
     || !['exact-global', 'adaptive-current-viewport', 'mixed', 'unresolved'].includes(evidence.basis)
     || !Number.isFinite(evidence.validatedInterval?.minimum)
     || !Number.isFinite(evidence.validatedInterval?.maximum)

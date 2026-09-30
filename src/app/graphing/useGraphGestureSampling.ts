@@ -49,8 +49,9 @@ function createGraphGestureLane({ readDocument, readSize, readWorkspace, isOpen 
 
   const run = async (viewport: GraphViewportV1) => {
     const snapshot = readDocument();
-    const items = classifiedGraphItems(snapshot).filter((item) => item.kind === 'relation' && item.visible
-      && GESTURE_ROUTES.has(item.relation.kind));
+    // Piecewise curves refresh during gestures too; their branches are y = f(x), x = f(y) or polar curves.
+    const items = classifiedGraphItems(snapshot).filter((item) => item.visible
+      && ((item.kind === 'relation' && GESTURE_ROUTES.has(item.relation.kind)) || item.kind === 'piecewise'));
     if (items.length === 0) return;
     sequence += 1;
     const current = sequence;

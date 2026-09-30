@@ -335,17 +335,29 @@ export function traceGraphPathAtPointer(input: {
   maximumDistancePixels?: number;
   pathId?: string;
 }): GraphTraceTarget | null {
-  const pathIndex = input.scene.paths.findIndex((path) => (
-    path.itemId === input.itemId && (input.pathId ? path.pathId === input.pathId && traceable(path) : primaryTraceable(path))
-  ));
-  const path = input.scene.paths[pathIndex];
-  const parameters = path?.parameterValues;
-  if (!path || !parameters || parameters.length === 0) return null;
   const targetParameter = input.relationKind === 'explicit-y'
     ? input.viewport.xMin + input.screen.x / input.size.width
       * (input.viewport.xMax - input.viewport.xMin)
     : input.viewport.yMax - input.screen.y / input.size.height
       * (input.viewport.yMax - input.viewport.yMin);
+  // A piecewise item has one path per branch: the sweep moves onto whichever branch covers the input.
+  // A Re/Im path of a complex-valued curve stays on itself.
+  const lockedIndex = input.pathId ? input.scene.paths.findIndex((path) => path.pathId === input.pathId && traceable(path)) : -1;
+  const covers = (path: SampledSceneRuntimeV2['paths'][number]) => {
+    const values = path.parameterValues;
+    if (!values || values.length === 0) return false;
+    let low = Infinity; let high = -Infinity;
+    for (const value of values) { if (value < low) low = value; if (value > high) high = value; }
+    return targetParameter >= low && targetParameter <= high;
+  };
+  const siblings = input.scene.paths.map((path, index) => ({ path, index }))
+    .filter(({ path }) => path.itemId === input.itemId && primaryTraceable(path));
+  const lockedPath = lockedIndex >= 0 ? input.scene.paths[lockedIndex] : undefined;
+  const pathIndex = lockedPath && (graphComplexValuePart(lockedPath.pathId) !== null || covers(lockedPath)) ? lockedIndex
+    : siblings.find(({ path }) => covers(path))?.index ?? (lockedIndex >= 0 ? lockedIndex : siblings[0]?.index ?? -1);
+  const path = input.scene.paths[pathIndex];
+  const parameters = path?.parameterValues;
+  if (!path || !parameters || parameters.length === 0) return null;
   let lower = 0;
   let upper = parameters.length - 1;
   while (lower < upper) {

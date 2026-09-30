@@ -200,7 +200,25 @@ async function runComplexLocusSmoke(session) {
   return { ...locus, screenshot };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus) {
+async function runPiecewiseSmoke(session) {
+  // A jump: the left branch ends at an open circle (1, 1), the right starts at a filled one (1, 3).
+  await click(session, 'xpath', "//button[normalize-space(.)='Real']");
+  await waitFor('piecewise expression', () => execute(session, `
+    const field = document.querySelectorAll('math-field')[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue('\\\\begin{cases}x&x<1\\\\\\\\x+2&x\\\\ge1\\\\end{cases}');
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  const piecewise = await waitFor('piecewise end circles', () => execute(session, `
+    const circles = [...document.querySelectorAll('[data-testid="graph-scene-points"] [data-marker]')];
+    const markers = circles.map((circle) => circle.dataset.marker).sort();
+    return markers.length === 2 ? { markers, paths: document.querySelectorAll('[data-testid="graph-scene-paths"] path[data-item-id]').length } : null;`), 30_000);
+  await delay(800);
+  const screenshot = await webdriver('GET', `/session/${session}/screenshot`);
+  return { ...piecewise, screenshot };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -217,6 +235,9 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
     failures.push(`2D surface is not a GPU height map: ${surfaceHeat.chip.text}, ${surfaceHeat.visibleSvgBands} SVG bands visible`);
   }
   if (complexLocus && complexLocus.mode !== 'Complex') failures.push(`a locus did not open the Complex view (${complexLocus.mode})`);
+  if (piecewise && (piecewise.markers.join(',') !== 'filled,open' || piecewise.paths !== 2)) {
+    failures.push(`piecewise jump is not drawn with one open and one filled end circle (${JSON.stringify(piecewise)})`);
+  }
   if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
     failures.push(`the locus circle is not painted in the Complex pane (${JSON.stringify(complexLocus.circlePixels)})`);
   }
@@ -280,14 +301,21 @@ try {
     complexLocus = { mode: locus.mode, status: locus.status, circlePixels: locus.circlePixels };
     if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-locus.png', Buffer.from(locus.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus) : [];
+  let piecewise = null;
+  if (smoke) {
+    log('running piecewise smoke');
+    const run = await runPiecewiseSmoke(sessionId);
+    piecewise = { markers: run.markers, paths: run.paths };
+    if (outFile) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-piecewise.png', Buffer.from(run.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

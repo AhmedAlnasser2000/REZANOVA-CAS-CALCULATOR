@@ -44,6 +44,8 @@ export function graphConditionLatex(condition: GraphConditionIR): string {
     )).join('');
   }
   if (condition.kind === 'and') return condition.clauses.map(graphConditionLatex).join('\\land ');
+  if (condition.kind === 'or') return condition.clauses.map(graphConditionLatex).join('\\lor ');
+  if (condition.kind === 'not-equal') return `${expressionLatex(condition.left)}\\ne ${expressionLatex(condition.right)}`;
   const minimum = condition.minimum ? expressionLatex(condition.minimum) : '-\\infty';
   const maximum = condition.maximum ? expressionLatex(condition.maximum) : '\\infty';
   return `${expressionLatex(condition.value)}\\in${condition.minimumInclusive ? '[' : '('}${minimum},${maximum}${condition.maximumInclusive ? ']' : ')'}`;
@@ -68,9 +70,9 @@ function graphConditionFreeSymbols(condition: GraphConditionIR) {
     value?.freeSymbols.forEach((symbol) => symbols.add(symbol));
   };
   const visit = (value: GraphConditionIR) => {
-    if (value.kind === 'comparison') { expression(value.left); expression(value.right); }
+    if (value.kind === 'comparison' || value.kind === 'not-equal') { expression(value.left); expression(value.right); }
     else if (value.kind === 'chain') value.operands.forEach(expression);
-    else if (value.kind === 'and') value.clauses.forEach(visit);
+    else if (value.kind === 'and' || value.kind === 'or') value.clauses.forEach(visit);
     else if (value.kind === 'interval-membership') {
       expression(value.value); expression(value.minimum); expression(value.maximum);
     }
@@ -554,6 +556,19 @@ export function graphDraftMessage(stop: GraphStopReason) {
   }
   if (stop.detailCode === 'complex-mapping-coordinate-conflict') {
     return 'z is the complex variable and cannot be mixed with x or y. Use f(z) = … for a complex map, or z = f(x, y) for a surface.';
+  }
+  if (stop.detailCode === 'explicit-y-coordinate-conflict' || stop.detailCode === 'explicit-x-coordinate-conflict'
+    || stop.detailCode === 'bare-polar-coordinate') {
+    return 'r and θ are polar coordinates, so they cannot be sliders here. Use another letter (like b), or write a polar curve r = f(θ).';
+  }
+  if (stop.detailCode === 'domain-restriction-route') {
+    return 'Restrictions like {x > 0} work on y = f(x), x = f(y), polar and parametric curves. Restricting implicit curves and regions is coming.';
+  }
+  if (stop.detailCode === 'piecewise-parametric-branch') {
+    return 'Piecewise branches are values such as x² (or r = … for polar curves). Parametric pairs inside cases are not supported yet.';
+  }
+  if (stop.detailCode === 'piecewise-condition-coordinate-conflict') {
+    return 'A condition must use the curve\'s own variable: x for y = f(x), y for x = f(y), θ for polar curves.';
   }
   if (stop.detailCode === 'dependent-parameter-definition') {
     return 'Dependent parameter definitions are not supported yet. Use a finite numeric value.';

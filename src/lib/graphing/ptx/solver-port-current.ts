@@ -1,6 +1,7 @@
 import { complexAbs } from '../../numeric/complex';
 import type { GraphExpressionIR } from '../contracts';
-import { compileGraphExpression, createGraphExpressionEvaluator } from '../evaluator';
+import { compileGraphExpression, createGraphExpressionEvaluator, GraphExpressionPlanCache } from '../evaluator';
+import { compileGraphCondition } from '../sampling/condition';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';
 import { findGraphPlaneRoots } from '../sampling/complex-plane-newton';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
@@ -12,7 +13,7 @@ import type { PtxRealFunction, PtxSolverPort } from './solver-port';
 
 let planSerial = 0;
 
-function realFunction(expression: GraphExpressionIR, variable: 'x' | 'y', parameters: Readonly<Record<string, number>>): PtxRealFunction | null {
+function realFunction(expression: GraphExpressionIR, variable: string, parameters: Readonly<Record<string, number>>): PtxRealFunction | null {
   const compiled = compileGraphExpression({ planId: `ptx.${planSerial += 1}`, sourceRevision: 0, expression });
   if (!compiled.ok) return null;
   const evaluator = createGraphExpressionEvaluator(compiled.plan);
@@ -41,6 +42,27 @@ function usesSymbol(node: unknown, symbol: string): boolean {
 export const currentPtxSolverPort: PtxSolverPort = {
   id: 'graphing-current',
   realFunction,
+  piecewiseFunction(piecewise, variable, parameters) {
+    const cache = new GraphExpressionPlanCache(4 * piecewise.branches.length + 4);
+    const valueOf = (relation: (typeof piecewise.branches)[number]['relation']) => (
+      relation.kind === 'explicit-y' || relation.kind === 'explicit-x' ? relation.rhs : relation.kind === 'polar-radius' ? relation.radius : null);
+    const branches: Array<{ f: PtxRealFunction; test: (environment: Record<string, number>) => boolean | null }> = [];
+    for (const branch of piecewise.branches) {
+      const expression = valueOf(branch.relation);
+      const f = expression ? realFunction(expression, variable, parameters) : null;
+      const condition = compileGraphCondition({ condition: branch.condition, itemId: `ptx.${planSerial += 1}`, branchId: branch.branchId, sourceRevision: 0, cache });
+      if (!f || !condition.ok) return null;
+      branches.push({ f, test: condition.condition.test });
+    }
+    const otherwiseExpression = piecewise.otherwise ? valueOf(piecewise.otherwise) : null;
+    const otherwise = otherwiseExpression ? realFunction(otherwiseExpression, variable, parameters) : null;
+    if (piecewise.otherwise && !otherwise) return null;
+    return (value) => {
+      const environment = { ...parameters, [variable]: value };
+      for (const branch of branches) if (branch.test(environment) === true) return branch.f(value);
+      return otherwise ? otherwise(value) : undefined;
+    };
+  },
   planeFunction(left, right, parameters) {
     const difference = { mathJson: ['Add', left.mathJson, ['Negate', right.mathJson]], freeSymbols: [...new Set([...left.freeSymbols, ...right.freeSymbols])] } as GraphExpressionIR;
     const compiled = compileGraphExpression({ planId: `ptx.${planSerial += 1}`, sourceRevision: 0, expression: difference });
