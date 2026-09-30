@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { runIntegrationJob } from '../../lib/calculus/new-integration/runtime';
 import { integrationError } from '../../lib/calculus/new-integration/error';
 import type { IntegrationDraft, IntegrationResponse } from '../../lib/calculus/new-integration/types';
-import { loadIntegrationDrafts, readIntegrationDraft, saveIntegrationDrafts } from './new-integration-drafts';
+import { loadIntegrationDrafts, readIntegrationDraft, readFormulaView, saveIntegrationDrafts, type FormulaView } from './new-integration-drafts';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import { workspaceInstanceRuntimeContext } from './workspace-instances';
 export type IntegrationViewState = {response?: IntegrationResponse; running?: boolean; notice?: string};
@@ -14,21 +14,26 @@ export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorksp
   const jobs = useRef(new Map<string, AbortController>()), revisions = useRef(new Map<string, number>());
   const setView = useCallback((id: string, patch: Partial<IntegrationViewState>) => setViews(v => ({...v, [id]: {...v[id], ...patch}})), []);
   const stop = useCallback((id: string) => {jobs.current.get(id)?.abort(); jobs.current.delete(id); setView(id, {running: false, notice: 'Stopped.'});}, [setView]);
-  const create = useCallback((draft: IntegrationDraft, title = 'New Integration') => current.current.createNewIntegrationTabs([{title, state: {...draft}}])[0], []);
+  const create = useCallback((draft: IntegrationDraft, title = 'New Integration') => current.current.createNewIntegrationTabs([{title, state: {...draft, formulaView: 'compact'}}])[0], []);
   const open = useCallback(() => {
     if (!enteredRef.current) {
       enteredRef.current = true; setEntered(true);
       const saved = loadIntegrationDrafts(localStorage);
-      if (saved.length) {current.current.createNewIntegrationTabs(saved.map(v => ({title: v.title, state: {...v.draft}}))); return;}
+      if (saved.length) {current.current.createNewIntegrationTabs(saved.map(v => ({title: v.title, state: {...v.draft, formulaView: v.formulaView ?? 'compact'}}))); return;}
     }
     create(readIntegrationDraft(null));
   }, [create]);
   const change = useCallback((id: string, draft: IntegrationDraft) => {
     jobs.current.get(id)?.abort(); jobs.current.delete(id);
     revisions.current.set(id, (revisions.current.get(id) ?? 0) + 1);
-    current.current.updateInstanceSurfaceState(id, {...draft});
+    const previous = current.current.workspaceInstances.find(v => v.id === id);
+    current.current.updateInstanceSurfaceState(id, {...draft, formulaView: readFormulaView(previous?.surfaceState)});
     setView(id, {running: false, notice: undefined});
   }, [setView]);
+  const setFormulaView = useCallback((id: string, formulaView: FormulaView) => {
+    const instance = current.current.workspaceInstances.find(v => v.id === id);
+    if (instance?.workspaceKind === 'new-integration') current.current.updateInstanceSurfaceState(id, {...readIntegrationDraft(instance.surfaceState), formulaView});
+  }, []);
   const run = useCallback(async (id: string, artifact?: string, action?: 'open' | 'verify') => {
     const instance = current.current.workspaceInstances.find(v => v.id === id);
     if (!instance) return;
@@ -60,11 +65,11 @@ export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorksp
     for (const [id, job] of jobs.current) if (!ids.has(id)) {job.abort(); jobs.current.delete(id); revisions.current.delete(id);}
     setViews(previous => {const removed = Object.keys(previous).filter(id => !ids.has(id)); if (!removed.length) return previous; const next = {...previous}; for (const id of removed) delete next[id]; return next;});
     if (entered) {
-      try {saveIntegrationDrafts(localStorage, workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-integration').map(v => ({title: v.title, draft: readIntegrationDraft(v.surfaceState)})));}
+      try {saveIntegrationDrafts(localStorage, workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-integration').map(v => ({title: v.title, draft: readIntegrationDraft(v.surfaceState), formulaView: readFormulaView(v.surfaceState)})));}
       catch (e) {const id = workspaces.activeInstanceId; setView(id, {notice: e instanceof Error ? e.message : 'Draft persistence unavailable.'});}
     }
   }, [entered, workspaces.workspaceInstances, workspaces.activeInstanceId, setView]);
   useEffect(() => {const running = jobs.current; return () => {for (const job of running.values()) job.abort(); running.clear();};}, []);
-  return {views, open, change, run, stop};
+  return {views, open, change, run, stop, setFormulaView};
 }
 export type NewIntegrationRuntime = ReturnType<typeof useNewIntegrationRuntime>;

@@ -36,3 +36,24 @@ it('switching leaves work running; editing or closing aborts and drops late repl
   act(() => {void h.result.current.integration.run(first);}); act(() => h.result.current.workspaces.closeInstance(first));
   await waitFor(() => expect(pending[1].signal.aborted).toBe(true));
 });
+it('persists per-tab formula view without changing a running request or its revision', async () => {
+  let resolve!: (v: IntegrationResponse) => void;
+  vi.mocked(runIntegrationJob).mockImplementation(() => new Promise(r => {resolve = r;}));
+  const h = hook(); act(() => h.result.current.integration.open()); const first = h.result.current.workspaces.activeInstanceId;
+  act(() => {void h.result.current.integration.run(first);});
+  const call = vi.mocked(runIntegrationJob).mock.calls[0], revision = call[3]();
+  act(() => h.result.current.integration.setFormulaView(first, 'full'));
+  expect(call[5].aborted).toBe(false); expect(call[3]()).toBe(revision);
+  expect(call[0].request).not.toHaveProperty('formulaView');
+  const response = {document: integrationError('Fixture'), request: readIntegrationDraft(null), elapsedMs: 1, usage: {work: 1, allocation: 1}, checks: []};
+  await act(async () => resolve(response));
+  expect(h.result.current.integration.views[first].response).toBe(response);
+  act(() => h.result.current.integration.change(first, {...readIntegrationDraft(null), source: 'x'}));
+  expect(h.result.current.workspaces.activeInstance?.surfaceState).toHaveProperty('formulaView', 'full');
+  act(() => h.result.current.integration.open());
+  expect(h.result.current.workspaces.activeInstance?.surfaceState).toHaveProperty('formulaView', 'compact');
+  h.unmount(); const restored = hook(); act(() => restored.result.current.integration.open());
+  const tabs = restored.result.current.workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-integration');
+  expect(tabs.map(t => (t.surfaceState as {formulaView: string}).formulaView)).toEqual(['full', 'compact']);
+  expect(restored.result.current.integration.views).toEqual({});
+});

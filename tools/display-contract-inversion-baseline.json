@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "New Integration V5 and workspace adoption, including Calculate versioned-result type repair: retain native coverage for VersionedResultProducerDraft and inventory existing Statistics/Trigonometry versioned forwarders; zero legacy reads or compatibility projections.",
+  "acceptedReason": "INTEGRATION-RATIONAL-PRESENTATION1 moves the New Integration canonical read into its typed presentation read model; no legacy reads or compatibility additions.",
   "registryDigest": "e9622195ae9f83dcd1a7",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -1054,9 +1054,6 @@
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "630f3af4b7b731062433:1"
       ],
-      "src/app/new-integration/NewIntegrationPage.tsx": [
-        "a7ddc828fa96fc1de011:1"
-      ],
       "src/app/runtime/equation-explicit-numeric-panels.ts": [
         "7e94924f98dcbf4c617d:1"
       ],
@@ -1156,6 +1153,9 @@
       "src/lib/result-contract/consumer.ts": [
         "3ff7d4c54b0a1ee0ad4a:1",
         "3ff7d4c54b0a1ee0ad4a:2"
+      ],
+      "src/lib/result-contract/integration-presentation.ts": [
+        "094ffacdc6b2d538e9c2:1"
       ],
       "src/lib/result-contract/mathjson-coverage.ts": [
         "e91614bdc560475ad735:1",

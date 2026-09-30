@@ -1,8 +1,8 @@
 # Elementary Integration Reconstruction Roadmap
 
 Date: 2026-09-27
-Updated: 2026-09-28
-Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are backend-verified private capabilities. Later-stage details and sequencing remain provisional and subject to change when necessary.
+Updated: 2026-09-30
+Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is UI-verified. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
 
@@ -18,7 +18,7 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **`INTEGRATION-RATIONAL-REPRESENTATION1` is backend-verified and committed as `89cbc176`**, with 84 focused tests at its checkpoint. The [representation specification](integration-rational-representation1-spec.md) records the ring/integral-domain/field distinction, verified Brown subresultants, square-free quotient units/CRT, exact local-complex root-log primitives, trace differentiation, retained conditions and private replay.
 
-**`INTEGRATION-RATIONAL-DECISION1` is backend-verified and committed as `3a96622c`**, with 122 focused tests at that checkpoint. The [decision specification](integration-rational-decision1-spec.md) records automatic normalized-Q(x) primitives, exact conditions and full replayable Hermite/LRT derivations. There is no application caller.
+**`INTEGRATION-RATIONAL-DECISION1` is backend-verified and committed as `3a96622c`**, with 122 focused tests at that checkpoint. The [decision specification](integration-rational-decision1-spec.md) records automatic normalized-Q(x) primitives, exact conditions and full replayable Hermite/LRT derivations. This kernel is now adopted through the separately verified New Integration boundary.
 
 **`INTEGRATION-RATIONAL-PROOF-PERFORMANCE1` is implemented and benchmark-verified**, with 138 focused tests, preserved v1 artifacts and mandatory exact proofs. Same-machine quintic medians improve complete integration 42.961 s → 3.215 s (13.36x), fresh verification 8.295 s → 0.059 s (140.14x), and decoding 8.952 s → 0.273 s (32.81x). All corpus operations pass the regression threshold. The [performance specification](integration-rational-proof-performance1-spec.md) records bounded operation-local caches, checked shared-denominator proof arithmetic and reproducible evidence. The user subsequently authorized this integration-only milestone commit; no push. The user approved the two ordered result-contract/adoption gates; both are now verified and user-authorized for commit (see below).
 
@@ -37,6 +37,7 @@ The first three foundation gates and their proof-performance follow-up are concr
 | 3 follow-up (backend verified; adopted in New Integration) | `INTEGRATION-RATIONAL-PROOF-PERFORMANCE1` | Exact validation, operation-scoped immutable proof reuse and shared-denominator checking; preserve certificates and all limits. | Backend: both 5x targets exceeded, no material corpus regression, fresh v1 replay and adversarial trust/resource checks. |
 | 4 prerequisite (backend verified) | `INTEGRATION-RATIONAL-RESULT-CONTRACT1` | Exact V5 all-roots primitive and V2 ordinary-result adapters; standard MathJSON leaves and explicit binding. | Exact conversion, authority, bounds, compatibility and conditions. |
 | 4 (ui verified) | `INTEGRATION-RATIONAL-ADOPTION1` | Independent New Integration workspace with exact source lowering, retained exclusions, worker-only execution, drafts and fresh replay. | Formal output, conditions, copy/artifacts, cancellation/staleness, authority ratchets and npm-dev Playwright. |
+| 4 presentation follow-up (ui verified) | `INTEGRATION-RATIONAL-PRESENTATION1` | Canonical-derived structural formatting, compact/full formulas, exact copy, condition provenance and per-tab preference. | UI: exact identity/fallback tests, proof/artifact invariance, lifecycle isolation and npm-dev Playwright. |
 | 5 | `INTEGRATION-DIFFERENTIAL-FIELD1` | Exact fields and valid defining relations; generic parameter fields, derivations, relation-aware towers, constant-field hypotheses and input conversion. Pull algebraic arithmetic forward where required. | Backend: derivation/conversion laws, dependent generators, preserved exclusions and truthful unknown decisions. |
 | 6 | `INTEGRATION-TRANSCENDENTAL-DECISION1` | Validated towers and required lower-field algorithms; recursive RDE bounds, limited integration, logarithmic derivatives and Liouville reductions. | Backend and UI on adoption: checked positive/negative certificates with explicit domain hypotheses. |
 | 7 | `INTEGRATION-ALGEBRAIC-FIELD1` | Generic arithmetic/derivations; irreducible defining relations, basis arithmetic, exact inversion/differentiation and root/embedding semantics. May precede Stage 6 as its prerequisites require. | Backend: arithmetic/differential laws beyond quadratic radical templates. |

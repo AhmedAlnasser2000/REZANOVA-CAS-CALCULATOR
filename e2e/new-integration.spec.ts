@@ -17,10 +17,18 @@ test('New Integration: exact answers, editable expressions, isolated tabs and sa
   await expect(workspace.getByRole('heading', {name: 'Verified antiderivative'})).toBeVisible({timeout: 30000});
   await workspace.getByText('Conditions', {exact: true}).click();
   await workspace.getByText('Verification details', {exact: true}).click();
-  await expect(workspace.getByText('Log norm', {exact: true})).toBeVisible();
+  await expect(workspace.getByText('Log norm', {exact: true}).first()).toBeVisible();
   await page.screenshot({path: testInfo.outputPath('formal-answer.png'), fullPage: true});
   await workspace.getByRole('button', {name: 'Copy LaTeX', exact: true}).click();
   await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toContain('\\sum_');
+  const compactCopy = await page.evaluate(() => window.__calcwizClipboardText);
+  await workspace.getByRole('button', {name: 'Show full formula', exact: true}).click();
+  await expect(workspace.getByRole('button', {name: 'Show compact formula', exact: true})).toBeVisible();
+  await workspace.getByRole('button', {name: 'Copy LaTeX', exact: true}).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toBe(compactCopy);
+  expect(compactCopy).toContain('\\ne0'); expect(compactCopy).not.toMatch(/[LqG]_\{/);
+  await workspace.getByText('Original condition entries', {exact: true}).click();
+  await page.screenshot({path: testInfo.outputPath('expanded-answer-original-conditions.png'), fullPage: true});
   const download = page.waitForEvent('download'); await workspace.getByRole('button', {name: 'Export derivation'}).click();
   const saved = await download; const path = testInfo.outputPath('derivation.json'); await saved.saveAs(path);
   // Changed draft must not change the producing request exported with the result.
@@ -68,6 +76,11 @@ test('New Integration: background completion, limits, close cancellation and qui
   await expect(workspace.getByRole('heading', {name: 'Verified antiderivative'})).toBeVisible({timeout: 60000});
   await workspace.getByText('Conditions', {exact: true}).click();
   await page.screenshot({path: testInfo.outputPath('quintic.png'), fullPage: true});
+  await workspace.getByRole('button', {name: 'Show full formula', exact: true}).click();
+  await page.screenshot({path: testInfo.outputPath('quintic-expanded.png'), fullPage: true});
+  await tabs.nth(1).getByRole('tab').click();
+  await tabs.nth(0).getByRole('tab').click();
+  await expect(workspace.getByRole('button', {name: 'Show compact formula', exact: true})).toBeVisible();
   expect(await workspace.evaluate(e => e.scrollWidth <= e.clientWidth + 2)).toBe(true);
   await page.setViewportSize({width: 640, height: 900});
   await page.screenshot({path: testInfo.outputPath('quintic-narrow.png'), fullPage: true});
@@ -110,4 +123,30 @@ test('New Integration opens without secure-context UUID or clipboard APIs', asyn
   await expect(workspace.getByRole('heading', {name: 'Verified antiderivative'})).toBeVisible();
   await workspace.getByRole('button', {name: 'Copy LaTeX'}).click();
   await expect(workspace.getByText(/^(LaTeX copied\.|Clipboard is unavailable\.)$/)).toBeVisible();
+});
+
+test('New Integration restores full-view preference without restoring a result', async ({page}, testInfo) => {
+  await page.goto('/'); await openLauncherApp(page, 'Calculus', 'New Integration');
+  const workspace = page.getByTestId('new-integration-page');
+  await workspace.getByRole('button', {name: 'Example', exact: true}).click();
+  await workspace.getByRole('button', {name: 'Integrate', exact: true}).click();
+  await workspace.getByRole('button', {name: 'Show full formula', exact: true}).click();
+  await page.reload(); await openLauncherApp(page, 'Calculus', 'New Integration');
+  await expect(workspace.getByTestId('integration-result')).toHaveCount(0);
+  await workspace.getByRole('button', {name: 'Integrate', exact: true}).click();
+  await expect(workspace.getByRole('button', {name: 'Show compact formula', exact: true})).toBeVisible();
+  await page.screenshot({path: testInfo.outputPath('restored-full.png'), fullPage: true});
+});
+
+test('New Integration emphasizes continuation plus signs in a multi-term answer', async ({page}, testInfo) => {
+  await page.goto('/'); await openLauncherApp(page, 'Calculus', 'New Integration');
+  const workspace = page.getByTestId('new-integration-page');
+  await setMathFieldLatex(page, String.raw`\int \frac{1}{y^5+\frac{y}{1+y^4}}-\frac{2y}{3}\,dy`, 'new-integration-editor');
+  await workspace.getByRole('button', {name: 'Integrate', exact: true}).click();
+  await workspace.getByRole('button', {name: 'Show full formula', exact: true}).click({timeout: 60000});
+  await workspace.getByText('Conditions', {exact: true}).click();
+  await page.screenshot({path: testInfo.outputPath('emphasized-additions.png'), fullPage: true});
+  await page.setViewportSize({width: 640, height: 900});
+  await page.screenshot({path: testInfo.outputPath('emphasized-additions-narrow.png'), fullPage: true});
+  expect(await workspace.evaluate(e => e.scrollWidth <= e.clientWidth + 2)).toBe(true);
 });

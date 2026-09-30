@@ -1,15 +1,13 @@
 import { writeTextClipboard } from '../../lib/clipboard/system-clipboard';
-import { useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import type { NewIntegrationRuntime } from '../runtime/useNewIntegrationRuntime';
-import { readIntegrationDraft } from '../runtime/new-integration-drafts';
+import { readIntegrationDraft, readFormulaView } from '../runtime/new-integration-drafts';
 import { MAX_INTEGRATION_ARTIFACT_BYTES, type IntegrationLimits } from '../../lib/calculus/new-integration/types';
-import { readRationalPrimitiveV5 } from '../../lib/result-contract/rational-primitive-v5';
-import { resolveCanonicalResultForConsumer } from '../../lib/result-contract/consumer';
-import { exactSymbolLatex } from '../../lib/result-contract/exact-arithmetic-latex';
+import { readIntegrationPresentation } from '../../lib/result-contract/integration-presentation';
 import '../../styles/app/new-integration.css';
 
 export default function NewIntegrationPage({instance, runtime}: {instance: WorkspaceInstance; runtime: NewIntegrationRuntime}) {
@@ -18,11 +16,9 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
   const [notice, setNotice] = useState('');
   const draft = readIntegrationDraft(instance.surfaceState), view = runtime.views[instance.id] ?? {};
   const result = view.response, doc = result?.document;
-  const formal = doc?.version === 5 ? readRationalPrimitiveV5(doc) : undefined;
-  const ordinary = doc?.version === 2 ? resolveCanonicalResultForConsumer(doc.outcomeKind === 'success'
-    ? {kind: 'success', canonicalResult: doc} : {kind: 'error', canonicalResult: doc}) : undefined;
-  const latex = formal?.latex ?? (ordinary?.ok ? ordinary.presentation.primaryLatex : undefined);
-  const conditions = formal?.conditions ?? (ordinary?.ok ? ordinary.presentation.supplements?.map((latex, i, all) => ({origin: i < all.length - 2 ? 'Source exclusion' : i === all.length - 2 ? 'Input denominator' : 'Primitive denominator', latex})) : []);
+  const presentation = useMemo(() => doc ? readIntegrationPresentation(doc) : undefined, [doc]);
+  const formulaView = readFormulaView(instance.surfaceState);
+  const latex = presentation && (formulaView === 'full' ? presentation.expanded() : presentation.compact);
   const changeSource = (source: string) => runtime.change(instance.id, {...draft, source});
   function insertIntegral() {
     const field = editor.current;
@@ -68,17 +64,26 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
       {result?.request.source !== draft.source && <MathStatic className="ni-math" latex={result?.request.source} block normalizeDisplay={false} />}
       {doc.outcomeKind === 'error' ? <p role="alert">{doc.error}</p> : <>
         <p>Verified · formal local complex primitive. Logarithm choices differ locally by constants.</p>
-        {formal ? <div className="ni-formal-answer"><MathStatic className="ni-math" block normalizeDisplay={false} latex={`${formal.document.primary.rationalPart.canonicalLatex}+${formal.document.primary.terms.map((_, i) => `L_{${i + 1}}`).join('+')}+${exactSymbolLatex(formal.document.primary.integrationConstant)}`} />
-          {formal.document.primary.terms.map((t, i) => <div className="ni-term" key={t.rootVariable}>
-            <MathStatic className="ni-math" block normalizeDisplay={false} latex={`L_{${i + 1}}=\\sum_{q_{${i + 1}}(${exactSymbolLatex(t.rootVariable)})=0}\\left(${t.weight.canonicalLatex}\\right)\\log\\left(G_{${i + 1}}(${exactSymbolLatex(formal.document.primary.variable)},${exactSymbolLatex(t.rootVariable)})\\right)`} />
-            <MathStatic className="ni-math" block normalizeDisplay={false} latex={`q_{${i + 1}}(${exactSymbolLatex(t.rootVariable)})=${t.modulus.canonicalLatex}`} />
-            <MathStatic className="ni-math" block normalizeDisplay={false} latex={`G_{${i + 1}}(${exactSymbolLatex(formal.document.primary.variable)},${exactSymbolLatex(t.rootVariable)})=${t.argument.canonicalLatex}`} />
+        {presentation && <div className="ni-formal-answer">
+          <MathStatic className="ni-math" block normalizeDisplay={false} latex={latex} />
+          {presentation.terms.length > 0 && <>
+            <button aria-pressed={formulaView === 'full'} onClick={() => runtime.setFormulaView(instance.id, formulaView === 'full' ? 'compact' : 'full')}>
+              {formulaView === 'full' ? 'Show compact formula' : 'Show full formula'}</button>
+            {formulaView === 'compact' && presentation.terms.map((t, i) => <div className="ni-term" key={i}>
+              <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.definition} />
+              <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.modulus} />
+              <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.argument} />
+            </div>)}
             <p>Every distinct root is included once. No root ordering or principal logarithm is selected.</p>
-          </div>)}
-        </div> : <MathStatic className="ni-math" latex={latex} block normalizeDisplay={false} />}
-        <div className="ni-actions"><button onClick={() => {if (latex) void writeTextClipboard(latex).then(ok => setNotice(ok ? 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}}>Copy LaTeX</button>
+          </>}
+        </div>}
+        <div className="ni-actions"><button onClick={() => {if (presentation) void writeTextClipboard(presentation.copy()).then(ok => setNotice(ok ? 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}}>Copy LaTeX</button>
           <button disabled={!result?.artifact} onClick={exportArtifact}>Export derivation</button></div>
-        <details><summary>Conditions</summary>{conditions?.map((c, i) => <div className="ni-condition" key={i}><span>{c.origin}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}</details>
+        <details><summary>Conditions</summary>
+          {presentation?.conditions.length === 0 && <p>No nontrivial restrictions.</p>}
+          {presentation?.conditions.map((c, i) => <div className="ni-condition" key={i}><span>{c.origins.map((origin, j) => <Fragment key={origin}>{j > 0 && ' · '}<span>{origin}</span></Fragment>)}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}
+          <details><summary>Original condition entries</summary>{presentation?.originals.map((c, i) => <div className="ni-condition" key={i}><span>{c.origins.join(' · ')}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}</details>
+        </details>
         <details><summary>Verification details</summary><ul>{result?.checks.map(c => <li key={c}>{c}</li>)}</ul><p>{result?.elapsedMs.toFixed(1)} ms · {result?.usage.work.toLocaleString()} work · {result?.usage.allocation.toLocaleString()} cumulative allocation units</p></details>
       </>}
     </section>}

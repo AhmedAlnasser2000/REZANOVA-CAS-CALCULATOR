@@ -1,6 +1,8 @@
 import { DEFAULT_INTEGRATION_LIMITS, validIntegrationLimits, type IntegrationDraft } from '../../lib/calculus/new-integration/types';
 export const INTEGRATION_DRAFT_KEY = 'rezanova.new-integration.drafts.v1';
-export type SavedIntegrationDraft = {title: string; draft: IntegrationDraft};
+export type FormulaView = 'compact' | 'full';
+export function readFormulaView(v: unknown): FormulaView {return v && typeof v === 'object' && 'formulaView' in v && v.formulaView === 'full' ? 'full' : 'compact';}
+export type SavedIntegrationDraft = {title: string; draft: IntegrationDraft; formulaView?: FormulaView};
 export function readIntegrationDraft(v: unknown): IntegrationDraft {
   if (v && typeof v === 'object') {
     const a = v as Record<string, unknown>;
@@ -15,7 +17,7 @@ export function loadIntegrationDrafts(storage: Pick<Storage, 'getItem'>): SavedI
     if (!Array.isArray(raw) || raw.length > 64) return [];
     return raw.flatMap(item => item && typeof item === 'object' && typeof item.title === 'string' && item.title.length <= 120
       && item.draft && typeof item.draft.source === 'string' && validIntegrationLimits(item.draft.limits)
-      ? [{title: item.title, draft: readIntegrationDraft(item.draft)}] : []);
+      ? [{title: item.title, draft: readIntegrationDraft(item.draft), formulaView: readFormulaView(item)}] : []);
   } catch {return [];}
 }
 export function saveIntegrationDrafts(storage: Pick<Storage, 'setItem'>, drafts: SavedIntegrationDraft[]) {
