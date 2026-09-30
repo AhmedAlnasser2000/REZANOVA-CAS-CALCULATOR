@@ -55,6 +55,7 @@ import type {
 import { graphAutoFitViewport } from './graph-auto-fit';
 import { useGraphSessionActions } from './useGraphSessionActions';
 import { useGraphViewAutoSwitch } from './graph-view-auto-switch';
+import { usePiecewiseSuppression } from './usePiecewiseSuppression';
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
@@ -74,7 +75,6 @@ export function useGraphWorkspaceController({
   const [sampleResult, setSampleResult] = useState<GraphSampleResultV6 | null>(null);
   const [status, setStatus] = useState<GraphControllerStatus>({ kind: 'ready', label: 'Ready' });
   const [visibleDraftErrors, setVisibleDraftErrors] = useState<ReadonlySet<string>>(new Set());
-  const [suppressedPiecewiseItems, setSuppressedPiecewiseItems] = useState<ReadonlySet<string>>(new Set());
   const [blankItemId, setBlankItemId] = useState(() => `${workspaceContext.workspaceInstanceId}.item.1`);
   const [historyAvailability, setHistoryAvailability] = useState({ canRedo: false, canUndo: false });
   const sessionRef = useRef(session);
@@ -112,7 +112,11 @@ export function useGraphWorkspaceController({
     parameter: initialSession.surface.parameterRevision,
     viewport: initialSession.surface.viewportRevision,
   });
-  const piecewiseGraceTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const {
+    suppressed: suppressedPiecewiseItems,
+    release: releasePiecewiseSuppression,
+    suppressAfterGrace: suppressPiecewiseAfterGrace,
+  } = usePiecewiseSuppression(useMemo(() => session.document.items.map((item) => item.itemId), [session.document.items]));
 
   const publishHistoryAvailability = useCallback(() => {
     setHistoryAvailability({
@@ -233,10 +237,13 @@ export function useGraphWorkspaceController({
       ...current,
       document: removeGraphDocumentItem(current.document, itemId),
       surface: surface.selectedItemId === itemId ? { ...surface, selectedItemId: null } : surface,
+      // A deleted piecewise item takes its open branch draft with it.
+      ...(current.authoring ? { authoring: { piecewiseDrafts: current.authoring.piecewiseDrafts.filter((draft) => draft.itemId !== itemId) } } : {}),
     });
     activeInputRevisionRef.current = null;
+    releasePiecewiseSuppression(itemId);
     commitSession(next, true);
-  }, [applyAutoView, commitSession, pushHistory]);
+  }, [applyAutoView, commitSession, pushHistory, releasePiecewiseSuppression]);
 
   const blurItem = useCallback((itemId: string) => {
     endTypingTransaction();
@@ -375,21 +382,15 @@ export function useGraphWorkspaceController({
       }, true);
       return true;
     }
-    const graceTimer = piecewiseGraceTimersRef.current.get(input.itemId);
-    if (graceTimer) clearTimeout(graceTimer);
-    piecewiseGraceTimersRef.current.delete(input.itemId);
-    if (!promoted && nextDraft.mode === 'replace') {
-      piecewiseGraceTimersRef.current.set(input.itemId, setTimeout(() => {
-        setSuppressedPiecewiseItems((currentIds) => new Set(currentIds).add(input.itemId));
-        piecewiseGraceTimersRef.current.delete(input.itemId);
-      }, INVALID_GRACE_MS));
-    }
+    // Branches that are valid again bring the item back at once; invalid ones hide it after a short grace.
+    releasePiecewiseSuppression(input.itemId);
+    if (!promoted && nextDraft.mode === 'replace') suppressPiecewiseAfterGrace(input.itemId);
     commitSession({
       ...current,
       authoring: { piecewiseDrafts: drafts.map((candidate) => candidate.itemId === input.itemId ? nextDraft : candidate) },
     });
     return false;
-  }, [commitSession, pushHistory]);
+  }, [commitSession, pushHistory, releasePiecewiseSuppression, suppressPiecewiseAfterGrace]);
 
   const commitPiecewiseDraft = useCallback((itemId: string) => {
     activeSamplingItemIdRef.current = itemId;
@@ -411,34 +412,22 @@ export function useGraphWorkspaceController({
     if (!promoted) return false;
     if (previous) pushHistory(current.document, null);
     activeInputRevisionRef.current = null;
-    const graceTimer = piecewiseGraceTimersRef.current.get(itemId);
-    if (graceTimer) clearTimeout(graceTimer);
-    piecewiseGraceTimersRef.current.delete(itemId);
-    setSuppressedPiecewiseItems((currentIds) => {
-      if (!currentIds.has(itemId)) return currentIds;
-      const next = new Set(currentIds); next.delete(itemId); return next;
-    });
+    releasePiecewiseSuppression(itemId);
     commitSession({
       ...current,
       document: replaceGraphDocumentItem(current.document, promoted),
       authoring: { piecewiseDrafts: drafts.filter((candidate) => candidate.itemId !== itemId) },
     }, true);
     return true;
-  }, [commitSession, pushHistory]);
+  }, [commitSession, pushHistory, releasePiecewiseSuppression]);
 
   const removePiecewiseDraft = useCallback((itemId: string) => {
     const current = sessionRef.current;
     commitSession({ ...current, authoring: {
       piecewiseDrafts: (current.authoring?.piecewiseDrafts ?? []).filter((draft) => draft.itemId !== itemId),
     } }, true);
-    const graceTimer = piecewiseGraceTimersRef.current.get(itemId);
-    if (graceTimer) clearTimeout(graceTimer);
-    piecewiseGraceTimersRef.current.delete(itemId);
-    setSuppressedPiecewiseItems((currentIds) => {
-      if (!currentIds.has(itemId)) return currentIds;
-      const next = new Set(currentIds); next.delete(itemId); return next;
-    });
-  }, [commitSession]);
+    releasePiecewiseSuppression(itemId);
+  }, [commitSession, releasePiecewiseSuppression]);
 
   const mutatePiecewiseDraft = useCallback((input: {
     itemId: string;
@@ -459,9 +448,6 @@ export function useGraphWorkspaceController({
     else if (input.action === 'up' && index > 0) [branches[index - 1], branches[index]] = [branches[index], branches[index - 1]];
     else if (input.action === 'down' && index >= 0 && index < branches.length - 1) [branches[index], branches[index + 1]] = [branches[index + 1], branches[index]];
     else return;
-    const graceTimer = piecewiseGraceTimersRef.current.get(input.itemId);
-    if (graceTimer) clearTimeout(graceTimer);
-    piecewiseGraceTimersRef.current.delete(input.itemId);
     const previous = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
       candidate.itemId === input.itemId && candidate.kind === 'piecewise'
     ));
@@ -473,16 +459,12 @@ export function useGraphWorkspaceController({
       branches,
       ...(previous ? { previous } : {}),
     }) !== null;
-    if (draft.mode === 'replace' && !remainsValid) {
-      piecewiseGraceTimersRef.current.set(input.itemId, setTimeout(() => {
-        setSuppressedPiecewiseItems((currentIds) => new Set(currentIds).add(input.itemId));
-        piecewiseGraceTimersRef.current.delete(input.itemId);
-      }, INVALID_GRACE_MS));
-    }
+    releasePiecewiseSuppression(input.itemId);
+    if (draft.mode === 'replace' && !remainsValid) suppressPiecewiseAfterGrace(input.itemId);
     commitSession({ ...current, authoring: { piecewiseDrafts: drafts.map((candidate) => (
       candidate.itemId === input.itemId ? { ...candidate, branches } : candidate
     )) } });
-  }, [commitSession]);
+  }, [commitSession, releasePiecewiseSuppression, suppressPiecewiseAfterGrace]);
 
   const toggleItem = useCallback((itemId: string) => {
     const current = sessionRef.current;
@@ -642,6 +624,15 @@ export function useGraphWorkspaceController({
     setViewport(graphAutoFitViewport(resultRef.current?.scene.planarScene ?? null));
   }, [setViewport]);
 
+  /** A failed or dropped sample leaves no stale picture: the scene is cleared and the status says why. */
+  const clearStaleScene = useCallback((label: string) => {
+    const previous = resultRef.current;
+    if (previous) retiredResultsRef.current.push(previous);
+    resultRef.current = null;
+    setSampleResult(null);
+    setStatus({ kind: 'error', label });
+  }, []);
+
   const runSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV7,
@@ -717,6 +708,13 @@ export function useGraphWorkspaceController({
         && envelope.payload.status !== 'cancelled';
       if (!current) {
         if (envelope.ooe.releasedBufferBytes === 0) releaseGraphSampleResultBuffers(envelope.payload);
+        // Superseded by a newer request: that one will draw. Dropped while still current: the old
+        // picture no longer matches the document, so it is cleared rather than left standing.
+        const superseded = !mountedRef.current || sequence !== requestSequenceRef.current
+          || latest.document.mathematicsRevision !== request.revisions.mathematics
+          || latest.surface.viewportRevision !== request.revisions.viewport
+          || latest.surface.parameterRevision !== request.revisions.parameter;
+        if (!superseded) clearStaleScene('Graph sampling was cancelled; nothing is drawn until it runs again. Edit or pan to retry.');
         return;
       }
       const previous = resultRef.current;
@@ -746,12 +744,12 @@ export function useGraphWorkspaceController({
         : { kind: 'ready', label: 'Ready' });
     } catch {
       if (mountedRef.current && sequence === requestSequenceRef.current) {
-        setStatus({ kind: 'error', label: 'Graph sampling stopped safely.' });
+        clearStaleScene('Graph sampling stopped safely; nothing is drawn until it succeeds. Edit or pan to retry.');
       }
     } finally {
       if (statusTimer) clearTimeout(statusTimer);
     }
-  }, [cssSize.height, cssSize.width, workspaceContext.workspaceInstanceId]);
+  }, [clearStaleScene, cssSize.height, cssSize.width, workspaceContext.workspaceInstanceId]);
 
   const launchSample = useCallback(async (
     quality: 'preview' | 'settled' | 'polish',
@@ -866,8 +864,6 @@ export function useGraphWorkspaceController({
       activeInputRevisionRef.current = null;
       queuedSampleRef.current = null;
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
-      piecewiseGraceTimersRef.current.forEach((timer) => clearTimeout(timer));
-      piecewiseGraceTimersRef.current.clear();
       persistRef.current(sessionRef.current);
       retiredResultsRef.current.splice(0).forEach(releaseGraphSampleResultBuffers);
       if (resultRef.current) releaseGraphSampleResultBuffers(resultRef.current);

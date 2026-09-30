@@ -8,9 +8,10 @@ import 'mathlive/static.css'
 import 'mathlive/fonts.css'
 import './index.css'
 import App from './App.tsx'
-import { configureMathLiveRuntime } from './mathlive-runtime.ts'
+import { configureMathLiveRuntime, warmMathLiveTypesetting } from './mathlive-runtime.ts'
 
 configureMathLiveRuntime()
+warmMathLiveTypesetting()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

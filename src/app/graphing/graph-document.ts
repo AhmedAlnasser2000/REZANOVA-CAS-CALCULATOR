@@ -25,6 +25,19 @@ export function graphItemSource(item: GraphItemSpecV2) {
       : null;
 }
 
+/**
+ * Whether a piecewise item is edited with the branch editor. Restriction
+ * braces (x^2{x>0}, one branch) and polar cases stay plain expression rows,
+ * edited as the text the user typed.
+ */
+export function graphPiecewiseUsesBranchEditor(item: GraphItemSpecV2 | null | undefined) {
+  if (item?.kind !== 'piecewise') return false;
+  const { branches, otherwise } = item.piecewise;
+  return branches.length + (otherwise ? 1 : 0) >= 2
+    && [...branches.map((branch) => branch.relation), ...(otherwise ? [otherwise] : [])]
+      .every((relation) => relation.kind === 'explicit-y' || relation.kind === 'explicit-x');
+}
+
 export function graphItemSourceLatex(item: GraphItemSpecV2) {
   return graphItemSource(item)?.sourceLatex ?? '';
 }

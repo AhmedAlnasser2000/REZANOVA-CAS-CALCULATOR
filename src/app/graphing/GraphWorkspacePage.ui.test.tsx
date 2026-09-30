@@ -117,6 +117,8 @@ function setMathFieldValue(field: HTMLElement, value: string) {
   fireEvent.input(field);
 }
 
+const runGraphSampleWithOoeDefault = runGraphSampleWithOoe.getMockImplementation()!;
+
 describe('GraphWorkspacePage', () => {
   beforeEach(() => {
     runGraphSampleWithOoe.mockClear();
@@ -744,5 +746,26 @@ describe('GraphWorkspacePage', () => {
       state.document.items[0]?.kind === 'relation' && state.document.items[0].relation.kind === 'real-surface'
         && state.document.items[0].relation.bounds?.xMin === -4
     ))).toBe(true));
+  });
+
+  it('clears a stale picture when sampling fails, and draws again on the next success (GRAPHING-FIX2)', async () => {
+    render(
+      <GraphWorkspacePage
+        onUpdateSession={vi.fn()}
+        session={createGraphWorkspaceSessionState('graphing.2', 'Untitled Graph')}
+        workspaceContext={workspaceContext}
+      />,
+    );
+    const field = screen.getByTestId('graph-expression-editor-graphing.2.item.1');
+    setMathFieldValue(field, 'x');
+    await waitFor(() => expect(screen.getByTestId('graph-scene-paths').querySelector('path')).not.toBeNull());
+    runGraphSampleWithOoe.mockRejectedValue(new Error('worker lost'));
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'x+1');
+    await waitFor(() => expect(screen.getByText(/Graph sampling stopped safely; nothing is drawn/u)).toBeInTheDocument());
+    expect(screen.getByTestId('graph-scene-paths').querySelector('path')).toBeNull();
+    runGraphSampleWithOoe.mockReset();
+    runGraphSampleWithOoe.mockImplementation(runGraphSampleWithOoeDefault);
+    setMathFieldValue(screen.getByTestId('graph-expression-editor-graphing.2.item.1'), 'x+2');
+    await waitFor(() => expect(screen.getByTestId('graph-scene-paths').querySelector('path')).not.toBeNull());
   });
 });

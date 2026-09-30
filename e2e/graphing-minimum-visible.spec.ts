@@ -611,7 +611,9 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await addItem.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('menuitem', { name: 'Piecewise Function' })).toBeVisible();
-    await page.keyboard.press('Tab');
+    // A keyboard-opened menu focuses its first item (Note); the arrow keys move to Piecewise Function.
+    await expect(page.getByRole('menuitem', { name: 'Note' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
     await expect(page.getByRole('menuitem', { name: 'Piecewise Function' })).toBeFocused();
     await page.keyboard.press('Enter');
     const values = page.locator('[data-testid^="graph-piecewise-draft-value-"]');

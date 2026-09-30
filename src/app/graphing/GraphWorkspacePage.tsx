@@ -46,6 +46,7 @@ import {
   graphDraftMessage,
   graphItemSourceLatex,
   graphPiecewiseDraftBranchFeedback,
+  graphPiecewiseUsesBranchEditor,
 } from './graph-document';
 import { GraphViewportHost } from './GraphViewportHost';
 import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
@@ -58,6 +59,7 @@ import { useGraphGestureSampling } from './useGraphGestureSampling';
 import { useGraphEqualAxes } from './useGraphEqualAxes';
 import { useGraphComplexPlaneItems } from './useGraphComplexPlaneItems';
 import { graphItemTraceRoutes } from './graph-item-routes';
+import { graphMenuKeyDown } from './graph-menu-keys';
 import { usePtxPointsOfInterest } from './ptx/usePtxPointsOfInterest';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 
@@ -237,17 +239,18 @@ function GraphExpressionRow({
     ? presentationColor.token
     : item?.kind === 'parameter' ? 'graph-violet' : item ? undefined : 'graph-blue';
   const hidden = item ? !item.visible : false;
-  const piecewiseEditorOpen = item?.kind === 'piecewise'
+  const branchEditable = graphPiecewiseUsesBranchEditor(item);
+  const piecewiseEditorOpen = branchEditable
     && Boolean(piecewiseDraft)
     && !piecewiseCollapsed;
 
   return (
     <div
-      className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}${item?.kind === 'piecewise' ? ' is-piecewise' : ''}`}
+      className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}${branchEditable ? ' is-piecewise' : ''}`}
       style={{ '--graph-item-color': color } as CSSProperties}
       data-color-token={colorToken}
       data-graph-item-id={itemId}
-      data-piecewise-state={item?.kind === 'piecewise' ? (piecewiseEditorOpen ? 'expanded' : 'summary') : undefined}
+      data-piecewise-state={branchEditable ? (piecewiseEditorOpen ? 'expanded' : 'summary') : undefined}
       data-testid={item ? 'graph-expression-row' : 'graph-expression-blank-row'}
     >
       {item && 'presentation' in item ? <button aria-expanded={styleOpen}
@@ -263,13 +266,13 @@ function GraphExpressionRow({
         </strong>
       ) : (
         <div
-          className={`graph-expression-editor-scroll${item?.kind === 'piecewise' ? ' graph-piecewise-summary' : ''}${editorOverflowing ? ' is-overflowing' : ''}`}
+          className={`graph-expression-editor-scroll${branchEditable ? ' graph-piecewise-summary' : ''}${editorOverflowing ? ' is-overflowing' : ''}`}
           data-overflowing={editorOverflowing ? 'true' : 'false'}
-          data-testid={item?.kind === 'piecewise' ? 'graph-piecewise-summary' : undefined}
+          data-testid={branchEditable ? 'graph-piecewise-summary' : undefined}
           ref={editorScrollRef}
         >
           <MathEditor
-            className={`graph-expression-editor${item?.kind === 'piecewise' ? ' graph-piecewise-summary-editor' : ''}`}
+            className={`graph-expression-editor${branchEditable ? ' graph-piecewise-summary-editor' : ''}`}
             dataTestId={`graph-expression-editor-${itemId}`}
             // Show the start of a long formula once editing ends.
             onBlur={() => { if (editorScrollRef.current) editorScrollRef.current.scrollLeft = 0; onBlur(); }}
@@ -287,7 +290,7 @@ function GraphExpressionRow({
       )}
       {item ? (
         <div className="graph-expression-actions">
-          {item.kind === 'piecewise' ? (
+          {branchEditable ? (
             <button
               aria-controls={piecewiseEditorOpen ? `graph-piecewise-editor-${itemId}` : undefined}
               aria-expanded={piecewiseEditorOpen}
@@ -335,7 +338,7 @@ function GraphExpressionRow({
           <span>{runtimeWarning ?? draftMessage}</span>
         </p>
       ) : null}
-      {item?.kind === 'piecewise' && piecewiseDraft && !piecewiseCollapsed && onChangePiecewiseDraft
+      {branchEditable && item?.kind === 'piecewise' && piecewiseDraft && !piecewiseCollapsed && onChangePiecewiseDraft
         && onCommitPiecewiseDraft && onMutatePiecewiseDraft ? (
           <div className="graph-piecewise-expanded-editor" id={`graph-piecewise-editor-${itemId}`}>
             <GraphPiecewiseDraftRow draft={piecewiseDraft} embedded onChange={onChangePiecewiseDraft}
@@ -857,9 +860,14 @@ export default function GraphWorkspacePage({
               </div>
             ) : null}
             <div className="graph-add-item">
-              <button aria-expanded={addItemOpen} className="graph-add-point-button"
-                onClick={() => setAddItemOpen((open) => !open)} type="button">+ Add item</button>
-              {addItemOpen ? <div className="graph-add-item-menu" role="menu">
+              <button aria-expanded={addItemOpen} aria-haspopup="menu" className="graph-add-point-button"
+                onClick={(event) => {
+                  setAddItemOpen((open) => !open);
+                  // Opened from the keyboard (Enter/Space): focus the first item, as a menu button should.
+                  const container = event.currentTarget.parentElement;
+                  if (event.detail === 0) requestAnimationFrame(() => container?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
+                }} type="button">+ Add item</button>
+              {addItemOpen ? <div className="graph-add-item-menu" onKeyDown={graphMenuKeyDown(() => setAddItemOpen(false))} role="menu">
                 <button onClick={() => {
                   const itemId = controller.addNote();
                   setAddItemOpen(false);
@@ -898,7 +906,8 @@ export default function GraphWorkspacePage({
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}
             paneView={controller.session.surface.panes.real}
-            pending={controller.isScenePending || controller.suppressedPiecewiseItems.size > 0}
+            // A piecewise item hidden while its branches are being fixed is already out of the scene; other curves stay traceable.
+            pending={controller.isScenePending}
             presentation={presentation}
             scene={scene}
             sceneViewport={controller.sampleResult?.viewport ?? null}
