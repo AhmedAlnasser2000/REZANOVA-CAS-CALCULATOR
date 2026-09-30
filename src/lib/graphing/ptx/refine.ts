@@ -1,0 +1,97 @@
+import type { PtxPlaneFunction, PtxRealFunction } from './solver-port';
+import type { PtxLevel } from './types';
+
+// Putting a picked point onto the true object. Explicit curves are evaluated at
+// the pointer; implicit curves (and complex loci, which are implicit curves in
+// the (Re z, Im z) plane) are reached by Newton projection along the gradient,
+// in small screen-sized steps so a trace never jumps to another branch.
+
+/** Graph units per CSS pixel along x and y. */
+export type PtxPixelUnits = { x: number; y: number };
+
+export type PtxRefinedPoint = { x: number; y: number; level: PtxLevel; errorBound: number; residual: number };
+
+const MAX_ITERATIONS = 40;
+const MAX_STEP_PIXELS = 2;
+
+/** The point of y = f(x) (or x = f(y)) at the pointer's coordinate. */
+export function ptxRefineExplicit(f: PtxRealFunction, at: number, orientation: 'y-of-x' | 'x-of-y'): PtxRefinedPoint | null {
+  const value = f(at);
+  if (value === undefined) return null;
+  // Floating-point evaluation error, not an interpolation error.
+  const errorBound = 8 * Number.EPSILON * Math.max(1, Math.abs(value));
+  return orientation === 'y-of-x'
+    ? { x: at, y: value, level: 'numeric-validated', errorBound, residual: 0 }
+    : { x: value, y: at, level: 'numeric-validated', errorBound, residual: 0 };
+}
+
+function gradient(F: PtxPlaneFunction, x: number, y: number, units: PtxPixelUnits) {
+  const hx = Math.max(units.x * 1e-3, 1e-9 * (1 + Math.abs(x)));
+  const hy = Math.max(units.y * 1e-3, 1e-9 * (1 + Math.abs(y)));
+  const east = F(x + hx, y); const west = F(x - hx, y); const north = F(x, y + hy); const south = F(x, y - hy);
+  if (east === undefined || west === undefined || north === undefined || south === undefined) return null;
+  return { gx: (east - west) / (2 * hx), gy: (north - south) / (2 * hy) };
+}
+
+/**
+ * A jump (arg across its cut, a pole) flips sign without a root: its slope
+ * grows as the probe distance shrinks, while a root's slope stays put.
+ */
+function isJumpAt(F: PtxPlaneFunction, x: number, y: number, nx: number, ny: number, distance: number) {
+  const near = [F(x + nx * distance, y + ny * distance), F(x - nx * distance, y - ny * distance)];
+  const far = [F(x + 4 * nx * distance, y + 4 * ny * distance), F(x - 4 * nx * distance, y - 4 * ny * distance)];
+  if (near.some((value) => value === undefined) || far.some((value) => value === undefined)) return false;
+  const nearSlope = Math.abs(near[0]! - near[1]!) / (2 * distance);
+  const farSlope = Math.abs(far[0]! - far[1]!) / (8 * distance);
+  return nearSlope > 3 * farSlope && nearSlope > 1e-12;
+}
+
+/**
+ * Projects `start` onto F = 0. Null when F is undefined there, the curve is
+ * further than `maxMovePixels` away, or the only "crossing" is a jump.
+ */
+export function ptxProjectToCurve(F: PtxPlaneFunction, start: { x: number; y: number }, units: PtxPixelUnits,
+  maxMovePixels = 12): PtxRefinedPoint | null {
+  let x = start.x; let y = start.y;
+  let value = F(x, y);
+  for (let iteration = 0; value !== undefined && iteration < MAX_ITERATIONS; iteration += 1) {
+    const g = gradient(F, x, y, units);
+    if (!g) return null;
+    const norm2 = g.gx * g.gx + g.gy * g.gy;
+    if (!(norm2 > 0) || !Number.isFinite(norm2)) return null;
+    let stepX = value * g.gx / norm2; let stepY = value * g.gy / norm2;
+    const stepPixels = Math.hypot(stepX / units.x, stepY / units.y);
+    if (stepPixels > MAX_STEP_PIXELS) { stepX *= MAX_STEP_PIXELS / stepPixels; stepY *= MAX_STEP_PIXELS / stepPixels; }
+    x -= stepX; y -= stepY;
+    if (Math.hypot((x - start.x) / units.x, (y - start.y) / units.y) > maxMovePixels) return null;
+    value = F(x, y);
+    if (stepPixels < 1e-9) break;
+  }
+  if (value === undefined) return null;
+  const g = gradient(F, x, y, units);
+  if (!g) return null;
+  const norm = Math.hypot(g.gx, g.gy);
+  if (!(norm > 0)) return null;
+  const nx = g.gx / norm; const ny = g.gy / norm;
+  const distanceToCurve = Math.abs(value) / norm;
+  // Bracket along the normal: a sign change within `probe` proves a zero there.
+  const probe = Math.max(4 * distanceToCurve, 1e-10 * (1 + Math.hypot(x, y)));
+  if (isJumpAt(F, x, y, nx, ny, Math.max(probe, 1e-3 * Math.min(units.x, units.y)))) return null;
+  const ahead = F(x + nx * probe, y + ny * probe); const behind = F(x - nx * probe, y - ny * probe);
+  const bracketed = ahead !== undefined && behind !== undefined && ahead * behind <= 0;
+  return bracketed
+    ? { x, y, level: 'numeric-validated', errorBound: probe, residual: Math.abs(value) }
+    : { x, y, level: 'sampled-estimate', errorBound: Math.max(distanceToCurve, 1e-3 * Math.min(units.x, units.y)), residual: Math.abs(value) };
+}
+
+/** Moves `pixels` along the curve (sign picks the direction) and projects back onto it. */
+export function ptxStepAlongCurve(F: PtxPlaneFunction, from: { x: number; y: number }, pixels: number, units: PtxPixelUnits) {
+  const g = gradient(F, from.x, from.y, units);
+  if (!g) return null;
+  // The tangent (−Fy, Fx), scaled so one step is `pixels` long on screen whatever the axes' scales.
+  const tx = -g.gy; const ty = g.gx;
+  const screenLength = Math.hypot(tx / units.x, ty / units.y);
+  if (!(screenLength > 0)) return null;
+  const next = { x: from.x + tx / screenLength * pixels, y: from.y + ty / screenLength * pixels };
+  return ptxProjectToCurve(F, next, units, Math.abs(pixels) + 6);
+}

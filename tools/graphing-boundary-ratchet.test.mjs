@@ -72,6 +72,18 @@ describe('Graphing boundary ratchet', () => {
     assert.throws(() => validateGraphingBoundaries({ rootDir: privateRoot }), /imports private solver ownership/u);
   });
 
+  it('keeps PTX solver access inside its solver-port adapters', () => {
+    const adapter = rootWith('src/lib/graphing/ptx/solver-port-current.ts',
+      "import { solveGraphComplexRoots } from '../sampling/complex-roots';\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: adapter }));
+    const finder = rootWith('src/lib/graphing/ptx/features.ts',
+      "import { solveGraphComplexRoots } from '../sampling/complex-roots';\n");
+    assert.throws(() => validateGraphingBoundaries({ rootDir: finder }), /outside the PTX solver port/u);
+    const shared = rootWith('src/lib/graphing/ptx/refine.ts',
+      "import type { PtxLevel } from './types';\nimport type { GraphViewportV1 } from '../contracts';\n");
+    assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: shared }));
+  });
+
   it('keeps OOE in its future Graph-owned district and contracts renderer-neutral', () => {
     const ooeRoot = rootWith('src/lib/graphing/sampling.ts', "import { launch } from '../ooe/job-launch/launch';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir: ooeRoot }), /imports OOE outside/u);

@@ -15,6 +15,12 @@ const GPU_PURE_MODULES = new Set([
 ]);
 const WEBGL_SOURCE_PATTERN = /getContext\(\s*['"](?:webgl2?|experimental-webgl)['"]|#version\s+300\s+es/u;
 const OOE_ROOT = `${GRAPH_ROOT}/ooe`;
+// PTX reaches evaluators and solvers only through its solver-port adapters, so a
+// rebuilt Equation engine replaces one adapter. Other PTX files may use PTX
+// itself, public contracts, and shared numeric types.
+const PTX_ROOT = `${GRAPH_ROOT}/ptx`;
+const PTX_PORT_ADAPTER = /\/solver-port-[a-z0-9-]+\.ts$/u;
+const PTX_SHARED_IMPORTS = [`${PTX_ROOT}/`, `${GRAPH_ROOT}/contracts`, 'src/lib/numeric/'];
 const STRUCTURED_RUNTIME_ROOTS = [
   `${GRAPH_ROOT}/evaluator/`,
   `${GRAPH_ROOT}/headless/`,
@@ -119,6 +125,10 @@ export function validateGraphingBoundaries({ rootDir = process.cwd(), files } = 
       if (FORBIDDEN_SOLVER_ROOTS.some((root) => resolved.startsWith(root))
         && !REVIEWED_PUBLIC_SOLVER_SEAMS.has(resolved)) {
         failures.push(`${repoPath} imports private solver ownership from ${specifier}.`);
+      }
+      if (repoPath.startsWith(`${PTX_ROOT}/`) && !PTX_PORT_ADAPTER.test(repoPath) && specifier.startsWith('.')
+        && !PTX_SHARED_IMPORTS.some((allowed) => resolved.startsWith(allowed))) {
+        failures.push(`${repoPath} reaches solver code outside the PTX solver port via ${specifier}.`);
       }
       if (resolved.startsWith('src/lib/ooe/') && !repoPath.startsWith(`${OOE_ROOT}/`)) {
         failures.push(`${repoPath} imports OOE outside the Graph-owned OOE district.`);

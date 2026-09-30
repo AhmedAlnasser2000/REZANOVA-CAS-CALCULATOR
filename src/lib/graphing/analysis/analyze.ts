@@ -21,6 +21,8 @@ import type {
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
+import { defaultPtxSolverPort, ptxPlaneIntersections, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from '../ptx';
+import type { PtxPlaneFunction } from '../ptx';
 
 export type GraphAnalysisControl = {
   isCancelled?: () => boolean;
@@ -264,30 +266,16 @@ function evaluatorFor(
   };
 }
 
-function numericRoots(run: Evaluator, minimum: number, maximum: number, onEvaluation: () => void) {
-  const roots: Array<{ value: number; error: number }> = [];
-  const steps = 320;
-  let left = minimum;
-  let leftValue = run(left); onEvaluation();
-  for (let index = 1; index <= steps; index += 1) {
-    const right = minimum + ((maximum - minimum) * index) / steps;
-    const rightValue = run(right); onEvaluation();
-    if (leftValue !== undefined && rightValue !== undefined) {
-      if (Math.abs(leftValue) < 1e-9) roots.push({ value: left, error: (maximum - minimum) / steps });
-      if (leftValue * rightValue < 0) {
-        let a = left; let b = right; let fa = leftValue;
-        for (let pass = 0; pass < 42; pass += 1) {
-          const mid = (a + b) / 2; const fm = run(mid); onEvaluation();
-          if (fm === undefined) break;
-          if (fa * fm <= 0) b = mid;
-          else { a = mid; fa = fm; }
-        }
-        roots.push({ value: (a + b) / 2, error: Math.abs(b - a) / 2 });
-      }
-    }
-    left = right; leftValue = rightValue;
-  }
-  return roots.filter((entry, index) => index === 0 || Math.abs(entry.value - roots[index - 1].value) > 1e-6);
+/** A one-equation locus as a real function of (Re z, Im z); inequalities and chains have no single curve. */
+function locusCurve(relation: Extract<GraphRelationIR, { kind: 'complex-locus' }>, parameters: Record<string, number>): PtxPlaneFunction | null {
+  const [clause] = relation.clauses;
+  if (relation.clauses.length !== 1 || clause!.operator !== '=') return null;
+  const f = defaultPtxSolverPort().complexFunction(['Add', clause!.left.mathJson, ['Negate', clause!.right.mathJson]], parameters);
+  if (!f) return null;
+  return (x, y) => {
+    const value = f({ re: x, im: y });
+    return value && Math.abs(value.im) <= 1e-9 * Math.max(1, Math.abs(value.re)) ? value.re : undefined;
+  };
 }
 
 function relationExpression(relation: GraphRelationIR) {
@@ -398,6 +386,8 @@ export async function runGraphAnalysisRequest(
   const window = request.numericWindow ?? { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
   const requested = new Set(request.features);
   const explicitItems: Array<{ item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>; run: Evaluator; expression: GraphExpressionIR }> = [];
+  const locusItems: Array<{ itemId: string; curve: PtxPlaneFunction }> = [];
+  const ptx = defaultPtxSolverPort();
 
   for (const snapshot of request.items) {
     if (control.isCancelled?.()) break;
@@ -436,6 +426,10 @@ export async function runGraphAnalysisRequest(
       await control.yieldBetweenItems?.();
       continue;
     }
+    if (snapshot.relation.kind === 'complex-locus') {
+      const curve = locusCurve(snapshot.relation, request.parameterEnvironment);
+      if (curve) locusItems.push({ itemId: snapshot.itemId, curve });
+    }
     const expression = relationExpression(snapshot.relation);
     if (!expression) {
       for (const feature of request.features) {
@@ -449,21 +443,21 @@ export async function runGraphAnalysisRequest(
     if (!run) continue;
     explicitItems.push({ item: snapshot, run, expression });
     const coefficients = polynomial(expression.mathJson);
+    const finder = { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 1; } };
     if (requested.has('root') || requested.has('x-intercept')) {
-      const roots = coefficients
-        ? polynomialRoots(coefficients).map((value) => ({ value, exact: true, error: 0 }))
-        : numericRoots(run, window.xMin, window.xMax, () => { evaluatedPointCount += 1; })
-          .map((entry) => ({ ...entry, exact: false }));
-      for (const root of roots.filter((entry) => entry.value >= window.xMin && entry.value <= window.xMax)) {
-        const level = root.exact ? 'exact-proved' : 'numeric-validated';
-        const x = root.exact ? exact(root.value) : approximate(root.value, root.error);
+      // PTX finders: exact polynomial roots of any degree the exact path splits; otherwise bracketed and touching roots.
+      const roots = ptxRealRoots(run, window.xMin, window.xMax, finder,
+        ptx.realPolynomialRoots(expression.mathJson, 'x', request.parameterEnvironment));
+      for (const root of roots) {
+        const proved = root.level === 'exact-proved';
+        const x = proved ? exact(root.x) : approximate(root.x, root.errorBound);
         for (const feature of ['root', 'x-intercept'] as const) if (requested.has(feature)) {
-          findings.push(evidence(request, feature, [snapshot.itemId], level, serial++, {
-            coordinates: { x, y: root.exact ? exact(0) : approximate(0, 1e-9) },
-            relationValue: root.exact ? exact(0) : approximate(0, 1e-9),
-            basis: root.exact
-              ? { source: 'graph-symbolic', validator: 'degree-at-most-two polynomial identity' }
-              : { source: 'numeric-validator', validator: 'bracketed bisection', residualBound: 1e-8 },
+          findings.push(evidence(request, feature, [snapshot.itemId], root.level, serial++, {
+            coordinates: { x, y: proved ? exact(0) : approximate(0, root.residual || 1e-9) },
+            relationValue: proved ? exact(0) : approximate(0, root.residual || 1e-9),
+            basis: proved
+              ? { source: 'graph-symbolic', validator: 'exact polynomial factorisation' }
+              : { source: 'numeric-validator', validator: root.level === 'numeric-validated' ? 'bracketed bisection' : 'touching root: minimum of |f| at zero', residualBound: Math.max(root.residual, 1e-12) },
           }));
         }
       }
@@ -481,6 +475,13 @@ export async function runGraphAnalysisRequest(
         coordinates: { x: exact(x), y: exact(y) },
         basis: { source: 'graph-symbolic', validator: coefficients[2] > 0 ? 'quadratic local minimum' : 'quadratic local maximum' },
       }));
+    } else if (requested.has('extremum')) {
+      for (const extremum of ptxRealExtrema(run, window.xMin, window.xMax, finder)) {
+        findings.push(evidence(request, 'extremum', [snapshot.itemId], extremum.level, serial++, {
+          coordinates: { x: approximate(extremum.x, extremum.errorBound), y: approximate(extremum.y, 1e-12 * Math.max(1, Math.abs(extremum.y))) },
+          basis: { source: 'numeric-validator', validator: `local ${extremum.kind}: slope sign change refined by golden-section search` },
+        }));
+      }
     }
     const node = expression.mathJson;
     if (Array.isArray(node) && node[0] === 'Divide') {
@@ -515,17 +516,27 @@ export async function runGraphAnalysisRequest(
   }
 
   if (!control.isCancelled?.() && requested.has('intersection')) {
+    const finder = { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 2; } };
     for (let first = 0; first < explicitItems.length; first += 1) for (let second = first + 1; second < explicitItems.length; second += 1) {
       const a = explicitItems[first]; const b = explicitItems[second];
-      const roots = numericRoots((x) => {
-        const av = a.run(x); const bv = b.run(x);
-        return av === undefined || bv === undefined ? undefined : av - bv;
-      }, window.xMin, window.xMax, () => { evaluatedPointCount += 2; });
-      for (const root of roots) {
-        const y = a.run(root.value); evaluatedPointCount += 1;
-        if (y !== undefined) findings.push(evidence(request, 'intersection', [a.item.itemId, b.item.itemId], 'numeric-validated', serial++, {
-          coordinates: { x: approximate(root.value, root.error), y: approximate(y, 1e-7) },
-          basis: { source: 'numeric-validator', validator: 'bracketed difference bisection', residualBound: 1e-7 },
+      const exactDifference = ptx.realPolynomialRoots(['Add', a.expression.mathJson, ['Negate', b.expression.mathJson]], 'x', request.parameterEnvironment);
+      for (const point of ptxRealIntersections(a.run, b.run, window.xMin, window.xMax, finder, exactDifference)) {
+        const proved = point.level === 'exact-proved';
+        findings.push(evidence(request, 'intersection', [a.item.itemId, b.item.itemId], point.level, serial++, {
+          coordinates: proved ? { x: exact(point.x), y: exact(point.y) }
+            : { x: approximate(point.x, point.errorBound), y: approximate(point.y, Math.max(point.residual, 1e-12)) },
+          basis: proved ? { source: 'graph-symbolic', validator: 'exact polynomial factorisation of the difference' }
+            : { source: 'numeric-validator', validator: 'bracketed or touching root of the difference', residualBound: Math.max(point.residual, 1e-12) },
+        }));
+      }
+    }
+    // Complex loci meet where both clause functions vanish (two curves in the (Re z, Im z) plane).
+    for (let first = 0; first < locusItems.length; first += 1) for (let second = first + 1; second < locusItems.length; second += 1) {
+      const a = locusItems[first]!; const b = locusItems[second]!;
+      for (const point of ptxPlaneIntersections(a.curve, b.curve, window, ptx)) {
+        findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
+          coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },
+          basis: { source: 'numeric-validator', validator: 'common zero of both loci, seeded Newton in the plane', residualBound: 1e-9 },
         }));
       }
     }
