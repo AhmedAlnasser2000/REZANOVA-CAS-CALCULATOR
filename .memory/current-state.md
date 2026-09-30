@@ -20,7 +20,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - verified_by_agent_model: gpt-6-astra
 - verified_by_agent_family: astra
 - attribution_basis: live
-- Most recent Graphing milestone: `GRAPHING-COMPLEX-FOLLOWUP1` owned by claude / claude-sonnet-5-5 / sonnet-5.5 (live); the block above records the concurrent Integration lane owner.
+- Most recent Graphing milestone: `PTX1` (point tracing extreme) owned by claude / claude-opus-5-5 / opus-5.5 (live); the block above records the concurrent Integration lane owner.
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context

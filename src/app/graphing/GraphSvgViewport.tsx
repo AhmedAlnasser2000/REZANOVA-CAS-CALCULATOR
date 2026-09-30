@@ -31,6 +31,8 @@ import type { GraphGestureLane } from './useGraphGestureSampling';
 import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 import type { PtxDot } from './ptx/usePtxPointsOfInterest';
+import { ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
+import { PTX_SNAP_RADIUS_PIXELS } from './ptx/ptx-snap';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | 'real-surface'
@@ -72,6 +74,24 @@ const GESTURE_LANE_INTERVAL_MS = 100;
 function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null) {
   return scene && 'planarScene' in scene ? scene
     : scene ? { version: 2 as const, planarScene: scene, surfaceMeshes: [], complexTiles: [] } : null;
+}
+
+const NO_DOTS: readonly PtxDot[] = [];
+
+/** Draws the selected item's points of interest as grey dots at their graph positions. */
+function placeDots(layer: HTMLDivElement | null, dots: readonly PtxDot[], live: GraphViewportV1, size: Size) {
+  if (!layer) return;
+  while (layer.children.length < dots.length) {
+    const dot = document.createElement('div'); dot.className = 'graph-ptx-dot'; dot.dataset.testid = 'graph-ptx-dot'; layer.append(dot);
+  }
+  while (layer.children.length > dots.length) layer.lastElementChild?.remove();
+  dots.forEach((dot, index) => {
+    const element = layer.children[index] as HTMLDivElement;
+    const x = (dot.x - live.xMin) / (live.xMax - live.xMin) * size.width;
+    const y = (live.yMax - dot.y) / (live.yMax - live.yMin) * size.height;
+    element.hidden = !(x >= -8 && x <= size.width + 8 && y >= -8 && y <= size.height + 8);
+    element.style.transform = `translate3d(${x - 5}px,${y - 5}px,0)`;
+  });
 }
 
 /** Positions the Complex pane's traced point in this pane (x = Re z, y = Im z), hidden when off-screen. */
@@ -141,10 +161,13 @@ function surfaceTargetAtScreen(
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
   document = null, gestureLane = null, gpuRendering = 'auto', itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
-  presentation = { version: 1, contentRevision: 0, items: [] }, ptxMirror = null, scene, viewport, sceneViewport = viewport,
+  presentation = { version: 1, contentRevision: 0, items: [] }, ptxDots = NO_DOTS, ptxMirror = null, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const mirrorPointRef = useRef(ptxMirror);
+  const dotsLayerRef = useRef<HTMLDivElement | null>(null);
+  const dotsRef = useRef(ptxDots);
+  const refinersRef = useRef<ReturnType<typeof ptxRealRefiners>>(new Map());
   const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
@@ -198,6 +221,7 @@ export function GraphSvgViewport({
   const renderView = useCallback((liveViewport: GraphViewportV1) => {
     liveViewportRef.current = liveViewport;
     placeMirror(mirrorRef.current, mirrorPointRef.current, liveViewport, sizeRef.current);
+    placeDots(dotsLayerRef.current, dotsRef.current, liveViewport, sizeRef.current);
     if (hostRef.current) hostRef.current.dataset.viewport = `${liveViewport.xMin},${liveViewport.xMax},${liveViewport.yMin},${liveViewport.yMax}`;
     const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
       policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
@@ -267,6 +291,14 @@ export function GraphSvgViewport({
   }, [gestureLane]);
 
   useLayoutEffect(() => {
+    dotsRef.current = ptxDots;
+    placeDots(dotsLayerRef.current, ptxDots, liveViewportRef.current, sizeRef.current);
+  }, [ptxDots]);
+  useEffect(() => {
+    refinersRef.current = ptxRealRefiners(document, document ? graphParameterEnvironment(document) : {});
+  }, [document]);
+
+  useLayoutEffect(() => {
     mirrorPointRef.current = ptxMirror;
     placeMirror(mirrorRef.current, ptxMirror, liveViewportRef.current, sizeRef.current);
   }, [ptxMirror]);
@@ -295,6 +327,15 @@ export function GraphSvgViewport({
   }, [hideTrace, onTraceItemChange]);
   const publishTrace = useCallback((target: GraphTraceTarget | null, announce = false) => {
     if (!target) { traceRef.current = null; hideTrace(); return; }
+    // PTX: a path point is put on the true curve (and onto a dot it has arrived at) before it is shown.
+    const certified = target.kind === 'path' && !graphComplexValuePart(target.pathId)
+      ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, dotsRef.current)
+      : null;
+    if (certified) {
+      const vp = viewportRef.current; const size = sizeRef.current;
+      target = { ...target, world: { x: certified.x, y: certified.y },
+        screen: { x: (certified.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width, y: (vp.yMax - certified.y) / (vp.yMax - vp.yMin) * size.height } };
+    }
     traceRef.current = target;
     if (announce) onTraceItemChange?.(target.itemId);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
@@ -305,6 +346,7 @@ export function GraphSvgViewport({
     const ly = Math.max(8, Math.min(sizeRef.current.height - 38, target.screen.y - 36));
     label.hidden = false; label.style.transform = `translate3d(${lx}px,${ly}px,0)`;
     label.dataset.traceItemId = target.itemId;
+    delete label.dataset.hoverDot;
     const part = graphComplexValuePart(target.pathId);
     const complexValue = part ? complexTraceRef.current.get(target.itemId)?.({ re: target.world.x, im: 0 }) : null;
     if (part && complexValue) {
@@ -316,7 +358,10 @@ export function GraphSvgViewport({
       return;
     }
     label.classList.remove('is-complex-part');
-    const text = `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
+    const badge = certified ? ptxRealTraceBadge(certified) : null;
+    if (badge) { label.dataset.ptxBadge = badge.badge; label.title = badge.detail; } else { delete label.dataset.ptxBadge; label.removeAttribute('title'); }
+    const text = certified ? ptxRealTraceText(certified)
+      : `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
     label.textContent = text + (target.parameterValue !== undefined && typeof route === 'object' ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
@@ -429,6 +474,7 @@ export function GraphSvgViewport({
       }
       return;
     }
+    if (!traceLockRef.current) { hoverDot(clientToScreen(event.clientX, event.clientY)); return; }
     const lock = traceLockRef.current;
     const currentScene = sceneRef.current?.planarScene;
     const index = traceIndexRef.current;
@@ -479,9 +525,44 @@ export function GraphSvgViewport({
     else clearTrace();
   };
 
+  /** Hovering a point of interest (with no trace running) shows what it is, like Desmos. */
+  const hoverDot = (screen: { x: number; y: number }) => {
+    const vp = viewportRef.current; const size = sizeRef.current;
+    const dot = dotsRef.current.find((candidate) => Math.hypot(
+      (candidate.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width - screen.x,
+      (vp.yMax - candidate.y) / (vp.yMax - vp.yMin) * size.height - screen.y) <= PTX_SNAP_RADIUS_PIXELS + 2);
+    const marker = traceMarkerRef.current; const label = traceLabelRef.current;
+    if (!marker || !label) return;
+    if (!dot) { if (label.dataset.hoverDot) { delete label.dataset.hoverDot; hideTrace(); } return; }
+    const x = (dot.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width; const y = (vp.yMax - dot.y) / (vp.yMax - vp.yMin) * size.height;
+    marker.hidden = false; marker.style.transform = `translate3d(${x - 6}px,${y - 6}px,0)`;
+    label.hidden = false; label.dataset.hoverDot = dot.key; label.classList.remove('is-complex-part');
+    label.style.transform = `translate3d(${Math.max(8, Math.min(size.width - 190, x + 12))}px,${Math.max(8, Math.min(size.height - 38, y - 36))}px,0)`;
+    const point = { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot };
+    label.textContent = ptxRealTraceText(point);
+    const badge = ptxRealTraceBadge(point); label.dataset.ptxBadge = badge.badge; label.title = badge.detail;
+  };
+
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const currentScene = sceneRef.current?.planarScene; if (!currentScene || pendingRef.current) return;
     if (event.key === 'Escape') { clearTrace(); return; }
+    if (event.shiftKey && traceRef.current && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      // Shift+Arrow jumps to the traced curve's next point of interest.
+      event.preventDefault();
+      const current = traceRef.current;
+      const next = ptxNextDot(dotsRef.current, current.itemId, current.world.x, event.key === 'ArrowRight' ? 1 : -1);
+      const path = currentScene.paths.find((candidate) => candidate.pathId === current.pathId);
+      let vertexIndex = current.vertexIndex;
+      if (next && path) {
+        let best = Infinity;
+        for (let vertex = 0; vertex * 2 < path.coordinates.length; vertex += 1) {
+          const gap = Math.abs(path.coordinates[vertex * 2]! - next.x);
+          if (gap < best) { best = gap; vertexIndex = vertex; }
+        }
+      }
+      if (next) publishTrace({ ...current, world: { x: next.x, y: next.y }, ...(vertexIndex === undefined ? {} : { vertexIndex }) }, true);
+      return;
+    }
     if (event.key === 'Enter' && !traceRef.current) {
       event.preventDefault();
       const first = firstGraphTraceTarget(currentScene, viewportRef.current, sizeRef.current);
@@ -516,7 +597,8 @@ export function GraphSvgViewport({
     onPointerMove={handlePointerMove} onPointerUp={finishPointer} ref={hostRef} tabIndex={0}>
     <div className="graph-svg-renderer-host" ref={rendererHostRef} />
     <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
-    <div className="graph-trace-marker graph-ptx-mirror" data-testid="graph-ptx-mirror" hidden ref={mirrorRef} />
+    <div className="graph-ptx-dots" ref={dotsLayerRef} />
+    <div className="graph-ptx-mirror" data-testid="graph-ptx-mirror" hidden ref={mirrorRef} />
     <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />
     <span className="graph-trace-instructions" id="graph-trace-instructions">Click a curve or point to trace it. Move to sweep, use arrows to step, and Escape to clear.</span>
     {gpuStatus.candidates > 0 ? <span className={`graph-real-renderer is-${gpuStatus.gpuItems > 0 ? 'gpu' : 'cpu'}`}

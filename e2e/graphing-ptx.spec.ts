@@ -100,3 +100,60 @@ test.describe('PTX point tracing', () => {
     await expect(page.getByTestId('graph-ptx-mirror')).toBeVisible();
   });
 });
+
+/** Client coordinates of (x, y) in the Real pane. */
+async function realPoint(page: Page, x: number, y: number) {
+  const host = page.getByTestId('graph-viewport');
+  const box = await host.boundingBox();
+  const view = (await host.getAttribute('data-viewport'))?.split(',').map(Number);
+  if (!box || !view) throw new Error('real pane has no viewport');
+  const [xMin, xMax, yMin, yMax] = view as [number, number, number, number];
+  return { x: box.x + (x - xMin) / (xMax - xMin) * box.width, y: box.y + (yMax - y) / (yMax - yMin) * box.height };
+}
+
+test.describe('PTX points of interest in the Real pane', () => {
+  test('shows intersection dots for x and x^2, snaps only on arrival, and jumps with Shift+Arrow', async ({ page }, testInfo) => {
+    await openGraph(page);
+    await enterExpression(page, 'x');
+    await enterExpression(page, 'x^2');
+    const callout = page.locator('.graph-trace-callout');
+    // Trace the parabola: that selects it, and its dots appear.
+    const start = await realPoint(page, 2, 4);
+    await page.mouse.click(start.x, start.y);
+    await expect(callout).toBeVisible();
+    await expect(page.getByTestId('graph-ptx-dot')).not.toHaveCount(0, { timeout: 8_000 });
+    await expect(callout).toHaveAttribute('data-ptx-badge', 'verified');
+    // Sweeping onto (1, 1) snaps to the intersection; nearby is plain tracing.
+    const crossing = await realPoint(page, 1, 1);
+    await page.mouse.move(crossing.x, crossing.y, { steps: 6 });
+    await expect(callout).toHaveText(/^Intersection \(1, 1\)$/u);
+    await expect(callout).toHaveAttribute('data-ptx-badge', 'exact');
+    const near = await realPoint(page, 1.25, 1.5625);
+    await page.mouse.move(near.x, near.y, { steps: 4 });
+    await expect(callout).toHaveText('(1.25, 1.5625)');
+    await page.screenshot({ path: testInfo.outputPath('ptx-real-dots.png') });
+    await page.keyboard.press('Shift+ArrowLeft');
+    await expect(callout).toHaveText(/^Intersection \(1, 1\)$/u);
+    await page.keyboard.press('Shift+ArrowLeft');
+    await expect(callout).toHaveText(/^(?:Intersection|Root|Extremum) \(0, 0\)$/u);
+  });
+
+  test('never pulls a trace toward a dot it has not reached', async ({ page }) => {
+    await openGraph(page);
+    await enterExpression(page, String.raw`\frac{\sin x}{x}`);
+    const callout = page.locator('.graph-trace-callout');
+    const start = await realPoint(page, 2, Math.sin(2) / 2);
+    await page.mouse.click(start.x, start.y);
+    await expect(callout).toBeVisible();
+    await page.waitForTimeout(900);
+    // Approaching x = 0 (a removable gap, not a point of interest), the readout is f at the pointer each step.
+    for (const x of [0.6, 0.3, 0.12]) {
+      const point = await realPoint(page, x, Math.sin(x) / x);
+      await page.mouse.move(point.x, point.y);
+      await expect.poll(async () => {
+        const match = /^\(([\d.]+), ([\d.]+)\)$/u.exec(await callout.textContent() ?? '');
+        return match ? Math.abs(Number(match[2]) - Math.sin(Number(match[1])) / Number(match[1])) : 1;
+      }).toBeLessThan(1e-5);
+    }
+  });
+});

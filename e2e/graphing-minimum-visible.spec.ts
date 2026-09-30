@@ -20,6 +20,14 @@ async function enterExpression(page: Page, latex: string) {
 
 /** Graph coordinates to client pixels from the live viewport (Equal axes squares the view to the pane). */
 async function graphScreen(viewport: Locator) {
+  // Equal axes may still be squaring the first view; wait until it stops changing.
+  let previous = '';
+  await expect.poll(async () => {
+    const current = await viewport.getAttribute('data-viewport') ?? '';
+    const stable = current !== '' && current === previous;
+    previous = current;
+    return stable;
+  }, { intervals: [150], timeout: 5_000 }).toBe(true);
   const bounds = await viewport.boundingBox();
   const view = (await viewport.getAttribute('data-viewport'))?.split(',').map(Number);
   if (!bounds || !view || view.length !== 4) throw new Error('Graph viewport did not have layout bounds.');
@@ -990,7 +998,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await rootCard.getByRole('button', { name: 'Pin' }).click();
     await expect(page.locator('.graph-analysis-marker:not(.is-preview)')).toBeVisible();
     await overlay.getByRole('tab', { name: 'Evidence' }).click();
-    await expect(overlay.getByText('degree-at-most-two polynomial identity').first()).toBeVisible();
+    await expect(overlay.getByText('exact polynomial factorisation').first()).toBeVisible();
     await expect(overlay.getByRole('tab', { name: 'Style' })).toHaveCount(0);
     await overlay.getByRole('tab', { name: 'Features' }).click();
 
