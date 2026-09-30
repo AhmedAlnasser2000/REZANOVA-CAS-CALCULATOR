@@ -62,6 +62,8 @@ export class ExecutionContext {
     this.#stopped = new AlgebraError('resource-limit', reason);
     throw this.#stopped;
   }
+  /** Additional private-kernel safeguards share sticky exhaustion. */
+  exhaust(reason: string): never { this.#alive(); return this.#stop(reason); }
   #alive() { if (this.#stopped) throw this.#stopped; }
   tick(units = 1): void {
     this.#alive();

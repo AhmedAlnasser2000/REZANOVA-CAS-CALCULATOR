@@ -2,7 +2,7 @@
 
 Date: 2026-09-27
 Updated: 2026-09-30
-Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is UI-verified. Later-stage details and sequencing remain provisional and subject to change when necessary.
+Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is committed in `1b7ab181`. The differential-field foundation is backend-verified and complete; milestone commit authorized. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
 
@@ -25,6 +25,8 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **2026-09-29 adoption posture:** `INTEGRATION-RATIONAL-RESULT-CONTRACT1` adds the V5 formal rational-antiderivative representation; `INTEGRATION-RATIONAL-ADOPTION1` exposes New Integration in independent launcher tabs, with exact source lowering, worker-only execution, retained exclusions, drafts and replayable artifacts. See the [result contract](integration-rational-result-contract1-spec.md) and [adoption specification](integration-rational-adoption1-spec.md). Focused verification and real-app evidence are in their separate dossiers. Both gates are complete: the authority/display and Calculate type blockers are resolved without exemptions. Commit authorized; no push. Old Calculus remains available. Further work and roadmap sequencing remain subject to change when necessary.
 
+**2026-09-30 differential-field posture:** the [field specification](integration-differential-field1-spec.md) fixes the approved Q-only, backend-only boundary. Formal arithmetic and certified function admission are distinct; no automatic transcendental integration or application adoption is implied.
+
 ## Updated implementation sequence
 
 The first three foundation gates and their proof-performance follow-up are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
@@ -38,7 +40,7 @@ The first three foundation gates and their proof-performance follow-up are concr
 | 4 prerequisite (backend verified) | `INTEGRATION-RATIONAL-RESULT-CONTRACT1` | Exact V5 all-roots primitive and V2 ordinary-result adapters; standard MathJSON leaves and explicit binding. | Exact conversion, authority, bounds, compatibility and conditions. |
 | 4 (ui verified) | `INTEGRATION-RATIONAL-ADOPTION1` | Independent New Integration workspace with exact source lowering, retained exclusions, worker-only execution, drafts and fresh replay. | Formal output, conditions, copy/artifacts, cancellation/staleness, authority ratchets and npm-dev Playwright. |
 | 4 presentation follow-up (ui verified) | `INTEGRATION-RATIONAL-PRESENTATION1` | Canonical-derived structural formatting, compact/full formulas, exact copy, condition provenance and per-tab preference. | UI: exact identity/fallback tests, proof/artifact invariance, lifecycle isolation and npm-dev Playwright. |
-| 5 | `INTEGRATION-DIFFERENTIAL-FIELD1` | Exact fields and valid defining relations; generic parameter fields, derivations, relation-aware towers, constant-field hypotheses and input conversion. Pull algebraic arithmetic forward where required. | Backend: derivation/conversion laws, dependent generators, preserved exclusions and truthful unknown decisions. |
+| 5 (backend verified; not adopted) | `INTEGRATION-DIFFERENTIAL-FIELD1` | Q and Q(x); recursive formal towers, dual-number derivative verification, certified first-level rational-multiple exponentials/local logarithms, exact admission evidence and fresh replay. | 138 retained tests plus 40 new tests; honest formal constants, ownership/derivative laws, pole/residue obstructions, mutation/budget/codec checks. Parameters, algebraic constants, broader admission and input conversion are deferred. |
 | 6 | `INTEGRATION-TRANSCENDENTAL-DECISION1` | Validated towers and required lower-field algorithms; recursive RDE bounds, limited integration, logarithmic derivatives and Liouville reductions. | Backend and UI on adoption: checked positive/negative certificates with explicit domain hypotheses. |
 | 7 | `INTEGRATION-ALGEBRAIC-FIELD1` | Generic arithmetic/derivations; irreducible defining relations, basis arithmetic, exact inversion/differentiation and root/embedding semantics. May precede Stage 6 as its prerequisites require. | Backend: arithmetic/differential laws beyond quadratic radical templates. |
 | 8 | `INTEGRATION-ALGEBRAIC-DECISION1` | Stage 7 and a reviewed algorithm dossier for integral bases, places, infinity, residues and the logarithmic/principal-divisor problem. | Backend and UI on adoption: exact reductions and justified decisions for the declared algebraic domain. |
@@ -60,8 +62,8 @@ Parameters, branch interpretation, exact proof verification and mixed-field repr
 
 ## Decisions remaining before later gates
 
-- Stage 4: input lowering/original exclusions and product-facing algebraic-root/log-sum output; local-complex internal semantics are fixed in Stage 2, while branch/display policy and a standard encoding proof or explicit new result-contract approval remain prerequisites. The existing V4 governance wording also needs reconciliation before widening.
-- Stage 5–6: effective constant-extension and dependency algorithms beyond Q and generic rational parameter fields; theorem hypotheses and complete lower-field RDE/limited-integration obligations.
+- Adopted rational results use the reviewed V5 all-roots local-complex contract and source-exclusion lowering. Wider transcendental results, algebraic display rewrites and real forms still require their own representation/adoption decisions.
+- After Stage 5: broader simultaneous/mixed/nested admission, effective constant extensions and parameter domains; lower-field RDE, limited-integration and logarithmic-derivative obligations. The completed first-level sufficient certificates are not a general dependency algorithm. Review these prerequisites before committing to the scope of Stage 6.
 - Stage 7–9: concrete integral-basis/local/divisor implementations and their effective-field requirements. General algorithms must not be replaced by genus-specific templates while retaining a completeness claim.
 - Adoption/closeout: exceptional parameter partitions and bounded main-thread fallback behavior; decide exact runtime budgets using measured workloads.
 - Native/WASM acceleration: reconsider only when measurements justify a separate implementation boundary. No such dependency is selected now.
