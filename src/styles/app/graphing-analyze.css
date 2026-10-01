@@ -160,6 +160,7 @@
   white-space: nowrap;
 }
 .graph-evidence-badge.is-exact-proved { background: rgba(98, 230, 144, 0.14); color: #80eca2; }
+.graph-evidence-badge.is-interval-proved { background: rgba(190, 230, 120, 0.15); color: #c9e88a; }
 .graph-evidence-badge.is-numeric-validated { background: rgba(80, 163, 255, 0.15); color: #88baff; }
 
 .graph-evidence-card { margin-bottom: 8px; padding: 10px; }

@@ -90,10 +90,10 @@ export function analyzeGraphCurve(input: {
   }
   if (edges && edges.length > 1 && requested.has('region-corner')) {
     for (const corner of ptxRegionCorners(edges, window, finder)) {
-      findings.push(evidence('region-corner', itemIds, 'sampled-estimate', {
+      findings.push(evidence('region-corner', itemIds, corner.level, {
         coordinates: { x: approximate(corner.x, corner.errorBound), y: approximate(corner.y, corner.errorBound) },
         detail: { included: corner.included },
-        basis: { source: 'numeric-validator', validator: `edges ${corner.edges[0] + 1} and ${corner.edges[1] + 1} meet: Newton in the plane` },
+        basis: { source: 'numeric-validator', validator: `edges ${corner.edges[0] + 1} and ${corner.edges[1] + 1} meet: ${corner.level === 'interval-proved' ? 'proved by the 2-D Krawczyk test' : 'Newton in the plane'}` },
       }));
     }
   }

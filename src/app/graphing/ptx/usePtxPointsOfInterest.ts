@@ -43,7 +43,7 @@ export type PtxAsymptoteLine = {
 };
 
 export type GraphAsymptoteMode = 'auto' | 'always' | 'off';
-const DOT_LEVELS = new Set<GraphAnalysisEvidenceV1['level']>(['exact-proved', 'numeric-validated', 'sampled-estimate']);
+const DOT_LEVELS = new Set<GraphAnalysisEvidenceV1['level']>(['exact-proved', 'interval-proved', 'numeric-validated', 'sampled-estimate']);
 // Its own worker, so dots never cancel (or wait behind) the Analyze panel.
 const pointsHost = new GraphAnalysisApplicationHost();
 

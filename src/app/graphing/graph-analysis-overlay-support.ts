@@ -31,7 +31,8 @@ export function graphAnalysisAnnotationId(entry: GraphAnalysisEvidenceV1) {
 }
 
 export function graphPinnedAnnotation(entry: GraphAnalysisEvidenceV1): GraphPinnedAnnotationV2 | null {
-  if (!entry.coordinates || (entry.level !== 'exact-proved' && entry.level !== 'numeric-validated')) return null;
+  if (!entry.coordinates || (entry.level !== 'exact-proved' && entry.level !== 'interval-proved' && entry.level !== 'numeric-validated')) return null;
+  // A pin stores exact or validated; an interval proof is pinned as validated (true, and the stored schema is unchanged).
   return { version: 2, annotationId: graphAnalysisAnnotationId(entry), feature: entry.feature,
-    level: entry.level, itemIds: [...entry.itemIds], coordinates: structuredClone(entry.coordinates) };
+    level: entry.level === 'interval-proved' ? 'numeric-validated' : entry.level, itemIds: [...entry.itemIds], coordinates: structuredClone(entry.coordinates) };
 }

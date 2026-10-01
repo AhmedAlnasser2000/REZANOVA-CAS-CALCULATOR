@@ -4,7 +4,6 @@ import {
   complexAdd,
   complexArg,
   complexConjugate,
-  complexDiv,
   complexMul,
   complexNeg,
   complexPowInteger,
@@ -57,7 +56,13 @@ function cosh(value: ComplexValue) {
   return complex(Math.cosh(value.re) * Math.cos(value.im), Math.sinh(value.re) * Math.sin(value.im));
 }
 function divide(numerator: ComplexValue | null, denominator: ComplexValue | null) {
-  return numerator && denominator && complexAbs(denominator) >= EPSILON ? complexDiv(numerator, denominator) : null;
+  if (!numerator || !denominator || complexAbs(denominator) < EPSILON) return null;
+  // Divide directly: complexDiv refuses |b|² below its own epsilon, which a denominator of size 1e-7 already is
+  // (it threw near every pole); here only a non-finite quotient is refused.
+  const norm = denominator.re * denominator.re + denominator.im * denominator.im;
+  const re = (numerator.re * denominator.re + numerator.im * denominator.im) / norm;
+  const im = (numerator.im * denominator.re - numerator.re * denominator.im) / norm;
+  return Number.isFinite(re) && Number.isFinite(im) ? complex(re, im) : null;
 }
 
 const UNARY: Record<string, (value: ComplexValue) => ComplexValue | null> = {

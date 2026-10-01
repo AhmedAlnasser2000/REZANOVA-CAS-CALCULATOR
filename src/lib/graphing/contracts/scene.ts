@@ -446,6 +446,8 @@ function validateGraphSampleResultEnvelope(
     || typeof item.refinable !== 'boolean'
     || (item.stopReason !== undefined && !validateGraphStopReason(item.stopReason).ok)
     || (item.piecewiseCondition !== undefined && !validPiecewiseConditionEvidence(item.piecewiseCondition))
+    || (item.topology !== undefined && (typeof item.topology !== 'object'
+      || ![item.topology.certifiedCells, item.topology.uncertifiedCells, item.topology.singularPoints].every((count) => Number.isSafeInteger(count) && count >= 0)))
   ))) return fail('invalid-scene', 'Graph sample result item evidence is invalid.');
   if (!result.evidence || Object.values(result.evidence).some((value) => !Number.isFinite(value) || value < 0)) return fail('invalid-scene', 'Graph sample result counters are invalid.');
   const sceneValidation = validateGraphSpatialSceneRuntime(result.scene);

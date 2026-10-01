@@ -1,5 +1,5 @@
 import type { GraphSamplingLimitsV2, GraphViewportV1 } from '../contracts';
-import { createGraphExpressionEvaluator } from '../evaluator';
+import { createGraphExpressionEvaluator, createGraphIntervalEvaluator } from '../evaluator';
 import type {
   GraphExplicitSamplingInput,
   GraphSampledExplicitPath,
@@ -274,6 +274,62 @@ export function sampleExplicitGraphRelation(
     }
   };
 
+  // PTX-ENGINE1 (E7): between every two neighbouring samples, a guaranteed enclosure of f says whether the
+  // drawn segment can be missing something (a spike narrower than the sampling). Where the enclosure reaches
+  // more than a pixel beyond the segment, the interval is halved until it does not, or is a quarter pixel wide.
+  const intervals = createGraphIntervalEvaluator(input.plan.expression, [input.plan.independentSymbol]);
+  const centreIntervals = createGraphIntervalEvaluator(input.plan.expression);
+  const dependentPixels = input.plan.relationKind === 'explicit-y' ? input.cssSize.height : input.cssSize.width;
+  const enclosure = (lo: number, hi: number) => {
+    const symbol = input.plan.independentSymbol;
+    const range = intervals.evaluate({ ...input.parameterEnvironment, [symbol]: { lo, hi } });
+    if (range.defined !== 2 || !range.continuous) return null;
+    let low = range.lo; let high = range.hi;
+    const slope = range.gradient[0];
+    if (range.smooth && slope && Number.isFinite(slope.lo) && Number.isFinite(slope.hi)) {
+      const centre = (lo + hi) / 2;
+      const atCentre = centreIntervals.evaluate({ ...input.parameterEnvironment, [symbol]: centre });
+      if (atCentre.defined === 2) {
+        const half = (hi - lo) / 2;
+        const reach = Math.max(Math.abs(slope.lo), Math.abs(slope.hi)) * half;
+        low = Math.max(low, atCentre.lo - reach); high = Math.min(high, atCentre.hi + reach);
+      }
+    }
+    return { lo: low, hi: high };
+  };
+  const checkColumnsAgainstEnclosures = () => {
+    const pixel = dependentSpan / Math.max(1, dependentPixels);
+    const quarterPixel = independentSpan / Math.max(1, input.plan.relationKind === 'explicit-y' ? input.cssSize.width : input.cssSize.height) / 4;
+    const ordered = [...samples.values()].filter((point) => point.finite).sort((a, b) => a.independent - b.independent);
+    const stack: Array<[SamplePoint, SamplePoint]> = [];
+    for (let index = 0; index + 1 < ordered.length; index += 1) stack.push([ordered[index]!, ordered[index + 1]!]);
+    while (stack.length && !stop) {
+      const [left, right] = stack.pop()!;
+      if (breakPairs.has(pairKey(left.independent, right.independent))) continue;
+      const bound = enclosure(left.independent, right.independent);
+      // Only spikes that can reach the view matter.
+      if (!bound || bound.hi < dependent.minimum || bound.lo > dependent.maximum) continue;
+      const a = dependentValue(left, input.plan.relationKind); const b = dependentValue(right, input.plan.relationKind);
+      const above = bound.hi > Math.max(a, b) + pixel; const below = bound.lo < Math.min(a, b) - pixel;
+      if (!above && !below) continue;
+      if (right.independent - left.independent <= quarterPixel) {
+        // Narrower than a pixel and still hiding something: sample the peak (or trough) itself, so it is drawn at full height.
+        const sign = above ? 1 : -1;
+        let lo = left.independent; let hi = right.independent;
+        const valueAt = (t: number) => { environment[input.plan.independentSymbol] = t; const r = evaluator.evaluate(environment); return r.status === 'finite' ? sign * r.value : -Infinity; };
+        for (let step = 0; step < 60 && hi - lo > Number.EPSILON * Math.max(1, Math.abs(lo)); step += 1) {
+          const m1 = lo + (hi - lo) / 3; const m2 = hi - (hi - lo) / 3;
+          if (valueAt(m1) < valueAt(m2)) lo = m1; else hi = m2;
+        }
+        evaluateAt((lo + hi) / 2);
+        continue;
+      }
+      const middle = evaluateAt((left.independent + right.independent) / 2);
+      if (!middle || !middle.finite) continue;
+      stack.push([left, middle], [middle, right]);
+    }
+  };
+
   const refineToScreenConvergence = () => {
     while (pending.length > 0 && !stop) {
       const interval = pending.pop()!;
@@ -359,6 +415,8 @@ export function sampleExplicitGraphRelation(
       pending.push({ left: seedPoints[index], right: seedPoints[index + 1] });
     }
     refineToScreenConvergence();
+    // Previews are placeholders drawn while the view moves; settled and polished samples are checked.
+    if (!stop && input.quality !== 'preview') checkColumnsAgainstEnclosures();
   }
 
   const ordered = [...samples.values()].sort((left, right) => left.independent - right.independent);

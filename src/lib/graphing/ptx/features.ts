@@ -114,7 +114,25 @@ function isJumpAt(f: PtxRealFunction, x: number, y: number, distance: number) {
   return false;
 }
 
-/** Local minima and maxima of f strictly inside the window, refined by golden-section search. */
+/**
+ * Where f' crosses zero inside [low, high], in the direction a minimum (− to +)
+ * or maximum (+ to −) needs: bisected until the bracket cannot shrink.
+ */
+function bisectSlope(derivative: (x: number) => number | undefined, low: number, high: number, kind: 'minimum' | 'maximum') {
+  let a = low; let b = high; let da = derivative(a); let db = derivative(b);
+  if (da === undefined || db === undefined) return null;
+  const sign = kind === 'minimum' ? 1 : -1;
+  if (!(sign * da < 0 && sign * db > 0)) return null;
+  for (let pass = 0; pass < 200 && b - a > 2 * Number.EPSILON * (1 + Math.abs(a)); pass += 1) {
+    const middle = (a + b) / 2; const dm = derivative(middle);
+    if (dm === undefined) return null;
+    if (dm === 0) return { x: middle, errorBound: Number.EPSILON * (1 + Math.abs(middle)) };
+    if (sign * dm < 0) { a = middle; da = dm; } else { b = middle; db = dm; }
+  }
+  return { x: (a + b) / 2, errorBound: Math.max(b - a, Number.EPSILON * (1 + Math.abs(a))) };
+}
+
+/** Local minima and maxima of f strictly inside the window, refined by golden-section search (or f' = 0 when f' is known). */
 export function ptxRealExtrema(f: PtxRealFunction, minimum: number, maximum: number, options: PtxFinderOptions = {}): PtxFoundExtremum[] {
   const run = sampler(f, options);
   const { xs, values } = grid(run, minimum, maximum, options.steps ?? 400);
@@ -132,6 +150,12 @@ export function ptxRealExtrema(f: PtxRealFunction, minimum: number, maximum: num
     // A pole between samples looks like a maximum of huge height; a real extremum stays near its neighbours.
     if (Math.abs(y) > 1e3 * Math.max(1, Math.abs(previous), Math.abs(next))) continue;
     if (isJumpAt(run, x, y, (maximum - minimum) * 1e-6)) continue;
+    // With an exact derivative, x is where f' changes sign: bisected to the last bit (PTX-ENGINE1).
+    const exact = f.derivative ? bisectSlope(f.derivative, xs[index - 1]!, xs[index + 1]!, kind) : null;
+    if (exact) {
+      const atExact = run(exact.x);
+      if (atExact !== undefined) { found.push({ x: exact.x, y: atExact, kind, level: 'numeric-validated', errorBound: exact.errorBound }); continue; }
+    }
     // Error in x from rounding: the flat top hides x to about sqrt(eps · |f| / |f''|).
     const h = (maximum - minimum) * 1e-4;
     const left = run(x - h); const right = run(x + h);
@@ -171,8 +195,15 @@ export function ptxPlaneIntersections(F: PtxPlaneFunction, G: PtxPlaneFunction, 
  */
 export function ptxOneSidedLimit(f: PtxRealFunction, at: number, side: 1 | -1, span: number) {
   let previous: number | undefined; let change = Infinity;
-  for (let power = 4; power <= 12; power += 1) {
-    const value = f(at + side * span * 10 ** -power);
+  // Close to the point, doubles lose digits to cancellation ((eˣ − 1)/x near 0); double-double keeps them.
+  const evaluate = (x: number) => f.precise?.(x)?.value ?? f(x);
+  // With the lane the approach can go much closer before cancellation would set in.
+  const closest = f.precise ? 20 : 12;
+  for (let power = 4; power <= closest; power += 1) {
+    const offset = span * 10 ** -power;
+    // Inputs are doubles: an offset below a few ulps of the point would land on the point itself.
+    if (power > 12 && offset < 64 * Number.EPSILON * Math.max(Math.abs(at), Number.MIN_VALUE)) break;
+    const value = evaluate(at + side * offset);
     if (value === undefined) return undefined;
     if (previous !== undefined) change = Math.abs(value - previous);
     previous = value;
@@ -293,6 +324,9 @@ export function ptxRealDiscontinuities(f: PtxRealFunction, mathJson: unknown, va
       candidates.push((low + high) / 2);
     }
   }
+  // Guaranteed ranges (PTX-ENGINE1, E7): bisect every part of the window where f may be discontinuous or undefined
+  // down to machine precision, so a pole, hole or jump cannot hide between grid points.
+  if (f.enclose) candidates.push(...intervalCandidates(f.enclose, minimum, maximum, options));
   const found: PtxDiscontinuity[] = [];
   const seen: number[] = [];
   for (const x of candidates.sort((a, b) => a - b)) {
@@ -308,6 +342,30 @@ export function ptxRealDiscontinuities(f: PtxRealFunction, mathJson: unknown, va
       : { kind: 'jump', x, left: left.value, right: right.value, ...(value !== undefined ? { value } : {}) });
   }
   return found;
+}
+
+function intervalCandidates(enclose: NonNullable<PtxRealFunction['enclose']>, minimum: number, maximum: number, options: PtxFinderOptions) {
+  const candidates: number[] = [];
+  const stack: Array<[number, number]> = [[minimum, maximum]];
+  let evaluations = 0;
+  while (stack.length && evaluations < 6000 && candidates.length < 200) {
+    if (options.isCancelled?.()) break;
+    const [lo, hi] = stack.pop()!;
+    // Only definedness and continuity matter here: the plain enclosure is enough and much cheaper.
+    const value = enclose(lo, hi, false).value; evaluations += 1;
+    if (value.defined === 2 && value.continuous && Number.isFinite(value.lo) && Number.isFinite(value.hi)) continue;
+    // Nowhere defined: a gap in the domain, not a point (its edges are found where it meets defined parts).
+    if (value.defined === 0) continue;
+    const middle = (lo + hi) / 2;
+    if (middle <= lo || middle >= hi || hi - lo <= 4 * Number.EPSILON * Math.max(1, Math.abs(middle))) {
+      // Within a few ulps of the discontinuity, possibly on its wrong side: snap to 12 digits, as the grid path does,
+      // so floor reads at x = 3, not 3 − ε.
+      candidates.push(Math.abs(middle) < 1e-12 * (maximum - minimum) ? 0 : Number(middle.toPrecision(12)));
+      continue;
+    }
+    stack.push([middle, hi], [lo, middle]);
+  }
+  return candidates;
 }
 
 /** Circles for holes and jumps: open where the curve has no point, filled where it does. */

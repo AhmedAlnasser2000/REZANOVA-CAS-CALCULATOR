@@ -732,6 +732,12 @@ export type GraphSamplingItemEvidenceV1 = {
   refinable: boolean;
   stopReason?: GraphStopReason;
   piecewiseCondition?: GraphPiecewiseConditionEvidenceV1;
+  /**
+   * Implicit curves (PTX-ENGINE1): boundary cells whose curve is certified to
+   * be one simple arc (Plantinga–Vegter), those not certified, and the
+   * crossings or cusps joined through their singular point.
+   */
+  topology?: { certifiedCells: number; uncertifiedCells: number; singularPoints: number };
 };
 
 export type GraphClassifiedItemSnapshotV2 = {
@@ -808,6 +814,8 @@ export type GraphAnalysisFeature = typeof GRAPH_ANALYSIS_FEATURES[number];
 
 export type GraphEvidenceLevel =
   | 'exact-proved'
+  /** Proved by interval arithmetic (a Krawczyk test or a guaranteed sign change), PTX-ENGINE1. */
+  | 'interval-proved'
   | 'conditional'
   | 'numeric-validated'
   | 'sampled-estimate'

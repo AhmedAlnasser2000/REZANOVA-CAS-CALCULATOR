@@ -330,4 +330,12 @@ describe('Graph explicit screen-space sampler', () => {
       stopReason: { code: 'unsupported-relation', detailCode: 'sampler-implicit-equality' },
     });
   });
+
+  it('draws a spike far narrower than the sampling, found by guaranteed enclosures between samples (PTX-ENGINE1)', () => {
+    // 1/(10⁶(x − 0.3)² + 1): a bump of height 1 and width ~0.002, between the first seeds.
+    const spike = sample(explicitY(['Divide', 1, ['Add', ['Multiply', 1_000_000, ['Power', ['Add', 'x', -0.3], 2]], 1]]));
+    const ys = [...spike.coordinates].filter((_, index) => index % 2 === 1);
+    expect(Math.max(...ys)).toBeGreaterThan(0.95);
+  });
 });
+

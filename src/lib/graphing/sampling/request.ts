@@ -628,6 +628,7 @@ export async function runGraphSampleRequest(
         cache: 'miss',
         refinable: sampled.status !== 'cancelled' && request.quality !== 'polish',
         ...(implicitReason ? { stopReason: { ...implicitReason, path: item.itemId } } : {}),
+        ...(sampled.topology ? { topology: sampled.topology } : {}),
       };
       itemEvidence.push(implicitEvidence);
       cacheItem({

@@ -11,6 +11,7 @@ import {
   GraphExpressionPlanCache,
   type GraphExpressionEvaluator,
 } from '../evaluator';
+import { createGraphImplicitIntervalTester, type GraphImplicitCellVerdict, type GraphImplicitClausePlans } from './implicit-interval';
 import type { GraphSamplerControl } from './types';
 import { sampleDirectedInequality } from './directed';
 import type { GraphAdaptiveQualityPolicyV1 } from './adaptive-policy';
@@ -73,6 +74,8 @@ export type GraphSampledImplicitRelation = {
     emittedVertices: number;
     elapsedMs: number;
   };
+  /** Interval topology evidence (PTX-ENGINE1); absent for prebuilt clauses, which have no tape. */
+  topology?: { certifiedCells: number; uncertifiedCells: number; singularPoints: number };
 };
 
 export type GraphImplicitSamplingInput = {
@@ -92,7 +95,7 @@ export type GraphImplicitSamplingInput = {
 };
 
 type CompileResult =
-  | { ok: true; clauses: CompiledClause[]; fillsRegion: boolean }
+  | { ok: true; clauses: CompiledClause[]; fillsRegion: boolean; plans?: GraphImplicitClausePlans[] }
   | { ok: false; stopReason: GraphStopReason };
 
 function relationClauses(relation: ImplicitRelation) {
@@ -113,6 +116,7 @@ function compileImplicitRelation(input: GraphImplicitSamplingInput): CompileResu
   if (input.prebuilt) return { ok: true, ...input.prebuilt };
   const cache = input.cache ?? new GraphExpressionPlanCache(16);
   const clauses: CompiledClause[] = [];
+  const plans: GraphImplicitClausePlans[] = [];
   for (const [index, clause] of relationClauses(input.relation).entries()) {
     const left = cache.getOrCompile({
       planId: `${input.itemId}.${input.relation.kind}.${index}.left`,
@@ -131,8 +135,9 @@ function compileImplicitRelation(input: GraphImplicitSamplingInput): CompileResu
       right: createGraphExpressionEvaluator(right.plan),
       operator: clause.operator,
     });
+    plans.push({ left: left.plan, right: right.plan, operator: clause.operator });
   }
-  return { ok: true, clauses, fillsRegion: input.relation.kind !== 'implicit-equality' };
+  return { ok: true, clauses, fillsRegion: input.relation.kind !== 'implicit-equality', plans };
 }
 
 /**
@@ -199,6 +204,12 @@ function targetBoundaryPixels(quality: GraphSamplingQualityV3) {
 
 function targetRootPixels(quality: GraphSamplingQualityV3) {
   return quality === 'preview' ? 0.5 : quality === 'settled' ? 0.15 : 0.08;
+}
+
+/** Whether the cell's nine samples strictly straddle the clause's zero (some < 0 and some > 0); a lone exact 0 does not. */
+function cellHasSignChange(cell: AdaptiveCell, clauseIndex: number) {
+  const values = [...cell.corners, ...cell.edgeMidpoints, cell.center].map((point) => point.values[clauseIndex]!);
+  return values.some((value) => value < 0) && values.some((value) => value > 0);
 }
 
 function cellMayContainBoundary(cell: AdaptiveCell, clauseIndex: number) {
@@ -487,11 +498,28 @@ export function sampleImplicitGraphRelation(
   const leaves: AdaptiveCell[] = [];
   const boundaryTarget = targetBoundaryPixels(input.quality);
 
+  // Interval tests (PTX-ENGINE1): proved-empty cells are not refined, and cells that may hold a zero the samples
+  // missed (a thin feature, a touching curve) or a curve that may branch are refined until they are small.
+  // Previews are placeholders drawn while the view moves: only settled and polished samples pay for interval tests.
+  const tester = compiled.plans && input.quality !== 'preview' ? createGraphImplicitIntervalTester(compiled.plans, input.parameterEnvironment) : null;
+  const verdicts = new WeakMap<AdaptiveCell, GraphImplicitCellVerdict[]>();
+  const verdictsOf = (cell: AdaptiveCell) => {
+    let known = verdicts.get(cell);
+    if (!known && tester) { known = compiled.clauses.map((_, clauseIndex) => tester.verdict(clauseIndex, cell)); verdicts.set(cell, known); }
+    return known ?? null;
+  };
   const needsRefinement = (cell: AdaptiveCell) => {
     const boundaryClauses = compiled.clauses.flatMap((_, clauseIndex) => (
       cellMayContainBoundary(cell, clauseIndex) ? [clauseIndex] : []
     ));
-    return boundaryClauses.some((clauseIndex) => !cellClauseIsAffine(cell, clauseIndex));
+    const heuristic = boundaryClauses.some((clauseIndex) => !cellClauseIsAffine(cell, clauseIndex));
+    if (!tester) return heuristic;
+    // Cheap first: a plain enclosure that excludes every clause's zero proves the cell empty of boundary.
+    if (compiled.clauses.every((_, clauseIndex) => tester.excludesZero(clauseIndex, cell))) return false;
+    if (heuristic) return true;
+    // The samples see nothing; the full verdict decides whether a thin, touching or branching curve may hide here.
+    const known = verdictsOf(cell)!;
+    return known.some((verdict, clauseIndex) => verdict.zeroPossible && (!cellHasSignChange(cell, clauseIndex) || !verdict.simpleArc));
   };
   const atTargetSize = (bounds: CellBounds) => {
     const size = screenCellSize(input, bounds);
@@ -637,9 +665,41 @@ export function sampleImplicitGraphRelation(
     return false;
   };
 
+  const topology = { certifiedCells: 0, uncertifiedCells: 0, singularPoints: 0 };
+  const touching = compiled.clauses.map(() => [] as Array<{ x: number; y: number; bounds: CellBounds }>);
   for (const cell of leaves) {
     if (cancelled || geometryBudgetExhausted) break;
     for (let clauseIndex = 0; clauseIndex < compiled.clauses.length; clauseIndex += 1) {
+      // The full verdict only where it can matter: cells the curve crosses (topology, crossings) and small cells the
+      // cheap enclosure cannot clear (touching curves). Empty cells cost nothing more.
+      const crossing = cellHasSignChange(cell, clauseIndex);
+      const small = atTargetSize(cell);
+      const verdict = tester && (crossing || (small && !tester.excludesZero(clauseIndex, cell))) ? verdictsOf(cell)?.[clauseIndex] : undefined;
+      if (verdict && tester && verdict.zeroPossible) {
+        if (crossing) { if (verdict.simpleArc) topology.certifiedCells += 1; else topology.uncertifiedCells += 1; }
+        if (!crossing && small) {
+          // A curve that only touches zero here: no sign change, but the enclosure cannot exclude 0.
+          const point = tester.touchingPoint(clauseIndex, cell);
+          if (point) touching[clauseIndex]!.push({ ...point, bounds: cell });
+          continue;
+        }
+        if (crossing && small && !verdict.simpleArc && verdict.gradientMayVanish) {
+          // A crossing or cusp: join every edge crossing of the cell through the singular point.
+          const singular = tester.singularPoint(clauseIndex, cell);
+          if (singular) {
+            const centre = evaluatePoint(singular.x, singular.y);
+            if (centre) {
+              topology.singularPoints += 1;
+              for (let edge = 0; edge < 4; edge += 1) {
+                const [start, end] = edgeVertices(cell, edge);
+                const root = rootOnEdge(start, end, clauseIndex);
+                if (root) segmentsByClause[clauseIndex]!.push({ first: root, second: centre });
+              }
+              continue;
+            }
+          }
+        }
+      }
       const code = cell.corners.reduce((value, corner, index) => (
         value | (corner.values[clauseIndex]! <= 0 ? 1 << index : 0)
       ), 0);
@@ -688,6 +748,37 @@ export function sampleImplicitGraphRelation(
     }
   }
 
+  // Touching curves: join the touching points of neighbouring cells; a lone one (x² + y² = 0) is a dot.
+  touching.forEach((found, clauseIndex) => {
+    // Cells that share a corner find the same point (x² + y² = 0 at a grid vertex): keep one, with the union of their cells.
+    const points: typeof found = [];
+    for (const point of found) {
+      const same = points.find((other) => Math.abs(other.x - point.x) <= 1e-9 * (point.bounds.x1 - point.bounds.x0)
+        && Math.abs(other.y - point.y) <= 1e-9 * (point.bounds.y1 - point.bounds.y0));
+      if (!same) { points.push({ ...point }); continue; }
+      same.bounds = { x0: Math.min(same.bounds.x0, point.bounds.x0), x1: Math.max(same.bounds.x1, point.bounds.x1),
+        y0: Math.min(same.bounds.y0, point.bounds.y0), y1: Math.max(same.bounds.y1, point.bounds.y1) };
+    }
+    const near = (a: CellBounds, b: CellBounds) => {
+      const slackX = 0.01 * (a.x1 - a.x0); const slackY = 0.01 * (a.y1 - a.y0);
+      return a.x0 <= b.x1 + slackX && b.x0 <= a.x1 + slackX && a.y0 <= b.y1 + slackY && b.y0 <= a.y1 + slackY;
+    };
+    points.forEach((point, index) => {
+      const vertex = evaluatePoint(point.x, point.y);
+      if (!vertex) return;
+      let joined = false;
+      for (let other = index + 1; other < points.length; other += 1) {
+        if (!near(point.bounds, points[other]!.bounds)) continue;
+        const next = evaluatePoint(points[other]!.x, points[other]!.y);
+        if (next) { segmentsByClause[clauseIndex]!.push({ first: vertex, second: next }); joined = true; }
+      }
+      if (!joined && !points.some((candidate, j) => j < index && near(candidate.bounds, point.bounds))) {
+        const tiny = 1e-3 * (point.bounds.x1 - point.bounds.x0);
+        segmentsByClause[clauseIndex]!.push({ first: vertex, second: { ...vertex, x: vertex.x + tiny } });
+      }
+    });
+  });
+
   if (cancelled) {
     return {
       itemId: input.itemId,
@@ -731,5 +822,6 @@ export function sampleImplicitGraphRelation(
       emittedVertices,
       elapsedMs: Math.max(0, now() - startedAt),
     },
+    ...(tester ? { topology } : {}),
   };
 }

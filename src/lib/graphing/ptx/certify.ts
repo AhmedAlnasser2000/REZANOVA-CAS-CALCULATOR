@@ -29,14 +29,15 @@ export function ptxComplexText(re: number, im: number, errorBound = 0) {
   return `${real} ${im < 0 ? '−' : '+'} ${imaginaryPart}`;
 }
 
-export type PtxBadge = 'exact' | 'verified' | 'numeric';
+export type PtxBadge = 'exact' | 'proved' | 'verified' | 'numeric';
 
 export function ptxBadge(level: PtxLevel): PtxBadge {
-  return level === 'exact-proved' ? 'exact' : level === 'numeric-validated' ? 'verified' : 'numeric';
+  return level === 'exact-proved' ? 'exact' : level === 'interval-proved' ? 'proved' : level === 'numeric-validated' ? 'verified' : 'numeric';
 }
 
 const BADGE_MEANING: Record<PtxBadge, string> = {
   exact: 'Exact: proved symbolically',
+  proved: 'Proved: interval arithmetic guarantees it lies within the error shown',
   verified: 'Verified: bracketed or bounded numerically',
   numeric: 'Numeric: converged, not bracketed',
 };

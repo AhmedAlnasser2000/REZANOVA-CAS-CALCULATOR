@@ -289,9 +289,18 @@ async function runPtx3Smoke(session) {
   const openCorners = await waitFor('region corner', () => execute(session, `
     const count = document.querySelectorAll('[data-testid="graph-ptx-dot"].is-open:not([hidden])').length;
     return count === 1 ? count : null;`), 30_000);
+  // PTX-ENGINE1: a curve that only touches zero is drawn, and a trace on sin x is proved by interval arithmetic.
+  await setRow('(x-y)^2=0');
+  const touching = await waitFor('touching curve', () => execute(session, `
+    return document.querySelectorAll('[data-testid="graph-scene-paths"] path[data-item-id]').length || null;`), 30_000);
+  await setRow(String.raw`\sin x`);
+  await delay(1200);
+  await traceFirst();
+  const badge = await waitFor('proved badge', () => execute(session, `
+    return document.querySelector('.graph-trace-callout')?.dataset.ptxBadge ?? null;`), 30_000);
   await delay(600);
   const image = await screenshot(session);
-  return { curveDots, openCorners, screenshot: image };
+  return { curveDots, openCorners, touching, badge, screenshot: image };
 }
 
 function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) {
@@ -316,6 +325,7 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
   }
   if (ptx2 && ptx2.hole.join(',') !== 'open') failures.push(`the removable gap is not an open circle (${JSON.stringify(ptx2.hole)})`);
   if (ptx3 && !(ptx3.curveDots >= 4 && ptx3.openCorners === 1)) failures.push(`PTX3 dots missing (${JSON.stringify(ptx3)})`);
+  if (ptx3 && !(ptx3.touching >= 1 && ptx3.badge === 'proved')) failures.push(`PTX-ENGINE1 touching curve or proved badge missing (${JSON.stringify(ptx3)})`);
   if (ptx2 && !(ptx2.tan?.includes('x = −π/2') && ptx2.tan?.includes('x = π/2'))) failures.push(`tan x is missing its asymptotes (${JSON.stringify(ptx2.tan)})`);
   if (ptx2 && ptx2.asymptotes.join(',') !== 'x = 1,y = 1') failures.push(`asymptotes are not x = 1 and y = 1 (${JSON.stringify(ptx2.asymptotes)})`);
   if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
@@ -399,7 +409,7 @@ try {
   if (smoke) {
     log('running curve points and region corner smoke');
     const run = await runPtx3Smoke(sessionId);
-    ptx3 = { curveDots: run.curveDots, openCorners: run.openCorners };
+    ptx3 = { curveDots: run.curveDots, openCorners: run.openCorners, touching: run.touching, badge: run.badge };
     if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-region.png', Buffer.from(run.screenshot, 'base64'));
   }
   const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) : [];

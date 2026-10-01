@@ -122,7 +122,8 @@ test.describe('PTX points of interest in the Real pane', () => {
     await page.mouse.click(start.x, start.y);
     await expect(callout).toBeVisible();
     await expect(page.getByTestId('graph-ptx-dot')).not.toHaveCount(0, { timeout: 8_000 });
-    await expect(callout).toHaveAttribute('data-ptx-badge', 'verified');
+    // PTX-ENGINE1: the value at the traced x is proved by interval evaluation.
+    await expect(callout).toHaveAttribute('data-ptx-badge', 'proved');
     // Sweeping onto (1, 1) snaps to the intersection; nearby is plain tracing.
     const crossing = await realPoint(page, 1, 1);
     await page.mouse.move(crossing.x, crossing.y, { steps: 6 });

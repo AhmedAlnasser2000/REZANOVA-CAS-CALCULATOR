@@ -1277,6 +1277,11 @@
   background: #7fd8a4;
 }
 
+.graph-ptx-badge.is-proved {
+  color: #10170a;
+  background: #c9e88a;
+}
+
 .graph-ptx-badge.is-verified {
   color: #0b1420;
   background: #8fc2ff;
@@ -1318,6 +1323,11 @@
 .graph-trace-callout[data-ptx-badge="exact"]::after {
   color: #0b1a12;
   background: #7fd8a4;
+}
+
+.graph-trace-callout[data-ptx-badge="proved"]::after {
+  color: #10170a;
+  background: #c9e88a;
 }
 
 .graph-trace-callout[data-ptx-badge="verified"]::after {

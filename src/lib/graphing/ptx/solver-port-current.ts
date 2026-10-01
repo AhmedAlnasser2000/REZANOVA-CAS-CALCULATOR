@@ -1,6 +1,6 @@
 import { complexAbs } from '../../numeric/complex';
 import type { GraphExpressionIR } from '../contracts';
-import { compileGraphExpression, createGraphExpressionEvaluator, GraphExpressionPlanCache } from '../evaluator';
+import { compileGraphComplexIntervalPlan, compileGraphExpression, createGraphDoubleDoubleEvaluator, createGraphDualEvaluator, createGraphExpressionEvaluator, createGraphIntervalEvaluator, graphTightRange, GraphExpressionPlanCache } from '../evaluator';
 import { compileGraphCondition } from '../sampling/condition';
 import { graphParametricDomain } from '../sampling/parametric';
 import { graphPiecewiseForm } from '../sampling/piecewise';
@@ -9,7 +9,7 @@ import { findGraphPlaneRoots } from '../sampling/complex-plane-newton';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { exactGraphPolynomial, gIsZero, qDiv, qIsZero, qMul, qSub, qToNumber, type GraphExactPolynomial } from '../sampling/complex-polynomial';
 import type { PtxCurve, PtxParamCurve } from './curves';
-import type { PtxCurvePoint, PtxRealFunction, PtxSolverPort } from './solver-port';
+import type { PtxCurvePoint, PtxPlaneFunction, PtxRealFunction, PtxSolverPort } from './solver-port';
 
 // The current adapter: Graphing's own evaluators and root solvers (which reach
 // Equation only through its reviewed public facade). Replace this file's
@@ -21,10 +21,32 @@ function realFunction(expression: GraphExpressionIR, variable: string, parameter
   const compiled = compileGraphExpression({ planId: `ptx.${planSerial += 1}`, sourceRevision: 0, expression });
   if (!compiled.ok) return null;
   const evaluator = createGraphExpressionEvaluator(compiled.plan);
-  return (value) => {
+  const dual = createGraphDualEvaluator(compiled.plan, [variable]);
+  const f: PtxRealFunction = (value) => {
     const result = evaluator.evaluate({ ...parameters, [variable]: value });
     return result.status === 'finite' ? result.value : undefined;
   };
+  f.derivative = (value) => {
+    const result = dual.evaluate({ ...parameters, [variable]: value });
+    return result.status === 'finite' && Number.isFinite(result.gradient[0]) ? result.gradient[0] : undefined;
+  };
+  const precise = createGraphDoubleDoubleEvaluator(compiled.plan);
+  f.precise = (value) => {
+    const result = precise.evaluate({ ...parameters, [variable]: value });
+    return result ? { value: result.value.hi + result.value.lo, error: result.error } : undefined;
+  };
+  const intervals = createGraphIntervalEvaluator(compiled.plan, [variable]);
+  f.enclose = (lo, hi, tight = true) => {
+    const plain = intervals.evaluate({ ...parameters, [variable]: { lo, hi } });
+    // The tightest guaranteed range (plain, mean-value and affine forms intersected); the slope from interval AD.
+    const value = lo === hi || !tight ? plain : graphTightRange(compiled.plan, { [variable]: { lo, hi } }, parameters);
+    return { value: enclosureOf(value), slope: enclosureOf(plain.gradient[0] ?? plain) };
+  };
+  return f;
+}
+
+function enclosureOf(value: { lo: number; hi: number; defined: 0 | 1 | 2; continuous: boolean; smooth: boolean }) {
+  return { lo: value.lo, hi: value.hi, defined: value.defined, continuous: value.continuous, smooth: value.smooth };
 }
 
 function renameSymbol(node: unknown, from: string, to: string): unknown {
@@ -49,10 +71,21 @@ function usesSymbol(node: unknown, symbol: string): boolean {
 }
 
 function polarPoint(r: PtxRealFunction): PtxCurvePoint {
-  return (theta) => {
+  const point: PtxCurvePoint = (theta) => {
     const radius = r(theta);
     return radius === undefined ? undefined : { x: radius * Math.cos(theta), y: radius * Math.sin(theta), radius };
   };
+  const derivative = r.derivative;
+  if (derivative) {
+    // (r cos θ)' = r' cos θ − r sin θ, (r sin θ)' = r' sin θ + r cos θ.
+    point.velocity = (theta) => {
+      const radius = r(theta); const slope = derivative(theta);
+      if (radius === undefined || slope === undefined) return undefined;
+      const c = Math.cos(theta); const s = Math.sin(theta);
+      return { dx: slope * c - radius * s, dy: slope * s + radius * c };
+    };
+  }
+  return point;
 }
 
 function paramCurve(point: PtxCurvePoint, rest: Omit<PtxParamCurve, 'kind' | 'point'>): PtxCurve {
@@ -87,18 +120,25 @@ export const currentPtxSolverPort: PtxSolverPort = {
   curvePoint(relation, parameters) {
     if (relation.kind === 'polar-radius') {
       const r = realFunction(relation.radius, 'theta', parameters);
-      return r ? (theta) => {
-        const radius = r(theta);
-        return radius === undefined ? undefined : { x: radius * Math.cos(theta), y: radius * Math.sin(theta), radius };
-      } : null;
+      return r ? polarPoint(r) : null;
     }
     if (relation.kind !== 'parametric-curve') return null;
     const x = realFunction(relation.x, relation.parameterSymbol, parameters);
     const y = realFunction(relation.y, relation.parameterSymbol, parameters);
-    return x && y ? (t) => {
+    if (!x || !y) return null;
+    const point: PtxCurvePoint = (t) => {
       const px = x(t); const py = y(t);
       return px === undefined || py === undefined ? undefined : { x: px, y: py };
-    } : null;
+    };
+    point.velocity = (t) => {
+      const dx = x.derivative?.(t); const dy = y.derivative?.(t);
+      return dx === undefined || dy === undefined ? undefined : { dx, dy };
+    };
+    point.enclose = (lo, hi) => {
+      const ex = x.enclose!(lo, hi); const ey = y.enclose!(lo, hi);
+      return { x: ex.value, y: ey.value, dx: ex.slope, dy: ey.slope };
+    };
+    return point;
   },
   curve(source, parameters, window) {
     if ('piecewise' in source) {
@@ -169,20 +209,50 @@ export const currentPtxSolverPort: PtxSolverPort = {
     const otherwiseExpression = piecewise.otherwise ? valueOf(piecewise.otherwise) : null;
     const otherwise = otherwiseExpression ? realFunction(otherwiseExpression, variable, parameters) : null;
     if (piecewise.otherwise && !otherwise) return null;
-    return (value) => {
+    // The branch that decides a value also decides its slope.
+    const active = (value: number) => {
       const environment = { ...parameters, [variable]: value };
-      for (const branch of branches) if (branch.test(environment) === true) return branch.f(value);
-      return otherwise ? otherwise(value) : undefined;
+      for (const branch of branches) if (branch.test(environment) === true) return branch.f;
+      return otherwise ?? undefined;
     };
+    const f: PtxRealFunction = (value) => active(value)?.(value);
+    f.derivative = (value) => active(value)?.derivative?.(value);
+    return f;
   },
   planeFunction(left, right, parameters) {
     const difference = { mathJson: ['Add', left.mathJson, ['Negate', right.mathJson]], freeSymbols: [...new Set([...left.freeSymbols, ...right.freeSymbols])] } as GraphExpressionIR;
     const compiled = compileGraphExpression({ planId: `ptx.${planSerial += 1}`, sourceRevision: 0, expression: difference });
     if (!compiled.ok) return null;
     const evaluator = createGraphExpressionEvaluator(compiled.plan);
-    return (x, y) => {
+    const dual = createGraphDualEvaluator(compiled.plan, ['x', 'y']);
+    const F: PtxPlaneFunction = (x, y) => {
       const result = evaluator.evaluate({ ...parameters, x, y });
       return result.status === 'finite' ? result.value : undefined;
+    };
+    F.gradient = (x, y) => {
+      const result = dual.evaluate({ ...parameters, x, y });
+      return result.status === 'finite' && Number.isFinite(result.gradient[0]) && Number.isFinite(result.gradient[1])
+        ? { fx: result.gradient[0]!, fy: result.gradient[1]! } : undefined;
+    };
+    const intervals = createGraphIntervalEvaluator(compiled.plan, ['x', 'y']);
+    F.enclose = (box) => {
+      const x = { lo: box.xMin, hi: box.xMax }; const y = { lo: box.yMin, hi: box.yMax };
+      const plain = intervals.evaluate({ ...parameters, x, y });
+      const point = box.xMin === box.xMax && box.yMin === box.yMax;
+      const value = point ? plain : graphTightRange(compiled.plan, { x, y }, parameters);
+      return { value: enclosureOf(value), fx: enclosureOf(plain.gradient[0] ?? plain), fy: enclosureOf(plain.gradient[1] ?? plain) };
+    };
+    return F;
+  },
+  complexEnclosure(mathJson, parameters) {
+    const plan = compileGraphComplexIntervalPlan(mathJson, parameters);
+    if (!plan) return null;
+    return (box) => {
+      const result = plan.evaluate(box);
+      if (!result) return null;
+      const bounded = result.re.defined === 2 && result.im.defined === 2
+        && [result.re.lo, result.re.hi, result.im.lo, result.im.hi].every(Number.isFinite);
+      return { re: { lo: result.re.lo, hi: result.re.hi }, im: { lo: result.im.lo, hi: result.im.hi }, bounded };
     };
   },
   complexFunction(mathJson, parameters) {

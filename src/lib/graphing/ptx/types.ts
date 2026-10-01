@@ -4,8 +4,8 @@ import type { GraphEvidenceLevel } from '../contracts';
 // drawn geometry only says which object was hit and roughly where; PTX puts
 // the point on the true object and says how sure it is.
 
-/** How a PTX point is known: exact (proved symbolically), verified (bracketed or bounded), numeric (converged only). */
-export type PtxLevel = Extract<GraphEvidenceLevel, 'exact-proved' | 'numeric-validated' | 'sampled-estimate'>;
+/** How a PTX point is known: exact (proved symbolically), proved (by interval arithmetic), verified (bracketed or bounded), numeric (converged only). */
+export type PtxLevel = Extract<GraphEvidenceLevel, 'exact-proved' | 'interval-proved' | 'numeric-validated' | 'sampled-estimate'>;
 
 export type PtxRole = 'on-curve' | 'probe' | 'root' | 'intersection' | 'extremum' | 'y-intercept' | 'complex-zero';
 

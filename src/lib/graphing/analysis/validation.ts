@@ -10,7 +10,7 @@ import {
 
 const featureSet = new Set<string>(GRAPH_ANALYSIS_FEATURES);
 const levelSet = new Set([
-  'exact-proved', 'conditional', 'numeric-validated', 'sampled-estimate',
+  'exact-proved', 'interval-proved', 'conditional', 'numeric-validated', 'sampled-estimate',
   'suspected', 'inconclusive', 'unsupported',
 ]);
 const limits = { maxNodes: 80_000, maxDepth: 128, maxBytes: 4_000_000 };

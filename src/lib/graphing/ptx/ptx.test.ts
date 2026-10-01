@@ -4,6 +4,7 @@ import { ptxAsymptoteLabel, ptxAsymptotes } from './asymptotes';
 import { ptxBadge, ptxComplexText, ptxNumber, ptxSignificantDigits } from './certify';
 import { ptxDiscontinuityMarkers, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from './features';
 import { ptxProjectToCurve, ptxRefineExplicit, ptxRefineParametric, ptxStepAlongCurve } from './refine';
+import { ptxProvePlaneZero, ptxProveRealExtremum, ptxProveRealZero } from './prove';
 import type { PtxPlaneFunction, PtxSolverPort } from './solver-port';
 import { currentPtxSolverPort } from './solver-port-current';
 
@@ -28,14 +29,17 @@ describe('PTX refiners', () => {
     const sine = port.realFunction(expression(['Sin', 'x']), 'x', {})!;
     const point = ptxRefineExplicit(sine, 1.234567, 'y-of-x')!;
     expect(point.y).toBe(Math.sin(1.234567));
-    expect(point.level).toBe('numeric-validated');
+    // PTX-ENGINE1: an interval evaluation at the same x proves the value to a few ulps.
+    expect(point.level).toBe('interval-proved');
+    expect(point.errorBound).toBeLessThan(1e-14);
   });
 
   it('projects onto x^2 + y^2 = 9 within 1e-10 and brackets the point', () => {
     const circle = port.planeFunction(expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]]), expression(9), {})!;
     const point = ptxProjectToCurve(circle, { x: 2.1, y: 2.2 }, units, 20)!;
     expect(Math.abs(Math.hypot(point.x, point.y) - 3)).toBeLessThan(1e-10);
-    expect(point.level).toBe('numeric-validated');
+    // PTX-ENGINE1: the bracket along the normal is a guaranteed sign change, so the point is proved.
+    expect(point.level).toBe('interval-proved');
     expect(point.errorBound).toBeLessThan(1e-8);
   });
 
@@ -223,5 +227,73 @@ describe('PTX asymptotes', () => {
     expect(lines(['Sin', 'x'])).toEqual([]);
     const f = port.realFunction(expression(['Floor', 'x']), 'x', {})!;
     expect(ptxRealDiscontinuities(f, ['Floor', 'x'], 'x', -10.4, 10.4, port, {}).every((item) => item.kind === 'jump')).toBe(true);
+  });
+});
+
+describe('PTX-ENGINE1 E1: exact derivatives', () => {
+  it('pins extrema to the last bit with f′ = 0 instead of a golden-section estimate', () => {
+    const f = port.realFunction(expression(['Add', ['Power', 'x', 3], ['Multiply', -3, 'x']]), 'x', {})!;
+    expect(f.derivative?.(2)).toBe(9);
+    const extrema = ptxRealExtrema(f, -3, 3);
+    expect(extrema.map((e) => e.kind)).toEqual(['maximum', 'minimum']);
+    expect(Math.abs(extrema[0]!.x + 1)).toBeLessThan(1e-15);
+    expect(Math.abs(extrema[1]!.x - 1)).toBeLessThan(1e-15);
+    expect(extrema[1]!.errorBound).toBeLessThan(1e-14);
+  });
+
+  it('gives implicit curves exact gradients and parametric curves exact velocities', () => {
+    const F = port.planeFunction(expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]]), expression(9), {})!;
+    expect(F.gradient?.(1, 2)).toEqual({ fx: 2, fy: 4 });
+    const curve = port.curvePoint({ kind: 'parametric-curve', parameterSymbol: 't', x: expression(['Cos', 't']), y: expression(['Sin', 't']) } as never, {})!;
+    const v = curve.velocity!(0.3)!;
+    expect(v.dx).toBe(-Math.sin(0.3)); expect(v.dy).toBe(Math.cos(0.3));
+  });
+});
+
+describe('PTX-ENGINE1 E4: interval proofs', () => {
+  const f = (mathJson: unknown) => port.realFunction(expression(mathJson), 'x', {})!;
+  it('proves √2 is the only zero of x² − 2 near 1.414, and refuses a double root', () => {
+    const proof = ptxProveRealZero(f(['Add', ['Power', 'x', 2], -2]), 1.41421356, 1e-8)!;
+    expect(proof.unique).toBe(true);
+    expect(proof.lo).toBeLessThanOrEqual(Math.SQRT2); expect(proof.hi).toBeGreaterThanOrEqual(Math.SQRT2);
+    expect(proof.hi - proof.lo).toBeLessThan(1e-12);
+    expect(ptxProveRealZero(f(['Power', 'x', 2]), 1e-9, 1e-8)).toBeNull();
+  });
+
+  it('proves a sign change where there is no slope range, and the extrema of x³ − 3x', () => {
+    const step = ptxProveRealZero(f(['Add', ['Power', 'x', 3], ['Abs', 'x'], -1]), 0.6823278038280193, 1e-10);
+    expect(step).not.toBeNull();
+    const cubic = f(['Add', ['Power', 'x', 3], ['Multiply', -3, 'x']]);
+    expect(ptxProveRealExtremum(cubic, 1, 1e-10, 'minimum')).not.toBeNull();
+    expect(ptxProveRealExtremum(cubic, -1, 1e-10, 'maximum')).not.toBeNull();
+    expect(ptxProveRealExtremum(cubic, 1, 1e-10, 'maximum')).toBeNull();
+  });
+
+  it('proves where two circles cross with the 2-D Krawczyk test', () => {
+    const F = port.planeFunction(expression(['Add', ['Power', 'x', 2], ['Power', 'y', 2]]), expression(4), {})!;
+    const G = port.planeFunction(expression(['Add', ['Power', ['Add', 'x', -2], 2], ['Power', 'y', 2]]), expression(4), {})!;
+    const proof = ptxProvePlaneZero(F, G, 1 + 1e-9, Math.sqrt(3) - 1e-9, 1e-7)!;
+    expect(proof.unique).toBe(true);
+    expect(proof.x.lo).toBeLessThanOrEqual(1); expect(proof.x.hi).toBeGreaterThanOrEqual(1);
+    expect(proof.y.lo).toBeLessThanOrEqual(Math.sqrt(3)); expect(proof.y.hi).toBeGreaterThanOrEqual(Math.sqrt(3));
+  });
+});
+
+describe('PTX-ENGINE1 E8: the double-double lane', () => {
+  it('reads (eˣ − 1)/x at x = 1e−12 correctly where doubles are wrong in the fifth digit', () => {
+    const f = port.realFunction(expression(['Divide', ['Add', ['Exp', 'x'], -1], 'x']), 'x', {})!;
+    const point = ptxRefineExplicit(f, 1e-12, 'y-of-x')!;
+    expect(Math.abs(point.y - (1 + 5e-13))).toBeLessThan(1e-14);
+    expect(point.errorBound).toBeLessThan(1e-12);
+    expect(ptxNumber(point.y, point.errorBound)).toBe('1');
+  });
+
+  it('finds its hole at 0 with limit 1', () => {
+    const mathJson = ['Divide', ['Add', ['Exp', 'x'], -1], 'x'];
+    const f = port.realFunction(expression(mathJson), 'x', {})!;
+    const holes = ptxRealDiscontinuities(f, mathJson, 'x', -5, 5, port, {}).filter((item) => item.kind === 'hole');
+    expect(holes).toHaveLength(1);
+    expect(holes[0]).toMatchObject({ x: 0 });
+    expect(Math.abs((holes[0] as { limit: number }).limit - 1)).toBeLessThan(1e-12);
   });
 });

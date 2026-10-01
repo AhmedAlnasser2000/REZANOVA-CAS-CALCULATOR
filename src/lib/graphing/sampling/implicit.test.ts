@@ -227,12 +227,13 @@ describe('Graph implicit contour and region sampler', () => {
     const wide = sample(mixedPower, {
       viewport: { coordinateSystem: 'cartesian', xMin: -20, xMax: 20, yMin: -12, yMax: 12 },
       cssSize: { width: 1000, height: 600 },
-      limits: { maximumSamples: 47_232, maximumTimeMs: 5_000, maximumVertices: 100_000 },
+      // PTX-ENGINE1's interval pruning finishes this view within the old 47 232 samples; a smaller budget still runs out.
+      limits: { maximumSamples: 20_000, maximumTimeMs: 5_000, maximumVertices: 100_000 },
     });
     // This wide view previously returned no geometry at all once the sample
     // budget ran out; partial output must survive and be reported as such.
     expect(wide.status).toBe('budget-exhausted');
-    expect(wide.stats.evaluatedSamples).toBeLessThanOrEqual(47_232);
+    expect(wide.stats.evaluatedSamples).toBeLessThanOrEqual(20_000);
     const xs = Array.from(wide.boundaries[0]?.coordinates ?? []).filter((_, index) => index % 2 === 0);
     expect(xs.length).toBeGreaterThan(40);
     expect(Math.min(...xs)).toBeLessThan(1);
@@ -304,5 +305,36 @@ describe('Graph implicit contour and region sampler', () => {
     expect(bounded.stopReasons).toContainEqual(expect.objectContaining({
       code: 'sampling-budget-exceeded',
     }));
+  });
+
+  describe('PTX-ENGINE1 interval sampling', () => {
+    it('draws curves that touch zero without changing sign', () => {
+      const line = sample({ kind: 'implicit-equality', left: expression(['Power', ['Add', 'x', ['Negate', 'y']], 2]), right: expression(0, []) });
+      const along = points(line);
+      expect(along.length).toBeGreaterThan(20);
+      expect(along.every(({ x, y }) => Math.abs(x - y) < 1e-6)).toBe(true);
+      expect(Math.min(...along.map(({ x }) => x))).toBeLessThan(-3);
+      expect(Math.max(...along.map(({ x }) => x))).toBeGreaterThan(3);
+      const dot = sample({ kind: 'implicit-equality', left: circleLeft, right: expression(0, []) });
+      expect(points(dot).length).toBeGreaterThan(0);
+      // A lone point is drawn as a segment a thousandth of a cell long, so the renderer shows a dot.
+      expect(points(dot).every(({ x, y }) => Math.hypot(x, y) < 1e-3)).toBe(true);
+    });
+
+    it('joins the branches of x² = y² through their crossing and certifies smooth arcs', () => {
+      const cross = sample({ kind: 'implicit-equality', left: expression(['Power', 'x', 2], ['x']), right: expression(['Power', 'y', 2], ['y']) });
+      expect(cross.topology!.singularPoints).toBeGreaterThan(0);
+      expect(points(cross).some(({ x, y }) => Math.hypot(x, y) < 1e-9)).toBe(true);
+      const circle = sample({ kind: 'implicit-equality', left: circleLeft, right: expression(4, []) });
+      expect(circle.topology!.certifiedCells).toBeGreaterThan(0);
+      expect(circle.topology!.uncertifiedCells).toBe(0);
+    });
+
+    it('finds a loop far smaller than a grid cell', () => {
+      const tiny = sample({ kind: 'implicit-equality', left: expression(['Add', ['Power', ['Add', 'x', -1.234], 2], ['Power', ['Add', 'y', -0.567], 2]]), right: expression(0.0004, []) });
+      const found = points(tiny);
+      expect(found.length).toBeGreaterThan(4);
+      expect(found.every(({ x, y }) => Math.abs(Math.hypot(x - 1.234, y - 0.567) - 0.02) < 2e-3)).toBe(true);
+    });
   });
 });

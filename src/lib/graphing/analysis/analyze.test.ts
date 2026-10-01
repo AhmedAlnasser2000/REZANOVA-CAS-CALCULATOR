@@ -62,12 +62,16 @@ describe('Graph analysis authority', () => {
     expect(result.evidence.some((entry) => entry.itemIds[0] === 'hole' && entry.feature === 'pole')).toBe(false);
   });
 
-  it('finds bounded numeric roots and intersections without upgrading them to exact proof', async () => {
+  it('proves numeric roots and intersections by interval arithmetic without upgrading them to exact proof', async () => {
     const result = await runGraphAnalysisRequest(request([
-      item('sine', ['Sin', 'x']), item('line', 'x'), item('constant', 1),
+      item('sine', ['Sin', 'x']), item('line', 'x'), item('half', ['Multiply', 0.5, 'x']),
     ], ['root', 'intersection']));
-    expect(result.evidence.some((entry) => entry.feature === 'root' && entry.level === 'numeric-validated')).toBe(true);
-    expect(result.evidence.some((entry) => entry.feature === 'intersection' && entry.level === 'numeric-validated')).toBe(true);
+    // PTX-ENGINE1: the roots of sin x and its simple crossings with y = x/2 carry interval proofs, never exact;
+    // sin x = x at 0 (a triple root, no proof at that size) stays numeric.
+    expect(result.evidence.some((entry) => entry.feature === 'root' && entry.level === 'interval-proved')).toBe(true);
+    expect(result.evidence.some((entry) => entry.feature === 'intersection' && entry.level === 'interval-proved')).toBe(true);
+    expect(result.evidence.filter((entry) => entry.itemIds.includes('sine') && entry.feature === 'root').every((entry) => entry.level !== 'exact-proved')).toBe(true);
+    expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
   });
 
   it('reports exact real-domain boundaries for logarithms and radicals', async () => {
@@ -103,8 +107,12 @@ describe('Graph analysis authority', () => {
       complexSearchRegion: { reMin: -2, reMax: 2, imMin: -2, imMax: 2 },
     }, undefined, { now: () => 0 });
     expect(result.evidence).toEqual(expect.arrayContaining([
-      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'numeric-validated' }),
-      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'inconclusive',
+      // PTX-ENGINE1: z² + 1 is meromorphic, so each zero is proved and the argument principle counts them all.
+      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'interval-proved', coordinates: expect.anything() }),
+      expect.objectContaining({ itemIds: ['quadratic-complex'], feature: 'complex-zero', level: 'interval-proved',
+        basis: expect.objectContaining({ validator: expect.stringContaining('exactly 2 zeros and 0 poles') }) }),
+      // ln z is not meromorphic: completeness stays unproved.
+      expect.objectContaining({ itemIds: ['log-complex'], feature: 'complex-zero', level: 'inconclusive',
         stopReason: expect.objectContaining({ detailCode: 'bounded-complex-search-does-not-prove-global-completeness' }) }),
       expect.objectContaining({ itemIds: ['reciprocal-complex'], feature: 'complex-pole', level: 'exact-proved' }),
       expect.objectContaining({ itemIds: ['log-complex'], feature: 'branch-point', level: 'exact-proved' }),

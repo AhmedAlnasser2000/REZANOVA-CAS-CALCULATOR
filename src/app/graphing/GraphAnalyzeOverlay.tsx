@@ -114,7 +114,7 @@ export function GraphAnalyzeOverlay({
         {[...grouped.entries()].map(([feature, entries]) => <section className="graph-feature-group" key={feature}>
           <h3>{label(feature)}</h3>
           {entries.map((entry) => {
-            const mayPin = entry.level === 'exact-proved' || entry.level === 'numeric-validated';
+            const mayPin = entry.level === 'exact-proved' || entry.level === 'interval-proved' || entry.level === 'numeric-validated';
             const pinnedNow = pinned.some((candidate) => candidate.annotationId === graphAnalysisAnnotationId(entry));
             const complexCoordinate = (entry.feature.startsWith('complex-') || entry.feature === 'branch-point')
               && entry.coordinates?.x && entry.coordinates?.y
@@ -156,6 +156,7 @@ export function GraphAnalyzeOverlay({
         <dl><div><dt>Scope</dt><dd>{entry.itemIds.join(', ')}</dd></div>
           <div><dt>Method</dt><dd>{entry.basis.validator ?? entry.basis.source}</dd></div>
           <div><dt>Certainty</dt><dd>{entry.level === 'exact-proved' ? 'Proved in the supported symbolic family.'
+            : entry.level === 'interval-proved' ? 'Proved by interval arithmetic: the true value lies within the stated bound.'
             : entry.level === 'numeric-validated' ? 'Validated inside the stated numeric window.'
               : 'Not eligible for a persistent annotation.'}</dd></div>
           {entry.basis.residualBound !== undefined ? <div><dt>Residual</dt><dd>≤ {entry.basis.residualBound}</dd></div> : null}</dl>

@@ -46,7 +46,8 @@ test.describe('PTX2', () => {
     const onCircle = await realPoint(page, Math.cos(1), Math.sin(1));
     await page.mouse.click(onCircle.x, onCircle.y);
     await expect(callout(page)).toContainText(' · t = ');
-    await expect(callout(page)).toHaveAttribute('data-ptx-badge', 'verified');
+    // PTX-ENGINE1: the point is evaluated with guaranteed enclosures, so the badge is proved.
+    await expect(callout(page)).toHaveAttribute('data-ptx-badge', 'proved');
     await page.keyboard.press('Escape');
     await enterExpression(page, 'r=3');
     const onPolar = await realPoint(page, 0, 3);

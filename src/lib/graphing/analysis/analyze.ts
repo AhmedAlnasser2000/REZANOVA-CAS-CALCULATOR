@@ -21,7 +21,7 @@ import type {
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
-import { defaultPtxSolverPort, ptxAsymptotes, ptxCurveIntersections, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots, type PtxCurve } from '../ptx';
+import { defaultPtxSolverPort, ptxCountZerosAndPoles, ptxProveComplexZero, ptxReciprocalExpression, ptxAsymptotes, ptxCurveIntersections, ptxDifference, ptxPlaneIntersections, ptxProveRealExtremum, ptxProveRealZero, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots, type PtxCurve } from '../ptx';
 import { analyzeGraphCurve } from './curve-analysis';
 import type { PtxPlaneFunction } from '../ptx';
 import { analyzeGraphPiecewise } from './piecewise-analysis';
@@ -113,18 +113,37 @@ function analyzeComplexMapping(input: {
     }));
     const roots = findComplexNewtonCandidates({ evaluator, region, gridSize: 7, lowDiscrepancySeedCount: 8 });
     input.onEvaluations(roots.diagnostics.totalEvaluations);
+    // PTX-ENGINE1 (E8): for meromorphic maps, guaranteed enclosures prove each zero (f winds round 0 in a tiny box
+    // where it is bounded) and the argument principle counts every zero and pole in the region exactly.
+    const port = defaultPtxSolverPort();
+    const f = port.complexFunction(expression, input.request.parameterEnvironment);
+    const enclose = port.complexEnclosure?.(expression, input.request.parameterEnvironment) ?? null;
+    const encloseInverse = port.complexEnclosure?.(ptxReciprocalExpression(expression), input.request.parameterEnvironment) ?? null;
+    let multiplicityFound = originIsExact ? 1 : 0;
     for (const candidate of roots.candidates) {
       if (originIsExact && Math.hypot(candidate.value.re, candidate.value.im) < 1e-7) continue;
-      findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'numeric-validated', input.serial(), {
-        coordinates: complexPoint(candidate.value, Math.max(1e-10, candidate.residualNorm)),
+      const proof = f && enclose ? ptxProveComplexZero(f, enclose, candidate.value, Math.max(1e-9 * (1 + Math.hypot(candidate.value.re, candidate.value.im)), 100 * candidate.residualNorm)) : null;
+      multiplicityFound += proof?.multiplicity ?? 1;
+      findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], proof ? 'interval-proved' : 'numeric-validated', input.serial(), {
+        coordinates: complexPoint(candidate.value, proof ? proof.radius : Math.max(1e-10, candidate.residualNorm)),
         relationValue: approximate(0, candidate.residualNorm),
-        basis: { source: 'numeric-validator', validator: `bounded complex Newton search in [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]`, residualBound: candidate.residualNorm },
+        basis: proof ? { source: 'numeric-validator', validator: `f winds round 0 ${proof.multiplicity === 1 ? 'once' : `${proof.multiplicity} times`} in a box of half-width ${proof.radius.toPrecision(2)} where it is bounded` }
+          : { source: 'numeric-validator', validator: `bounded complex Newton search in [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]`, residualBound: candidate.residualNorm },
       }));
     }
-    findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'inconclusive', input.serial(), {
-      basis: { source: 'numeric-validator', validator: `bounded search region [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]` },
-      stopReason: { code: 'analysis-inconclusive', detailCode: 'bounded-complex-search-does-not-prove-global-completeness' },
-    }));
+    const counted = f && enclose && encloseInverse ? ptxCountZerosAndPoles(f, enclose, encloseInverse, region) : null;
+    if (counted) {
+      const regionText = `[${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]`;
+      findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'interval-proved', input.serial(), {
+        relationValue: exact(counted.zeros),
+        basis: { source: 'numeric-validator', validator: `argument principle: exactly ${counted.zeros} zero${counted.zeros === 1 ? '' : 's'} and ${counted.poles} pole${counted.poles === 1 ? '' : 's'} in ${regionText}, counted with multiplicity${multiplicityFound < counted.zeros ? ` (${multiplicityFound} located)` : ''}` },
+      }));
+    } else {
+      findings.push(evidence(input.request, 'complex-zero', [input.item.itemId], 'inconclusive', input.serial(), {
+        basis: { source: 'numeric-validator', validator: `bounded search region [${region.reMin}, ${region.reMax}] × [${region.imMin}, ${region.imMax}]` },
+        stopReason: { code: 'analysis-inconclusive', detailCode: 'bounded-complex-search-does-not-prove-global-completeness' },
+      }));
+    }
   }
   const poleExpression = complexPoleExpression(expression);
   if (input.requested.has('complex-pole')) {
@@ -475,12 +494,16 @@ export async function runGraphAnalysisRequest(
     if (!run) continue;
     explicitItems.push({ item: snapshot, run, expression });
     const coefficients = polynomial(expression.mathJson);
+    // The same function through the PTX port, with exact slopes and guaranteed ranges, for interval proofs (PTX-ENGINE1).
+    const provable = ptx.realFunction(expression, 'x', request.parameterEnvironment);
     const finder = itemFinder;
     if (requested.has('root') || requested.has('x-intercept')) {
       // PTX finders: exact polynomial roots of any degree the exact path splits; otherwise bracketed and touching roots.
       const roots = ptxRealRoots(run, window.xMin, window.xMax, finder,
         ptx.realPolynomialRoots(expression.mathJson, 'x', request.parameterEnvironment));
-      for (const root of roots) {
+      for (const found of roots) {
+        const proof = found.level !== 'exact-proved' && provable ? ptxProveRealZero(provable, found.x, found.errorBound) : null;
+        const root = proof ? { ...found, x: (proof.lo + proof.hi) / 2, errorBound: (proof.hi - proof.lo) / 2 + Number.EPSILON, level: 'interval-proved' as const } : found;
         const proved = root.level === 'exact-proved';
         const x = proved ? exact(root.x) : approximate(root.x, root.errorBound);
         for (const feature of ['root', 'x-intercept'] as const) if (requested.has(feature)) {
@@ -489,7 +512,8 @@ export async function runGraphAnalysisRequest(
             relationValue: proved ? exact(0) : approximate(0, root.residual || 1e-9),
             basis: proved
               ? { source: 'graph-symbolic', validator: 'exact polynomial factorisation' }
-              : { source: 'numeric-validator', validator: root.level === 'numeric-validated' ? 'bracketed bisection' : 'touching root: minimum of |f| at zero', residualBound: Math.max(root.residual, 1e-12) },
+              : { source: 'numeric-validator', validator: root.level === 'interval-proved' ? (proof?.unique ? 'Krawczyk test: exactly one root in the bound' : 'guaranteed sign change on a continuous interval')
+                : root.level === 'numeric-validated' ? 'bracketed bisection' : 'touching root: minimum of |f| at zero', residualBound: Math.max(root.residual, 1e-12) },
           }));
         }
       }
@@ -508,10 +532,11 @@ export async function runGraphAnalysisRequest(
         basis: { source: 'graph-symbolic', validator: coefficients[2] > 0 ? 'quadratic local minimum' : 'quadratic local maximum' },
       }));
     } else if (requested.has('extremum')) {
-      for (const extremum of ptxRealExtrema(run, window.xMin, window.xMax, finder)) {
-        findings.push(evidence(request, 'extremum', [snapshot.itemId], extremum.level, serial++, {
-          coordinates: { x: approximate(extremum.x, extremum.errorBound), y: approximate(extremum.y, 1e-12 * Math.max(1, Math.abs(extremum.y))) },
-          basis: { source: 'numeric-validator', validator: `local ${extremum.kind}: slope sign change refined by golden-section search` },
+      for (const extremum of ptxRealExtrema(provable ?? run, window.xMin, window.xMax, finder)) {
+        const proof = provable ? ptxProveRealExtremum(provable, extremum.x, extremum.errorBound, extremum.kind) : null;
+        findings.push(evidence(request, 'extremum', [snapshot.itemId], proof ? 'interval-proved' : extremum.level, serial++, {
+          coordinates: { x: approximate(extremum.x, proof ? Math.max(extremum.x - proof.lo, proof.hi - extremum.x) : extremum.errorBound), y: approximate(extremum.y, 1e-12 * Math.max(1, Math.abs(extremum.y))) },
+          basis: { source: 'numeric-validator', validator: proof ? `local ${extremum.kind}: guaranteed slope sign change` : `local ${extremum.kind}: slope sign change refined by golden-section search` },
         }));
       }
     }
@@ -562,7 +587,13 @@ export async function runGraphAnalysisRequest(
       const a = explicitItems[first]; const b = explicitItems[second];
       const exactDifference = a.expression && b.expression
         ? ptx.realPolynomialRoots(['Add', a.expression.mathJson, ['Negate', b.expression.mathJson]], 'x', request.parameterEnvironment) : null;
-      for (const point of ptxRealIntersections(a.run, b.run, window.xMin, window.xMax, finder, exactDifference)) {
+      // Guaranteed ranges of f − g, when both are plain expressions, prove the crossings found.
+      const fa = a.expression ? ptx.realFunction(a.expression, 'x', request.parameterEnvironment) : null;
+      const fb = b.expression ? ptx.realFunction(b.expression, 'x', request.parameterEnvironment) : null;
+      const difference = fa && fb ? ptxDifference(fa, fb) : null;
+      for (const found of ptxRealIntersections(a.run, b.run, window.xMin, window.xMax, finder, exactDifference)) {
+        const proof = found.level !== 'exact-proved' && difference ? ptxProveRealZero(difference, found.x, found.errorBound) : null;
+        const point = proof ? { ...found, level: 'interval-proved' as const, x: (proof.lo + proof.hi) / 2, errorBound: (proof.hi - proof.lo) / 2 + Number.EPSILON } : found;
         const proved = point.level === 'exact-proved';
         findings.push(evidence(request, 'intersection', [a.item.itemId, b.item.itemId], point.level, serial++, {
           coordinates: proved ? { x: exact(point.x), y: exact(point.y) }
