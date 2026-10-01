@@ -1,0 +1,114 @@
+{
+  "node": "v24.19.0",
+  "cpu": "Intel(R) Core(TM) Ultra 7 265K",
+  "warmups": 1,
+  "runs": 3,
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "bounds": {
+    "towerHeight": 8,
+    "artifactDepth": 64,
+    "artifactNodes": 100000,
+    "artifactBytes": 16777216
+  },
+  "results": {
+    "primitive": {
+      "construction": [
+        {
+          "ms": 173.05176700000004,
+          "work": 8637941,
+          "allocation": 82927745,
+          "rss": 134905856,
+          "heapUsed": 25693840
+        },
+        {
+          "ms": 165.4015220000001,
+          "work": 8637941,
+          "allocation": 82927745,
+          "rss": 139747328,
+          "heapUsed": 28210952
+        },
+        {
+          "ms": 177.07514700000002,
+          "work": 8637941,
+          "allocation": 82927745,
+          "rss": 165584896,
+          "heapUsed": 49288624
+        }
+      ],
+      "verification": [
+        {
+          "ms": 34.813986,
+          "work": 1674504,
+          "allocation": 16267415,
+          "rss": 135798784,
+          "heapUsed": 22261928
+        },
+        {
+          "ms": 32.04363400000011,
+          "work": 1674504,
+          "allocation": 16267415,
+          "rss": 140550144,
+          "heapUsed": 41617176
+        },
+        {
+          "ms": 36.184134000000086,
+          "work": 1674504,
+          "allocation": 16267415,
+          "rss": 182386688,
+          "heapUsed": 62692248
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 42.11991699999999,
+          "work": 2146635,
+          "allocation": 19977570,
+          "rss": 136208384,
+          "heapUsed": 35703048
+        },
+        {
+          "ms": 43.3418630000001,
+          "work": 2146635,
+          "allocation": 19977570,
+          "rss": 140533760,
+          "heapUsed": 38057440
+        },
+        {
+          "ms": 43.964619000000084,
+          "work": 2146635,
+          "allocation": 19977570,
+          "rss": 182521856,
+          "heapUsed": 58812856
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 160.50012700000002,
+          "work": 8168301,
+          "allocation": 82532318,
+          "rss": 137801728,
+          "heapUsed": 23277576
+        },
+        {
+          "ms": 162.60178700000006,
+          "work": 8168301,
+          "allocation": 82532318,
+          "rss": 142536704,
+          "heapUsed": 42640288
+        },
+        {
+          "ms": 161.25950699999999,
+          "work": 8168301,
+          "allocation": 82532318,
+          "rss": 183689216,
+          "heapUsed": 62536736
+        }
+      ]
+    }
+  }
+}

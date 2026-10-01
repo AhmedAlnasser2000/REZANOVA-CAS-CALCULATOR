@@ -97,7 +97,7 @@ export function encodeDifferentialArtifact(ctx: ExecutionContext, owner: Differe
 
 /** Rebuild owned values and replay claims. No differentiation or admission producers. */
 function decode(ctx: ExecutionContext, expected: DifferentialField, data: unknown,
-  bounds: DifferentialBounds, bindBase: boolean): DifferentialArtifactReplay {
+  bounds: DifferentialBounds, bindBase: boolean, bindOwner = false): DifferentialArtifactReplay {
   return ctx.operation(() => {
     checkDifferentialBounds(ctx, bounds); inspect(ctx, bounds, data);
     const root = record(data, ['tag', 'version', 'construction', 'elements', 'derivatives']);
@@ -203,6 +203,15 @@ function decode(ctx: ExecutionContext, expected: DifferentialField, data: unknow
     const actualWire = writer(ctx, bindBase ? owners.slice(0, 2) : owners, bounds).construction(), actualBytes = inspect(ctx, bounds, actualWire);
     ctx.allocate(expectedBytes + actualBytes);
     demand(JSON.stringify(expectedWire) === JSON.stringify(actualWire), 'domain-mismatch', 'unexpected differential construction');
+    if (bindOwner) {
+      // Only after full fresh construction replay and exact descriptor comparison.
+      const bound = tower(ctx, expected, bounds);
+      for (const field of bound) {
+        assertDifferentialFieldOwner(ctx, field);
+        if (field.admission) verifyAdmission(ctx, field, field.admission);
+      }
+      ctx.allocate(bound.length); owners.splice(0, owners.length, ...bound);
+    }
     const es = array(root.elements), ds = array(root.derivatives); ctx.allocate(es.length + ds.length + 3);
     const elements = Object.freeze(es.map(e => element(e))), derivatives = Object.freeze(ds.map(d => derivative(d)));
     for (const d of derivatives) verifyDerivative(ctx, d.input.owner, d.input, d);
@@ -220,4 +229,11 @@ export function decodeDifferentialArtifact(ctx: ExecutionContext, expected: Diff
 export function decodeDifferentialArtifactOverBase(ctx: ExecutionContext, base: DifferentialField, data: unknown,
   bounds: DifferentialBounds): DifferentialArtifactReplay {
   return decode(ctx, base, data, bounds, true);
+}
+/** Composition boundary: verify the entire saved construction before binding
+ * selected values to the explicitly supplied owner. Existing decoders stay fresh. */
+export function decodeDifferentialArtifactInOwner(ctx: ExecutionContext, expected: DifferentialField, data: unknown,
+  bounds: DifferentialBounds): DifferentialArtifactReplay {
+  assertDifferentialFieldOwner(ctx, expected);
+  return decode(ctx, expected, data, bounds, false, true);
 }
