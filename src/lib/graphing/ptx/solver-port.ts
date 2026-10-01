@@ -1,5 +1,6 @@
 import type { ComplexValue } from '../../numeric/complex';
-import type { GraphExpressionIR, GraphPiecewiseSpecV1, GraphRelationIR, GraphViewportV1 } from '../contracts';
+import type { GraphExpressionIR, GraphInequalityComparator, GraphPiecewiseSpecV1, GraphRelationIR, GraphViewportV1 } from '../contracts';
+import type { PtxCurve, PtxCurveSource } from './curves';
 import type { PtxWindow } from './types';
 
 // Everything PTX needs from evaluators and solvers goes through this port, so
@@ -34,6 +35,16 @@ export type PtxSolverPort = {
    */
   rationalEndBehaviour(mathJson: unknown, variable: string, parameters: Readonly<Record<string, number>>):
     { kind: 'horizontal'; y: number } | { kind: 'oblique'; slope: number; intercept: number } | { kind: 'none' } | null;
+  /**
+   * Any real curve (y = f(x), x = f(y), parametric, polar, implicit, a
+   * region's single edge, a complex trajectory, or a piecewise curve of one
+   * form) in the one model PTX finds points on; null when it cannot be built.
+   * `window` sets a trajectory's parameter range (its sampler uses the view's x-range).
+   */
+  curve(source: PtxCurveSource, parameters: Readonly<Record<string, number>>, window: PtxWindow): PtxCurve | null;
+  /** A region's edges: each comparison's left − right, its operator, and its index (the boundary path's number). */
+  regionEdges(relation: GraphRelationIR, parameters: Readonly<Record<string, number>>):
+    Array<{ index: number; F: PtxPlaneFunction; operator: GraphInequalityComparator }> | null;
   /** A piecewise curve as one function: the first branch whose condition holds (or `otherwise`); undefined where none does. */
   piecewiseFunction(piecewise: GraphPiecewiseSpecV1, variable: string, parameters: Readonly<Record<string, number>>): PtxRealFunction | null;
   /** F(x, y) = left − right for a real relation in x and y. */

@@ -483,7 +483,8 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     );
     await expect.poll(async () => {
       const text = await page.locator('.graph-trace-callout').textContent();
-      const coordinates = text?.match(/^\(([-\d.]+), ([-\d.]+)\)$/u);
+      // PTX3: a region's edge also says which condition it belongs to and whether it is included.
+      const coordinates = text?.match(/^\(([-\d.]+), ([-\d.]+)\)(?: · edge of [^,]+, (?:not )?included)?$/u);
       return coordinates
         ? { x: Number(coordinates[1]), y: Number(coordinates[2]) }
         : null;

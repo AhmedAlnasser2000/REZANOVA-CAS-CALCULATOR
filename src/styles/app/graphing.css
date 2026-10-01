@@ -987,6 +987,18 @@
   background: #071517;
 }
 
+/* Inside a region the marker is the pointer's own point, neutral rather than a curve's colour. */
+.graph-trace-marker.is-region {
+  border-color: #eef7f1;
+  background: rgba(238, 247, 241, 0.35);
+}
+
+/* An end or corner that is not part of its curve or region: a ring. */
+.graph-ptx-dot.is-open {
+  background: #081114;
+  border-color: #9aa7a1;
+}
+
 .graph-trace-marker,
 .graph-trace-callout {
   position: absolute;

@@ -800,6 +800,8 @@ export const GRAPH_ANALYSIS_FEATURES = [
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
   'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point',
   'local-extremum', 'complex-zero', 'complex-pole', 'branch-point',
+  // PTX3: points of interest of any curve kind and of regions.
+  'turning-point', 'curve-endpoint', 'origin-crossing', 'region-corner',
 ] as const;
 
 export type GraphAnalysisFeature = typeof GRAPH_ANALYSIS_FEATURES[number];
@@ -827,6 +829,16 @@ export type GraphAnalysisEvidenceV1 = {
   level: GraphEvidenceLevel;
   coordinates?: { x?: GraphFeatureValueV1; y?: GraphFeatureValueV1; z?: GraphFeatureValueV1 };
   relationValue?: GraphFeatureValueV1;
+  /**
+   * What kind of point it is, where the feature alone does not say: which way
+   * a turning point faces, which end of a curve, whether an end or corner
+   * belongs to the curve or region, and the curve parameter there.
+   */
+  detail?: {
+    kind?: 'highest' | 'lowest' | 'leftmost' | 'rightmost' | 'start' | 'end';
+    included?: boolean;
+    parameter?: { symbol: string; value: number };
+  };
   conditions: CanonicalMathValueV2[];
   basis: {
     source: 'graph-symbolic' | 'reviewed-public-fact' | 'numeric-validator' | 'sampler';

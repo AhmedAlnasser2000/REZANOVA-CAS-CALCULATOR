@@ -15,7 +15,10 @@ export function graphItemTraceRoutes(items: GraphDocumentV4['items']) {
     if (!relation) continue;
     if (relation.kind === 'explicit-y' || relation.kind === 'explicit-x') routes[item.itemId] = relation.kind;
     else if (relation.kind === 'polar-radius') routes[item.itemId] = { kind: 'polar-radius', parameterSymbol: 'theta' };
-    else if (relation.kind === 'parametric-curve') routes[item.itemId] = { kind: 'parametric-curve', parameterSymbol: relation.parameterSymbol };
+    else if (relation.kind === 'parametric-curve' || relation.kind === 'complex-trajectory') {
+      // A trajectory z(t) is traced like a parametric curve (Re z, Im z) in t.
+      routes[item.itemId] = { kind: 'parametric-curve', parameterSymbol: relation.parameterSymbol };
+    }
     else if (relation.kind === 'real-surface') routes[item.itemId] = 'real-surface';
   }
   return routes;

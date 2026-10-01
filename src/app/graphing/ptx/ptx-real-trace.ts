@@ -1,6 +1,7 @@
 import {
   defaultPtxSolverPort,
   ptxBadge,
+  ptxComplexText,
   ptxNumber,
   ptxPointDetail,
   ptxProjectToCurve,
@@ -13,6 +14,7 @@ import {
   type PtxPlaneFunction,
   type PtxRealFunction,
 } from '../../../lib/graphing';
+import { ptxRegions, ptxRegionEdgeText, type PtxRegionEdge } from './ptx-region-trace';
 import { ptxSnapOnArrival } from './ptx-snap';
 import type { PtxDot } from './usePtxPointsOfInterest';
 
@@ -23,13 +25,19 @@ import type { PtxDot } from './usePtxPointsOfInterest';
 export type PtxRealRefiner =
   | { kind: 'explicit-y' | 'explicit-x'; f: PtxRealFunction }
   | { kind: 'implicit'; F: PtxPlaneFunction }
-  /** A parametric curve in `symbol`, or a polar curve in θ. */
-  | { kind: 'curve'; curve: PtxCurvePoint; symbol: string; polar: boolean };
+  /** A parametric curve in `symbol`, a polar curve in θ, or a complex trajectory z(t). */
+  | { kind: 'curve'; curve: PtxCurvePoint; symbol: string; polar: boolean; complex?: boolean }
+  /** A region: its edges, one boundary path each (`…:boundary:<index>`). */
+  | { kind: 'region'; edges: PtxRegionEdge[] };
 
 export type PtxRealTracePoint = {
   x: number; y: number; level: PtxLevel; errorBound: number; residual: number; dot: PtxDot | null;
   /** The parameter of a parametric or polar point (and r for polar). */
   parameter?: { symbol: string; value: number; radius?: number };
+  /** A complex trajectory's point: read as z = x + iy. */
+  complex?: boolean;
+  /** On a region's edge: which condition it belongs to and whether it is included. */
+  edge?: string;
 };
 
 function polarCurve(r: PtxRealFunction): PtxCurvePoint {
@@ -62,16 +70,20 @@ export function ptxRealRefiners(document: GraphDocumentV4 | null, parameters: Re
     if (relation.kind === 'explicit-y' || relation.kind === 'explicit-x') {
       const f = port.realFunction(relation.rhs, relation.kind === 'explicit-y' ? 'x' : 'y', parameters);
       if (f) refiners.set(item.itemId, { kind: relation.kind, f });
-    } else if (relation.kind === 'implicit-equality' || relation.kind === 'inequality') {
-      // A region's boundary is its left = right curve.
+    } else if (relation.kind === 'implicit-equality') {
       const F = port.planeFunction(relation.left, relation.right, parameters);
       if (F) refiners.set(item.itemId, { kind: 'implicit', F });
+    } else if (relation.kind === 'complex-trajectory') {
+      const curve = port.curve({ relation }, parameters, { xMin: -10, xMax: 10, yMin: -10, yMax: 10 });
+      if (curve?.kind === 'param') refiners.set(item.itemId, { kind: 'curve', curve: curve.point, symbol: curve.symbol, polar: false, complex: true });
     } else if (relation.kind === 'parametric-curve' || relation.kind === 'polar-radius') {
       const curve = port.curvePoint(relation, parameters);
       if (curve) refiners.set(item.itemId, { kind: 'curve', curve, polar: relation.kind === 'polar-radius',
         symbol: relation.kind === 'polar-radius' ? 'θ' : relation.parameterSymbol });
     }
   }
+  // Regions (inequalities and chains): each boundary path is refined on its own edge.
+  for (const region of ptxRegions(document, parameters)) refiners.set(region.itemId, { kind: 'region', edges: region.edges });
   return refiners;
 }
 
@@ -88,15 +100,27 @@ function frame(viewport: GraphViewportV1, size: { width: number; height: number 
 export function ptxRefineRealTrace(refiner: PtxRealRefiner | undefined, itemId: string, world: { x: number; y: number },
   viewport: GraphViewportV1, size: { width: number; height: number }, dots: readonly PtxDot[],
   /** For parametric and polar curves: the sampled parameter and how far around it to search. */
-  sampledParameter?: { value: number; span: number }, pointer?: { x: number; y: number }): PtxRealTracePoint {
+  sampledParameter?: { value: number; span: number }, pointer?: { x: number; y: number },
+  /** The traced path, which says which edge of a region it is. */
+  pathId?: string): PtxRealTracePoint {
   const { units, toScreen } = frame(viewport, size);
+  if (refiner?.kind === 'region') {
+    const edge = refiner.edges[Number(/:boundary:(\d+)$/u.exec(pathId ?? '')?.[1] ?? 0)];
+    const projected = edge ? ptxProjectToCurve(edge.F, world, units, 6) : null;
+    if (edge && projected) {
+      const dot = ptxSnapOnArrival(projected, dots, toScreen, itemId);
+      return dot ? { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot }
+        : { ...projected, dot: null, edge: ptxRegionEdgeText(edge) };
+    }
+  }
   if (refiner?.kind === 'curve' && sampledParameter) {
     const curvePoint = ptxRefineParametric(refiner.curve, sampledParameter.value, sampledParameter.span, pointer ?? world, units);
     if (curvePoint) {
       const parameter = { symbol: refiner.symbol, value: curvePoint.t, ...(curvePoint.radius !== undefined ? { radius: curvePoint.radius } : {}) };
       const dot = ptxSnapOnArrival(curvePoint, dots, toScreen, itemId);
       return dot ? { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot }
-        : { x: curvePoint.x, y: curvePoint.y, level: curvePoint.level, errorBound: curvePoint.errorBound, residual: 0, dot: null, parameter };
+        : { x: curvePoint.x, y: curvePoint.y, level: curvePoint.level, errorBound: curvePoint.errorBound, residual: 0, dot: null, parameter,
+          ...(refiner.complex ? { complex: true } : {}) };
     }
   }
   const refined = refiner?.kind === 'explicit-y' ? ptxRefineExplicit(refiner.f, world.x, 'y-of-x')
@@ -109,9 +133,24 @@ export function ptxRefineRealTrace(refiner: PtxRealRefiner | undefined, itemId: 
 }
 
 const DOT_NAMES: Record<PtxDot['feature'], string> = {
-  root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept', endpoint: 'Endpoint', hole: 'Hole',
-  'complex-zero': 'Zero', 'complex-pole': 'Pole',
+  root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept', 'x-intercept': 'x-intercept',
+  endpoint: 'Endpoint', hole: 'Hole', 'complex-zero': 'Zero', 'complex-pole': 'Pole',
+  'turning-point': 'Turning point', 'curve-endpoint': 'End', 'origin-crossing': 'Origin', 'region-corner': 'Corner',
 };
+const KIND_NAMES = { highest: 'Highest', lowest: 'Lowest', leftmost: 'Leftmost', rightmost: 'Rightmost', start: 'Start', end: 'End' } as const;
+
+/** A dot's name: its kind when it has one (Highest, Start), else its feature. */
+export function ptxDotName(dot: Pick<PtxDot, 'feature' | 'detail'>) {
+  return dot.detail?.kind ? KIND_NAMES[dot.detail.kind] : DOT_NAMES[dot.feature];
+}
+
+/** What follows a dot's coordinates: whether an end or corner is included, and the parameter there. */
+function dotSuffix(dot: Pick<PtxDot, 'detail'>) {
+  const parts: string[] = [];
+  if (dot.detail?.included !== undefined) parts.push(dot.detail.included ? 'included' : 'not included');
+  if (dot.detail?.parameter) parts.push(`${dot.detail.parameter.symbol === 'theta' ? 'θ' : dot.detail.parameter.symbol} = ${ptxNumber(dot.detail.parameter.value)}`);
+  return parts.map((part) => ` · ${part}`).join('');
+}
 
 /** A piecewise item's end circles from the scene, as snap targets: filled ends and open ones (holes). */
 export function ptxEndpointDots(pointBatches: ReadonlyArray<{ pointBatchId: string; itemId: string; coordinates: Float64Array; marker?: 'filled' | 'open' }>): PtxDot[] {
@@ -127,11 +166,13 @@ export function ptxEndpointDots(pointBatches: ReadonlyArray<{ pointBatchId: stri
 }
 
 /** "(x, y)" to the reliable digits, named when it is a point of interest. */
-export function ptxRealTraceText(point: Pick<PtxRealTracePoint, 'x' | 'y' | 'errorBound' | 'dot' | 'parameter'>) {
+export function ptxRealTraceText(point: Pick<PtxRealTracePoint, 'x' | 'y' | 'errorBound' | 'dot' | 'parameter' | 'complex' | 'edge'>) {
   // An open circle is not on the graph: its x has no value, only a limit.
   if (point.dot?.feature === 'hole') return `(${ptxNumber(point.x, point.errorBound)}, undefined) · limit ${ptxNumber(point.y, point.errorBound)}`;
-  const text = `(${ptxNumber(point.x, point.errorBound)}, ${ptxNumber(point.y, point.errorBound)})`;
-  if (point.dot) return `${DOT_NAMES[point.dot.feature]} ${text}`;
+  const text = point.complex ? `z = ${ptxComplexText(point.x, point.y, point.errorBound)}`
+    : `(${ptxNumber(point.x, point.errorBound)}, ${ptxNumber(point.y, point.errorBound)})`;
+  if (point.dot) return `${ptxDotName(point.dot)} ${text}${dotSuffix(point.dot)}`;
+  if (point.edge) return `${text} · ${point.edge}`;
   const parameter = point.parameter;
   if (!parameter) return text;
   // The parameter is chosen to match the pointer, so it is shown to the usual six digits.

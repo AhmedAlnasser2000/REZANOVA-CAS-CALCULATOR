@@ -1,5 +1,7 @@
 export * from './asymptotes';
 export * from './certify';
+export * from './curve-features';
+export * from './curves';
 export * from './features';
 export * from './refine';
 export * from './solver-port';

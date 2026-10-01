@@ -16,7 +16,10 @@ export type PtxDot = {
   key: string;
   plane: 'real' | 'complex';
   /** `endpoint` and `hole` are a piecewise branch's filled and open end circles (from the scene, not Analyze). */
-  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'endpoint' | 'hole' | 'complex-zero' | 'complex-pole';
+  feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'x-intercept' | 'endpoint' | 'hole' | 'complex-zero' | 'complex-pole'
+    | 'turning-point' | 'curve-endpoint' | 'origin-crossing' | 'region-corner';
+  /** Which way a turning point faces, which end, whether an end or corner belongs to the curve, and the parameter there. */
+  detail?: GraphAnalysisEvidenceV1['detail'];
   itemIds: string[];
   x: number;
   y: number;
@@ -24,7 +27,8 @@ export type PtxDot = {
   errorBound: number;
 };
 
-const FEATURES = ['root', 'extremum', 'intersection', 'y-intercept', 'complex-zero', 'complex-pole'] as const;
+const FEATURES = ['root', 'x-intercept', 'extremum', 'intersection', 'y-intercept', 'complex-zero', 'complex-pole',
+  'turning-point', 'curve-endpoint', 'origin-crossing', 'region-corner'] as const;
 const LINE_FEATURES = ['vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote'] as const;
 
 /** An asymptote line of a curve: x = a, y = b, or y = slope·x + intercept. */
@@ -51,16 +55,22 @@ function numberOf(value: GraphFeatureValueV1 | undefined) {
 
 /** Evidence to dots: only the selected item's findings with both coordinates and a usable level. */
 export function ptxDotsFromEvidence(evidence: readonly GraphAnalysisEvidenceV1[], selectedItemId: string, plane: 'real' | 'complex'): PtxDot[] {
-  return evidence.flatMap((entry): PtxDot[] => {
-    if (!entry.itemIds.includes(selectedItemId) || !DOT_LEVELS.has(entry.level)) return [];
-    if (!(FEATURES as readonly string[]).includes(entry.feature)) return [];
+  const dots: PtxDot[] = [];
+  for (const entry of evidence) {
+    if (!entry.itemIds.includes(selectedItemId) || !DOT_LEVELS.has(entry.level)) continue;
+    if (!(FEATURES as readonly string[]).includes(entry.feature)) continue;
     const x = numberOf(entry.coordinates?.x); const y = numberOf(entry.coordinates?.y);
-    if (!x || !y) return [];
-    return [{
+    if (!x || !y) continue;
+    // One dot per place: a root of y = f(x) is also its x-intercept, and the first name found is kept.
+    const tolerance = 1e-9 * Math.max(1, Math.abs(x.value), Math.abs(y.value));
+    if (dots.some((dot) => Math.abs(dot.x - x.value) <= tolerance && Math.abs(dot.y - y.value) <= tolerance)) continue;
+    dots.push({
       key: entry.evidenceId, plane, feature: entry.feature as PtxDot['feature'], itemIds: entry.itemIds,
       x: x.value, y: y.value, level: entry.level as PtxLevel, errorBound: Math.max(x.errorBound, y.errorBound),
-    }];
-  });
+      ...(entry.detail ? { detail: entry.detail } : {}),
+    });
+  }
+  return dots;
 }
 
 /** Evidence to asymptote lines, for the items whose lines are showing. */
@@ -109,7 +119,9 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
     const timer = window.setTimeout(() => {
       const snapshot = sessionRef.current;
       const context = contextRef.current;
-      const items = classifiedGraphItems(snapshot.document).filter((item) => item.visible);
+      // The selected item first, so its points are found even when the view holds many heavy curves.
+      const items = classifiedGraphItems(snapshot.document).filter((item) => item.visible)
+        .sort((a, b) => Number(b.itemId === selectedItemId) - Number(a.itemId === selectedItemId));
       const selected = items.find((item) => item.itemId === selectedItemId);
       const showing = new Set(snapshot.document.items.flatMap((item) => {
         const mode = modeOf(item);
@@ -117,7 +129,8 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
       }));
       const selectable = selected && (selected.kind === 'relation' || selected.kind === 'piecewise');
       if (!selectable && showing.size === 0) { if (live) { setDots([]); setAsymptotes([]); } return; }
-      const plane = selected?.kind === 'relation' && (selected.relation.kind === 'complex-locus' || selected.relation.kind === 'complex-mapping') ? 'complex' : 'real';
+      const plane = selected?.kind === 'relation' && (selected.relation.kind === 'complex-locus' || selected.relation.kind === 'complex-mapping'
+        || selected.relation.kind === 'complex-roots') ? 'complex' : 'real';
       const request = {
         version: 1 as const,
         requestId: `${context.workspaceInstanceId}.ptx-points.${++sequence.current}`,
@@ -129,7 +142,8 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
         assumptions: snapshot.document.assumptions,
         features: [...FEATURES, ...LINE_FEATURES],
         numericWindow: snapshot.surface.viewport,
-        maximumTimeMs: 400,
+        // Each item gets a fair share inside the analysis; more items get more time in all.
+        maximumTimeMs: Math.min(1500, 300 + 150 * items.length),
       };
       void runGraphAnalyzeWithOoe(request, {
         activeInputRevisionId: buildGraphAnalyzeInputRevisionId(request),

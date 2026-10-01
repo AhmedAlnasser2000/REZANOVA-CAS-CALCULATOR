@@ -14,6 +14,7 @@ const ALL_FEATURES = [
   'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote',
   'domain-boundary', 'piecewise-continuity', 'level-contour', 'stationary-point', 'local-extremum',
   'complex-zero', 'complex-pole', 'branch-point',
+  'turning-point', 'curve-endpoint', 'origin-crossing', 'region-corner',
 ] as const;
 
 export function useGraphAnalysis(input: {

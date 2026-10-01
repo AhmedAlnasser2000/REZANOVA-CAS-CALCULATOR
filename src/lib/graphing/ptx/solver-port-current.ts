@@ -2,11 +2,14 @@ import { complexAbs } from '../../numeric/complex';
 import type { GraphExpressionIR } from '../contracts';
 import { compileGraphExpression, createGraphExpressionEvaluator, GraphExpressionPlanCache } from '../evaluator';
 import { compileGraphCondition } from '../sampling/condition';
+import { graphParametricDomain } from '../sampling/parametric';
+import { graphPiecewiseForm } from '../sampling/piecewise';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';
 import { findGraphPlaneRoots } from '../sampling/complex-plane-newton';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { exactGraphPolynomial, gIsZero, qDiv, qIsZero, qMul, qSub, qToNumber, type GraphExactPolynomial } from '../sampling/complex-polynomial';
-import type { PtxRealFunction, PtxSolverPort } from './solver-port';
+import type { PtxCurve, PtxParamCurve } from './curves';
+import type { PtxCurvePoint, PtxRealFunction, PtxSolverPort } from './solver-port';
 
 // The current adapter: Graphing's own evaluators and root solvers (which reach
 // Equation only through its reviewed public facade). Replace this file's
@@ -43,6 +46,17 @@ function substituteParameters(node: unknown, parameters: Readonly<Record<string,
 
 function usesSymbol(node: unknown, symbol: string): boolean {
   return node === symbol || (Array.isArray(node) && node.slice(1).some((child) => usesSymbol(child, symbol)));
+}
+
+function polarPoint(r: PtxRealFunction): PtxCurvePoint {
+  return (theta) => {
+    const radius = r(theta);
+    return radius === undefined ? undefined : { x: radius * Math.cos(theta), y: radius * Math.sin(theta), radius };
+  };
+}
+
+function paramCurve(point: PtxCurvePoint, rest: Omit<PtxParamCurve, 'kind' | 'point'>): PtxCurve {
+  return { kind: 'param', point, ...rest };
 }
 
 export const currentPtxSolverPort: PtxSolverPort = {
@@ -85,6 +99,60 @@ export const currentPtxSolverPort: PtxSolverPort = {
       const px = x(t); const py = y(t);
       return px === undefined || py === undefined ? undefined : { x: px, y: py };
     } : null;
+  },
+  curve(source, parameters, window) {
+    if ('piecewise' in source) {
+      const form = graphPiecewiseForm(source.piecewise);
+      const variable = form === 'explicit-y' ? 'x' : form === 'explicit-x' ? 'y' : form === 'polar' ? 'theta' : null;
+      const f = variable ? currentPtxSolverPort.piecewiseFunction(source.piecewise, variable, parameters) : null;
+      if (!f) return null;
+      if (form === 'explicit-y') return { kind: 'graph', f };
+      if (form === 'explicit-x') return { kind: 'graph-x', f };
+      return paramCurve(polarPoint(f), { symbol: 'θ', tMin: 0, tMax: 2 * Math.PI, restricted: false, includesStart: true, includesEnd: true, radius: f, complex: false });
+    }
+    const relation = source.relation;
+    if (relation.kind === 'explicit-y' || relation.kind === 'explicit-x') {
+      const f = realFunction(relation.rhs, relation.kind === 'explicit-y' ? 'x' : 'y', parameters);
+      return f ? { kind: relation.kind === 'explicit-y' ? 'graph' : 'graph-x', f } : null;
+    }
+    if (relation.kind === 'parametric-curve' || relation.kind === 'polar-radius') {
+      const point = currentPtxSolverPort.curvePoint(relation, parameters);
+      if (!point) return null;
+      const domain = graphParametricDomain(relation, parameters);
+      const radius = relation.kind === 'polar-radius' ? realFunction(relation.radius, 'theta', parameters) : null;
+      return paramCurve(point, {
+        symbol: relation.kind === 'polar-radius' ? 'θ' : relation.parameterSymbol, tMin: domain.minimum, tMax: domain.maximum,
+        restricted: domain.restricted, includesStart: domain.includesMinimum, includesEnd: domain.includesMaximum, radius, complex: false,
+      });
+    }
+    if (relation.kind === 'implicit-equality' || relation.kind === 'inequality') {
+      const F = currentPtxSolverPort.planeFunction(relation.left, relation.right, parameters);
+      return F ? { kind: 'implicit', F } : null;
+    }
+    if (relation.kind === 'complex-trajectory') {
+      // z(t) with t real: evaluate as a function of z at z = t + 0i, and read (Re, Im) as the point.
+      const f = currentPtxSolverPort.complexFunction(renameSymbol(relation.value.mathJson, relation.parameterSymbol, 'z'), parameters);
+      if (!f) return null;
+      const point: PtxCurvePoint = (t) => {
+        const value = f({ re: t, im: 0 });
+        return value && Number.isFinite(value.re) && Number.isFinite(value.im) ? { x: value.re, y: value.im } : undefined;
+      };
+      return paramCurve(point, { symbol: relation.parameterSymbol, tMin: window.xMin, tMax: window.xMax, restricted: false,
+        includesStart: true, includesEnd: true, radius: null, complex: true });
+    }
+    return null;
+  },
+  regionEdges(relation, parameters) {
+    const pairs = relation.kind === 'inequality' ? [{ left: relation.left, right: relation.right, operator: relation.operator }]
+      : relation.kind === 'chained-inequality' ? relation.operators.map((operator, index) => ({
+        left: relation.operands[index]!, right: relation.operands[index + 1]!, operator,
+      })) : null;
+    if (!pairs) return null;
+    const edges = pairs.map((pair, index) => {
+      const F = currentPtxSolverPort.planeFunction(pair.left, pair.right, parameters);
+      return F ? { index, F, operator: pair.operator } : null;
+    });
+    return edges.every((edge) => edge !== null) ? edges as Array<NonNullable<(typeof edges)[number]>> : null;
   },
   piecewiseFunction(piecewise, variable, parameters) {
     const cache = new GraphExpressionPlanCache(4 * piecewise.branches.length + 4);

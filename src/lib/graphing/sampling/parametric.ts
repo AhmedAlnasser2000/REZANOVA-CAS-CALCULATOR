@@ -34,6 +34,28 @@ type ParametricInterval = {
   right: Point;
 };
 
+let domainSerial = 0;
+
+/**
+ * The parameter range a parametric or polar curve is drawn over (its
+ * restriction, or t in [−10, 10] and θ in [0, 2π]), and whether each end
+ * belongs to the curve. `restricted` is false for the default range, whose
+ * ends are not ends of the curve.
+ */
+export function graphParametricDomain(relation: ParametricRelation, parameters: Readonly<Record<string, number>>) {
+  const cache = new GraphExpressionPlanCache(16);
+  const itemId = `domain.${domainSerial += 1}`;
+  const symbol = relation.kind === 'polar-radius' ? 'theta' : relation.parameterSymbol;
+  const fallback = relation.kind === 'polar-radius' ? { minimum: 0, maximum: Math.PI * 2 } : { minimum: -10, maximum: 10 };
+  const domain = domainFromCondition({ condition: relation.domain, symbol, fallback, cache, itemId, sourceRevision: 0, environment: parameters });
+  const condition = relation.domain
+    ? compileGraphCondition({ condition: relation.domain, itemId, branchId: 'domain', sourceRevision: 0, cache })
+    : null;
+  const includes = (value: number) => (condition?.ok ? condition.condition.test({ ...parameters, [symbol]: value }) === true : true);
+  const restricted = Boolean(relation.domain) && (domain.minimum !== fallback.minimum || domain.maximum !== fallback.maximum);
+  return { symbol, ...domain, restricted, includesMinimum: includes(domain.minimum), includesMaximum: includes(domain.maximum) };
+}
+
 function evaluateConstant(
   expression: GraphExpressionIR,
   cache: GraphExpressionPlanCache,

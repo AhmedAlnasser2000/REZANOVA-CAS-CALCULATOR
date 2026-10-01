@@ -21,7 +21,8 @@ import type {
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
 import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
-import { defaultPtxSolverPort, ptxAsymptotes, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots } from '../ptx';
+import { defaultPtxSolverPort, ptxAsymptotes, ptxCurveIntersections, ptxPlaneIntersections, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots, type PtxCurve } from '../ptx';
+import { analyzeGraphCurve } from './curve-analysis';
 import type { PtxPlaneFunction } from '../ptx';
 import { analyzeGraphPiecewise } from './piecewise-analysis';
 
@@ -389,23 +390,39 @@ export async function runGraphAnalysisRequest(
   // y = f(x) curves (piecewise ones too, with no single expression) that can meet each other.
   const explicitItems: Array<{ item: GraphClassifiedItemSnapshotV2; run: Evaluator; expression: GraphExpressionIR | null }> = [];
   const locusItems: Array<{ itemId: string; curve: PtxPlaneFunction }> = [];
+  // Real curves of every other kind (x = f(y), parametric, polar, implicit, region edges, trajectories).
+  const curveItems: Array<{ itemId: string; curve: PtxCurve }> = [];
   const ptx = defaultPtxSolverPort();
+  const curveEvidence = (feature: GraphAnalysisFeature, itemIds: string[], level: GraphAnalysisEvidenceV1['level'], extra?: Partial<GraphAnalysisEvidenceV1>) => (
+    evidence(request, feature, itemIds, level, serial++, extra));
 
-  for (const snapshot of request.items) {
+  for (const [itemIndex, snapshot] of request.items.entries()) {
     if (control.isCancelled?.()) break;
     if (now() - started > request.maximumTimeMs) {
       stopReasons.push({ code: 'analysis-inconclusive', detailCode: 'time-budget-exceeded' });
       break;
     }
+    // Each item gets a fair share of the time left, so one heavy curve cannot starve the ones after it.
+    const itemStarted = now();
+    const itemShare = Math.max(40, (request.maximumTimeMs - (itemStarted - started)) / (request.items.length - itemIndex));
+    const itemFinder = {
+      isCancelled: () => (control.isCancelled?.() ?? false) || now() - itemStarted > itemShare,
+      onEvaluation: () => { evaluatedPointCount += 1; },
+    };
     if (snapshot.kind !== 'relation') {
       if (snapshot.kind === 'piecewise') {
         const piecewise = analyzeGraphPiecewise({
           snapshot, window, parameters: request.parameterEnvironment, requested,
-          evidence: (feature, itemIds, level, extra) => evidence(request, feature, itemIds, level, serial++, extra),
-          approximate, exact, finder: { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 1; } },
+          evidence: curveEvidence, approximate, exact, finder: itemFinder,
         });
         findings.push(...piecewise.findings);
         if (piecewise.run) explicitItems.push({ item: snapshot, run: piecewise.run, expression: null });
+        else {
+          // x = f(y) and polar piecewise curves: the same points as their plain forms.
+          const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested, evidence: curveEvidence, approximate, finder: itemFinder });
+          findings.push(...curve.findings);
+          for (const each of curve.curves) curveItems.push({ itemId: snapshot.itemId, curve: each });
+        }
       }
       await control.yieldBetweenItems?.();
       continue;
@@ -436,6 +453,15 @@ export async function runGraphAnalysisRequest(
       const curve = locusCurve(snapshot.relation, request.parameterEnvironment);
       if (curve) locusItems.push({ itemId: snapshot.itemId, curve });
     }
+    if (snapshot.relation.kind !== 'explicit-y' && snapshot.relation.kind !== 'complex-locus') {
+      const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested, evidence: curveEvidence, approximate, finder: itemFinder });
+      if (curve.handled) {
+        findings.push(...curve.findings);
+        for (const each of curve.curves) curveItems.push({ itemId: snapshot.itemId, curve: each });
+        await control.yieldBetweenItems?.();
+        continue;
+      }
+    }
     const expression = relationExpression(snapshot.relation);
     if (!expression) {
       for (const feature of request.features) {
@@ -449,7 +475,7 @@ export async function runGraphAnalysisRequest(
     if (!run) continue;
     explicitItems.push({ item: snapshot, run, expression });
     const coefficients = polynomial(expression.mathJson);
-    const finder = { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 1; } };
+    const finder = itemFinder;
     if (requested.has('root') || requested.has('x-intercept')) {
       // PTX finders: exact polynomial roots of any degree the exact path splits; otherwise bracketed and touching roots.
       const roots = ptxRealRoots(run, window.xMin, window.xMax, finder,
@@ -543,6 +569,21 @@ export async function runGraphAnalysisRequest(
             : { x: approximate(point.x, point.errorBound), y: approximate(point.y, Math.max(point.residual, 1e-12)) },
           basis: proved ? { source: 'graph-symbolic', validator: 'exact polynomial factorisation of the difference' }
             : { source: 'numeric-validator', validator: 'bracketed or touching root of the difference', residualBound: Math.max(point.residual, 1e-12) },
+        }));
+      }
+    }
+    // Any other pair of real curves: each reduced to the smallest problem (PTX3).
+    const everyCurve = [
+      ...explicitItems.map((entry) => ({ itemId: entry.item.itemId, curve: { kind: 'graph' as const, f: entry.run }, graph: true })),
+      ...curveItems.map((entry) => ({ ...entry, graph: false })),
+    ];
+    for (let first = 0; first < everyCurve.length; first += 1) for (let second = first + 1; second < everyCurve.length; second += 1) {
+      const a = everyCurve[first]!; const b = everyCurve[second]!;
+      if ((a.graph && b.graph) || a.itemId === b.itemId || control.isCancelled?.()) continue;
+      for (const point of ptxCurveIntersections(a.curve, b.curve, window, finder)) {
+        findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
+          coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },
+          basis: { source: 'numeric-validator', validator: 'where the two curves meet: root along one curve of the other\'s equation, or Newton in the plane' },
         }));
       }
     }

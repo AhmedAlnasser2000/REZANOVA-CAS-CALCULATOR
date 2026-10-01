@@ -7,6 +7,7 @@ import {
   buildGraphGridScene,
   GraphSvgReferenceRenderer,
   loadGraphComplexTraceEvaluator,
+  ptxNumber,
   type GraphComplexTraceValue,
   type GraphDocumentV4,
   type GraphGridPolicyV1,
@@ -34,6 +35,7 @@ import type { PtxAsymptoteLine, PtxDot } from './ptx/usePtxPointsOfInterest';
 import { placeAsymptotes } from './ptx/ptx-asymptote-layer';
 import { ptxEndpointDots, ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
 import { PTX_SNAP_RADIUS_PIXELS } from './ptx/ptx-snap';
+import { ptxRegionAt, ptxRegions } from './ptx/ptx-region-trace';
 
 export type GraphTraceRouteKind = 'explicit-y' | 'explicit-x' | 'point-set'
   | 'real-surface'
@@ -103,6 +105,8 @@ function placeDots(layer: HTMLDivElement | null, dots: readonly PtxDot[], live: 
     const y = (live.yMax - dot.y) / (live.yMax - live.yMin) * size.height;
     element.hidden = !(x >= -8 && x <= size.width + 8 && y >= -8 && y <= size.height + 8);
     element.style.transform = `translate3d(${x - 5}px,${y - 5}px,0)`;
+    // An end or corner that does not belong to its curve or region is a ring, like a hole.
+    element.classList.toggle('is-open', dot.detail?.included === false);
   });
 }
 
@@ -184,6 +188,7 @@ export function GraphSvgViewport({
   // What a trace can snap to: the drawn dots plus piecewise end circles already in the scene.
   const snapDotsRef = useRef<readonly PtxDot[]>(ptxDots);
   const refinersRef = useRef<ReturnType<typeof ptxRealRefiners>>(new Map());
+  const regionsRef = useRef<ReturnType<typeof ptxRegions>>([]);
   const spatialScene = useMemo(() => asSpatialScene(scene), [scene]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const rendererHostRef = useRef<HTMLDivElement | null>(null);
@@ -319,6 +324,7 @@ export function GraphSvgViewport({
   }, [ptxDots, spatialScene]);
   useEffect(() => {
     refinersRef.current = ptxRealRefiners(document, document ? graphParameterEnvironment(document) : {});
+    regionsRef.current = ptxRegions(document, document ? graphParameterEnvironment(document) : {});
   }, [document]);
 
   useLayoutEffect(() => {
@@ -361,7 +367,7 @@ export function GraphSvgViewport({
       y: vpNow.yMax - pointerScreen.y / sizeNow.height * (vpNow.yMax - vpNow.yMin) } : undefined;
     const certified = target.kind === 'path' && !graphComplexValuePart(target.pathId)
       ? ptxRefineRealTrace(refinersRef.current.get(target.itemId), target.itemId, target.world, viewportRef.current, sizeRef.current, snapDotsRef.current,
-        sampledParameter, pointerWorld)
+        sampledParameter, pointerWorld, target.pathId)
       : null;
     if (certified) {
       const vp = viewportRef.current; const size = sizeRef.current;
@@ -372,7 +378,8 @@ export function GraphSvgViewport({
     if (announce) onTraceItemChange?.(target.itemId);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current; if (!marker || !label) return;
     marker.hidden = false; marker.style.transform = `translate3d(${target.screen.x - 6}px,${target.screen.y - 6}px,0)`;
-    marker.classList.toggle('is-open', certified?.dot?.feature === 'hole');
+    marker.classList.toggle('is-open', certified?.dot?.feature === 'hole' || certified?.dot?.detail?.included === false);
+    marker.classList.remove('is-region');
     marker.dataset.traceItemId = target.itemId;
     const labelWidth = graphComplexValuePart(target.pathId) ? 240 : 150;
     const lx = Math.max(8, Math.min(sizeRef.current.width - labelWidth, target.screen.x + 12));
@@ -396,7 +403,7 @@ export function GraphSvgViewport({
     const text = certified ? ptxRealTraceText(certified)
       : `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
-    label.textContent = text + (!certified?.parameter && target.parameterValue !== undefined && typeof route === 'object'
+    label.textContent = text + (!certified?.parameter && !certified?.dot && target.parameterValue !== undefined && typeof route === 'object'
       ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
   }, [hideTrace, onTraceItemChange]);
@@ -556,7 +563,30 @@ export function GraphSvgViewport({
       };
       publishTrace(target, true);
     }
-    else clearTrace();
+    else {
+      clearTrace();
+      // A click inside a shaded region selects it (its corners show) and keeps its readout.
+      const region = hoverRegion(screen);
+      if (region) onTraceItemChange?.(region.itemId);
+    }
+  };
+
+  /** Hovering inside a region (with no trace running) shows the point and each condition it meets with a ✓. */
+  const hoverRegion = (screen: { x: number; y: number }) => {
+    const vp = viewportRef.current; const size = sizeRef.current;
+    const x = vp.xMin + screen.x / size.width * (vp.xMax - vp.xMin); const y = vp.yMax - screen.y / size.height * (vp.yMax - vp.yMin);
+    const region = pendingRef.current ? null : ptxRegionAt(regionsRef.current, x, y);
+    const marker = traceMarkerRef.current; const label = traceLabelRef.current;
+    if (!region || !marker || !label) return null;
+    const units = Math.max((vp.xMax - vp.xMin) / size.width, (vp.yMax - vp.yMin) / size.height);
+    marker.hidden = false; marker.classList.remove('is-open'); marker.classList.add('is-region');
+    marker.style.transform = `translate3d(${screen.x - 6}px,${screen.y - 6}px,0)`;
+    label.hidden = false; label.dataset.hoverDot = `region:${region.itemId}`; label.classList.remove('is-complex-part');
+    label.style.transform = `translate3d(${Math.max(8, Math.min(size.width - 260, screen.x + 12))}px,${Math.max(8, Math.min(size.height - 38, screen.y - 36))}px,0)`;
+    // The point is the pointer itself: its coordinates to the pixel, and each condition evaluated there.
+    label.textContent = `(${ptxNumber(x, units)}, ${ptxNumber(y, units)}) · ${region.text}`;
+    delete label.dataset.ptxBadge; label.title = 'Inside the region: every condition holds at this point';
+    return region;
   };
 
   /** Hovering a point of interest (with no trace running) shows what it is, like Desmos. */
@@ -567,10 +597,11 @@ export function GraphSvgViewport({
       (vp.yMax - candidate.y) / (vp.yMax - vp.yMin) * size.height - screen.y) <= PTX_SNAP_RADIUS_PIXELS + 2);
     const marker = traceMarkerRef.current; const label = traceLabelRef.current;
     if (!marker || !label) return;
-    if (!dot) { if (label.dataset.hoverDot) { delete label.dataset.hoverDot; hideTrace(); } return; }
+    if (!dot) { if (!hoverRegion(screen) && label.dataset.hoverDot) { delete label.dataset.hoverDot; hideTrace(); } return; }
     const x = (dot.x - vp.xMin) / (vp.xMax - vp.xMin) * size.width; const y = (vp.yMax - dot.y) / (vp.yMax - vp.yMin) * size.height;
     marker.hidden = false; marker.style.transform = `translate3d(${x - 6}px,${y - 6}px,0)`;
-    marker.classList.toggle('is-open', dot.feature === 'hole');
+    marker.classList.toggle('is-open', dot.feature === 'hole' || dot.detail?.included === false);
+    marker.classList.remove('is-region');
     label.hidden = false; label.dataset.hoverDot = dot.key; label.classList.remove('is-complex-part');
     label.style.transform = `translate3d(${Math.max(8, Math.min(size.width - 190, x + 12))}px,${Math.max(8, Math.min(size.height - 38, y - 36))}px,0)`;
     const point = { x: dot.x, y: dot.y, level: dot.level, errorBound: dot.errorBound, residual: 0, dot };

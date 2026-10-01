@@ -264,7 +264,37 @@ async function runPtx2Smoke(session) {
   return { hole, asymptotes, tan, screenshot: image };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) {
+async function runPtx3Smoke(session) {
+  // Points of interest on other curve kinds: a traced parametric circle gets dots, a region its open corner.
+  const setRow = (latex) => waitFor(`expression ${latex}`, () => execute(session, `
+    const field = document.querySelectorAll('math-field')[0];
+    if (!field || typeof field.setValue !== 'function') return false;
+    field.setValue(${JSON.stringify(latex)});
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+    return true;`));
+  const traceFirst = async () => {
+    const viewport = await findElement(session, 'css selector', '[data-testid="graph-viewport"]');
+    await webdriver('POST', `/session/${session}/element/${viewport}/value`, { text: '\uE00C' });
+    await webdriver('POST', `/session/${session}/element/${viewport}/value`, { text: '\uE007' });
+  };
+  await setRow(String.raw`(\cos t,\sin t)`);
+  await delay(1200);
+  await traceFirst();
+  const curveDots = await waitFor('parametric dots', () => execute(session, `
+    const count = document.querySelectorAll('[data-testid="graph-ptx-dot"]:not([hidden])').length;
+    return count >= 4 ? count : null;`), 30_000);
+  await setRow(String.raw`x<y\le2`);
+  await delay(1200);
+  await traceFirst();
+  const openCorners = await waitFor('region corner', () => execute(session, `
+    const count = document.querySelectorAll('[data-testid="graph-ptx-dot"].is-open:not([hidden])').length;
+    return count === 1 ? count : null;`), 30_000);
+  await delay(600);
+  const image = await screenshot(session);
+  return { curveDots, openCorners, screenshot: image };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) {
   const failures = [];
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
@@ -285,6 +315,7 @@ function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, comp
     failures.push(`piecewise jump is not drawn with one open and one filled end circle (${JSON.stringify(piecewise)})`);
   }
   if (ptx2 && ptx2.hole.join(',') !== 'open') failures.push(`the removable gap is not an open circle (${JSON.stringify(ptx2.hole)})`);
+  if (ptx3 && !(ptx3.curveDots >= 4 && ptx3.openCorners === 1)) failures.push(`PTX3 dots missing (${JSON.stringify(ptx3)})`);
   if (ptx2 && !(ptx2.tan?.includes('x = −π/2') && ptx2.tan?.includes('x = π/2'))) failures.push(`tan x is missing its asymptotes (${JSON.stringify(ptx2.tan)})`);
   if (ptx2 && ptx2.asymptotes.join(',') !== 'x = 1,y = 1') failures.push(`asymptotes are not x = 1 and y = 1 (${JSON.stringify(ptx2.asymptotes)})`);
   if (complexLocus && !(complexLocus.circlePixels?.every((strength) => strength > 80))) {
@@ -364,14 +395,21 @@ try {
     ptx2 = { hole: run.hole, asymptotes: run.asymptotes, tan: run.tan };
     if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-asymptotes.png', Buffer.from(run.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2) : [];
+  let ptx3 = null;
+  if (smoke) {
+    log('running curve points and region corner smoke');
+    const run = await runPtx3Smoke(sessionId);
+    ptx3 = { curveDots: run.curveDots, openCorners: run.openCorners };
+    if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-region.png', Buffer.from(run.screenshot, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) : [];
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, screenshotsMissing, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3, screenshotsMissing, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);
