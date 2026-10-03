@@ -56,6 +56,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `engine/engine-semantic-planner-district-audit.md`: audit map for the Engine semantic planner surface
 
 ## Equation
+- `equation/equation-algebraic-numbers1-spec.md`: factorization, certified real/complex isolation and RootOf arithmetic for the private Equation core
 - `equation/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `equation/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
 - `equation/equation-exact-algebra1-spec.md`: first implementation specification for the private Equation core's exact-algebra substrate
