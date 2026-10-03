@@ -58,6 +58,11 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 ## Equation
 - `equation/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `equation/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
+- `equation/equation-exact-algebra1-spec.md`: first implementation specification for the private Equation core's exact-algebra substrate
+- `equation/equation-reconstruction-blueprint.md`: machinery and native representation for the private Equation core rebuild
+- `equation/equation-reconstruction-design.md`: locked design decisions for the private Equation core rebuild
+- `equation/equation-reconstruction-inventory.md`: old-engine cap inventory and 50-equation baseline probe
+- `equation/equation-reconstruction-roadmap.md`: provisional gate sequence for the private Equation core rebuild
 - `equation/equation-domain-shared-surface-audit.md`: audit map for remaining active/shared Equation root surfaces
 - `equation/equation-guarded-district-audit.md`: audit map for the current guarded Equation solve district
 - `equation/equation-inequality-district-audit.md`: audit map for the current Equation inequality district
