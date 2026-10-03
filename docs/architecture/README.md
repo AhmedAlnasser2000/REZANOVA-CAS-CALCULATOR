@@ -64,6 +64,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `equation/equation-reconstruction-design.md`: locked design decisions for the private Equation core rebuild
 - `equation/equation-reconstruction-inventory.md`: old-engine cap inventory and 50-equation baseline probe
 - `equation/equation-reconstruction-roadmap.md`: provisional gate sequence for the private Equation core rebuild
+- `equation/equation-representation1-spec.md`: expression graph, relation problems, transform proof logs, search, solution sets, MathJSON and wire for the private Equation core
 - `equation/equation-domain-shared-surface-audit.md`: audit map for remaining active/shared Equation root surfaces
 - `equation/equation-guarded-district-audit.md`: audit map for the current guarded Equation solve district
 - `equation/equation-inequality-district-audit.md`: audit map for the current Equation inequality district

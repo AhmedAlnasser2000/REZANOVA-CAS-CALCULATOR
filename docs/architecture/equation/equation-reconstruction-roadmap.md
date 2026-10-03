@@ -1,13 +1,13 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-03
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1` and `EQUATION-ALGEBRAIC-NUMBERS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1` and `EQUATION-REPRESENTATION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-ALGEBRAIC-NUMBERS1` is backend-verified (see its [specification](equation-algebraic-numbers1-spec.md)). The next gate is `EQUATION-REPRESENTATION1`: the expression graph, relation problem, transform records, solution-set algebra and replay verifier. It needs its own approval.
+`EQUATION-REPRESENTATION1` is backend-verified (see its [specification](equation-representation1-spec.md)). The next gate is `EQUATION-POLYNOMIAL-DECISION1` (slice 1): univariate polynomial and rational equations over ℝ and ℂ on top of the representation. It needs its own approval.
 
 ## Implementation sequence
 
@@ -16,7 +16,7 @@ Companion: [design](equation-reconstruction-design.md), [blueprint](equation-rec
 | 1 (complete) | `EQUATION-RECONSTRUCTION-DESIGN1` | Design, blueprint, inventory, baseline probe, roadmap, first specification | Docs and memory recorded; memory/file-size/diff checks |
 | 2 (backend verified) | `EQUATION-EXACT-ALGEBRA1` | Execution context with typed stops; rationals; modular tools; dense univariate polynomials; modular GCD; Yun; subresultants; Bareiss; private wire; isolation and no-caps ratchets | Law and identity tests, adversarial sizes, tiny-budget stops, isolation |
 | 3 (backend verified) | `EQUATION-ALGEBRAIC-NUMBERS1` | Factorization over ℚ (Cantor–Zassenhaus, Hensel, Zassenhaus); real and complex root isolation; RootOf arithmetic and sign; certificates | Product/isolation certificates, mutation rejection, high-degree cases (degree 20, 50, 100) |
-| 4 | `EQUATION-REPRESENTATION1` | Expression graph, relation problem, transform records, solution-set algebra, replay codec, verifier | Hash-consing laws, replay of recorded chains, tampering rejection |
+| 4 (backend verified) | `EQUATION-REPRESENTATION1` | Expression graph, relation problem, transform records, solution-set algebra, replay codec, verifier | Hash-consing laws, replay of recorded chains, tampering rejection |
 | 5 | `EQUATION-POLYNOMIAL-DECISION1` (slice 1) | Univariate polynomial and rational equations over ℝ and ℂ; exclusions; exact reduced forms; six outcomes | Corpus P/R cases exact, including degree ≥ 5 as RootOf; empty sets proven |
 | 6 | `EQUATION-GENERATORS1` (slice 2) | Kernel collection, exponent lattice, basis choice, exp/log inverse relations, Lambert W | Corpus E cases exact (ln 2, ln 3; W₀(1)); equivalent forms converge |
 | 7 | `EQUATION-CONSTRAINTS1` (slice 3) | Range contractors, sign intervals, lazy branch manager, absolute values and radical generators | Corpus A/S/M cases exact, including the two old false negatives |

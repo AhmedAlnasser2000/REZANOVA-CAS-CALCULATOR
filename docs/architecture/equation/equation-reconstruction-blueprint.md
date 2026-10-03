@@ -59,6 +59,13 @@ Hard spot: radicals for solvable quintics and higher need Galois-group computati
   - Exact reduced forms: an equivalent relation left unsolved.
   - "Unconfirmed" candidate sets, each with its derivation.
 
+Implemented choices (2026-10-03, [`EQUATION-REPRESENTATION1`](equation-representation1-spec.md)):
+- Nodes are hash-consed per store and ordered by store-independent SHA-256 digests.
+- Canonicalization preserves value and domain; a zero coefficient drops only total terms.
+- Algebraic nodes are keyed by minimal polynomial plus catalog index.
+- Proof logs are verified structurally (hashes, continuity, condition bookkeeping, measures, obligations), then by per-rule checkers.
+- Search is iterative deepening with a visited set that proves exhaustion on finite spaces.
+
 ## D. Constraint reasoning
 
 | Machinery | Method |
