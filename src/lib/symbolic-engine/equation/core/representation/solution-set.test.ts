@@ -7,7 +7,7 @@ import { ExpressionStore } from './expression';
 import { relationProblem } from './relation';
 import {
   OUTCOME_KINDS, assertOutcome, finiteContains, finiteSet, normalizeSet, resourceOutcome, setKey, unionSet,
-  type EquationOutcome, type PointValue, type SolutionSet,
+  type EquationOutcome, type Interval, type PointValue, type SolutionSet,
 } from './solution-set';
 import { ProofLogBuilder } from './transform';
 import { decodeOutcome, encodeOutcome } from './wire';
@@ -67,6 +67,40 @@ describe('finite sets', () => {
     expect(normalizeSet(s, finiteSet(['x'], [[{ kind: 'algebraic', root: i }]]), 'complex').kind).toBe('finite');
     expect(() => finiteSet(['x', 'x'], [])).toThrow(/variables/);
     expect(() => finiteSet(['x'], [[q(s, 1), q(s, 2)]])).toThrow(/arity/);
+  });
+});
+
+describe('interval and cofinite sets', () => {
+  const inf = (sign: -1 | 1) => ({ kind: 'infinity' as const, sign });
+  it('merges overlapping and touching intervals, keeping closedness exact', () => {
+    const s = new ExpressionStore(context());
+    const { wide } = sqrt2(s);
+    const root2: PointValue = { kind: 'algebraic', root: wide };
+    const set = normalizeSet(s, { kind: 'intervals', variables: ['x'], intervals: [
+      { lo: q(s, 1), hi: root2, loClosed: true, hiClosed: false },
+      { lo: inf(-1), hi: q(s, 0), loClosed: false, hiClosed: false },
+      { lo: { kind: 'algebraic', root: refineReal(s.ctx, wide, rational(s.ctx, 1n, 10n ** 6n)) }, hi: q(s, 3), loClosed: true, hiClosed: true },
+      { lo: q(s, 0), hi: q(s, 0), loClosed: true, hiClosed: true },
+    ] }, 'real');
+    expect(setKey(s, set)).toBe('intervals(x){(-inf,q:0/1]|[q:1/1,q:3/1]}');
+    const open = normalizeSet(s, { kind: 'intervals', variables: ['x'], intervals: [
+      { lo: inf(-1), hi: q(s, 0), loClosed: false, hiClosed: false }, { lo: q(s, 0), hi: inf(1), loClosed: false, hiClosed: false },
+    ] }, 'real');
+    expect(setKey(s, open)).toBe('intervals(x){(-inf,q:0/1)|(q:0/1,+inf)}');
+  });
+
+  it('rejects malformed intervals and normalizes cofinite sets', () => {
+    const s = new ExpressionStore(context());
+    const bad = (i: Interval) => () => normalizeSet(s, { kind: 'intervals', variables: ['x'], intervals: [i] }, 'real');
+    expect(bad({ lo: q(s, 2), hi: q(s, 1), loClosed: false, hiClosed: false })).toThrow(/empty or reversed/);
+    expect(bad({ lo: q(s, 1), hi: q(s, 1), loClosed: true, hiClosed: false })).toThrow(/empty or reversed/);
+    expect(bad({ lo: inf(-1), hi: q(s, 1), loClosed: true, hiClosed: false })).toThrow(/infinite/);
+    expect(() => normalizeSet(s, { kind: 'intervals', variables: ['x'], intervals: [] }, 'complex')).toThrow(/real domain/);
+    const co = normalizeSet(s, { kind: 'cofinite', variables: ['x'], except: [[q(s, 2)], [q(s, -2)], [q(s, 2)]] }, 'complex');
+    expect(setKey(s, co)).toBe('cofinite(x){q:-2/1|q:2/1}');
+    const wire = JSON.parse(JSON.stringify(encodeOutcome(s, { kind: 'solved', set: co, proof: new ProofLogBuilder(relationProblem(s, { domain: 'complex', targets: ['x'], relations: [] })).build() })));
+    const back = decodeOutcome(context(), wire);
+    expect(back.outcome.kind === 'solved' && setKey(back.store, back.outcome.set)).toBe(setKey(s, co));
   });
 });
 

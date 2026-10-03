@@ -1,6 +1,6 @@
 import { demand, EquationAlgebraError, type EquationStop } from '../execution';
 import { rCompare } from '../algebra/rational';
-import { compareReal, type RealRootOf } from '../algebraic/root-of';
+import { compareReal, type RealRootOf, type RootOf } from '../algebraic/root-of';
 import { asRoot, evaluateExact, type EvaluationDomain, type ExactValue } from './evaluate';
 import { isSymbolName, type ExprId, type ExpressionStore } from './expression';
 import { canonicalCondition, conditionKey, type Condition, type RelationProblem } from './relation';
@@ -24,15 +24,28 @@ export type EquationOutcome =
   | { readonly kind: 'unsupported'; readonly reason: string }
   | { readonly kind: 'resource'; readonly stop: EquationStop };
 
-/** A coordinate value: exact number, or a closed-form expression (for example log 2). */
-export type PointValue = ExactValue | { readonly kind: 'expression'; readonly id: ExprId };
+/**
+ * A coordinate value: exact number, or a closed-form expression (for example
+ * log 2). An algebraic value may carry `form`, a closed form (radicals) proven
+ * to evaluate exactly to the same root; identity always stays the RootOf.
+ */
+export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly root: RootOf; readonly form?: ExprId } | { readonly kind: 'expression'; readonly id: ExprId };
 export type Point = readonly PointValue[];
+
+/** An interval endpoint: ±∞ or an exact real value. */
+export type Endpoint = { readonly kind: 'infinity'; readonly sign: -1 | 1 } | PointValue;
+/** A real interval; infinite ends are open, and a degenerate interval [a, a] is a point. */
+export interface Interval { readonly lo: Endpoint; readonly hi: Endpoint; readonly loClosed: boolean; readonly hiClosed: boolean }
 
 export interface Case { readonly conditions: readonly Condition[]; readonly set: SolutionSet }
 export interface Candidate { readonly point: Point; readonly derivations: readonly string[] }
 
 export type SolutionSet =
   | { readonly kind: 'finite'; readonly variables: readonly string[]; readonly points: readonly Point[] }
+  /** A union of disjoint real intervals (one variable), sorted and non-touching. */
+  | { readonly kind: 'intervals'; readonly variables: readonly string[]; readonly intervals: readonly Interval[] }
+  /** Every value of the domain except finitely many points. */
+  | { readonly kind: 'cofinite'; readonly variables: readonly string[]; readonly except: readonly Point[] }
   | { readonly kind: 'union'; readonly sets: readonly SolutionSet[] }
   | { readonly kind: 'case-tree'; readonly cases: readonly Case[] }
   /** values[i] gives variables[i] in terms of integer parameters (k ∈ ℤ), under constraints. */
@@ -44,7 +57,7 @@ export type SolutionSet =
   /** Candidates whose verification could not be decided, each with the derivations that produced it. */
   | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] };
 
-export const SOLUTION_SET_KINDS = ['finite', 'union', 'case-tree', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
+export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
 
 const fail = (reason: string): never => demand(false, 'invalid-input', reason) as never;
 
@@ -104,7 +117,9 @@ function normalizeValue(store: ExpressionStore, v: PointValue, domain: Evaluatio
   if (v.kind === 'rational') return Object.freeze({ kind: 'rational', value: v.value });
   if (domain === 'real' && v.root.kind !== 'real') fail('non-real value in a real solution set');
   const c = store.roots.canonical(store.ctx, v.root);
-  return Object.freeze({ kind: 'algebraic', root: c.root });
+  const form = 'form' in v ? v.form : undefined;
+  if (form !== undefined) store.node(form);
+  return Object.freeze(form === undefined ? { kind: 'algebraic', root: c.root } : { kind: 'algebraic', root: c.root, form });
 }
 
 function pointKey(store: ExpressionStore, p: Point): string { return p.map(v => valueKey(store, v)).join(';'); }
@@ -166,6 +181,11 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
       const points = [...unique.values()].sort((a, b) => comparePoints(store, a, b));
       return finiteSet(set.variables, points);
     }
+    case 'intervals': return normalizeIntervals(store, set, domain);
+    case 'cofinite': {
+      const finite = normalizeSet(store, finiteSet(set.variables, set.except), domain) as Extract<SolutionSet, { kind: 'finite' }>;
+      return Object.freeze({ kind: 'cofinite', variables: finite.variables, except: finite.points });
+    }
     case 'union': {
       const vars = setVariables(set).join(',');
       const flat: SolutionSet[] = [];
@@ -223,6 +243,8 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
   const conds = (list: readonly Condition[]) => list.map(c => conditionKey(store, c)).join('&');
   switch (set.kind) {
     case 'finite': return `finite(${set.variables.join(',')}){${set.points.map(p => pointKey(store, p)).join('|')}}`;
+    case 'intervals': return `intervals(${set.variables.join(',')}){${set.intervals.map(i => `${i.loClosed ? '[' : '('}${endpointKey(store, i.lo)},${endpointKey(store, i.hi)}${i.hiClosed ? ']' : ')'}`).join('|')}}`;
+    case 'cofinite': return `cofinite(${set.variables.join(',')}){${set.except.map(p => pointKey(store, p)).join('|')}}`;
     case 'union': return `union{${set.sets.map(s => setKey(store, s)).join('|')}}`;
     case 'case-tree': return `cases{${set.cases.map(c => caseKey(store, c)).join('|')}}`;
     case 'periodic': return `periodic(${set.variables.join(',')};${set.integerParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
@@ -230,6 +252,64 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
     case 'reduced-form': return `reduced{${set.problem.hash}}`;
     case 'unconfirmed': return `unconfirmed(${set.variables.join(',')}){${set.candidates.map(c => `${pointKey(store, c.point)}<${c.derivations.join(',')}>`).join('|')}}`;
   }
+}
+
+// ---- intervals ----
+
+function endpointKey(store: ExpressionStore, e: Endpoint): string {
+  return e.kind === 'infinity' ? (e.sign < 0 ? '-inf' : '+inf') : valueKey(store, e);
+}
+
+/** Exact order of endpoints (−∞ < every real < +∞). */
+export function compareEndpoints(store: ExpressionStore, a: Endpoint, b: Endpoint): number {
+  if (a.kind === 'infinity' || b.kind === 'infinity') {
+    const ra = a.kind === 'infinity' ? a.sign * 2 : 0, rb = b.kind === 'infinity' ? b.sign * 2 : 0;
+    if (ra !== rb) return ra - rb;
+    return 0;
+  }
+  return compareValues(store, a, b);
+}
+
+function normalizeEndpoint(store: ExpressionStore, e: Endpoint): Endpoint {
+  if (e.kind === 'infinity') {
+    if (e.sign !== 1 && e.sign !== -1) fail('infinity sign');
+    return Object.freeze({ kind: 'infinity', sign: e.sign });
+  }
+  const v = normalizeValue(store, e, 'real');
+  if (v.kind === 'expression') fail('interval endpoints must be exact numbers');
+  return v;
+}
+
+/** Validate, sort and merge overlapping or touching intervals. */
+function normalizeIntervals(store: ExpressionStore, set: Extract<SolutionSet, { kind: 'intervals' }>, domain: EvaluationDomain): SolutionSet {
+  if (domain !== 'real') fail('intervals need the real domain');
+  const vars = checkVariables(set.variables);
+  if (vars.length !== 1) fail('intervals describe one variable');
+  const items = set.intervals.map(i => {
+    const lo = normalizeEndpoint(store, i.lo), hi = normalizeEndpoint(store, i.hi);
+    const loClosed = i.loClosed === true, hiClosed = i.hiClosed === true;
+    if ((lo.kind === 'infinity' && (lo.sign !== -1 || loClosed)) || (hi.kind === 'infinity' && (hi.sign !== 1 || hiClosed))) fail('infinite interval ends are open and outward');
+    const c = compareEndpoints(store, lo, hi);
+    if (c > 0 || (c === 0 && !(loClosed && hiClosed))) fail('empty or reversed interval');
+    return { lo, hi, loClosed, hiClosed };
+  });
+  items.sort((a, b) => compareEndpoints(store, a.lo, b.lo) || (a.loClosed === b.loClosed ? 0 : a.loClosed ? -1 : 1));
+  const merged: Interval[] = [];
+  for (const it of items) {
+    store.ctx.tick();
+    const last = merged[merged.length - 1];
+    if (last) {
+      const c = compareEndpoints(store, last.hi, it.lo);
+      if (c > 0 || (c === 0 && (last.hiClosed || it.loClosed))) {
+        const d = compareEndpoints(store, it.hi, last.hi);
+        const hi = d > 0 ? it.hi : last.hi, hiClosed = d > 0 ? it.hiClosed : d < 0 ? last.hiClosed : last.hiClosed || it.hiClosed;
+        merged[merged.length - 1] = Object.freeze({ lo: last.lo, loClosed: last.loClosed, hi, hiClosed });
+        continue;
+      }
+    }
+    merged.push(Object.freeze(it));
+  }
+  return Object.freeze({ kind: 'intervals', variables: vars, intervals: Object.freeze(merged) });
 }
 
 // ---- membership ----
