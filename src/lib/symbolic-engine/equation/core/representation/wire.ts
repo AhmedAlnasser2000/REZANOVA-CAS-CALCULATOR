@@ -8,7 +8,7 @@ import {
 } from './relation';
 import { minimalPolynomial } from './root-identity';
 import {
-  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Point, type PointValue, type SolutionSet,
+  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type SolutionSet,
 } from './solution-set';
 import { EQUIVALENCE_KINDS, OBLIGATIONS, type EquivalenceKind, type Obligation, type ProofLog, type TransformRecord } from './transform';
 
@@ -319,6 +319,10 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
     case 'cofinite': return { kind: 'cofinite', variables: [...set.variables], except: set.except.map(point) };
     case 'union': return { kind: 'union', sets: set.sets.map(s => encodeSet(enc, s)) };
     case 'case-tree': return { kind: 'case-tree', cases: set.cases.map(c => ({ conditions: conds(c.conditions), set: encodeSet(enc, c.set) })) };
+    case 'periodic-set': {
+      const iv = (i: Interval) => [encodeEndpoint(enc, i.lo), encodeEndpoint(enc, i.hi), i.loClosed, i.hiClosed];
+      return { kind: 'periodic-set', variables: [...set.variables], period: encodeValue(enc, set.period), components: set.components.map(iv), range: iv(set.range) };
+    }
     case 'periodic': return { kind: 'periodic', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), integerParameters: [...set.integerParameters], constraints: conds(set.constraints) };
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
@@ -331,19 +335,21 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
   const conds = (l: Json) => Object.freeze(list(l).map(c => decodeCondition(dec, c)));
   const point = (p: Json) => Object.freeze(list(p).map(v => decodeValue(dec, v)));
   const names = (l: Json) => Object.freeze(list(l).map(text));
+  const flag = (b: Json) => (typeof b === 'boolean' ? b : fail('interval closedness flag'));
+  const interval = (x: Json): Interval => {
+    const e = list(x);
+    if (e.length !== 4) fail('interval arity');
+    return Object.freeze({ lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) });
+  };
   switch (kind) {
     case 'finite': { const r = record(value, ['kind', 'variables', 'points']); return Object.freeze({ kind, variables: names(r.variables), points: Object.freeze(list(r.points).map(point)) }); }
     case 'intervals': {
       const r = record(value, ['kind', 'variables', 'intervals']);
-      const flag = (b: Json) => (typeof b === 'boolean' ? b : fail('interval closedness flag'));
-      return Object.freeze({
-        kind, variables: names(r.variables),
-        intervals: Object.freeze(list(r.intervals).map(x => {
-          const e = list(x);
-          if (e.length !== 4) fail('interval arity');
-          return Object.freeze({ lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) });
-        })),
-      });
+      return Object.freeze({ kind, variables: names(r.variables), intervals: Object.freeze(list(r.intervals).map(interval)) });
+    }
+    case 'periodic-set': {
+      const r = record(value, ['kind', 'variables', 'period', 'components', 'range']);
+      return Object.freeze({ kind, variables: names(r.variables), period: decodeValue(dec, r.period), components: Object.freeze(list(r.components).map(interval)), range: interval(r.range) });
     }
     case 'cofinite': { const r = record(value, ['kind', 'variables', 'except']); return Object.freeze({ kind, variables: names(r.variables), except: Object.freeze(list(r.except).map(point)) }); }
     case 'union': { const r = record(value, ['kind', 'sets']); return Object.freeze({ kind, sets: Object.freeze(list(r.sets).map(s => decodeSet(dec, s))) }); }

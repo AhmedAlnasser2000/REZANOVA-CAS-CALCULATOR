@@ -6,11 +6,15 @@ import { MOVE_TO_ZERO, ProofLogBuilder, type TransformRule } from '../representa
 import { decideClosedForm } from './closed-form-set';
 import { LOG_DOMAIN, REAL_POWER_NORMAL_FORM } from './normal-form';
 import { RADICAL_DOMAIN } from '../constraints/normal-form';
+import { TRIG_DOMAIN } from '../periodic/normal-form';
 
-/** Kernel domains, real normal form, kernel domains again (new logs), radical domains, denominators, zero form. */
-const PIPELINE: readonly TransformRule[] = [LOG_DOMAIN, REAL_POWER_NORMAL_FORM, LOG_DOMAIN, RADICAL_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO];
+/** Kernel domains, real normal form, kernel domains again (new logs), radical and trig domains, denominators, zero form. */
+const PIPELINE: readonly TransformRule[] = [LOG_DOMAIN, REAL_POWER_NORMAL_FORM, LOG_DOMAIN, RADICAL_DOMAIN, TRIG_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO];
 
-export const GENERATOR_RULES: ReadonlyMap<string, TransformRule> = new Map([LOG_DOMAIN, REAL_POWER_NORMAL_FORM, RADICAL_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO].map(r => [r.id, r]));
+/** Rules whose application means a state is not yet final. */
+export const FINAL_FORM_RULES: readonly TransformRule[] = [LOG_DOMAIN, REAL_POWER_NORMAL_FORM, RADICAL_DOMAIN, TRIG_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO];
+
+export const GENERATOR_RULES: ReadonlyMap<string, TransformRule> = new Map(FINAL_FORM_RULES.map(r => [r.id, r]));
 
 export function rewriteGenerators(problem: RelationProblem) {
   const log = new ProofLogBuilder(problem);
@@ -33,7 +37,7 @@ export function rewriteGenerators(problem: RelationProblem) {
 export function decideGeneratorProblem(problem: RelationProblem): EquationOutcome {
   try {
     if (problem.targets.length !== 1) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: several target variables` };
-    if (problem.domain !== 'real') return { kind: 'incomplete-implementation', reason: `${OWNERS.periodic}: complex exponential and logarithmic equations` };
+    if (problem.domain !== 'real') return { kind: 'incomplete-implementation', reason: `${OWNERS.periodic}: complex exponential, logarithmic and trig equations` };
     if (problem.parameters.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.parameters}: parameters ${problem.parameters.join(', ')}` };
     if (problem.generators.length || problem.constraints.length) return { kind: 'incomplete-implementation', reason: 'generator and constraint tables are filled by this slice, not given' };
     const { log, leaf } = rewriteGenerators(problem);
