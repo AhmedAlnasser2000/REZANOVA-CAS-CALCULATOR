@@ -290,7 +290,7 @@ export function asinBounds(ctx: ExecutionContext, q: Rational, bits: number): Bo
 }
 
 /** sin or cos over an interval: endpoint values, plus ±1 wherever an extremum k·π/2 may lie inside. */
-function sinCosBox(ctx: ExecutionContext, fn: 'sin' | 'cos', a: Box, bits: number): Box {
+export function sinCosBox(ctx: ExecutionContext, fn: 'sin' | 'cos', a: Bounds, bits: number): Bounds {
   if (rSubtract(ctx, a.hi, a.lo).numerator === 0n) return sinCosBounds(ctx, fn, a.lo, bits);
   const one = rational(ctx, 1n), minusOne = rational(ctx, -1n);
   if (lt(ctx, rational(ctx, 4n), rSubtract(ctx, a.hi, a.lo))) return { lo: minusOne, hi: one };
@@ -346,7 +346,7 @@ function trigBox(ctx: ExecutionContext, fn: string, a: Box, bits: number): Box |
 const ROOT_CROSSOVER = 64n;
 
 /** Floor and ceiling bounds of r^(1/q) for r ≥ 0, q ≥ 2, at `bits` (exact integer roots). */
-function rootBounds(ctx: ExecutionContext, r: Rational, q: number, bits: number): Bounds {
+export function rootBounds(ctx: ExecutionContext, r: Rational, q: number, bits: number): Bounds {
   if (r.numerator === 0n) return { lo: zero(ctx), hi: zero(ctx) };
   const scale = 1n << BigInt(bits);
   const radicand = imul(ctx, imul(ctx, r.numerator, ipow(ctx, r.denominator, q - 1)), ipow(ctx, scale, q));

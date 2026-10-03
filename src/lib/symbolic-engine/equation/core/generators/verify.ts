@@ -145,6 +145,19 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
         }
         return;
       }
+      case 'interval-family': {
+        // The first members: closed ends and inner samples satisfy the problem; the gap to the next member fails.
+        const at = (k: bigint, e: ExprId) => store.substitute(e, new Map([[set.parameter, store.integer(k)]]));
+        const first = set.from ?? (set.to !== undefined ? set.to - 2n : -1n);
+        const ks = [first, first + 1n, first + 2n].filter(k => (set.from === undefined || k >= set.from) && (set.to === undefined || k <= set.to));
+        for (const k of ks) {
+          const lo = at(k, set.lo), hi = at(k, set.hi);
+          if (set.loClosed) satisfiesProblem(lo, 'an interval-family end');
+          if (set.hiClosed) satisfiesProblem(hi, 'an interval-family end');
+          satisfiesProblem(sampleBetween({ kind: 'expression', id: lo }, { kind: 'expression', id: hi }), 'an interval-family sample');
+        }
+        return;
+      }
       case 'periodic': {
         // The first members allowed by the parameter constraints (each parameter from its lower bound, or 0).
         const lower = (name: string) => {
@@ -170,6 +183,7 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
   if (decision.kind === 'refused') fail('leaf is not decidable by this slice');
   if (decision.kind !== 'set') return fail('claimed solutions, but the leaf is empty');
   if (setKey(store, claimed) !== setKey(store, normalizeSet(store, decision.set, 'real'))) fail('solution set differs from the re-derived set');
+  if (claimed.kind !== 'finite' && claimed.kind !== 'intervals') return;
   const built = closedAtoms(leaf);
   if ('refusal' in built) return fail('leaf atoms are not decidable');
   const atoms = built.atoms, x = leaf.targets[0];

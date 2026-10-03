@@ -120,7 +120,7 @@ group('inequalities and conjunctions', () => {
 
 group('routing to the gates that own a problem', () => {
   it.each([
-    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 5), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
+    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 6), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
     [eq(['Add', exp('x'), ln('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
     [eq(['Add', exp(times(2, 'x')), exp('x')], 'ExponentialE'), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-2 equation with transcendental coefficients'],
     [eq(ln(['Add', ['Power', 'x', 3], 'x']), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-3 equation with transcendental coefficients'],

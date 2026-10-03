@@ -324,6 +324,10 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
       return { kind: 'periodic-set', variables: [...set.variables], period: encodeValue(enc, set.period), components: set.components.map(iv), range: iv(set.range) };
     }
     case 'periodic': return { kind: 'periodic', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), integerParameters: [...set.integerParameters], constraints: conds(set.constraints) };
+    case 'interval-family': return {
+      kind: 'interval-family', variables: [...set.variables], parameter: set.parameter, from: set.from === undefined ? null : set.from.toString(), to: set.to === undefined ? null : set.to.toString(),
+      lo: enc.ref(set.lo), hi: enc.ref(set.hi), loClosed: set.loClosed, hiClosed: set.hiClosed,
+    };
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
     case 'unconfirmed': return { kind: 'unconfirmed', variables: [...set.variables], candidates: set.candidates.map(c => ({ point: point(c.point), derivations: [...c.derivations] })) };
@@ -356,6 +360,15 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
     case 'case-tree': {
       const r = record(value, ['kind', 'cases']);
       return Object.freeze({ kind, cases: Object.freeze(list(r.cases).map(c => { const o = record(c, ['conditions', 'set']); return Object.freeze({ conditions: conds(o.conditions), set: decodeSet(dec, o.set) }); })) });
+    }
+    case 'interval-family': {
+      const r = record(value, ['kind', 'variables', 'parameter', 'from', 'to', 'lo', 'hi', 'loClosed', 'hiClosed']);
+      const bound = (b: Json) => (b === null ? undefined : typeof b === 'string' && /^-?[0-9]+$/.test(b) ? BigInt(b) : fail('interval-family bound'));
+      const from = bound(r.from), to = bound(r.to), [parameter] = names([r.parameter]);
+      return Object.freeze({
+        kind, variables: names(r.variables), parameter, ...(from === undefined ? {} : { from }), ...(to === undefined ? {} : { to }),
+        lo: dec.id(r.lo), hi: dec.id(r.hi), loClosed: flag(r.loClosed), hiClosed: flag(r.hiClosed),
+      });
     }
     case 'periodic': {
       const r = record(value, ['kind', 'variables', 'values', 'integerParameters', 'constraints']);

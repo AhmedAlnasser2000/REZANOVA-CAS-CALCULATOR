@@ -17,6 +17,8 @@ import { absPiecewise, containsAbs } from '../constraints/piecewise';
 import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } from '../constraints/radicals';
 import { mergeAffineFamilies, type FamilyZeros, type Param, type PeriodicZeros } from '../periodic/families';
 import { ARCS, arcSum, halfAngle, invertArc, invertTrig, parametricStep, TRIG, type Sink } from '../periodic/inversion';
+import { cancelInjective } from '../composition/injective';
+import { rangeZeros } from '../composition/zeros';
 
 /**
  * Complete real zero sets of target-dependent expressions built from
@@ -186,6 +188,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
       const g = stack.pop() as Goal;
       if (g.params.length) { parametricStep(store, g, sink); continue; }
       const emit = emitFor(g);
+      try {
       const push = (h: ExprId, level: ExprId) => stack.push({ h, level, variable: g.variable, back: g.back, top: false, params: [] });
       // A product of target-dependent factors vanishes where a factor does (domains are conditions of the decision).
       const product = store.node(g.h);
@@ -193,6 +196,8 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
         for (const a of product.args) if (dependsOn(store, a, g.variable)) push(a, g.level);
         continue;
       }
+      const injective = store.numberValue(g.level)?.numerator === 0n ? cancelInjective(store, g.h, g.variable) : undefined;
+      if (injective !== undefined) { for (const h of injective) push(h, g.level); continue; }
       const scan = scanKernels(store, g.h, g.variable);
       if (scan.kernels.length === 0) {
         const r = solveRational(store, g.h, g.level, g.variable, true);
@@ -215,7 +220,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
       }
       if (containsAbs(store, g.h, g.variable)) {
         const split = absPiecewise(store, store.sub(g.h, g.level), g.variable, e => zerosOf(store, e, g.variable, fresh), (a, b) => sampleBetween(store, a, b));
-        if ('refusal' in split) return { kind: 'refused', refusal: split.refusal };
+        if ('refusal' in split) throw new Refused(split.refusal);
         split.values.forEach(emit);
         if (split.periodic?.length) {
           if (g.back !== store.symbol(g.variable)) refuse('EQUATION-COMPOSITION1', 'periodic zeros behind a substitution');
@@ -238,7 +243,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
           continue;
         }
         const el = eliminateRadicals(store, store.sub(g.h, g.level), g.variable);
-        if (el.kind === 'refused') return { kind: 'refused', refusal: el.refusal };
+        if (el.kind === 'refused') throw new Refused(el.refusal);
         if (el.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.constraints, 'an inner identity among radicals'); continue; }
         el.values.forEach(emit);
         continue;
@@ -275,6 +280,13 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
         continue;
       }
       refuse(CERTIFIED_NUMERICS, 'mixed transcendental kernels');
+      } catch (e) {
+        // Composition (slice 5): the complete zero set by certified ranges, monotonicity and exact candidates.
+        if (!(e instanceof Refused) || e.refusal.owner === OWNERS.parameters || e.refusal.owner === OWNERS.systems) throw e;
+        const r = rangeZeros(store, store.sub(g.h, g.level), g.variable, h => zerosOf(store, h, g.variable, fresh));
+        if ('refusal' in r) throw e;
+        r.values.forEach(emit);
+      }
     }
     const merged = mergeAffineFamilies(store, [...values.keys()], families);
     return { kind: 'zeros', values: merged.values, intervals, periodic: [...periodic, ...merged.periodic], families: merged.families };

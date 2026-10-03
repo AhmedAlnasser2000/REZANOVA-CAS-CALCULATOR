@@ -58,6 +58,12 @@ export type SolutionSet =
    * a half-line that starts or ends at a component occurrence.
    */
   | { readonly kind: 'periodic-set'; readonly variables: readonly string[]; readonly period: PointValue; readonly components: readonly Interval[]; readonly range: Interval }
+  /**
+   * One real variable: the union over integers k with from ≤ k ≤ to (either bound may be absent) of
+   * the intervals between lo(k) and hi(k), expressions in the parameter. Members are pairwise disjoint
+   * and ordered in k (proven when the set is built); lower-bounded ranges start at k = 0.
+   */
+  | { readonly kind: 'interval-family'; readonly variables: readonly string[]; readonly parameter: string; readonly from?: bigint; readonly to?: bigint; readonly lo: ExprId; readonly hi: ExprId; readonly loClosed: boolean; readonly hiClosed: boolean }
   /** values[i] gives variables[i] in terms of integer parameters (k ∈ ℤ), under constraints. */
   | { readonly kind: 'periodic'; readonly variables: readonly string[]; readonly values: readonly ExprId[]; readonly integerParameters: readonly string[]; readonly constraints: readonly Condition[] }
   /** values[i] gives variables[i] in terms of free continuous parameters, under constraints. */
@@ -67,7 +73,7 @@ export type SolutionSet =
   /** Candidates whose verification could not be decided, each with the derivations that produced it. */
   | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] };
 
-export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
+export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
 
 const fail = (reason: string): never => demand(false, 'invalid-input', reason) as never;
 
@@ -249,6 +255,13 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
     case 'periodic-set': return normalizePeriodicSet(store, set, domain);
     case 'periodic': case 'parametric':
       return Object.freeze({ ...set, constraints: canonicalConditions(store, set.constraints) });
+    case 'interval-family': {
+      checkVariables(set.variables);
+      if (!isSymbolName(set.parameter) || set.variables.includes(set.parameter)) fail('interval-family parameter');
+      if (set.from !== undefined && set.to !== undefined && set.from > set.to) fail('interval-family range');
+      store.node(set.lo); store.node(set.hi);
+      return Object.freeze({ ...set });
+    }
     case 'reduced-form':
       return set;
     case 'unconfirmed': {
@@ -290,6 +303,7 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
       return `periodic-set(${set.variables.join(',')}){${valueKey(store, set.period)}}{${set.components.map(iv).join('|')}}${iv(set.range)}`;
     }
     case 'periodic': return `periodic(${set.variables.join(',')};${set.integerParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
+    case 'interval-family': return `interval-family(${set.variables.join(',')};${set.parameter}:${set.from ?? '-inf'}..${set.to ?? 'inf'})${set.loClosed ? '[' : '('}${store.digest(set.lo)},${store.digest(set.hi)}${set.hiClosed ? ']' : ')'}`;
     case 'parametric': return `parametric(${set.variables.join(',')};${set.freeParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
     case 'reduced-form': return `reduced{${set.problem.hash}}`;
     case 'unconfirmed': return `unconfirmed(${set.variables.join(',')}){${set.candidates.map(c => `${pointKey(store, c.point)}<${c.derivations.join(',')}>`).join('|')}}`;

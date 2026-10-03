@@ -11,6 +11,8 @@ import { decidePeriodic } from '../periodic/decide';
 import { inFamilies, type FamilyZeros, type PeriodicZeros } from '../periodic/families';
 import { zerosOf, type ZeroInterval } from './inversion';
 import { sampleBetween } from './samples';
+import { rewriteGenerators } from './solve';
+import { decideIntervalFamilies } from '../composition/families';
 
 /**
  * Exact one-dimensional decision with closed-form critical points.
@@ -134,8 +136,19 @@ function canonicalAtom(atom: ClosedAtom, representative: ReadonlyMap<ExprId, Exp
 export function decideClosedForm(problem: RelationProblem): ClosedDecision {
   const s = problem.store, x = problem.targets[0];
   const built = closedAtoms(problem);
-  if ('refusal' in built) return { kind: 'refused', refusal: built.refusal };
-  if (built.atoms.some(a => a.periodic.length || a.families.length)) return decidePeriodic(problem, built.atoms);
+  if ('refusal' in built) {
+    // Families through a non-affine common argument the zero finder cannot invert (sin x³ ≥ 1/2), slice 5.
+    if (built.refusal.owner !== 'EQUATION-COMPOSITION1') return { kind: 'refused', refusal: built.refusal };
+    const families = decideIntervalFamilies(problem, decideClosedForm, rewriteGenerators, (e, v) => zerosOf(s, e, v));
+    return families.kind === 'refused' ? { kind: 'refused', refusal: built.refusal } : families;
+  }
+  if (built.atoms.some(a => a.periodic.length || a.families.length)) {
+    const periodic = decidePeriodic(problem, built.atoms);
+    // Inequalities with families that are not affine in k (slice 5): interval families through the common argument.
+    if (periodic.kind !== 'refused' || !built.atoms.some(a => a.families.length)) return periodic;
+    const families = decideIntervalFamilies(problem, decideClosedForm, rewriteGenerators, (e, v) => zerosOf(s, e, v));
+    return families.kind === 'refused' ? periodic : families;
+  }
   const { points: critical, representative } = sortedCritical(s, built.atoms);
   const atoms = built.atoms.map(a => canonicalAtom(a, representative));
   // Pieces: open (before c₀), point c₀, open (c₀, c₁), …, point cₖ, open (after cₖ).

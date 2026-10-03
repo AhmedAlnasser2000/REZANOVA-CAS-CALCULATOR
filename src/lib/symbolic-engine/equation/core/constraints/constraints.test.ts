@@ -126,8 +126,8 @@ group('mixing with exp and log (slice 2)', () => {
 group('routing to the gates that own a problem', () => {
   it.each([
     [eq(add(sqrt('x'), exp('x')), 3), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(add(sqrt('x'), sqrt(add('x', 1))), ['Ln', 2]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: radical elimination with log'],
-    [eq(add(['Sin', abs('x')], 'x')), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
+    [eq(add(sqrt('x'), sqrt(add('x', 1))), ['Ln', 5]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: radical elimination with log'],
+    [eq(add(['Sin', abs('x')], 'x'), 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
     [eq(sqrt(add('x', 'a')), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: parameters a'],
   ])('%j', (json, expected) => {
     expect(run(json).text).toBe(expected);
