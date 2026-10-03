@@ -101,3 +101,32 @@ export function isqrt(ctx: ExecutionContext, n: bigint): bigint {
   demand(imul(ctx, x, x) <= n && imul(ctx, x + 1n, x + 1n) > n, 'verification-failed', 'integer square root');
   return x;
 }
+
+/** Floor k-th root of a non-negative integer (Newton iteration from above), checked. */
+export function iroot(ctx: ExecutionContext, n: bigint, k: number): bigint {
+  demand(n >= 0n, 'invalid-input', 'root of a negative integer');
+  demand(Number.isSafeInteger(k) && k >= 1, 'invalid-input', 'root index');
+  if (k === 1 || n < 2n) return n;
+  // 2 ≤ n < 2^bits ≤ 2^k gives 1 ≤ n^(1/k) < 2.
+  if (k >= bitLength(n)) return 1n;
+  const K = BigInt(k);
+  let x = 1n << BigInt(Math.ceil(bitLength(n) / k));
+  for (;;) {
+    const y = iquot(ctx, iadd(ctx, imul(ctx, K - 1n, x), iquot(ctx, n, ipow(ctx, x, k - 1))), K);
+    if (y >= x) break;
+    x = y;
+  }
+  demand(ipow(ctx, x, k) <= n && ipow(ctx, x + 1n, k) > n, 'verification-failed', 'integer k-th root');
+  return x;
+}
+
+/** Largest m with n = r^m for an integer r (n ≥ 2), and that r. Bounded by the bit length of n. */
+export function perfectPower(ctx: ExecutionContext, n: bigint): { root: bigint; exponent: number } {
+  demand(n >= 2n, 'invalid-input', 'perfect power of n < 2');
+  for (let k = bitLength(n); k >= 2; k--) {
+    ctx.tick();
+    const r = iroot(ctx, n, k);
+    if (r >= 2n && ipow(ctx, r, k) === n) return { root: r, exponent: k };
+  }
+  return { root: n, exponent: 1 };
+}

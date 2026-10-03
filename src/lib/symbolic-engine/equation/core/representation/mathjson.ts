@@ -30,7 +30,7 @@ const FUNCTION_WRITE: Readonly<Record<FunctionName, string>> = Object.fromEntrie
 /** Heads with a fixed arity, or [min, max]. */
 const ARITY: Readonly<Record<string, number | readonly [number, number]>> = {
   Add: [0, Infinity], Multiply: [0, Infinity], Subtract: [1, Infinity], Negate: 1, Divide: 2, Power: 2, Square: 1, Sqrt: 1, Root: 2,
-  Log: [1, 2], Lb: 1, Lg: 1, Sec: 1, Csc: 1, Cot: 1, Sinh: 1, Cosh: 1, Tanh: 1, Rational: 2, Delimiter: 1,
+  Log: [1, 2], Lb: 1, Lg: 1, LambertW: [1, 2], Sec: 1, Csc: 1, Cot: 1, Sinh: 1, Cosh: 1, Tanh: 1, Rational: 2, Delimiter: 1,
   ...Object.fromEntries(Object.keys(FUNCTION_HEADS).map(k => [k, 1])),
 };
 const RELATION_HEADS: Readonly<Record<string, RelationOperator>> = {
@@ -159,6 +159,12 @@ function combine(store: ExpressionStore, head: string, a: readonly ExprId[]): Ex
       return s.number(rational(s.ctx, n.numerator, d.numerator));
     }
     case 'Delimiter': return a[0];
+    case 'LambertW': {
+      // ["LambertW", z] is the principal branch W₀; ["LambertW", z, -1] is W₋₁.
+      const k = a.length === 2 ? s.numberValue(a[1]) : rational(s.ctx, 0n);
+      if (!k || k.denominator !== 1n || (k.numerator !== 0n && k.numerator !== -1n)) return unsupported('LambertW', 'only the real branches 0 and −1 are supported');
+      return s.lambertW(a[0], k.numerator === 0n ? 0 : -1);
+    }
     default: return s.apply(FUNCTION_HEADS[head], a[0]);
   }
 }
@@ -243,7 +249,9 @@ export function writeExpression(store: ExpressionStore, id: ExprId): unknown {
       case 'add': json = ['Add', ...node.args.map(get)]; break;
       case 'mul': json = ['Multiply', ...node.args.map(get)]; break;
       case 'pow': json = ['Power', get(node.base), get(node.exponent)]; break;
-      case 'apply': json = [FUNCTION_WRITE[node.fn], get(node.arg)]; break;
+      case 'apply':
+        json = node.fn === 'lambertw' ? ['LambertW', get(node.arg)] : node.fn === 'lambertwm1' ? ['LambertW', get(node.arg), -1] : [FUNCTION_WRITE[node.fn], get(node.arg)];
+        break;
     }
     out.set(n, json);
   }

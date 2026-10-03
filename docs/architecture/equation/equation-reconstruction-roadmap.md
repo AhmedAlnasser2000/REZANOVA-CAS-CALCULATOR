@@ -1,13 +1,13 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-03
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1` and `EQUATION-POLYNOMIAL-DECISION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1` and `EQUATION-GENERATORS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-POLYNOMIAL-DECISION1` (slice 1) is backend-verified (see its [specification](equation-polynomial-decision1-spec.md)); by user decision it also covers single-variable inequalities, conjunctions and algebraic coefficients. The next gate is `EQUATION-GENERATORS1` (slice 2): exp/log generators, the exponent lattice and Lambert W. It needs its own approval.
+`EQUATION-GENERATORS1` (slice 2) is backend-verified (see its [specification](equation-generators1-spec.md)). By user decision it covers ℝ only (complex exp/log moved to `EQUATION-PERIODIC1`), inequalities and conjunctions, the full canonical Lambert-W class, and nested exp/log chains (C6/C7 moved here from `EQUATION-COMPOSITION1`). The next gate is `EQUATION-CONSTRAINTS1` (slice 3): range contractors, sign intervals, a lazy branch manager, absolute values and radical generators. It needs its own approval.
 
 ## Implementation sequence
 
@@ -18,10 +18,10 @@ Companion: [design](equation-reconstruction-design.md), [blueprint](equation-rec
 | 3 (backend verified) | `EQUATION-ALGEBRAIC-NUMBERS1` | Factorization over ℚ (Cantor–Zassenhaus, Hensel, Zassenhaus); real and complex root isolation; RootOf arithmetic and sign; certificates | Product/isolation certificates, mutation rejection, high-degree cases (degree 20, 50, 100) |
 | 4 (backend verified) | `EQUATION-REPRESENTATION1` | Expression graph, relation problem, transform records, solution-set algebra, replay codec, verifier | Hash-consing laws, replay of recorded chains, tampering rejection |
 | 5 (backend verified) | `EQUATION-POLYNOMIAL-DECISION1` (slice 1) | Univariate polynomial and rational equations over ℝ and ℂ; exclusions; exact reduced forms; six outcomes | Corpus P/R cases exact, including degree ≥ 5 as RootOf; empty sets proven |
-| 6 | `EQUATION-GENERATORS1` (slice 2) | Kernel collection, exponent lattice, basis choice, exp/log inverse relations, Lambert W | Corpus E cases exact (ln 2, ln 3; W₀(1)); equivalent forms converge |
+| 6 (backend verified) | `EQUATION-GENERATORS1` (slice 2) | Kernel collection, exponent lattice, basis choice, exp/log inverse relations, Lambert W; also nested exp/log chains (C6/C7) | Corpus E cases exact (ln 2, ln 3; W₀(1)); equivalent forms converge |
 | 7 | `EQUATION-CONSTRAINTS1` (slice 3) | Range contractors, sign intervals, lazy branch manager, absolute values and radical generators | Corpus A/S/M cases exact, including the two old false negatives |
-| 8 | `EQUATION-PERIODIC1` (slice 4) | Trig algebraization, periodic families, Diophantine intersection, interval restriction | T cases exact; sin x = 0 on [0,100] as 32 exact roots kπ |
-| 9 | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth | C cases with exact constants (no decimals); depth 3 and depth 25 by the same code |
+| 8 | `EQUATION-PERIODIC1` (slice 4) | Trig algebraization, periodic families, Diophantine intersection, interval restriction; complex exp/log families ln c + 2πik (moved from stage 6) | T cases exact; sin x = 0 on [0,100] as 32 exact roots kπ |
+| 9 | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth | Remaining C cases with exact constants (no decimals; C6/C7 done in stage 6); depth 3 and depth 25 by the same code |
 | 10 | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |

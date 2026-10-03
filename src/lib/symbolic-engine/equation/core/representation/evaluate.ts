@@ -3,7 +3,9 @@ import {
   rAbs, rAdd, rational, rCompare, rInverse, rMultiply, rNegate, type Rational,
 } from '../algebra/rational';
 import * as algebraic from '../algebraic/arithmetic';
-import { ALGEBRAIC_RING, compareReal, realRoots, rootsOfIrreducible, type RealRootOf, type RootOf } from '../algebraic/root-of';
+import { compareRational } from '../algebraic/real-roots';
+import { ALGEBRAIC_RING, compareReal, realRoots, refineReal, rootsOfIrreducible, type RealRootOf, type RootOf } from '../algebraic/root-of';
+import { minusInverseE } from './enclosure';
 import { childrenOf as childrenOfNode, safeCount, type ExprId, type ExpressionStore } from './expression';
 
 /**
@@ -150,6 +152,18 @@ function absoluteValue(ctx: ExecutionContext, a: ExactValue): ExactValue {
   return positiveRoot(ctx, normalizeValue(algebraic.multiply(ctx, z, conjugate)), 2);
 }
 
+/** Whether a negative real algebraic value lies below −1/e (never equal, by Lindemann–Weierstrass). */
+function belowMinusInverseE(ctx: ExecutionContext, v: ExactValue): boolean {
+  for (let bits = 32; ; bits *= 2) {
+    ctx.tick();
+    const t = minusInverseE(ctx, bits);
+    const lo = v.kind === 'rational' ? v.value : refineReal(ctx, v.root as RealRootOf, rational(ctx, 1n, 1n << BigInt(bits))).lo;
+    const hi = v.kind === 'rational' ? v.value : refineReal(ctx, v.root as RealRootOf, rational(ctx, 1n, 1n << BigInt(bits))).hi;
+    if (compareRational(ctx, hi, t.lo) < 0) return true;
+    if (compareRational(ctx, t.hi, lo) < 0) return false;
+  }
+}
+
 function applyFunction(ctx: ExecutionContext, fn: string, v: ExactValue, domain: EvaluationDomain): ExactValue {
   const one = rational(ctx, 1n), minusOne = rational(ctx, -1n);
   switch (fn) {
@@ -175,6 +189,18 @@ function applyFunction(ctx: ExecutionContext, fn: string, v: ExactValue, domain:
       if (domain === 'real' && realSign(ctx, v) === undefined) return undefinedValue('atan of a non-real number');
       if (v.kind === 'algebraic' && v.root.kind === 'complex' && v.root.poly.coefficients.join(',') === '1,0,1') return undefinedValue('atan pole at ±i');
       return isZero(v) ? q(rational(ctx, 0n)) : notExact('transcendental', 'atan of a nonzero algebraic number');
+    }
+    case 'lambertw': case 'lambertwm1': {
+      // W(0) = 0 on the principal branch; W₋₁ is defined on [−1/e, 0) over ℝ. A nonzero
+      // algebraic argument gives a transcendental value (W·e^W = v with W algebraic contradicts Lindemann–Weierstrass).
+      if (isZero(v)) return fn === 'lambertw' ? q(rational(ctx, 0n)) : undefinedValue('W₋₁(0)');
+      if (domain === 'real') {
+        const s = realSign(ctx, v);
+        if (s === undefined) return undefinedValue('Lambert W of a non-real number');
+        if (fn === 'lambertwm1' && s > 0) return undefinedValue('W₋₁ of a positive number');
+        if (s < 0 && belowMinusInverseE(ctx, v)) return undefinedValue('Lambert W below −1/e');
+      }
+      return notExact('transcendental', `${fn} of a nonzero algebraic number`);
     }
     default: return demand(false, 'invalid-input', 'unknown function') as never;
   }

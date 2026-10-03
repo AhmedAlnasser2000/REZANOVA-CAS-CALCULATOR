@@ -60,6 +60,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `equation/equation-complex-district-audit.md`: audit map for the current Equation complex district
 - `equation/equation-direct-symbolic-worker-district.md`: audit and split record for the Equation direct-symbolic worker district
 - `equation/equation-exact-algebra1-spec.md`: first implementation specification for the private Equation core's exact-algebra substrate
+- `equation/equation-generators1-spec.md`: slice 2 of the private Equation core: exact real exp/log/Lambert-W equations, inequalities and nested chains via exponent lattices, certified enclosures and a proof-log verifier
 - `equation/equation-polynomial-decision1-spec.md`: slice 1 of the private Equation core: exact univariate polynomial/rational equations, inequalities and conjunctions over R and C, with proof logs and a verifier
 - `equation/equation-reconstruction-blueprint.md`: machinery and native representation for the private Equation core rebuild
 - `equation/equation-reconstruction-design.md`: locked design decisions for the private Equation core rebuild
