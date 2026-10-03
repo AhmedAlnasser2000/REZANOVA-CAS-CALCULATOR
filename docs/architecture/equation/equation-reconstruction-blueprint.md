@@ -36,6 +36,13 @@ Hard worst case: Zassenhaus recombination is exponential on rare adversarial inp
 | Sign and comparison | Refine until the intervals separate; exact zero test by GCD |
 | Radical presentation | Cardano and Ferrari only as an optional *presentation* of RootOf for degree ≤ 4 |
 
+Implemented choices (2026-10-03, [`EQUATION-ALGEBRAIC-NUMBERS1`](equation-algebraic-numbers1-spec.md)):
+- Complex isolation seeds Aberth with Bini Newton-polygon points in doubles, using reversed-polynomial evaluation for |z| > 1.
+- Each root is certified by Smale's α-test with a rigorous bit-length bound (α < 1/8).
+- Completeness comes from deg f pairwise-disjoint disks.
+- Real isolation is VCA, cross-checked by a Sturm count.
+- Arithmetic uses resultants by evaluation and interpolation.
+
 Hard spot: radicals for solvable quintics and higher need Galois-group computation. This is deferred. RootOf is already exact.
 
 ## C. Representation
