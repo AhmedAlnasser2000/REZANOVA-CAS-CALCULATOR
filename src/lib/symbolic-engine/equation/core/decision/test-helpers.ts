@@ -1,0 +1,54 @@
+// Test fixtures for the decision tests. Not imported by production code (the isolation test forbids it).
+import { complexDecimal, realDecimal } from '../algebraic/root-of';
+import type { ExpressionStore } from '../representation/expression';
+import { readRelations, writeExpression } from '../representation/mathjson';
+import { relationProblem, type ProblemDomain } from '../representation/relation';
+import type { Endpoint, EquationOutcome, PointValue, SolutionSet } from '../representation/solution-set';
+import { decidePolynomialProblem } from './solve';
+import { verifyOutcome } from './verify';
+
+export function problemOf(store: ExpressionStore, json: unknown, domain: ProblemDomain = 'real') {
+  const r = readRelations(store, json);
+  if (r.kind !== 'ok') throw new Error(JSON.stringify(r));
+  return relationProblem(store, { domain, targets: ['x'], relations: r.value });
+}
+
+/** Decide, verify independently, and return the outcome. */
+export function solve(store: ExpressionStore, json: unknown, domain: ProblemDomain = 'real') {
+  const problem = problemOf(store, json, domain);
+  const outcome = decidePolynomialProblem(problem);
+  verifyOutcome(problem, outcome);
+  return { problem, outcome, store: problem.store };
+}
+
+/** Readable exact description: rationals as n/d, irrationals to 6 decimals (computed exactly). */
+export function show(store: ExpressionStore, v: PointValue | Endpoint): string {
+  const ctx = store.ctx;
+  if (v.kind === 'infinity') return v.sign < 0 ? '-inf' : '+inf';
+  if (v.kind === 'rational') return v.value.denominator === 1n ? `${v.value.numerator}` : `${v.value.numerator}/${v.value.denominator}`;
+  if (v.kind === 'expression') return JSON.stringify(writeExpression(store, v.id));
+  if (v.root.kind === 'real') return `≈${realDecimal(ctx, v.root, 6)}`;
+  const { re, im } = complexDecimal(ctx, v.root, 6);
+  return `≈${re}${im.startsWith('-') ? '' : '+'}${im}i`;
+}
+
+export function describe(store: ExpressionStore, outcome: EquationOutcome): string {
+  if (outcome.kind === 'solved') return describeSet(store, outcome.set);
+  if (outcome.kind === 'empty') return 'empty';
+  return `${outcome.kind}: ${'reason' in outcome ? outcome.reason : outcome.stop}`;
+}
+
+export function describeSet(store: ExpressionStore, set: SolutionSet): string {
+  switch (set.kind) {
+    case 'finite': return `{${set.points.map(p => show(store, p[0])).join(', ')}}`;
+    case 'cofinite': return `C\\{${set.except.map(p => show(store, p[0])).join(', ')}}`;
+    case 'intervals': return set.intervals.map(i => `${i.loClosed ? '[' : '('}${show(store, i.lo)}, ${show(store, i.hi)}${i.hiClosed ? ']' : ')'}`).join(' ∪ ');
+    default: return set.kind;
+  }
+}
+
+/** MathJSON of the radical forms attached to a finite set's points. */
+export function forms(store: ExpressionStore, outcome: EquationOutcome): unknown[] {
+  if (outcome.kind !== 'solved' || outcome.set.kind !== 'finite') return [];
+  return outcome.set.points.map(([v]) => (v.kind === 'algebraic' && 'form' in v && v.form !== undefined ? writeExpression(store, v.form) : null));
+}
