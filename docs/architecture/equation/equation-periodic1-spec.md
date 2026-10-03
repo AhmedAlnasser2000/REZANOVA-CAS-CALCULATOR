@@ -3,7 +3,7 @@
 Date: 2026-10-03
 Status:
 - **Part A (real)**: implemented and backend-verified on 2026-10-03; private, no production caller.
-- **Part B (complex exp/log/trig families)**: follows in a second PR.
+- **Part B (complex exp/log/trig families)**: implemented and backend-verified on 2026-10-03; this completes the gate.
 
 Gate: backend only. Stage 8 of the [roadmap](equation-reconstruction-roadmap.md).
 
@@ -26,6 +26,7 @@ Every answer comes with a replayable proof log and an independent verifier.
 User decisions (2026-10-03):
 
 - **Complex**: exp/log and trig families (part B).
+- **Complex powers** (part B decision): b^z for a nonzero constant b is the principal value exp(z·Log b); z^z and other target-dependent bases are refused.
 - **Inequalities**: full periodic, with periodic tails on half-lines.
 - **Composition chains**: included. C1–C5, and families through other kernels.
 - **Bounded results**: enumerated as exact points, with no count cap. Members that accumulate stay a constrained family.
@@ -105,7 +106,7 @@ User decisions (2026-10-03):
   - the first members of families;
   - certified-sign evidence for inequalities at non-algebraic points;
   - a full-line periodic set needs every trig inequality (or each trig factor) structurally periodic with a multiple of the claimed period.
-- **Dispatcher**: trig and inverse trig of the target go to the closed-form engine. Complex problems are refused until part B.
+- **Dispatcher**: trig and inverse trig of the target go to the closed-form engine; complex problems go to the complex families (part B).
 
 ## Acceptance evidence (part A)
 
@@ -157,7 +158,6 @@ User decisions (2026-10-03):
 **Routing.**
 - cos x = x, x·sin x = 1, sin x + sin √2x, and sin x + eˣ name `EQUATION-CERTIFIED-NUMERICS1`.
 - sin(ax) names the parameters gate.
-- Complex trig names this gate's part B.
 - Slices 1–3 are unchanged.
 
 **Substrate.**
@@ -197,11 +197,77 @@ Existing tests changed by design:
 
 ## Known follow-ups (not caps)
 
-- Part B: complex exp/log/trig families (same gate).
 - Families in several integer parameters are decided only for a single equation without further conditions.
 - Inequalities with families that are not affine in their parameter go to `EQUATION-COMPOSITION1`.
 - Transcendental residues equal to a different closed form could only be ordered by refinement (the gate-6 caveat).
 - Presentation: residues keep their derivation form (asin, atan) when they are not q·π. Display normalization belongs to the result contract.
+
+## Outcome (part B)
+
+Over ℂ, the core exactly decides equations and ≠ conditions in one target with exp, log, principal powers b^z and sin, cos, tan, composed at any depth where each level stays invertible. Answers are points, affine families a + ω·k (k ∈ ℤ) and families in several integer parameters with constraints, each with a replayable proof log and an independent verifier.
+
+### Semantics and canonical forms (ℂ)
+
+- **Principal values.** Log w = ln|w| + i·Arg w with Arg ∈ (−π, π]; b^u = exp(u·Log b); √ is the principal root.
+- **log u = c** holds exactly when u = e^c and −π < Im c ≤ π (the strip check), so log z = 2πi is empty and log z = iπ gives −1.
+- **Affine families** are stored in the existing `periodic` kind (values [a + ω·k], integer parameter k, constraints). The period is oriented (Re ω > 0, or Re ω = 0 and Im ω > 0) and minimal; families with commensurable periods merge and split into maximal orbits (e^{2z} = 1 is πi·k), and the anchor has Re(a/ω) ∈ (−1/2, 1/2].
+- **Non-affine families** keep their derivation form under exact constraints: e^{eᶻ} = 1 gives Log(2πik₁) + 2πik₂ with k₁ ≠ 0.
+- **Exclusions.** A ≠ condition removes a sublattice (a congruence class) or a single member (k ≠ m).
+
+### Implemented contracts (part B)
+
+- **Store folds** (value- and domain-preserving): exp(q·π·i + u) reduces q by whole turns and is exact at the special angles (exp(πi) = −1); exp(c·log A) = A^c for positive constants A; (A·B·…)ⁿ = Aⁿ·Bⁿ·… for never-zero constant factors (so 2πi/(2πi) = 1); (A^p)^r = A^{p·r} for a positive constant A.
+- **`evaluate.ts`**: exp, sin, cos and tan of complex linear forms Σ cⱼ·atomⱼ (Gaussian-rational cⱼ; atoms π, log v, arcs of real algebraic numbers) are exact when the exponential is algebraic: e^{i·q·π} is a root of unity, e^{n·log v} = vⁿ, e^{i·n·arc} a unit point. A nonzero algebraic part is transcendental (Lindemann–Weierstrass).
+- **New `periodic/rectangular.ts`**: rectangular parts of complex closed forms (principal semantics; Log(e^v) is structural with Im v reduced into (−π, π]), the canonical principal Log, an exact complex zero test (exact evaluation, then exact real signs of both parts), certified complex enclosures from the real ones, exact turn floors and exact lattice indices.
+- **New `periodic/complex-rules.ts`**: `complex-kernel-normal-form` (b^u → exp(u·Log b); sin, cos, tan → rational expressions in exp(±iu), tan keeping its poles as denominators) and `complex-log-domain` (log u needs u ≠ 0), followed by `natural-domain` and `move-to-zero`.
+- **New `periodic/complex-zeros.ts`**: a goal worklist — factor split; one generator for exponentials with rational exponent ratios (orientation fixed, each root c ≠ 0 gives Log c + 2πik); one exponential of another argument and one logarithm (strip check) by inversion; parametric goals at degree ≤ 2, with the leading coefficient's integer exclusions.
+- **New `periodic/complex.ts`**: canonical families (merge, maximal orbits, window), exact lattice intersection (parallel periods by a congruence, non-parallel ones in at most one point, confirmed exactly), exclusions, and the decision with its proof log.
+- **New `periodic/complex-verify.ts`**: replay with the complex rules and a final-form check; evidence first — every point, and each family's members at k ∈ {−2 … 2} (or {−1, 0, 1}² for two parameters) satisfy the original relations exactly when decidable (otherwise a 192-bit residual enclosure must contain 0), and members excluded by a constraint must fail them; then re-derivation by `setKey`.
+- **Dispatcher**: `generators/solve.ts` sends complex problems to `decideComplexProblem`; `core/decide.ts` verifies them with `verifyComplexOutcome`. Complex abs and radicals stay `unsupported`.
+
+## Acceptance evidence (part B)
+
+`node node_modules/vitest/vitest.mjs run src/lib/symbolic-engine/equation/core --maxWorkers=2`: 28 files / 387 tests pass (49 new).
+
+| Case | Result |
+| --- | --- |
+| E1 over ℂ | {ln 2 + 2πik} ∪ {ln 3 + 2πik} |
+| eᶻ = 1 ∧ z ≠ 0 | 2πik, k ≠ 0 |
+| e^{2z} = 1 | πik |
+| eᶻ = −1 | πi + 2πik |
+| eᶻ = 1 + i | ½ln 2 + iπ/4 + 2πik |
+| log z = 1 / 2πi / iπ / 1 + i | e / empty / −1 / e^{1+i} |
+| log²z − 3 log z + 2 = 0 | {e, e²} |
+| sin z = 2 | π/2 − i·ln((4 ± √12)/2) + 2πk, i.e. π/2 − i·ln(2 ± √3) + 2πk |
+| cos z = 0 | π/2 + πk |
+| tan z = 2 / tan z = i | atan 2 + πk / empty |
+| sin 2z = cos z | π/6 + (2π/3)k ∪ π/2 + 2πk (only the real families) |
+| e^{eᶻ} = 1 | Log(2πik₁) + 2πik₂, k₁ ≠ 0 |
+| e^{1/z} = 1 | 1/(2πik), k ≠ 0 |
+| e^{z²} = 2 | ±√(ln 2 + 2πik) |
+| 2ᶻ = 3 | (ln 3 + 2πik)/ln 2 |
+| (−1)ᶻ = 1 | 2k |
+| eᶻ = 1 ∧ sin z = 0 | {0} |
+| eᶻ = 1 ∧ z² = −4π² | {±2πi} |
+| eᶻ = 1 ∧ e^{z/2} = −1, and eᶻ = 1 ∧ e^{z/2} ≠ 1 | 2πi + 4πik |
+| E1 ∧ z ≠ ln 2 | {ln 2 + 2πik, k ≠ 0} ∪ {ln 3 + 2πik} |
+
+- **Refusals**: z·eᶻ = 1 (complex Lambert) and eᶻ + sin z (frequencies 1 and i) name `EQUATION-CERTIFIED-NUMERICS1`; several logarithms and non-affine intersections name `EQUATION-COMPOSITION1`; eᶻ ≠ 1 alone (the complement of a family has no set kind yet) names `EQUATION-RESULT-CONTRACT1`; |z| and √z stay `unsupported`.
+- **Substrate**: the folds; exact exponentials (e^{ln 2 + 6πi} = 2, sin(i·ln 2) = 3i/4); canonical Log of −1, −2i, −1 + i; complex enclosures of exp(1 + i), Log(1 + i), sin(1 + 2i), cos(2 − i), Log(−3 + 4i) and √(ln 2 + 2πi) against mpmath (40 digits).
+- **Verifier** rejects a wrong residue, a wrong period, a non-minimal period, a missing k ≠ 0, a family claimed for an empty problem, a false empty claim and a proof without its log-domain step. Complex wire replay verifies. Typed `work` and `cancelled` stops on sin 2z = cos z.
+- Existing tests changed by design: the two routing rows that expected the complex refusal now expect the exact families.
+
+## Bugs found during part B
+
+- **Log of an exponential refined forever.** Log(e^{1+i}) was rebuilt from |w| = e·√(cos²1 + sin²1), an identity only refinement could confirm; Log∘exp is now structural.
+- **0·i survived.** i is undefined over ℝ, so the store keeps 0·i; zero multiples are no longer built (zero denominator coefficients, zero lattice indices, real values of exp(qπi)).
+- **(√A)² in rectangular parts** is now A under the principal value, which keeps the e^{z²} = 2 members exactly checkable.
+
+## Known follow-ups after part B (not caps)
+
+- The complement of an infinite family over ℂ needs a set kind (`EQUATION-RESULT-CONTRACT1`).
+- Intersections with non-affine complex families, several logarithms, and nested families whose level is not affine in its parameter go to `EQUATION-COMPOSITION1`.
+- Radical forms keep their discovered shape (√12 rather than 2√3); display normalization belongs to the result contract.
 
 ## Attribution
 

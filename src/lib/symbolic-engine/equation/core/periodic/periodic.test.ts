@@ -120,8 +120,8 @@ group('routing to the gates that own a problem', () => {
     expect(run(json).text).toBe(expected);
   });
 
-  it('keeps complex trig for the complex part of this gate and slices 1–3 unchanged', () => {
-    expect(run(eq(sin('x'), half), 'complex').text).toBe('incomplete-implementation: EQUATION-PERIODIC1: complex exponential, logarithmic and trig equations');
+  it('decides complex trig with the complex families (sin x = 1/2 has only real solutions) and keeps slices 1–3 unchanged', () => {
+    expect(run(eq(sin('x'), half), 'complex').text).toBe('{["Add",["Multiply",2,"Pi","k"],["Multiply",["Rational",1,6],"Pi"]] : k ∈ ℤ} ∪ {["Add",["Multiply",2,"Pi","k"],["Multiply",["Rational",5,6],"Pi"]] : k ∈ ℤ}');
     expect(run(eq(['Power', 'x', 2], 4)).text).toBe('{-2, 2}');
     expect(run(eq(['Exp', 'x'], 2)).text).toBe('{["Ln",2]}');
     expect(run(eq(['Abs', 'x'], 1)).text).toBe('{-1, 1}');

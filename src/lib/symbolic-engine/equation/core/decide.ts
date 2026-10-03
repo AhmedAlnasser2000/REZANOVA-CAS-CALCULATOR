@@ -2,6 +2,7 @@ import { decidePolynomialProblem } from './decision/solve';
 import { verifyOutcome as verifyPolynomialOutcome } from './decision/verify';
 import { decideGeneratorProblem } from './generators/solve';
 import { verifyGeneratorOutcome } from './generators/verify';
+import { verifyComplexOutcome } from './periodic/complex-verify';
 import type { ExprId } from './representation/expression';
 import type { RelationProblem } from './representation/relation';
 import type { EquationOutcome } from './representation/solution-set';
@@ -10,9 +11,9 @@ import type { EquationOutcome } from './representation/solution-set';
  * Entry point of the private Equation core: route a problem to the slice that
  * owns it. Problems whose target appears inside exp, log, Lambert W or an
  * exponent (slice 2), inside an absolute value or a radical (slice 3, real
- * only), or inside trig and inverse trig (slice 4) go to the closed-form
- * engine; everything else starts at the polynomial slice, which names the
- * owning gate when it cannot decide.
+ * only), or inside trig and inverse trig (slice 4; over ℂ the complex
+ * families of slice 4) go to the closed-form engine; everything else starts
+ * at the polynomial slice, which names the owning gate when it cannot decide.
  */
 function someNode(problem: RelationProblem, test: (n: ExprId, x: string) => boolean): boolean {
   const s = problem.store, x = problem.targets[0];
@@ -52,5 +53,7 @@ export function decideEquation(problem: RelationProblem): EquationOutcome {
 }
 
 export function verifyEquationOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
-  if (closedForm(problem)) verifyGeneratorOutcome(problem, outcome); else verifyPolynomialOutcome(problem, outcome);
+  if (!closedForm(problem)) verifyPolynomialOutcome(problem, outcome);
+  else if (problem.domain === 'complex') verifyComplexOutcome(problem, outcome);
+  else verifyGeneratorOutcome(problem, outcome);
 }

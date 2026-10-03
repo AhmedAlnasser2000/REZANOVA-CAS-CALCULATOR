@@ -333,6 +333,100 @@ function trigByAngle(store: ExpressionStore, fn: string, arg: ExprId, exact: (id
   return isZero(c) ? undefinedValue('tan at a pole') : multiplyValues(ctx, imaginaryPart(ctx, w), inverseValue(ctx, c));
 }
 
+// ---- exponentials of complex linear forms ----
+
+/** A Gaussian rational re + i·im. */
+interface Gauss { readonly re: Rational; readonly im: Rational }
+
+/**
+ * e^{s·θ} exactly, when s·θ (products distributed over sums) is Σ cⱼ·atomⱼ with
+ * Gaussian-rational cⱼ and atoms π, log v (v exact and nonzero) and arcs of
+ * real algebraic numbers: e^{i·q·π} is a root of unity, e^{n·log v} = vⁿ
+ * (exp∘Log is the identity), e^{i·n·arc} a unit point. Anything else —
+ * a nonzero algebraic part (Lindemann–Weierstrass), e^{a·π} with a ≠ 0
+ * (Gelfond), v^{i·b} or a non-integer power of a non-positive v — gives
+ * undefined.
+ */
+export function expValue(store: ExpressionStore, theta: ExprId, exact: (id: ExprId) => ExactValue | undefined, scale: 'one' | 'i'): ExactValue | undefined {
+  const ctx = store.ctx, zero = rational(ctx, 0n);
+  const times = (a: Gauss, b: Gauss): Gauss => ({
+    re: rAdd(ctx, rMultiply(ctx, a.re, b.re), rNegate(ctx, rMultiply(ctx, a.im, b.im))),
+    im: rAdd(ctx, rMultiply(ctx, a.re, b.im), rMultiply(ctx, a.im, b.re)),
+  });
+  const plus = (a: Gauss, b: Gauss): Gauss => ({ re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im) });
+  let constant: Gauss = { re: zero, im: zero }, pi: Gauss = { re: zero, im: zero };
+  const logs = new Map<string, { v: ExactValue; c: Gauss }>(), arcs: { fn: 'asin' | 'acos' | 'atan'; u: ExactValue; c: Gauss }[] = [];
+  const work: { id: ExprId; c: Gauss }[] = [{ id: theta, c: scale === 'one' ? { re: rational(ctx, 1n), im: zero } : { re: zero, im: rational(ctx, 1n) } }];
+  while (work.length) {
+    ctx.tick();
+    const { id, c } = work.pop() as { id: ExprId; c: Gauss };
+    const node = store.node(id);
+    if (node.kind === 'number') { constant = plus(constant, times(c, { re: node.value, im: zero })); continue; }
+    if (node.kind === 'constant') {
+      if (node.name === 'pi') pi = plus(pi, c);
+      else if (node.name === 'i') constant = plus(constant, times(c, { re: zero, im: rational(ctx, 1n) }));
+      else return undefined;
+      continue;
+    }
+    if (node.kind === 'add') { for (const a of node.args) work.push({ id: a, c }); continue; }
+    if (node.kind === 'mul') {
+      let factor: Gauss = { re: rational(ctx, 1n), im: zero };
+      const rest: ExprId[] = [];
+      for (const a of node.args) {
+        const v = store.numberValue(a), n = store.node(a);
+        if (v) factor = times(factor, { re: v, im: zero });
+        else if (n.kind === 'constant' && n.name === 'i') factor = times(factor, { re: zero, im: rational(ctx, 1n) });
+        else rest.push(a);
+      }
+      if (rest.length > 1) return undefined;
+      if (rest.length === 0) constant = plus(constant, times(c, factor)); else work.push({ id: rest[0], c: times(c, factor) });
+      continue;
+    }
+    if (node.kind !== 'apply') return undefined;
+    const u = exact(node.arg);
+    if (u === undefined) return undefined;
+    if (node.fn === 'log') {
+      if (isZero(u)) return undefined;
+      const key = u.kind === 'rational' ? `q:${u.value.numerator}/${u.value.denominator}` : `a:${store.roots.canonical(ctx, u.root).key}`;
+      const prior = logs.get(key);
+      logs.set(key, { v: u, c: prior ? plus(prior.c, c) : c });
+      continue;
+    }
+    if ((node.fn === 'asin' || node.fn === 'acos' || node.fn === 'atan') && realSign(ctx, u) !== undefined) { arcs.push({ fn: node.fn, u, c }); continue; }
+    return undefined;
+  }
+  if (constant.re.numerator !== 0n || constant.im.numerator !== 0n || pi.re.numerator !== 0n) return undefined;
+  let value = rootOfUnity(ctx, rational(ctx, pi.im.numerator, 2n * pi.im.denominator));
+  for (const { v, c } of logs.values()) {
+    if (c.im.numerator !== 0n) return undefined;
+    if (c.re.denominator === 1n) { value = multiplyValues(ctx, value, integerPower(ctx, v, c.re.numerator)); continue; }
+    if (realSign(ctx, v) !== 1) return undefined;
+    value = multiplyValues(ctx, value, integerPower(ctx, positiveRoot(ctx, v, safeCount(ctx, c.re.denominator)), c.re.numerator));
+  }
+  for (const { fn, u, c } of arcs) {
+    if (c.re.numerator !== 0n || c.im.denominator !== 1n) return undefined;
+    const w = arcUnit(ctx, fn, u);
+    if (w === undefined) return undefined;
+    value = multiplyValues(ctx, value, integerPower(ctx, w, c.im.numerator));
+  }
+  return value;
+}
+
+/** exp, sin, cos or tan of a complex linear form with an exact exponential; undefined otherwise. */
+function byExponential(store: ExpressionStore, fn: string, arg: ExprId, exact: (id: ExprId) => ExactValue | undefined): ExactValue | undefined {
+  const ctx = store.ctx;
+  if (fn === 'exp') return expValue(store, arg, exact, 'one');
+  if (fn !== 'sin' && fn !== 'cos' && fn !== 'tan') return undefined;
+  const w = expValue(store, arg, exact, 'i');
+  if (w === undefined) return undefined;
+  const inv = inverseValue(ctx, w), i = imaginaryUnit(ctx);
+  const sin = multiplyValues(ctx, addValues(ctx, w, negateValue(ctx, inv)), inverseValue(ctx, multiplyValues(ctx, q(rational(ctx, 2n)), i)));
+  const cos = multiplyValues(ctx, addValues(ctx, w, inv), q(rational(ctx, 1n, 2n)));
+  if (fn === 'sin') return sin;
+  if (fn === 'cos') return cos;
+  return isZero(cos) ? undefinedValue('tan at a pole') : multiplyValues(ctx, sin, inverseValue(ctx, cos));
+}
+
 export function evaluateExact(store: ExpressionStore, id: ExprId, domain: EvaluationDomain): Evaluation {
   const ctx = store.ctx;
   demand(domain === 'real' || domain === 'complex', 'invalid-input', 'evaluation domain');
@@ -350,7 +444,7 @@ export function evaluateExact(store: ExpressionStore, id: ExprId, domain: Evalua
           // sin/cos/tan of π-multiples and arcs of algebraic numbers are algebraic although their argument is not;
           // a product with an exact zero factor is 0 (the other factors are defined: undefined values stop at once).
           const zeroFactor = node.kind === 'mul' && node.args.some(c => { const v = values.get(c); return v !== undefined && isZero(v); });
-          const v = zeroFactor ? q(rational(ctx, 0n)) : node.kind === 'apply' ? trigByAngle(store, node.fn, node.arg, c => values.get(c)) : undefined;
+          const v = zeroFactor ? q(rational(ctx, 0n)) : node.kind === 'apply' ? (trigByAngle(store, node.fn, node.arg, c => values.get(c)) ?? byExponential(store, node.fn, node.arg, c => values.get(c))) : undefined;
           if (v === undefined) unknown.add(n); else values.set(n, v);
           continue;
         }
