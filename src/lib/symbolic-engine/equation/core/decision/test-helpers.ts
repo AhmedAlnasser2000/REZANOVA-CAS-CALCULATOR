@@ -53,6 +53,10 @@ export function describeSet(store: ExpressionStore, set: SolutionSet): string {
       const full = set.range.lo.kind === 'infinity' && set.range.hi.kind === 'infinity';
       return `${body} + ${show(store, set.period)}ℤ${full ? '' : ` on ${interval(store, set.range)}`}`;
     }
+    case 'interval-family': {
+      const range = set.from !== undefined && set.to !== undefined ? `${set.from} ≤ ${set.parameter} ≤ ${set.to}` : set.from !== undefined ? `${set.parameter} ≥ ${set.from}` : set.to !== undefined ? `${set.parameter} ≤ ${set.to}` : `${set.parameter} ∈ ℤ`;
+      return `⋃ ${set.loClosed ? '[' : '('}${JSON.stringify(writeExpression(store, set.lo))}, ${JSON.stringify(writeExpression(store, set.hi))}${set.hiClosed ? ']' : ')'} : ${range}`;
+    }
     case 'periodic': return `{${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')} : ${set.integerParameters.join(', ')} ∈ ℤ${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
     case 'union': return set.sets.map(x => describeSet(store, x)).join(' ∪ ');
     default: return set.kind;
