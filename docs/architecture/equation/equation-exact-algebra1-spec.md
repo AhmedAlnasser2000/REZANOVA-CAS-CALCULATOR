@@ -1,7 +1,7 @@
 # EQUATION-EXACT-ALGEBRA1 — First Implementation Specification
 
 Date: 2026-10-03
-Status: specified, not started. Implementation needs its own approval.
+Status: implemented and backend-verified on 2026-10-03; private foundation only, with no production caller.
 Gate: backend only, one meaningful milestone. Internal checkpoints are not separate alphabet-suffix commits.
 
 Dependencies: the [design](equation-reconstruction-design.md), and the existing TypeScript/Vitest toolchain with native BigInt. No dependency, schema, workspace or production caller is added.
@@ -98,6 +98,42 @@ Stop and revise the design if any of these happens:
 - a dependency or shared-source change becomes necessary.
 
 Report the gap; never insert a floating-point or simplifier shortcut.
+
+## Implemented contracts and evidence
+
+- Production modules under `src/lib/symbolic-engine/equation/core/`:
+  - `execution.ts`;
+  - `algebra/integer.ts`, `rational.ts`, `modular.ts`, `domain.ts`, `polynomial.ts`, `polynomial-division.ts`, `subresultant.ts`, `polynomial-gcd.ts`, `square-free.ts`, `linear.ts`, `wire.ts`.
+
+  There are about 1,950 lines including tests. Nothing outside the core imports them, and they import nothing outside the core.
+- The domains `ZZ` (bigint) and `QQ` (canonical rationals) implement one `ExactDomain` interface. `PolynomialRing` is generic over it, and every ring has its own identity. Karatsuba multiplication switches on at 24 coefficients; a timing probe measured it faster from 32 on (about 2.4× at 256 coefficients with 64-bit entries). The crossover is an algorithm choice, not a limit.
+- Cost is charged per 64-bit limb before each bigint operation. There is no degree or integer-size limit anywhere. `EQUATION_STOPS` is exactly `work`, `allocation` and `cancelled`, and the no-caps ratchet enforces it, along with the absence of cap constants and cap fields.
+- Modular GCD (Brown):
+  - uses word primes below 2^26, so residue products stay exact in JavaScript numbers;
+  - detects unlucky primes by degree;
+  - terminates by stabilization plus exact trial division;
+  - falls back to the subresultant PRS if the prime supply is ever exhausted.
+- The subresultant resultant follows Cohen 3.3.7, and the PRS gcd follows Cohen 3.3.1. Pseudo-division follows Cohen 3.1.2.
+- Every public result is checked before return:
+  - division and pseudo-division identities;
+  - exact quotients;
+  - gcds as common divisors;
+  - the Bézout identity;
+  - square-free reconstruction, square-freeness, coprimality and increasing multiplicities;
+  - linear residuals, nullspace dimension and basis shape, and the inconsistency witness;
+  - CRT and rational reconstruction.
+- The private wire format (v1) handles ZZ and QQ polynomials and rationals. It rejects extra or accessor properties, noncanonical integers and rationals, trailing zeros, and mismatched domains or variables.
+- Focused evidence: 8 files / 48 tests pass. They include:
+  - resultants agreeing with an independent Sylvester-determinant oracle in 80 seeded cases up to degree 6;
+  - a degree-40 resultant;
+  - modular gcd equal to the PRS gcd in 30 seeded cases;
+  - an unlucky-prime fixture built from the first prime the algorithm uses;
+  - a degree-200 gcd with 500-bit coefficients;
+  - square-free decomposition of a degree-100 input;
+  - a 30×30 system;
+  - mutated certificates being rejected;
+  - typed stops for work, allocation and cancellation, with no partial value returned.
+- Incremental TypeScript, scoped ESLint, compartment boundaries (36 tests) and OOE boundaries (8 tests) pass. The compartment manifest needed no change: the new folder lies inside the existing `symbolic-engine` compartment.
 
 ## Attribution
 
