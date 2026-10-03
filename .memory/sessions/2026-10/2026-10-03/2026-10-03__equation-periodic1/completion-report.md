@@ -1,4 +1,4 @@
-# EQUATION-PERIODIC1 (part A)
+# EQUATION-PERIODIC1 (parts A and B)
 
 ## Attribution
 
@@ -64,6 +64,12 @@ See verification-summary.md.
 - `docs/architecture/equation/equation-periodic1-spec.md` (new), the roadmap and `docs/architecture/README.md`
 - This dossier's completion report, verification summary and commit log.
 
+## Part B (complex)
+
+- 2026-10-03: after PR #14 merged, the user asked to continue; the part B plan was approved in plan mode. The user chose principal values for b^z over ℂ (exp(z·Log b) for any nonzero constant b). The branch was restarted from `origin/main`.
+- Scope: new `core/periodic/` files (`rectangular.ts`, `complex-rules.ts`, `complex-zeros.ts`, `complex.ts`, `complex-verify.ts` and tests); store folds in `representation/expression.ts`; exact exponentials of complex linear forms in `representation/evaluate.ts`; the complex route in `generators/solve.ts` and `core/decide.ts`; constraint display in `decision/test-helpers.ts`; spec, roadmap, README and Equation memory. No old-engine code; no edits to the integration core, contracts, OOE or UI.
+- Outcome: exact complex exp/log/power/trig decisions as canonical lattice families, non-affine families with exact constraints, exact intersections and exclusions; the principal log strip; honest refusals (complex Lambert, incommensurable frequencies, several logarithms, the complement of a family). This completes `EQUATION-PERIODIC1`.
+
 ## Handoff
 
-Part B follows after part A merges, on the same gate: complex exp/log/trig families, complex enclosures for verifier evidence, and the dispatcher change. Nothing is product-adopted.
+The gate is complete. Next is `EQUATION-COMPOSITION1` (slice 5): range and injectivity reasoning at any depth, HC4 range contractors, inequalities with non-affine families and the complex intersections deferred here. It needs its own approval. Nothing is product-adopted.

@@ -402,6 +402,8 @@ export class ExpressionStore {
           return this.mul(this.number(this.#rationalPower(c, integerExponent)), this.pow(rest, exponent));
         }
       }
+      // (A·B…)ⁿ = Aⁿ·Bⁿ… for never-zero constant factors (π, i, exp(·), …): same value, defined everywhere.
+      if (b.kind === 'mul' && b.args.every(a => this.#knownNonzero(a) && this.freeSymbols(a).length === 0)) return this.mul(...b.args.map(a => this.pow(a, exponent)));
       // (xᵃ)ⁿ = x^(a·n) for integers a, n when a > 0, or a < 0 < n, or x is never zero: same value and domain.
       if (b.kind === 'pow') {
         const a = this.numberValue(b.exponent);
@@ -417,6 +419,10 @@ export class ExpressionStore {
         const rest = b.args.length === 2 ? b.args[1] : this.#product(b.args.slice(1));
         return this.mul(this.pow(b.args[0], exponent), this.pow(rest, exponent));
       }
+    }
+    // (A^p)^r = A^(p·r) for a positive constant A, real p and rational r: same value, defined everywhere.
+    if (e && b.kind === 'pow' && this.#isPositiveConstant(b.base) && this.numberValue(b.exponent)) {
+      return this.pow(b.base, this.number(rMultiply(ctx, this.numberValue(b.exponent) as Rational, e)));
     }
     // q^(m/k) for a positive rational q that is a perfect k-th power: exact.
     if (b.kind === 'number' && b.value.numerator > 0n && e && e.denominator > 1n && e.denominator <= BigInt(Number.MAX_SAFE_INTEGER)) {
@@ -575,17 +581,33 @@ export class ExpressionStore {
     return undefined;
   }
 
-  /** exp(c·log q + rest) = q^c·exp(rest) for rational c and rational q > 0 (exp(a + b) = exp a·exp b). */
+  /**
+   * exp(c·log A + rest) = A^c·exp(rest) for rational c and a positive constant A (exp(a + b) = exp a·exp b);
+   * exp(q·π·i + rest): q reduced by whole turns into (−1, 1], and cos qπ + i·sin qπ at the classic
+   * special angles.
+   */
   #foldExp(arg: ExprId): ExprId | undefined {
-    const n = this.node(arg);
+    const ctx = this.ctx, n = this.node(arg);
     const terms = n.kind === 'add' ? n.args : [arg];
     const kept: ExprId[] = [], factors: ExprId[] = [];
+    let turn: Rational | undefined;
     for (const t of terms) {
       const { coefficient, rest } = this.#splitCoefficient(t);
       const r = this.node(rest);
-      const q = r.kind === 'apply' && r.fn === 'log' ? this.numberValue(r.arg) : undefined;
-      if (q && q.numerator > 0n) factors.push(this.pow(r.kind === 'apply' ? r.arg : rest, this.number(coefficient)));
+      const positive = r.kind === 'apply' && r.fn === 'log' && (this.numberValue(r.arg)?.numerator ?? 0n) > 0n;
+      // exp(c·log A) = A^c also for a positive constant A other than a number (π, e^a, …): same value, total.
+      if (positive || (r.kind === 'apply' && r.fn === 'log' && this.#isPositiveConstant(r.arg))) factors.push(this.pow(r.kind === 'apply' ? r.arg : rest, this.number(coefficient)));
+      else if (r.kind === 'mul' && r.args.length === 2 && this.#isConstant(r.args[0], 'pi') !== this.#isConstant(r.args[1], 'pi')
+        && r.args.every(a => this.#isConstant(a, 'pi') || this.#isConstant(a, 'i'))) turn = turn ? rAdd(ctx, turn, coefficient) : coefficient;
       else kept.push(t);
+    }
+    if (turn) {
+      const reduced = this.#reduceModulo(turn, 2n), angle = this.mul(this.number(reduced), this.constant('pi'));
+      const c = this.cos(angle), s = this.sin(angle), plain = (x: ExprId) => { const m = this.node(x); return !(m.kind === 'apply' && (m.fn === 'sin' || m.fn === 'cos')); };
+      if (plain(c) && plain(s)) factors.push(this.numberValue(s)?.numerator === 0n ? c : this.add(c, this.mul(this.constant('i'), s)));
+      else if (reduced.numerator !== turn.numerator || reduced.denominator !== turn.denominator) kept.push(this.mul(angle, this.constant('i')));
+      else kept.push(this.mul(this.number(turn), this.constant('pi'), this.constant('i')));
+      if (factors.length === 0) return reduced.numerator === turn.numerator && reduced.denominator === turn.denominator ? undefined : this.exp(this.add(...kept));
     }
     if (factors.length === 0) return undefined;
     const rest = this.add(...kept);

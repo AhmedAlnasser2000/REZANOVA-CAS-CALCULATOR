@@ -1,4 +1,4 @@
-# Periodic gate verification (part A)
+# Periodic gate verification (parts A and B)
 
 ## Attribution
 
@@ -33,3 +33,14 @@
 ## Documentation checks
 
 - See commit-log.md.
+
+## Part B backend gate: pass
+
+- **Tests**: `node node_modules/vitest/vitest.mjs run src/lib/symbolic-engine/equation/core --maxWorkers=2` passed 28 files / 387 tests (49 new) in about 68 s.
+- **Reference digits** (Python mpmath, 40 digits): exp(1 + i), Log(1 + i), sin(1 + 2i), cos(2 − i), Log(−3 + 4i) and √(ln 2 + 2πi), each enclosed in both parts.
+- **Real bugs found and fixed**:
+  1. Log(e^{1+i}) was rebuilt from |w| = e·√(cos²1 + sin²1), an identity only refinement could confirm, so the decision ran to the budget. Log∘exp is now structural (Im reduced into (−π, π] by an exact turn floor).
+  2. 0·i terms survived (i is undefined over ℝ, so the store keeps them); zero multiples are no longer built.
+  3. (√A)² stayed unsimplified in rectangular parts, so the verifier refined forever on e^{z²} = 2; (B^r)ⁿ = B^{r·n} under the principal value.
+- **Intended behavior changes in existing tests**: two routing rows (complex eˣ = 2, complex sin x = 1/2) that expected the part-A refusal now expect exact families.
+- **Other checks**: `tsc -b`, scoped ESLint, compartment boundaries, OOE boundaries and file sizes passed. Every file is under 1000 lines (the largest changed file is `representation/expression.ts` at 688).

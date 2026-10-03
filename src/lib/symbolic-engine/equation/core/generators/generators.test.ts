@@ -131,8 +131,8 @@ group('routing to the gates that own a problem', () => {
     expect(run(json).text).toBe(expected);
   });
 
-  it('sends complex exp/log to the periodic gate and polynomial problems to slice 1', () => {
-    expect(run(eq(exp('x'), 2), 'complex').text).toBe('incomplete-implementation: EQUATION-PERIODIC1: complex exponential, logarithmic and trig equations');
+  it('sends complex exp/log to the complex families of the periodic slice and polynomial problems to slice 1', () => {
+    expect(run(eq(exp('x'), 2), 'complex').text).toBe('{["Add",["Multiply",2,"Pi","k","ImaginaryUnit"],["Ln",2]] : k ∈ ℤ}');
     expect(run(eq(['Power', 'x', 2], 2)).text).toBe('{≈-1.414214, ≈1.414214}');
   });
 });
