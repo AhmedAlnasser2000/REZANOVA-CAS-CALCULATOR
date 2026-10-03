@@ -15,8 +15,9 @@ import { recordsEqual, type TransformRecord, type TransformRule, type TransformS
  *   v ≥ −1/e; W₋₁(v) needs v ≥ −1/e and v < 0 (EQUIVALENT_UNDER_CONDITIONS).
  * - `real-power-normal-form` rewrites, with the same value on that domain:
  *   a^u → exp(u·log a) for a positive constant a or a target-dependent a;
- *   exp(u)^w → exp(u·w); log(exp u) → u; exp(log v) → v when v > 0 is
- *   recorded (EQUIVALENT over ℝ).
+ *   exp(u)^w → exp(u·w) (also for rational w); log(exp u) → u; exp(log v) → v
+ *   when v > 0 is recorded; (uⁿ)^{1/n} → |u| (n even) or u (n odd);
+ *   |u|^{2k} → u^{2k} (EQUIVALENT over ℝ).
  */
 export function dependsOn(store: ExpressionStore, id: ExprId, variable: string): boolean {
   return store.freeSymbols(id).includes(variable);
@@ -61,7 +62,7 @@ function missing(p: RelationProblem): Condition[] {
   return out;
 }
 
-function step(rule: string, from: RelationProblem, out: RelationProblem, kind: TransformRecord['kind'], added: readonly Condition[], measure: string, before: number, after: number): TransformStep {
+export function step(rule: string, from: RelationProblem, out: RelationProblem, kind: TransformRecord['kind'], added: readonly Condition[], measure: string, before: number, after: number): TransformStep {
   const record: TransformRecord = Object.freeze({
     rule, from: from.hash, kind, progress: 'measure', obligations: Object.freeze([]),
     to: Object.freeze([Object.freeze({ state: out.hash, added: Object.freeze([...added]), removed: Object.freeze([]) })]),
@@ -70,7 +71,7 @@ function step(rule: string, from: RelationProblem, out: RelationProblem, kind: T
   return Object.freeze({ record, outputs: Object.freeze([out]) });
 }
 
-const replay = (rule: () => TransformRule) => (from: RelationProblem, outputs: readonly RelationProblem[], record: TransformRecord) => {
+export const replay = (rule: () => TransformRule) => (from: RelationProblem, outputs: readonly RelationProblem[], record: TransformRecord) => {
   const again = rule().apply(from);
   return again !== null && outputs.length === 1 && again.outputs[0].hash === outputs[0].hash && recordsEqual(again.record, record, from);
 };
@@ -95,6 +96,17 @@ function rewriteNode(store: ExpressionStore, id: ExprId, x: string, positives: R
     if (b.kind === 'apply' && b.fn === 'exp') return store.exp(store.mul(b.arg, node.exponent));
     if (dependsOn(store, node.base, x) || positiveConstant(store, node.base)) return store.exp(store.mul(node.exponent, store.log(node.base)));
     return undefined;
+  }
+  if (node.kind === 'pow' && dependsOn(store, node.base, x)) {
+    const r = store.numberValue(node.exponent), b = store.node(node.base);
+    // (eᵘ)^r = e^{r·u} over ℝ (eᵘ > 0).
+    if (r && b.kind === 'apply' && b.fn === 'exp') return store.exp(store.mul(node.exponent, b.arg));
+    // (uⁿ)^{1/n} = |u| for even n and u for odd n, over ℝ.
+    if (r && r.numerator === 1n && r.denominator > 1n && b.kind === 'pow' && store.numberValue(b.exponent)?.numerator === r.denominator && store.numberValue(b.exponent)?.denominator === 1n) {
+      return r.denominator % 2n === 0n ? store.abs(b.base) : b.base;
+    }
+    // |u|^{2k} = u^{2k}.
+    if (r && r.denominator === 1n && r.numerator % 2n === 0n && r.numerator !== 0n && b.kind === 'apply' && b.fn === 'abs') return store.pow(b.arg, node.exponent);
   }
   if (node.kind === 'apply' && dependsOn(store, node.arg, x)) {
     const a = store.node(node.arg);

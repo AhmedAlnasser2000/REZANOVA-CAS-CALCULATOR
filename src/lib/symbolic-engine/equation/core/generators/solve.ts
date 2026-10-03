@@ -5,11 +5,12 @@ import { normalizeSet, resourceOutcome, type EquationOutcome } from '../represen
 import { MOVE_TO_ZERO, ProofLogBuilder, type TransformRule } from '../representation/transform';
 import { decideClosedForm } from './closed-form-set';
 import { LOG_DOMAIN, REAL_POWER_NORMAL_FORM } from './normal-form';
+import { RADICAL_DOMAIN } from '../constraints/normal-form';
 
-/** Kernel domains, real normal form, kernel domains again (new logs), denominators, zero form. */
-const PIPELINE: readonly TransformRule[] = [LOG_DOMAIN, REAL_POWER_NORMAL_FORM, LOG_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO];
+/** Kernel domains, real normal form, kernel domains again (new logs), radical domains, denominators, zero form. */
+const PIPELINE: readonly TransformRule[] = [LOG_DOMAIN, REAL_POWER_NORMAL_FORM, LOG_DOMAIN, RADICAL_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO];
 
-export const GENERATOR_RULES: ReadonlyMap<string, TransformRule> = new Map([LOG_DOMAIN, REAL_POWER_NORMAL_FORM, NATURAL_DOMAIN, MOVE_TO_ZERO].map(r => [r.id, r]));
+export const GENERATOR_RULES: ReadonlyMap<string, TransformRule> = new Map([LOG_DOMAIN, REAL_POWER_NORMAL_FORM, RADICAL_DOMAIN, NATURAL_DOMAIN, MOVE_TO_ZERO].map(r => [r.id, r]));
 
 export function rewriteGenerators(problem: RelationProblem) {
   const log = new ProofLogBuilder(problem);

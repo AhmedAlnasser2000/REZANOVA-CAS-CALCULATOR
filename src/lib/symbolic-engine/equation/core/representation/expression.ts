@@ -402,6 +402,14 @@ export class ExpressionStore {
         }
       }
     }
+    // (c·A)^r = c^r·A^r for a positive number c and rational r: same value (real root or principal) and domain.
+    if (e && e.denominator > 1n && b.kind === 'mul') {
+      const c = this.numberValue(b.args[0]);
+      if (c && c.numerator > 0n && b.args.length > 1) {
+        const rest = b.args.length === 2 ? b.args[1] : this.#product(b.args.slice(1));
+        return this.mul(this.pow(b.args[0], exponent), this.pow(rest, exponent));
+      }
+    }
     // q^(m/k) for a positive rational q that is a perfect k-th power: exact.
     if (b.kind === 'number' && b.value.numerator > 0n && e && e.denominator > 1n && e.denominator <= BigInt(Number.MAX_SAFE_INTEGER)) {
       const k = Number(e.denominator), rn = iroot(ctx, b.value.numerator, k), rd = iroot(ctx, b.value.denominator, k);

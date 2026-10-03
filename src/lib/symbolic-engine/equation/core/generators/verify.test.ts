@@ -39,7 +39,7 @@ group('verifier rejects tampering', () => {
     const { set, proof } = solved(outcome);
     if (set.kind !== 'finite') throw new Error(set.kind);
     const ln5: PointValue = { kind: 'expression', id: s.log(s.integer(5)) };
-    rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, points: [set.points[0], [ln5]] } }), /differs/);
+    rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, points: [set.points[0], [ln5]] } }), /a point does not satisfy a relation exactly/);
     rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, points: [set.points[0]] } }), /differs/);
     rejects(() => verifyEquationOutcome(problem, { kind: 'empty', proof }), /claimed empty/);
 
@@ -57,7 +57,7 @@ group('verifier rejects tampering', () => {
     if (set.kind !== 'intervals') throw new Error(set.kind);
     const moved: Interval = { ...set.intervals[0], lo: { kind: 'expression', id: s.log(s.integer(3)) } };
     rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, intervals: [moved] } }), /differs/);
-    rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, intervals: [{ ...set.intervals[0], loClosed: true }] } }), /differs/);
+    rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, intervals: [{ ...set.intervals[0], loClosed: true }] } }), /closed endpoint does not satisfy a relation exactly/);
   });
 
   it('rejects a log without its domain step, a tampered measure and a foreign proof', () => {
