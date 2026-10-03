@@ -4,6 +4,7 @@ import { compareReal, type RealRootOf, type RootOf } from '../algebraic/root-of'
 import { asRoot, evaluateExact, type EvaluationDomain, type ExactValue } from './evaluate';
 import { isSymbolName, type ExprId, type ExpressionStore } from './expression';
 import { canonicalCondition, conditionKey, type Condition, type RelationProblem } from './relation';
+import { realCompare } from './real-order';
 import type { ProofLog } from './transform';
 
 /**
@@ -93,9 +94,30 @@ function rank(v: PointValue): number {
   return v.kind === 'rational' || (v.kind === 'algebraic' && v.root.kind === 'real') ? 0 : v.kind === 'algebraic' ? 1 : 2;
 }
 
-/** Canonical order: real values by size, then non-real by canonical identity, then expressions by digest. */
+function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
+  return v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root);
+}
+
+/**
+ * Canonical order: real values by size — closed forms included, compared by
+ * certified enclosures — then non-real values by canonical identity, then
+ * remaining expressions by digest.
+ */
 export function compareValues(store: ExpressionStore, a: PointValue, b: PointValue): number {
-  const ctx = store.ctx, ra = rank(a), rb = rank(b);
+  const ctx = store.ctx;
+  if (a.kind === 'expression' || b.kind === 'expression') {
+    if (valueKey(store, a) === valueKey(store, b)) return 0;
+    const real = (v: PointValue) => v.kind !== 'algebraic' || v.root.kind === 'real';
+    if (real(a) && real(b)) {
+      try {
+        return realCompare(store, valueExpression(store, a), valueExpression(store, b));
+      } catch (e) {
+        // Non-real or not enclosable closed forms keep the canonical identity order below.
+        if (!(e instanceof EquationAlgebraError) || e.code !== 'invalid-input') throw e;
+      }
+    }
+  }
+  const ra = rank(a), rb = rank(b);
   if (ra !== rb) return ra - rb;
   if (ra === 0) {
     const x = a as ExactValue, y = b as ExactValue;
@@ -275,9 +297,8 @@ function normalizeEndpoint(store: ExpressionStore, e: Endpoint): Endpoint {
     if (e.sign !== 1 && e.sign !== -1) fail('infinity sign');
     return Object.freeze({ kind: 'infinity', sign: e.sign });
   }
-  const v = normalizeValue(store, e, 'real');
-  if (v.kind === 'expression') fail('interval endpoints must be exact numbers');
-  return v;
+  // Closed-form endpoints (e.g. ln 2) are allowed; they are ordered by certified enclosures.
+  return normalizeValue(store, e, 'real');
 }
 
 /** Validate, sort and merge overlapping or touching intervals. */

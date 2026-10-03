@@ -4,7 +4,7 @@ import { compareRational } from '../algebraic/real-roots';
 import { bisectReal, type RealRootOf } from '../algebraic/root-of';
 import type { ExactValue } from '../representation/evaluate';
 import type { ExpressionStore } from '../representation/expression';
-import { compareValues, type Interval } from '../representation/solution-set';
+import { compareValues, type Endpoint, type Interval } from '../representation/solution-set';
 
 /**
  * One-dimensional sign decomposition. Sorted distinct critical points c₁ < … < cₖ
@@ -51,7 +51,7 @@ export function pieces(store: ExpressionStore, critical: readonly ExactValue[]):
 }
 
 /** Merge true pieces into disjoint, non-touching intervals. */
-export function assemble(critical: readonly ExactValue[], truth: readonly boolean[]): Interval[] {
+export function assemble<T extends Endpoint>(critical: readonly T[], truth: readonly boolean[]): Interval[] {
   const intervals: Interval[] = [];
   // Piece 2i is the open piece before critical[i] (2i−1 is the point critical[i−1]).
   const leftOf = (p: number) => (p === 0 ? { kind: 'infinity' as const, sign: -1 as const } : critical[(p - 1) >> 1]);

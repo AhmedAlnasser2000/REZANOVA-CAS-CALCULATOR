@@ -1,5 +1,5 @@
 import { demand, type ExecutionContext } from '../execution';
-import { ipow } from '../algebra/integer';
+import { igcd, ipow, iroot, perfectPower } from '../algebra/integer';
 import {
   assertRational, rAdd, rational, rFromInteger, rMultiply, type IntegerInput, type Rational,
 } from '../algebra/rational';
@@ -19,7 +19,11 @@ import { RootCatalog } from './root-identity';
  * - pure-number arithmetic is folded exactly (rationals, powers of i,
  *   special values such as exp(0) and |−3|);
  * - numeric coefficients of identical terms are merged, and integer
- *   exponents of identical bases are merged only when they share a sign;
+ *   exponents of identical bases are merged only when they share a sign,
+ *   or for any signs when the base is a nonzero constant (so ln 8/ln 2 = 3);
+ * - number-only logarithms are canonical: log q = m·log r for rational q > 0
+ *   with r > 1 not a perfect power, log(q^c) = c·log q, exp(c·log q) = q^c
+ *   and log(exp c) = c for real constants c;
  * - a zero coefficient drops a term only when that term is defined
  *   everywhere ("total"); otherwise 0·t stays, keeping t's domain.
  * Nothing cancels: x/x, x⁰, log(eˣ) and √(x²) stay as written. Every
@@ -35,7 +39,8 @@ export type ExprId = number & { readonly __equationExpression: unique symbol };
 
 export const CONSTANT_NAMES = ['pi', 'e', 'i'] as const;
 export type ConstantName = (typeof CONSTANT_NAMES)[number];
-export const FUNCTION_NAMES = ['exp', 'log', 'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'abs'] as const;
+/** `lambertw` is the principal branch W₀; `lambertwm1` is the real branch W₋₁. */
+export const FUNCTION_NAMES = ['exp', 'log', 'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'abs', 'lambertw', 'lambertwm1'] as const;
 export type FunctionName = (typeof FUNCTION_NAMES)[number];
 
 export type ExpressionNode =
@@ -56,6 +61,8 @@ interface Entry {
   readonly height: number;
   /** Defined, finite and real for every assignment of its symbols, in ℝ and in ℂ. */
   readonly total: boolean;
+  /** A number-only expression that is real by construction (conservative). */
+  readonly real: boolean;
 }
 
 const SYMBOL_NAME = /^\p{L}[\p{L}\p{N}_]*$/u;
@@ -111,6 +118,8 @@ export class ExpressionStore {
   size(id: ExprId): bigint { return this.#entry(id).size; }
   height(id: ExprId): number { return this.#entry(id).height; }
   isTotal(id: ExprId): boolean { return this.#entry(id).total; }
+  /** Number-only and real by construction (conservative: false means unknown). */
+  isRealConstant(id: ExprId): boolean { return this.#entry(id).real; }
 
   /** Canonical, store-independent order. Equal digests of distinct nodes would be a SHA-256 collision. */
   compare(a: ExprId, b: ExprId): -1 | 0 | 1 {
@@ -118,6 +127,57 @@ export class ExpressionStore {
     const da = this.digest(a), db = this.digest(b);
     demand(da !== db, 'verification-failed', 'expression digest collision');
     return da < db ? -1 : 1;
+  }
+
+  #realByConstruction(node: ExpressionNode): boolean {
+    const real = (c: ExprId) => this.#entries[c].real;
+    const positiveNumber = (c: ExprId) => { const n = this.#entries[c].node; return n.kind === 'number' && n.value.numerator > 0n; };
+    switch (node.kind) {
+      case 'number': return true;
+      case 'symbol': return false;
+      case 'constant': return node.name === 'pi';
+      case 'algebraic': return node.root.kind === 'real';
+      case 'add': case 'mul': return node.args.every(real);
+      case 'pow': {
+        const e = this.#entries[node.exponent].node;
+        const positiveInteger = e.kind === 'number' && e.value.denominator === 1n && e.value.numerator > 0n;
+        // Real and defined: a positive integer power of a real constant, or any real power of a positive one.
+        return real(node.base) && real(node.exponent) && (positiveInteger || positiveNumber(node.base) || this.#isPositiveConstant(node.base));
+      }
+      case 'apply':
+        if (!real(node.arg)) return false;
+        if (node.fn === 'exp' || node.fn === 'sin' || node.fn === 'cos' || node.fn === 'atan' || node.fn === 'abs') return true;
+        if (node.fn === 'log') return positiveNumber(node.arg) || this.#isPositiveConstant(node.arg);
+        return false;
+    }
+  }
+
+  /** Positive by construction: π, exp(real), positive numbers and real algebraic numbers known positive, products and powers of these. */
+  #isPositiveConstant(id: ExprId): boolean {
+    const n = this.#entries[id].node;
+    if (n.kind === 'number') return n.value.numerator > 0n;
+    if (n.kind === 'constant') return n.name === 'pi';
+    if (n.kind === 'apply') {
+      if (n.fn === 'exp') return this.#entries[n.arg].real;
+      // log q > 0 for a rational q > 1.
+      const q = n.fn === 'log' ? this.numberValue(n.arg) : undefined;
+      return q !== undefined && q.numerator > q.denominator;
+    }
+    if (n.kind === 'mul') return n.args.every(a => this.#isPositiveConstant(a));
+    if (n.kind === 'pow') return this.#isPositiveConstant(n.base) && this.#entries[n.exponent].real;
+    return false;
+  }
+
+  /** Never zero wherever defined: nonzero constants, and exp of anything. */
+  #knownNonzero(id: ExprId): boolean {
+    const n = this.#entries[id].node;
+    if (n.kind === 'apply' && n.fn === 'exp') return true;
+    if (n.kind === 'constant' || n.kind === 'algebraic') return true;
+    if (n.kind === 'apply' && n.fn === 'log') {
+      const v = this.numberValue(n.arg);
+      return v !== undefined && !(v.numerator === v.denominator);
+    }
+    return this.#isPositiveConstant(id);
   }
 
   numberValue(id: ExprId): Rational | undefined {
@@ -138,7 +198,9 @@ export class ExpressionStore {
       if (e.height > height) height = e.height;
     }
     const id = this.#entries.length as ExprId;
-    this.#entries.push(Object.freeze({ node: Object.freeze(node), digest: sha256(ctx, digestText), size, height: height + 1, total }));
+    const real = this.#realByConstruction(node);
+    // A number-only expression that is real by construction is defined, hence total.
+    this.#entries.push(Object.freeze({ node: Object.freeze(node), digest: sha256(ctx, digestText), size, height: height + 1, total: total || real, real }));
     this.#intern.set(key, id);
     return id;
   }
@@ -243,10 +305,18 @@ export class ExpressionStore {
   mul(...args: ExprId[]): ExprId {
     const ctx = this.ctx;
     ctx.allocate(args.length);
-    const flat: ExprId[] = [];
+    let flat: ExprId[] = [];
     for (const a of args) {
       const n = this.node(a);
       if (n.kind === 'mul') flat.push(...n.args); else flat.push(a);
+    }
+    // exp(a)·exp(b) = exp(a + b): same value, and exp is defined wherever its argument is.
+    const isExp = (f: ExprId) => { const n = this.node(f); return n.kind === 'apply' && n.fn === 'exp'; };
+    const exps = flat.filter(isExp);
+    if (exps.length >= 2) {
+      const combined = this.exp(this.add(...exps.map(f => (this.node(f) as { arg: ExprId }).arg)));
+      const c = this.node(combined);
+      flat = [...flat.filter(f => !isExp(f)), ...(c.kind === 'mul' ? c.args : [combined])];
     }
     let coefficient = rational(ctx, 1n);
     let iPower = 0n;
@@ -266,7 +336,9 @@ export class ExpressionStore {
     if (residue >= 2n) coefficient = rMultiply(ctx, coefficient, rational(ctx, -1n));
     if (residue % 2n === 1n) factors.push(this.constant('i'));
     for (const [base, { positive, negative }] of groups) {
-      for (const e of [positive, negative]) {
+      // A base that is never zero has the same domain at every integer exponent: merge across signs.
+      const merged = this.#knownNonzero(base) ? [positive + negative] : [positive, negative];
+      for (const e of merged) {
         if (e === 0n) continue;
         const f = e === 1n ? base : this.pow(base, this.integer(e));
         const v = this.numberValue(f);
@@ -314,12 +386,27 @@ export class ExpressionStore {
         const r = ((integerExponent % 4n) + 4n) % 4n;
         return r === 0n ? this.integer(1) : r === 1n ? base : r === 2n ? this.integer(-1) : this.neg(base);
       }
-      // (xᵃ)ⁿ = x^(a·n) for integers a, n when a > 0, or a < 0 < n: same value and domain.
+      // (c·A)ⁿ = cⁿ·Aⁿ for a nonzero number c and integer n: same value, and the same domain (A ≠ 0 ⇔ c·A ≠ 0).
+      if (b.kind === 'mul') {
+        const c = this.numberValue(b.args[0]);
+        if (c && c.numerator !== 0n && b.args.length > 1) {
+          const rest = b.args.length === 2 ? b.args[1] : this.#product(b.args.slice(1));
+          return this.mul(this.number(this.#rationalPower(c, integerExponent)), this.pow(rest, exponent));
+        }
+      }
+      // (xᵃ)ⁿ = x^(a·n) for integers a, n when a > 0, or a < 0 < n, or x is never zero: same value and domain.
       if (b.kind === 'pow') {
         const a = this.numberValue(b.exponent);
-        if (a && a.denominator === 1n && a.numerator !== 0n && (a.numerator > 0n || integerExponent > 0n)) {
+        if (a && a.denominator === 1n && a.numerator !== 0n && (a.numerator > 0n || integerExponent > 0n || this.#knownNonzero(b.base))) {
           return this.pow(b.base, this.integer(a.numerator * integerExponent));
         }
+      }
+    }
+    // q^(m/k) for a positive rational q that is a perfect k-th power: exact.
+    if (b.kind === 'number' && b.value.numerator > 0n && e && e.denominator > 1n && e.denominator <= BigInt(Number.MAX_SAFE_INTEGER)) {
+      const k = Number(e.denominator), rn = iroot(ctx, b.value.numerator, k), rd = iroot(ctx, b.value.denominator, k);
+      if (ipow(ctx, rn, k) === b.value.numerator && ipow(ctx, rd, k) === b.value.denominator) {
+        return this.pow(this.number(rational(ctx, rn, rd)), this.number(rational(ctx, e.numerator)));
       }
     }
     const positiveBase = (b.kind === 'number' && b.value.numerator > 0n) || (b.kind === 'constant' && b.name === 'pi');
@@ -359,8 +446,64 @@ export class ExpressionStore {
       if (one && (fn === 'log' || fn === 'acos')) return this.integer(0);
     }
     if (fn === 'abs' && this.node(arg).kind === 'apply' && (this.node(arg) as { fn: FunctionName }).fn === 'abs') return arg;
+    if ((fn === 'lambertw') && v?.numerator === 0n) return this.integer(0);
+    if (fn === 'lambertw' || fn === 'lambertwm1') {
+      // W(s·e^s) = s for rational s on the matching branch (s ≥ −1 for W₀, s ≤ −1 for W₋₁).
+      const { coefficient, rest } = this.#splitCoefficient(arg);
+      const r = this.node(rest);
+      const s = r.kind === 'apply' && r.fn === 'exp' ? this.numberValue(r.arg) : undefined;
+      if (s && s.numerator === coefficient.numerator && s.denominator === coefficient.denominator) {
+        const atLeastMinusOne = s.numerator + s.denominator >= 0n; // s ≥ −1 with a positive denominator
+        const atMostMinusOne = s.numerator + s.denominator <= 0n;
+        if ((fn === 'lambertw' && atLeastMinusOne) || (fn === 'lambertwm1' && atMostMinusOne)) return this.number(s);
+      }
+    }
+    if (fn === 'log') { const folded = this.#foldLog(arg); if (folded !== undefined) return folded; }
+    if (fn === 'exp') { const folded = this.#foldExp(arg); if (folded !== undefined) return folded; }
     return this.#make(`f:${fn}:${arg}`, { kind: 'apply', fn, arg }, `f|${fn}|${this.digest(arg)}`, [arg],
       TOTAL_FUNCTIONS.has(fn) && this.isTotal(arg));
+  }
+
+  /** Canonical number-only logarithms (value-preserving for positive arguments). */
+  #foldLog(arg: ExprId): ExprId | undefined {
+    const ctx = this.ctx, n = this.node(arg);
+    if (n.kind === 'number' && n.value.numerator > 0n) {
+      const { numerator: p, denominator: q } = n.value;
+      if (p === q) return this.integer(0);
+      if (p < q) return this.neg(this.log(this.number(rational(ctx, q, p))));
+      // q = r^m with m = gcd of the perfect-power exponents of numerator and denominator.
+      const a = perfectPower(ctx, p), b = q === 1n ? undefined : perfectPower(ctx, q);
+      const m = b === undefined ? a.exponent : Number(igcd(ctx, BigInt(a.exponent), BigInt(b.exponent)));
+      if (m <= 1) return undefined;
+      const r = rational(ctx, iroot(ctx, p, m), q === 1n ? 1n : iroot(ctx, q, m));
+      return this.mul(this.integer(m), this.log(this.number(r)));
+    }
+    // log(q^c) = c·log q for rational q > 0 and real rational c.
+    if (n.kind === 'pow') {
+      const base = this.numberValue(n.base), c = this.numberValue(n.exponent);
+      if (base && base.numerator > 0n && c) return this.mul(n.exponent, this.log(n.base));
+    }
+    // log(exp c) = c for a real constant c.
+    if (n.kind === 'apply' && n.fn === 'exp' && this.isRealConstant(n.arg)) return n.arg;
+    return undefined;
+  }
+
+  /** exp(c·log q + rest) = q^c·exp(rest) for rational c and rational q > 0 (exp(a + b) = exp a·exp b). */
+  #foldExp(arg: ExprId): ExprId | undefined {
+    const n = this.node(arg);
+    const terms = n.kind === 'add' ? n.args : [arg];
+    const kept: ExprId[] = [], factors: ExprId[] = [];
+    for (const t of terms) {
+      const { coefficient, rest } = this.#splitCoefficient(t);
+      const r = this.node(rest);
+      const q = r.kind === 'apply' && r.fn === 'log' ? this.numberValue(r.arg) : undefined;
+      if (q && q.numerator > 0n) factors.push(this.pow(r.kind === 'apply' ? r.arg : rest, this.number(coefficient)));
+      else kept.push(t);
+    }
+    if (factors.length === 0) return undefined;
+    const rest = this.add(...kept);
+    const restValue = this.numberValue(rest);
+    return this.mul(...factors, ...(restValue?.numerator === 0n ? [] : [this.exp(rest)]));
   }
 
   exp(a: ExprId) { return this.apply('exp', a); }
@@ -374,6 +517,7 @@ export class ExpressionStore {
   acos(a: ExprId) { return this.apply('acos', a); }
   atan(a: ExprId) { return this.apply('atan', a); }
   abs(a: ExprId) { return this.apply('abs', a); }
+  lambertW(a: ExprId, branch: 0 | -1 = 0) { return this.apply(branch === 0 ? 'lambertw' : 'lambertwm1', a); }
 
   // ---- queries ----
 

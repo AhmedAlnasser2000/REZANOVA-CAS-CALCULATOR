@@ -39,7 +39,7 @@ export type Recognition =
   | { readonly ok: false; readonly undefinedEverywhere: string };
 
 const FUNCTION_OWNER: Readonly<Record<FunctionName, string>> = {
-  exp: OWNERS.generators, log: OWNERS.generators, abs: OWNERS.constraints,
+  exp: OWNERS.generators, log: OWNERS.generators, lambertw: OWNERS.generators, lambertwm1: OWNERS.generators, abs: OWNERS.constraints,
   sin: OWNERS.periodic, cos: OWNERS.periodic, tan: OWNERS.periodic, asin: OWNERS.periodic, acos: OWNERS.periodic, atan: OWNERS.periodic,
 };
 

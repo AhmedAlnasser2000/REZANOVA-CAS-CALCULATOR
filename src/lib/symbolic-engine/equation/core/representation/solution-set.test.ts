@@ -37,7 +37,7 @@ describe('finite sets', () => {
   it('turns exactly evaluable expressions into numbers and keeps closed forms', () => {
     const s = new ExpressionStore(context());
     const set = normalizeSet(s, finiteSet(['x'], [[{ kind: 'expression', id: s.pow(s.sqrt(s.integer(2)), s.integer(2)) }], [q(s, 2)], [{ kind: 'expression', id: s.log(s.integer(2)) }]]), 'real');
-    expect(set.kind === 'finite' && set.points.map(p => p[0].kind)).toEqual(['rational', 'expression']);
+    expect(set.kind === 'finite' && set.points.map(p => p[0].kind)).toEqual(['expression', 'rational']); // ln 2 < 2, ordered by certified enclosure
     expect(finiteContains(s, set, [{ kind: 'expression', id: s.log(s.integer(2)) }], 'real')).toBe(true);
     expect(finiteContains(s, set, [{ kind: 'expression', id: s.log(s.integer(3)) }], 'real')).toBe('unknown');
     expect(() => normalizeSet(s, finiteSet(['x'], [[{ kind: 'expression', id: s.log(s.integer(-1)) }]]), 'real')).toThrow(/undefined/);
