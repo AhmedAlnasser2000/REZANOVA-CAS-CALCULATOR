@@ -18,7 +18,7 @@ import type { ExprId, ExpressionStore } from './expression';
  */
 export const START_BITS = 32;
 
-function exactSign(ctx: ExecutionContext, v: ExactValue): -1 | 0 | 1 {
+export function exactSign(ctx: ExecutionContext, v: ExactValue): -1 | 0 | 1 {
   if (v.kind === 'rational') return v.value.numerator === 0n ? 0 : v.value.numerator < 0n ? -1 : 1;
   demand(v.root.kind === 'real', 'invalid-input', 'sign of a non-real value');
   return compareReal(ctx, v.root, asRoot(ctx, { kind: 'rational', value: rational(ctx, 0n) }) as RealRootOf) as -1 | 1;

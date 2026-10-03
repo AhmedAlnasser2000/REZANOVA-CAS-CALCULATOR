@@ -1,33 +1,34 @@
-import type { ExecutionContext } from '../execution';
-import { rAdd, rational, rDivide, rSubtract, type Rational } from '../algebra/rational';
-import { compareRational } from '../algebraic/real-roots';
 import { attachForm } from '../decision/radical-forms';
 import type { Refusal } from '../decision/rational-form';
 import { assemble } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
-import { enclose } from '../representation/enclosure';
 import { evaluateExact } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
-import { realCompare, realSign, START_BITS } from '../representation/real-order';
+import { realCompare, realSign } from '../representation/real-order';
 import type { Condition, RelationProblem } from '../representation/relation';
 import type { PointValue, SolutionSet } from '../representation/solution-set';
-import { zerosOf } from './inversion';
+import { zerosOf, type ZeroInterval } from './inversion';
+import { sampleBetween } from './samples';
 
 /**
  * Exact one-dimensional decision with closed-form critical points.
  *
  * Every relation and condition is an atom F op 0 whose complete real zero set
- * is known in closed form (`zerosOf`). Sorted, those zeros split ℝ into
- * pieces on which every atom has constant sign. Each atom is evaluated at one
- * rational sample per open piece and at each critical point: zero by
- * membership in its own zero list, otherwise nonzero — which is what makes
- * certified refinement terminate. Conditions come first, innermost first, so
- * an atom is never evaluated outside its natural domain.
+ * is known in closed form (`zerosOf`): finitely many points and intervals.
+ * Sorted, those points and interval endpoints split ℝ into pieces on which
+ * every atom has constant sign. Each atom is evaluated at one rational sample
+ * per open piece and at each critical point: zero by membership in its own
+ * zero set, otherwise nonzero — which is what makes certified refinement
+ * terminate (an identically zero piece is never refined). Conditions come
+ * first, innermost first, so an atom is never evaluated outside its natural
+ * domain.
  */
 export interface ClosedAtom {
   readonly f: ExprId;
   readonly op: AtomOperator;
+  /** Zero points, closed interval endpoints included. */
   readonly zeros: ReadonlySet<ExprId> | 'all';
+  readonly intervals: readonly ZeroInterval[];
 }
 
 export type ClosedDecision =
@@ -60,56 +61,30 @@ export function closedAtoms(problem: RelationProblem): { atoms: ClosedAtom[] } |
   for (const a of raw) {
     const z = zerosOf(s, a.f, x);
     if (z.kind === 'refused') return { refusal: z.refusal };
-    atoms.push({ f: a.f, op: a.op, zeros: z.kind === 'all' ? 'all' : new Set(z.values) });
+    if (z.kind === 'all') { atoms.push({ f: a.f, op: a.op, zeros: 'all', intervals: [] }); continue; }
+    const intervals = z.intervals ?? [], zeros = new Set(z.values);
+    for (const i of intervals) { if (i.loClosed && i.lo !== undefined) zeros.add(i.lo); if (i.hiClosed && i.hi !== undefined) zeros.add(i.hi); }
+    atoms.push({ f: a.f, op: a.op, zeros, intervals });
   }
   return { atoms };
 }
 
-/** Sign of an atom at a point (a closed form, or a rational sample that is no atom's zero). */
+/** Whether a point lies in the open interior of a zero interval (its endpoints are compared exactly, never equal to it). */
+function inInterior(store: ExpressionStore, i: ZeroInterval, point: ExprId): boolean {
+  if (point === i.lo || point === i.hi) return false;
+  return (i.lo === undefined || realCompare(store, point, i.lo) > 0) && (i.hi === undefined || realCompare(store, point, i.hi) < 0);
+}
+
+/** Sign of an atom at a point (a closed form, or a rational sample that is no atom's isolated zero). */
 export function atomSign(store: ExpressionStore, atom: ClosedAtom, x: string, point: ExprId): -1 | 0 | 1 {
   if (atom.zeros === 'all' || atom.zeros.has(point)) return 0;
+  if (atom.intervals.some(i => inInterior(store, i, point))) return 0;
   return realSign(store, store.substitute(atom.f, new Map([[x, point]])));
 }
 
 export function allHold(store: ExpressionStore, atoms: readonly ClosedAtom[], x: string, point: ExprId): boolean {
   for (const a of atoms) if (!holds(a.op, atomSign(store, a, x, point))) return false;
   return true;
-}
-
-function floorOf(r: Rational): bigint { return r.numerator >= 0n ? r.numerator / r.denominator : -((-r.numerator + r.denominator - 1n) / r.denominator); }
-
-/**
- * The rational with the smallest denominator in the open interval (lo, hi),
- * lo < hi (continued fractions). Simple samples keep later exact evaluation
- * cheap: e^{s·ln 2} at s = 1/2 is √2, not a root of degree 2³².
- */
-export function simplestBetween(ctx: ExecutionContext, lo: Rational, hi: Rational | undefined): Rational {
-  ctx.tick();
-  const a = floorOf(lo);
-  if (hi === undefined || compareRational(ctx, rational(ctx, a + 1n), hi) < 0) return rational(ctx, a + 1n);
-  // (lo, hi) ⊂ [a, a + 1]: recurse on the reciprocals of the fractional parts.
-  const fracLo = rSubtract(ctx, lo, rational(ctx, a)), fracHi = rSubtract(ctx, hi, rational(ctx, a));
-  const inner = simplestBetween(ctx, rDivide(ctx, rational(ctx, 1n), fracHi), fracLo.numerator === 0n ? undefined : rDivide(ctx, rational(ctx, 1n), fracLo));
-  return rAdd(ctx, rational(ctx, a), rDivide(ctx, rational(ctx, 1n), inner));
-}
-
-/** A simple rational strictly between closed forms a < b (enclosures refined until they separate). */
-export function rationalBetween(store: ExpressionStore, a: ExprId, b: ExprId): Rational {
-  const ctx = store.ctx;
-  for (let bits = START_BITS; ; bits *= 2) {
-    ctx.tick();
-    const ea = enclose(store, a, bits), eb = enclose(store, b, bits);
-    if (ea.kind === 'bounds' && eb.kind === 'bounds' && compareRational(ctx, ea.hi, eb.lo) < 0) return simplestBetween(ctx, ea.hi, eb.lo);
-  }
-}
-
-/** An integer below (side −1) or above (side +1) a closed form. */
-function outside(store: ExpressionStore, c: ExprId, side: -1 | 1): Rational {
-  const ctx = store.ctx;
-  for (let bits = START_BITS; ; bits *= 2) {
-    const e = enclose(store, c, bits);
-    if (e.kind === 'bounds') return rational(ctx, side < 0 ? floorOf(e.lo) - 1n : floorOf(e.hi) + 1n);
-  }
 }
 
 /** Closed form as a solution value: exact numbers when exact (with proven radical forms), else the expression. */
@@ -119,22 +94,47 @@ export function pointValue(store: ExpressionStore, id: ExprId): PointValue {
   return e.value.kind === 'algebraic' ? attachForm(store, e.value) : e.value;
 }
 
+/** Distinct critical points in increasing order; numerically equal closed forms are merged into one representative. */
+function sortedCritical(store: ExpressionStore, atoms: readonly ClosedAtom[]): { points: ExprId[]; representative: Map<ExprId, ExprId> } {
+  const distinct = new Set<ExprId>();
+  for (const a of atoms) {
+    if (a.zeros !== 'all') for (const z of a.zeros) distinct.add(z);
+    for (const i of a.intervals) { if (i.lo !== undefined) distinct.add(i.lo); if (i.hi !== undefined) distinct.add(i.hi); }
+  }
+  const sorted = [...distinct].sort((a, b) => realCompare(store, a, b));
+  const points: ExprId[] = [], representative = new Map<ExprId, ExprId>();
+  for (const c of sorted) {
+    const last = points[points.length - 1];
+    if (last !== undefined && realCompare(store, last, c) === 0) { representative.set(c, last); continue; }
+    points.push(c);
+    representative.set(c, c);
+  }
+  return { points, representative };
+}
+
+/** The atom with its zero points and interval endpoints mapped to the merged representatives. */
+function canonicalAtom(atom: ClosedAtom, representative: ReadonlyMap<ExprId, ExprId>): ClosedAtom {
+  const rep = (c: ExprId) => representative.get(c) ?? c;
+  if (atom.zeros === 'all') return atom;
+  return {
+    ...atom,
+    zeros: new Set([...atom.zeros].map(rep)),
+    intervals: atom.intervals.map(i => ({ ...i, lo: i.lo === undefined ? undefined : rep(i.lo), hi: i.hi === undefined ? undefined : rep(i.hi) })),
+  };
+}
+
 export function decideClosedForm(problem: RelationProblem): ClosedDecision {
   const s = problem.store, x = problem.targets[0];
   const built = closedAtoms(problem);
   if ('refusal' in built) return { kind: 'refused', refusal: built.refusal };
-  const atoms = built.atoms;
-  const distinct = new Set<ExprId>();
-  for (const a of atoms) if (a.zeros !== 'all') for (const z of a.zeros) distinct.add(z);
-  const critical = [...distinct].sort((a, b) => realCompare(s, a, b));
+  const { points: critical, representative } = sortedCritical(s, built.atoms);
+  const atoms = built.atoms.map(a => canonicalAtom(a, representative));
   // Pieces: open (before c₀), point c₀, open (c₀, c₁), …, point cₖ, open (after cₖ).
   const truth: boolean[] = [];
-  const sample = (r: Rational) => s.number(r);
-  truth.push(allHold(s, atoms, x, critical.length ? sample(outside(s, critical[0], -1)) : s.integer(0)));
+  truth.push(allHold(s, atoms, x, sampleBetween(s, undefined, critical[0])));
   critical.forEach((c, i) => {
     truth.push(allHold(s, atoms, x, c));
-    const next = i + 1 < critical.length ? rationalBetween(s, c, critical[i + 1]) : outside(s, c, 1);
-    truth.push(allHold(s, atoms, x, sample(next)));
+    truth.push(allHold(s, atoms, x, sampleBetween(s, c, critical[i + 1])));
   });
   const values = critical.map(c => pointValue(s, c));
   const intervals = assemble(values, truth);

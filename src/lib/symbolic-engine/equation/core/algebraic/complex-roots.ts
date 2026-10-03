@@ -195,9 +195,11 @@ function aberthDouble(f: readonly bigint[], precision: number): Fixed[] | null {
     if (!Number.isFinite(largest)) return null;
     if (largest < 1e-14) break;
   }
+  if (z.some(([a, b]) => !Number.isFinite(a) || !Number.isFinite(b))) return null;
   const toFixed = (v: number) => {
     if (v === 0) return 0n;
-    const e = Math.floor(Math.log2(Math.abs(v))), m = BigInt(Math.round(v * 2 ** (52 - e))), shift = e - 52 + precision;
+    // v = μ·2^e with 1 ≤ |μ| < 2; dividing by the power of two is exact even for subnormal v.
+    const e = Math.floor(Math.log2(Math.abs(v))), m = BigInt(Math.round((v / 2 ** e) * 2 ** 52)), shift = e - 52 + precision;
     return shift >= 0 ? m << BigInt(shift) : m >> BigInt(-shift);
   };
   return z.map(([a, b]) => ({ re: toFixed(a), im: toFixed(b) }));

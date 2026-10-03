@@ -9,11 +9,17 @@ import {
   rationalRatio, replaceSubexpressions, scanKernels,
 } from './lattice';
 import { solveLambertForm } from './lambert';
+import { sampleBetween } from './samples';
 import type { Polynomial } from '../algebra/polynomial';
+import { eliminateRadicals } from '../constraints/elimination';
+import { absPiecewise, containsAbs } from '../constraints/piecewise';
+import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } from '../constraints/radicals';
 
 /**
  * Complete real zero sets of target-dependent expressions built from
- * rational operations, exp, log and Lambert W, as exact closed forms.
+ * rational operations, exp, log, Lambert W, absolute values and real
+ * radicals, as exact closed forms (points, and intervals where the
+ * expression vanishes identically).
  *
  * A worklist of goals "H(v) = L" (L a closed-form constant; v the current
  * variable, with x = back(v)) is processed with an explicit stack, so chains
@@ -22,15 +28,21 @@ import type { Polynomial } from '../algebra/polynomial';
  *   level, degree 1 always and degree 2 for inner equations (radicals; the
  *   discriminant sign is certified);
  * - one kernel κ: solve the rational equation in κ, then invert κ
- *   (exp, log, W₀, W₋₁) with its range conditions;
+ *   (exp, log, W₀, W₋₁, |·|, real radicals) with its range conditions;
+ * - absolute values elsewhere: lazy branching on the signs of their arguments;
+ * - radicals of one base: one generator t = v^{1/L}; of several bases, nested,
+ *   or algebraic constants alongside: the tower norm, each candidate confirmed;
  * - several exponential kernels: the exponent lattice gives one generator;
  * - logarithmic kernels: one factor class, or several combined linearly
  *   (then exponentiated);
  * - the variable also outside kernels: the Lambert class.
  * Every step is an equivalence on the natural domain, so the list is complete.
  */
+/** An interval (open end: ±∞) on which the expression is zero wherever defined. */
+export interface ZeroInterval { readonly lo?: ExprId; readonly hi?: ExprId; readonly loClosed: boolean; readonly hiClosed: boolean }
+
 export type ZeroResult =
-  | { readonly kind: 'zeros'; readonly values: readonly ExprId[] }
+  | { readonly kind: 'zeros'; readonly values: readonly ExprId[]; readonly intervals?: readonly ZeroInterval[] }
   | { readonly kind: 'all' }
   | { readonly kind: 'refused'; readonly refusal: Refusal };
 
@@ -40,7 +52,7 @@ class Refused { readonly refusal: Refusal; constructor(refusal: Refusal) { this.
 const refuse = (owner: string, detail: string): never => { throw new Refused({ owner, detail }); };
 
 const KERNEL_OWNER: Partial<Record<FunctionName, string>> = {
-  abs: OWNERS.constraints, sin: OWNERS.periodic, cos: OWNERS.periodic, tan: OWNERS.periodic,
+  sin: OWNERS.periodic, cos: OWNERS.periodic, tan: OWNERS.periodic,
   asin: OWNERS.periodic, acos: OWNERS.periodic, atan: OWNERS.periodic,
 };
 
@@ -103,9 +115,16 @@ export function solveRational(store: ExpressionStore, h: ExprId, level: ExprId, 
 /** Goals that invert one kernel κ = c (range conditions applied exactly). */
 function invertKernel(store: ExpressionStore, kernel: ExprId, c: ExprId): { h: ExprId; level: ExprId }[] {
   const node = store.node(kernel);
-  if (node.kind !== 'apply') return refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
+  if (node.kind !== 'apply') {
+    const radical = asRadical(store, kernel);
+    return radical ? invertRadical(store, radical, c) : refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
+  }
   const plusOne = () => realSign(store, store.add(c, store.integer(1)));
   switch (node.fn) {
+    case 'abs': {
+      const sc = realSign(store, c);
+      return sc < 0 ? [] : sc === 0 ? [{ h: node.arg, level: c }] : [{ h: node.arg, level: c }, { h: node.arg, level: store.neg(c) }];
+    }
     case 'exp': return realSign(store, c) <= 0 ? [] : [{ h: node.arg, level: store.log(c) }];
     case 'log': return [{ h: node.arg, level: store.exp(c) }];
     case 'lambertw': return plusOne() < 0 ? [] : [{ h: node.arg, level: store.mul(c, store.exp(c)) }];
@@ -121,12 +140,15 @@ function kernelFunction(store: ExpressionStore, k: ExprId): string {
   return e ? 'radical' : 'variable-exponent';
 }
 
-export function zerosOf(store: ExpressionStore, f: ExprId, x: string): ZeroResult {
-  // Fresh placeholder names per call; they never appear in results.
+/** Fresh placeholder names per top-level call (shared with nested calls); they never appear in results. */
+function freshNames(): (prefix: string) => string {
   let counter = 0;
-  const fresh = (prefix: string) => `${prefix}${++counter}`;
+  return prefix => `${prefix}${++counter}`;
+}
+
+export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = freshNames()): ZeroResult {
   try {
-    const values = new Map<ExprId, true>();
+    const values = new Map<ExprId, true>(), intervals: ZeroInterval[] = [];
     const stack: Goal[] = [{ h: f, level: store.integer(0), variable: x, back: store.symbol(x), top: true }];
     while (stack.length) {
       store.ctx.tick();
@@ -142,7 +164,6 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string): ZeroResul
       }
       const kinds = scan.kernels.map(k => kernelFunction(store, k));
       for (const k of kinds) {
-        if (k === 'radical') refuse(OWNERS.constraints, 'a non-integer power of the variable (radical)');
         if (k in KERNEL_OWNER) refuse(KERNEL_OWNER[k as FunctionName] as string, `${k} of the variable`);
         if (k === 'variable-exponent') refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
       }
@@ -150,8 +171,34 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string): ZeroResul
       if (!scan.variableOutside && scan.kernels.length === 1) {
         const kernel = scan.kernels[0];
         const r = solveRational(store, replaceSubexpressions(store, g.h, new Map([[kernel, t]])), g.level, tau, false);
-        if (r.kind === 'all') refuse(OWNERS.generators, 'an identity in a kernel');
+        if (r.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.generators, 'an identity in a kernel'); }
         for (const c of (r as { values: ExprId[] }).values) for (const goal of invertKernel(store, kernel, c)) push(goal.h, goal.level);
+        continue;
+      }
+      if (containsAbs(store, g.h, g.variable)) {
+        const split = absPiecewise(store, store.sub(g.h, g.level), g.variable, e => zerosOf(store, e, g.variable, fresh), (a, b) => sampleBetween(store, a, b));
+        if ('refusal' in split) return { kind: 'refused', refusal: split.refusal };
+        split.values.forEach(emit);
+        if (split.intervals.length) {
+          if (g.back !== store.symbol(g.variable)) refuse(OWNERS.constraints, 'a zero interval behind a substitution');
+          intervals.push(...split.intervals);
+        }
+        continue;
+      }
+      if (kinds.every(k => k === 'radical')) {
+        const radicals = scan.kernels.map(k => asRadical(store, k) as RadicalKernel);
+        const same = sameBaseSubstitution(store, g.h, radicals, g.variable, scan.variableOutside, t);
+        if (same) {
+          // v = τ^L with τ ≥ 0 for even L: each admissible root c gives the goal v = c^L.
+          const r = solveRational(store, same.expression, g.level, tau, true);
+          if (r.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.constraints, 'an inner identity in a radical'); continue; }
+          for (const c of r.values) if (same.order % 2n === 1n || realSign(store, c) >= 0) push(same.base, store.pow(c, store.integer(same.order)));
+          continue;
+        }
+        const el = eliminateRadicals(store, store.sub(g.h, g.level), g.variable);
+        if (el.kind === 'refused') return { kind: 'refused', refusal: el.refusal };
+        if (el.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.constraints, 'an inner identity among radicals'); continue; }
+        el.values.forEach(emit);
         continue;
       }
       if (kinds.every(k => k === 'exp')) {
@@ -161,7 +208,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string): ZeroResul
         const substituted = replaceSubexpressions(store, g.h, new Map([...parts].map(([k, p]) => [k, store.mul(p.coefficient, store.pow(t, store.integer(p.power)))])));
         if (!scan.variableOutside) {
           const r = solveRational(store, substituted, g.level, tau, false);
-          if (r.kind === 'all') refuse(OWNERS.generators, 'an identity in the generator');
+          if (r.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.generators, 'an identity in the generator'); }
           for (const c of (r as { values: ExprId[] }).values) {
             if (realSign(store, c) > 0) push(exponent, store.sub(store.log(c), shift));
           }
@@ -176,7 +223,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string): ZeroResul
       }
       refuse(CERTIFIED_NUMERICS, 'mixed transcendental kernels');
     }
-    return { kind: 'zeros', values: [...values.keys()] };
+    return { kind: 'zeros', values: [...values.keys()], intervals };
   } catch (e) {
     if (e instanceof Refused) return { kind: 'refused', refusal: e.refusal };
     throw e;
