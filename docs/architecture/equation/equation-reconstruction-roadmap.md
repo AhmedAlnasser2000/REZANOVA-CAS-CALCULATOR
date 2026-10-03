@@ -1,20 +1,20 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-03
-Status: provisional direction approved with the design gate. Only `EQUATION-RECONSTRUCTION-DESIGN1` is complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1` and `EQUATION-EXACT-ALGEBRA1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-[`EQUATION-EXACT-ALGEBRA1`](equation-exact-algebra1-spec.md) is a backend-only private exact-algebra substrate. It has no production caller.
+`EQUATION-EXACT-ALGEBRA1` is backend-verified (see its [specification](equation-exact-algebra1-spec.md)). The next gate is `EQUATION-ALGEBRAIC-NUMBERS1`: factorization over ℚ, real and complex root isolation, and RootOf arithmetic. The user decided on 2026-10-03 to keep it a separate gate. It needs its own approval.
 
 ## Implementation sequence
 
 | Stage | Milestone | Prerequisites and work | Exit evidence |
 | --- | --- | --- | --- |
 | 1 (complete) | `EQUATION-RECONSTRUCTION-DESIGN1` | Design, blueprint, inventory, baseline probe, roadmap, first specification | Docs and memory recorded; memory/file-size/diff checks |
-| 2 | `EQUATION-EXACT-ALGEBRA1` | Execution context with typed stops; rationals; modular tools; dense univariate polynomials; modular GCD; Yun; subresultants; Bareiss; private wire; isolation and no-caps ratchets | Law and identity tests, adversarial sizes, tiny-budget stops, isolation |
+| 2 (backend verified) | `EQUATION-EXACT-ALGEBRA1` | Execution context with typed stops; rationals; modular tools; dense univariate polynomials; modular GCD; Yun; subresultants; Bareiss; private wire; isolation and no-caps ratchets | Law and identity tests, adversarial sizes, tiny-budget stops, isolation |
 | 3 | `EQUATION-ALGEBRAIC-NUMBERS1` | Factorization over ℚ (Cantor–Zassenhaus, Hensel, Zassenhaus); real and complex root isolation; RootOf arithmetic and sign; certificates | Product/isolation certificates, mutation rejection, high-degree cases (degree 20, 50, 100) |
 | 4 | `EQUATION-REPRESENTATION1` | Expression graph, relation problem, transform records, solution-set algebra, replay codec, verifier | Hash-consing laws, replay of recorded chains, tampering rejection |
 | 5 | `EQUATION-POLYNOMIAL-DECISION1` (slice 1) | Univariate polynomial and rational equations over ℝ and ℂ; exclusions; exact reduced forms; six outcomes | Corpus P/R cases exact, including degree ≥ 5 as RootOf; empty sets proven |
@@ -45,7 +45,6 @@ Stages 15 and 16 may move before adoption if the user wants them in the first pr
 
 ## Decisions remaining before later gates
 
-- Whether factorization and root isolation (stage 3) merge into stage 2.
 - V6 scope and whether adoption precedes stages 15–16.
 - The exact interface of the future OOE resource subsystem that replaces the core's budgets.
 - When, if ever, to extract a shared exact-arithmetic layer with the integration core.
