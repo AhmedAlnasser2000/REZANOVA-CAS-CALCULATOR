@@ -125,14 +125,14 @@ group('routing to the gates that own a problem', () => {
     [eq(['Add', exp(times(2, 'x')), exp('x')], 'ExponentialE'), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-2 equation with transcendental coefficients'],
     [eq(ln(['Add', ['Power', 'x', 3], 'x']), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-3 equation with transcendental coefficients'],
     [eq(['Add', ['Sqrt', 'x'], exp('x')], 3), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(exp(['Sin', 'x']), 2), 'incomplete-implementation: EQUATION-PERIODIC1: sin of the variable'],
+    [eq(['Add', exp('x'), ['Sin', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
     [eq(times('a', exp('x')), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: parameters a'],
   ])('%j', (json, expected) => {
     expect(run(json).text).toBe(expected);
   });
 
   it('sends complex exp/log to the periodic gate and polynomial problems to slice 1', () => {
-    expect(run(eq(exp('x'), 2), 'complex').text).toBe('incomplete-implementation: EQUATION-PERIODIC1: complex exponential and logarithmic equations');
+    expect(run(eq(exp('x'), 2), 'complex').text).toBe('incomplete-implementation: EQUATION-PERIODIC1: complex exponential, logarithmic and trig equations');
     expect(run(eq(['Power', 'x', 2], 2)).text).toBe('{≈-1.414214, ≈1.414214}');
   });
 });

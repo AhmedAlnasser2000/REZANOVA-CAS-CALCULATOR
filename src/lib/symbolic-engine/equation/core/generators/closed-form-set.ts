@@ -7,6 +7,8 @@ import type { ExprId, ExpressionStore } from '../representation/expression';
 import { realCompare, realSign } from '../representation/real-order';
 import type { Condition, RelationProblem } from '../representation/relation';
 import type { PointValue, SolutionSet } from '../representation/solution-set';
+import { decidePeriodic } from '../periodic/decide';
+import { inFamilies, type FamilyZeros, type PeriodicZeros } from '../periodic/families';
 import { zerosOf, type ZeroInterval } from './inversion';
 import { sampleBetween } from './samples';
 
@@ -29,6 +31,10 @@ export interface ClosedAtom {
   /** Zero points, closed interval endpoints included. */
   readonly zeros: ReadonlySet<ExprId> | 'all';
   readonly intervals: readonly ZeroInterval[];
+  /** Affine zero families r + P·ℤ (slice 4). */
+  readonly periodic: readonly PeriodicZeros[];
+  /** Zero families in integer parameters (slice 4). */
+  readonly families: readonly FamilyZeros[];
 }
 
 export type ClosedDecision =
@@ -61,10 +67,10 @@ export function closedAtoms(problem: RelationProblem): { atoms: ClosedAtom[] } |
   for (const a of raw) {
     const z = zerosOf(s, a.f, x);
     if (z.kind === 'refused') return { refusal: z.refusal };
-    if (z.kind === 'all') { atoms.push({ f: a.f, op: a.op, zeros: 'all', intervals: [] }); continue; }
+    if (z.kind === 'all') { atoms.push({ f: a.f, op: a.op, zeros: 'all', intervals: [], periodic: [], families: [] }); continue; }
     const intervals = z.intervals ?? [], zeros = new Set(z.values);
     for (const i of intervals) { if (i.loClosed && i.lo !== undefined) zeros.add(i.lo); if (i.hiClosed && i.hi !== undefined) zeros.add(i.hi); }
-    atoms.push({ f: a.f, op: a.op, zeros, intervals });
+    atoms.push({ f: a.f, op: a.op, zeros, intervals, periodic: z.periodic ?? [], families: z.families ?? [] });
   }
   return { atoms };
 }
@@ -79,6 +85,8 @@ function inInterior(store: ExpressionStore, i: ZeroInterval, point: ExprId): boo
 export function atomSign(store: ExpressionStore, atom: ClosedAtom, x: string, point: ExprId): -1 | 0 | 1 {
   if (atom.zeros === 'all' || atom.zeros.has(point)) return 0;
   if (atom.intervals.some(i => inInterior(store, i, point))) return 0;
+  // Members of affine zero families (exact: (point − r)/P is an integer).
+  if (inFamilies(store, atom.periodic, point)) return 0;
   return realSign(store, store.substitute(atom.f, new Map([[x, point]])));
 }
 
@@ -127,6 +135,7 @@ export function decideClosedForm(problem: RelationProblem): ClosedDecision {
   const s = problem.store, x = problem.targets[0];
   const built = closedAtoms(problem);
   if ('refusal' in built) return { kind: 'refused', refusal: built.refusal };
+  if (built.atoms.some(a => a.periodic.length || a.families.length)) return decidePeriodic(problem, built.atoms);
   const { points: critical, representative } = sortedCritical(s, built.atoms);
   const atoms = built.atoms.map(a => canonicalAtom(a, representative));
   // Pieces: open (before c₀), point c₀, open (c₀, c₁), …, point cₖ, open (after cₖ).

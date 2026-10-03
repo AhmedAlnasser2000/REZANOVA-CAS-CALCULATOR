@@ -9,9 +9,10 @@ import type { EquationOutcome } from './representation/solution-set';
 /**
  * Entry point of the private Equation core: route a problem to the slice that
  * owns it. Problems whose target appears inside exp, log, Lambert W or an
- * exponent (slice 2), or inside an absolute value or a radical (slice 3, real
- * only), go to the closed-form engine; everything else starts at the
- * polynomial slice, which names the owning gate when it cannot decide.
+ * exponent (slice 2), inside an absolute value or a radical (slice 3, real
+ * only), or inside trig and inverse trig (slice 4) go to the closed-form
+ * engine; everything else starts at the polynomial slice, which names the
+ * owning gate when it cannot decide.
  */
 function someNode(problem: RelationProblem, test: (n: ExprId, x: string) => boolean): boolean {
   const s = problem.store, x = problem.targets[0];
@@ -24,7 +25,7 @@ export function hasTranscendentalKernels(problem: RelationProblem): boolean {
   const s = problem.store;
   return someNode(problem, (n, x) => {
     const node = s.node(n);
-    if (node.kind === 'apply' && ['exp', 'log', 'lambertw', 'lambertwm1'].includes(node.fn) && s.freeSymbols(node.arg).includes(x)) return true;
+    if (node.kind === 'apply' && ['exp', 'log', 'lambertw', 'lambertwm1', 'sin', 'cos', 'tan', 'asin', 'acos', 'atan'].includes(node.fn) && s.freeSymbols(node.arg).includes(x)) return true;
     return node.kind === 'pow' && s.freeSymbols(node.exponent).includes(x);
   });
 }

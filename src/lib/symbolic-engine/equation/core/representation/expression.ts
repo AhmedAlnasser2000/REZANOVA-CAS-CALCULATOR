@@ -1,7 +1,7 @@
 import { demand, type ExecutionContext } from '../execution';
 import { igcd, ipow, iroot, perfectPower } from '../algebra/integer';
 import {
-  assertRational, rAdd, rational, rFromInteger, rMultiply, type IntegerInput, type Rational,
+  assertRational, rAdd, rational, rFromInteger, rMultiply, rSubtract, type IntegerInput, type Rational,
 } from '../algebra/rational';
 import type { Polynomial } from '../algebra/polynomial';
 import type { RootOf } from '../algebraic/root-of';
@@ -24,6 +24,9 @@ import { RootCatalog } from './root-identity';
  * - number-only logarithms are canonical: log q = m·log r for rational q > 0
  *   with r > 1 not a perfect power, log(q^c) = c·log q, exp(c·log q) = q^c
  *   and log(exp c) = c for real constants c;
+ * - trig: a π-multiple term of a sin/cos/tan argument is reduced by whole
+ *   periods (sin(x + 2π) = sin x), the classic special angles (multiples of
+ *   π/6 and π/4) are exact, and asin/acos/atan at ±1/2, ±1, 0 are q·π;
  * - a zero coefficient drops a term only when that term is defined
  *   everywhere ("total"); otherwise 0·t stays, keeping t's domain.
  * Nothing cancels: x/x, x⁰, log(eˣ) and √(x²) stay as written. Every
@@ -148,6 +151,11 @@ export class ExpressionStore {
         if (!real(node.arg)) return false;
         if (node.fn === 'exp' || node.fn === 'sin' || node.fn === 'cos' || node.fn === 'atan' || node.fn === 'abs') return true;
         if (node.fn === 'log') return positiveNumber(node.arg) || this.#isPositiveConstant(node.arg);
+        if (node.fn === 'asin' || node.fn === 'acos') {
+          // Defined for a rational argument in [−1, 1].
+          const n = this.#entries[node.arg].node;
+          return n.kind === 'number' && (n.value.numerator < 0n ? -n.value.numerator : n.value.numerator) <= n.value.denominator;
+        }
         return false;
     }
   }
@@ -468,8 +476,79 @@ export class ExpressionStore {
     }
     if (fn === 'log') { const folded = this.#foldLog(arg); if (folded !== undefined) return folded; }
     if (fn === 'exp') { const folded = this.#foldExp(arg); if (folded !== undefined) return folded; }
+    if (v && (fn === 'asin' || fn === 'acos' || fn === 'atan')) { const folded = this.#arcSpecial(fn, v); if (folded !== undefined) return folded; }
+    if (fn === 'sin' || fn === 'cos' || fn === 'tan') { const folded = this.#foldTrig(fn, arg); if (folded !== undefined) return folded; }
     return this.#make(`f:${fn}:${arg}`, { kind: 'apply', fn, arg }, `f|${fn}|${this.digest(arg)}`, [arg],
       TOTAL_FUNCTIONS.has(fn) && this.isTotal(arg));
+  }
+
+  /** c when id is c·π (or π itself). */
+  #piCoefficient(id: ExprId): Rational | undefined {
+    const n = this.node(id);
+    if (n.kind === 'constant' && n.name === 'pi') return rational(this.ctx, 1n);
+    if (n.kind === 'mul' && n.args.length === 2) {
+      const c = this.numberValue(n.args[0]), r = this.node(n.args[1]);
+      if (c && r.kind === 'constant' && r.name === 'pi') return c;
+    }
+    return undefined;
+  }
+
+  /** c reduced by whole periods into (−p/2, p/2]. */
+  #reduceModulo(c: Rational, p: bigint): Rational {
+    const ctx = this.ctx, den = c.denominator, P = p * den;
+    let num = ((c.numerator % P) + P) % P; // [0, p)
+    if (2n * num > P) num -= P;
+    return rational(ctx, num, den);
+  }
+
+  /** sin(qπ) for q ∈ (−1, 1] at the classic special angles (multiples of π/6 and π/4); undefined elsewhere. */
+  #sinSpecial(q: Rational): ExprId | undefined {
+    const ctx = this.ctx, sign = q.numerator < 0n ? -1n : 1n;
+    let a = rational(ctx, sign * q.numerator, q.denominator);
+    if (2n * a.numerator > a.denominator) a = rational(ctx, a.denominator - a.numerator, a.denominator); // sin(π − x) = sin x
+    const key = `${a.numerator}/${a.denominator}`;
+    const half = this.number(rational(ctx, 1n, 2n));
+    const table: Record<string, () => ExprId> = {
+      '0/1': () => this.integer(0), '1/6': () => half, '1/4': () => this.mul(half, this.sqrt(this.integer(2))),
+      '1/3': () => this.mul(half, this.sqrt(this.integer(3))), '1/2': () => this.integer(1),
+    };
+    const value = table[key]?.();
+    return value === undefined ? undefined : sign < 0n ? this.neg(value) : value;
+  }
+
+  /**
+   * sin/cos/tan: a π-multiple term of the argument is reduced by whole periods
+   * (2π, or π for tan), and the classic special angles are exact. Value- and
+   * domain-preserving over ℝ and ℂ.
+   */
+  #foldTrig(fn: 'sin' | 'cos' | 'tan', arg: ExprId): ExprId | undefined {
+    const ctx = this.ctx, n = this.node(arg);
+    const terms = n.kind === 'add' ? n.args : [arg];
+    const j = terms.findIndex(t => this.#piCoefficient(t) !== undefined);
+    if (j < 0) return undefined;
+    const c = this.#piCoefficient(terms[j]) as Rational, reduced = this.#reduceModulo(c, fn === 'tan' ? 1n : 2n);
+    if (terms.length === 1) {
+      if (fn === 'sin') { const v = this.#sinSpecial(reduced); if (v !== undefined) return v; }
+      if (fn === 'cos') { const v = this.#sinSpecial(this.#reduceModulo(rSubtract(ctx, rational(ctx, 1n, 2n), reduced), 2n)); if (v !== undefined) return v; }
+      if (fn === 'tan' && 2n * reduced.numerator !== reduced.denominator) {
+        const s = this.#sinSpecial(reduced), co = this.#sinSpecial(this.#reduceModulo(rSubtract(ctx, rational(ctx, 1n, 2n), reduced), 2n));
+        if (s !== undefined && co !== undefined) return this.div(s, co);
+      }
+    }
+    if (reduced.numerator === c.numerator && reduced.denominator === c.denominator) return undefined;
+    const others = terms.filter((_, i) => i !== j);
+    const piTerm = reduced.numerator === 0n ? [] : [this.mul(this.number(reduced), this.constant('pi'))];
+    return this.apply(fn, others.length || piTerm.length ? this.add(...others, ...piTerm) : this.integer(0));
+  }
+
+  /** asin, acos, atan at the rational special values (±1/2, ±1, 0). */
+  #arcSpecial(fn: 'asin' | 'acos' | 'atan', v: Rational): ExprId | undefined {
+    const ctx = this.ctx, key = `${v.numerator}/${v.denominator}`;
+    const asin: Record<string, [bigint, bigint]> = { '1/2': [1n, 6n], '-1/2': [-1n, 6n], '1/1': [1n, 2n], '-1/1': [-1n, 2n] };
+    const acos: Record<string, [bigint, bigint]> = { '0/1': [1n, 2n], '1/2': [1n, 3n], '-1/2': [2n, 3n], '-1/1': [1n, 1n] };
+    const atan: Record<string, [bigint, bigint]> = { '1/1': [1n, 4n], '-1/1': [-1n, 4n] };
+    const hit = (fn === 'asin' ? asin : fn === 'acos' ? acos : atan)[key];
+    return hit ? this.mul(this.number(rational(ctx, hit[0], hit[1])), this.constant('pi')) : undefined;
   }
 
   /** Canonical number-only logarithms (value-preserving for positive arguments). */
