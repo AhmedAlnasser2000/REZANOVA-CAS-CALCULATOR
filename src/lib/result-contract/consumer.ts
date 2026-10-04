@@ -75,6 +75,7 @@ export function resolveCanonicalResultForConsumer(
     };
   }
   if (validation.validated.value.version === 5) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the rational-antiderivative V5 read model; generic answer reuse is unsupported.'}};
+  if (validation.validated.value.version === 6) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the Equation outcome V6 read model; generic answer reuse is unsupported.'}};
   const normalized = normalizeCanonicalResultDocument(validation.validated.value);
   return {
     ok: true,

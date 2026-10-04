@@ -533,5 +533,6 @@ export function normalizeCanonicalResultDocument(
   document: CanonicalResultDocument,
 ): NormalizedCanonicalResult {
   if (document.version === 5) throw new Error('V5 requires the rational-antiderivative read model.');
+  if (document.version === 6) throw new Error('V6 requires the Equation outcome read model.');
   return document.version === 1 ? normalizeV1(document) : normalizeModern(document);
 }

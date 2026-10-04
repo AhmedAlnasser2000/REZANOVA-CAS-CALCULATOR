@@ -253,7 +253,7 @@ describe('Canonical Result V2 contract', () => {
       validated: { value: { version: 4 } },
     });
     expect(validateCanonicalResultDocumentVersioned({
-      version: 6,
+      version: 7,
       outcomeKind: 'success',
       title: 'Future',
       warnings: [],

@@ -9,3 +9,4 @@ export * from './calculator/statistics-visualization-types';
 export * from './calculator/runtime-types';
 export * from './calculator/workspace-instance-types';
 export * from './calculator/canonical-result-v5-types';
+export * from './calculator/canonical-result-v6-types';
