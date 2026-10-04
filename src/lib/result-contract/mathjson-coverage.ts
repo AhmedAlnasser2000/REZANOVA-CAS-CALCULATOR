@@ -1,4 +1,5 @@
 import { collectCanonicalResultMathValuesV5 } from './validation-v5';
+import { collectCanonicalResultMathValuesV6 } from './validation-v6';
 import type {
   CanonicalResultDocument,
 } from '../../types/calculator';
@@ -164,6 +165,11 @@ export function collectCanonicalMathLeaves(
   if ('version' in input && input.version === 5) {
     const {primary: _primary, ...common} = input; void _primary;
     return [...collectCanonicalResultMathValuesV5(input).map(v => ({...v, leafPath: 'primary.rationalPrimitive[*]' as const})),
+      ...collectCanonicalMathLeaves({...common, version: 2})];
+  }
+  if ('version' in input && input.version === 6) {
+    const {primary: _primary, ...common} = input; void _primary;
+    return [...collectCanonicalResultMathValuesV6(input).map(v => ({...v, leafPath: 'primary.equationOutcome[*]' as const})),
       ...collectCanonicalMathLeaves({...common, version: 2})];
   }
   const result = 'semantics' in input ? input : normalizeCanonicalResultDocument(input);

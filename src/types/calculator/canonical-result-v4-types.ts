@@ -1,4 +1,5 @@
 import type { CanonicalResultDocumentV5 } from './canonical-result-v5-types';
+import type { CanonicalResultDocumentV6 } from './canonical-result-v6-types';
 import type {
   CanonicalMathValueV2,
   CanonicalResultDocumentV2,
@@ -81,6 +82,7 @@ export type CanonicalResultDocument =
   | CanonicalResultDocumentV2
   | CanonicalResultDocumentV3
   | CanonicalResultDocumentV4
-  | CanonicalResultDocumentV5;
+  | CanonicalResultDocumentV5
+  | CanonicalResultDocumentV6;
 
 export type CanonicalResultVersion = CanonicalResultDocument['version'];

@@ -1,24 +1,25 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1` and `EQUATION-PROOF-PERFORMANCE1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1` and `EQUATION-RESULT-CONTRACT1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-PROOF-PERFORMANCE1` (stage 12) is backend-verified in one PR with two commits (see its [specification](equation-proof-performance1-spec.md)).
+`EQUATION-RESULT-CONTRACT1` (stage 13) is verified in one PR with two commits (see its [specification](equation-result-contract1-spec.md)).
 
-Part A:
-- a fixed benchmark corpus (the 50 old-engine baseline cases plus depth, parameters and systems evidence), with before/after medians;
-- cost accounting without string conversion, dyadic rationals and fixed-point sin/cos series;
-- per-store and per-context caches of enclosures, signs, π and root refinements.
+Part A: canonical-result V6, with:
+- typed Equation outcomes (six) and solution sets (twelve kinds);
+- root binders with isolation data;
+- a restricted standard math grammar with canonical LaTeX;
+- binding rules;
+- routing, authority, consumer and coverage wiring;
+- the AGENTS.md policy.
 
-Part B:
-- certificates-first verification: re-derivation dropped where the checks prove completeness (finite polynomial systems, linear systems), kept elsewhere;
-- fixed-point disk evaluation, a smaller several-parameter grid with per-case search, polynomial class brand, a shared word-prime table.
+Part B: the Equation adapter. It verifies, projects, validates and replays core outcomes into V6, and has a V6 read model. All 67 corpus cases round-trip.
 
-Every old-engine baseline case now decides and verifies in under 1 s. This completes stage 12. The next gate is `EQUATION-RESULT-CONTRACT1`. It needs its own approval.
+This completes stage 13. The next gate is `EQUATION-PRESENTATION1` (display polish, user decision 2026-10-04), then adoption. Each needs its own approval.
 
 ## Implementation sequence
 
@@ -36,7 +37,8 @@ Every old-engine baseline case now decides and verifies in under 1 s. This compl
 | 10 (backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 (backend verified) | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 (backend verified) | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
-| 13 | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
+| 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
+| 13b | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
 | 16 | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs | N cases certified; numerical results typed as numerical |
@@ -67,16 +69,16 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 
 | Item | From | Owner |
 | --- | --- | --- |
-| Non-real points ordered by canonical identity, not numerically (display order) | `EQUATION-POLYNOMIAL-DECISION1` | `EQUATION-RESULT-CONTRACT1` |
-| Radical presentation: √D unsimplified (½·√8), √12 rather than 2√3, −(1 − e) not distributed, asin/atan residues not normalized | slices 1, 2 and 4 | `EQUATION-RESULT-CONTRACT1` (printer) |
+| Non-real points ordered by canonical identity, not numerically (display order) | `EQUATION-POLYNOMIAL-DECISION1` | `EQUATION-PRESENTATION1` |
+| Radical presentation: √D unsimplified (½·√8), √12 rather than 2√3, −(1 − e) not distributed, asin/atan residues not normalized | slices 1, 2 and 4 | `EQUATION-PRESENTATION1` |
 | Two different closed forms of one value ordered only by refinement under the budget (the gate-6 caveat) | `EQUATION-GENERATORS1`, `EQUATION-PERIODIC1` | unassigned |
 | Wider Lambert W simplification (several log bases) and algebraic bases with non-binomial minimal polynomials in the exponent lattice | `EQUATION-GENERATORS1` | unassigned |
 | Dependent radicals (norm identically zero, e.g. √(x²+2x+1)) | `EQUATION-CONSTRAINTS1` | unassigned |
 | Complex modulus and complex radicals (`unsupported` by decision) | `EQUATION-CONSTRAINTS1` | unassigned (see "Decisions remaining") |
 | Transcendental constants inside a radical tower (√x + √(x+1) = ln 2) | `EQUATION-CONSTRAINTS1` | `EQUATION-CERTIFIED-NUMERICS1` |
-| Radical forms beyond quadratic and pure binomial roots (S4 stays a RootOf) | `EQUATION-CONSTRAINTS1` | `EQUATION-RESULT-CONTRACT1` |
+| Radical forms beyond quadratic and pure binomial roots (S4 stays a RootOf) | `EQUATION-CONSTRAINTS1` | `EQUATION-PRESENTATION1` |
 | Families in several integer parameters under further conditions | `EQUATION-PERIODIC1` | unassigned |
-| The complement of an infinite family over ℂ (needs a set kind) | `EQUATION-PERIODIC1` (part B) | `EQUATION-RESULT-CONTRACT1` |
+| The complement of an infinite family over ℂ (needs a set kind; not in V6's first version, user decision 2026-10-04) | `EQUATION-PERIODIC1` (part B) | a later V6 kind, with the slice that produces it |
 | Complex intersections and exclusions with non-affine families; nested families whose level is quadratic in its parameter | `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` | unassigned |
 | Interval families need one common trig argument with a peelable inverse | `EQUATION-COMPOSITION1` | unassigned |
 | Non-closed-form boundaries and isolated numeric roots (eˣ + sin x > 0) | `EQUATION-COMPOSITION1` | `EQUATION-CERTIFIED-NUMERICS1` |
@@ -96,6 +98,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Kernels with parameters or extra conditions in a system; elimination that leaves several targets or interval answers | `EQUATION-SYSTEMS1` | unassigned |
 | Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition) | `EQUATION-SYSTEMS1` | unassigned |
 | Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` |
+| Evidence cases still over 1 s to decide and verify (atan x + atan 2x = π/4 at 1.8 s; the depth-25 ln chain at 1.1 s); the user accepted them for now (2026-10-04) | `EQUATION-PROOF-PERFORMANCE1` | a later performance gate |
 
 ## Attribution
 
