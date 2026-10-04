@@ -25,3 +25,17 @@
   - sample tiling (a dropped parameter case).
 - **Other checks**: `tsc -b`, scoped ESLint, compartment boundaries, OOE boundaries and file sizes passed. Every file is under 1000 lines.
 - **Not run**: no full suite and no UI gate, because there is no product caller.
+
+## Part B backend gate: pass
+
+- **Tests**: `node node_modules/vitest/vitest.mjs run src/lib/symbolic-engine/equation/core --maxWorkers=2` passed 36 files / 511 tests (15 new) in about 172 s.
+- **Reference digits**: x³ − x − 1 (mpmath), and Katsura-3 from SymPy `solve` and mpmath `findroot`. Both are independent of this code.
+- **Real bugs found and fixed**:
+  1. Family components were compared by object identity, which refused sin x = y, 2y = 1. They are now compared by value.
+  2. My first Katsura-3 reference digits, written from memory, were wrong. They were replaced by SymPy/mpmath values; the engine's answer was right.
+- **Verifier independence**:
+  - a missing point is caught by the Hermite count;
+  - a swapped coordinate, by exact substitution;
+  - a false empty claim, by the count or re-derivation;
+  - a dropped branch, by sampling the free target against independent decisions.
+- **Other checks**: `tsc -b`, scoped ESLint, compartment boundaries, OOE boundaries and file sizes passed. Every file is under 1000 lines.

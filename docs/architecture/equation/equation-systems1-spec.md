@@ -3,7 +3,7 @@
 Date: 2026-10-04
 Status:
 - **Part A (multivariate atoms and linear systems, with parameters)**: implemented and backend-verified on 2026-10-04; private, no production caller.
-- **Part B (Gröbner bases, exact points, triangular infinite sets, kernel elimination)**: next, in the same PR.
+- **Part B (Gröbner bases, exact points, triangular infinite sets, kernel elimination)**: implemented and backend-verified on 2026-10-04, in the same PR. This completes the slice.
 
 Gate: backend only. Stage 11 of the [roadmap](equation-reconstruction-roadmap.md).
 
@@ -98,9 +98,86 @@ Dependencies: [`EQUATION-PARAMETERS1`](equation-parameters1-spec.md) and every e
 - **Tampering:** a wrong point, a lost free direction, a non-identical direction, a dropped case.
 - **Also:** wire replay of points, parametric sets and case trees; typed `work` and `cancelled` stops.
 
-## Not in this part
+## Method (part B)
 
-- **Part B:** Gröbner bases, exact points of zero-dimensional systems, triangular infinite sets, kernel elimination.
-- **Ledger:**
-  - complex or algebraic coefficients in systems (the atoms read rational coefficients);
-  - nonlinear systems with parameters.
+### Gröbner bases (`systems/groebner.ts`)
+
+- **Polynomials.** Sparse polynomials over ℚ with terms sorted by grevlex or lex.
+- **Algorithm.** Buchberger with the Gebauer–Möller pair criteria and the normal selection strategy, giving a reduced basis.
+- **Cofactors (optional).** Each basis element can carry cofactors over the inputs (g = Σ cⱼ·fⱼ), so `checkCofactors` proves membership by an exact identity.
+- **`isGroebner`** checks Buchberger's criterion independently.
+
+### Exact points (`systems/zero-dim.ts`, `systems/polynomial.ts`)
+
+1. **No solutions.** The basis {1} means no solution over ℂ (hence over ℝ).
+2. **Finiteness.** A finite normal set B (every unknown has a pure power among the leading monomials) gives multiplication matrices M_v on B.
+3. **Counting.** The Hermite form H = (Tr(M_{bᵢ}·M_{bⱼ})) has rank = the number of distinct complex solutions and signature = the number of distinct real ones. Its rank and signature come from a congruence diagonalization over ℚ (Sylvester's law).
+4. **Separating element.** The separating element t = Σ cᵥ·xᵥ is accepted when the square-free part f of χ_t = det(T − M_t) has degree equal to the rank. χ_t comes from Bareiss determinants at T = 0..D and interpolation.
+5. **Rational univariate representation** (Rouillier): xᵥ = gᵥ(t)/g₁(t), with g_q(T) = Σᵢ Tr(q·tⁱ)·Σⱼ a_{i+j+1}Tʲ.
+6. **Points.** Each root τ of f (over ℝ, a real τ, since a separating t is real exactly at real solutions) is one solution. Each coordinate is the unique root of the eliminant χ_{xᵥ} whose certified disk meets gᵥ(τ)/g₁(τ), with refinement until exactly one candidate remains. Quadratic coordinates get radical forms.
+7. **Exclusions.** ≠ atoms g are enforced exactly with fresh unknowns u·g − 1 = 0 (Rabinowitsch), and points are projected back.
+
+### Infinite sets (`systems/polynomial.ts`)
+
+1. **Splitting the targets.** With a lex basis (targets in order), the trailing targets U with no basis element in ℚ[U] are free.
+2. **The last dependent** is solved by the parameters gate with U as parameters, using its basis elements as relations.
+3. **Each earlier dependent** must have exactly one basis element of the form v + r(later). Otherwise the system is not triangular and goes to the ledger.
+4. **Assembly.** The cases become parametric sets in U, constrained by the case conditions. A dependent the gate leaves free stays free.
+
+| System | Answer |
+| --- | --- |
+| x² + y² = 1 over ℝ | x = ∓½·√(−4(y² − 1)) for −1 ≤ y ≤ 1 (two branches) |
+| x² + y² = 1 over ℂ | the same two branches without conditions |
+| x·y = 0 | (x, y) with y = 0, x free; (0, y) with y ≠ 0 |
+| x² = y, z = x | (z, z², z) |
+
+### Kernels by elimination (`systems/eliminate.ts`)
+
+1. **Isolation.** An equation in which a target v occurs only as c·v, with c a nonzero constant, gives v = −rest/c. Isolations whose value has no other target, and then no kernel, are preferred.
+2. **Substitution.** v is substituted everywhere else; each step is an equivalence.
+3. **One target left.** Its problem goes to slices 1–5, and the tuples are rebuilt:
+   - points (a point where an eliminated expression is undefined is dropped);
+   - the `periodic` kind for real or complex families;
+   - a parametric curve when no equation is left and the eliminated expressions are defined everywhere.
+4. **Nothing isolable** names `EQUATION-CERTIFIED-NUMERICS1`.
+
+| System | Answer |
+| --- | --- |
+| eˣ + y = 3, y = 1 | {(ln 2, 1)} |
+| ln x + y = 0, y = −1 | {(e, −1)} |
+| sin x = y, 2y = 1 | (π/6 + 2πk, ½) and (5π/6 + 2πk, ½) |
+| sin x = y, x + y = 0 | {(0, 0)} (via the composition slice) |
+| y = eˣ | {(x, eˣ) : x free} |
+| eˣ = y, y = 2 over ℂ | (ln 2 + 2πik, 2) |
+
+### Verifier (part B)
+
+- **Finite polynomial answers** (`verify-nonlinear.ts`):
+  - points are substituted exactly;
+  - the extended basis is recomputed with cofactors: every element must equal its combination of the inputs, every input must reduce to zero, and Buchberger's criterion must hold. This proves the basis generates the input ideal.
+  - the number of claimed points must equal the Hermite rank (signature over ℝ).
+- **Infinite polynomial answers:** the free targets common to every piece are sampled. At each sample the restricted pieces must equal the system with those targets fixed, decided independently.
+- **Kernel systems:** points, family members at k ∈ {−1, 0, 1, 2} and free values at small rationals must satisfy every relation (exactly, or by certified sign or complex zero test).
+- **Re-derivation** must agree in every case.
+
+## Evidence (part B)
+
+`systems/nonlinear.test.ts`, 15 tests:
+- **Rational and radical points:** four rational points; ±√2/2 with forms.
+- **A RootOf point:** 1.324717957… (mpmath).
+- **Complex-only solutions:** empty over ℝ, two points over ℂ.
+- **Katsura-3:** four real solutions, checked against SymPy and mpmath.
+- **Exclusions:** exact exclusions and an inconsistent system.
+- **Infinite sets:** the circle over ℝ and ℂ, x·y = 0, and a curve in three unknowns.
+- **Kernel eliminations:** over ℝ and ℂ, plus a refusal.
+- **Tampering:** a missing point, a swapped coordinate, a false empty claim, a dropped branch.
+- **Also:** wire replay; typed `work` and `cancelled` stops.
+
+## Not in this gate (follow-up ledger)
+
+- complex or algebraic coefficients in systems;
+- nonlinear systems with parameters (comprehensive Gröbner systems);
+- kernels with parameters or extra conditions in a system;
+- positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3;
+- systems with kernels where elimination leaves several targets or interval answers;
+- inequalities in systems (`EQUATION-SEMIALGEBRAIC1`).

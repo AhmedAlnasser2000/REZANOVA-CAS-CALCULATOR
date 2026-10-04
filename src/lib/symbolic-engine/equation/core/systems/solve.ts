@@ -6,6 +6,9 @@ import { caseOutcome, simplifyCases } from '../parameters/solve';
 import { parametricAtoms } from '../parameters/specialize';
 import { SEMIALGEBRAIC } from '../parameters/tree';
 import { decideLinear, isLinear } from './linear';
+import { decideEquation } from '../decide';
+import { decideByElimination } from './eliminate';
+import { decidePolynomialSystem } from './polynomial';
 
 /**
  * Decide a system: several target variables, over ℝ or ℂ, possibly with
@@ -21,11 +24,20 @@ export function decideSystem(problem: RelationProblem): EquationOutcome {
     if (problem.relations.some(r => r.op !== 'eq' && r.op !== 'ne') || problem.conditions.some(c => c.kind === 'positive' || c.kind === 'nonnegative')) {
       return { kind: 'incomplete-implementation', reason: `${SEMIALGEBRAIC}: inequalities in a system` };
     }
-    if (targetsInKernel(problem)) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: kernels of the targets in a system (part B)` };
+    if (targetsInKernel(problem)) {
+      if (problem.parameters.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: kernels of the targets with parameters in a system (follow-up ledger)` };
+      if (problem.conditions.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: conditions in a system with kernels (follow-up ledger)` };
+      const r = decideByElimination(problem, one => decideEquation(one));
+      return r.kind === 'refused' ? { kind: 'incomplete-implementation', reason: r.reason } : caseOutcome(problem, r.cases);
+    }
     const atoms = parametricAtoms(problem);
     if ('owner' in atoms) return { kind: 'incomplete-implementation', reason: `${atoms.owner}: ${atoms.detail}` };
     const n = problem.targets.length;
-    if (!atoms.atoms.filter(a => a.op === 'eq').every(a => isLinear(a, n))) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: a nonlinear system (part B)` };
+    if (!atoms.atoms.filter(a => a.op === 'eq').every(a => isLinear(a, n))) {
+      if (problem.parameters.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: a nonlinear system with parameters (follow-up ledger)` };
+      const r = decidePolynomialSystem(problem, atoms.atoms);
+      return r.kind === 'refused' ? { kind: 'incomplete-implementation', reason: r.reason } : caseOutcome(problem, r.cases);
+    }
     const cases = decideLinear(problem, atoms.vars, atoms.atoms);
     return caseOutcome(problem, problem.parameters.length ? simplifyCases(problem.store, cases) : cases);
   } catch (e) {

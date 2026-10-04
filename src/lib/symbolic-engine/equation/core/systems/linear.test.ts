@@ -90,9 +90,9 @@ group('linear systems with parameters: case trees', () => {
 group('routing', () => {
   it('names the owners of what this part does not decide', () => {
     const s = new ExpressionStore(context());
-    expect(describe(s, setup(['And', eq(['Power', 'x', 2], 'y'), eq('x', 'y')]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: a nonlinear system/);
+    expect(describe(s, setup(['And', eq(['Power', 'x', 2], 'a'), eq('x', 'y')]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: a nonlinear system with parameters/);
     expect(describe(s, setup(['And', ['Less', 'x', 'y'], eq('x', 1)]).outcome)).toMatch(/incomplete-implementation: EQUATION-SEMIALGEBRAIC1/);
-    expect(describe(s, setup(['And', eq(['Exp', 'x'], 'y'), eq('y', 1)]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: kernels/);
+    expect(describe(s, setup(['And', eq(['Exp', 'x'], 'y'), eq('y', 'a')]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: kernels of the targets with parameters/);
   });
 });
 

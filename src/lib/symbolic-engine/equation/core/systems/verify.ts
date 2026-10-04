@@ -3,13 +3,15 @@ import { solveLinear } from '../algebra/linear';
 import { rational, rNegate, type Rational } from '../algebra/rational';
 import { evaluateExact } from '../representation/evaluate';
 import type { RelationProblem } from '../representation/relation';
-import { assertOutcome, compareValues, normalizeSet, setKey, valueExpression, type EquationOutcome, type Point } from '../representation/solution-set';
+import { assertOutcome, compareValues, finiteSet, normalizeSet, setKey, valueExpression, type EquationOutcome, type Point } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
 import { fractionOf, toExpression } from '../parameters/mpoly';
 import { parametricAtoms, type ParamAtom } from '../parameters/specialize';
 import { verifyParametricOutcome } from '../parameters/verify';
 import { isLinear } from './linear';
-import { decideSystem } from './solve';
+import { decideEquation } from '../decide';
+import { decideSystem, targetsInKernel } from './solve';
+import { holdsAt, verifyEliminationSamples, verifyInfiniteSamples, verifyPolynomialCertificate } from './verify-nonlinear';
 
 /**
  * Independent evidence for a system outcome:
@@ -34,8 +36,20 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
   if (outcome.proof.root !== problem.hash) fail('proof does not start from the problem');
   const report = verifyProofLog(outcome.proof, new Map());
   if (report.leaves.length !== 1 || report.leaves[0] !== problem.hash) fail('a systems proof is the problem itself');
+  if (targetsInKernel(problem)) {
+    if (outcome.kind === 'solved') verifyEliminationSamples(problem, outcome.set);
+    return rederive(problem, outcome);
+  }
   const atoms = parametricAtoms(problem);
   if ('owner' in atoms) return fail('the problem has no polynomial atoms');
+  if (!atoms.atoms.filter(a => a.op === 'eq').every(a => isLinear(a, n))) {
+    const s = outcome.kind === 'solved' ? outcome.set : finiteSet(problem.targets, []);
+    if (s.kind === 'finite') {
+      for (const p of s.points) if (!holdsAt(problem, p.map(v => valueExpression(store, v)))) fail('a point does not satisfy the system');
+      verifyPolynomialCertificate(problem, atoms.atoms, s);
+    } else verifyInfiniteSamples(problem, s, p => (p.targets.length > 1 ? decideSystem(p) : decideEquation(p)));
+    return rederive(problem, outcome);
+  }
   const at = (atom: ParamAtom, point: Point): boolean => {
     const id = store.substitute(toExpression(store, atom.poly), new Map(problem.targets.map((t, i) => [t, valueExpression(store, point[i])] as const)));
     const v = evaluateExact(store, id, domain);
@@ -72,7 +86,11 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
       else if (set?.kind !== 'finite' || set.points.length !== 1 || !set.points[0].every((v, i) => compareValues(store, v, point[i]) === 0)) fail('the claimed point differs from the unique solution');
     } else if (outcome.kind === 'solved' && (set?.kind !== 'parametric' || set.freeParameters.length !== n - solution.rank)) fail('the claimed free targets differ from the nullity');
   }
-  const again = decideSystem(problem);
+  rederive(problem, outcome);
+}
+
+function rederive(problem: RelationProblem, outcome: EquationOutcome): void {
+  const store = problem.store, domain = problem.domain, again = decideSystem(problem);
   if (again.kind !== outcome.kind) fail('re-derivation gives a different outcome');
   if (again.kind === 'solved' && outcome.kind === 'solved' && setKey(store, normalizeSet(store, again.set, domain)) !== setKey(store, normalizeSet(store, outcome.set, domain))) fail('the set differs from the re-derived set');
 }

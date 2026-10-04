@@ -1,4 +1,4 @@
-# EQUATION-SYSTEMS1 (part A)
+# EQUATION-SYSTEMS1 (parts A and B)
 
 ## Attribution
 
@@ -50,3 +50,20 @@ See verification-summary.md.
 - `.memory/current-state.md`, `.memory/decisions.md`, `.memory/journal/2026-10/2026-10-04.md`
 - `docs/architecture/equation/equation-systems1-spec.md` (new), the roadmap (stage 11 and a ledger row) and `docs/architecture/README.md`
 - This dossier.
+
+## Part B
+
+- **Authority**: the same approved plan; the user asked to finish part B without stopping after part A. Commit and push to #19 were pre-authorized.
+- **Scope**:
+  - `systems/groebner.ts`, `zero-dim.ts`, `polynomial.ts`, `eliminate.ts`, `verify-nonlinear.ts`;
+  - the exported disk helpers in `decision/algebraic-coefficients.ts`;
+  - routing in `systems/solve.ts` and its verifier;
+  - spec, roadmap (stage 11 and ledger rows), README and Equation memory.
+
+  No edits to the integration core, contracts, OOE or UI.
+- **Outcome**:
+  - nonlinear systems give exact points or triangular parametric sets;
+  - kernels are handled by elimination.
+
+  This completes the slice.
+- **Deviation from the plan**: the `parametric` kind was not widened to root values. Dependent targets given by roots of degree ≥ 3 are refused to the ledger instead.
