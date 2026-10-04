@@ -1,6 +1,8 @@
 import { demand, type ExecutionContext } from './execution';
 import { divide, requireField } from './field';
 import type { Polynomial, PolynomialRing } from './polynomial';
+import { fractionCoefficient } from './fraction-coefficient';
+import { primitiveExtendedGcd } from './primitive-euclid';
 
 export interface Division<E> { readonly quotient: Polynomial<E>; readonly remainder: Polynomial<E> }
 export interface Bezout<E> { readonly gcd: Polynomial<E>; readonly s: Polynomial<E>; readonly t: Polynomial<E> }
@@ -63,6 +65,10 @@ export function verifyBezout<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, 
 export function extendedGcd<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, a: Polynomial<E>, b: Polynomial<E>): Bezout<E> {
   requireField(ring.domain);
   ring.assert(ctx, a); ring.assert(ctx, b);
+  const adapter = fractionCoefficient(ring.domain);
+  if (adapter && a.coefficients.length > 1 && b.coefficients.length > 1) {
+    return primitiveExtendedGcd(ctx, ring, adapter, a, b);
+  }
   let oldR = a, r = b, oldS = ring.one(ctx), s = ring.zero(ctx), oldT = ring.zero(ctx), t = ring.one(ctx);
   while (!ring.isZero(ctx, r)) {
     ctx.tick();

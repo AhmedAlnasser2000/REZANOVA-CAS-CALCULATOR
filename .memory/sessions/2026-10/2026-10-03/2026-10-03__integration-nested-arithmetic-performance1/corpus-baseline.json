@@ -1,0 +1,4706 @@
+{
+  "node": "v24.19.0",
+  "platform": "linux",
+  "arch": "x64",
+  "machine": {
+    "host": "ahmed-Desktop",
+    "cpu": "Intel(R) Core(TM) Ultra 7 265K",
+    "logicalCpus": 20
+  },
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "bounds": {
+    "towerHeight": 8,
+    "artifactDepth": 64,
+    "artifactNodes": 100000,
+    "artifactBytes": 16777216
+  },
+  "runs": 5,
+  "warmups": 2,
+  "results": {
+    "exp-x": {
+      "integration": [
+        {
+          "ms": 7.260975999999999,
+          "work": 393290,
+          "allocation": 3549299,
+          "rss": 101539840,
+          "heapUsed": 15930512,
+          "maxRSSKiB": 99160
+        },
+        {
+          "ms": 10.70299700000001,
+          "work": 393290,
+          "allocation": 3549299,
+          "rss": 103211008,
+          "heapUsed": 13227784,
+          "maxRSSKiB": 100792
+        },
+        {
+          "ms": 8.633837999999997,
+          "work": 393290,
+          "allocation": 3549299,
+          "rss": 103374848,
+          "heapUsed": 12983696,
+          "maxRSSKiB": 100952
+        },
+        {
+          "ms": 8.407781999999997,
+          "work": 393290,
+          "allocation": 3549299,
+          "rss": 111239168,
+          "heapUsed": 16570400,
+          "maxRSSKiB": 108632
+        },
+        {
+          "ms": 8.636903000000018,
+          "work": 393290,
+          "allocation": 3549299,
+          "rss": 111566848,
+          "heapUsed": 16406856,
+          "maxRSSKiB": 108952
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.966087000000016,
+          "work": 141172,
+          "allocation": 1225233,
+          "rss": 101539840,
+          "heapUsed": 12826120,
+          "maxRSSKiB": 99160
+        },
+        {
+          "ms": 3.048971999999992,
+          "work": 141172,
+          "allocation": 1225233,
+          "rss": 103211008,
+          "heapUsed": 14074600,
+          "maxRSSKiB": 100792
+        },
+        {
+          "ms": 2.8059790000000078,
+          "work": 141172,
+          "allocation": 1225233,
+          "rss": 103374848,
+          "heapUsed": 13776400,
+          "maxRSSKiB": 100952
+        },
+        {
+          "ms": 3.2263379999999984,
+          "work": 141172,
+          "allocation": 1225233,
+          "rss": 111239168,
+          "heapUsed": 13422784,
+          "maxRSSKiB": 108632
+        },
+        {
+          "ms": 2.2889580000000365,
+          "work": 141172,
+          "allocation": 1225233,
+          "rss": 111566848,
+          "heapUsed": 21331416,
+          "maxRSSKiB": 108952
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 5.481063000000006,
+          "work": 282724,
+          "allocation": 2319966,
+          "rss": 101539840,
+          "heapUsed": 14368928,
+          "maxRSSKiB": 99160
+        },
+        {
+          "ms": 6.115290000000016,
+          "work": 282724,
+          "allocation": 2319966,
+          "rss": 103211008,
+          "heapUsed": 15652176,
+          "maxRSSKiB": 100792
+        },
+        {
+          "ms": 6.061644999999999,
+          "work": 282724,
+          "allocation": 2319966,
+          "rss": 103538688,
+          "heapUsed": 15317456,
+          "maxRSSKiB": 101112
+        },
+        {
+          "ms": 5.616680000000002,
+          "work": 282724,
+          "allocation": 2319966,
+          "rss": 111239168,
+          "heapUsed": 14875824,
+          "maxRSSKiB": 108632
+        },
+        {
+          "ms": 6.223598999999979,
+          "work": 282724,
+          "allocation": 2319966,
+          "rss": 111730688,
+          "heapUsed": 14572632,
+          "maxRSSKiB": 109112
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 6.995765999999975,
+          "work": 338908,
+          "allocation": 2804559,
+          "rss": 101703680,
+          "heapUsed": 14533760,
+          "maxRSSKiB": 99320
+        },
+        {
+          "ms": 7.376006999999987,
+          "work": 338908,
+          "allocation": 2804559,
+          "rss": 103211008,
+          "heapUsed": 15776120,
+          "maxRSSKiB": 100792
+        },
+        {
+          "ms": 8.110762999999992,
+          "work": 338908,
+          "allocation": 2804559,
+          "rss": 109764608,
+          "heapUsed": 19575712,
+          "maxRSSKiB": 107192
+        },
+        {
+          "ms": 6.396523000000002,
+          "work": 338908,
+          "allocation": 2804559,
+          "rss": 111239168,
+          "heapUsed": 19270488,
+          "maxRSSKiB": 108632
+        },
+        {
+          "ms": 6.539825999999948,
+          "work": 338908,
+          "allocation": 2804559,
+          "rss": 111730688,
+          "heapUsed": 18801528,
+          "maxRSSKiB": 109112
+        }
+      ]
+    },
+    "exp-minus-x": {
+      "integration": [
+        {
+          "ms": 9.793941999999959,
+          "work": 484036,
+          "allocation": 4249060,
+          "rss": 112713728,
+          "heapUsed": 16627256,
+          "maxRSSKiB": 110072
+        },
+        {
+          "ms": 9.811431999999968,
+          "work": 484036,
+          "allocation": 4249060,
+          "rss": 113205248,
+          "heapUsed": 19668232,
+          "maxRSSKiB": 110552
+        },
+        {
+          "ms": 9.251550000000009,
+          "work": 484036,
+          "allocation": 4249060,
+          "rss": 113532928,
+          "heapUsed": 22169568,
+          "maxRSSKiB": 110872
+        },
+        {
+          "ms": 12.659807,
+          "work": 484036,
+          "allocation": 4249060,
+          "rss": 123035648,
+          "heapUsed": 17113624,
+          "maxRSSKiB": 120152
+        },
+        {
+          "ms": 9.872830000000022,
+          "work": 484036,
+          "allocation": 4249060,
+          "rss": 131719168,
+          "heapUsed": 19542904,
+          "maxRSSKiB": 128632
+        }
+      ],
+      "verification": [
+        {
+          "ms": 4.181180999999981,
+          "work": 184597,
+          "allocation": 1559522,
+          "rss": 112713728,
+          "heapUsed": 15097704,
+          "maxRSSKiB": 110072
+        },
+        {
+          "ms": 4.274946999999997,
+          "work": 184597,
+          "allocation": 1559522,
+          "rss": 113369088,
+          "heapUsed": 18126240,
+          "maxRSSKiB": 110712
+        },
+        {
+          "ms": 4.195059000000015,
+          "work": 184597,
+          "allocation": 1559522,
+          "rss": 113696768,
+          "heapUsed": 20643536,
+          "maxRSSKiB": 111032
+        },
+        {
+          "ms": 3.086330999999973,
+          "work": 184597,
+          "allocation": 1559522,
+          "rss": 123035648,
+          "heapUsed": 23747768,
+          "maxRSSKiB": 120152
+        },
+        {
+          "ms": 3.049030000000016,
+          "work": 184597,
+          "allocation": 1559522,
+          "rss": 131719168,
+          "heapUsed": 26177312,
+          "maxRSSKiB": 128632
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 6.942804000000024,
+          "work": 359240,
+          "allocation": 2911042,
+          "rss": 113041408,
+          "heapUsed": 19587280,
+          "maxRSSKiB": 110392
+        },
+        {
+          "ms": 6.689842999999996,
+          "work": 359240,
+          "allocation": 2911042,
+          "rss": 113369088,
+          "heapUsed": 22680184,
+          "maxRSSKiB": 110712
+        },
+        {
+          "ms": 7.763805999999988,
+          "work": 359240,
+          "allocation": 2911042,
+          "rss": 113696768,
+          "heapUsed": 16768120,
+          "maxRSSKiB": 111032
+        },
+        {
+          "ms": 10.216811000000007,
+          "work": 359240,
+          "allocation": 2911042,
+          "rss": 131227648,
+          "heapUsed": 19861064,
+          "maxRSSKiB": 128152
+        },
+        {
+          "ms": 8.567764999999952,
+          "work": 359240,
+          "allocation": 2911042,
+          "rss": 131883008,
+          "heapUsed": 22499232,
+          "maxRSSKiB": 128792
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 8.767105000000015,
+          "work": 417321,
+          "allocation": 3407103,
+          "rss": 113041408,
+          "heapUsed": 18841344,
+          "maxRSSKiB": 110392
+        },
+        {
+          "ms": 8.368199000000004,
+          "work": 417321,
+          "allocation": 3407103,
+          "rss": 113369088,
+          "heapUsed": 21692352,
+          "maxRSSKiB": 110712
+        },
+        {
+          "ms": 9.308701999999982,
+          "work": 417321,
+          "allocation": 3407103,
+          "rss": 114188288,
+          "heapUsed": 16171920,
+          "maxRSSKiB": 111512
+        },
+        {
+          "ms": 8.796165999999971,
+          "work": 417321,
+          "allocation": 3407103,
+          "rss": 131391488,
+          "heapUsed": 18962816,
+          "maxRSSKiB": 128312
+        },
+        {
+          "ms": 9.18940600000002,
+          "work": 417321,
+          "allocation": 3407103,
+          "rss": 132046848,
+          "heapUsed": 21602776,
+          "maxRSSKiB": 128952
+        }
+      ]
+    },
+    "shifted": {
+      "integration": [
+        {
+          "ms": 8.932045000000016,
+          "work": 439826,
+          "allocation": 4054931,
+          "rss": 133357568,
+          "heapUsed": 21019224,
+          "maxRSSKiB": 130232
+        },
+        {
+          "ms": 8.637396999999964,
+          "work": 439826,
+          "allocation": 4054931,
+          "rss": 133849088,
+          "heapUsed": 30286368,
+          "maxRSSKiB": 130712
+        },
+        {
+          "ms": 9.557943000000023,
+          "work": 439826,
+          "allocation": 4054931,
+          "rss": 134504448,
+          "heapUsed": 22767656,
+          "maxRSSKiB": 131352
+        },
+        {
+          "ms": 8.391315000000077,
+          "work": 439826,
+          "allocation": 4054931,
+          "rss": 134995968,
+          "heapUsed": 31981712,
+          "maxRSSKiB": 131832
+        },
+        {
+          "ms": 8.928950999999984,
+          "work": 439826,
+          "allocation": 4054931,
+          "rss": 135651328,
+          "heapUsed": 24467184,
+          "maxRSSKiB": 132472
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.578683000000069,
+          "work": 146180,
+          "allocation": 1279891,
+          "rss": 133357568,
+          "heapUsed": 26045088,
+          "maxRSSKiB": 130232
+        },
+        {
+          "ms": 2.6714419999999564,
+          "work": 146180,
+          "allocation": 1279891,
+          "rss": 134012928,
+          "heapUsed": 35532696,
+          "maxRSSKiB": 130872
+        },
+        {
+          "ms": 2.4376399999999876,
+          "work": 146180,
+          "allocation": 1279891,
+          "rss": 134504448,
+          "heapUsed": 27787720,
+          "maxRSSKiB": 131352
+        },
+        {
+          "ms": 2.5199830000000247,
+          "work": 146180,
+          "allocation": 1279891,
+          "rss": 135159808,
+          "heapUsed": 37225312,
+          "maxRSSKiB": 131992
+        },
+        {
+          "ms": 2.3782569999999623,
+          "work": 146180,
+          "allocation": 1279891,
+          "rss": 135651328,
+          "heapUsed": 29493328,
+          "maxRSSKiB": 132472
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 8.174900000000093,
+          "work": 292739,
+          "allocation": 2429284,
+          "rss": 133521408,
+          "heapUsed": 19621360,
+          "maxRSSKiB": 130392
+        },
+        {
+          "ms": 7.660474000000022,
+          "work": 292739,
+          "allocation": 2429284,
+          "rss": 134176768,
+          "heapUsed": 28894736,
+          "maxRSSKiB": 131032
+        },
+        {
+          "ms": 6.633902000000035,
+          "work": 292739,
+          "allocation": 2429284,
+          "rss": 134668288,
+          "heapUsed": 21339432,
+          "maxRSSKiB": 131512
+        },
+        {
+          "ms": 6.599147000000016,
+          "work": 292739,
+          "allocation": 2429284,
+          "rss": 135323648,
+          "heapUsed": 30582696,
+          "maxRSSKiB": 132152
+        },
+        {
+          "ms": 6.899156999999946,
+          "work": 292739,
+          "allocation": 2429284,
+          "rss": 135815168,
+          "heapUsed": 23101496,
+          "maxRSSKiB": 132632
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 6.049160000000029,
+          "work": 348998,
+          "allocation": 2914862,
+          "rss": 133685248,
+          "heapUsed": 32370928,
+          "maxRSSKiB": 130552
+        },
+        {
+          "ms": 7.589527999999973,
+          "work": 348998,
+          "allocation": 2914862,
+          "rss": 134176768,
+          "heapUsed": 24920992,
+          "maxRSSKiB": 131032
+        },
+        {
+          "ms": 6.091754000000037,
+          "work": 348998,
+          "allocation": 2914862,
+          "rss": 134832128,
+          "heapUsed": 34140712,
+          "maxRSSKiB": 131672
+        },
+        {
+          "ms": 7.662090000000035,
+          "work": 348998,
+          "allocation": 2914862,
+          "rss": 135323648,
+          "heapUsed": 26633848,
+          "maxRSSKiB": 132152
+        },
+        {
+          "ms": 5.915452000000073,
+          "work": 348998,
+          "allocation": 2914862,
+          "rss": 135979008,
+          "heapUsed": 35862824,
+          "maxRSSKiB": 132792
+        }
+      ]
+    },
+    "shifted-negative": {
+      "integration": [
+        {
+          "ms": 10.554745000000025,
+          "work": 530889,
+          "allocation": 4757075,
+          "rss": 137453568,
+          "heapUsed": 28926016,
+          "maxRSSKiB": 134232
+        },
+        {
+          "ms": 10.555153000000018,
+          "work": 530889,
+          "allocation": 4757075,
+          "rss": 137945088,
+          "heapUsed": 32914408,
+          "maxRSSKiB": 134712
+        },
+        {
+          "ms": 10.35337800000002,
+          "work": 530889,
+          "allocation": 4757075,
+          "rss": 138600448,
+          "heapUsed": 37131752,
+          "maxRSSKiB": 135352
+        },
+        {
+          "ms": 10.57418000000007,
+          "work": 530889,
+          "allocation": 4757075,
+          "rss": 139419648,
+          "heapUsed": 41255048,
+          "maxRSSKiB": 136152
+        },
+        {
+          "ms": 10.598406000000068,
+          "work": 530889,
+          "allocation": 4757075,
+          "rss": 139911168,
+          "heapUsed": 28690688,
+          "maxRSSKiB": 136632
+        }
+      ],
+      "verification": [
+        {
+          "ms": 3.377207999999996,
+          "work": 189673,
+          "allocation": 1614761,
+          "rss": 137453568,
+          "heapUsed": 35740872,
+          "maxRSSKiB": 134232
+        },
+        {
+          "ms": 3.4774099999999635,
+          "work": 189673,
+          "allocation": 1614761,
+          "rss": 138108928,
+          "heapUsed": 39834680,
+          "maxRSSKiB": 134872
+        },
+        {
+          "ms": 5.286475999999993,
+          "work": 189673,
+          "allocation": 1614761,
+          "rss": 138928128,
+          "heapUsed": 27488032,
+          "maxRSSKiB": 135672
+        },
+        {
+          "ms": 5.036917000000017,
+          "work": 189673,
+          "allocation": 1614761,
+          "rss": 139419648,
+          "heapUsed": 31417856,
+          "maxRSSKiB": 136152
+        },
+        {
+          "ms": 3.137262000000078,
+          "work": 189673,
+          "allocation": 1614761,
+          "rss": 139911168,
+          "heapUsed": 35424080,
+          "maxRSSKiB": 136632
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 8.250850999999898,
+          "work": 369397,
+          "allocation": 3021525,
+          "rss": 137617408,
+          "heapUsed": 32267800,
+          "maxRSSKiB": 134392
+        },
+        {
+          "ms": 7.741241999999943,
+          "work": 369397,
+          "allocation": 3021525,
+          "rss": 138272768,
+          "heapUsed": 36240960,
+          "maxRSSKiB": 135032
+        },
+        {
+          "ms": 6.188115999999923,
+          "work": 369397,
+          "allocation": 3021525,
+          "rss": 138928128,
+          "heapUsed": 40501544,
+          "maxRSSKiB": 135672
+        },
+        {
+          "ms": 7.853514000000018,
+          "work": 369397,
+          "allocation": 3021525,
+          "rss": 139583488,
+          "heapUsed": 27811832,
+          "maxRSSKiB": 136312
+        },
+        {
+          "ms": 7.998997000000031,
+          "work": 369397,
+          "allocation": 3021525,
+          "rss": 140075008,
+          "heapUsed": 32051840,
+          "maxRSSKiB": 136792
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 8.228791000000001,
+          "work": 427586,
+          "allocation": 3518788,
+          "rss": 137781248,
+          "heapUsed": 31487880,
+          "maxRSSKiB": 134552
+        },
+        {
+          "ms": 8.947369999999978,
+          "work": 427586,
+          "allocation": 3518788,
+          "rss": 138436608,
+          "heapUsed": 35585544,
+          "maxRSSKiB": 135192
+        },
+        {
+          "ms": 9.116859999999974,
+          "work": 427586,
+          "allocation": 3518788,
+          "rss": 139091968,
+          "heapUsed": 39738816,
+          "maxRSSKiB": 135832
+        },
+        {
+          "ms": 8.615084000000024,
+          "work": 427586,
+          "allocation": 3518788,
+          "rss": 139747328,
+          "heapUsed": 27120960,
+          "maxRSSKiB": 136472
+        },
+        {
+          "ms": 8.48357999999996,
+          "work": 427586,
+          "allocation": 3518788,
+          "rss": 140238848,
+          "heapUsed": 31234912,
+          "maxRSSKiB": 136952
+        }
+      ]
+    },
+    "2x-exp-x2": {
+      "integration": [
+        {
+          "ms": 8.237490000000093,
+          "work": 457779,
+          "allocation": 4175238,
+          "rss": 176283648,
+          "heapUsed": 56624016,
+          "maxRSSKiB": 172152
+        },
+        {
+          "ms": 10.469529999999963,
+          "work": 457779,
+          "allocation": 4175238,
+          "rss": 177102848,
+          "heapUsed": 36218832,
+          "maxRSSKiB": 172952
+        },
+        {
+          "ms": 8.007677999999942,
+          "work": 457779,
+          "allocation": 4175238,
+          "rss": 177758208,
+          "heapUsed": 49415544,
+          "maxRSSKiB": 173592
+        },
+        {
+          "ms": 8.00309900000002,
+          "work": 457779,
+          "allocation": 4175238,
+          "rss": 178577408,
+          "heapUsed": 62540528,
+          "maxRSSKiB": 174392
+        },
+        {
+          "ms": 11.128048000000035,
+          "work": 457779,
+          "allocation": 4175238,
+          "rss": 179396608,
+          "heapUsed": 42217792,
+          "maxRSSKiB": 175192
+        }
+      ],
+      "verification": [
+        {
+          "ms": 8.207806000000005,
+          "work": 162813,
+          "allocation": 1425095,
+          "rss": 176939008,
+          "heapUsed": 29311648,
+          "maxRSSKiB": 172792
+        },
+        {
+          "ms": 2.991517999999928,
+          "work": 162813,
+          "allocation": 1425095,
+          "rss": 177266688,
+          "heapUsed": 42055584,
+          "maxRSSKiB": 173112
+        },
+        {
+          "ms": 3.1336109999999735,
+          "work": 162813,
+          "allocation": 1425095,
+          "rss": 178249728,
+          "heapUsed": 55389064,
+          "maxRSSKiB": 174072
+        },
+        {
+          "ms": 7.157161999999971,
+          "work": 162813,
+          "allocation": 1425095,
+          "rss": 178905088,
+          "heapUsed": 34992352,
+          "maxRSSKiB": 174712
+        },
+        {
+          "ms": 2.9810500000000957,
+          "work": 162813,
+          "allocation": 1425095,
+          "rss": 179560448,
+          "heapUsed": 47998736,
+          "maxRSSKiB": 175352
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 5.500806000000011,
+          "work": 323363,
+          "allocation": 2685688,
+          "rss": 176939008,
+          "heapUsed": 40318656,
+          "maxRSSKiB": 172792
+        },
+        {
+          "ms": 5.969531999999958,
+          "work": 323363,
+          "allocation": 2685688,
+          "rss": 177758208,
+          "heapUsed": 53522096,
+          "maxRSSKiB": 173592
+        },
+        {
+          "ms": 9.628251999999975,
+          "work": 323363,
+          "allocation": 2685688,
+          "rss": 178413568,
+          "heapUsed": 33157952,
+          "maxRSSKiB": 174232
+        },
+        {
+          "ms": 5.765570999999909,
+          "work": 323363,
+          "allocation": 2685688,
+          "rss": 178905088,
+          "heapUsed": 45977856,
+          "maxRSSKiB": 174712
+        },
+        {
+          "ms": 5.888835999999856,
+          "work": 323363,
+          "allocation": 2685688,
+          "rss": 179888128,
+          "heapUsed": 59415712,
+          "maxRSSKiB": 175672
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 6.881187999999952,
+          "work": 388649,
+          "allocation": 3268867,
+          "rss": 176939008,
+          "heapUsed": 54299688,
+          "maxRSSKiB": 172792
+        },
+        {
+          "ms": 13.726175000000012,
+          "work": 388649,
+          "allocation": 3268867,
+          "rss": 177758208,
+          "heapUsed": 34101568,
+          "maxRSSKiB": 173592
+        },
+        {
+          "ms": 6.972443000000112,
+          "work": 388649,
+          "allocation": 3268867,
+          "rss": 178413568,
+          "heapUsed": 47200576,
+          "maxRSSKiB": 174232
+        },
+        {
+          "ms": 7.049976999999899,
+          "work": 388649,
+          "allocation": 3268867,
+          "rss": 179068928,
+          "heapUsed": 60077256,
+          "maxRSSKiB": 174872
+        },
+        {
+          "ms": 10.53843999999981,
+          "work": 388649,
+          "allocation": 3268867,
+          "rss": 180051968,
+          "heapUsed": 39955008,
+          "maxRSSKiB": 175832
+        }
+      ]
+    },
+    "inverse-x-positive": {
+      "integration": [
+        {
+          "ms": 14.460679000000027,
+          "work": 628241,
+          "allocation": 6051672,
+          "rss": 182509568,
+          "heapUsed": 34274984,
+          "maxRSSKiB": 178232
+        },
+        {
+          "ms": 10.74011900000005,
+          "work": 628241,
+          "allocation": 6051672,
+          "rss": 183328768,
+          "heapUsed": 54931712,
+          "maxRSSKiB": 179032
+        },
+        {
+          "ms": 15.530713000000105,
+          "work": 628241,
+          "allocation": 6051672,
+          "rss": 183820288,
+          "heapUsed": 41857424,
+          "maxRSSKiB": 179512
+        },
+        {
+          "ms": 10.71008699999993,
+          "work": 628241,
+          "allocation": 6051672,
+          "rss": 185131008,
+          "heapUsed": 63119024,
+          "maxRSSKiB": 180792
+        },
+        {
+          "ms": 13.478771000000052,
+          "work": 628241,
+          "allocation": 6051672,
+          "rss": 185458688,
+          "heapUsed": 49858688,
+          "maxRSSKiB": 181112
+        }
+      ],
+      "verification": [
+        {
+          "ms": 3.3790910000000167,
+          "work": 201398,
+          "allocation": 1851603,
+          "rss": 182509568,
+          "heapUsed": 40607912,
+          "maxRSSKiB": 178232
+        },
+        {
+          "ms": 3.2857860000001438,
+          "work": 201398,
+          "allocation": 1851603,
+          "rss": 183328768,
+          "heapUsed": 61290968,
+          "maxRSSKiB": 179032
+        },
+        {
+          "ms": 3.3578070000000935,
+          "work": 201398,
+          "allocation": 1851603,
+          "rss": 183820288,
+          "heapUsed": 48235120,
+          "maxRSSKiB": 179512
+        },
+        {
+          "ms": 3.4872170000001006,
+          "work": 201398,
+          "allocation": 1851603,
+          "rss": 185131008,
+          "heapUsed": 69478280,
+          "maxRSSKiB": 180792
+        },
+        {
+          "ms": 3.6290959999998904,
+          "work": 201398,
+          "allocation": 1851603,
+          "rss": 185950208,
+          "heapUsed": 56670328,
+          "maxRSSKiB": 181592
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 6.83504199999993,
+          "work": 404371,
+          "allocation": 3542172,
+          "rss": 182509568,
+          "heapUsed": 53239032,
+          "maxRSSKiB": 178232
+        },
+        {
+          "ms": 10.687441999999919,
+          "work": 404371,
+          "allocation": 3542172,
+          "rss": 183492608,
+          "heapUsed": 40527952,
+          "maxRSSKiB": 179192
+        },
+        {
+          "ms": 7.902919999999995,
+          "work": 404371,
+          "allocation": 3542172,
+          "rss": 184311808,
+          "heapUsed": 61284440,
+          "maxRSSKiB": 179992
+        },
+        {
+          "ms": 10.917016999999987,
+          "work": 404371,
+          "allocation": 3542172,
+          "rss": 185131008,
+          "heapUsed": 48603696,
+          "maxRSSKiB": 180792
+        },
+        {
+          "ms": 6.627378000000135,
+          "work": 404371,
+          "allocation": 3542172,
+          "rss": 185950208,
+          "heapUsed": 69406008,
+          "maxRSSKiB": 181592
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 11.889946000000009,
+          "work": 471703,
+          "allocation": 4135613,
+          "rss": 182673408,
+          "heapUsed": 35783504,
+          "maxRSSKiB": 178392
+        },
+        {
+          "ms": 7.98443199999997,
+          "work": 471703,
+          "allocation": 4135613,
+          "rss": 183492608,
+          "heapUsed": 56297528,
+          "maxRSSKiB": 179192
+        },
+        {
+          "ms": 11.15541600000006,
+          "work": 471703,
+          "allocation": 4135613,
+          "rss": 184475648,
+          "heapUsed": 43943584,
+          "maxRSSKiB": 180152
+        },
+        {
+          "ms": 8.123049000000037,
+          "work": 471703,
+          "allocation": 4135613,
+          "rss": 185294848,
+          "heapUsed": 64398600,
+          "maxRSSKiB": 180952
+        },
+        {
+          "ms": 12.178330000000187,
+          "work": 471703,
+          "allocation": 4135613,
+          "rss": 186114048,
+          "heapUsed": 51839856,
+          "maxRSSKiB": 181752
+        }
+      ]
+    },
+    "zero": {
+      "integration": [
+        {
+          "ms": 11.318095999999969,
+          "work": 498176,
+          "allocation": 4880973,
+          "rss": 187588608,
+          "heapUsed": 47171280,
+          "maxRSSKiB": 183192
+        },
+        {
+          "ms": 8.099243999999999,
+          "work": 498176,
+          "allocation": 4880973,
+          "rss": 188243968,
+          "heapUsed": 54338176,
+          "maxRSSKiB": 183832
+        },
+        {
+          "ms": 8.36637399999995,
+          "work": 498176,
+          "allocation": 4880973,
+          "rss": 189063168,
+          "heapUsed": 61223040,
+          "maxRSSKiB": 184632
+        },
+        {
+          "ms": 8.398302000000058,
+          "work": 498176,
+          "allocation": 4880973,
+          "rss": 189554688,
+          "heapUsed": 68161432,
+          "maxRSSKiB": 185112
+        },
+        {
+          "ms": 13.570453000000043,
+          "work": 498176,
+          "allocation": 4880973,
+          "rss": 190009344,
+          "heapUsed": 41462056,
+          "maxRSSKiB": 185592
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.3756130000001576,
+          "work": 150155,
+          "allocation": 1407968,
+          "rss": 187588608,
+          "heapUsed": 51743904,
+          "maxRSSKiB": 183192
+        },
+        {
+          "ms": 2.830048999999917,
+          "work": 150155,
+          "allocation": 1407968,
+          "rss": 188735488,
+          "heapUsed": 59335328,
+          "maxRSSKiB": 184312
+        },
+        {
+          "ms": 2.9298639999999523,
+          "work": 150155,
+          "allocation": 1407968,
+          "rss": 189390848,
+          "heapUsed": 66222760,
+          "maxRSSKiB": 184952
+        },
+        {
+          "ms": 2.862911999999824,
+          "work": 150155,
+          "allocation": 1407968,
+          "rss": 190046208,
+          "heapUsed": 73158352,
+          "maxRSSKiB": 185592
+        },
+        {
+          "ms": 2.4426610000000437,
+          "work": 150155,
+          "allocation": 1407968,
+          "rss": 190009344,
+          "heapUsed": 46027840,
+          "maxRSSKiB": 185592
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 5.3771690000000945,
+          "work": 306266,
+          "allocation": 2697457,
+          "rss": 187916288,
+          "heapUsed": 61535528,
+          "maxRSSKiB": 183512
+        },
+        {
+          "ms": 4.985206000000062,
+          "work": 306266,
+          "allocation": 2697457,
+          "rss": 188735488,
+          "heapUsed": 68708960,
+          "maxRSSKiB": 184312
+        },
+        {
+          "ms": 8.210307000000057,
+          "work": 306266,
+          "allocation": 2697457,
+          "rss": 189390848,
+          "heapUsed": 41963736,
+          "maxRSSKiB": 184952
+        },
+        {
+          "ms": 8.22923199999991,
+          "work": 306266,
+          "allocation": 2697457,
+          "rss": 189845504,
+          "heapUsed": 48620096,
+          "maxRSSKiB": 185592
+        },
+        {
+          "ms": 5.014704000000165,
+          "work": 306266,
+          "allocation": 2697457,
+          "rss": 190009344,
+          "heapUsed": 55390528,
+          "maxRSSKiB": 185592
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 10.952845999999909,
+          "work": 353127,
+          "allocation": 3128614,
+          "rss": 188243968,
+          "heapUsed": 39888576,
+          "maxRSSKiB": 183832
+        },
+        {
+          "ms": 9.792097999999896,
+          "work": 353127,
+          "allocation": 3128614,
+          "rss": 188899328,
+          "heapUsed": 46791144,
+          "maxRSSKiB": 184472
+        },
+        {
+          "ms": 6.1531159999999545,
+          "work": 353127,
+          "allocation": 3128614,
+          "rss": 189390848,
+          "heapUsed": 53639352,
+          "maxRSSKiB": 184952
+        },
+        {
+          "ms": 6.143843000000061,
+          "work": 353127,
+          "allocation": 3128614,
+          "rss": 189845504,
+          "heapUsed": 60290864,
+          "maxRSSKiB": 185592
+        },
+        {
+          "ms": 6.1971810000000005,
+          "work": 353127,
+          "allocation": 3128614,
+          "rss": 190173184,
+          "heapUsed": 67014928,
+          "maxRSSKiB": 185716
+        }
+      ]
+    },
+    "rational-coefficient": {
+      "integration": [
+        {
+          "ms": 16.983685999999807,
+          "work": 804044,
+          "allocation": 7812161,
+          "rss": 193449984,
+          "heapUsed": 58167224,
+          "maxRSSKiB": 188916
+        },
+        {
+          "ms": 16.413534000000027,
+          "work": 804044,
+          "allocation": 7812161,
+          "rss": 194506752,
+          "heapUsed": 58457224,
+          "maxRSSKiB": 190196
+        },
+        {
+          "ms": 17.17016999999987,
+          "work": 804044,
+          "allocation": 7812161,
+          "rss": 195706880,
+          "heapUsed": 58930752,
+          "maxRSSKiB": 191388
+        },
+        {
+          "ms": 16.39982000000009,
+          "work": 804044,
+          "allocation": 7812161,
+          "rss": 196722688,
+          "heapUsed": 59349456,
+          "maxRSSKiB": 192400
+        },
+        {
+          "ms": 16.683520000000044,
+          "work": 804044,
+          "allocation": 7812161,
+          "rss": 197951488,
+          "heapUsed": 59750256,
+          "maxRSSKiB": 193552
+        }
+      ],
+      "verification": [
+        {
+          "ms": 5.169002999999975,
+          "work": 252422,
+          "allocation": 2309428,
+          "rss": 193777664,
+          "heapUsed": 66605952,
+          "maxRSSKiB": 189236
+        },
+        {
+          "ms": 5.186455000000024,
+          "work": 252422,
+          "allocation": 2309428,
+          "rss": 194834432,
+          "heapUsed": 66921040,
+          "maxRSSKiB": 190268
+        },
+        {
+          "ms": 5.0689920000002076,
+          "work": 252422,
+          "allocation": 2309428,
+          "rss": 196034560,
+          "heapUsed": 67344248,
+          "maxRSSKiB": 191440
+        },
+        {
+          "ms": 5.100772000000006,
+          "work": 252422,
+          "allocation": 2309428,
+          "rss": 197050368,
+          "heapUsed": 67794336,
+          "maxRSSKiB": 192432
+        },
+        {
+          "ms": 5.218447000000197,
+          "work": 252422,
+          "allocation": 2309428,
+          "rss": 198115328,
+          "heapUsed": 68176936,
+          "maxRSSKiB": 193552
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 14.213602999999921,
+          "work": 505587,
+          "allocation": 4425422,
+          "rss": 193941504,
+          "heapUsed": 49262616,
+          "maxRSSKiB": 189396
+        },
+        {
+          "ms": 11.613283000000138,
+          "work": 505587,
+          "allocation": 4425422,
+          "rss": 195162112,
+          "heapUsed": 49645784,
+          "maxRSSKiB": 190588
+        },
+        {
+          "ms": 11.48369300000013,
+          "work": 505587,
+          "allocation": 4425422,
+          "rss": 196198400,
+          "heapUsed": 50158616,
+          "maxRSSKiB": 191600
+        },
+        {
+          "ms": 11.995722999999998,
+          "work": 505587,
+          "allocation": 4425422,
+          "rss": 197214208,
+          "heapUsed": 50490632,
+          "maxRSSKiB": 192592
+        },
+        {
+          "ms": 11.759927999999945,
+          "work": 505587,
+          "allocation": 4425422,
+          "rss": 198443008,
+          "heapUsed": 50819968,
+          "maxRSSKiB": 193792
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 9.920419000000038,
+          "work": 580686,
+          "allocation": 5107769,
+          "rss": 194269184,
+          "heapUsed": 68748368,
+          "maxRSSKiB": 189716
+        },
+        {
+          "ms": 9.927553999999873,
+          "work": 580686,
+          "allocation": 5107769,
+          "rss": 195489792,
+          "heapUsed": 69125464,
+          "maxRSSKiB": 190908
+        },
+        {
+          "ms": 10.042045000000144,
+          "work": 580686,
+          "allocation": 5107769,
+          "rss": 196689920,
+          "heapUsed": 69560200,
+          "maxRSSKiB": 192080
+        },
+        {
+          "ms": 10.084204999999884,
+          "work": 580686,
+          "allocation": 5107769,
+          "rss": 197541888,
+          "heapUsed": 69966344,
+          "maxRSSKiB": 192912
+        },
+        {
+          "ms": 9.936550000000125,
+          "work": 580686,
+          "allocation": 5107769,
+          "rss": 198770688,
+          "heapUsed": 70279480,
+          "maxRSSKiB": 194112
+        }
+      ]
+    },
+    "negative-exp-x2": {
+      "integration": [
+        {
+          "ms": 6.458631999999852,
+          "work": 237133,
+          "allocation": 2283607,
+          "rss": 199262208,
+          "heapUsed": 50688048,
+          "maxRSSKiB": 194592
+        },
+        {
+          "ms": 3.8675190000001294,
+          "work": 237133,
+          "allocation": 2283607,
+          "rss": 199262208,
+          "heapUsed": 70224656,
+          "maxRSSKiB": 194592
+        },
+        {
+          "ms": 3.933815999999979,
+          "work": 237133,
+          "allocation": 2283607,
+          "rss": 176721920,
+          "heapUsed": 25593568,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 4.000727000000097,
+          "work": 237133,
+          "allocation": 2283607,
+          "rss": 176721920,
+          "heapUsed": 45394120,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 3.871105999999827,
+          "work": 237133,
+          "allocation": 2283607,
+          "rss": 176721920,
+          "heapUsed": 32040288,
+          "maxRSSKiB": 194752
+        }
+      ],
+      "verification": [
+        {
+          "ms": 1.049015000000054,
+          "work": 65734,
+          "allocation": 598146,
+          "rss": 199262208,
+          "heapUsed": 52795592,
+          "maxRSSKiB": 194592
+        },
+        {
+          "ms": 1.2932999999998174,
+          "work": 65734,
+          "allocation": 598146,
+          "rss": 199426048,
+          "heapUsed": 72547128,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 1.327829999999949,
+          "work": 65734,
+          "allocation": 598146,
+          "rss": 176721920,
+          "heapUsed": 27916272,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 3.677171000000044,
+          "work": 65734,
+          "allocation": 598146,
+          "rss": 176721920,
+          "heapUsed": 14623456,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 1.2560819999998785,
+          "work": 65734,
+          "allocation": 598146,
+          "rss": 176885760,
+          "heapUsed": 34362608,
+          "maxRSSKiB": 194752
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 2.147815000000037,
+          "work": 134126,
+          "allocation": 1107916,
+          "rss": 199262208,
+          "heapUsed": 57101728,
+          "maxRSSKiB": 194592
+        },
+        {
+          "ms": 3.2543969999999263,
+          "work": 134126,
+          "allocation": 1107916,
+          "rss": 199426048,
+          "heapUsed": 76850800,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 2.2036310000000867,
+          "work": 134126,
+          "allocation": 1107916,
+          "rss": 176721920,
+          "heapUsed": 32218720,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 2.398584999999912,
+          "work": 134126,
+          "allocation": 1107916,
+          "rss": 176721920,
+          "heapUsed": 18913224,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 2.2560000000000855,
+          "work": 134126,
+          "allocation": 1107916,
+          "rss": 176885760,
+          "heapUsed": 38660112,
+          "maxRSSKiB": 194752
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 2.990934000000152,
+          "work": 171658,
+          "allocation": 1454882,
+          "rss": 199262208,
+          "heapUsed": 63025568,
+          "maxRSSKiB": 194592
+        },
+        {
+          "ms": 7.8714350000000195,
+          "work": 171658,
+          "allocation": 1454882,
+          "rss": 176721920,
+          "heapUsed": 18389280,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 3.122771999999941,
+          "work": 171658,
+          "allocation": 1454882,
+          "rss": 176721920,
+          "heapUsed": 38184064,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 3.0889629999999215,
+          "work": 171658,
+          "allocation": 1454882,
+          "rss": 176721920,
+          "heapUsed": 24841864,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 3.164118000000144,
+          "work": 171658,
+          "allocation": 1454882,
+          "rss": 176885760,
+          "heapUsed": 44585336,
+          "maxRSSKiB": 194752
+        }
+      ]
+    },
+    "negative-exp-x-over-x": {
+      "integration": [
+        {
+          "ms": 6.99660300000005,
+          "work": 306943,
+          "allocation": 3044996,
+          "rss": 195891200,
+          "heapUsed": 65346456,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 9.251899000000094,
+          "work": 306943,
+          "allocation": 3044996,
+          "rss": 212881408,
+          "heapUsed": 21520296,
+          "maxRSSKiB": 208100
+        },
+        {
+          "ms": 4.9827020000000175,
+          "work": 306943,
+          "allocation": 3044996,
+          "rss": 213209088,
+          "heapUsed": 44190616,
+          "maxRSSKiB": 208212
+        },
+        {
+          "ms": 7.167693999999983,
+          "work": 306943,
+          "allocation": 3044996,
+          "rss": 231231488,
+          "heapUsed": 66609552,
+          "maxRSSKiB": 225812
+        },
+        {
+          "ms": 8.17370800000026,
+          "work": 306943,
+          "allocation": 3044996,
+          "rss": 246210560,
+          "heapUsed": 21846752,
+          "maxRSSKiB": 240692
+        }
+      ],
+      "verification": [
+        {
+          "ms": 1.8404699999998684,
+          "work": 78012,
+          "allocation": 727626,
+          "rss": 198348800,
+          "heapUsed": 67781232,
+          "maxRSSKiB": 194752
+        },
+        {
+          "ms": 1.4261599999999817,
+          "work": 78012,
+          "allocation": 727626,
+          "rss": 212881408,
+          "heapUsed": 24147504,
+          "maxRSSKiB": 208100
+        },
+        {
+          "ms": 1.2791379999998753,
+          "work": 78012,
+          "allocation": 727626,
+          "rss": 213209088,
+          "heapUsed": 46624384,
+          "maxRSSKiB": 208212
+        },
+        {
+          "ms": 1.89449599999989,
+          "work": 78012,
+          "allocation": 727626,
+          "rss": 233689088,
+          "heapUsed": 69043320,
+          "maxRSSKiB": 228212
+        },
+        {
+          "ms": 1.6674900000002708,
+          "work": 78012,
+          "allocation": 727626,
+          "rss": 246210560,
+          "heapUsed": 24476856,
+          "maxRSSKiB": 240692
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 3.709914000000026,
+          "work": 156225,
+          "allocation": 1332258,
+          "rss": 202936320,
+          "heapUsed": 72528456,
+          "maxRSSKiB": 198180
+        },
+        {
+          "ms": 2.5110899999999674,
+          "work": 156225,
+          "allocation": 1332258,
+          "rss": 212881408,
+          "heapUsed": 28906792,
+          "maxRSSKiB": 208100
+        },
+        {
+          "ms": 3.269749000000047,
+          "work": 156225,
+          "allocation": 1332258,
+          "rss": 216158208,
+          "heapUsed": 51376904,
+          "maxRSSKiB": 211092
+        },
+        {
+          "ms": 3.5555340000000797,
+          "work": 156225,
+          "allocation": 1332258,
+          "rss": 238276608,
+          "heapUsed": 73789096,
+          "maxRSSKiB": 232692
+        },
+        {
+          "ms": 2.509078000000045,
+          "work": 156225,
+          "allocation": 1332258,
+          "rss": 246210560,
+          "heapUsed": 29236456,
+          "maxRSSKiB": 240692
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 8.92708400000015,
+          "work": 190496,
+          "allocation": 1640125,
+          "rss": 210800640,
+          "heapUsed": 79948304,
+          "maxRSSKiB": 205860
+        },
+        {
+          "ms": 3.216089000000011,
+          "work": 190496,
+          "allocation": 1640125,
+          "rss": 212881408,
+          "heapUsed": 35268816,
+          "maxRSSKiB": 208100
+        },
+        {
+          "ms": 4.773685999999998,
+          "work": 190496,
+          "allocation": 1640125,
+          "rss": 222547968,
+          "heapUsed": 57746888,
+          "maxRSSKiB": 217332
+        },
+        {
+          "ms": 4.736229000000094,
+          "work": 190496,
+          "allocation": 1640125,
+          "rss": 244502528,
+          "heapUsed": 80160296,
+          "maxRSSKiB": 238772
+        },
+        {
+          "ms": 3.35636199999999,
+          "work": 190496,
+          "allocation": 1640125,
+          "rss": 246210560,
+          "heapUsed": 35657168,
+          "maxRSSKiB": 240692
+        }
+      ]
+    },
+    "negative-exp-inverse-x": {
+      "integration": [
+        {
+          "ms": 6.848688000000038,
+          "work": 435654,
+          "allocation": 4472542,
+          "rss": 246611968,
+          "heapUsed": 36916296,
+          "maxRSSKiB": 241560
+        },
+        {
+          "ms": 7.102723999999853,
+          "work": 435654,
+          "allocation": 4472542,
+          "rss": 247267328,
+          "heapUsed": 65909720,
+          "maxRSSKiB": 241560
+        },
+        {
+          "ms": 7.114300000000185,
+          "work": 435654,
+          "allocation": 4472542,
+          "rss": 247013376,
+          "heapUsed": 27247832,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 7.131038999999873,
+          "work": 435654,
+          "allocation": 4472542,
+          "rss": 247668736,
+          "heapUsed": 56228472,
+          "maxRSSKiB": 241864
+        },
+        {
+          "ms": 12.037466000000222,
+          "work": 435654,
+          "allocation": 4472542,
+          "rss": 247599104,
+          "heapUsed": 17641504,
+          "maxRSSKiB": 242344
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.048569000000043,
+          "work": 110708,
+          "allocation": 1096971,
+          "rss": 246939648,
+          "heapUsed": 40167008,
+          "maxRSSKiB": 241560
+        },
+        {
+          "ms": 2.1033779999997932,
+          "work": 110708,
+          "allocation": 1096971,
+          "rss": 247431168,
+          "heapUsed": 69157712,
+          "maxRSSKiB": 241632
+        },
+        {
+          "ms": 1.9538590000001932,
+          "work": 110708,
+          "allocation": 1096971,
+          "rss": 247341056,
+          "heapUsed": 30495824,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 2.052484000000277,
+          "work": 110708,
+          "allocation": 1096971,
+          "rss": 247832576,
+          "heapUsed": 59477608,
+          "maxRSSKiB": 242024
+        },
+        {
+          "ms": 1.8279780000002575,
+          "work": 110708,
+          "allocation": 1096971,
+          "rss": 247599104,
+          "heapUsed": 20622040,
+          "maxRSSKiB": 242344
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 3.740522999999939,
+          "work": 232504,
+          "allocation": 2112977,
+          "rss": 247103488,
+          "heapUsed": 46547624,
+          "maxRSSKiB": 241560
+        },
+        {
+          "ms": 3.8917320000000473,
+          "work": 232504,
+          "allocation": 2112977,
+          "rss": 247595008,
+          "heapUsed": 75535648,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 3.779884000000038,
+          "work": 232504,
+          "allocation": 2112977,
+          "rss": 247504896,
+          "heapUsed": 36873760,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 3.910073999999895,
+          "work": 232504,
+          "allocation": 2112977,
+          "rss": 247996416,
+          "heapUsed": 65863488,
+          "maxRSSKiB": 242184
+        },
+        {
+          "ms": 3.9134070000000065,
+          "work": 232504,
+          "allocation": 2112977,
+          "rss": 247599104,
+          "heapUsed": 26862000,
+          "maxRSSKiB": 242344
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 4.589941000000181,
+          "work": 270854,
+          "allocation": 2461296,
+          "rss": 247103488,
+          "heapUsed": 54577888,
+          "maxRSSKiB": 241560
+        },
+        {
+          "ms": 9.187588000000233,
+          "work": 270854,
+          "allocation": 2461296,
+          "rss": 247013376,
+          "heapUsed": 15929656,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 4.629120999999941,
+          "work": 270854,
+          "allocation": 2461296,
+          "rss": 247504896,
+          "heapUsed": 44874240,
+          "maxRSSKiB": 241792
+        },
+        {
+          "ms": 4.60388200000034,
+          "work": 270854,
+          "allocation": 2461296,
+          "rss": 247996416,
+          "heapUsed": 73885576,
+          "maxRSSKiB": 242184
+        },
+        {
+          "ms": 4.555812999999944,
+          "work": 270854,
+          "allocation": 2461296,
+          "rss": 247599104,
+          "heapUsed": 34895680,
+          "maxRSSKiB": 242344
+        }
+      ]
+    },
+    "power-positive": {
+      "differentiation": [
+        {
+          "ms": 3.1137360000002445,
+          "work": 164332,
+          "allocation": 1325519,
+          "rss": 247762944,
+          "heapUsed": 72888920,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 5.925429999999778,
+          "work": 164332,
+          "allocation": 1325519,
+          "rss": 247734272,
+          "heapUsed": 19941184,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 2.993572999999742,
+          "work": 164332,
+          "allocation": 1325519,
+          "rss": 247734272,
+          "heapUsed": 34481272,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.0590480000000753,
+          "work": 164332,
+          "allocation": 1325519,
+          "rss": 247734272,
+          "heapUsed": 49032776,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.045889999999872,
+          "work": 164332,
+          "allocation": 1325519,
+          "rss": 247734272,
+          "heapUsed": 63581120,
+          "maxRSSKiB": 242344
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.859497999999803,
+          "work": 149041,
+          "allocation": 1213542,
+          "rss": 247926784,
+          "heapUsed": 78790664,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 2.6901080000002366,
+          "work": 149041,
+          "allocation": 1213542,
+          "rss": 247734272,
+          "heapUsed": 25833760,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 2.874764000000141,
+          "work": 149041,
+          "allocation": 1213542,
+          "rss": 247734272,
+          "heapUsed": 40384856,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 2.774580000000242,
+          "work": 149041,
+          "allocation": 1213542,
+          "rss": 247734272,
+          "heapUsed": 54933200,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 2.872392999999647,
+          "work": 149041,
+          "allocation": 1213542,
+          "rss": 247898112,
+          "heapUsed": 69481544,
+          "maxRSSKiB": 242344
+        }
+      ]
+    },
+    "power-negative": {
+      "differentiation": [
+        {
+          "ms": 3.269158999999945,
+          "work": 186900,
+          "allocation": 1446276,
+          "rss": 247869440,
+          "heapUsed": 46834760,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.363847000000078,
+          "work": 186900,
+          "allocation": 1446276,
+          "rss": 247869440,
+          "heapUsed": 64082136,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.4541919999996935,
+          "work": 186900,
+          "allocation": 1446276,
+          "rss": 248033280,
+          "heapUsed": 81439208,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.3346529999998893,
+          "work": 186900,
+          "allocation": 1446276,
+          "rss": 248004608,
+          "heapUsed": 30856136,
+          "maxRSSKiB": 242380
+        },
+        {
+          "ms": 3.3147579999999834,
+          "work": 186900,
+          "allocation": 1446276,
+          "rss": 248004608,
+          "heapUsed": 48100440,
+          "maxRSSKiB": 242380
+        }
+      ],
+      "verification": [
+        {
+          "ms": 2.996262999999999,
+          "work": 167004,
+          "allocation": 1317750,
+          "rss": 247869440,
+          "heapUsed": 53687056,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 3.0446099999999205,
+          "work": 167004,
+          "allocation": 1317750,
+          "rss": 248033280,
+          "heapUsed": 70966216,
+          "maxRSSKiB": 242344
+        },
+        {
+          "ms": 5.735206999999718,
+          "work": 167004,
+          "allocation": 1317750,
+          "rss": 248004608,
+          "heapUsed": 20476512,
+          "maxRSSKiB": 242380
+        },
+        {
+          "ms": 3.154533999999785,
+          "work": 167004,
+          "allocation": 1317750,
+          "rss": 248004608,
+          "heapUsed": 37708328,
+          "maxRSSKiB": 242380
+        },
+        {
+          "ms": 2.97090500000013,
+          "work": 167004,
+          "allocation": 1317750,
+          "rss": 248004608,
+          "heapUsed": 54984520,
+          "maxRSSKiB": 242380
+        }
+      ]
+    },
+    "mixed-laurent": {
+      "differentiation": [
+        {
+          "ms": 7.819862999999714,
+          "work": 414025,
+          "allocation": 3011651,
+          "rss": 250015744,
+          "heapUsed": 85899264,
+          "maxRSSKiB": 244156
+        },
+        {
+          "ms": 7.514381999999841,
+          "work": 414025,
+          "allocation": 3011651,
+          "rss": 249466880,
+          "heapUsed": 55507120,
+          "maxRSSKiB": 244156
+        },
+        {
+          "ms": 9.872349000000213,
+          "work": 414025,
+          "allocation": 3011651,
+          "rss": 248946688,
+          "heapUsed": 25070112,
+          "maxRSSKiB": 244420
+        },
+        {
+          "ms": 7.5704319999999825,
+          "work": 414025,
+          "allocation": 3011651,
+          "rss": 249602048,
+          "heapUsed": 63227560,
+          "maxRSSKiB": 244420
+        },
+        {
+          "ms": 9.709771000000273,
+          "work": 414025,
+          "allocation": 3011651,
+          "rss": 249110528,
+          "heapUsed": 32969208,
+          "maxRSSKiB": 244552
+        }
+      ],
+      "verification": [
+        {
+          "ms": 9.731682000000092,
+          "work": 368736,
+          "allocation": 2697932,
+          "rss": 248811520,
+          "heapUsed": 33385056,
+          "maxRSSKiB": 244156
+        },
+        {
+          "ms": 6.861983999999666,
+          "work": 368736,
+          "allocation": 2697932,
+          "rss": 250122240,
+          "heapUsed": 71996544,
+          "maxRSSKiB": 244260
+        },
+        {
+          "ms": 6.818520000000262,
+          "work": 368736,
+          "allocation": 2697932,
+          "rss": 249110528,
+          "heapUsed": 41192984,
+          "maxRSSKiB": 244420
+        },
+        {
+          "ms": 6.899225999999999,
+          "work": 368736,
+          "allocation": 2697932,
+          "rss": 250421248,
+          "heapUsed": 79599400,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 7.045223000000078,
+          "work": 368736,
+          "allocation": 2697932,
+          "rss": 249929728,
+          "heapUsed": 49578176,
+          "maxRSSKiB": 244552
+        }
+      ]
+    },
+    "logarithmic": {
+      "differentiation": [
+        {
+          "ms": 3.474888000000192,
+          "work": 189803,
+          "allocation": 1537090,
+          "rss": 249618432,
+          "heapUsed": 28048472,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.602907999999843,
+          "work": 189803,
+          "allocation": 1537090,
+          "rss": 249782272,
+          "heapUsed": 45873352,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.608251999999993,
+          "work": 189803,
+          "allocation": 1537090,
+          "rss": 250109952,
+          "heapUsed": 63698344,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.7804150000001755,
+          "work": 189803,
+          "allocation": 1537090,
+          "rss": 250273792,
+          "heapUsed": 81538824,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.7523949999999786,
+          "work": 189803,
+          "allocation": 1537090,
+          "rss": 249753600,
+          "heapUsed": 31130408,
+          "maxRSSKiB": 244552
+        }
+      ],
+      "verification": [
+        {
+          "ms": 3.2519099999999526,
+          "work": 169601,
+          "allocation": 1370969,
+          "rss": 249618432,
+          "heapUsed": 34786896,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.102249000000029,
+          "work": 169601,
+          "allocation": 1370969,
+          "rss": 249946112,
+          "heapUsed": 52611888,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.2309329999998226,
+          "work": 169601,
+          "allocation": 1370969,
+          "rss": 250273792,
+          "heapUsed": 70436880,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 5.751134999999977,
+          "work": 169601,
+          "allocation": 1370969,
+          "rss": 249753600,
+          "heapUsed": 20062352,
+          "maxRSSKiB": 244552
+        },
+        {
+          "ms": 3.0888740000000325,
+          "work": 169601,
+          "allocation": 1370969,
+          "rss": 249917440,
+          "heapUsed": 37828296,
+          "maxRSSKiB": 244552
+        }
+      ]
+    },
+    "tower-five": {
+      "differentiation": [
+        {
+          "ms": 519.4882450000005,
+          "work": 24150853,
+          "allocation": 208037074,
+          "rss": 265228288,
+          "heapUsed": 59701720,
+          "maxRSSKiB": 259548
+        },
+        {
+          "ms": 523.6552819999997,
+          "work": 24150853,
+          "allocation": 208037074,
+          "rss": 269283328,
+          "heapUsed": 83817512,
+          "maxRSSKiB": 263640
+        },
+        {
+          "ms": 533.1460479999996,
+          "work": 24150853,
+          "allocation": 208037074,
+          "rss": 275329024,
+          "heapUsed": 108709696,
+          "maxRSSKiB": 268876
+        },
+        {
+          "ms": 535.5075620000007,
+          "work": 24150853,
+          "allocation": 208037074,
+          "rss": 279986176,
+          "heapUsed": 65331432,
+          "maxRSSKiB": 274280
+        },
+        {
+          "ms": 527.0349229999993,
+          "work": 24150853,
+          "allocation": 208037074,
+          "rss": 285073408,
+          "heapUsed": 89489560,
+          "maxRSSKiB": 279060
+        }
+      ],
+      "verification": [
+        {
+          "ms": 454.6673890000002,
+          "work": 21000176,
+          "allocation": 180800884,
+          "rss": 265818112,
+          "heapUsed": 43006608,
+          "maxRSSKiB": 260632
+        },
+        {
+          "ms": 463.9279459999998,
+          "work": 21000176,
+          "allocation": 180800884,
+          "rss": 270553088,
+          "heapUsed": 67265400,
+          "maxRSSKiB": 265360
+        },
+        {
+          "ms": 471.09515199999987,
+          "work": 21000176,
+          "allocation": 180800884,
+          "rss": 276295680,
+          "heapUsed": 92274048,
+          "maxRSSKiB": 270196
+        },
+        {
+          "ms": 453.57814899999903,
+          "work": 21000176,
+          "allocation": 180800884,
+          "rss": 281886720,
+          "heapUsed": 116990368,
+          "maxRSSKiB": 275600
+        },
+        {
+          "ms": 462.29198599999836,
+          "work": 21000176,
+          "allocation": 180800884,
+          "rss": 285933568,
+          "heapUsed": 72844792,
+          "maxRSSKiB": 280380
+        }
+      ]
+    },
+    "rational-quintic": {
+      "integration": [
+        {
+          "ms": 3162.875906999998,
+          "work": 161178727,
+          "allocation": 9816746200,
+          "rss": 299466752,
+          "heapUsed": 119852024,
+          "maxRSSKiB": 293188
+        },
+        {
+          "ms": 3194.476612999999,
+          "work": 161178727,
+          "allocation": 9816746200,
+          "rss": 301887488,
+          "heapUsed": 85322704,
+          "maxRSSKiB": 296864
+        },
+        {
+          "ms": 3210.8890539999993,
+          "work": 161178727,
+          "allocation": 9816746200,
+          "rss": 310624256,
+          "heapUsed": 123769800,
+          "maxRSSKiB": 304328
+        },
+        {
+          "ms": 3358.167588999997,
+          "work": 161178727,
+          "allocation": 9816746200,
+          "rss": 364204032,
+          "heapUsed": 63312520,
+          "maxRSSKiB": 359544
+        },
+        {
+          "ms": 3162.6326950000002,
+          "work": 161178727,
+          "allocation": 9816746200,
+          "rss": 368451584,
+          "heapUsed": 105550072,
+          "maxRSSKiB": 360352
+        }
+      ],
+      "verification": [
+        {
+          "ms": 67.96374499999729,
+          "work": 3786981,
+          "allocation": 53337889,
+          "rss": 298319872,
+          "heapUsed": 82971384,
+          "maxRSSKiB": 293188
+        },
+        {
+          "ms": 59.37320399999953,
+          "work": 3786981,
+          "allocation": 53337889,
+          "rss": 303034368,
+          "heapUsed": 118231984,
+          "maxRSSKiB": 296864
+        },
+        {
+          "ms": 72.39916100000119,
+          "work": 3786981,
+          "allocation": 53337889,
+          "rss": 309719040,
+          "heapUsed": 87198464,
+          "maxRSSKiB": 304328
+        },
+        {
+          "ms": 61.89721500000087,
+          "work": 3786981,
+          "allocation": 53337889,
+          "rss": 365350912,
+          "heapUsed": 96226160,
+          "maxRSSKiB": 359544
+        },
+        {
+          "ms": 68.71689200000401,
+          "work": 3786981,
+          "allocation": 53337889,
+          "rss": 367738880,
+          "heapUsed": 68852792,
+          "maxRSSKiB": 360352
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 63.31500199999937,
+          "work": 4003930,
+          "allocation": 57710497,
+          "rss": 299630592,
+          "heapUsed": 118263720,
+          "maxRSSKiB": 293188
+        },
+        {
+          "ms": 72.81346800000028,
+          "work": 4003930,
+          "allocation": 57710497,
+          "rss": 301830144,
+          "heapUsed": 83595480,
+          "maxRSSKiB": 296892
+        },
+        {
+          "ms": 64.00002499999755,
+          "work": 4003930,
+          "allocation": 57710497,
+          "rss": 310865920,
+          "heapUsed": 122546088,
+          "maxRSSKiB": 304328
+        },
+        {
+          "ms": 75.71355300000141,
+          "work": 4003930,
+          "allocation": 57710497,
+          "rss": 364367872,
+          "heapUsed": 66843352,
+          "maxRSSKiB": 359544
+        },
+        {
+          "ms": 65.22419900000386,
+          "work": 4003930,
+          "allocation": 57710497,
+          "rss": 368885760,
+          "heapUsed": 104194320,
+          "maxRSSKiB": 360352
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 244.49911599999905,
+          "work": 13384387,
+          "allocation": 467037684,
+          "rss": 299855872,
+          "heapUsed": 114286112,
+          "maxRSSKiB": 293248
+        },
+        {
+          "ms": 245.23197599999912,
+          "work": 13384387,
+          "allocation": 467037684,
+          "rss": 302231552,
+          "heapUsed": 80101864,
+          "maxRSSKiB": 296996
+        },
+        {
+          "ms": 247.95381899999848,
+          "work": 13384387,
+          "allocation": 467037684,
+          "rss": 311242752,
+          "heapUsed": 119163704,
+          "maxRSSKiB": 304380
+        },
+        {
+          "ms": 243.92262599999958,
+          "work": 13384387,
+          "allocation": 467037684,
+          "rss": 364904448,
+          "heapUsed": 64927552,
+          "maxRSSKiB": 359544
+        },
+        {
+          "ms": 243.78778199999942,
+          "work": 13384387,
+          "allocation": 467037684,
+          "rss": 369020928,
+          "heapUsed": 100780032,
+          "maxRSSKiB": 360560
+        }
+      ]
+    },
+    "rational-quintic-log": {
+      "integration": [
+        {
+          "ms": 67.15914599999815,
+          "work": 3708791,
+          "allocation": 46753666,
+          "rss": 368738304,
+          "heapUsed": 73936296,
+          "maxRSSKiB": 361536
+        },
+        {
+          "ms": 67.88894099999743,
+          "work": 3708791,
+          "allocation": 46753666,
+          "rss": 369274880,
+          "heapUsed": 77979216,
+          "maxRSSKiB": 361696
+        },
+        {
+          "ms": 66.01930900000298,
+          "work": 3708791,
+          "allocation": 46753666,
+          "rss": 369782784,
+          "heapUsed": 81481808,
+          "maxRSSKiB": 362396
+        },
+        {
+          "ms": 58.256036999999196,
+          "work": 3708791,
+          "allocation": 46753666,
+          "rss": 369917952,
+          "heapUsed": 84611216,
+          "maxRSSKiB": 362556
+        },
+        {
+          "ms": 57.901520999999775,
+          "work": 3708791,
+          "allocation": 46753666,
+          "rss": 370483200,
+          "heapUsed": 88696312,
+          "maxRSSKiB": 362688
+        }
+      ],
+      "verification": [
+        {
+          "ms": 16.028894000002765,
+          "work": 1050390,
+          "allocation": 13487962,
+          "rss": 369065984,
+          "heapUsed": 83267736,
+          "maxRSSKiB": 361536
+        },
+        {
+          "ms": 16.050097999999707,
+          "work": 1050390,
+          "allocation": 13487962,
+          "rss": 369602560,
+          "heapUsed": 87296664,
+          "maxRSSKiB": 361696
+        },
+        {
+          "ms": 16.027408000001742,
+          "work": 1050390,
+          "allocation": 13487962,
+          "rss": 369946624,
+          "heapUsed": 90820488,
+          "maxRSSKiB": 362396
+        },
+        {
+          "ms": 16.449102999999013,
+          "work": 1050390,
+          "allocation": 13487962,
+          "rss": 370409472,
+          "heapUsed": 94251712,
+          "maxRSSKiB": 362556
+        },
+        {
+          "ms": 16.622559999996156,
+          "work": 1050390,
+          "allocation": 13487962,
+          "rss": 370974720,
+          "heapUsed": 98297176,
+          "maxRSSKiB": 362688
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 16.774489000003086,
+          "work": 1061588,
+          "allocation": 13606040,
+          "rss": 369557504,
+          "heapUsed": 93191120,
+          "maxRSSKiB": 361536
+        },
+        {
+          "ms": 16.906838000002608,
+          "work": 1061588,
+          "allocation": 13606040,
+          "rss": 370257920,
+          "heapUsed": 97368880,
+          "maxRSSKiB": 361696
+        },
+        {
+          "ms": 16.79739100000006,
+          "work": 1061588,
+          "allocation": 13606040,
+          "rss": 370765824,
+          "heapUsed": 100870640,
+          "maxRSSKiB": 362396
+        },
+        {
+          "ms": 16.558634000000893,
+          "work": 1061588,
+          "allocation": 13606040,
+          "rss": 370900992,
+          "heapUsed": 104043560,
+          "maxRSSKiB": 362556
+        },
+        {
+          "ms": 16.842415999999503,
+          "work": 1061588,
+          "allocation": 13606040,
+          "rss": 371302400,
+          "heapUsed": 108085144,
+          "maxRSSKiB": 362688
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 31.54198099999485,
+          "work": 1849235,
+          "allocation": 23479714,
+          "rss": 370049024,
+          "heapUsed": 111760896,
+          "maxRSSKiB": 361536
+        },
+        {
+          "ms": 31.365877999996883,
+          "work": 1849235,
+          "allocation": 23479714,
+          "rss": 370929664,
+          "heapUsed": 115972320,
+          "maxRSSKiB": 362236
+        },
+        {
+          "ms": 30.892515000006824,
+          "work": 1849235,
+          "allocation": 23479714,
+          "rss": 371257344,
+          "heapUsed": 119472712,
+          "maxRSSKiB": 362556
+        },
+        {
+          "ms": 41.72601600000053,
+          "work": 1849235,
+          "allocation": 23479714,
+          "rss": 369008640,
+          "heapUsed": 53314768,
+          "maxRSSKiB": 362688
+        },
+        {
+          "ms": 43.408410999996704,
+          "work": 1849235,
+          "allocation": 23479714,
+          "rss": 369680384,
+          "heapUsed": 57608912,
+          "maxRSSKiB": 363080
+        }
+      ]
+    },
+    "rational-quadratic": {
+      "integration": [
+        {
+          "ms": 62.896390999994765,
+          "work": 3570818,
+          "allocation": 43232421,
+          "rss": 373657600,
+          "heapUsed": 105255696,
+          "maxRSSKiB": 364900
+        },
+        {
+          "ms": 60.45664000000397,
+          "work": 3570818,
+          "allocation": 43232421,
+          "rss": 374849536,
+          "heapUsed": 107688232,
+          "maxRSSKiB": 366064
+        },
+        {
+          "ms": 61.08921199999895,
+          "work": 3570818,
+          "allocation": 43232421,
+          "rss": 375541760,
+          "heapUsed": 109666112,
+          "maxRSSKiB": 366740
+        },
+        {
+          "ms": 61.294465999999375,
+          "work": 3570818,
+          "allocation": 43232421,
+          "rss": 376070144,
+          "heapUsed": 111505480,
+          "maxRSSKiB": 367256
+        },
+        {
+          "ms": 60.87051100000099,
+          "work": 3570818,
+          "allocation": 43232421,
+          "rss": 376598528,
+          "heapUsed": 113624736,
+          "maxRSSKiB": 367772
+        }
+      ],
+      "verification": [
+        {
+          "ms": 10.062998000001244,
+          "work": 576126,
+          "allocation": 6972624,
+          "rss": 374312960,
+          "heapUsed": 112221608,
+          "maxRSSKiB": 365540
+        },
+        {
+          "ms": 9.901769999996759,
+          "work": 576126,
+          "allocation": 6972624,
+          "rss": 375013376,
+          "heapUsed": 114594200,
+          "maxRSSKiB": 366224
+        },
+        {
+          "ms": 10.106636000004073,
+          "work": 576126,
+          "allocation": 6972624,
+          "rss": 375705600,
+          "heapUsed": 116572312,
+          "maxRSSKiB": 366900
+        },
+        {
+          "ms": 9.743671000003815,
+          "work": 576126,
+          "allocation": 6972624,
+          "rss": 376233984,
+          "heapUsed": 118411680,
+          "maxRSSKiB": 367416
+        },
+        {
+          "ms": 9.764690000003611,
+          "work": 576126,
+          "allocation": 6972624,
+          "rss": 376762368,
+          "heapUsed": 120463016,
+          "maxRSSKiB": 367932
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 10.696581999996852,
+          "work": 610282,
+          "allocation": 7375188,
+          "rss": 374312960,
+          "heapUsed": 119640968,
+          "maxRSSKiB": 365540
+        },
+        {
+          "ms": 10.513341000005312,
+          "work": 610282,
+          "allocation": 7375188,
+          "rss": 375177216,
+          "heapUsed": 122007640,
+          "maxRSSKiB": 366384
+        },
+        {
+          "ms": 10.660822999998345,
+          "work": 610282,
+          "allocation": 7375188,
+          "rss": 375869440,
+          "heapUsed": 123853168,
+          "maxRSSKiB": 367060
+        },
+        {
+          "ms": 21.716212999999698,
+          "work": 610282,
+          "allocation": 7375188,
+          "rss": 373485568,
+          "heapUsed": 55788088,
+          "maxRSSKiB": 367576
+        },
+        {
+          "ms": 20.827260999998543,
+          "work": 610282,
+          "allocation": 7375188,
+          "rss": 374013952,
+          "heapUsed": 57624544,
+          "maxRSSKiB": 368092
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 29.320369000000937,
+          "work": 1098494,
+          "allocation": 13223853,
+          "rss": 372228096,
+          "heapUsed": 64474376,
+          "maxRSSKiB": 365540
+        },
+        {
+          "ms": 29.002964999999676,
+          "work": 1098494,
+          "allocation": 13223853,
+          "rss": 372920320,
+          "heapUsed": 66454672,
+          "maxRSSKiB": 366384
+        },
+        {
+          "ms": 18.66357699999935,
+          "work": 1098494,
+          "allocation": 13223853,
+          "rss": 373448704,
+          "heapUsed": 68277096,
+          "maxRSSKiB": 367060
+        },
+        {
+          "ms": 17.97194099999615,
+          "work": 1098494,
+          "allocation": 13223853,
+          "rss": 373977088,
+          "heapUsed": 70317056,
+          "maxRSSKiB": 367576
+        },
+        {
+          "ms": 19.280352999994648,
+          "work": 1098494,
+          "allocation": 13223853,
+          "rss": 374505472,
+          "heapUsed": 72186248,
+          "maxRSSKiB": 368092
+        }
+      ]
+    },
+    "rational-quartic": {
+      "integration": [
+        {
+          "ms": 179.43372599999566,
+          "work": 9298769,
+          "allocation": 114811834,
+          "rss": 377204736,
+          "heapUsed": 63889344,
+          "maxRSSKiB": 371240
+        },
+        {
+          "ms": 171.952956000001,
+          "work": 9298769,
+          "allocation": 114811834,
+          "rss": 378654720,
+          "heapUsed": 80331080,
+          "maxRSSKiB": 372276
+        },
+        {
+          "ms": 160.64275400000042,
+          "work": 9298769,
+          "allocation": 114811834,
+          "rss": 380137472,
+          "heapUsed": 97145880,
+          "maxRSSKiB": 372792
+        },
+        {
+          "ms": 163.84622300000046,
+          "work": 9298769,
+          "allocation": 114811834,
+          "rss": 381685760,
+          "heapUsed": 113956000,
+          "maxRSSKiB": 372800
+        },
+        {
+          "ms": 164.6278300000049,
+          "work": 9298769,
+          "allocation": 114811834,
+          "rss": 383569920,
+          "heapUsed": 130765368,
+          "maxRSSKiB": 374580
+        }
+      ],
+      "verification": [
+        {
+          "ms": 19.881271000005654,
+          "work": 1290536,
+          "allocation": 15977932,
+          "rss": 377696256,
+          "heapUsed": 76963952,
+          "maxRSSKiB": 371240
+        },
+        {
+          "ms": 20.960782000001927,
+          "work": 1290536,
+          "allocation": 15977932,
+          "rss": 378982400,
+          "heapUsed": 93417528,
+          "maxRSSKiB": 372276
+        },
+        {
+          "ms": 20.881280000001425,
+          "work": 1290536,
+          "allocation": 15977932,
+          "rss": 380465152,
+          "heapUsed": 110245816,
+          "maxRSSKiB": 372792
+        },
+        {
+          "ms": 21.571852000000945,
+          "work": 1290536,
+          "allocation": 15977932,
+          "rss": 382013440,
+          "heapUsed": 127030288,
+          "maxRSSKiB": 373060
+        },
+        {
+          "ms": 32.680992000001424,
+          "work": 1290536,
+          "allocation": 15977932,
+          "rss": 381059072,
+          "heapUsed": 74174672,
+          "maxRSSKiB": 374740
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 21.738671999999497,
+          "work": 1363750,
+          "allocation": 16868299,
+          "rss": 378023936,
+          "heapUsed": 91000104,
+          "maxRSSKiB": 371240
+        },
+        {
+          "ms": 22.344661000002816,
+          "work": 1363750,
+          "allocation": 16868299,
+          "rss": 379473920,
+          "heapUsed": 107445424,
+          "maxRSSKiB": 372276
+        },
+        {
+          "ms": 22.428532999998424,
+          "work": 1363750,
+          "allocation": 16868299,
+          "rss": 380956672,
+          "heapUsed": 124293824,
+          "maxRSSKiB": 372792
+        },
+        {
+          "ms": 33.29224399999657,
+          "work": 1363750,
+          "allocation": 16868299,
+          "rss": 379727872,
+          "heapUsed": 71520264,
+          "maxRSSKiB": 373220
+        },
+        {
+          "ms": 21.623919000005117,
+          "work": 1363750,
+          "allocation": 16868299,
+          "rss": 381550592,
+          "heapUsed": 88179552,
+          "maxRSSKiB": 374740
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 47.38923999999679,
+          "work": 2847458,
+          "allocation": 35129783,
+          "rss": 379498496,
+          "heapUsed": 122737696,
+          "maxRSSKiB": 371240
+        },
+        {
+          "ms": 58.17041700000118,
+          "work": 2847458,
+          "allocation": 35129783,
+          "rss": 378298368,
+          "heapUsed": 69915496,
+          "maxRSSKiB": 372276
+        },
+        {
+          "ms": 56.50812399999995,
+          "work": 2847458,
+          "allocation": 35129783,
+          "rss": 379617280,
+          "heapUsed": 86488544,
+          "maxRSSKiB": 372792
+        },
+        {
+          "ms": 46.503866999999445,
+          "work": 2847458,
+          "allocation": 35129783,
+          "rss": 381202432,
+          "heapUsed": 103156360,
+          "maxRSSKiB": 373220
+        },
+        {
+          "ms": 46.99850999999762,
+          "work": 2847458,
+          "allocation": 35129783,
+          "rss": 383025152,
+          "heapUsed": 119813968,
+          "maxRSSKiB": 374740
+        }
+      ]
+    },
+    "rational-repeated-poles": {
+      "integration": [
+        {
+          "ms": 73.89320299999963,
+          "work": 4373401,
+          "allocation": 53302611,
+          "rss": 386658304,
+          "heapUsed": 136209520,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 83.36375100000441,
+          "work": 4373401,
+          "allocation": 53302611,
+          "rss": 384339968,
+          "heapUsed": 82468504,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 83.55022800000006,
+          "work": 4373401,
+          "allocation": 53302611,
+          "rss": 385593344,
+          "heapUsed": 99211280,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 83.49964800000453,
+          "work": 4373401,
+          "allocation": 53302611,
+          "rss": 387727360,
+          "heapUsed": 117223416,
+          "maxRSSKiB": 378640
+        },
+        {
+          "ms": 74.11589100000128,
+          "work": 4373401,
+          "allocation": 53302611,
+          "rss": 388882432,
+          "heapUsed": 134465520,
+          "maxRSSKiB": 379768
+        }
+      ],
+      "verification": [
+        {
+          "ms": 24.877878999999666,
+          "work": 839214,
+          "allocation": 10273554,
+          "rss": 383582208,
+          "heapUsed": 75033448,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 13.637141999999585,
+          "work": 839214,
+          "allocation": 10273554,
+          "rss": 384503808,
+          "heapUsed": 91641200,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 15.833518999999797,
+          "work": 839214,
+          "allocation": 10273554,
+          "rss": 386248704,
+          "heapUsed": 108898552,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 14.550772999995388,
+          "work": 839214,
+          "allocation": 10273554,
+          "rss": 387891200,
+          "heapUsed": 126446968,
+          "maxRSSKiB": 378800
+        },
+        {
+          "ms": 26.7992729999969,
+          "work": 839214,
+          "allocation": 10273554,
+          "rss": 385970176,
+          "heapUsed": 73713344,
+          "maxRSSKiB": 379928
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 14.495138999998744,
+          "work": 873684,
+          "allocation": 10679213,
+          "rss": 383909888,
+          "heapUsed": 84878456,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 14.537722999994003,
+          "work": 873684,
+          "allocation": 10679213,
+          "rss": 384831488,
+          "heapUsed": 101370800,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 14.979102999997849,
+          "work": 873684,
+          "allocation": 10679213,
+          "rss": 386576384,
+          "heapUsed": 118634296,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 14.662135999999009,
+          "work": 873684,
+          "allocation": 10679213,
+          "rss": 388218880,
+          "heapUsed": 136192976,
+          "maxRSSKiB": 379120
+        },
+        {
+          "ms": 14.363170999997237,
+          "work": 873684,
+          "allocation": 10679213,
+          "rss": 386297856,
+          "heapUsed": 83438368,
+          "maxRSSKiB": 379928
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 24.436659999999392,
+          "work": 1434882,
+          "allocation": 17432010,
+          "rss": 384729088,
+          "heapUsed": 102528480,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 24.704252999996243,
+          "work": 1434882,
+          "allocation": 17432010,
+          "rss": 385650688,
+          "heapUsed": 119023416,
+          "maxRSSKiB": 377596
+        },
+        {
+          "ms": 25.17485399999714,
+          "work": 1434882,
+          "allocation": 17432010,
+          "rss": 387395584,
+          "heapUsed": 136323856,
+          "maxRSSKiB": 378316
+        },
+        {
+          "ms": 35.436908000003314,
+          "work": 1434882,
+          "allocation": 17432010,
+          "rss": 385933312,
+          "heapUsed": 83899576,
+          "maxRSSKiB": 379120
+        },
+        {
+          "ms": 24.25574599999527,
+          "work": 1434882,
+          "allocation": 17432010,
+          "rss": 387117056,
+          "heapUsed": 101087744,
+          "maxRSSKiB": 379928
+        }
+      ]
+    },
+    "rational-repeated-residues": {
+      "integration": [
+        {
+          "ms": 21.78618699999788,
+          "work": 1261051,
+          "allocation": 15093212,
+          "rss": 388042752,
+          "heapUsed": 117464128,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 29.254695000003267,
+          "work": 1261051,
+          "allocation": 15093212,
+          "rss": 386703360,
+          "heapUsed": 82073624,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 21.066521000000648,
+          "work": 1261051,
+          "allocation": 15093212,
+          "rss": 388177920,
+          "heapUsed": 116810992,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 29.07775400000537,
+          "work": 1261051,
+          "allocation": 15093212,
+          "rss": 386732032,
+          "heapUsed": 81570552,
+          "maxRSSKiB": 380040
+        },
+        {
+          "ms": 20.99739799999952,
+          "work": 1261051,
+          "allocation": 15093212,
+          "rss": 388206592,
+          "heapUsed": 116308992,
+          "maxRSSKiB": 380040
+        }
+      ],
+      "verification": [
+        {
+          "ms": 6.482626999997592,
+          "work": 373215,
+          "allocation": 4508031,
+          "rss": 388370432,
+          "heapUsed": 122147912,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.051510999997845,
+          "work": 373215,
+          "allocation": 4508031,
+          "rss": 386867200,
+          "heapUsed": 86535640,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.437394000000495,
+          "work": 373215,
+          "allocation": 4508031,
+          "rss": 388505600,
+          "heapUsed": 121492736,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.055010999996739,
+          "work": 373215,
+          "allocation": 4508031,
+          "rss": 386895872,
+          "heapUsed": 85988952,
+          "maxRSSKiB": 380040
+        },
+        {
+          "ms": 6.497710000003281,
+          "work": 373215,
+          "allocation": 4508031,
+          "rss": 388534272,
+          "heapUsed": 120990736,
+          "maxRSSKiB": 380040
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 6.566382000004523,
+          "work": 378908,
+          "allocation": 4563167,
+          "rss": 388534272,
+          "heapUsed": 126883200,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.440505999999004,
+          "work": 378908,
+          "allocation": 4563167,
+          "rss": 387194880,
+          "heapUsed": 91431160,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.4331529999981285,
+          "work": 378908,
+          "allocation": 4563167,
+          "rss": 388669440,
+          "heapUsed": 126230064,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 6.406002000003355,
+          "work": 378908,
+          "allocation": 4563167,
+          "rss": 387223552,
+          "heapUsed": 90929160,
+          "maxRSSKiB": 380040
+        },
+        {
+          "ms": 6.49285499999678,
+          "work": 378908,
+          "allocation": 4563167,
+          "rss": 388698112,
+          "heapUsed": 125728064,
+          "maxRSSKiB": 380040
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 11.437269000001834,
+          "work": 655849,
+          "allocation": 7869331,
+          "rss": 388861952,
+          "heapUsed": 135975328,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 11.24513200000365,
+          "work": 655849,
+          "allocation": 7869331,
+          "rss": 387522560,
+          "heapUsed": 100380304,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 11.44943400000193,
+          "work": 655849,
+          "allocation": 7869331,
+          "rss": 388997120,
+          "heapUsed": 135335848,
+          "maxRSSKiB": 379928
+        },
+        {
+          "ms": 11.257433000006131,
+          "work": 655849,
+          "allocation": 7869331,
+          "rss": 387551232,
+          "heapUsed": 99878112,
+          "maxRSSKiB": 380040
+        },
+        {
+          "ms": 11.60515999999916,
+          "work": 655849,
+          "allocation": 7869331,
+          "rss": 389025792,
+          "heapUsed": 134820192,
+          "maxRSSKiB": 380040
+        }
+      ]
+    },
+    "rational-degree-loss": {
+      "integration": [
+        {
+          "ms": 133.7570429999978,
+          "work": 6891650,
+          "allocation": 84261774,
+          "rss": 392302592,
+          "heapUsed": 121171896,
+          "maxRSSKiB": 383108
+        },
+        {
+          "ms": 133.15871200000402,
+          "work": 6891650,
+          "allocation": 84261774,
+          "rss": 392617984,
+          "heapUsed": 110205688,
+          "maxRSSKiB": 384552
+        },
+        {
+          "ms": 131.64239700000326,
+          "work": 6891650,
+          "allocation": 84261774,
+          "rss": 393424896,
+          "heapUsed": 100082648,
+          "maxRSSKiB": 386172
+        },
+        {
+          "ms": 132.44700999999623,
+          "work": 6891650,
+          "allocation": 84261774,
+          "rss": 394108928,
+          "heapUsed": 89528656,
+          "maxRSSKiB": 387348
+        },
+        {
+          "ms": 129.88725400000112,
+          "work": 6891650,
+          "allocation": 84261774,
+          "rss": 397717504,
+          "heapUsed": 148515336,
+          "maxRSSKiB": 388396
+        }
+      ],
+      "verification": [
+        {
+          "ms": 21.0842679999987,
+          "work": 1178773,
+          "allocation": 14425795,
+          "rss": 392630272,
+          "heapUsed": 134031392,
+          "maxRSSKiB": 383428
+        },
+        {
+          "ms": 23.093220000002475,
+          "work": 1178773,
+          "allocation": 14425795,
+          "rss": 393437184,
+          "heapUsed": 123527872,
+          "maxRSSKiB": 384552
+        },
+        {
+          "ms": 20.491869999998016,
+          "work": 1178773,
+          "allocation": 14425795,
+          "rss": 393916416,
+          "heapUsed": 112944568,
+          "maxRSSKiB": 386172
+        },
+        {
+          "ms": 20.43454599999677,
+          "work": 1178773,
+          "allocation": 14425795,
+          "rss": 394600448,
+          "heapUsed": 102348216,
+          "maxRSSKiB": 387348
+        },
+        {
+          "ms": 32.31098400000337,
+          "work": 1178773,
+          "allocation": 14425795,
+          "rss": 394805248,
+          "heapUsed": 91001448,
+          "maxRSSKiB": 388396
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 33.57539700000052,
+          "work": 1220248,
+          "allocation": 14906053,
+          "rss": 390340608,
+          "heapUsed": 78045120,
+          "maxRSSKiB": 383748
+        },
+        {
+          "ms": 21.891947999996773,
+          "work": 1220248,
+          "allocation": 14906053,
+          "rss": 393928704,
+          "heapUsed": 137103936,
+          "maxRSSKiB": 384696
+        },
+        {
+          "ms": 21.26351500000601,
+          "work": 1220248,
+          "allocation": 14906053,
+          "rss": 394244096,
+          "heapUsed": 126538800,
+          "maxRSSKiB": 386172
+        },
+        {
+          "ms": 21.583073000001605,
+          "work": 1220248,
+          "allocation": 14906053,
+          "rss": 394928128,
+          "heapUsed": 115935136,
+          "maxRSSKiB": 387348
+        },
+        {
+          "ms": 20.68329100000119,
+          "work": 1220248,
+          "allocation": 14906053,
+          "rss": 395132928,
+          "heapUsed": 104548728,
+          "maxRSSKiB": 388396
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 35.01021399999445,
+          "work": 2066178,
+          "allocation": 25134084,
+          "rss": 391651328,
+          "heapUsed": 103594368,
+          "maxRSSKiB": 383748
+        },
+        {
+          "ms": 46.90260000000126,
+          "work": 2066178,
+          "allocation": 25134084,
+          "rss": 392327168,
+          "heapUsed": 93157680,
+          "maxRSSKiB": 384856
+        },
+        {
+          "ms": 47.14691299999686,
+          "work": 2066178,
+          "allocation": 25134084,
+          "rss": 392876032,
+          "heapUsed": 82597392,
+          "maxRSSKiB": 386172
+        },
+        {
+          "ms": 36.649130999998306,
+          "work": 2066178,
+          "allocation": 25134084,
+          "rss": 396238848,
+          "heapUsed": 141430520,
+          "maxRSSKiB": 387348
+        },
+        {
+          "ms": 35.418203000001085,
+          "work": 2066178,
+          "allocation": 25134084,
+          "rss": 396443648,
+          "heapUsed": 129973456,
+          "maxRSSKiB": 388396
+        }
+      ]
+    },
+    "rational-seeded-0": {
+      "integration": [
+        {
+          "ms": 32.14753899999778,
+          "work": 2015282,
+          "allocation": 24629208,
+          "rss": 396783616,
+          "heapUsed": 113850120,
+          "maxRSSKiB": 388504
+        },
+        {
+          "ms": 40.30220499999996,
+          "work": 2015282,
+          "allocation": 24629208,
+          "rss": 395636736,
+          "heapUsed": 93045488,
+          "maxRSSKiB": 388924
+        },
+        {
+          "ms": 32.60874299999705,
+          "work": 2015282,
+          "allocation": 24629208,
+          "rss": 398258176,
+          "heapUsed": 143348000,
+          "maxRSSKiB": 388924
+        },
+        {
+          "ms": 32.06609400000161,
+          "work": 2015282,
+          "allocation": 24629208,
+          "rss": 397541376,
+          "heapUsed": 122906664,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 41.00967700000183,
+          "work": 2015282,
+          "allocation": 24629208,
+          "rss": 396562432,
+          "heapUsed": 102411456,
+          "maxRSSKiB": 389344
+        }
+      ],
+      "verification": [
+        {
+          "ms": 10.422582999999577,
+          "work": 657799,
+          "allocation": 8091169,
+          "rss": 397111296,
+          "heapUsed": 120825472,
+          "maxRSSKiB": 388504
+        },
+        {
+          "ms": 10.15040699999372,
+          "work": 657799,
+          "allocation": 8091169,
+          "rss": 395800576,
+          "heapUsed": 100045808,
+          "maxRSSKiB": 388924
+        },
+        {
+          "ms": 10.698234999996203,
+          "work": 657799,
+          "allocation": 8091169,
+          "rss": 398585856,
+          "heapUsed": 150179432,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 10.76438600000256,
+          "work": 657799,
+          "allocation": 8091169,
+          "rss": 397705216,
+          "heapUsed": 129881416,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 10.400564999996277,
+          "work": 657799,
+          "allocation": 8091169,
+          "rss": 396890112,
+          "heapUsed": 109491928,
+          "maxRSSKiB": 389344
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 10.626055000000633,
+          "work": 662062,
+          "allocation": 8130522,
+          "rss": 397438976,
+          "heapUsed": 127991856,
+          "maxRSSKiB": 388504
+        },
+        {
+          "ms": 10.688258000001952,
+          "work": 662062,
+          "allocation": 8130522,
+          "rss": 396455936,
+          "heapUsed": 107436976,
+          "maxRSSKiB": 388924
+        },
+        {
+          "ms": 20.824863000001642,
+          "work": 662062,
+          "allocation": 8130522,
+          "rss": 395575296,
+          "heapUsed": 87057760,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 10.847025999995822,
+          "work": 662062,
+          "allocation": 8130522,
+          "rss": 398032896,
+          "heapUsed": 137048400,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 10.529356999999436,
+          "work": 662062,
+          "allocation": 8130522,
+          "rss": 397053952,
+          "heapUsed": 116646592,
+          "maxRSSKiB": 389344
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 17.08649400000286,
+          "work": 1044664,
+          "allocation": 12788770,
+          "rss": 398094336,
+          "heapUsed": 140651240,
+          "maxRSSKiB": 388764
+        },
+        {
+          "ms": 16.5204819999999,
+          "work": 1044664,
+          "allocation": 12788770,
+          "rss": 397111296,
+          "heapUsed": 120109816,
+          "maxRSSKiB": 388924
+        },
+        {
+          "ms": 16.43070999999327,
+          "work": 1044664,
+          "allocation": 12788770,
+          "rss": 396230656,
+          "heapUsed": 99739840,
+          "maxRSSKiB": 389244
+        },
+        {
+          "ms": 17.47471100000257,
+          "work": 1044664,
+          "allocation": 12788770,
+          "rss": 398688256,
+          "heapUsed": 149711320,
+          "maxRSSKiB": 389344
+        },
+        {
+          "ms": 16.701834999999846,
+          "work": 1044664,
+          "allocation": 12788770,
+          "rss": 397709312,
+          "heapUsed": 129262936,
+          "maxRSSKiB": 389344
+        }
+      ]
+    },
+    "rational-seeded-1": {
+      "integration": [
+        {
+          "ms": 31.65229299999919,
+          "work": 2024593,
+          "allocation": 24754280,
+          "rss": 397664256,
+          "heapUsed": 112246624,
+          "maxRSSKiB": 389668
+        },
+        {
+          "ms": 41.0978399999949,
+          "work": 2024593,
+          "allocation": 24754280,
+          "rss": 396652544,
+          "heapUsed": 91573168,
+          "maxRSSKiB": 389944
+        },
+        {
+          "ms": 32.31499099999928,
+          "work": 2024593,
+          "allocation": 24754280,
+          "rss": 399437824,
+          "heapUsed": 141743744,
+          "maxRSSKiB": 390076
+        },
+        {
+          "ms": 31.9881979999991,
+          "work": 2024593,
+          "allocation": 24754280,
+          "rss": 399122432,
+          "heapUsed": 121859008,
+          "maxRSSKiB": 390396
+        },
+        {
+          "ms": 40.753421999994316,
+          "work": 2024593,
+          "allocation": 24754280,
+          "rss": 397946880,
+          "heapUsed": 101058808,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "verification": [
+        {
+          "ms": 10.128740000000107,
+          "work": 649584,
+          "allocation": 7996152,
+          "rss": 397828096,
+          "heapUsed": 119223128,
+          "maxRSSKiB": 389668
+        },
+        {
+          "ms": 9.957393999997294,
+          "work": 649584,
+          "allocation": 7996152,
+          "rss": 396980224,
+          "heapUsed": 98477872,
+          "maxRSSKiB": 389944
+        },
+        {
+          "ms": 10.127958999997645,
+          "work": 649584,
+          "allocation": 7996152,
+          "rss": 399601664,
+          "heapUsed": 148720248,
+          "maxRSSKiB": 390236
+        },
+        {
+          "ms": 10.139892999999574,
+          "work": 649584,
+          "allocation": 7996152,
+          "rss": 399450112,
+          "heapUsed": 128835512,
+          "maxRSSKiB": 390396
+        },
+        {
+          "ms": 10.137677999999141,
+          "work": 649584,
+          "allocation": 7996152,
+          "rss": 398602240,
+          "heapUsed": 108264736,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 10.336137999998755,
+          "work": 653834,
+          "allocation": 8035447,
+          "rss": 398155776,
+          "heapUsed": 126326704,
+          "maxRSSKiB": 389668
+        },
+        {
+          "ms": 11.009811000003538,
+          "work": 653834,
+          "allocation": 8035447,
+          "rss": 397471744,
+          "heapUsed": 105882216,
+          "maxRSSKiB": 389944
+        },
+        {
+          "ms": 21.949201000003086,
+          "work": 653834,
+          "allocation": 8035447,
+          "rss": 397156352,
+          "heapUsed": 85899448,
+          "maxRSSKiB": 390396
+        },
+        {
+          "ms": 10.347379999999248,
+          "work": 653834,
+          "allocation": 8035447,
+          "rss": 399613952,
+          "heapUsed": 135939000,
+          "maxRSSKiB": 390396
+        },
+        {
+          "ms": 9.867943999997806,
+          "work": 653834,
+          "allocation": 8035447,
+          "rss": 398766080,
+          "heapUsed": 115368744,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 16.393920000002254,
+          "work": 1032488,
+          "allocation": 12650309,
+          "rss": 398811136,
+          "heapUsed": 138848680,
+          "maxRSSKiB": 389668
+        },
+        {
+          "ms": 16.30994400000054,
+          "work": 1032488,
+          "allocation": 12650309,
+          "rss": 398127104,
+          "heapUsed": 118389792,
+          "maxRSSKiB": 389944
+        },
+        {
+          "ms": 15.559449000000313,
+          "work": 1032488,
+          "allocation": 12650309,
+          "rss": 397811712,
+          "heapUsed": 98429872,
+          "maxRSSKiB": 390396
+        },
+        {
+          "ms": 16.065458999997645,
+          "work": 1032488,
+          "allocation": 12650309,
+          "rss": 400269312,
+          "heapUsed": 148461064,
+          "maxRSSKiB": 390888
+        },
+        {
+          "ms": 16.011536000005435,
+          "work": 1032488,
+          "allocation": 12650309,
+          "rss": 399585280,
+          "heapUsed": 127866728,
+          "maxRSSKiB": 391048
+        }
+      ]
+    },
+    "rational-seeded-2": {
+      "integration": [
+        {
+          "ms": 11.114725999999791,
+          "work": 638742,
+          "allocation": 7494857,
+          "rss": 398409728,
+          "heapUsed": 109168392,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 11.230941999994684,
+          "work": 638742,
+          "allocation": 7494857,
+          "rss": 399228928,
+          "heapUsed": 130277712,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 11.120442999999796,
+          "work": 638742,
+          "allocation": 7494857,
+          "rss": 399884288,
+          "heapUsed": 151529064,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 10.69122800000332,
+          "work": 638742,
+          "allocation": 7494857,
+          "rss": 397963264,
+          "heapUsed": 102674568,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 10.811126000000513,
+          "work": 638742,
+          "allocation": 7494857,
+          "rss": 398782464,
+          "heapUsed": 123908016,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "verification": [
+        {
+          "ms": 4.4260079999949085,
+          "work": 249997,
+          "allocation": 2988925,
+          "rss": 398573568,
+          "heapUsed": 112576464,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.468468999999459,
+          "work": 249997,
+          "allocation": 2988925,
+          "rss": 399392768,
+          "heapUsed": 133749184,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 11.8648100000064,
+          "work": 249997,
+          "allocation": 2988925,
+          "rss": 397471744,
+          "heapUsed": 84956168,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.332333999998809,
+          "work": 249997,
+          "allocation": 2988925,
+          "rss": 398127104,
+          "heapUsed": 106146040,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.313287999997556,
+          "work": 249997,
+          "allocation": 2988925,
+          "rss": 398946304,
+          "heapUsed": 127379488,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 4.421948000002885,
+          "work": 254090,
+          "allocation": 3026217,
+          "rss": 398737408,
+          "heapUsed": 116001904,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.392530000004626,
+          "work": 254090,
+          "allocation": 3026217,
+          "rss": 399556608,
+          "heapUsed": 137206040,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.1714500000016415,
+          "work": 254090,
+          "allocation": 3026217,
+          "rss": 397471744,
+          "heapUsed": 88373152,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.291339999996126,
+          "work": 254090,
+          "allocation": 3026217,
+          "rss": 398290944,
+          "heapUsed": 109602576,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 4.425992000004044,
+          "work": 254090,
+          "allocation": 3026217,
+          "rss": 399110144,
+          "heapUsed": 130836024,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 6.047251000003598,
+          "work": 344768,
+          "allocation": 4056681,
+          "rss": 398901248,
+          "heapUsed": 121166520,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 6.1004700000048615,
+          "work": 344768,
+          "allocation": 4056681,
+          "rss": 399720448,
+          "heapUsed": 142390176,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 5.8549219999986235,
+          "work": 344768,
+          "allocation": 4056681,
+          "rss": 397635584,
+          "heapUsed": 93568328,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 5.931388000004517,
+          "work": 344768,
+          "allocation": 4056681,
+          "rss": 398454784,
+          "heapUsed": 114768448,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 5.969190000003437,
+          "work": 344768,
+          "allocation": 4056681,
+          "rss": 399273984,
+          "heapUsed": 136001896,
+          "maxRSSKiB": 391048
+        }
+      ]
+    },
+    "rde-positive": {
+      "integration": [
+        {
+          "ms": 9.86612199999945,
+          "work": 119293,
+          "allocation": 1234945,
+          "rss": 397643776,
+          "heapUsed": 84304760,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 2.1080279999951017,
+          "work": 119293,
+          "allocation": 1234945,
+          "rss": 397643776,
+          "heapUsed": 90689184,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 2.109476999998151,
+          "work": 119293,
+          "allocation": 1234945,
+          "rss": 397643776,
+          "heapUsed": 97013000,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 2.069839999996475,
+          "work": 119293,
+          "allocation": 1234945,
+          "rss": 397643776,
+          "heapUsed": 103335784,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 2.1513229999982286,
+          "work": 119293,
+          "allocation": 1234945,
+          "rss": 397643776,
+          "heapUsed": 109645432,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "verification": [
+        {
+          "ms": 0.5753789999944274,
+          "work": 33922,
+          "allocation": 339694,
+          "rss": 397643776,
+          "heapUsed": 85133992,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.660040000002482,
+          "work": 33922,
+          "allocation": 339694,
+          "rss": 397643776,
+          "heapUsed": 91633256,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6748749999969732,
+          "work": 33922,
+          "allocation": 339694,
+          "rss": 397643776,
+          "heapUsed": 97944712,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6391199999998207,
+          "work": 33922,
+          "allocation": 339694,
+          "rss": 397643776,
+          "heapUsed": 104262744,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6417740000033518,
+          "work": 33922,
+          "allocation": 339694,
+          "rss": 397643776,
+          "heapUsed": 110572376,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 0.7993730000016512,
+          "work": 41158,
+          "allocation": 347789,
+          "rss": 397643776,
+          "heapUsed": 86342144,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.7887340000015683,
+          "work": 41158,
+          "allocation": 347789,
+          "rss": 397643776,
+          "heapUsed": 92720456,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.7798130000010133,
+          "work": 41158,
+          "allocation": 347789,
+          "rss": 397643776,
+          "heapUsed": 99032176,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.7818450000049779,
+          "work": 41158,
+          "allocation": 347789,
+          "rss": 397643776,
+          "heapUsed": 105352184,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.7815649999974994,
+          "work": 41158,
+          "allocation": 347789,
+          "rss": 397643776,
+          "heapUsed": 111659728,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 1.0212400000018533,
+          "work": 48845,
+          "allocation": 423540,
+          "rss": 397643776,
+          "heapUsed": 87787944,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.9916969999976573,
+          "work": 48845,
+          "allocation": 423540,
+          "rss": 397643776,
+          "heapUsed": 94134176,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.9898929999981192,
+          "work": 48845,
+          "allocation": 423540,
+          "rss": 397643776,
+          "heapUsed": 100447424,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.0136940000011236,
+          "work": 48845,
+          "allocation": 423540,
+          "rss": 397643776,
+          "heapUsed": 106764664,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.0028759999986505,
+          "work": 48845,
+          "allocation": 423540,
+          "rss": 397643776,
+          "heapUsed": 113071880,
+          "maxRSSKiB": 391048
+        }
+      ]
+    },
+    "rde-negative": {
+      "integration": [
+        {
+          "ms": 1.5915880000029574,
+          "work": 90538,
+          "allocation": 965099,
+          "rss": 397643776,
+          "heapUsed": 123607552,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.6300219999975525,
+          "work": 90538,
+          "allocation": 965099,
+          "rss": 397643776,
+          "heapUsed": 127804456,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.5344009999971604,
+          "work": 90538,
+          "allocation": 965099,
+          "rss": 397643776,
+          "heapUsed": 131998184,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.5519150000036461,
+          "work": 90538,
+          "allocation": 965099,
+          "rss": 397643776,
+          "heapUsed": 136192472,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 1.5773520000002463,
+          "work": 90538,
+          "allocation": 965099,
+          "rss": 397643776,
+          "heapUsed": 140386760,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "verification": [
+        {
+          "ms": 0.37585499999840977,
+          "work": 21730,
+          "allocation": 229781,
+          "rss": 397643776,
+          "heapUsed": 124065848,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.3642580000014277,
+          "work": 21730,
+          "allocation": 229781,
+          "rss": 397643776,
+          "heapUsed": 128262504,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.38185599999997066,
+          "work": 21730,
+          "allocation": 229781,
+          "rss": 397643776,
+          "heapUsed": 132456240,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.37006100000144215,
+          "work": 21730,
+          "allocation": 229781,
+          "rss": 397643776,
+          "heapUsed": 136650528,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.3687229999995907,
+          "work": 21730,
+          "allocation": 229781,
+          "rss": 397643776,
+          "heapUsed": 140844816,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 0.5486550000059651,
+          "work": 27032,
+          "allocation": 235684,
+          "rss": 397643776,
+          "heapUsed": 124850536,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.5297040000004927,
+          "work": 27032,
+          "allocation": 235684,
+          "rss": 397643776,
+          "heapUsed": 129044824,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.5473320000019157,
+          "work": 27032,
+          "allocation": 235684,
+          "rss": 397643776,
+          "heapUsed": 133239112,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.5239639999999781,
+          "work": 27032,
+          "allocation": 235684,
+          "rss": 397643776,
+          "heapUsed": 137433400,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.5397649999940768,
+          "work": 27032,
+          "allocation": 235684,
+          "rss": 397643776,
+          "heapUsed": 141627688,
+          "maxRSSKiB": 391048
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 0.6908579999944777,
+          "work": 31327,
+          "allocation": 277591,
+          "rss": 397643776,
+          "heapUsed": 125747920,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6654970000017784,
+          "work": 31327,
+          "allocation": 277591,
+          "rss": 397643776,
+          "heapUsed": 129941904,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.660158999999112,
+          "work": 31327,
+          "allocation": 277591,
+          "rss": 397643776,
+          "heapUsed": 134136192,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6650340000051074,
+          "work": 31327,
+          "allocation": 277591,
+          "rss": 397643776,
+          "heapUsed": 138330480,
+          "maxRSSKiB": 391048
+        },
+        {
+          "ms": 0.6959869999991497,
+          "work": 31327,
+          "allocation": 277591,
+          "rss": 397643776,
+          "heapUsed": 142545296,
+          "maxRSSKiB": 391048
+        }
+      ]
+    },
+    "sum-positive": {
+      "integration": [
+        {
+          "ms": 115.73074300000007,
+          "work": 5526104,
+          "allocation": 62194832,
+          "rss": 402219008,
+          "heapUsed": 98768744,
+          "maxRSSKiB": 394996
+        },
+        {
+          "ms": 110.80812700000388,
+          "work": 5526104,
+          "allocation": 62194832,
+          "rss": 404647936,
+          "heapUsed": 130963944,
+          "maxRSSKiB": 396872
+        },
+        {
+          "ms": 114.8694220000034,
+          "work": 5526104,
+          "allocation": 62194832,
+          "rss": 406392832,
+          "heapUsed": 94785752,
+          "maxRSSKiB": 398704
+        },
+        {
+          "ms": 108.57212400000572,
+          "work": 5526104,
+          "allocation": 62194832,
+          "rss": 408797184,
+          "heapUsed": 126863584,
+          "maxRSSKiB": 401188
+        },
+        {
+          "ms": 110.42175200000202,
+          "work": 5526104,
+          "allocation": 62194832,
+          "rss": 411758592,
+          "heapUsed": 158630104,
+          "maxRSSKiB": 402108
+        }
+      ],
+      "verification": [
+        {
+          "ms": 20.231447999998636,
+          "work": 1127841,
+          "allocation": 11575705,
+          "rss": 402219008,
+          "heapUsed": 125007912,
+          "maxRSSKiB": 394996
+        },
+        {
+          "ms": 24.411456000001635,
+          "work": 1127841,
+          "allocation": 11575705,
+          "rss": 405794816,
+          "heapUsed": 158248224,
+          "maxRSSKiB": 396872
+        },
+        {
+          "ms": 20.581773999998404,
+          "work": 1127841,
+          "allocation": 11575705,
+          "rss": 406392832,
+          "heapUsed": 121036592,
+          "maxRSSKiB": 398704
+        },
+        {
+          "ms": 24.835464000003412,
+          "work": 1127841,
+          "allocation": 11575705,
+          "rss": 409944064,
+          "heapUsed": 154222504,
+          "maxRSSKiB": 401188
+        },
+        {
+          "ms": 32.35883300000569,
+          "work": 1127841,
+          "allocation": 11575705,
+          "rss": 411086848,
+          "heapUsed": 117301192,
+          "maxRSSKiB": 402428
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 52.233783000003314,
+          "work": 2152551,
+          "allocation": 21809385,
+          "rss": 403169280,
+          "heapUsed": 107181832,
+          "maxRSSKiB": 394996
+        },
+        {
+          "ms": 47.541443999994954,
+          "work": 2152551,
+          "allocation": 21809385,
+          "rss": 405577728,
+          "heapUsed": 139181096,
+          "maxRSSKiB": 396872
+        },
+        {
+          "ms": 51.43471000000136,
+          "work": 2152551,
+          "allocation": 21809385,
+          "rss": 407330816,
+          "heapUsed": 103276168,
+          "maxRSSKiB": 398704
+        },
+        {
+          "ms": 48.24585300000035,
+          "work": 2152551,
+          "allocation": 21809385,
+          "rss": 409726976,
+          "heapUsed": 134965120,
+          "maxRSSKiB": 401188
+        },
+        {
+          "ms": 40.95521000000008,
+          "work": 2152551,
+          "allocation": 21809385,
+          "rss": 411742208,
+          "heapUsed": 165989784,
+          "maxRSSKiB": 402428
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 61.68372200000158,
+          "work": 2906814,
+          "allocation": 30220826,
+          "rss": 403447808,
+          "heapUsed": 102565896,
+          "maxRSSKiB": 394996
+        },
+        {
+          "ms": 60.79145799999969,
+          "work": 2906814,
+          "allocation": 30220826,
+          "rss": 406396928,
+          "heapUsed": 134899096,
+          "maxRSSKiB": 396872
+        },
+        {
+          "ms": 63.48254299999826,
+          "work": 2906814,
+          "allocation": 30220826,
+          "rss": 407867392,
+          "heapUsed": 98680984,
+          "maxRSSKiB": 399064
+        },
+        {
+          "ms": 61.09488899999997,
+          "work": 2906814,
+          "allocation": 30220826,
+          "rss": 410054656,
+          "heapUsed": 130343864,
+          "maxRSSKiB": 401188
+        },
+        {
+          "ms": 62.62410000000091,
+          "work": 2906814,
+          "allocation": 30220826,
+          "rss": 412790784,
+          "heapUsed": 161409584,
+          "maxRSSKiB": 403116
+        }
+      ]
+    },
+    "sum-negative": {
+      "integration": [
+        {
+          "ms": 13.179951999998593,
+          "work": 673361,
+          "allocation": 6260990,
+          "rss": 413986816,
+          "heapUsed": 160220024,
+          "maxRSSKiB": 404284
+        },
+        {
+          "ms": 12.777701999999408,
+          "work": 673361,
+          "allocation": 6260990,
+          "rss": 414314496,
+          "heapUsed": 148754776,
+          "maxRSSKiB": 404604
+        },
+        {
+          "ms": 13.170790999996825,
+          "work": 673361,
+          "allocation": 6260990,
+          "rss": 415129600,
+          "heapUsed": 137547216,
+          "maxRSSKiB": 405404
+        },
+        {
+          "ms": 13.042015000006359,
+          "work": 673361,
+          "allocation": 6260990,
+          "rss": 415924224,
+          "heapUsed": 126747384,
+          "maxRSSKiB": 406200
+        },
+        {
+          "ms": 21.575905999998213,
+          "work": 673361,
+          "allocation": 6260990,
+          "rss": 416526336,
+          "heapUsed": 115371360,
+          "maxRSSKiB": 407136
+        }
+      ],
+      "verification": [
+        {
+          "ms": 4.385672999997041,
+          "work": 223057,
+          "allocation": 1931610,
+          "rss": 413986816,
+          "heapUsed": 167833312,
+          "maxRSSKiB": 404284
+        },
+        {
+          "ms": 4.261610000001383,
+          "work": 223057,
+          "allocation": 1931610,
+          "rss": 414314496,
+          "heapUsed": 156368032,
+          "maxRSSKiB": 404604
+        },
+        {
+          "ms": 4.226000999995449,
+          "work": 223057,
+          "allocation": 1931610,
+          "rss": 415129600,
+          "heapUsed": 145174904,
+          "maxRSSKiB": 405404
+        },
+        {
+          "ms": 4.302963999994972,
+          "work": 223057,
+          "allocation": 1931610,
+          "rss": 415924224,
+          "heapUsed": 134360640,
+          "maxRSSKiB": 406200
+        },
+        {
+          "ms": 5.455332000005001,
+          "work": 223057,
+          "allocation": 1931610,
+          "rss": 416690176,
+          "heapUsed": 123425320,
+          "maxRSSKiB": 407136
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 14.4692670000004,
+          "work": 352177,
+          "allocation": 2863066,
+          "rss": 413986816,
+          "heapUsed": 111789848,
+          "maxRSSKiB": 404284
+        },
+        {
+          "ms": 7.417231999999785,
+          "work": 352177,
+          "allocation": 2863066,
+          "rss": 415133696,
+          "heapUsed": 168335104,
+          "maxRSSKiB": 405404
+        },
+        {
+          "ms": 7.417658000005758,
+          "work": 352177,
+          "allocation": 2863066,
+          "rss": 415948800,
+          "heapUsed": 157161272,
+          "maxRSSKiB": 406200
+        },
+        {
+          "ms": 7.28019299999869,
+          "work": 352177,
+          "allocation": 2863066,
+          "rss": 416743424,
+          "heapUsed": 146327456,
+          "maxRSSKiB": 406976
+        },
+        {
+          "ms": 6.670318000004045,
+          "work": 352177,
+          "allocation": 2863066,
+          "rss": 416690176,
+          "heapUsed": 134623000,
+          "maxRSSKiB": 407136
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 9.53624800000398,
+          "work": 503305,
+          "allocation": 4323108,
+          "rss": 413986816,
+          "heapUsed": 127276040,
+          "maxRSSKiB": 404284
+        },
+        {
+          "ms": 18.391003000004275,
+          "work": 503305,
+          "allocation": 4323108,
+          "rss": 414801920,
+          "heapUsed": 116169344,
+          "maxRSSKiB": 405404
+        },
+        {
+          "ms": 18.999078000000736,
+          "work": 503305,
+          "allocation": 4323108,
+          "rss": 415596544,
+          "heapUsed": 105371040,
+          "maxRSSKiB": 406200
+        },
+        {
+          "ms": 9.713057000000845,
+          "work": 503305,
+          "allocation": 4323108,
+          "rss": 416743424,
+          "heapUsed": 161821664,
+          "maxRSSKiB": 406976
+        },
+        {
+          "ms": 11.733469999999215,
+          "work": 503305,
+          "allocation": 4323108,
+          "rss": 417509376,
+          "heapUsed": 150933616,
+          "maxRSSKiB": 407724
+        }
+      ]
+    }
+  }
+}

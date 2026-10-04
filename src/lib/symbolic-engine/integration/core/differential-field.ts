@@ -5,6 +5,7 @@ import { rational, type Rational } from './rational';
 import { PolynomialRing, type Polynomial } from './polynomial';
 import { OwnedValidation } from './owned-validation';
 import { RationalFunctionField, type RationalFunction } from './rational-function';
+import { registerFractionCoefficient, registerRationalCoefficient } from './fraction-coefficient';
 
 export interface DifferentialBounds {
   readonly towerHeight: number;
@@ -51,6 +52,11 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     this.admission = admission;
     this.height = parent ? parent.height + 1 : 0; this.kind = kind;
     this.constantField = kind === 'formal' && !admission ? 'unestablished' : 'Q';
+    if (kind === 'rational') registerRationalCoefficient(this);
+    if (fractions) registerFractionCoefficient(this, { ring: fractions.ring,
+      read: (ctx, value) => {
+        this.assert(ctx, value); demand(value.kind === 'fraction', 'domain-mismatch', 'fraction coefficient'); return value.value;
+      }, make: (ctx, n, d) => this.fraction(ctx, fractions.make(ctx, n, d)) });
     Object.freeze(this);
   }
   static rationals(ctx: ExecutionContext, bounds: DifferentialBounds): DifferentialField {

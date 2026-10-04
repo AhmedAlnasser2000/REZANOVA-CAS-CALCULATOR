@@ -126,6 +126,36 @@ for (const v of rationals.filter(v => wanted(v.name))) {
   }
   save();
 }
+if (args.includes('--nested-corpus')) {
+  const { solveRationalRde, verifyRationalRde } = await load('rational-rde') as typeof import('../rational-rde');
+  const { encodeRationalRde, decodeRationalRde } = await load('rational-rde-wire') as typeof import('../rational-rde-wire');
+  const { integrateExponentialSum, verifyExponentialSumDecision } = await load('exponential-sum-decision') as typeof import('../exponential-sum-decision');
+  const { encodeExponentialSumDecision, decodeExponentialSumDecision } = await load('exponential-sum-wire') as typeof import('../exponential-sum-wire');
+  for (const name of ['rde-positive', 'rde-negative', 'sum-positive', 'sum-negative'].filter(wanted)) {
+    for (let i = -warmups; i < runs; i++) {
+      const s = setup(), a = s.p([0, 2]), b = s.p(name === 'rde-positive' ? [0, 2] : [1]);
+      if (name.startsWith('rde')) {
+        const d = measure(name, 'integration', i, c => solveRationalRde(c, s.f, a, b));
+        measure(name, 'verification', i, c => verifyRationalRde(c, s.f, a, b, d));
+        const wire = JSON.parse(JSON.stringify(measure(name, 'encoding', i, c => encodeRationalRde(c, s.f, a, b, d, bounds))));
+        measure(name, 'decoding', i, c => decodeRationalRde(c, s.f, a, b, wire, bounds));
+      } else {
+        const positive = name === 'sum-positive';
+        const input = { rationalPart: s.p([1], [1, 0, 1]), terms: [
+          { argument: s.p([0, -1]), coefficient: s.p([-1]) },
+          { argument: s.p([0, 1]), coefficient: positive ? s.p([1]) : s.p([1], [0, 1]) },
+          { argument: s.p([0, 2]), coefficient: s.p([2]) },
+        ] };
+        const d = measure(name, 'integration', i, c => integrateExponentialSum(c, s.f, input, bounds));
+        if (d.kind === 'unsupported') throw Error('sum fixture unsupported');
+        measure(name, 'verification', i, c => verifyExponentialSumDecision(c, s.f, input, d, bounds));
+        const wire = JSON.parse(JSON.stringify(measure(name, 'encoding', i, c => encodeExponentialSumDecision(c, s.f, input, d, bounds))));
+        measure(name, 'decoding', i, c => decodeExponentialSumDecision(c, s.f, input, wire, bounds));
+      }
+    }
+    save();
+  }
+}
 if (!Object.keys(results).length) throw new Error('no selected cases');
 if (option('--compare')) {
   const baseline = JSON.parse(readFileSync(option('--compare'),'utf8'));
@@ -138,7 +168,7 @@ if (option('--compare')) {
   for (const [name, operations] of Object.entries(results)) for (const [operation, samples] of Object.entries(operations)) {
     const before = median(baseline.results[name][operation]), after = median(samples), speedup = before/after;
     console.log(JSON.stringify({ name, operation, baselineMs: before, candidateMs: after, speedup }));
-    const target = name === 'exp-minus-x' && ['integration','verification'].includes(operation);
+    const target = !args.includes('--regression-only') && name === 'exp-minus-x' && ['integration','verification'].includes(operation);
     if (target ? speedup < 5 : after-before > Math.max(before*0.2,20)) failures.push(`${name}/${operation}`);
   }
   if (failures.length) throw new Error(`performance acceptance failed: ${failures.join(', ')}`);

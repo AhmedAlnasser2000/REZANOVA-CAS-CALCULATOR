@@ -1,0 +1,78 @@
+{
+  "node": "v24.19.0",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 265K",
+    "host": "ahmed-Desktop",
+    "threads": 20
+  },
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "bounds": {
+    "towerHeight": 8,
+    "artifactDepth": 64,
+    "artifactNodes": 100000,
+    "artifactBytes": 16777216
+  },
+  "runs": 1,
+  "warmups": 0,
+  "diagnostics": true,
+  "artifactHashes": {},
+  "results": {
+    "stress-quadratic": {
+      "input-direct": [
+        {
+          "ms": 4555.0993579999995,
+          "work": 86745808,
+          "allocation": 21182583064,
+          "rss": 115277824,
+          "heapUsed": 24866072,
+          "maxRSSKiB": 112576,
+          "peakAcceptedIntegerBits": 619,
+          "peakPolynomialDegree": 25
+        }
+      ],
+      "input-ordinary": [
+        {
+          "ms": 5722.683797999999,
+          "work": 107842645,
+          "allocation": 16372614538,
+          "rss": 119406592,
+          "heapUsed": 26741384,
+          "maxRSSKiB": 116608,
+          "peakAcceptedIntegerBits": 435,
+          "peakPolynomialDegree": 25
+        }
+      ]
+    },
+    "stress-inverse": {
+      "input-direct": [
+        {
+          "ms": 3417.075696,
+          "work": 61967979,
+          "allocation": 12388006013,
+          "rss": 132349952,
+          "heapUsed": 19507752,
+          "maxRSSKiB": 136288,
+          "peakAcceptedIntegerBits": 502,
+          "peakPolynomialDegree": 24
+        }
+      ],
+      "input-ordinary": [
+        {
+          "ms": 3957.6795359999996,
+          "work": 78346022,
+          "allocation": 9098401113,
+          "rss": 133005312,
+          "heapUsed": 22281872,
+          "maxRSSKiB": 136288,
+          "peakAcceptedIntegerBits": 316,
+          "peakPolynomialDegree": 24
+        }
+      ]
+    }
+  }
+}

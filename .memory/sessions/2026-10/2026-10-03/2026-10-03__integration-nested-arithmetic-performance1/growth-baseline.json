@@ -1,0 +1,82 @@
+{
+  "node": "v24.19.0",
+  "machine": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 265K",
+    "host": "ahmed-Desktop",
+    "threads": 20
+  },
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "bounds": {
+    "towerHeight": 8,
+    "artifactDepth": 64,
+    "artifactNodes": 100000,
+    "artifactBytes": 16777216
+  },
+  "runs": 1,
+  "warmups": 0,
+  "diagnostics": true,
+  "artifactHashes": {},
+  "results": {
+    "stress-quadratic": {
+      "input-direct": [
+        {
+          "ms": 10868.343796000001,
+          "work": 150202134,
+          "allocation": 63607113439,
+          "rss": 117977088,
+          "heapUsed": 21528816,
+          "maxRSSKiB": 115212,
+          "peakAcceptedIntegerBits": 2011,
+          "peakPolynomialDegree": 34,
+          "error": "resource-limit: integer-product-bits"
+        }
+      ],
+      "input-ordinary": [
+        {
+          "ms": 18456.816657,
+          "work": 280376186,
+          "allocation": 77747871631,
+          "rss": 149430272,
+          "heapUsed": 47921832,
+          "maxRSSKiB": 145928,
+          "peakAcceptedIntegerBits": 2011,
+          "peakPolynomialDegree": 36,
+          "error": "resource-limit: integer-product-bits"
+        }
+      ]
+    },
+    "stress-inverse": {
+      "input-direct": [
+        {
+          "ms": 12936.439390000003,
+          "work": 161730661,
+          "allocation": 71685519620,
+          "rss": 188588032,
+          "heapUsed": 53710984,
+          "maxRSSKiB": 184168,
+          "peakAcceptedIntegerBits": 1987,
+          "peakPolynomialDegree": 34,
+          "error": "resource-limit: integer-product-bits"
+        }
+      ],
+      "input-ordinary": [
+        {
+          "ms": 19739.569868,
+          "work": 275766054,
+          "allocation": 92344079342,
+          "rss": 193011712,
+          "heapUsed": 45997520,
+          "maxRSSKiB": 188488,
+          "peakAcceptedIntegerBits": 1987,
+          "peakPolynomialDegree": 34,
+          "error": "resource-limit: integer-product-bits"
+        }
+      ]
+    }
+  }
+}

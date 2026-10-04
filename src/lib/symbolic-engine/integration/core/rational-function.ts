@@ -1,7 +1,8 @@
 import { demand, type ExecutionContext } from './execution';
 import { requireField, type ExactField } from './field';
 import type { Polynomial, PolynomialRing } from './polynomial';
-import { exactDivide, polynomialGcd } from './polynomial-division';
+import { exactDivide, extendedGcd, polynomialGcd } from './polynomial-division';
+import { registerFractionCoefficient } from './fraction-coefficient';
 
 export interface RationalFunction<E> {
   readonly field: RationalFunctionField<E>;
@@ -15,7 +16,13 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
   readonly characteristic = 0 as const;
   readonly ring: PolynomialRing<E>;
   #values = new WeakSet<object>();
-  constructor(ring: PolynomialRing<E>) { requireField(ring.domain); this.ring = ring; Object.freeze(this); }
+  constructor(ring: PolynomialRing<E>) {
+    requireField(ring.domain); this.ring = ring;
+    registerFractionCoefficient(this, { ring,
+      read: (ctx, value) => { this.assert(ctx, value); return value; },
+      make: (ctx, n, d) => this.make(ctx, n, d) });
+    Object.freeze(this);
+  }
   assert(ctx: ExecutionContext, a: RationalFunction<E>): void {
     ctx.tick();
     demand(typeof a === 'object' && a !== null && this.#values.has(a), 'domain-mismatch', 'rational function field');
@@ -53,7 +60,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
     const r = this.ring;
     r.assert(ctx, numerator); r.assert(ctx, denominator);
     demand(!r.isZero(ctx, denominator), 'division-by-zero', 'rational function denominator');
-    let n: Polynomial<E>, d: Polynomial<E>, monomial = false;
+    let n: Polynomial<E>, d: Polynomial<E>, monomial = false, coprime = false;
     if (r.degree(ctx, denominator) === 0) {
       // A nonzero constant is a unit: normalization needs no Euclidean algorithm.
       n = r.scale(ctx, numerator, r.domain.inverse(ctx, r.leading(ctx, denominator))); d = r.one(ctx);
@@ -69,10 +76,15 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
       const cs: E[] = Array(k - cancel).fill(r.domain.fromInteger(ctx, 0n));
       cs.push(r.domain.fromInteger(ctx, 1n)); d = r.make(ctx, cs);
     } else {
-      const gcd = polynomialGcd(ctx, r, numerator, denominator);
-      n = exactDivide(ctx, r, numerator, gcd); d = exactDivide(ctx, r, denominator, gcd);
+      const proof = extendedGcd(ctx, r, numerator, denominator);
+      n = exactDivide(ctx, r, numerator, proof.gcd); d = exactDivide(ctx, r, denominator, proof.gcd);
       const inverse = r.domain.inverse(ctx, r.leading(ctx, d));
       n = r.scale(ctx, n, inverse); d = r.scale(ctx, d, inverse);
+      // s*N+t*D=g and N=g*n/c, D=g*d/c imply s*n+t*d=c.
+      // A checked nonzero constant combination proves coprimality without
+      // producing a second Euclidean sequence for the normalized pair.
+      coprime = !r.domain.isZero(ctx, inverse) && r.equal(ctx,
+        r.add(ctx, r.multiply(ctx, proof.s, n), r.multiply(ctx, proof.t, d)), r.constant(ctx, inverse));
     }
     demand(r.domain.equal(ctx, r.leading(ctx, d), r.domain.fromInteger(ctx, 1n)), 'verification-failed', 'fraction denominator not monic');
     // Monic degree-zero denominator is exactly one, hence coprime to every numerator.
@@ -80,7 +92,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
     // denominator shape independently of the cancellation scan.
     demand(r.degree(ctx, d) === 0 || (monomial
       ? this.monomial(ctx, d) && !r.domain.isZero(ctx, n.coefficients[0])
-      : r.equal(ctx, polynomialGcd(ctx, r, n, d), r.one(ctx))), 'verification-failed', 'fraction not coprime');
+      : coprime), 'verification-failed', 'fraction not coprime');
     demand(r.equal(ctx, r.multiply(ctx, n, denominator), r.multiply(ctx, numerator, d)), 'verification-failed', 'fraction normalization changed value');
     ctx.allocate(3);
     const value = Object.freeze({ field: this, numerator: n, denominator: d });

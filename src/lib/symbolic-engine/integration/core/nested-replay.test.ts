@@ -1,0 +1,54 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { exponentialSetup } from './__tests__/exponential-rational-fixtures';
+import { nestedStress } from './__tests__/nested-fixtures';
+import { bounds } from './differential-test-support';
+import { ExecutionContext } from './execution';
+import { decodeExponentialRationalDecision, encodeExponentialRationalDecision } from './exponential-rational-wire';
+import { verifyExponentialRationalDecision } from './exponential-rational-decision';
+import * as integration from './exponential-rational-decision';
+import * as hermite from './exponential-rational-hermite';
+import * as residue from './exponential-rational-residue';
+import * as selection from './exponential-rational-selection';
+import * as sum from './exponential-sum-decision';
+import * as rde from './rational-rde';
+import * as rational from './rational-decision';
+import * as admission from './differential-admission';
+import * as derivative from './differential-derivative';
+import * as traces from './quotient-trace';
+import * as prs from './subresultant';
+
+afterEach(() => vi.restoreAllMocks());
+describe('baseline nested arithmetic artifacts', () => {
+  it.each(['positive', 'negative'])('replays the b452798e %s artifact without producers', kind => {
+    const s = exponentialSetup(kind === 'positive' ? [1, 1] : [0, 1]);
+    const fresh = () => new ExecutionContext(s.ctx.limits);
+    const input = kind === 'positive' ? nestedStress(fresh(), s, s.p([1]), false)
+      : s.F.make(s.ctx, [s.c(1)], [s.x, s.c(1)]);
+    const file = kind === 'positive' ? 'shifted' : 'negative';
+    const data = JSON.parse(readFileSync(new URL(`./__tests__/fixtures/exponential-rational-${file}-b452798e.json`, import.meta.url), 'utf8'));
+    const disabled = () => { throw Error('producer disabled'); };
+    vi.spyOn(integration, 'integrateExponentialRational').mockImplementation(disabled);
+    vi.spyOn(hermite, 'differentialHermite').mockImplementation(disabled);
+    vi.spyOn(residue, 'exponentialResidues').mockImplementation(disabled);
+    vi.spyOn(selection, 'selectExponentialResidues').mockImplementation(disabled);
+    vi.spyOn(sum, 'integrateExponentialSum').mockImplementation(disabled);
+    vi.spyOn(rde, 'solveRationalRde').mockImplementation(disabled);
+    vi.spyOn(rational, 'integrateRational').mockImplementation(disabled);
+    vi.spyOn(admission, 'buildExponential').mockImplementation(disabled);
+    vi.spyOn(derivative, 'differentiate').mockImplementation(disabled);
+    vi.spyOn(traces, 'quotientTrace').mockImplementation(disabled);
+    vi.spyOn(prs, 'subresultants').mockImplementation(disabled);
+    const proof = decodeExponentialRationalDecision(fresh(), s.F, input, data, bounds);
+    expect(proof.kind).toBe(kind === 'positive' ? 'elementary' : 'non-elementary');
+    expect(encodeExponentialRationalDecision(fresh(), s.F, input, proof, bounds)).toEqual(data);
+    const repeated = fresh();
+    verifyExponentialRationalDecision(repeated, s.F, input, proof, bounds);
+    const first = repeated.usage.work;
+    verifyExponentialRationalDecision(repeated, s.F, input, proof, bounds);
+    expect(repeated.usage.work).toBe(first * 2);
+    expect(() => verifyExponentialRationalDecision(fresh(), s.F, s.t, proof, bounds)).toThrow('verification-failed');
+    expect(() => verifyExponentialRationalDecision(fresh(), s.F, input, { ...proof, conditions: [] }, bounds)).toThrow('verification-failed');
+    expect(() => decodeExponentialRationalDecision(new ExecutionContext({ ...s.ctx.limits, work: 10 }), s.F, input, data, bounds)).toThrow('resource-limit');
+  }, 120_000);
+});
