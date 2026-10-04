@@ -67,6 +67,26 @@ group('verifier rejects tampering with complex families', () => {
   });
 });
 
+group('verifier rejects tampering with sums of logarithms', () => {
+  it('rejects the root that fails the Arg sum and a dropped root', () => {
+    const { store: s, problem, outcome } = setup(eq(['Add', ['Ln', 'z'], ['Ln', ['Add', 'z', 1]]]));
+    const { set, proof } = solved(outcome);
+    if (set.kind !== 'finite') throw new Error(set.kind);
+    // (−1 − √5)/2 solves z(z + 1) = 1, but Arg z + Arg(z + 1) = 2π.
+    const other = s.mul(s.fraction(-1, 2), s.add(s.integer(1), s.sqrt(s.integer(5))));
+    rejects(() => verifyEquationOutcome(problem, { kind: 'solved', proof, set: { ...set, points: [[{ kind: 'expression', id: other }]] } }), /does not satisfy/);
+    rejects(() => verifyEquationOutcome(problem, { kind: 'empty', proof }), /claimed empty/);
+  }, 60_000);
+
+  it('round-trips a sum of logarithms through the wire', () => {
+    const { store, outcome } = setup(eq(['Subtract', ['Ln', 'z'], ['Ln', ['Add', 'z', -1]]], ['Multiply', ['Rational', 1, 2], 'Pi', I]));
+    const back = decodeOutcome(context(), JSON.parse(JSON.stringify(encodeOutcome(store, outcome))));
+    const replayed = back.outcome as Extract<EquationOutcome, { kind: 'solved' }>;
+    verifyEquationOutcome(replayed.proof.states.get(replayed.proof.root)!, replayed);
+    expect(describe(back.store, replayed)).toBe(describe(store, outcome));
+  }, 60_000);
+});
+
 group('complex wire replay', () => {
   it('round-trips families, constraints, several parameters and points, and verifies the replay', () => {
     const cases = [

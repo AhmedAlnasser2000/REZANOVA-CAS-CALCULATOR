@@ -1,4 +1,4 @@
-# Composition gate commit (part A)
+# Composition gate commits (parts A and B)
 
 ## Attribution
 
@@ -23,3 +23,4 @@
 - The commit contains part A of the composition slice, the engine hooks, the new set kind, the gate spec, roadmap/README notes and Equation-owned memory.
 - Commit identity: the commit containing this record (resolve with git log for this path); no self-referential hash is embedded.
 - Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.
+- Part A merged as #16 (checked: main equals the pushed commit). Part B: the user pre-authorized commit, push and PR. The branch was restarted from `origin/main`, so the push uses force-with-lease. Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.

@@ -8,7 +8,9 @@ import { expandConstant } from '../representation/angles';
 import { evaluateExact, imaginaryPart, realPart, type ExactValue } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import type { Condition } from '../representation/relation';
-import { realSign } from '../representation/real-order';
+import { realSign, START_BITS } from '../representation/real-order';
+import { enclose } from '../representation/enclosure';
+import { linearForm } from '../generators/inversion';
 import { complexForm, complexIsZero, latticeIndex, logParts, quotient, rect, valueExpression } from './rectangular';
 
 /**
@@ -29,6 +31,9 @@ import { complexForm, complexIsZero, latticeIndex, logParts, quotient, rect, val
  *   u = Log c + 2πik;
  * - one logarithmic kernel: log u = c (Im c ∈ (−π, π], the principal strip)
  *   gives u = e^c;
+ * - several logarithmic kernels with rational coefficients (slice 5): the
+ *   exponentiated rational equation, each root kept exactly when its Arg sum
+ *   puts the logarithms back on the principal branch (`severalLogs`);
  * - goals with parameters: degree ≤ 2 in z, or one exponential kernel at
  *   degree 1 (constraint: the level is nonzero, an exact integer exclusion).
  * Every step is an equivalence over ℂ, so the list is complete.
@@ -222,8 +227,11 @@ export function complexZeros(store: ExpressionStore, f: ExprId, x: string, fresh
       if (scan.variableOutside) refuse(CERTIFIED_NUMERICS, 'the variable outside exponential or logarithmic kernels over ℂ (Lambert class)');
       const tau = fresh('τ'), t = store.symbol(tau);
       if (fns.every(fn => fn === 'log')) {
-        if (scan.kernels.length > 1) refuse(COMPOSITION, 'several logarithms over ℂ');
         if (parametric) refuse(COMPOSITION, 'a logarithm behind a family');
+        if (scan.kernels.length > 1) {
+          for (const p of severalLogs(store, store.sub(g.h, g.level), scan.kernels, x, fresh)) points.set(p, true);
+          continue;
+        }
         const kernel = scan.kernels[0], u = (store.node(kernel) as { arg: ExprId }).arg;
         const r = complexRoots(store, replaceSubexpressions(store, g.h, new Map([[kernel, t]])), g.level, tau);
         if (r.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.generators, 'an identity in the logarithm'); continue; }
@@ -282,6 +290,54 @@ export function complexZeros(store: ExpressionStore, f: ExprId, x: string, fresh
   } catch (e) {
     if (e instanceof Refused) return { kind: 'refused', refusal: e.refusal };
     throw e;
+  }
+}
+
+/**
+ * Zeros of Σ cⱼ·Log uⱼ(z) + R with rational cⱼ (slice 5). With L the lcm of the
+ * denominators, every zero satisfies ∏ uⱼ^{L·cⱼ} = e^{−L·R} (exp(n·Log u) = uⁿ for
+ * integer n), a rational equation with exact roots. At such a root the sum is
+ * 2πi·m/L for an integer m, so it vanishes exactly when the Arg sum gives m = 0;
+ * m is an integer, so enclosures fix it without any transcendental zero test.
+ */
+function severalLogs(store: ExpressionStore, h: ExprId, kernels: readonly ExprId[], x: string, fresh: (prefix: string) => string): ExprId[] {
+  const ctx = store.ctx, symbols = kernels.map(() => store.symbol(fresh('λ')));
+  const lin = linearForm(store, replaceSubexpressions(store, h, new Map(kernels.map((k, i) => [k, symbols[i]]))), symbols);
+  if (!lin) return refuse(COMPOSITION, 'logarithms combined non-linearly over ℂ');
+  if (dependsOn(store, lin.constant, x)) return refuse(CERTIFIED_NUMERICS, 'the variable outside the logarithms over ℂ');
+  const cs = symbols.map(sy => rationalValue(store, lin.coefficients.get(sy) ?? store.integer(0)));
+  if (cs.some(c => c === undefined)) return refuse(OWNERS.parameters, 'a non-rational multiple of a logarithm over ℂ');
+  let L = 1n;
+  for (const c of cs as Rational[]) L = iquot(ctx, imul(ctx, L, c.denominator), igcd(ctx, L, c.denominator));
+  const n = (cs as Rational[]).map(c => iquot(ctx, imul(ctx, c.numerator, L), c.denominator));
+  const args = kernels.map(k => (store.node(k) as { arg: ExprId }).arg);
+  const product = store.mul(...args.map((u, j) => store.pow(u, store.integer(n[j]))));
+  const r = complexRoots(store, product, store.exp(store.neg(store.mul(store.integer(L), lin.constant))), x);
+  if (r.kind === 'all') return refuse(OWNERS.generators, 'an identity among logarithms over ℂ');
+  const R = rect(store, lin.constant);
+  if (R === undefined) return refuse(COMPOSITION, 'a constant without rectangular parts');
+  const twoPi = store.mul(store.integer(2), store.constant('pi'));
+  const out: ExprId[] = [];
+  for (const z of r.values) {
+    const at = args.map(u => store.substitute(u, new Map([[x, z]])));
+    if (at.some(u => complexIsZero(store, u) !== false)) continue;
+    const parts = at.map(u => { const p = rect(store, u); return p && logParts(store, p); });
+    if (parts.some(p => p === undefined)) return refuse(COMPOSITION, 'a logarithm argument without rectangular parts');
+    const turns = store.add(...parts.map((p, j) => store.mul(store.integer(n[j]), (p as { im: ExprId }).im)), store.mul(store.integer(L), R.im));
+    if (nearestInteger(store, store.div(turns, twoPi)) === 0n) out.push(z);
+  }
+  return out;
+}
+
+/** The integer a real closed form is known to equal, from enclosures. */
+function nearestInteger(store: ExpressionStore, id: ExprId): bigint {
+  for (let bits = START_BITS; ; bits *= 2) {
+    store.ctx.tick();
+    const e = enclose(store, id, bits);
+    if (e.kind !== 'bounds') { if (e.kind === 'unknown') continue; return refuse(COMPOSITION, 'an Arg sum that cannot be enclosed'); }
+    const round = (q: Rational) => { const t = q.numerator * 2n + q.denominator, d = 2n * q.denominator; return t >= 0n ? t / d : -((-t + d - 1n) / d); };
+    const a = round(e.lo), b = round(e.hi);
+    if (a === b) return a;
   }
 }
 

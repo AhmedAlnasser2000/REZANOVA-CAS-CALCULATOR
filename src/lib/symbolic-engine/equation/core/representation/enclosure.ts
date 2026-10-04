@@ -239,6 +239,12 @@ function quarterTurns(ctx: ExecutionContext, q: Rational, W: number): { n: bigin
 /** sin or cos at a rational point. */
 export function sinCosBounds(ctx: ExecutionContext, fn: 'sin' | 'cos', q: Rational, bits: number): Bounds {
   if (q.numerator === 0n) return fn === 'sin' ? { lo: zero(ctx), hi: zero(ctx) } : { lo: rational(ctx, 1n), hi: rational(ctx, 1n) };
+  // A point with a long denominator: sin and cos are 1-Lipschitz, so the value at the point rounded to
+  // working precision, widened by the rounding distance, bounds it at the same accuracy with short arithmetic.
+  if (bitLength(q.denominator) > bits + 48) {
+    const p = down(ctx, q, bits + 24), delta = rational(ctx, 1n, 1n << BigInt(bits + 24)), b = sinCosBounds(ctx, fn, p, bits + 8);
+    return { lo: down(ctx, rSubtract(ctx, b.lo, delta), bits), hi: up(ctx, rAdd(ctx, b.hi, delta), bits) };
+  }
   const W = bits + 16, { n, r } = quarterTurns(ctx, q, W);
   // sin is increasing on [−1, 1]; cos has its maximum 1 at 0.
   const sinR = { lo: sinSmall(ctx, r.lo, W).lo, hi: sinSmall(ctx, r.hi, W).hi };
@@ -256,24 +262,32 @@ export function atanBounds(ctx: ExecutionContext, q: Rational, bits: number): Bo
   if (q.numerator === 0n) return { lo: zero(ctx), hi: zero(ctx) };
   if (q.numerator < 0n) { const b = atanBounds(ctx, rNegate(ctx, q), bits); return { lo: rNegate(ctx, b.hi), hi: rNegate(ctx, b.lo) }; }
   const W = bits + 16;
+  // A point with a long denominator (an enclosure of a nested value): atan is increasing and 1-Lipschitz,
+  // so the point rounded outward to working precision bounds it at the same accuracy, with short arithmetic.
+  if (bitLength(q.denominator) > W + 32) {
+    return { lo: atanBounds(ctx, down(ctx, q, W + 8), bits).lo, hi: atanBounds(ctx, up(ctx, q, W + 8), bits).hi };
+  }
   if (lt(ctx, rational(ctx, 1n), q)) {
     const inner = atanBounds(ctx, rDivide(ctx, rational(ctx, 1n), q), W), pi = piBounds(ctx, W);
     const two = rational(ctx, 2n);
     return { lo: down(ctx, rSubtract(ctx, rDivide(ctx, pi.lo, two), inner.hi), bits), hi: up(ctx, rSubtract(ctx, rDivide(ctx, pi.hi, two), inner.lo), bits) };
   }
-  const q2 = rMultiply(ctx, q, q), d = rAdd(ctx, rational(ctx, 1n), q2), y = rDivide(ctx, q2, d);
-  const stop = rational(ctx, 1n, 1n << BigInt(W)), unit = W + 8;
-  let term = down(ctx, rDivide(ctx, q, d), unit), sum = zero(ctx), k = 0;
-  for (;;) {
+  const q2 = rMultiply(ctx, q, q), d = rAdd(ctx, rational(ctx, 1n), q2), y = rDivide(ctx, q2, d), t0 = rDivide(ctx, q, d);
+  // Fixed point with `unit` fractional bits: a lower chain (floors of y and of every step) and an upper chain
+  // (ceilings) bracket the true terms by induction, since every step is monotone in its inputs.
+  const unit = W + 8, S = 1n << BigInt(unit), stop = 1n << 8n;
+  const floorS = (r: Rational) => floorDiv(r.numerator * S, r.denominator), ceilS = (r: Rational) => -floorDiv(-r.numerator * S, r.denominator);
+  const yD = floorS(y), yU = ceilS(y);
+  let tD = floorS(t0), tU = ceilS(t0), sumD = 0n, sumU = 0n;
+  for (let k = 0n; ; k++) {
     ctx.tick();
-    sum = rAdd(ctx, sum, term);
-    term = down(ctx, rDivide(ctx, rMultiply(ctx, rMultiply(ctx, term, y), rational(ctx, BigInt(2 * k + 2))), rational(ctx, BigInt(2 * k + 3))), unit);
-    k++;
-    if (lt(ctx, term, stop)) break;
+    sumD += tD; sumU += tU;
+    tD = floorDiv(tD * yD * (2n * k + 2n), (2n * k + 3n) * S);
+    tU = -floorDiv(-(tU * yU * (2n * k + 2n)), (2n * k + 3n) * S);
+    if (tU < stop) break;
   }
-  // Positive terms with ratio ≤ y ≤ 1/2: the tail is at most twice the first omitted term; rounding adds one unit per term.
-  const err = rational(ctx, BigInt(2 * (k + 2)), 1n << BigInt(unit));
-  return { lo: down(ctx, sum, bits), hi: up(ctx, rAdd(ctx, rAdd(ctx, sum, rMultiply(ctx, rational(ctx, 2n), term)), err), bits) };
+  // The terms decrease with ratio ≤ y ≤ 1/2 (+ one unit): the tail is below three times the first omitted term.
+  return { lo: down(ctx, rational(ctx, sumD, S), bits), hi: up(ctx, rational(ctx, sumU + 3n * tU + 1n, S), bits) };
 }
 
 /** asin at a rational point of [−1, 1]: ±π/2 at the ends, else 2·atan(q/(1 + √(1 − q²))). */
@@ -282,6 +296,12 @@ export function asinBounds(ctx: ExecutionContext, q: Rational, bits: number): Bo
   if (rAbs(ctx, q).numerator === rAbs(ctx, q).denominator) {
     const pi = piBounds(ctx, W), h = { lo: rDivide(ctx, pi.lo, two), hi: rDivide(ctx, pi.hi, two) };
     return q.numerator > 0n ? { lo: down(ctx, h.lo, bits), hi: up(ctx, h.hi, bits) } : { lo: down(ctx, rNegate(ctx, h.hi), bits), hi: up(ctx, rNegate(ctx, h.lo), bits) };
+  }
+  // A point with a long denominator inside (−1, 1): asin is increasing, so outward-rounded points (clamped
+  // to [−1, 1]) bound it: sound everywhere, and as tight as the target precision away from ±1.
+  if (bitLength(q.denominator) > W + 32) {
+    const clamp = (r: Rational) => (lt(ctx, one, r) ? one : lt(ctx, r, rNegate(ctx, one)) ? rNegate(ctx, one) : r);
+    return { lo: asinBounds(ctx, clamp(down(ctx, q, W + 16)), bits).lo, hi: asinBounds(ctx, clamp(up(ctx, q, W + 16)), bits).hi };
   }
   const s = rootBounds(ctx, rSubtract(ctx, one, rMultiply(ctx, q, q)), 2, W);
   const a = rDivide(ctx, q, rAdd(ctx, one, s.hi)), b = rDivide(ctx, q, rAdd(ctx, one, s.lo));

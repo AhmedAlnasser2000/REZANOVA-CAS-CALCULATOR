@@ -8,6 +8,8 @@ import { readExpression, readRelations, writeExpression } from '../representatio
 import { relationProblem } from '../representation/relation';
 import { complexBounds, principalLog } from './rectangular';
 import { rational } from '../algebra/rational';
+import { algebraicLogIsZero } from '../representation/log-zero';
+import { realSign } from '../representation/real-order';
 
 /** Decide over ℂ through the dispatcher, verify independently, and describe exactly. */
 function run(json: unknown) {
@@ -95,10 +97,29 @@ group('chains, conjunctions and exclusions', () => {
   }, 60_000);
 });
 
+group('several principal logarithms (slice 5): exponentiate, then the exact Arg sum', () => {
+  it.each([
+    ['log z + log(z + 1) = 0: (√5 − 1)/2 (the other root fails the Arg sum)', eq(['Add', ['Ln', 'z'], ['Ln', ['Add', 'z', 1]]]), '{≈0.618034}', [-1n, 1n, 1n]],
+    ['2·log z = log 4: {2} (−2 fails)', eq(['Multiply', 2, ['Ln', 'z']], ['Ln', 4]), '{2}', undefined],
+    ['log z − log(z − 1) = iπ/2: (1 − i)/2', eq(['Subtract', ['Ln', 'z'], ['Ln', ['Add', 'z', -1]]], ['Multiply', ['Rational', 1, 2], 'Pi', I]), '{≈0.500000-0.500000i}', [1n, -2n, 2n]],
+    ['log z + log(z + 1) = iπ: only (−1 + i√3)/2', eq(['Add', ['Ln', 'z'], ['Ln', ['Add', 'z', 1]]], ['Multiply', 'Pi', I]), '{≈-0.500000+0.866025i}', [1n, 1n, 1n]],
+    ['log z + log(z + 1) + log(z + 2) = log 6: {1}', eq(['Add', ['Ln', 'z'], ['Ln', ['Add', 'z', 1]], ['Ln', ['Add', 'z', 2]]], ['Ln', 6]), '{1}', undefined],
+  ])('%s', (_, json, expected, minimal) => {
+    const r = run(json);
+    expect(r.text).toBe(expected);
+    if (minimal && r.outcome.kind === 'solved' && r.outcome.set.kind === 'finite') {
+      const v = r.outcome.set.points[0][0];
+      // Exact identity: the root of its minimal polynomial.
+      expect(v.kind === 'algebraic' ? v.root.poly.coefficients : undefined).toEqual(minimal);
+    }
+  }, 60_000);
+});
+
 group('routing over ℂ', () => {
   it.each([
     ['z·eᶻ = 1 (complex Lambert)', eq(['Multiply', 'z', exp('z')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside exponential or logarithmic kernels over ℂ (Lambert class)'],
-    ['log z + log(z + 1) = 0', eq(['Add', ['Ln', 'z'], ['Ln', ['Add', 'z', 1]]]), 'incomplete-implementation: EQUATION-COMPOSITION1: several logarithms over ℂ'],
+    ['√2·log z + log(z + 1) = 0 (an irrational coefficient)', eq(['Add', ['Multiply', ['Sqrt', 2], ['Ln', 'z']], ['Ln', ['Add', 'z', 1]]]), 'incomplete-implementation: EQUATION-PARAMETERS1: a non-rational multiple of a logarithm over ℂ'],
+    ['log z + z = 1 (the variable outside the logarithm)', eq(['Add', ['Ln', 'z'], 'z'], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside exponential or logarithmic kernels over ℂ (Lambert class)'],
     ['eᶻ + sin z = 0 (frequencies 1 and i)', eq(['Add', exp('z'), ['Sin', 'z']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
     ['eᶻ ≠ 1 (complement of a family)', ['NotEqual', exp('z'), 1], 'incomplete-implementation: EQUATION-RESULT-CONTRACT1: the complement of an infinite family over ℂ'],
     ['|z| = 1', eq(['Abs', 'z'], 1), 'unsupported: absolute values and radicals of the target are decided over the reals only'],
@@ -107,6 +128,19 @@ group('routing over ℂ', () => {
   ])('%s', (_, json, expected) => {
     expect(run(json).text).toBe(expected);
   }, 60_000);
+});
+
+group('exact zero test for logs of algebraic numbers', () => {
+  const store = new ExpressionStore(context());
+  const read = (json: unknown) => { const r = readExpression(store, json); if (r.kind !== 'ok') throw new Error('read'); return r.value; };
+  it('decides Σ cⱼ·ln αⱼ (+ a) exactly', () => {
+    const golden = ['Multiply', ['Rational', 1, 2], ['Add', ['Sqrt', 5], -1]], conjugate = ['Multiply', ['Rational', 1, 2], ['Add', ['Sqrt', 5], 1]];
+    expect(algebraicLogIsZero(store, read(['Add', ['Ln', golden], ['Ln', conjugate]]))).toBe(true);
+    expect(algebraicLogIsZero(store, read(['Add', ['Ln', ['Add', 1, ['Sqrt', 2]]], ['Ln', ['Add', -1, ['Sqrt', 2]]]]))).toBe(true);
+    expect(algebraicLogIsZero(store, read(['Add', ['Ln', 2], ['Ln', ['Sqrt', 2]]]))).toBe(false);
+    expect(algebraicLogIsZero(store, read(['Add', ['Ln', golden], ['Ln', conjugate], 1]))).toBe(false);
+    expect(realSign(store, read(['Add', ['Ln', golden], ['Ln', conjugate]]))).toBe(0);
+  });
 });
 
 group('complex substrate', () => {
