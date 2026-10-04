@@ -1,13 +1,20 @@
 # Equation Reconstruction Roadmap
 
-Date: 2026-10-03
+Date: 2026-10-04
 Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1` and `EQUATION-COMPOSITION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-COMPOSITION1` (slice 5) is backend-verified in two parts (see its [specification](equation-composition1-spec.md)). Part A (real): injective cancellation at any depth; certified extended-real ranges, symbolic derivatives and exact limits; a range-based exact zero finder for mixed kernels (split by exact sign, monotone pieces, confirmed exact candidates only); and the `interval-family` set kind for inequalities through a non-affine trig argument. Part B: several principal logarithms over ℂ (exponentiated equation, exact Arg-sum acceptance), an exact zero test for logs of algebraic numbers, faster certified enclosures, and the exit evidence that depth 3 and depth 25 are decided by the same code. Non-closed-form boundaries name `EQUATION-CERTIFIED-NUMERICS1`; non-affine complex intersections and nested quadratic levels are recorded follow-ups. The next gate is `EQUATION-PARAMETERS1`. It needs its own approval.
+`EQUATION-PARAMETERS1` (stage 10) is in progress in one PR with two commits (see its [specification](equation-parameters1-spec.md)). Part A is backend-verified:
+- polynomial and rational relations with coefficients in ℚ(p…) are decided as case trees;
+- one parameter gives exact cells with algebraic breakpoints and parametric roots;
+- several parameters give sign-condition trees (degree ≤ 2 over ℝ, root sets over ℂ);
+- a specialization verifier checks every case against slice 1;
+- exact zero tests with algebraic coefficients now use Liouville's inequality.
+
+Part B (parametric single kernels, transcendental constant coefficients, and the consolidated follow-up ledger) comes next in the same PR. `EQUATION-COMPOSITION1` (slice 5) is complete.
 
 ## Implementation sequence
 
@@ -22,7 +29,7 @@ Companion: [design](equation-reconstruction-design.md), [blueprint](equation-rec
 | 7 (backend verified) | `EQUATION-CONSTRAINTS1` (slice 3) | Sign intervals, lazy branch manager, absolute values and radical generators (same-base lattice, tower elimination), real only; range contractors moved to stage 9 | Corpus A/S/M cases exact, including the two old false negatives |
 | 8 (backend verified) | `EQUATION-PERIODIC1` (slice 4) | Trig algebraization, periodic families, Diophantine intersection, interval restriction; complex exp/log families ln c + 2πik (moved from stage 6) | T cases exact; sin x = 0 on [0,100] as 32 exact roots kπ |
 | 9 (backend verified) | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth; HC4 range contractors (moved from stage 7); inequalities with families not affine in their parameter, several complex logarithms and non-affine complex intersections (moved from stage 8) | Remaining C cases with exact constants (no decimals; C6/C7 done in stage 6); depth 3 and depth 25 by the same code |
-| 10 | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
+| 10 (part A backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |

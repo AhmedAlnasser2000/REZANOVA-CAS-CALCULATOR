@@ -7,7 +7,7 @@ import type { ExprId, ExpressionStore } from '../representation/expression';
 import { exactSign, START_BITS } from '../representation/real-order';
 import type { RelationProblem } from '../representation/relation';
 import {
-  assertOutcome, compareEndpoints, floorExact, normalizeSet, setKey, type Endpoint, type EquationOutcome, type Interval, type PointValue, type SolutionSet,
+  assertOutcome, compareEndpoints, floorExact, normalizeSet, setKey, type Endpoint, type EquationOutcome, type Interval, type PointValue, type SolutionSet, valueExpression,
 } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
 import { allHold, closedAtoms, decideClosedForm, holds } from './closed-form-set';
@@ -37,7 +37,7 @@ import { commonPeriod, hasTrig, kernelPeriods, periodicIn } from '../periodic/fa
 const RESIDUAL_BITS = 192;
 
 function idOf(store: ExpressionStore, v: PointValue): ExprId {
-  return v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root);
+  return valueExpression(store, v);
 }
 
 function bounds(store: ExpressionStore, id: ExprId) {

@@ -1,7 +1,7 @@
 import { demand } from '../execution';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import type { Condition, RelationProblem } from '../representation/relation';
-import { assertOutcome, normalizeSet, setKey, type EquationOutcome, type PointValue, type SolutionSet } from '../representation/solution-set';
+import { assertOutcome, normalizeSet, setKey, type EquationOutcome, type PointValue, type SolutionSet, valueExpression } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
 import { decideComplexLeaf } from './complex';
 import { COMPLEX_PIPELINE, COMPLEX_RULES } from './complex-rules';
@@ -22,7 +22,7 @@ const RESIDUAL_BITS = 192;
 type Check = 'holds' | 'fails' | 'unknown';
 
 function idOf(store: ExpressionStore, v: PointValue): ExprId {
-  return v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root);
+  return valueExpression(store, v);
 }
 
 /** e = 0 (eq) or e ≠ 0 (ne) at a point: exact when decidable, else from a residual enclosure. */

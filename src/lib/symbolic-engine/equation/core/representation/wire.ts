@@ -276,6 +276,7 @@ function encodeValue(enc: GraphEncoder, v: PointValue): Json {
     const base = ['a', c.poly.coefficients.map(String), c.index];
     return 'form' in v && v.form !== undefined ? [...base, enc.ref(v.form)] : base;
   }
+  if (v.kind === 'root') return ['r', enc.ref(v.poly), v.variable, v.index];
   return ['e', enc.ref(v.id)];
 }
 
@@ -283,6 +284,11 @@ function decodeValue(dec: GraphDecoder, value: Json): PointValue {
   const e = list(value), ctx = dec.store.ctx;
   if (e[0] === 'q' && e.length === 2) return Object.freeze({ kind: 'rational', value: decodeRational(ctx, e[1]) });
   if (e[0] === 'e' && e.length === 2) return Object.freeze({ kind: 'expression', id: dec.id(e[1]) });
+  if (e[0] === 'r' && e.length === 4) {
+    const variable = text(e[2]), index = e[3];
+    if (typeof index !== 'number' || !Number.isSafeInteger(index) || index < 1) fail('root index');
+    return Object.freeze({ kind: 'root', poly: dec.id(e[1]), variable, index: index as number });
+  }
   if (e[0] === 'a' && (e.length === 3 || e.length === 4)) {
     const roots = dec.store.roots.roots(ctx, minimalPolynomial(ctx, list(e[1]).map(integerText)));
     const k = e[2];
@@ -328,6 +334,7 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
       kind: 'interval-family', variables: [...set.variables], parameter: set.parameter, from: set.from === undefined ? null : set.from.toString(), to: set.to === undefined ? null : set.to.toString(),
       lo: enc.ref(set.lo), hi: enc.ref(set.hi), loClosed: set.loClosed, hiClosed: set.hiClosed,
     };
+    case 'root-set': return { kind: 'root-set', variables: [...set.variables], poly: enc.ref(set.poly) };
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
     case 'unconfirmed': return { kind: 'unconfirmed', variables: [...set.variables], candidates: set.candidates.map(c => ({ point: point(c.point), derivations: [...c.derivations] })) };
@@ -378,6 +385,7 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
       const r = record(value, ['kind', 'variables', 'values', 'freeParameters', 'constraints']);
       return Object.freeze({ kind, variables: names(r.variables), values: Object.freeze(list(r.values).map(v => dec.id(v))), freeParameters: names(r.freeParameters), constraints: conds(r.constraints) });
     }
+    case 'root-set': { const r = record(value, ['kind', 'variables', 'poly']); return Object.freeze({ kind, variables: names(r.variables), poly: dec.id(r.poly) }); }
     case 'reduced-form': { const r = record(value, ['kind', 'problem']); return Object.freeze({ kind, problem: decodeProblemBody(dec, r.problem) }); }
     case 'unconfirmed': {
       const r = record(value, ['kind', 'variables', 'candidates']);

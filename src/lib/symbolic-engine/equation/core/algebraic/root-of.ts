@@ -65,17 +65,35 @@ function sign(ctx: ExecutionContext, f: Polynomial<bigint>, x: Rational): number
 export function bisectReal(ctx: ExecutionContext, r: RealRootOf): RealRootOf {
   if (isRationalRoot(r)) return r;
   const mid = rDivide(ctx, rAdd(ctx, r.lo, r.hi), rational(ctx, 2n));
-  const sMid = sign(ctx, r.poly, mid), sLo = sign(ctx, r.poly, r.lo);
+  const sMid = signHomogeneous(ctx, r.poly, mid), sLo = signHomogeneous(ctx, r.poly, r.lo);
   demand(sMid !== 0 && sLo !== 0, 'verification-failed', 'irreducible polynomial vanished at a rational point');
   return Object.freeze({ ...r, ...(sMid === sLo ? { lo: mid } : { hi: mid }) });
 }
 
-/** Refine until the interval width is at most `width` (> 0). */
+/** Sign of f(p/q), q > 0, by homogeneous integer Horner Σ cᵢ·pⁱ·q^(n−i) (no rational normalization). */
+function signHomogeneous(ctx: ExecutionContext, f: Polynomial<bigint>, x: Rational): number {
+  const c = f.coefficients;
+  let acc = c[c.length - 1], qPower = 1n;
+  for (let i = c.length - 2; i >= 0; i--) {
+    qPower = imul(ctx, qPower, x.denominator);
+    acc = imul(ctx, acc, x.numerator) + imul(ctx, c[i], qPower);
+  }
+  return acc === 0n ? 0 : acc < 0n ? -1 : 1;
+}
+
+/** Refine until the interval width is at most `width` (> 0): bisection keeping the sign at lo. */
 export function refineReal(ctx: ExecutionContext, r: RealRootOf, width: Rational): RealRootOf {
   demand(width.numerator > 0n, 'invalid-input', 'refinement width must be positive');
-  let cur = r;
-  while (compareRational(ctx, rSubtract(ctx, cur.hi, cur.lo), width) > 0) cur = bisectReal(ctx, cur);
-  return cur;
+  if (isRationalRoot(r) || compareRational(ctx, rSubtract(ctx, r.hi, r.lo), width) <= 0) return r;
+  const sLo = signHomogeneous(ctx, r.poly, r.lo), half = rational(ctx, 1n, 2n);
+  let lo = r.lo, hi = r.hi;
+  while (compareRational(ctx, rSubtract(ctx, hi, lo), width) > 0) {
+    ctx.tick();
+    const mid = rMultiply(ctx, rAdd(ctx, lo, hi), half), s = signHomogeneous(ctx, r.poly, mid);
+    demand(s !== 0 && sLo !== 0, 'verification-failed', 'irreducible polynomial vanished at a rational point');
+    if (s === sLo) lo = mid; else hi = mid;
+  }
+  return Object.freeze({ ...r, lo, hi });
 }
 
 function floorRational(n: bigint, d: bigint): bigint { return n >= 0n ? n / d : -((-n + d - 1n) / d); }

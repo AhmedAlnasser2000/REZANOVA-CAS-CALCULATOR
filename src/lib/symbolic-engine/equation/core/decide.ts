@@ -2,6 +2,8 @@ import { decidePolynomialProblem } from './decision/solve';
 import { verifyOutcome as verifyPolynomialOutcome } from './decision/verify';
 import { decideGeneratorProblem } from './generators/solve';
 import { verifyGeneratorOutcome } from './generators/verify';
+import { decideParametricProblem } from './parameters/solve';
+import { verifyParametricOutcome } from './parameters/verify';
 import { verifyComplexOutcome } from './periodic/complex-verify';
 import type { ExprId } from './representation/expression';
 import type { RelationProblem } from './representation/relation';
@@ -49,11 +51,13 @@ export function decideEquation(problem: RelationProblem): EquationOutcome {
   if (problem.domain === 'complex' && hasConstraintKernels(problem)) {
     return { kind: 'unsupported', reason: 'absolute values and radicals of the target are decided over the reals only' };
   }
-  return closedForm(problem) ? decideGeneratorProblem(problem) : decidePolynomialProblem(problem);
+  if (closedForm(problem)) return decideGeneratorProblem(problem);
+  return problem.parameters.length ? decideParametricProblem(problem) : decidePolynomialProblem(problem);
 }
 
 export function verifyEquationOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
-  if (!closedForm(problem)) verifyPolynomialOutcome(problem, outcome);
+  if (!closedForm(problem) && problem.parameters.length) verifyParametricOutcome(problem, outcome);
+  else if (!closedForm(problem)) verifyPolynomialOutcome(problem, outcome);
   else if (problem.domain === 'complex') verifyComplexOutcome(problem, outcome);
   else verifyGeneratorOutcome(problem, outcome);
 }

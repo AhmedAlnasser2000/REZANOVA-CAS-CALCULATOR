@@ -32,7 +32,13 @@ export type EquationOutcome =
  * log 2). An algebraic value may carry `form`, a closed form (radicals) proven
  * to evaluate exactly to the same root; identity always stays the RootOf.
  */
-export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly root: RootOf; readonly form?: ExprId } | { readonly kind: 'expression'; readonly id: ExprId };
+export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly root: RootOf; readonly form?: ExprId } | { readonly kind: 'expression'; readonly id: ExprId } | RootValue;
+/**
+ * The index-th real root (1 = smallest) of a polynomial `poly` in `variable` whose
+ * coefficients carry parameters (parameters gate): valid inside a case whose
+ * conditions fix the number of real roots.
+ */
+export interface RootValue { readonly kind: 'root'; readonly poly: ExprId; readonly variable: string; readonly index: number }
 export type Point = readonly PointValue[];
 
 /** An interval endpoint: ±∞ or an exact real value. */
@@ -64,6 +70,8 @@ export type SolutionSet =
    * and ordered in k (proven when the set is built); lower-bounded ranges start at k = 0.
    */
   | { readonly kind: 'interval-family'; readonly variables: readonly string[]; readonly parameter: string; readonly from?: bigint; readonly to?: bigint; readonly lo: ExprId; readonly hi: ExprId; readonly loClosed: boolean; readonly hiClosed: boolean }
+  /** One variable: every root of `poly` in that variable (parameters gate, over ℂ, degree ≥ 3). */
+  | { readonly kind: 'root-set'; readonly variables: readonly string[]; readonly poly: ExprId }
   /** values[i] gives variables[i] in terms of integer parameters (k ∈ ℤ), under constraints. */
   | { readonly kind: 'periodic'; readonly variables: readonly string[]; readonly values: readonly ExprId[]; readonly integerParameters: readonly string[]; readonly constraints: readonly Condition[] }
   /** values[i] gives variables[i] in terms of free continuous parameters, under constraints. */
@@ -73,7 +81,7 @@ export type SolutionSet =
   /** Candidates whose verification could not be decided, each with the derivations that produced it. */
   | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] };
 
-export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
+export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'root-set', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
 
 const fail = (reason: string): never => demand(false, 'invalid-input', reason) as never;
 
@@ -102,14 +110,17 @@ export function resourceOutcome(error: unknown): EquationOutcome {
 export function valueKey(store: ExpressionStore, v: PointValue): string {
   if (v.kind === 'rational') return `q:${v.value.numerator}/${v.value.denominator}`;
   if (v.kind === 'algebraic') return `a:${store.roots.canonical(store.ctx, v.root).key}`;
+  if (v.kind === 'root') return `r:${store.digest(v.poly)}:${v.variable}:${v.index}`;
   return `e:${store.digest(v.id)}`;
 }
 
 function rank(v: PointValue): number {
-  return v.kind === 'rational' || (v.kind === 'algebraic' && v.root.kind === 'real') ? 0 : v.kind === 'algebraic' ? 1 : 2;
+  return v.kind === 'rational' || (v.kind === 'algebraic' && v.root.kind === 'real') ? 0 : v.kind === 'algebraic' ? 1 : v.kind === 'root' ? 3 : 2;
 }
 
-function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
+/** A point value as an expression (a parametric root has none). */
+export function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
+  demand(v.kind !== 'root', 'invalid-input', 'a parametric root has no closed form');
   return v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root);
 }
 
@@ -122,7 +133,7 @@ export function compareValues(store: ExpressionStore, a: PointValue, b: PointVal
   const ctx = store.ctx;
   if (a.kind === 'expression' || b.kind === 'expression') {
     if (valueKey(store, a) === valueKey(store, b)) return 0;
-    const real = (v: PointValue) => v.kind !== 'algebraic' || v.root.kind === 'real';
+    const real = (v: PointValue) => v.kind !== 'root' && (v.kind !== 'algebraic' || v.root.kind === 'real') && (v.kind !== 'expression' || store.freeSymbols(v.id).length === 0);
     if (real(a) && real(b)) {
       try {
         return realCompare(store, valueExpression(store, a), valueExpression(store, b));
@@ -145,6 +156,8 @@ export function compareValues(store: ExpressionStore, a: PointValue, b: PointVal
 
 /** Exact numbers in canonical form; expressions that evaluate exactly become numbers. */
 function normalizeValue(store: ExpressionStore, v: PointValue, domain: EvaluationDomain): PointValue {
+  if (v.kind === 'root') { store.node(v.poly); return Object.freeze({ ...v }); }
+  if (v.kind === 'expression' && store.freeSymbols(v.id).length) return Object.freeze({ kind: 'expression', id: v.id });
   if (v.kind === 'expression') {
     store.node(v.id);
     const e = evaluateExact(store, v.id, domain);
@@ -175,6 +188,19 @@ function checkVariables(variables: readonly string[]): readonly string[] {
 }
 
 // ---- construction ----
+
+/** Whether a set mentions parameter symbols or parametric roots (then it has no numeric normal form). */
+export function parametric(store: ExpressionStore, set: SolutionSet): boolean {
+  const value = (v: PointValue | Endpoint) => v.kind === 'root' || (v.kind === 'expression' && store.freeSymbols(v.id).length > 0);
+  switch (set.kind) {
+    case 'finite': return set.points.some(p => p.some(value));
+    case 'cofinite': return set.except.some(p => p.some(value));
+    case 'intervals': return set.intervals.some(i => value(i.lo) || value(i.hi));
+    case 'union': return set.sets.some(x => parametric(store, x));
+    case 'root-set': return true;
+    default: return false;
+  }
+}
 
 export function finiteSet(variables: readonly string[], points: readonly Point[]): SolutionSet {
   const vars = checkVariables(variables);
@@ -248,13 +274,21 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
       return ordered.length === 1 ? ordered[0] : unionSet(ordered);
     }
     case 'case-tree': {
-      const cases = set.cases.map(c => Object.freeze({ conditions: canonicalConditions(store, c.conditions), set: normalizeSet(store, c.set, domain) }));
+      // A case set in the parameters (ends such as (−b − √D)/(2a) or parametric roots) has no numeric order:
+      // it keeps the order in which the parameters engine built it.
+      // Finite sets have no order, so parametric points are still deduplicated and sorted (by identity).
+      const cases = set.cases.map(c => Object.freeze({ conditions: canonicalConditions(store, c.conditions), set: parametric(store, c.set) && c.set.kind !== 'finite' ? Object.freeze(c.set) : normalizeSet(store, c.set, domain) }));
       const byKey = new Map(cases.map(c => [caseKey(store, c), c] as const));
       return Object.freeze({ kind: 'case-tree', cases: Object.freeze([...byKey.keys()].sort().map(k => byKey.get(k) as Case)) });
     }
     case 'periodic-set': return normalizePeriodicSet(store, set, domain);
     case 'periodic': case 'parametric':
       return Object.freeze({ ...set, constraints: canonicalConditions(store, set.constraints) });
+    case 'root-set': {
+      checkVariables(set.variables);
+      store.node(set.poly);
+      return Object.freeze({ ...set });
+    }
     case 'interval-family': {
       checkVariables(set.variables);
       if (!isSymbolName(set.parameter) || set.variables.includes(set.parameter)) fail('interval-family parameter');
@@ -303,6 +337,7 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
       return `periodic-set(${set.variables.join(',')}){${valueKey(store, set.period)}}{${set.components.map(iv).join('|')}}${iv(set.range)}`;
     }
     case 'periodic': return `periodic(${set.variables.join(',')};${set.integerParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
+    case 'root-set': return `root-set(${set.variables.join(',')}){${store.digest(set.poly)}}`;
     case 'interval-family': return `interval-family(${set.variables.join(',')};${set.parameter}:${set.from ?? '-inf'}..${set.to ?? 'inf'})${set.loClosed ? '[' : '('}${store.digest(set.lo)},${store.digest(set.hi)}${set.hiClosed ? ']' : ')'}`;
     case 'parametric': return `parametric(${set.variables.join(',')};${set.freeParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
     case 'reduced-form': return `reduced{${set.problem.hash}}`;
