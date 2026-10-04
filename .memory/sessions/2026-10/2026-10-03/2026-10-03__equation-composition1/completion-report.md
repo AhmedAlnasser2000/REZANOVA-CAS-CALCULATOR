@@ -1,4 +1,4 @@
-# EQUATION-COMPOSITION1 (part A)
+# EQUATION-COMPOSITION1 (parts A and B)
 
 ## Attribution
 
@@ -51,6 +51,19 @@ See verification-summary.md.
 - `docs/architecture/equation/equation-composition1-spec.md` (new), the roadmap and `docs/architecture/README.md`
 - This dossier.
 
+## Part B
+
+- **Authority**: 2026-10-04, the user merged #16 and asked to check it and start part B. I checked that main equals the pushed commit. The part B plan was approved in plan mode, and the branch was restarted from `origin/main`.
+- **Scope**:
+  - several principal logs over ℂ in `periodic/complex-zeros.ts`;
+  - the new `representation/log-zero.ts` and its use in `realSign`;
+  - enclosure speedups in `representation/enclosure.ts`;
+  - `composition/depth.test.ts` and the new complex tests;
+  - spec, roadmap, README and Equation memory.
+
+  No old-engine code; no edits to the integration core, contracts, OOE or UI.
+- **Outcome**: Σ cⱼ·Log uⱼ = c over ℂ is decided exactly. Depth 3 and depth 25 are decided by the same code. This completes `EQUATION-COMPOSITION1`.
+
 ## Handoff
 
-Part B, after part A merges: several principal logs over ℂ and the depth-3 / depth-25 evidence. That closes the gate. Nothing is product-adopted.
+The gate is complete. Next is `EQUATION-PARAMETERS1` (case trees over ℚ(p…)), which needs its own approval. Nothing is product-adopted.

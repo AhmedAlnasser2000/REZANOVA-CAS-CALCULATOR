@@ -1,4 +1,4 @@
-# Composition gate verification (part A)
+# Composition gate verification (parts A and B)
 
 ## Attribution
 
@@ -30,3 +30,11 @@
 ## Documentation checks
 
 - See commit-log.md.
+
+## Part B backend gate: pass
+
+- **Tests**: `node node_modules/vitest/vitest.mjs run src/lib/symbolic-engine/equation/core --maxWorkers=2` passed 31 files / 445 tests (18 new) in about 143 s. The depth-25 periodic chain alone takes about 100 s.
+- **Real bugs found and fixed**:
+  1. Depth-25 chains exhausted 5·10⁸ work units in enclosure gcds (rational atan and alternating series on long points). Fixed with a fixed-point atan series and outward rounding of long points for atan, asin, sin and cos.
+  2. The first positivity check in the algebraic log zero test read an isolating interval that may straddle 0. It now compares exactly.
+- **Other checks**: `tsc -b`, scoped ESLint, compartment boundaries, OOE boundaries and file sizes passed. Every file is under 1000 lines.

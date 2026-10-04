@@ -4,6 +4,7 @@ import { compareRational } from '../algebraic/real-roots';
 import { compareReal, type RealRootOf } from '../algebraic/root-of';
 import { enclose, minusInverseE } from './enclosure';
 import { angleLinearIsZero } from './angles';
+import { algebraicLogIsZero } from './log-zero';
 import { asRoot, evaluateExact, type ExactValue } from './evaluate';
 import type { ExprId, ExpressionStore } from './expression';
 
@@ -37,7 +38,7 @@ export function realSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
     ctx.tick();
     if (bits > START_BITS && !tested) {
       tested = true;
-      if (angleLinearIsZero(store, id) === true) return 0;
+      if (angleLinearIsZero(store, id) === true || algebraicLogIsZero(store, id) === true) return 0;
     }
     const b = enclose(store, id, bits);
     if (b.kind === 'bounds') {
