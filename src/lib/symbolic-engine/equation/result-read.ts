@@ -134,4 +134,3 @@ export function replayEquationDocument(problem: RelationProblem, outcome: Equati
   } else if ('reason' in back && 'reason' in outcome && back.reason !== outcome.reason) fail('the document reads back to a different reason');
   else if (back.kind === 'resource' && outcome.kind === 'resource' && back.stop !== outcome.stop) fail('the document reads back to a different stop');
 }
-
