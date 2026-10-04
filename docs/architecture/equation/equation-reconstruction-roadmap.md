@@ -1,26 +1,24 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1` and `EQUATION-SYSTEMS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1` and `EQUATION-PROOF-PERFORMANCE1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-SYSTEMS1` (stage 11, slice 6) is backend-verified in one PR with two commits (see its [specification](equation-systems1-spec.md)).
+`EQUATION-PROOF-PERFORMANCE1` (stage 12) is backend-verified in one PR with two commits (see its [specification](equation-proof-performance1-spec.md)).
 
 Part A:
-- linear systems, with parameters as case trees;
-- answers as points, parametric sets in the free targets, or ∅;
-- a Bareiss completeness check in the verifier.
+- a fixed benchmark corpus (the 50 old-engine baseline cases plus depth, parameters and systems evidence), with before/after medians;
+- cost accounting without string conversion, dyadic rationals and fixed-point sin/cos series;
+- per-store and per-context caches of enclosures, signs, π and root refinements.
 
 Part B:
-- Gröbner bases with cofactor certificates;
-- exact points of zero-dimensional systems: Hermite count and signature, a separating element, the rational univariate representation and certified coordinate matching;
-- triangular infinite sets through the parameters gate;
-- kernels by elimination down to slices 1–5.
+- certificates-first verification: re-derivation dropped where the checks prove completeness (finite polynomial systems, linear systems), kept elsewhere;
+- fixed-point disk evaluation, a smaller several-parameter grid with per-case search, polynomial class brand, a shared word-prime table.
 
-This completes stage 11. The next gate is `EQUATION-PROOF-PERFORMANCE1`. It needs its own approval.
+Every old-engine baseline case now decides and verifies in under 1 s. This completes stage 12. The next gate is `EQUATION-RESULT-CONTRACT1`. It needs its own approval.
 
 ## Implementation sequence
 
@@ -37,7 +35,7 @@ This completes stage 11. The next gate is `EQUATION-PROOF-PERFORMANCE1`. It need
 | 9 (backend verified) | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth; HC4 range contractors (moved from stage 7); inequalities with families not affine in their parameter, several complex logarithms and non-affine complex intersections (moved from stage 8) | Remaining C cases with exact constants (no decimals; C6/C7 done in stage 6); depth 3 and depth 25 by the same code |
 | 10 (backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 (backend verified) | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
-| 12 | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
+| 12 (backend verified) | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
@@ -82,7 +80,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Complex intersections and exclusions with non-affine families; nested families whose level is quadratic in its parameter | `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` | unassigned |
 | Interval families need one common trig argument with a peelable inverse | `EQUATION-COMPOSITION1` | unassigned |
 | Non-closed-form boundaries and isolated numeric roots (eˣ + sin x > 0) | `EQUATION-COMPOSITION1` | `EQUATION-CERTIFIED-NUMERICS1` |
-| Depth-25 periodic chains cost about 100 s with verification | `EQUATION-COMPOSITION1` | `EQUATION-PROOF-PERFORMANCE1` |
+| ~~Depth-25 periodic chains cost about 100 s with verification~~ (closed: about 0.6 s, `EQUATION-PROOF-PERFORMANCE1` part A) | `EQUATION-COMPOSITION1` | `EQUATION-PROOF-PERFORMANCE1` |
 | Recursive walks of nested solution sets (normalization, keys, wire). The parameters gate builds flat case trees (one level), so the walks stay shallow; nested case trees would need explicit stacks | `EQUATION-REPRESENTATION1` | the gate that first nests case trees |
 | Conjunctions of several relations in the target with several parameters; real roots of degree ≥ 3 with several parameters; deciding whether a several-parameter case is empty | `EQUATION-PARAMETERS1` | `EQUATION-SEMIALGEBRAIC1` |
 | Excluding the roots of a parametric polynomial of degree ≥ 3 over ℂ | `EQUATION-PARAMETERS1` | unassigned |

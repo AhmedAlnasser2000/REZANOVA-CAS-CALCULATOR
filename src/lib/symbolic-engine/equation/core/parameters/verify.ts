@@ -22,7 +22,8 @@ import { canonical, decideAt, instantiate } from './specialize';
  * - specialization: parameter samples are taken from the cases' own
  *   conditions (one parameter: every zero of every condition and a rational
  *   between and beyond them; ℂ: those zeros and generic rationals; several:
- *   a grid of small rationals). Every sample must satisfy the conditions of
+ *   the grid {0, ±1, 2, ½}ᵏ, plus one sample from a wider grid for each case
+ *   the grid misses). Every sample must satisfy the conditions of
  *   exactly one case (the cases tile the parameter space), and there the
  *   case's set must equal the problem decided by slice 1 with the parameters
  *   replaced by the sample. With one parameter every case must be sampled;
@@ -137,6 +138,7 @@ export function sameSet(store: ExpressionStore, a: SolutionSet, b: SolutionSet):
 }
 
 const GRID = [[0n, 1n], [1n, 1n], [-1n, 1n], [2n, 1n], [-2n, 1n], [1n, 2n], [3n, 1n]] as const;
+const SMALL = [[0n, 1n], [1n, 1n], [-1n, 1n], [2n, 1n], [1n, 2n]] as const;
 
 function samples(problem: RelationProblem, cases: readonly Case[]): ReadonlyMap<string, ExprId>[] {
   const store = problem.store, ctx = store.ctx, ps = problem.parameters;
@@ -155,17 +157,31 @@ function samples(problem: RelationProblem, cases: readonly Case[]): ReadonlyMap<
     const cells = pieces(store, sortedDistinct(store, zeros)).map(piece => at(piece.kind === 'open' ? store.number(piece.sample) : valueExpression(store, piece.value)));
     return cases.every(k => k.conditions.every(c => polynomialIn(store, c, p))) ? cells : [...cells, ...generic.map(at)];
   }
-  // Several parameters: grid tuples in order of total index, all of them up to 7³, otherwise the first 512.
-  const out: Map<string, ExprId>[] = [], k = ps.length, total = GRID.length ** k;
-  const limit = k <= 3 ? total : 512;
-  const tuples: number[][] = [];
-  for (let i = 0; i < total && tuples.length < 4 * limit; i++) {
-    ctx.tick();
-    const t: number[] = [];
-    for (let j = 0, r = i; j < k; j++, r = Math.floor(r / GRID.length)) t.push(r % GRID.length);
-    tuples.push(t);
+  // Several parameters: the grid {0, ±1, 2, ½}ᵏ in order of total index (all of it up to k = 3, otherwise the
+  // first 512), then, for each case none of those satisfies, the first tuple of the wider grid that does.
+  const tupleAt = (t: readonly number[], grid: readonly (readonly [bigint, bigint])[]) => new Map(ps.map((p, j) => [p, store.number(rational(ctx, grid[t[j]][0], grid[t[j]][1]))]));
+  const enumerate = (size: number, max: number): number[][] => {
+    const all: number[][] = [], total = size ** ps.length;
+    for (let i = 0; i < total && all.length < max; i++) {
+      ctx.tick();
+      const t: number[] = [];
+      for (let j = 0, r = i; j < ps.length; j++, r = Math.floor(r / size)) t.push(r % size);
+      all.push(t);
+    }
+    return all.sort((a, b) => a.reduce((s, v) => s + v, 0) - b.reduce((s, v) => s + v, 0));
+  };
+  const limit = ps.length <= 3 ? SMALL.length ** ps.length : 512;
+  const out = enumerate(SMALL.length, 4 * limit).slice(0, limit).map(t => tupleAt(t, SMALL));
+  const covered = (c: Case) => out.some(v => c.conditions.every(k => conditionHolds(store, k, v, problem.domain)));
+  // The wider search runs over exactly the former sample set (all 7ᵏ up to k = 3, otherwise the first 512),
+  // so every case sampled before is still sampled.
+  const wideLimit = ps.length <= 3 ? GRID.length ** ps.length : 512;
+  let wide: Map<string, ExprId>[] | undefined;
+  for (const c of cases) {
+    if (covered(c)) continue;
+    wide ??= enumerate(GRID.length, 4 * wideLimit).slice(0, wideLimit).map(t => tupleAt(t, GRID));
+    const found = wide.find(v => c.conditions.every(k => conditionHolds(store, k, v, problem.domain)));
+    if (found) out.push(found);
   }
-  tuples.sort((a, b) => a.reduce((s, v) => s + v, 0) - b.reduce((s, v) => s + v, 0));
-  for (const t of tuples.slice(0, limit)) out.push(new Map(ps.map((p, j) => [p, store.number(rational(ctx, GRID[t[j]][0], GRID[t[j]][1]))])));
   return out;
 }

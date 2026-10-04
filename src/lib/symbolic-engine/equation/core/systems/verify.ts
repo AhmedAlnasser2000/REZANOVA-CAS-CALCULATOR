@@ -2,6 +2,7 @@ import { demand } from '../execution';
 import { solveLinear } from '../algebra/linear';
 import { rational, rNegate, type Rational } from '../algebra/rational';
 import { evaluateExact } from '../representation/evaluate';
+import type { ExprId } from '../representation/expression';
 import type { RelationProblem } from '../representation/relation';
 import { assertOutcome, compareValues, finiteSet, normalizeSet, setKey, valueExpression, type EquationOutcome, type Point } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
@@ -22,7 +23,9 @@ import { holdsAt, verifyEliminationSamples, verifyInfiniteSamples, verifyPolynom
  * - completeness of a linear system: an independent Bareiss solve over ℚ
  *   must agree (inconsistent ⇔ no point before ≠ atoms; full rank ⇔ the
  *   claimed point; rank r ⇔ n − r free targets);
- * - re-derivation gives the same set.
+ * - re-derivation gives the same set, unless the checks above already prove
+ *   completeness (finite polynomial answers by the Hermite count; linear
+ *   systems by the Bareiss rank, see EQUATION-PROOF-PERFORMANCE1).
  * With parameters, each case is specialized at samples and compared with the
  * parameter-free decision (the parameters gate's verifier).
  */
@@ -46,8 +49,12 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
     const s = outcome.kind === 'solved' ? outcome.set : finiteSet(problem.targets, []);
     if (s.kind === 'finite') {
       for (const p of s.points) if (!holdsAt(problem, p.map(v => valueExpression(store, v)))) fail('a point does not satisfy the system');
-      verifyPolynomialCertificate(problem, atoms.atoms, s);
-    } else verifyInfiniteSamples(problem, s, p => (p.targets.length > 1 ? decideSystem(p) : decideEquation(p)));
+      s.points.forEach((p, i) => { for (const q of s.points.slice(0, i)) if (p.every((v, j) => compareValues(store, v, q[j]) === 0)) fail('a point is claimed twice'); });
+      // Complete without re-derivation: distinct claimed solutions, as many as the Hermite count of the
+      // (certified) basis's solutions, are all of them.
+      return verifyPolynomialCertificate(problem, atoms.atoms, s);
+    }
+    verifyInfiniteSamples(problem, s, p => (p.targets.length > 1 ? decideSystem(p) : decideEquation(p)));
     return rederive(problem, outcome);
   }
   const at = (atom: ParamAtom, point: Point): boolean => {
@@ -78,13 +85,26 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
     };
     const rows = equations.map(row);
     const solution = solveLinear(ctx, rows.map(r => r.coefficients), rows.map(r => r.rhs), n);
+    // Each branch that returns has proven the answer complete; the rest fall through to re-derivation.
     if (solution.kind === 'inconsistent') {
       if (outcome.kind !== 'empty') fail('an inconsistent system was claimed solvable');
+      return;
     } else if (solution.rank === n) {
       const point: Point = solution.particular.map(v => ({ kind: 'rational', value: v }));
       if (outcome.kind === 'empty') { if (atoms.atoms.every(a => at(a, point))) fail('claimed empty, but the unique point satisfies the system'); }
       else if (set?.kind !== 'finite' || set.points.length !== 1 || !set.points[0].every((v, i) => compareValues(store, v, point[i]) === 0)) fail('the claimed point differs from the unique solution');
+      return;
     } else if (outcome.kind === 'solved' && (set?.kind !== 'parametric' || set.freeParameters.length !== n - solution.rank)) fail('the claimed free targets differ from the nullity');
+    // Rank r < n without ≠ atoms: a parametric set inside the solution space, defined everywhere (polynomial
+    // values) and with free targets mapping to themselves, projects onto all n − r of them, so it is the
+    // whole (n − r)-dimensional space.
+    const polynomial = (v: ExprId, free: readonly string[]) => {
+      const f = fractionOf(store, v, free);
+      return f !== undefined && [...f.den.terms.keys()].every(k => k.split(',').every(e => e === '0'));
+    };
+    if (set?.kind === 'parametric' && set.constraints.length === 0 && atoms.atoms.every(a => a.op === 'eq')
+      && set.freeParameters.every(t => set.values[problem.targets.indexOf(t)] === store.symbol(t))
+      && set.values.every(v => polynomial(v, set.freeParameters))) return;
   }
   rederive(problem, outcome);
 }

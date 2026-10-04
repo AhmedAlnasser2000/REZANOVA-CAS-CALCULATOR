@@ -1,8 +1,8 @@
 import { demand, type ExecutionContext } from '../execution';
 import type { Polynomial } from '../algebra/polynomial';
 import { determinant } from '../algebra/linear';
-import { iexact, igcd, imul } from '../algebra/integer';
-import { rAbs, rAdd, rational, rDivide, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
+import { bitLength, iexact, igcd, imul } from '../algebra/integer';
+import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { refineComplex, refineReal } from '../algebraic/root-of';
 import { addValues, asRoot, multiplyValues, type ExactValue } from '../representation/evaluate';
@@ -123,12 +123,53 @@ export function mayContainZero(ctx: ExecutionContext, d: Disk): boolean {
   return compareRational(ctx, rAdd(ctx, rMultiply(ctx, d.re, d.re), rMultiply(ctx, d.im, d.im)), rMultiply(ctx, d.r, d.r)) <= 0;
 }
 
-function diskValue(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue, width: Rational): Disk {
-  const x = diskOf(ctx, point, width);
-  let acc = diskOf(ctx, coefficients[coefficients.length - 1], width);
-  for (let i = coefficients.length - 2; i >= 0; i--) acc = diskAdd(ctx, diskMultiply(ctx, acc, x), diskOf(ctx, coefficients[i], width));
-  return acc;
+/**
+ * A disk in fixed point: centre (re, im)·2^−W and radius r·2^−W. Every truncated
+ * centre coordinate moves the centre by less than one unit in each coordinate, so
+ * the radius grows by 2 units per rounding (√2 < 2); radii round up.
+ */
+interface FixedDisk { readonly re: bigint; readonly im: bigint; readonly r: bigint }
+
+const floorDiv = (n: bigint, d: bigint) => (n >= 0n ? n / d : -((-n + d - 1n) / d));
+const ceilDiv = (n: bigint, d: bigint) => -floorDiv(-n, d);
+function fixedOf(ctx: ExecutionContext, v: ExactValue, width: Rational, W: bigint): FixedDisk {
+  const S = 1n << W;
+  const at = (q: Rational) => floorDiv(imul(ctx, q.numerator, S), q.denominator);
+  const up = (q: Rational) => ceilDiv(imul(ctx, q.numerator, S), q.denominator);
+  // A rational is exact when q·2^W is an integer; otherwise its truncation is off by less than one unit.
+  if (v.kind === 'rational') return { re: at(v.value), im: 0n, r: imul(ctx, v.value.numerator, S) % v.value.denominator === 0n ? 0n : 1n };
+  const root = v.root;
+  if (root.kind === 'real') {
+    const t = root.poly.coefficients.length === 2 ? root : refineReal(ctx, root, width);
+    // centre (lo + hi)/2, radius (hi − lo)/2, from one common denominator.
+    const d = imul(ctx, 2n * t.lo.denominator, t.hi.denominator);
+    const sum = imul(ctx, t.lo.numerator, t.hi.denominator) + imul(ctx, t.hi.numerator, t.lo.denominator);
+    const diff = imul(ctx, t.hi.numerator, t.lo.denominator) - imul(ctx, t.lo.numerator, t.hi.denominator);
+    return { re: floorDiv(imul(ctx, sum, S), d), im: 0n, r: ceilDiv(imul(ctx, diff, S), d) + 2n };
+  }
+  const t = root.radius.numerator === 0n ? root : refineComplex(ctx, root, width);
+  return { re: at(t.re), im: at(t.im), r: up(t.radius) + 2n };
 }
+
+function diskValue(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue, width: Rational): Disk {
+  // Working precision: the requested width plus room for the Horner steps.
+  const W = BigInt(bitLength(width.denominator) + 8 + bitLength(BigInt(coefficients.length)));
+  const x = fixedOf(ctx, point, width, W), xs = abs(x.re) + abs(x.im);
+  let acc = fixedOf(ctx, coefficients[coefficients.length - 1], width, W);
+  for (let i = coefficients.length - 2; i >= 0; i--) {
+    ctx.tick();
+    const c = fixedOf(ctx, coefficients[i], width, W);
+    // (a·x)·2^−2W truncated to 2^−W: each centre coordinate loses less than one unit.
+    const re = floorDiv(imul(ctx, acc.re, x.re) - imul(ctx, acc.im, x.im), 1n << W);
+    const im = floorDiv(imul(ctx, acc.re, x.im) + imul(ctx, acc.im, x.re), 1n << W);
+    const as = abs(acc.re) + abs(acc.im);
+    const r = ceilDiv(imul(ctx, as, x.r) + imul(ctx, xs, acc.r) + imul(ctx, acc.r, x.r), 1n << W) + 2n;
+    acc = { re: re + c.re, im: im + c.im, r: r + c.r };
+  }
+  const k = Number(W);
+  return { re: rDyadic(ctx, acc.re, k), im: rDyadic(ctx, acc.im, k), r: rDyadic(ctx, acc.r, k) };
+}
+const abs = (v: bigint) => (v < 0n ? -v : v);
 
 export function exactValueAt(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): ExactValue {
   let acc = coefficients[coefficients.length - 1];

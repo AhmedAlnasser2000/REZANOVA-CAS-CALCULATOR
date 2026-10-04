@@ -5,13 +5,18 @@ import { iabs, iadd, iexact, igcd, imul, isub } from './integer';
 export interface Rational { readonly numerator: bigint; readonly denominator: bigint }
 export type IntegerInput = bigint | string | number;
 
-const owned = new WeakSet<object>();
-
-function make(n: bigint, d: bigint): Rational {
-  const value = Object.freeze({ numerator: n, denominator: d });
-  owned.add(value);
-  return value;
+/**
+ * Rationals built by this module are instances of a private class: the brand
+ * (checked by `instanceof`) replaces a global WeakSet registry, which cost a
+ * hash insertion per value. Instances are frozen like before.
+ */
+class RationalValue implements Rational {
+  readonly numerator: bigint;
+  readonly denominator: bigint;
+  constructor(n: bigint, d: bigint) { this.numerator = n; this.denominator = d; Object.freeze(this); }
 }
+
+function make(n: bigint, d: bigint): Rational { return new RationalValue(n, d); }
 
 export function integerInput(ctx: ExecutionContext, input: IntegerInput): bigint {
   ctx.tick();
@@ -36,8 +41,23 @@ export function rational(ctx: ExecutionContext, numerator: IntegerInput, denomin
   return make(n, d);
 }
 
+/**
+ * n/2^k in lowest terms (k ≥ 0) without a general gcd: only factors of two can
+ * cancel, so trailing zero bits of n are stripped (32 at a time, then single).
+ */
+export function rDyadic(ctx: ExecutionContext, numerator: bigint, k: number): Rational {
+  ctx.tick();
+  demand(Number.isSafeInteger(k) && k >= 0, 'invalid-input', 'dyadic exponent');
+  let n = numerator, t = 0;
+  if (n === 0n) return make(0n, 1n);
+  while (k - t >= 32 && (n & 0xffffffffn) === 0n) { n >>= 32n; t += 32; }
+  while (t < k && (n & 1n) === 0n) { n >>= 1n; t++; }
+  ctx.allocate(2);
+  return make(n, 1n << BigInt(k - t));
+}
+
 export function isRational(value: unknown): value is Rational {
-  return typeof value === 'object' && value !== null && owned.has(value);
+  return value instanceof RationalValue;
 }
 
 export function assertRational(ctx: ExecutionContext, value: Rational): void {

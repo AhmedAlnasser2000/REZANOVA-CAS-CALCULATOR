@@ -26,7 +26,20 @@ export function exactSign(ctx: ExecutionContext, v: ExactValue): -1 | 0 | 1 {
   return compareReal(ctx, v.root, asRoot(ctx, { kind: 'rational', value: rational(ctx, 0n) }) as RealRootOf) as -1 | 1;
 }
 
+/** Signs are pure, exact facts of an expression: kept per store. */
+const SIGNS = new WeakMap<ExpressionStore, Map<ExprId, -1 | 0 | 1>>();
+
 export function realSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
+  let known = SIGNS.get(store);
+  if (!known) { known = new Map(); SIGNS.set(store, known); }
+  const cached = known.get(id);
+  if (cached !== undefined) return cached;
+  const s = computeSign(store, id);
+  known.set(id, s);
+  return s;
+}
+
+function computeSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
   const ctx = store.ctx;
   const e = evaluateExact(store, id, 'real');
   if (e.kind === 'exact') return exactSign(ctx, e.value);

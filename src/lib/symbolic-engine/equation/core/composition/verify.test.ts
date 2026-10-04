@@ -86,9 +86,9 @@ group('wire replay', () => {
 group('resources', () => {
   it('reports typed work and cancellation stops, never partial answers', () => {
     const json = ['GreaterEqual', ['Multiply', ['Add', 'x', -1], ['Add', 'x', sin('x')]], 0];
-    expect(setup(json, new ExpressionStore(context({ work: 20_000 }))).outcome).toEqual({ kind: 'resource', stop: 'work' });
+    expect(setup(json, new ExpressionStore(context({ work: 3_000 }))).outcome).toEqual({ kind: 'resource', stop: 'work' });
     let polls = 0;
-    expect(setup(json, new ExpressionStore(context({}, () => ++polls > 20_000))).outcome).toEqual({ kind: 'resource', stop: 'cancelled' });
+    expect(setup(json, new ExpressionStore(context({}, () => ++polls > 4_000))).outcome).toEqual({ kind: 'resource', stop: 'cancelled' });
     expect(setup(json).outcome.kind).toBe('solved');
   }, 60_000);
 });

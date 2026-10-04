@@ -121,6 +121,8 @@ group('verifier rejects tampering', () => {
     if (set.kind !== 'finite') throw new Error(set.kind);
     const swap = (s: SolutionSet) => () => verifyEquationOutcome(p.problem, { kind: 'solved', proof: ps.proof, set: s });
     rejects(swap({ ...set, points: set.points.slice(1) }), /number of points/);
+    // Right count, but one solution claimed twice and another dropped (no re-derivation runs for finite answers).
+    rejects(swap({ ...set, points: [set.points[0], ...set.points.slice(0, -1)] }), /claimed twice/);
     rejects(swap({ ...set, points: [[set.points[0][0], set.points[1][1]], ...set.points.slice(1)] }), /does not satisfy/);
     rejects(() => verifyEquationOutcome(p.problem, { kind: 'empty', proof: ps.proof }), /number of points|different outcome/);
     const c = setup(eq(add(pow('x', 2), pow('y', 2)), 1)), cs = solved(c.outcome), cset = cs.set;

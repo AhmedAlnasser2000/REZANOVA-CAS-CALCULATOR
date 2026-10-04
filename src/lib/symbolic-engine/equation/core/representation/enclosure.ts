@@ -1,6 +1,6 @@
 import type { ExecutionContext } from '../execution';
 import { bitLength, imul, iroot, ipow } from '../algebra/integer';
-import { rAbs, rAdd, rational, rDivide, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
+import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { refineReal } from '../algebraic/root-of';
 import type { ExprId, ExpressionStore } from './expression';
@@ -33,8 +33,11 @@ const zero = (ctx: ExecutionContext) => rational(ctx, 0n);
 function floorDiv(n: bigint, d: bigint): bigint { return n >= 0n ? n / d : -((-n + d - 1n) / d); }
 function down(ctx: ExecutionContext, r: Rational, bits: number): Rational {
   ctx.tick();
+  // Already a dyadic with at most `bits` fractional bits: exact.
+  const d = r.denominator;
+  if ((d & (d - 1n)) === 0n && d <= 1n << BigInt(bits)) return r;
   const scale = 1n << BigInt(bits);
-  return rational(ctx, floorDiv(imul(ctx, r.numerator, scale), r.denominator), scale);
+  return rDyadic(ctx, floorDiv(imul(ctx, r.numerator, scale), d), bits);
 }
 function up(ctx: ExecutionContext, r: Rational, bits: number): Rational {
   const n = rNegate(ctx, r);
@@ -112,8 +115,21 @@ function atanInverseBounds(ctx: ExecutionContext, k: bigint, W: number): Bounds 
   return { lo: min(ctx, [previous, sum]), hi: max(ctx, [previous, sum]) };
 }
 
+/** π at precision ≥ bits, computed once per 64-bit step and context (per context, so work charged, and hence typed stops, never depends on other computations). */
+const PI_CACHE = new WeakMap<ExecutionContext, Map<number, Bounds>>();
+
 /** π = 16·atan(1/5) − 4·atan(1/239) (Machin). */
 export function piBounds(ctx: ExecutionContext, bits: number): Bounds {
+  const step = Math.ceil(bits / 64) * 64;
+  let known = PI_CACHE.get(ctx);
+  if (!known) { known = new Map(); PI_CACHE.set(ctx, known); }
+  let cached = known.get(step);
+  if (!cached) { cached = machin(ctx, step); known.set(step, cached); }
+  ctx.tick();
+  return { lo: down(ctx, cached.lo, bits), hi: up(ctx, cached.hi, bits) };
+}
+
+function machin(ctx: ExecutionContext, bits: number): Bounds {
   const W = bits + 8, a = atanInverseBounds(ctx, 5n, W), b = atanInverseBounds(ctx, 239n, W);
   const s = rational(ctx, 16n), f = rational(ctx, 4n);
   return {
@@ -216,12 +232,40 @@ function alternatingBounds(ctx: ExecutionContext, first: Rational, factor: (k: n
   return { lo: down(ctx, rSubtract(ctx, sum, slack), W), hi: up(ctx, rAdd(ctx, sum, slack), W) };
 }
 
-/** sin y and cos y for a rational |y| ≤ 1. */
+/**
+ * sin y or cos y for a rational |y| ≤ 1 (larger |y| uses the rational series), in fixed point with U = W + 16 fractional bits
+ * (no rational normalization). Error budget, in units of 2^−U:
+ * - y and y² are truncated to Y and Y2 (one unit each); sin and cos are 1-Lipschitz in y,
+ *   and the series is 1-Lipschitz in z = y² on |y| ≤ 1, so each costs at most one unit;
+ * - every term tₖ₊₁ = −tₖ·Y2/(dₖ·2^U) is truncated toward zero (one unit), and an earlier
+ *   error is carried with a factor Y2/dₖ ≤ 1/2, so each term is off by at most 2 units;
+ * - the series alternates with decreasing terms (y²/dₖ < 1), so the remainder after the last
+ *   computed term is at most the first omitted term, below 2 + 2 units.
+ * The enclosure is the fixed-point sum ± (2·terms + 8) units.
+ */
+function trigSeries(ctx: ExecutionContext, y: Rational, sine: boolean, W: number): Bounds {
+  const U = W + 16, S = 1n << BigInt(U);
+  const Y = floorDiv(imul(ctx, y.numerator, S), y.denominator), Y2 = imul(ctx, Y, Y) >> BigInt(U);
+  let term = sine ? Y : S, sum = 0n, k = 0;
+  for (;;) {
+    ctx.tick();
+    sum += term;
+    const d = BigInt(sine ? (2 * k + 2) * (2 * k + 3) : (2 * k + 1) * (2 * k + 2));
+    term = -(imul(ctx, term, Y2) / (d << BigInt(U)));
+    k++;
+    if (term < 2n && term > -2n) break;
+  }
+  const E = BigInt(2 * (k + 1) + 8);
+  return { lo: rDyadic(ctx, sum - E, U), hi: rDyadic(ctx, sum + E, U) };
+}
+const withinOne = (ctx: ExecutionContext, y: Rational) => le(ctx, rAbs(ctx, y), rational(ctx, 1n));
 function sinSmall(ctx: ExecutionContext, y: Rational, W: number): Bounds {
+  if (withinOne(ctx, y)) return trigSeries(ctx, y, true, W);
   const y2 = rNegate(ctx, rMultiply(ctx, y, y));
   return alternatingBounds(ctx, y, k => rDivide(ctx, y2, rational(ctx, BigInt((2 * k + 2) * (2 * k + 3)))), W);
 }
 function cosSmall(ctx: ExecutionContext, y: Rational, W: number): Bounds {
+  if (withinOne(ctx, y)) return trigSeries(ctx, y, false, W);
   const y2 = rNegate(ctx, rMultiply(ctx, y, y));
   return alternatingBounds(ctx, rational(ctx, 1n), k => rDivide(ctx, y2, rational(ctx, BigInt((2 * k + 1) * (2 * k + 2)))), W);
 }
@@ -407,12 +451,23 @@ export function minusInverseE(ctx: ExecutionContext, bits: number): Bounds {
 }
 
 /** Enclose a real number-only expression at working precision `bits` (explicit stack). */
+const ENCLOSURES = new WeakMap<ExpressionStore, Map<number, Map<ExprId, Box>>>();
+
 export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclosed {
-  const ctx = store.ctx, boxes = new Map<ExprId, Box>();
+  // Boxes are pure facts of (node, precision): kept per store, so repeated questions (and a verifier
+  // re-deriving on the same store) reuse them.
+  let byBits = ENCLOSURES.get(store);
+  if (!byBits) { byBits = new Map(); ENCLOSURES.set(store, byBits); }
+  let boxes = byBits.get(bits);
+  if (!boxes) { boxes = new Map(); byBits.set(bits, boxes); }
+  const known = boxes.get(id);
+  if (known) return { kind: 'bounds', lo: known.lo, hi: known.hi };
+  const ctx = store.ctx;
   const fail = (e: Exclude<Enclosed, { kind: 'bounds' }>) => e;
   for (const n of store.postorder([id])) {
+    if (boxes.has(n)) continue;
     ctx.tick();
-    const node = store.node(n), get = (c: ExprId) => boxes.get(c) as Box;
+    const node = store.node(n), get = (c: ExprId) => (boxes as Map<ExprId, Box>).get(c) as Box;
     let box: Box | Exclude<Enclosed, { kind: 'bounds' }>;
     switch (node.kind) {
       case 'number': box = pointBox(node.value); break;
