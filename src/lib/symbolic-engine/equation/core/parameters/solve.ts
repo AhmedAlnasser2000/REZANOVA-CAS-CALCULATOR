@@ -40,7 +40,8 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
 
 const isEmpty = (s: SolutionSet) => s.kind === 'finite' && s.points.length === 0;
 
-function caseOutcome(problem: RelationProblem, cases: readonly ParamCase[]): EquationOutcome {
+/** The outcome for a list of cases: ∅ when every case is empty, a plain set for one unconditional case, otherwise a case tree. */
+export function caseOutcome(problem: RelationProblem, cases: readonly ParamCase[]): EquationOutcome {
   const proof = new ProofLogBuilder(problem).build(), store = problem.store;
   if (cases.every(c => isEmpty(c.set))) return { kind: 'empty', proof };
   if (cases.length === 1 && cases[0].conditions.length === 0) return { kind: 'solved', set: normalizeSet(store, cases[0].set, problem.domain), proof };

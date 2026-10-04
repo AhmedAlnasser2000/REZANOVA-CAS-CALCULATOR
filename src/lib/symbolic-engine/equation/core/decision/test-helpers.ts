@@ -45,7 +45,7 @@ function interval(store: ExpressionStore, i: Interval): string {
 
 export function describeSet(store: ExpressionStore, set: SolutionSet): string {
   switch (set.kind) {
-    case 'finite': return `{${set.points.map(p => show(store, p[0])).join(', ')}}`;
+    case 'finite': return `{${set.points.map(p => (p.length === 1 ? show(store, p[0]) : `(${p.map(v => show(store, v)).join(', ')})`)).join(', ')}}`;
     case 'cofinite': return `C\\{${set.except.map(p => show(store, p[0])).join(', ')}}`;
     case 'intervals': return set.intervals.map(i => interval(store, i)).join(' ∪ ');
     case 'periodic-set': {
@@ -62,6 +62,7 @@ export function describeSet(store: ExpressionStore, set: SolutionSet): string {
     case 'case-tree': return set.cases.map(c => `[${c.conditions.map(k => `${k.kind} ${JSON.stringify(writeExpression(store, k.expr))}${'other' in k ? ` ${JSON.stringify(writeExpression(store, k.other))}` : ''}`).join(' & ')}] ${describeSet(store, c.set)}`).join(' | ');
     case 'periodic': return `{${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')} : ${set.integerParameters.join(', ')} ∈ ℤ${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
     case 'union': return set.sets.map(x => describeSet(store, x)).join(' ∪ ');
+    case 'parametric': return `{(${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')}) : ${set.freeParameters.join(', ')} free${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
     default: return set.kind;
   }
 }
