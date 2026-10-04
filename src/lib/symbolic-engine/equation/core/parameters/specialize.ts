@@ -3,6 +3,7 @@ import { exactPolynomial, OWNERS, rationalForm, type Refusal } from '../decision
 import { domainBases } from '../decision/rules';
 import { decidePolynomialProblem } from '../decision/solve';
 import { decideGeneratorProblem } from '../generators/solve';
+import { decideSystem } from '../systems/solve';
 import { sortedDistinct } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
 import { zerosOf } from '../decision/univariate';
@@ -34,7 +35,7 @@ function expressions(p: RelationProblem): ExprId[] {
  * target and the parameters is refused (part B owns kernels and constants).
  */
 export function parametricAtoms(problem: RelationProblem): { readonly vars: readonly string[]; readonly atoms: readonly ParamAtom[] } | Refusal {
-  const s = problem.store, vars = [problem.targets[0], ...problem.parameters], atoms: ParamAtom[] = [];
+  const s = problem.store, vars = [...problem.targets, ...problem.parameters], atoms: ParamAtom[] = [];
   const add = (e: ExprId, op: AtomOperator): boolean => {
     const f = fractionOf(s, e, vars);
     if (!f) return false;
@@ -84,7 +85,7 @@ export function targetInKernel(problem: RelationProblem): boolean {
 export function decideAt(problem: RelationProblem, values: ReadonlyMap<string, ExprId>): Specialized {
   const sp = specializedProblem(problem, values);
   if (sp.parameters.length) return { kind: 'refused', reason: 'specialization left free symbols' };
-  const o = targetInKernel(sp) ? decideGeneratorProblem(sp) : decidePolynomialProblem(sp);
+  const o = sp.targets.length > 1 ? decideSystem(sp) : targetInKernel(sp) ? decideGeneratorProblem(sp) : decidePolynomialProblem(sp);
   if (o.kind === 'resource') {
     // The context keeps its stop: re-raise it unchanged.
     problem.store.ctx.checkCancelled();
@@ -150,6 +151,11 @@ export function instantiate(store: ExpressionStore, set: SolutionSet, values: Re
       case 'intervals': return { ...s, intervals: s.intervals.map((i): Interval => ({ ...i, lo: end(i.lo), hi: end(i.hi) })) };
       case 'union': return { kind: 'union', sets: s.sets.map(walk) };
       case 'root-set': return finiteSet(s.variables, rootsAt(store, s.poly, s.variables[0], values, domain).map(v => [v]));
+      case 'parametric': {
+        // Values stay expressions in the free targets; only the parameters are replaced.
+        const sub = (e: ExprId) => store.substitute(e, values);
+        return { ...s, values: s.values.map(sub), constraints: s.constraints.map(c => ('other' in c ? { ...c, expr: sub(c.expr), other: sub(c.other) } : { ...c, expr: sub(c.expr) })) };
+      }
       case 'periodic-set': return { ...s, period: value(s.period), components: s.components.map((i): Interval => ({ ...i, lo: end(i.lo), hi: end(i.hi) })), range: { ...s.range, lo: end(s.range.lo), hi: end(s.range.hi) } };
       default: throw new Mismatch();
     }

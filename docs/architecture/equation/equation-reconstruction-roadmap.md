@@ -1,32 +1,26 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` and `EQUATION-PARAMETERS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1` and `EQUATION-SYSTEMS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-PARAMETERS1` (stage 10) is backend-verified in one PR with two commits (see its [specification](equation-parameters1-spec.md)).
+`EQUATION-SYSTEMS1` (stage 11, slice 6) is backend-verified in one PR with two commits (see its [specification](equation-systems1-spec.md)).
 
 Part A:
-- polynomial and rational relations with coefficients in ℚ(p…), decided as case trees:
-  - one parameter: exact cells with algebraic breakpoints and parametric roots;
-  - several parameters: sign-condition trees (degree ≤ 2 over ℝ, root sets over ℂ);
-- a specialization verifier;
-- Liouville-bound zero tests with algebraic coefficients.
+- linear systems, with parameters as case trees;
+- answers as points, parametric sets in the free targets, or ∅;
+- a Bareiss completeness check in the verifier.
 
 Part B:
-- **Single kernels with parameters over ℝ** (exp, ln, sin, cos, |·|, q-th roots):
-  - = and ≠ for all of them;
-  - inequalities for the monotone ones and |·|;
-  - range conditions and the sign of the argument's slope become cases, and trig families get a parametric period.
-- **Polynomial and rational problems with transcendental constant coefficients:**
-  - over ℝ, as Sturm-isolated roots with certified signs;
-  - over ℂ, as root sets.
-- **The follow-up ledger below**, covering every gate.
+- Gröbner bases with cofactor certificates;
+- exact points of zero-dimensional systems: Hermite count and signature, a separating element, the rational univariate representation and certified coordinate matching;
+- triangular infinite sets through the parameters gate;
+- kernels by elimination down to slices 1–5.
 
-This completes stage 10. The next gate is `EQUATION-SYSTEMS1`. It needs its own approval.
+This completes stage 11. The next gate is `EQUATION-PROOF-PERFORMANCE1`. It needs its own approval.
 
 ## Implementation sequence
 
@@ -42,7 +36,7 @@ This completes stage 10. The next gate is `EQUATION-SYSTEMS1`. It needs its own 
 | 8 (backend verified) | `EQUATION-PERIODIC1` (slice 4) | Trig algebraization, periodic families, Diophantine intersection, interval restriction; complex exp/log families ln c + 2πik (moved from stage 6) | T cases exact; sin x = 0 on [0,100] as 32 exact roots kπ |
 | 9 (backend verified) | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth; HC4 range contractors (moved from stage 7); inequalities with families not affine in their parameter, several complex logarithms and non-affine complex intersections (moved from stage 8) | Remaining C cases with exact constants (no decimals; C6/C7 done in stage 6); depth 3 and depth 25 by the same code |
 | 10 (backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
-| 11 | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
+| 11 (backend verified) | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
@@ -99,6 +93,11 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | A RootOf expression node, so roots with transcendental coefficients can sit inside kernels (e^{3x} + π·eˣ = e; ln(x³ + x) = 1 at degree 3) | `EQUATION-PARAMETERS1` | unassigned |
 | Transcendental constants together with parameters (π·x = a); several relations or ≠ with transcendental constants over ℂ | `EQUATION-PARAMETERS1` | unassigned |
 | Choosing the target automatically (prefer x, then other conventions); today the caller names it | `EQUATION-PARAMETERS1` (user question) | unassigned, after the roadmap |
+| Complex or algebraic coefficients in systems (the polynomial atoms read rational coefficients) | `EQUATION-SYSTEMS1` | unassigned |
+| Nonlinear systems with parameters (comprehensive Gröbner systems) | `EQUATION-SYSTEMS1` | unassigned |
+| Kernels with parameters or extra conditions in a system; elimination that leaves several targets or interval answers | `EQUATION-SYSTEMS1` | unassigned |
+| Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition) | `EQUATION-SYSTEMS1` | unassigned |
+| Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` |
 
 ## Attribution
 

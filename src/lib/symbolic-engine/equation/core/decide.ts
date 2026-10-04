@@ -6,6 +6,8 @@ import { decideConstantProblem, hasTranscendentalConstants, verifyConstantOutcom
 import { decideParametricProblem } from './parameters/solve';
 import { verifyParametricOutcome } from './parameters/verify';
 import { verifyComplexOutcome } from './periodic/complex-verify';
+import { decideSystem } from './systems/solve';
+import { verifySystemOutcome } from './systems/verify';
 import type { ExprId } from './representation/expression';
 import type { RelationProblem } from './representation/relation';
 import type { EquationOutcome } from './representation/solution-set';
@@ -52,13 +54,15 @@ export function decideEquation(problem: RelationProblem): EquationOutcome {
   if (problem.domain === 'complex' && hasConstraintKernels(problem)) {
     return { kind: 'unsupported', reason: 'absolute values and radicals of the target are decided over the reals only' };
   }
+  if (problem.targets.length > 1) return decideSystem(problem);
   if (problem.parameters.length) return decideParametricProblem(problem);
   if (closedForm(problem)) return decideGeneratorProblem(problem);
   return hasTranscendentalConstants(problem) ? decideConstantProblem(problem) : decidePolynomialProblem(problem);
 }
 
 export function verifyEquationOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
-  if (problem.parameters.length) verifyParametricOutcome(problem, outcome);
+  if (problem.targets.length > 1) verifySystemOutcome(problem, outcome);
+  else if (problem.parameters.length) verifyParametricOutcome(problem, outcome);
   else if (!closedForm(problem) && hasTranscendentalConstants(problem)) verifyConstantOutcome(problem, outcome);
   else if (!closedForm(problem)) verifyPolynomialOutcome(problem, outcome);
   else if (problem.domain === 'complex') verifyComplexOutcome(problem, outcome);

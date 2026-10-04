@@ -95,9 +95,9 @@ export function normPolynomial(store: ExpressionStore, coefficients: readonly Ex
 
 // ---- certified disk evaluation ----
 
-interface Disk { readonly re: Rational; readonly im: Rational; readonly r: Rational }
+export interface Disk { readonly re: Rational; readonly im: Rational; readonly r: Rational }
 
-function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
+export function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
   const zero = rational(ctx, 0n), two = rational(ctx, 2n);
   if (v.kind === 'rational') return { re: v.value, im: zero, r: zero };
   const root = v.root;
@@ -109,9 +109,9 @@ function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
   return { re: t.re, im: t.im, r: t.radius };
 }
 
-function diskAdd(ctx: ExecutionContext, a: Disk, b: Disk): Disk { return { re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im), r: rAdd(ctx, a.r, b.r) }; }
+export function diskAdd(ctx: ExecutionContext, a: Disk, b: Disk): Disk { return { re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im), r: rAdd(ctx, a.r, b.r) }; }
 
-function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
+export function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
   const re = rSubtract(ctx, rMultiply(ctx, a.re, b.re), rMultiply(ctx, a.im, b.im));
   const im = rAdd(ctx, rMultiply(ctx, a.re, b.im), rMultiply(ctx, a.im, b.re));
   const size = (d: Disk) => rAdd(ctx, rAbs(ctx, d.re), rAbs(ctx, d.im));
@@ -119,7 +119,7 @@ function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
   return { re, im, r };
 }
 
-function mayContainZero(ctx: ExecutionContext, d: Disk): boolean {
+export function mayContainZero(ctx: ExecutionContext, d: Disk): boolean {
   return compareRational(ctx, rAdd(ctx, rMultiply(ctx, d.re, d.re), rMultiply(ctx, d.im, d.im)), rMultiply(ctx, d.r, d.r)) <= 0;
 }
 

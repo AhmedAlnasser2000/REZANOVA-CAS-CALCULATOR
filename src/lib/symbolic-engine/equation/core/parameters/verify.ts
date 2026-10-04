@@ -13,6 +13,7 @@ import {
 } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
 import { decideParametricProblem } from './solve';
+import { fractionOf } from './mpoly';
 import { canonical, decideAt, instantiate } from './specialize';
 
 /**
@@ -29,7 +30,7 @@ import { canonical, decideAt, instantiate } from './specialize';
  */
 const fail = (reason: string): never => demand(false, 'verification-failed', reason) as never;
 
-export function verifyParametricOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
+export function verifyParametricOutcome(problem: RelationProblem, outcome: EquationOutcome, rederive: (p: RelationProblem) => EquationOutcome = decideParametricProblem): void {
   assertOutcome(outcome);
   if (outcome.kind !== 'solved' && outcome.kind !== 'empty') return;
   const store = problem.store, domain = problem.domain;
@@ -51,7 +52,7 @@ export function verifyParametricOutcome(problem: RelationProblem, outcome: Equat
   }
   // One parameter: every case whose conditions are polynomial has a sample (cells are never empty).
   if (problem.parameters.length === 1 && cases.some((c, i) => !hit.has(i) && c.conditions.every(k => polynomialIn(store, k, problem.parameters[0])))) fail('a case is never sampled');
-  const again = decideParametricProblem(problem);
+  const again = rederive(problem);
   if (again.kind !== outcome.kind) fail('re-derivation gives a different outcome');
   if (outcome.kind === 'solved' && again.kind === 'solved'
     && setKey(store, normalizeSet(store, outcome.set, domain)) !== setKey(store, normalizeSet(store, again.set, domain))) fail('case tree differs from the re-derived tree');
@@ -119,6 +120,18 @@ export function sameSet(store: ExpressionStore, a: SolutionSet, b: SolutionSet):
       return eq(a.period, y.period) && iv(a.range, y.range) && matched(a.components, y.components, iv);
     }
     case 'union': return matched(a.sets, (b as typeof a).sets, (x, y) => sameSet(store, x, y));
+    case 'parametric': {
+      // Same free targets, and every coordinate and constraint equal as rational functions of them.
+      const y = b as typeof a;
+      if (a.variables.join() !== y.variables.join() || a.freeParameters.join() !== y.freeParameters.join()) return false;
+      const zeroDiff = (u: ExprId, v: ExprId) => {
+        const f = fractionOf(store, store.sub(u, v), a.freeParameters);
+        return f ? f.num.terms.size === 0 : u === v;
+      };
+      const zeroSum = (u: ExprId, v: ExprId) => zeroDiff(u, store.neg(v));
+      const cond = (c: Condition, d: Condition) => c.kind === d.kind && (zeroDiff(c.expr, d.expr) || (c.kind !== 'positive' && c.kind !== 'nonnegative' && zeroSum(c.expr, d.expr)));
+      return a.values.every((v, i) => zeroDiff(v, y.values[i])) && matched(a.constraints, y.constraints, cond);
+    }
     default: return false;
   }
 }

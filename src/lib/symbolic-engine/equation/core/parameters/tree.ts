@@ -37,7 +37,7 @@ export function constantSign(g: MPoly): number | undefined {
   if (isZero(g)) return 0;
   if (g.terms.size !== 1) return undefined;
   const [[k, c]] = [...g.terms];
-  return k.split(',').every(e => e === '0') ? (c.numerator < 0n ? -1 : 1) : undefined;
+  return k === '' || k.split(',').every(e => e === '0') ? (c.numerator < 0n ? -1 : 1) : undefined;
 }
 export const truth = (op: AtomOperator, s: number) => ({ eq: s === 0, ne: s !== 0, lt: s < 0, le: s <= 0, gt: s > 0, ge: s >= 0 })[op];
 
