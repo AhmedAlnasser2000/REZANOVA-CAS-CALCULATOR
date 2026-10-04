@@ -126,7 +126,8 @@ group('routing to the gates that own a problem', () => {
     [eq(ln(['Add', ['Power', 'x', 3], 'x']), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-3 equation with transcendental coefficients'],
     [eq(['Add', ['Sqrt', 'x'], exp('x')], 3), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
     [eq(['Add', exp('x'), ['Sin', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(times('a', exp('x')), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: parameters a'],
+    // a·eˣ = 1 is decided by the parameters gate; a kernel next to the target with a parameter stays refused.
+    [eq(['Add', exp('x'), times('a', 'x')], 1), 'incomplete-implementation: EQUATION-PARAMETERS1: the target outside its kernel with parameters (mixed kernels, follow-up ledger)'],
   ])('%j', (json, expected) => {
     expect(run(json).text).toBe(expected);
   });

@@ -5,7 +5,7 @@ import { expandConstant } from '../representation/angles';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import { realCompare, realSign } from '../representation/real-order';
 import { relationProblem, type Condition, type RelationInput, type RelationProblem } from '../representation/relation';
-import { floorExact, normalizeSet, type Endpoint, type Interval, type PointValue, type SolutionSet } from '../representation/solution-set';
+import { floorExact, normalizeSet, type Endpoint, type Interval, type PointValue, type SolutionSet, valueExpression } from '../representation/solution-set';
 import { sampleBetween } from '../generators/samples';
 import { hasTrig } from '../periodic/families';
 import { derivative } from './derivative';
@@ -86,7 +86,7 @@ function inverse(store: ExpressionStore, phi: ExprId, x: string, y: ExprId, samp
   }
 }
 
-const idOf = (store: ExpressionStore, v: PointValue): ExprId => (v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root));
+const idOf = (store: ExpressionStore, v: PointValue): ExprId => valueExpression(store, v);
 
 export function decideIntervalFamilies(problem: RelationProblem, decide: Decide, rewrite: Rewrite, zeros: Zeros): FamilyDecision {
   try {

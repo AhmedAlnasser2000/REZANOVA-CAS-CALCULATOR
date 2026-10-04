@@ -27,6 +27,7 @@ export function show(store: ExpressionStore, v: PointValue | Endpoint): string {
   if (v.kind === 'infinity') return v.sign < 0 ? '-inf' : '+inf';
   if (v.kind === 'rational') return v.value.denominator === 1n ? `${v.value.numerator}` : `${v.value.numerator}/${v.value.denominator}`;
   if (v.kind === 'expression') return JSON.stringify(writeExpression(store, v.id));
+  if (v.kind === 'root') return `root${v.index}(${JSON.stringify(writeExpression(store, v.poly))}, ${v.variable})`;
   if (v.root.kind === 'real') return `≈${realDecimal(ctx, v.root, 6)}`;
   const { re, im } = complexDecimal(ctx, v.root, 6);
   return `≈${re}${im.startsWith('-') ? '' : '+'}${im}i`;
@@ -57,6 +58,8 @@ export function describeSet(store: ExpressionStore, set: SolutionSet): string {
       const range = set.from !== undefined && set.to !== undefined ? `${set.from} ≤ ${set.parameter} ≤ ${set.to}` : set.from !== undefined ? `${set.parameter} ≥ ${set.from}` : set.to !== undefined ? `${set.parameter} ≤ ${set.to}` : `${set.parameter} ∈ ℤ`;
       return `⋃ ${set.loClosed ? '[' : '('}${JSON.stringify(writeExpression(store, set.lo))}, ${JSON.stringify(writeExpression(store, set.hi))}${set.hiClosed ? ']' : ')'} : ${range}`;
     }
+    case 'root-set': return `roots(${JSON.stringify(writeExpression(store, set.poly))})`;
+    case 'case-tree': return set.cases.map(c => `[${c.conditions.map(k => `${k.kind} ${JSON.stringify(writeExpression(store, k.expr))}${'other' in k ? ` ${JSON.stringify(writeExpression(store, k.other))}` : ''}`).join(' & ')}] ${describeSet(store, c.set)}`).join(' | ');
     case 'periodic': return `{${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')} : ${set.integerParameters.join(', ')} ∈ ℤ${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
     case 'union': return set.sets.map(x => describeSet(store, x)).join(' ∪ ');
     default: return set.kind;

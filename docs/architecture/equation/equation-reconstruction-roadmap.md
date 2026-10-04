@@ -1,13 +1,32 @@
 # Equation Reconstruction Roadmap
 
-Date: 2026-10-03
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1` and `EQUATION-COMPOSITION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Date: 2026-10-04
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` and `EQUATION-PARAMETERS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-COMPOSITION1` (slice 5) is backend-verified in two parts (see its [specification](equation-composition1-spec.md)). Part A (real): injective cancellation at any depth; certified extended-real ranges, symbolic derivatives and exact limits; a range-based exact zero finder for mixed kernels (split by exact sign, monotone pieces, confirmed exact candidates only); and the `interval-family` set kind for inequalities through a non-affine trig argument. Part B: several principal logarithms over ℂ (exponentiated equation, exact Arg-sum acceptance), an exact zero test for logs of algebraic numbers, faster certified enclosures, and the exit evidence that depth 3 and depth 25 are decided by the same code. Non-closed-form boundaries name `EQUATION-CERTIFIED-NUMERICS1`; non-affine complex intersections and nested quadratic levels are recorded follow-ups. The next gate is `EQUATION-PARAMETERS1`. It needs its own approval.
+`EQUATION-PARAMETERS1` (stage 10) is backend-verified in one PR with two commits (see its [specification](equation-parameters1-spec.md)).
+
+Part A:
+- polynomial and rational relations with coefficients in ℚ(p…), decided as case trees:
+  - one parameter: exact cells with algebraic breakpoints and parametric roots;
+  - several parameters: sign-condition trees (degree ≤ 2 over ℝ, root sets over ℂ);
+- a specialization verifier;
+- Liouville-bound zero tests with algebraic coefficients.
+
+Part B:
+- **Single kernels with parameters over ℝ** (exp, ln, sin, cos, |·|, q-th roots):
+  - = and ≠ for all of them;
+  - inequalities for the monotone ones and |·|;
+  - range conditions and the sign of the argument's slope become cases, and trig families get a parametric period.
+- **Polynomial and rational problems with transcendental constant coefficients:**
+  - over ℝ, as Sturm-isolated roots with certified signs;
+  - over ℂ, as root sets.
+- **The follow-up ledger below**, covering every gate.
+
+This completes stage 10. The next gate is `EQUATION-SYSTEMS1`. It needs its own approval.
 
 ## Implementation sequence
 
@@ -22,7 +41,7 @@ Companion: [design](equation-reconstruction-design.md), [blueprint](equation-rec
 | 7 (backend verified) | `EQUATION-CONSTRAINTS1` (slice 3) | Sign intervals, lazy branch manager, absolute values and radical generators (same-base lattice, tower elimination), real only; range contractors moved to stage 9 | Corpus A/S/M cases exact, including the two old false negatives |
 | 8 (backend verified) | `EQUATION-PERIODIC1` (slice 4) | Trig algebraization, periodic families, Diophantine intersection, interval restriction; complex exp/log families ln c + 2πik (moved from stage 6) | T cases exact; sin x = 0 on [0,100] as 32 exact roots kπ |
 | 9 (backend verified) | `EQUATION-COMPOSITION1` (slice 5) | Range/injectivity reasoning over the graph at any depth; HC4 range contractors (moved from stage 7); inequalities with families not affine in their parameter, several complex logarithms and non-affine complex intersections (moved from stage 8) | Remaining C cases with exact constants (no decimals; C6/C7 done in stage 6); depth 3 and depth 25 by the same code |
-| 10 | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
+| 10 (backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
@@ -49,6 +68,37 @@ Stages 15 and 16 may move before adoption if the user wants them in the first pr
 - The exact interface of the future OOE resource subsystem that replaces the core's budgets.
 - When, if ever, to extract a shared exact-arithmetic layer with the integration core.
 - Whether complex modulus and complex radicals (`unsupported` since stage 7, by user decision) get a gate of their own.
+
+## Deferred follow-ups (all gates)
+
+The user asked for one ledger of everything the gates deferred (2026-10-04, `EQUATION-PARAMETERS1`). Each item names where it came from and the gate that owns it, or "unassigned". Later gates append to this table and strike items they close. None of these is a cap: each is refused honestly today, naming its owner.
+
+| Item | From | Owner |
+| --- | --- | --- |
+| Non-real points ordered by canonical identity, not numerically (display order) | `EQUATION-POLYNOMIAL-DECISION1` | `EQUATION-RESULT-CONTRACT1` |
+| Radical presentation: √D unsimplified (½·√8), √12 rather than 2√3, −(1 − e) not distributed, asin/atan residues not normalized | slices 1, 2 and 4 | `EQUATION-RESULT-CONTRACT1` (printer) |
+| Two different closed forms of one value ordered only by refinement under the budget (the gate-6 caveat) | `EQUATION-GENERATORS1`, `EQUATION-PERIODIC1` | unassigned |
+| Wider Lambert W simplification (several log bases) and algebraic bases with non-binomial minimal polynomials in the exponent lattice | `EQUATION-GENERATORS1` | unassigned |
+| Dependent radicals (norm identically zero, e.g. √(x²+2x+1)) | `EQUATION-CONSTRAINTS1` | unassigned |
+| Complex modulus and complex radicals (`unsupported` by decision) | `EQUATION-CONSTRAINTS1` | unassigned (see "Decisions remaining") |
+| Transcendental constants inside a radical tower (√x + √(x+1) = ln 2) | `EQUATION-CONSTRAINTS1` | `EQUATION-CERTIFIED-NUMERICS1` |
+| Radical forms beyond quadratic and pure binomial roots (S4 stays a RootOf) | `EQUATION-CONSTRAINTS1` | `EQUATION-RESULT-CONTRACT1` |
+| Families in several integer parameters under further conditions | `EQUATION-PERIODIC1` | unassigned |
+| The complement of an infinite family over ℂ (needs a set kind) | `EQUATION-PERIODIC1` (part B) | `EQUATION-RESULT-CONTRACT1` |
+| Complex intersections and exclusions with non-affine families; nested families whose level is quadratic in its parameter | `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` | unassigned |
+| Interval families need one common trig argument with a peelable inverse | `EQUATION-COMPOSITION1` | unassigned |
+| Non-closed-form boundaries and isolated numeric roots (eˣ + sin x > 0) | `EQUATION-COMPOSITION1` | `EQUATION-CERTIFIED-NUMERICS1` |
+| Depth-25 periodic chains cost about 100 s with verification | `EQUATION-COMPOSITION1` | `EQUATION-PROOF-PERFORMANCE1` |
+| Recursive walks of nested solution sets (normalization, keys, wire). The parameters gate builds flat case trees (one level), so the walks stay shallow; nested case trees would need explicit stacks | `EQUATION-REPRESENTATION1` | the gate that first nests case trees |
+| Conjunctions of several relations in the target with several parameters; real roots of degree ≥ 3 with several parameters; deciding whether a several-parameter case is empty | `EQUATION-PARAMETERS1` | `EQUATION-SEMIALGEBRAIC1` |
+| Excluding the roots of a parametric polynomial of degree ≥ 3 over ℂ | `EQUATION-PARAMETERS1` | unassigned |
+| Mixed kernels with parameters (eˣ + a·sin x, eˣ + a·x, √x + √(x+a)) | `EQUATION-PARAMETERS1` | unassigned |
+| Kernel levels of degree ≥ 2 in the kernel with parameters (e^{2x} + a·eˣ = 1), nested kernels, non-affine kernel arguments, the target in an exponent, tan/arcs/Lambert W with parameters, non-unit rational powers | `EQUATION-PARAMETERS1` | unassigned |
+| sin/cos inequalities with parameters (parametric arcs per period) | `EQUATION-PARAMETERS1` | unassigned |
+| Kernels with parameters over ℂ (e^{az} = b as (ln b + 2πik)/a) | `EQUATION-PARAMETERS1` | unassigned |
+| A RootOf expression node, so roots with transcendental coefficients can sit inside kernels (e^{3x} + π·eˣ = e; ln(x³ + x) = 1 at degree 3) | `EQUATION-PARAMETERS1` | unassigned |
+| Transcendental constants together with parameters (π·x = a); several relations or ≠ with transcendental constants over ℂ | `EQUATION-PARAMETERS1` | unassigned |
+| Choosing the target automatically (prefer x, then other conventions); today the caller names it | `EQUATION-PARAMETERS1` (user question) | unassigned, after the roadmap |
 
 ## Attribution
 

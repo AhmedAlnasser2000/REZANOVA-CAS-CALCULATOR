@@ -5,7 +5,7 @@ import { evaluateExact } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import { realCompare, realSign } from '../representation/real-order';
 import { relationProblem, type Condition, type RelationOperator } from '../representation/relation';
-import { floorExact, normalizeSet, type Interval, type PointValue, type SolutionSet } from '../representation/solution-set';
+import { floorExact, normalizeSet, type Interval, type PointValue, type SolutionSet, valueExpression } from '../representation/solution-set';
 import { polynomialCoefficients, replaceSubexpressions } from '../generators/lattice';
 import { decideClosedForm } from '../generators/closed-form-set';
 import { rewriteGenerators } from '../generators/solve';
@@ -61,7 +61,7 @@ export function residueGroups(store: ExpressionStore, residues: readonly ExprId[
   return groupsOf(store, set);
 }
 
-const idOf = (store: ExpressionStore, v: PointValue) => (v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root));
+const idOf = (store: ExpressionStore, v: PointValue) => valueExpression(store, v);
 
 /** The point families of a normalized set of point families. */
 export function groupsOf(store: ExpressionStore, set: SolutionSet): PeriodicZeros[] {
