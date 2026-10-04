@@ -10,7 +10,7 @@ import { decideSystem } from './systems/solve';
 import { verifySystemOutcome } from './systems/verify';
 import type { ExprId } from './representation/expression';
 import type { RelationProblem } from './representation/relation';
-import type { EquationOutcome } from './representation/solution-set';
+import { resourceOutcome, type EquationOutcome } from './representation/solution-set';
 
 /**
  * Entry point of the private Equation core: route a problem to the slice that
@@ -51,6 +51,15 @@ export function hasConstraintKernels(problem: RelationProblem): boolean {
 const closedForm = (problem: RelationProblem) => hasTranscendentalKernels(problem) || hasConstraintKernels(problem);
 
 export function decideEquation(problem: RelationProblem): EquationOutcome {
+  // A typed stop raised while routing (before a slice's own handler) is still the typed `resource` outcome.
+  try {
+    return route(problem);
+  } catch (e) {
+    return resourceOutcome(e);
+  }
+}
+
+function route(problem: RelationProblem): EquationOutcome {
   if (problem.domain === 'complex' && hasConstraintKernels(problem)) {
     return { kind: 'unsupported', reason: 'absolute values and radicals of the target are decided over the reals only' };
   }

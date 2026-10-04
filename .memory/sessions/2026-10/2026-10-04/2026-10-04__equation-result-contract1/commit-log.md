@@ -22,3 +22,4 @@
 - The branch was restarted from `origin/main` after #20 merged, so the part A push uses force-with-lease.
 - Commit identity: the commit containing this record (resolve with git log for this path); no self-referential hash is embedded.
 - Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.
+- Part B: pushed normally on top of part A in #21 (no history rewrite). Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.

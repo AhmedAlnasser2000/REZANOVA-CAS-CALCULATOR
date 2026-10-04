@@ -1,15 +1,15 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1` and `EQUATION-PROOF-PERFORMANCE1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1` and `EQUATION-RESULT-CONTRACT1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-RESULT-CONTRACT1` (stage 13) is in progress in one PR with two commits (see its [specification](equation-result-contract1-spec.md)).
+`EQUATION-RESULT-CONTRACT1` (stage 13) is verified in one PR with two commits (see its [specification](equation-result-contract1-spec.md)).
 
-Part A (verified): canonical-result V6, with:
+Part A: canonical-result V6, with:
 - typed Equation outcomes (six) and solution sets (twelve kinds);
 - root binders with isolation data;
 - a restricted standard math grammar with canonical LaTeX;
@@ -17,9 +17,9 @@ Part A (verified): canonical-result V6, with:
 - routing, authority, consumer and coverage wiring;
 - the AGENTS.md policy.
 
-Part B: the Equation adapter, which projects and replays core outcomes into V6.
+Part B: the Equation adapter. It verifies, projects, validates and replays core outcomes into V6, and has a V6 read model. All 67 corpus cases round-trip.
 
-After stage 13 comes `EQUATION-PRESENTATION1` (display polish, user decision 2026-10-04), then adoption. Each needs its own approval.
+This completes stage 13. The next gate is `EQUATION-PRESENTATION1` (display polish, user decision 2026-10-04), then adoption. Each needs its own approval.
 
 ## Implementation sequence
 
@@ -37,7 +37,7 @@ After stage 13 comes `EQUATION-PRESENTATION1` (display polish, user decision 202
 | 10 (backend verified) | `EQUATION-PARAMETERS1` | Case trees over ℚ(p…) | Quadratic with a = 0 cases; x⁵ + ax + 1 as parametric RootOf |
 | 11 (backend verified) | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 (backend verified) | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
-| 13 (in progress) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
+| 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 13b | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |

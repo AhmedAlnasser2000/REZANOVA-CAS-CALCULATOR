@@ -2,8 +2,8 @@
 
 Date: 2026-10-04
 Status:
-- **Part A (the shared V6 contract)**: implemented and verified on 2026-10-04. No producer emits V6 yet.
-- **Part B (the Equation adapter)**: in progress, in the same PR.
+- **Part A (the shared V6 contract)**: implemented and verified on 2026-10-04.
+- **Part B (the Equation adapter)**: implemented and verified on 2026-10-04, in the same PR. This completes the gate. The adapter has no production caller until adoption.
 
 Gate: shared result contract plus the Equation adapter. Stage 13 of the [roadmap](equation-reconstruction-roadmap.md).
 
@@ -109,6 +109,52 @@ As with V5, validation proves nothing mathematical. Isolation correctness, set e
 - the canonical LaTeX projection.
 
 The full result-contract suite passes (21 files, 176 tests), as do the V2 enforcement, display-contract inversion, MathJSON coverage, agent-workflow and memory checks.
+
+## The Equation adapter (part B)
+
+The adapter is two files outside the core, `src/lib/symbolic-engine/equation/result.ts` and `result-read.ts`. They are the only files the core isolation test allows to import the core.
+
+### Projection: `projectEquationOutcome(problem, outcome, limits?)`
+
+1. **Verify.** The core verifier checks the outcome independently first; a failed verification is thrown, never projected.
+2. **Write the values.** Values become restricted standard MathJSON from the shared expression graph:
+   - each algebraic node or value becomes a binder holding its canonical minimal polynomial and canonical isolation, plus its closed `form` when one is proven;
+   - each parametric indexed root becomes an `indexed-real-root` binder, its variable renamed to the fresh binder symbol;
+   - binder symbols are `r_1, r_2, …`, skipping targets and parameters.
+3. **Fill in the rest.** The outcome is mapped; an `incomplete` reason that starts with an `EQUATION-…:` owner is split into owner and reason. `provenance.rules` lists the transform rules of the proof log.
+4. **Validate.** A document beyond the shared node, depth or byte limits is replaced by `stopped: result-size`.
+5. **Replay.** The validated document is read back into the problem's store and compared with the original by canonical key, or by value (`sameSet`) when two exact forms differ; kinds, reasons and stops must match.
+6. **Authority.** `requireCanonicalResultAuthority` runs last.
+7. **Stops.** A typed resource stop during verification or replay becomes the matching `stopped` document.
+
+### Reading: `readEquationOutcomeV6(store, document)`
+
+This is the V6 read model. It validates the document and rebuilds core values:
+- **real binders** must isolate exactly one real root of their minimal polynomial between their rational bounds (exact comparisons);
+- **complex binders** must carry the canonical isolation disk of one root;
+- **indexed roots** are allowed only as whole point values (with one target);
+- a `result-size` stop has no core outcome.
+
+### Found and fixed
+
+`decideEquation` could throw a typed resource stop raised while routing, before any slice's handler, instead of returning the `resource` outcome. It now always returns the typed outcome.
+
+## Evidence (part B)
+
+`src/lib/symbolic-engine/equation/result.test.ts`, 81 tests:
+- **The corpus:** every one of the 67 corpus cases (all slices; solved, empty and incomplete outcomes) projects, validates, replays, and reads back in a fresh store to the same outcome kind.
+- **Focused cases:**
+  - cofinite (x/x = 1 over ℂ), intervals, periodic-set (sin x = ½), periodic (eˣ = 2 over ℂ);
+  - case-tree (a·x + 1 = 0), parametric (x + y = 1), complex algebraic points (x³ + 2 = 0 over ℂ);
+  - interval-family (sin eˣ > ½), root-set (x³ + a·x + b = 0 over ℂ).
+- **Kind coverage:** together with the corpus, 10 of the 12 kinds come from real decisions. Reduced forms and unconfirmed sets, which no slice produces yet, are covered by the reader on hand-built documents.
+- **Non-answers:** cos x = x is `incomplete` with owner `EQUATION-CERTIFIED-NUMERICS1`; a cancelled decision is `stopped: cancelled`.
+- **Bounds:** an answer over a 30-node limit becomes `stopped: result-size`.
+- **Tampering, rejected on replay:**
+  - a moved isolation interval (no root inside);
+  - swapped case sets;
+  - a family value without its period term;
+  - a forged `outcomeKind`.
 
 ## Not in this gate
 

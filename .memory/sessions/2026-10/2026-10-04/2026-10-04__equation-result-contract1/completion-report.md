@@ -33,7 +33,19 @@
 
 ## Outcome
 
-- Part A: V6 exists, is validated, routed and recognized; no producer emits it yet.
+- Part A: V6 exists and is validated, routed and recognized.
+- Part B: the Equation adapter projects, validates and replays every corpus outcome, and has a V6 read model. No production caller. This completes the gate.
+
+## Part B
+
+- **Authority**: the same approved plan, continuing without stopping; commit and push to #21 were pre-authorized.
+- **Scope**:
+  - `src/lib/symbolic-engine/equation/result.ts`, `result-read.ts` and `result.test.ts`;
+  - the isolation test's adapter list;
+  - the typed-stop fix in `core/decide.ts`;
+  - spec, roadmap, README and memory.
+
+  No edits to New Integration, contracts beyond part A, OOE or UI.
 
 ## Evidence
 
