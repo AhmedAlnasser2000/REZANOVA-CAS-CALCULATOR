@@ -1,0 +1,26 @@
+# Performance gate verification
+
+## Attribution
+
+- primary_agent: claude
+- primary_agent_model: claude-opus-5-5
+- primary_agent_family: opus-5.5
+- recorded_by_agent: claude
+- recorded_by_agent_model: claude-opus-5-5
+- recorded_by_agent_family: opus-5.5
+- verified_by_agent: claude
+- verified_by_agent_model: claude-opus-5-5
+- verified_by_agent_family: opus-5.5
+- attribution_basis: live
+
+## Part A backend gate: pass
+
+- **Environment**: cloud container, Node v22.22.2 (the repository requires 24.x); tools invoked directly with `node`.
+- **Tests**: `node node_modules/vitest/vitest.mjs run src/lib/symbolic-engine/equation/core --maxWorkers=2` passed 38 files / 585 tests (1 skipped: the opt-in medians) in 41 s wall (before this gate: 36 files / 511 tests in about 172 s).
+- **Corpus**: every one of the 67 corpus cases decides with its expected kind and passes its verifier (always-on test).
+- **Medians**: `EQUATION_BENCH=1` before (unchanged main, separate worktree) and after, `--maxWorkers=1`; tables in the spec.
+- **Enclosure correctness**: fixed-point sin/cos at 1/3, −7/10 and 999/1000 contain mpmath 60-digit values at 64, 128 and 180 bits, with width at most 16·2^−bits.
+- **Real issue found and fixed**: the first π and refinement caches were process-global, so work charged (and typed stops) could depend on earlier computations in other contexts. They are now per context; a test checks equal work in two fresh contexts.
+- **Budget test**: the composition resource test completed inside its 20 000-unit budget after charging got cheaper (7 548 units, about 10 500 polls). Its budgets were lowered to 3 000 units and 4 000 polls, and it still stops with typed `work` and `cancelled`.
+- **Other checks**: `tsc -b`, scoped ESLint, compartment boundaries, OOE boundaries, file sizes and the memory protocol passed. Every file is under 1000 lines.
+- **Not run**: no full suite and no UI gate, because there is no product caller.
