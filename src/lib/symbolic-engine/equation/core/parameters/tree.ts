@@ -19,7 +19,7 @@ import type { ParamAtom } from './specialize';
  */
 export const SEMIALGEBRAIC = 'EQUATION-SEMIALGEBRAIC1';
 
-const holds = (store: ExpressionStore, g: MPoly, op: AtomOperator): Condition => {
+export const holds = (store: ExpressionStore, g: MPoly, op: AtomOperator): Condition => {
   const e = toExpression(store, op === 'eq' || op === 'ne' ? positiveLead(store.ctx, g) : g), m = () => toExpression(store, negate(store.ctx, g));
   switch (op) {
     case 'eq': return { kind: 'equal', expr: e, other: store.integer(0) };
@@ -30,16 +30,16 @@ const holds = (store: ExpressionStore, g: MPoly, op: AtomOperator): Condition =>
     case 'ge': return { kind: 'nonnegative', expr: e };
   }
 };
-const NEGATION: Readonly<Record<AtomOperator, AtomOperator>> = { eq: 'ne', ne: 'eq', lt: 'ge', le: 'gt', gt: 'le', ge: 'lt' };
+export const NEGATION: Readonly<Record<AtomOperator, AtomOperator>> = { eq: 'ne', ne: 'eq', lt: 'ge', le: 'gt', gt: 'le', ge: 'lt' };
 
 /** The sign of a polynomial without parameters, or undefined. */
-function constantSign(g: MPoly): number | undefined {
+export function constantSign(g: MPoly): number | undefined {
   if (isZero(g)) return 0;
   if (g.terms.size !== 1) return undefined;
   const [[k, c]] = [...g.terms];
   return k.split(',').every(e => e === '0') ? (c.numerator < 0n ? -1 : 1) : undefined;
 }
-const truth = (op: AtomOperator, s: number) => ({ eq: s === 0, ne: s !== 0, lt: s < 0, le: s <= 0, gt: s > 0, ge: s >= 0 })[op];
+export const truth = (op: AtomOperator, s: number) => ({ eq: s === 0, ne: s !== 0, lt: s < 0, le: s <= 0, gt: s > 0, ge: s >= 0 })[op];
 
 export function decideTree(problem: RelationProblem, atoms: readonly ParamAtom[]): CellsResult {
   const store = problem.store, ctx = store.ctx, x = problem.targets[0], real = problem.domain === 'real';

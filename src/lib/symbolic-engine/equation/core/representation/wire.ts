@@ -276,7 +276,10 @@ function encodeValue(enc: GraphEncoder, v: PointValue): Json {
     const base = ['a', c.poly.coefficients.map(String), c.index];
     return 'form' in v && v.form !== undefined ? [...base, enc.ref(v.form)] : base;
   }
-  if (v.kind === 'root') return ['r', enc.ref(v.poly), v.variable, v.index];
+  if (v.kind === 'root') {
+    const base = ['r', enc.ref(v.poly), v.variable, v.index];
+    return v.lo && v.hi ? [...base, encodeRational(enc.store.ctx, v.lo), encodeRational(enc.store.ctx, v.hi)] : base;
+  }
   return ['e', enc.ref(v.id)];
 }
 
@@ -284,10 +287,14 @@ function decodeValue(dec: GraphDecoder, value: Json): PointValue {
   const e = list(value), ctx = dec.store.ctx;
   if (e[0] === 'q' && e.length === 2) return Object.freeze({ kind: 'rational', value: decodeRational(ctx, e[1]) });
   if (e[0] === 'e' && e.length === 2) return Object.freeze({ kind: 'expression', id: dec.id(e[1]) });
-  if (e[0] === 'r' && e.length === 4) {
+  if (e[0] === 'r' && (e.length === 4 || e.length === 6)) {
     const variable = text(e[2]), index = e[3];
     if (typeof index !== 'number' || !Number.isSafeInteger(index) || index < 1) fail('root index');
-    return Object.freeze({ kind: 'root', poly: dec.id(e[1]), variable, index: index as number });
+    const base = { kind: 'root' as const, poly: dec.id(e[1]), variable, index: index as number };
+    if (e.length === 4) return Object.freeze(base);
+    const lo = decodeRational(ctx, e[4]), hi = decodeRational(ctx, e[5]);
+    if (lo.numerator * hi.denominator >= hi.numerator * lo.denominator) fail('root bounds');
+    return Object.freeze({ ...base, lo, hi });
   }
   if (e[0] === 'a' && (e.length === 3 || e.length === 4)) {
     const roots = dec.store.roots.roots(ctx, minimalPolynomial(ctx, list(e[1]).map(integerText)));

@@ -1,4 +1,4 @@
-# Parameters gate commits (part A)
+# Parameters gate commits (parts A and B)
 
 ## Attribution
 
@@ -23,3 +23,4 @@
 - The commit contains part A: `core/parameters/`, the representation additions, the routing, the Liouville-bound zero tests, the gate spec, roadmap/README notes and Equation-owned memory.
 - Commit identity: the commit containing this record (resolve with git log for this path); no self-referential hash is embedded.
 - Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.
+- Part B: the user pre-authorized commit and push to the same PR (#18). The second commit is pushed normally on top of part A (no history rewrite). Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.

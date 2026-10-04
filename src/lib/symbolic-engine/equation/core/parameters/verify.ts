@@ -4,10 +4,12 @@ import { exactPolynomial, rationalForm } from '../decision/rational-form';
 import { pieces, sortedDistinct } from '../decision/real-set';
 import { zerosOf } from '../decision/univariate';
 import { evaluateExact, type ExactValue } from '../representation/evaluate';
+import { realSign } from '../representation/real-order';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import type { Condition, ProblemDomain, RelationProblem } from '../representation/relation';
 import {
-  assertOutcome, compareValues, finiteSet, normalizeSet, setKey, valueExpression, type Case, type EquationOutcome, type SolutionSet,
+  assertOutcome, compareValues, finiteSet, normalizeSet, setKey, valueExpression, type Case, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue,
+  type SolutionSet,
 } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
 import { decideParametricProblem } from './solve';
@@ -45,9 +47,10 @@ export function verifyParametricOutcome(problem: RelationProblem, outcome: Equat
     const decided = decideAt(problem, sample);
     if (decided.kind === 'refused') return fail(`a sample is not decidable: ${decided.reason}`);
     const claimed = instantiate(store, cases[matching[0]].set, sample, domain);
-    if (claimed === undefined || setKey(store, claimed) !== setKey(store, canonical(store, decided.set, domain))) fail('a case set differs from the decision at a sample');
+    if (claimed === undefined || !sameSet(store, claimed, canonical(store, decided.set, domain))) fail('a case set differs from the decision at a sample');
   }
-  if (problem.parameters.length === 1 && hit.size !== cases.length) fail('a case is never sampled');
+  // One parameter: every case whose conditions are polynomial has a sample (cells are never empty).
+  if (problem.parameters.length === 1 && cases.some((c, i) => !hit.has(i) && c.conditions.every(k => polynomialIn(store, k, problem.parameters[0])))) fail('a case is never sampled');
   const again = decideParametricProblem(problem);
   if (again.kind !== outcome.kind) fail('re-derivation gives a different outcome');
   if (outcome.kind === 'solved' && again.kind === 'solved'
@@ -62,18 +65,61 @@ export function caseAt(problem: RelationProblem, set: SolutionSet, values: Reado
   return instantiate(store, matching[0].set, values, problem.domain);
 }
 
-function conditionHolds(store: ExpressionStore, c: Condition, values: ReadonlyMap<string, ExprId>, domain: ProblemDomain): boolean {
+/** Whether a condition holds at parameter values: exactly, or by certified sign for transcendental values over ℝ. */
+export function conditionHolds(store: ExpressionStore, c: Condition, values: ReadonlyMap<string, ExprId>, domain: ProblemDomain): boolean {
   if (c.kind === 'in-domain') return true;
-  const e = 'other' in c ? store.sub(c.expr, c.other) : c.expr;
-  const v = evaluateExact(store, store.substitute(e, values), c.kind === 'positive' || c.kind === 'nonnegative' ? 'real' : domain);
-  if (v.kind !== 'exact') return fail('a condition is not exactly evaluable at a sample');
-  const ev = (v as { value: ExactValue }).value;
-  const zero = ev.kind === 'rational' ? ev.value.numerator === 0n : false;
+  const e = store.substitute('other' in c ? store.sub(c.expr, c.other) : c.expr, values);
+  const real = c.kind === 'positive' || c.kind === 'nonnegative' || domain === 'real';
+  const v = evaluateExact(store, e, real ? 'real' : domain);
+  let sign: number;
+  if (v.kind === 'exact') {
+    const ev = v.value;
+    if (ev.kind === 'algebraic' && ev.root.kind !== 'real') sign = Number.NaN;
+    else sign = compareValues(store, ev, { kind: 'rational', value: rational(store.ctx, 0n) });
+  } else if (v.kind === 'not-exact' && v.reason === 'transcendental' && real) sign = realSign(store, e);
+  else if (v.kind === 'undefined') return false;
+  else return fail('a condition is not evaluable at a sample');
   switch (c.kind) {
-    case 'equal': return zero;
-    case 'nonzero': case 'not-equal': return !zero;
-    case 'positive': return compareValues(store, ev, { kind: 'rational', value: rational(store.ctx, 0n) }) > 0;
-    case 'nonnegative': return compareValues(store, ev, { kind: 'rational', value: rational(store.ctx, 0n) }) >= 0;
+    case 'equal': return sign === 0;
+    case 'nonzero': case 'not-equal': return sign !== 0;
+    case 'positive': return sign > 0;
+    case 'nonnegative': return sign >= 0;
+  }
+}
+
+function polynomialIn(store: ExpressionStore, c: Condition, p: string): boolean {
+  if (c.kind === 'in-domain') return true;
+  const r = rationalForm(store, 'other' in c ? store.sub(c.expr, c.other) : c.expr, p);
+  return r.ok && exactPolynomial(store, r.form.num, 'complex').kind === 'ok';
+}
+
+/**
+ * Equality of two canonical sets by value: the same kind and shape, and every
+ * value equal by exact comparison (two closed forms of one number, such as
+ * ln 4/2 and ln 2, are equal), not only by identity.
+ */
+export function sameSet(store: ExpressionStore, a: SolutionSet, b: SolutionSet): boolean {
+  if (setKey(store, a) === setKey(store, b)) return true;
+  const eq = (x: PointValue, y: PointValue) => compareValues(store, x, y) === 0;
+  const end = (x: Endpoint, y: Endpoint) => (x.kind === 'infinity' || y.kind === 'infinity' ? x.kind === y.kind && (x as { sign: number }).sign === (y as { sign: number }).sign : eq(x, y));
+  const iv = (x: Interval, y: Interval) => x.loClosed === y.loClosed && x.hiClosed === y.hiClosed && end(x.lo, y.lo) && end(x.hi, y.hi);
+  const matched = <T>(xs: readonly T[], ys: readonly T[], same: (x: T, y: T) => boolean) => {
+    if (xs.length !== ys.length) return false;
+    const used = new Set<number>();
+    return xs.every(x => { const j = ys.findIndex((y, k) => !used.has(k) && same(x, y)); if (j < 0) return false; used.add(j); return true; });
+  };
+  const point = (x: Point, y: Point) => x.length === y.length && x.every((v, i) => eq(v, y[i]));
+  if (a.kind !== b.kind) return false;
+  switch (a.kind) {
+    case 'finite': return matched(a.points, (b as typeof a).points, point);
+    case 'cofinite': return matched(a.except, (b as typeof a).except, point);
+    case 'intervals': return matched(a.intervals, (b as typeof a).intervals, iv);
+    case 'periodic-set': {
+      const y = b as typeof a;
+      return eq(a.period, y.period) && iv(a.range, y.range) && matched(a.components, y.components, iv);
+    }
+    case 'union': return matched(a.sets, (b as typeof a).sets, (x, y) => sameSet(store, x, y));
+    default: return false;
   }
 }
 
@@ -83,20 +129,18 @@ function samples(problem: RelationProblem, cases: readonly Case[]): ReadonlyMap<
   const store = problem.store, ctx = store.ctx, ps = problem.parameters;
   if (ps.length === 1) {
     const p = ps[0], zeros: ExactValue[] = [];
+    // Zeros of the polynomial conditions; a transcendental condition (from an x-free kernel relation) adds none.
     for (const c of cases.flatMap(k => k.conditions)) {
-      if (c.kind === 'in-domain') continue;
+      if (c.kind === 'in-domain' || !polynomialIn(store, c, p)) continue;
       const r = rationalForm(store, 'other' in c ? store.sub(c.expr, c.other) : c.expr, p);
-      if (!r.ok) return fail('a condition is not polynomial in the parameter');
-      const e = exactPolynomial(store, r.form.num, problem.domain);
-      if (e.kind !== 'ok') return fail('a condition has no exact polynomial form');
-      if ((e.poly.kind === 'rational' ? e.poly.poly.coefficients.length : e.poly.coefficients.length) > 1) zeros.push(...zerosOf(store, e.poly, problem.domain));
+      const e = r.ok ? exactPolynomial(store, r.form.num, problem.domain) : undefined;
+      if (e?.kind === 'ok' && (e.poly.kind === 'rational' ? e.poly.poly.coefficients.length : e.poly.coefficients.length) > 1) zeros.push(...zerosOf(store, e.poly, problem.domain));
     }
     const at = (e: ExprId) => new Map([[p, e]]);
-    if (problem.domain === 'complex') {
-      const generic = GRID.map(([n, d]) => store.number(rational(ctx, n, d)));
-      return [...zeros.map(z => at(valueExpression(store, z))), ...generic.map(at)];
-    }
-    return pieces(store, sortedDistinct(store, zeros)).map(piece => at(piece.kind === 'open' ? store.number(piece.sample) : valueExpression(store, piece.value)));
+    const generic = GRID.map(([n, d]) => store.number(rational(ctx, n, d)));
+    if (problem.domain === 'complex') return [...zeros.map(z => at(valueExpression(store, z))), ...generic.map(at)];
+    const cells = pieces(store, sortedDistinct(store, zeros)).map(piece => at(piece.kind === 'open' ? store.number(piece.sample) : valueExpression(store, piece.value)));
+    return cases.every(k => k.conditions.every(c => polynomialIn(store, c, p))) ? cells : [...cells, ...generic.map(at)];
   }
   // Several parameters: grid tuples in order of total index, all of them up to 7³, otherwise the first 512.
   const out: Map<string, ExprId>[] = [], k = ps.length, total = GRID.length ** k;

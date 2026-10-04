@@ -2,6 +2,7 @@ import { demand, EquationAlgebraError } from '../execution';
 import { exactPolynomial, OWNERS, rationalForm, type Refusal } from '../decision/rational-form';
 import { domainBases } from '../decision/rules';
 import { decidePolynomialProblem } from '../decision/solve';
+import { decideGeneratorProblem } from '../generators/solve';
 import { sortedDistinct } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
 import { zerosOf } from '../decision/univariate';
@@ -40,7 +41,7 @@ export function parametricAtoms(problem: RelationProblem): { readonly vars: read
     atoms.push({ poly: op === 'eq' || op === 'ne' ? positiveLead(s.ctx, f.num) : multiply(s.ctx, f.num, f.den), op });
     return true;
   };
-  const refusal = { owner: OWNERS.parameters, detail: 'a parameter problem beyond rational functions of the target and the parameters (functions or constants: part B)' };
+  const refusal = { owner: OWNERS.parameters, detail: 'transcendental constants or functions of the parameters together with parameters (follow-up ledger)' };
   for (const r of problem.relations) if (!add(s.sub(r.lhs, r.rhs), r.op)) return refusal;
   for (const c of problem.conditions as readonly Condition[]) {
     if (c.kind === 'in-domain') continue;
@@ -66,11 +67,24 @@ export function specializedProblem(problem: RelationProblem, values: ReadonlyMap
 
 export type Specialized = { readonly kind: 'set'; readonly set: SolutionSet } | { readonly kind: 'refused'; readonly reason: string };
 
-/** Decide the specialized problem with slice 1: its canonical set (the empty set as finite {}). */
+/** Whether the target occurs inside a function, a non-integer power, or an exponent. */
+export function targetInKernel(problem: RelationProblem): boolean {
+  const s = problem.store, x = problem.targets[0];
+  const roots = [...problem.relations.flatMap(r => [r.lhs, r.rhs]), ...problem.conditions.flatMap(c => ('other' in c ? [c.expr, c.other] : [c.expr]))];
+  return s.postorder(roots).some(n => {
+    const node = s.node(n);
+    if (node.kind === 'apply') return s.freeSymbols(node.arg).includes(x);
+    if (node.kind !== 'pow') return false;
+    const e = s.numberValue(node.exponent);
+    return s.freeSymbols(node.exponent).includes(x) || (s.freeSymbols(node.base).includes(x) && (e === undefined || e.denominator !== 1n));
+  });
+}
+
+/** Decide the specialized problem with the slice that owns it: its canonical set (the empty set as finite {}). */
 export function decideAt(problem: RelationProblem, values: ReadonlyMap<string, ExprId>): Specialized {
   const sp = specializedProblem(problem, values);
   if (sp.parameters.length) return { kind: 'refused', reason: 'specialization left free symbols' };
-  const o = decidePolynomialProblem(sp);
+  const o = targetInKernel(sp) ? decideGeneratorProblem(sp) : decidePolynomialProblem(sp);
   if (o.kind === 'resource') {
     // The context keeps its stop: re-raise it unchanged.
     problem.store.ctx.checkCancelled();
@@ -121,9 +135,11 @@ export function instantiate(store: ExpressionStore, set: SolutionSet, values: Re
       return zs[v.index - 1];
     }
     if (v.kind !== 'expression') return v;
-    const e = evaluateExact(store, store.substitute(v.id, values), domain);
-    if (e.kind !== 'exact') throw new Mismatch();
-    return e.value;
+    const id = store.substitute(v.id, values), e = evaluateExact(store, id, domain);
+    if (e.kind === 'exact') return e.value;
+    // A closed form that is not algebraic (ln 2, asin(1/3)) stays an expression; it must still be defined.
+    if (e.kind === 'not-exact' && e.reason === 'transcendental' && store.freeSymbols(id).length === 0) return { kind: 'expression', id };
+    throw new Mismatch();
   };
   const end = (e: Endpoint): Endpoint => (e.kind === 'infinity' ? e : value(e));
   const point = (p: Point): Point => p.map(value);
@@ -134,6 +150,7 @@ export function instantiate(store: ExpressionStore, set: SolutionSet, values: Re
       case 'intervals': return { ...s, intervals: s.intervals.map((i): Interval => ({ ...i, lo: end(i.lo), hi: end(i.hi) })) };
       case 'union': return { kind: 'union', sets: s.sets.map(walk) };
       case 'root-set': return finiteSet(s.variables, rootsAt(store, s.poly, s.variables[0], values, domain).map(v => [v]));
+      case 'periodic-set': return { ...s, period: value(s.period), components: s.components.map((i): Interval => ({ ...i, lo: end(i.lo), hi: end(i.hi) })), range: { ...s.range, lo: end(s.range.lo), hi: end(s.range.hi) } };
       default: throw new Mismatch();
     }
   };

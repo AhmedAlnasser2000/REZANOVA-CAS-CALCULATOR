@@ -157,10 +157,9 @@ group('over ℂ', () => {
 });
 
 group('refusals', () => {
-  it('functions of the target or constants with parameters belong to part B', () => {
-    for (const json of [['Equal', ['Exp', mul('a', 'x')], 2], ['Equal', pow('x', 2), ['Sin', 'a']], ['Equal', mul('Pi', 'x'), 'a']]) {
-      expect(describe(new ExpressionStore(context()), setup(json).outcome)).toMatch(/incomplete-implementation: EQUATION-PARAMETERS1/);
-    }
+  it('constants with parameters stay with their owners', () => {
+    const r = setup(['Equal', mul('Pi', 'x'), 'a']);
+    expect(describe(r.store, r.outcome)).toMatch(/incomplete-implementation: EQUATION-PARAMETERS1/);
   });
 });
 

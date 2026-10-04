@@ -1,4 +1,4 @@
-# EQUATION-PARAMETERS1 (part A)
+# EQUATION-PARAMETERS1 (parts A and B)
 
 ## Attribution
 
@@ -56,3 +56,30 @@ See verification-summary.md.
 - `.memory/current-state.md`, `.memory/decisions.md`, `.memory/journal/2026-10/2026-10-04.md`
 - `docs/architecture/equation/equation-parameters1-spec.md` (new), the roadmap and `docs/architecture/README.md`
 - This dossier.
+
+## Part B
+
+- **Authority**: 2026-10-04, the user asked to continue with part B. Plan mode asked three scope questions, and the user chose:
+  - equations plus monotone inequalities;
+  - real-only kernels;
+  - transcendental constants at the polynomial level.
+
+  Commit and push to #18 were pre-authorized when green.
+- **Scope**:
+  - new `parameters/kernels.ts` and `parameters/constants.ts`;
+  - case simplification in `parameters/solve.ts`;
+  - root bounds on `RootValue`, with ordering and wire;
+  - parametric periodic sets, kept in their built order at the top level;
+  - `decideAt` through the generator slice;
+  - value-based set equality in the verifier;
+  - routing in `decide.ts`;
+  - three routing rows in earlier tests;
+  - spec, roadmap ledger, README and Equation memory.
+
+  No edits to the integration core, contracts, OOE or UI.
+- **Outcome**:
+  - single kernels with parameters over ℝ;
+  - transcendental constant coefficients decided exactly with certified signs;
+  - the consolidated follow-up ledger.
+
+  This completes the gate.

@@ -115,7 +115,8 @@ group('routing to the gates that own a problem', () => {
     [eq(['Multiply', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
     [eq(['Add', sin('x'), sin(['Multiply', ['Sqrt', 2], 'x'])]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: incommensurable trig frequencies'],
     [eq(['Add', sin('x'), ['Exp', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(sin(['Multiply', 'a', 'x']), half), 'incomplete-implementation: EQUATION-PARAMETERS1: parameters a'],
+    // sin(a·x) = 1/2 is decided by the parameters gate; sin/cos inequalities with parameters stay refused.
+    [['Greater', sin('x'), 'a'], 'incomplete-implementation: EQUATION-PARAMETERS1: sin/cos inequalities with parameters (follow-up ledger)'],
   ])('%j', (json, expected) => {
     expect(run(json).text).toBe(expected);
   });

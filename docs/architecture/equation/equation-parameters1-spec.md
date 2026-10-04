@@ -3,7 +3,7 @@
 Date: 2026-10-04
 Status:
 - **Part A (polynomial and rational relations)**: implemented and backend-verified on 2026-10-04; private, no production caller.
-- **Part B (parametric kernels, transcendental constant coefficients, follow-up ledger)**: next, in the same PR.
+- **Part B (parametric kernels, transcendental constant coefficients, follow-up ledger)**: implemented and backend-verified on 2026-10-04, in the same PR. This completes the gate.
 
 Gate: backend only. Stage 10 of the [roadmap](equation-reconstruction-roadmap.md).
 
@@ -126,12 +126,120 @@ Tampering is rejected by the independent evidence alone, before re-derivation:
 
 Decimals in tests are checked against mpmath.
 
+## Part B
+
+User decisions (2026-10-04, part B):
+- **Kernel relations:**
+  - = and ≠ for exp, ln, sin, cos, |·| and q-th roots;
+  - <, ≤, >, ≥ for the monotone kernels (exp, ln, roots) and |·|;
+  - sin/cos inequalities with parameters go to the ledger.
+- **ℂ kernels with parameters**: real only; complex goes to the ledger.
+- **Transcendental constants**: polynomial level only. Kernel levels of degree ≥ 3 stay refused, because a root cannot yet sit inside an expression (ledger).
+
+### Single kernels with parameters (`parameters/kernels.ts`)
+
+**Shape** (anything else is refused with a ledger reason):
+- one relation c₁·f(L) + c₀ op 0 over ℝ;
+- f ∈ {exp, log, sin, cos, |·|, u^{1/q}}, with f(L) the only occurrence of the target;
+- the level linear in f(L);
+- L = (α·x + β)/δ affine in x;
+- every coefficient a polynomial or quotient in the parameters.
+
+**The tree** splits, in order:
+1. **The denominators** (≠ 0).
+2. **α**: α = 0 makes the relation free of x, and its truth (possibly transcendental, such as e^b = 2) becomes the condition.
+3. **The level coefficient a₁**:
+   - a₁ = 0 gives the domain of f(L) or ∅;
+   - for an order, its sign orients f(L) against τ = −a₀/a₁.
+4. **The range of f at τ**, as polynomial conditions on a₀, a₁:
+   - τ > 0 ⇔ −a₀·a₁ > 0;
+   - |τ| < 1 ⇔ a₀² < a₁²;
+   - τ = ±1 ⇔ a₀ ± a₁ = 0.
+5. **sign(α·δ)**: it orients intervals and makes the trig period 2π·δ/α positive.
+
+**Simplification:** sibling cases that differ only in the sign of one expression merge (a = 0 and a > 0 become a ≥ 0). Conditions on one expression intersect (a ≠ 0 with a ≤ 0 becomes a < 0).
+
+| Problem | Cases |
+| --- | --- |
+| e^{ax} = b | b ≤ 0, a ≠ 0: ∅; a = 0, b = 1: ℝ; a = 0, b ≠ 1: ∅; a ≠ 0, b > 0: ln b / a |
+| ln x = a | e^a (no case) |
+| sin x = a | \|a\| < 1: {asin a, π − asin a} + 2πℤ; a = ±1: ±π/2 + 2πℤ; \|a\| > 1: ∅ |
+| sin(a·x) = 1/2 | a = 0: ∅; a > 0 and a < 0: families with period ±2π/a |
+| √x = a | a ≥ 0: {a²}; a < 0: ∅ |
+| \|x\| = a | a > 0: {±a}; a = 0: {0}; a < 0: ∅ |
+| e^{ax} > b, ln x < a, \|x − a\| ≤ b, cos x ≠ a | intervals and periodic arcs with parametric ends |
+
+**Specialization.** The kernel answers specialize to the closed-form slices (`decideAt` uses the generator slice when the target is inside a kernel).
+
+**Verifier changes:**
+- Sets are compared by value, so ln 4 / 2 equals ln 2 through the exact log-zero test.
+- Transcendental conditions are decided by certified signs.
+- One-parameter samples add grid rationals when a condition is not polynomial.
+
+### Transcendental constant coefficients (`parameters/constants.ts`)
+
+**Routing.** A problem with no parameters and no kernel of the target, but with a transcendental number among its coefficients (π, e, ln 2, sin 1, …), is decided as follows:
+
+1. **Indeterminates.** Every maximal number-only subexpression that is not a rational combination becomes an indeterminate cₖ. Coefficients are then polynomials in the cₖ, with exact cancellation.
+2. **Signs.** A coefficient's sign comes from `realSign` of its value. An algebraic relation among the constants that no test recognizes ends in a typed work stop, never a wrong answer.
+3. **Basis.** Euclid with these zero tests computes gcds at the actual values, which gives a square-free coprime basis.
+4. **Isolation.**
+   - Sturm sequences, with −prem scaled by a positive multiplier, count real roots between rationals.
+   - Bisection from a Cauchy bound (certified enclosures) isolates them; exact rational roots stay rationals.
+   - Roots of different basis polynomials are refined apart.
+5. **Assembly.** The cells between the roots are assembled as in slice 1.
+6. **Answers:**
+   - roots of degree ≤ 2 get radical closed forms;
+   - higher degrees are `root` values with rational isolating bounds `lo < root < hi`, which `compareValues` uses for order and the wire codec carries;
+   - over ℂ, one equation gives the root set of its polynomial.
+
+**Verifier:**
+- Each root's bounds isolate exactly its index-th real root, by Sturm counts.
+- At rational samples before, between and after the claimed ends, membership equals the problem's truth (certified signs).
+- Re-derivation agrees.
+
+**Examples:**
+- π·x³ + x − e = 0 gives one real root, 0.8421191… (mpmath).
+- x⁵ − π·x + 1 = 0 gives −1.4012416, 0.3193674 and 1.2358080.
+- x³ − π·x < 0 gives (−∞, root₁) ∪ (0, root₃).
+- x² = π gives {±√π}.
+
+### Shared changes
+
+- `normalizeSet` keeps parametric interval unions and periodic sets in the order they were built, also at the top level. Before this, a single unconditional parametric interval union was sorted by digest.
+- `parametric()` covers periodic sets.
+
+### Follow-up ledger
+
+The roadmap now carries "Deferred follow-ups (all gates)". It collects every gate's known follow-ups and this gate's refusals, with their owners.
+
+### Evidence (part B)
+
+- **`parameters/kernels.test.ts`, 16 tests:**
+  - the kernel table;
+  - monotone inequalities;
+  - six ledger refusals;
+  - tampering: a widened range case and a negated period;
+  - wire replay of parametric closed forms and families;
+  - typed stops.
+- **`parameters/constants.test.ts`, 9 tests:**
+  - roots checked to 7 decimals against mpmath;
+  - closed forms and a conjunction;
+  - a root set over ℂ;
+  - refusals;
+  - tampering: shifted bounds, a wrong index and a widened interval;
+  - wire replay;
+  - typed stops.
+- **Intended routing changes in earlier tests.** a·eˣ = 1, sin(a·x) = 1/2 and √(x + a) = 1 are now decided. The routing rows are replaced by still-refused variants: eˣ + a·x = 1, sin x > a and √x + √(x + a) = 1.
+
 ## Not in this gate
 
-These items are recorded for the follow-up ledger in part B:
-- **Owned by `EQUATION-SEMIALGEBRAIC1`:**
-  - conjunctions with several parameters;
-  - real roots of degree ≥ 3 with several parameters;
-  - deciding whether a several-parameter case is empty.
-- **Over ℂ:** excluding the roots of a degree ≥ 3 parametric polynomial.
-- **Unassigned:** automatic target choice.
+Every deferred item is in the roadmap's follow-up ledger. In short:
+- several-parameter conjunctions, real degree ≥ 3 with several parameters and case emptiness (`EQUATION-SEMIALGEBRAIC1`);
+- ℂ exclusions of degree ≥ 3 parametric roots;
+- mixed kernels, nested kernels and higher kernel levels with parameters;
+- sin/cos inequalities with parameters;
+- ℂ kernels with parameters;
+- roots inside kernels (a RootOf expression node);
+- constants together with parameters;
+- automatic target choice.

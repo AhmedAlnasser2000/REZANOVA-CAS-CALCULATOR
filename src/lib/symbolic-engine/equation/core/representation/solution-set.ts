@@ -1,5 +1,5 @@
 import { demand, EquationAlgebraError, type EquationStop } from '../execution';
-import { rational, rCompare } from '../algebra/rational';
+import { rational, rCompare, type Rational } from '../algebra/rational';
 import { compareReal, type RealRootOf, type RootOf } from '../algebraic/root-of';
 import { asRoot, evaluateExact, type EvaluationDomain, type ExactValue } from './evaluate';
 import { isSymbolName, type ExprId, type ExpressionStore } from './expression';
@@ -38,7 +38,11 @@ export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly roo
  * coefficients carry parameters (parameters gate): valid inside a case whose
  * conditions fix the number of real roots.
  */
-export interface RootValue { readonly kind: 'root'; readonly poly: ExprId; readonly variable: string; readonly index: number }
+export interface RootValue {
+  readonly kind: 'root'; readonly poly: ExprId; readonly variable: string; readonly index: number;
+  /** For a polynomial with constant (possibly transcendental) coefficients: rationals lo < root < hi isolating it. */
+  readonly lo?: Rational; readonly hi?: Rational;
+}
 export type Point = readonly PointValue[];
 
 /** An interval endpoint: ±∞ or an exact real value. */
@@ -131,6 +135,10 @@ export function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
  */
 export function compareValues(store: ExpressionStore, a: PointValue, b: PointValue): number {
   const ctx = store.ctx;
+  if ((a.kind === 'root' && a.lo) || (b.kind === 'root' && b.lo)) {
+    const c = boundedCompare(store, a, b);
+    if (c !== undefined) return c;
+  }
   if (a.kind === 'expression' || b.kind === 'expression') {
     if (valueKey(store, a) === valueKey(store, b)) return 0;
     const real = (v: PointValue) => v.kind !== 'root' && (v.kind !== 'algebraic' || v.root.kind === 'real') && (v.kind !== 'expression' || store.freeSymbols(v.id).length === 0);
@@ -152,6 +160,35 @@ export function compareValues(store: ExpressionStore, a: PointValue, b: PointVal
   }
   const ka = valueKey(store, a), kb = valueKey(store, b);
   return ka < kb ? -1 : ka > kb ? 1 : 0;
+}
+
+/**
+ * Order against a root carrying isolating bounds: a value at or beyond one of
+ * its bounds is on that side (the root lies strictly inside). Undefined when
+ * the bounds do not separate the two values.
+ */
+function boundedCompare(store: ExpressionStore, a: PointValue, b: PointValue): number | undefined {
+  if (valueKey(store, a) === valueKey(store, b)) return 0;
+  const below = (v: PointValue, q: Rational): boolean | undefined => {
+    // v ≤ q, exactly.
+    if (v.kind === 'root') return v.hi ? rCompare(store.ctx, v.hi, q) <= 0 : undefined;
+    if (v.kind === 'expression' && store.freeSymbols(v.id).length) return undefined;
+    return realCompare(store, valueExpression(store, v), store.number(q)) <= 0;
+  };
+  const above = (v: PointValue, q: Rational): boolean | undefined => {
+    if (v.kind === 'root') return v.lo ? rCompare(store.ctx, v.lo, q) >= 0 : undefined;
+    if (v.kind === 'expression' && store.freeSymbols(v.id).length) return undefined;
+    return realCompare(store, valueExpression(store, v), store.number(q)) >= 0;
+  };
+  if (a.kind === 'root' && a.lo && a.hi) {
+    if (below(b, a.lo)) return 1;
+    if (above(b, a.hi)) return -1;
+  }
+  if (b.kind === 'root' && b.lo && b.hi) {
+    if (below(a, b.lo)) return -1;
+    if (above(a, b.hi)) return 1;
+  }
+  return undefined;
 }
 
 /** Exact numbers in canonical form; expressions that evaluate exactly become numbers. */
@@ -198,6 +235,7 @@ export function parametric(store: ExpressionStore, set: SolutionSet): boolean {
     case 'intervals': return set.intervals.some(i => value(i.lo) || value(i.hi));
     case 'union': return set.sets.some(x => parametric(store, x));
     case 'root-set': return true;
+    case 'periodic-set': return value(set.period) || set.components.some(i => value(i.lo) || value(i.hi));
     default: return false;
   }
 }
@@ -233,6 +271,8 @@ export function setVariables(set: SolutionSet): readonly string[] {
 export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: EvaluationDomain): SolutionSet {
   const ctx = store.ctx;
   ctx.tick();
+  // Interval ends and family members in the parameters have no numeric order: kept as the parameters engine built them.
+  if ((set.kind === 'intervals' || set.kind === 'periodic-set') && parametric(store, set)) return Object.freeze({ ...set, variables: checkVariables(set.variables) });
   switch (set.kind) {
     case 'finite': {
       ctx.allocate(set.points.length);
