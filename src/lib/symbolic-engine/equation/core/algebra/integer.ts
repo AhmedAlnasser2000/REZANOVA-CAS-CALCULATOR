@@ -9,27 +9,26 @@ export function bitLength(v: bigint): number {
   return (hex.length - 1) * 4 + (32 - Math.clz32(parseInt(hex[0], 16)));
 }
 
-/** LADDER[j] = 2^(64·2^j), built on demand. */
-const LADDER: bigint[] = [];
+/** LADDER[j] = 2^(64·2^j) and NEGATIVE[j] = −LADDER[j]: the first rungs up front, larger ones on demand. */
+const LADDER: bigint[] = [], NEGATIVE: bigint[] = [];
 const TWO_64 = 1n << 64n;
+function rung(j: number): void {
+  for (let i = LADDER.length; i <= j; i++) { LADDER[i] = 1n << BigInt(64 * 2 ** i); NEGATIVE[i] = -LADDER[i]; }
+}
+rung(5);
 
 /**
  * 64-bit limb count used for cost accounting (at least one): the smallest power
  * of two 2^j with |v| < 2^(64·2^j), so within a factor 2 of the exact count and
  * monotone in |v|. Comparing bigints of different lengths is constant time, so
  * this costs O(log limbs) comparisons instead of a radix conversion per operation.
+ * The caller charges the operation itself; this lookup charges nothing.
  */
-const NEGATIVE: bigint[] = [];
-export function limbs(ctx: ExecutionContext, v: bigint): number {
+export function limbs(_ctx: ExecutionContext, v: bigint): number {
   // Compare without negating (negation would copy the number).
   if (v < TWO_64 && v > -TWO_64) return 1;
   let j = 1;
-  for (;; j++) {
-    LADDER[j] ??= 1n << BigInt(64 * 2 ** j);
-    NEGATIVE[j] ??= -LADDER[j];
-    if (v < LADDER[j] && v > NEGATIVE[j]) break;
-  }
-  ctx.tick(j);
+  while (!(v < LADDER[j] && v > NEGATIVE[j])) if (++j >= LADDER.length) rung(j);
   return 2 ** j;
 }
 

@@ -1,11 +1,16 @@
 import { describe as group, expect, it } from 'vitest';
-import { context } from '../test-support';
+import { context, seeded } from '../test-support';
+import { ZZ, QQ } from '../algebra/domain';
+import { PolynomialRing } from '../algebra/polynomial';
+import { factorQ } from '../algebra/factor';
 import { bitLength, limbs } from '../algebra/integer';
 import { rational, rDyadic, type Rational } from '../algebra/rational';
 import { enclose, sinCosBounds } from './enclosure';
 import { ExpressionStore } from './expression';
 import { readExpression } from './mathjson';
 import { realSign } from './real-order';
+import { evaluateExact, type ExactValue } from './evaluate';
+import { signAt, vanishesAt } from '../decision/algebraic-coefficients';
 
 /** Gate-12 substrate: cheap cost accounting, dyadic rationals, fixed-point trig series, per-store caches. */
 const ctx = context();
@@ -84,5 +89,56 @@ group('per-store caches', () => {
     };
     const first = usage();
     expect(usage()).toEqual(first);
+  });
+});
+
+group('fixed-point disk evaluation', () => {
+  it('decides zeros and signs of polynomials with algebraic coefficients at algebraic points', () => {
+    const store = new ExpressionStore(context()), c = store.ctx;
+    const value = (json: unknown): ExactValue => {
+      const r = readExpression(store, json);
+      if (r.kind !== 'ok') throw new Error('parse');
+      const v = evaluateExact(store, r.value, 'real');
+      if (v.kind !== 'exact') throw new Error(v.kind);
+      return v.value;
+    };
+    const q = (n: bigint, d = 1n): ExactValue => ({ kind: 'rational', value: rational(c, n, d) });
+    const s2 = value(['Sqrt', 2]), s3 = value(['Sqrt', 3]), m = value(['Negate', ['Sqrt', 2]]);
+    expect(vanishesAt(c, [q(-2n), q(0n), q(1n)], s2)).toBe(true);
+    expect(vanishesAt(c, [m, q(1n)], s2)).toBe(true);
+    expect(signAt(c, [value(['Negate', ['Sqrt', 3]]), q(1n)], s2)).toBe(-1);
+    // x² − 2 + 10⁻³⁰ at √2: positive, though tiny.
+    expect(signAt(c, [q(-2n * 10n ** 30n + 1n, 10n ** 30n), q(0n), q(1n)], s2)).toBe(1);
+    // (√2 + √3)² − 5 − 2√6 = 0 written as x² + 0·x + (−5 − 2√6) at √2 + √3.
+    expect(vanishesAt(c, [value(['Add', -5, ['Multiply', -2, ['Sqrt', 6]]]), q(0n), q(1n)], value(['Add', ['Sqrt', 2], ['Sqrt', 3]]))).toBe(true);
+    expect(signAt(c, [m, q(1n)], s3)).toBe(1);
+  });
+});
+
+group('integer polynomial products and factorization reuse', () => {
+  it('Kronecker products equal the schoolbook product on random signed inputs', () => {
+    const rand = seeded(12), z = new PolynomialRing(ZZ, 'x');
+    for (const [n, m, bits] of [[4, 4, 3], [5, 30, 64], [40, 41, 300], [100, 7, 1000], [60, 60, 1]] as const) {
+      const a = Array.from({ length: n }, () => rand.big(bits)), b = Array.from({ length: m }, () => rand.big(bits));
+      const naive = Array.from({ length: n + m - 1 }, () => 0n);
+      a.forEach((x, i) => b.forEach((y, j) => { naive[i + j] += x * y; }));
+      while (naive.length && naive[naive.length - 1] === 0n) naive.pop();
+      expect(z.multiply(ctx, z.make(ctx, a), z.make(ctx, b)).coefficients).toEqual(naive);
+      // Over ℚ, with denominators: the same product, divided by the two scales.
+      const q = new PolynomialRing(QQ, 'x'), da = BigInt(n + 1), db = BigInt(m + 2);
+      const qa = q.make(ctx, a.map(v => rational(ctx, v, da))), qb = q.make(ctx, b.map(v => rational(ctx, v, db)));
+      expect(q.multiply(ctx, qa, qb).coefficients.map(r => `${r.numerator}/${r.denominator}`)).toEqual(naive.map(v => { const r = rational(ctx, v, da * db); return `${r.numerator}/${r.denominator}`; }));
+    }
+  });
+
+  it('a reused factorization is rebuilt in the caller’s ring and equals a fresh one', () => {
+    const c = context(), q = new PolynomialRing(QQ, 'x');
+    const f = q.make(c, [-6n, 11n, -6n, 1n, 0n, 1n].map(v => rational(c, v, 3n)));
+    const z1 = new PolynomialRing(ZZ, 'x'), z2 = new PolynomialRing(ZZ, 'x');
+    const first = factorQ(c, q, f, z1), again = factorQ(c, q, f, z2), fresh = factorQ(context(), q, f, z1);
+    expect(again.factors.every(g => g.factor.ring === z2)).toBe(true);
+    const show = (r: typeof first) => [`${r.unit.numerator}/${r.unit.denominator}`, ...r.factors.map(g => `${g.factor.coefficients.join(',')}^${g.multiplicity}`)];
+    expect(show(again)).toEqual(show(first));
+    expect(show(fresh)).toEqual(show(first));
   });
 });

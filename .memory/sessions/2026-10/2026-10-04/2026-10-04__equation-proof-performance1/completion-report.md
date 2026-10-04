@@ -48,3 +48,16 @@ See verification-summary.md.
 - `.memory/current-state.md`, `.memory/decisions.md`, `.memory/journal/2026-10/2026-10-04.md`
 - `docs/architecture/equation/equation-proof-performance1-spec.md` (new), the roadmap (stage 12, ledger) and `docs/architecture/README.md`
 - This dossier.
+
+## Part B
+
+- **Authority**: the same approved plan; the user asked to continue to part B without stopping. Commit and push to #20 were pre-authorized.
+- **Scope**:
+  - `decision/algebraic-coefficients.ts` (fixed-point disks), `decision/univariate.ts` (integer signs);
+  - `parameters/verify.ts` (grid), `systems/verify.ts` (certificates first);
+  - `algebra/polynomial.ts` (class brand, Kronecker), `algebra/modular.ts` (prime table), `algebra/factor.ts` (factorization cache), `algebra/integer.ts` (`limbs`);
+  - tests, spec, roadmap, README and Equation memory.
+
+  No edits to the integration core, contracts, OOE or UI.
+- **Outcome**: every target met (see verification-summary.md and the spec). This completes the gate.
+- **Deviation from the plan**: re-derivation is kept for one-parameter answers and transcendental constants, because their sampling does not prove completeness. The plan table had listed them as droppable; the user's rule ("only where independent evidence proves completeness") decides.

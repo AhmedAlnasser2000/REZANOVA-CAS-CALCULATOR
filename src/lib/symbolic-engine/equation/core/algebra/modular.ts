@@ -1,4 +1,4 @@
-import { demand, type ExecutionContext } from '../execution';
+import { demand, ExecutionContext } from '../execution';
 import { iabs, iadd, iextgcd, imul, iquot, irem, isqrt, isub } from './integer';
 import { rational, type Rational } from './rational';
 
@@ -18,10 +18,26 @@ export function isWordPrime(ctx: ExecutionContext, n: number): boolean {
   return true;
 }
 
+/**
+ * The descending word primes found so far (a pure table, shared by every context). Each prime is charged
+ * one fixed work unit when yielded, whether or not it was already in the table, so work stays deterministic.
+ */
+const PRIMES: number[] = [];
+let nextCandidate = WORD_PRIME_EXCLUSIVE_BOUND - 1;
+const UNCHARGED = new ExecutionContext({ work: Number.MAX_SAFE_INTEGER, allocation: Number.MAX_SAFE_INTEGER });
+
 /** Deterministic descending sequence of word primes; exhaustion is reported as `null`. */
 export function* wordPrimes(ctx: ExecutionContext): Generator<number, null> {
-  for (let n = WORD_PRIME_EXCLUSIVE_BOUND - 1; n >= 3; n -= 2) if (isWordPrime(ctx, n)) yield n;
-  return null;
+  for (let i = 0; ; i++) {
+    while (i >= PRIMES.length && nextCandidate >= 3) {
+      const n = nextCandidate;
+      nextCandidate -= 2;
+      if (isWordPrime(UNCHARGED, n)) PRIMES.push(n);
+    }
+    if (i >= PRIMES.length) return null;
+    ctx.tick();
+    yield PRIMES[i];
+  }
 }
 
 export function mulMod(a: number, b: number, p: number): number { return (a * b) % p; }

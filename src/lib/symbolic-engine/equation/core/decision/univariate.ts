@@ -1,4 +1,5 @@
-import { demand } from '../execution';
+import { demand, type ExecutionContext } from '../execution';
+import { iexact, igcd, imul } from '../algebra/integer';
 import { factorQ } from '../algebra/factor';
 import type { Polynomial } from '../algebra/polynomial';
 import { divides, rationalToPrimitive } from '../algebra/polynomial-division';
@@ -84,12 +85,29 @@ export function zerosOf(store: ExpressionStore, p: LeafPoly, domain: EvaluationD
 
 function rationalSign(n: bigint): -1 | 0 | 1 { return n === 0n ? 0 : n < 0n ? -1 : 1; }
 
+/**
+ * Sign of P(p/q), q > 0, for P over ℚ, without rational normalization: with L > 0 the lcm of the
+ * coefficient denominators, sign P(p/q) = sign Σ (L·cᵢ)·pⁱ·q^(n−i) (homogeneous integer Horner).
+ */
+function signAtRational(ctx: ExecutionContext, poly: Polynomial<Rational>, x: Rational): -1 | 0 | 1 {
+  const c = poly.coefficients;
+  let L = 1n;
+  for (const k of c) if (k.denominator !== 1n) L = imul(ctx, iexact(ctx, L, igcd(ctx, L, k.denominator)), k.denominator);
+  const at = (i: number) => (c[i].denominator === 1n ? imul(ctx, c[i].numerator, L) : imul(ctx, c[i].numerator, iexact(ctx, L, c[i].denominator)));
+  let acc = at(c.length - 1), qPower = 1n;
+  for (let i = c.length - 2; i >= 0; i--) {
+    qPower = imul(ctx, qPower, x.denominator);
+    acc = imul(ctx, acc, x.numerator) + imul(ctx, at(i), qPower);
+  }
+  return rationalSign(acc);
+}
+
 /** Sign of P at a real value (exact). */
 export function signOf(store: ExpressionStore, p: LeafPoly, v: ExactValue): -1 | 0 | 1 {
   const ctx = store.ctx;
   if (isZeroPoly(p)) return 0;
   if (p.kind === 'algebraic') return signAt(ctx, p.coefficients, v);
-  if (v.kind === 'rational') return rationalSign(QX.evaluate(ctx, p.poly, v.value).numerator);
+  if (v.kind === 'rational') return signAtRational(ctx, p.poly as Polynomial<Rational>, v.value);
   demand(v.root.kind === 'real', 'invalid-input', 'sign at a non-real value');
   return signAtReal(ctx, p.poly, v.root);
 }
@@ -99,7 +117,7 @@ export function vanishes(store: ExpressionStore, p: LeafPoly, v: ExactValue): bo
   const ctx = store.ctx;
   if (isZeroPoly(p)) return true;
   if (p.kind === 'algebraic') return vanishesAt(ctx, p.coefficients, v);
-  if (v.kind === 'rational') return QX.evaluate(ctx, p.poly, v.value).numerator === 0n;
+  if (v.kind === 'rational') return signAtRational(ctx, p.poly as Polynomial<Rational>, v.value) === 0;
   return divides(ctx, ALGEBRAIC_RING, v.root.poly, rationalToPrimitive(ctx, ALGEBRAIC_RING, p.poly as Polynomial<Rational>).primitive);
 }
 

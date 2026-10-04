@@ -1,5 +1,7 @@
 import { demand, type ExecutionContext } from '../execution';
-import type { ExactDomain } from './domain';
+import { QQ, ZZ, type ExactDomain } from './domain';
+import { bitLength, iexact, igcd, imul } from './integer';
+import { rational, rFromInteger, type Rational } from './rational';
 
 export interface Polynomial<E> {
   readonly ring: PolynomialRing<E>;
@@ -12,13 +14,25 @@ export interface Polynomial<E> {
  * Karatsuba. An algorithm crossover measured on this core, not a limit.
  */
 const KARATSUBA_THRESHOLD = 24;
+/** Integer polynomials from this many coefficients multiply by Kronecker substitution (a crossover, not a limit). */
+const KRONECKER_THRESHOLD = 4;
+
+/** The only constructor of polynomial values (not exported): ring membership is `instanceof` plus the ring field. */
+class PolynomialValue<E> implements Polynomial<E> {
+  readonly ring: PolynomialRing<E>;
+  readonly coefficients: readonly E[];
+  constructor(ring: PolynomialRing<E>, coefficients: readonly E[]) {
+    this.ring = ring;
+    this.coefficients = coefficients;
+    Object.freeze(this);
+  }
+}
 
 /** Univariate dense polynomials over an exact domain with an explicit variable identity. */
 export class PolynomialRing<E> {
   readonly identity = Symbol('equation-polynomial-ring');
   readonly domain: ExactDomain<E>;
   readonly variable: string;
-  readonly #owned = new WeakSet<object>();
 
   constructor(domain: ExactDomain<E>, variable: string) {
     demand(typeof variable === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(variable), 'invalid-input', 'invalid variable name');
@@ -29,7 +43,7 @@ export class PolynomialRing<E> {
 
   assert(ctx: ExecutionContext, a: Polynomial<E>): void {
     ctx.tick();
-    demand(typeof a === 'object' && a !== null && this.#owned.has(a), 'domain-mismatch', 'polynomial from another ring');
+    demand(typeof a === 'object' && a !== null && a instanceof PolynomialValue && a.ring === this, 'domain-mismatch', 'polynomial from another ring');
   }
 
   make(ctx: ExecutionContext, coefficients: readonly E[]): Polynomial<E> {
@@ -38,9 +52,7 @@ export class PolynomialRing<E> {
     for (const c of coefficients) this.domain.assert(ctx, c);
     let length = coefficients.length;
     while (length > 0 && this.domain.isZero(ctx, coefficients[length - 1])) length--;
-    const value = Object.freeze({ ring: this, coefficients: Object.freeze(coefficients.slice(0, length)) });
-    this.#owned.add(value);
-    return value;
+    return new PolynomialValue(this, Object.freeze(coefficients.slice(0, length)));
   }
 
   fromIntegers(ctx: ExecutionContext, coefficients: readonly (bigint | number)[]): Polynomial<E> {
@@ -169,9 +181,51 @@ function schoolbook<E>(d: ExactDomain<E>, ctx: ExecutionContext, a: readonly E[]
   return out;
 }
 
+/**
+ * Integer polynomials by Kronecker substitution: pack each into one integer at 2^K per slot, multiply once
+ * (the runtime's large-integer multiplication is sub-quadratic), and unpack signed digits. With every product
+ * coefficient below min(len a, len b)·max|a|·max|b| < 2^(K−2) in absolute value, each slot's digit in
+ * (−2^(K−1), 2^(K−1)) is unique; the final remainder must be zero (checked).
+ */
+function kronecker(ctx: ExecutionContext, a: readonly bigint[], b: readonly bigint[]): bigint[] {
+  const n = a.length + b.length - 1, top = (v: readonly bigint[]) => v.reduce((m, c) => { const x = c < 0n ? -c : c; return x > m ? x : m; }, 0n);
+  const ma = top(a), mb = top(b);
+  if (ma === 0n || mb === 0n) return Array<bigint>(n).fill(0n);
+  const K = BigInt(bitLength(imul(ctx, imul(ctx, ma, mb), BigInt(Math.min(a.length, b.length)))) + 2);
+  const pack = (v: readonly bigint[]) => { let acc = 0n; for (let i = v.length - 1; i >= 0; i--) { ctx.tick(); acc = (acc << K) + v[i]; } return acc; };
+  let P = imul(ctx, pack(a), pack(b));
+  ctx.allocate(n);
+  const mask = (1n << K) - 1n, half = 1n << (K - 1n), full = 1n << K;
+  const out: bigint[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    ctx.tick();
+    let r = P & mask;
+    if (r >= half) r -= full;
+    out[i] = r;
+    P = (P - r) >> K;
+  }
+  demand(P === 0n, 'verification-failed', 'Kronecker unpacking');
+  return out;
+}
+
+/** ℚ[x] products: a = A/la and b = B/lb with integer A, B (la, lb the lcms of the denominators), so a·b = (A·B)/(la·lb). */
+function rationalKronecker(ctx: ExecutionContext, a: readonly Rational[], b: readonly Rational[]): Rational[] {
+  const scale = (v: readonly Rational[]) => {
+    let l = 1n;
+    for (const c of v) if (c.denominator !== 1n) l = imul(ctx, iexact(ctx, l, igcd(ctx, l, c.denominator)), c.denominator);
+    return { l, ints: v.map(c => (c.denominator === l ? c.numerator : imul(ctx, c.numerator, iexact(ctx, l, c.denominator)))) };
+  };
+  const A = scale(a), B = scale(b), den = imul(ctx, A.l, B.l);
+  return kronecker(ctx, A.ints, B.ints).map(c => (den === 1n ? rFromInteger(ctx, c) : rational(ctx, c, den)));
+}
+
 /** Karatsuba multiplication on raw coefficient arrays; results may carry trailing zeros. */
 export function multiplyArrays<E>(d: ExactDomain<E>, ctx: ExecutionContext, a: readonly E[], b: readonly E[]): E[] {
   if (a.length === 0 || b.length === 0) return [];
+  if (Math.min(a.length, b.length) >= KRONECKER_THRESHOLD) {
+    if ((d as ExactDomain<unknown>) === ZZ) return kronecker(ctx, a as readonly bigint[], b as readonly bigint[]) as E[];
+    if ((d as ExactDomain<unknown>) === QQ) return rationalKronecker(ctx, a as readonly Rational[], b as readonly Rational[]) as E[];
+  }
   if (Math.min(a.length, b.length) < KARATSUBA_THRESHOLD) return schoolbook(d, ctx, a, b);
   const m = Math.floor(Math.max(a.length, b.length) / 2);
   const a0 = a.slice(0, m), a1 = a.slice(m), b0 = b.slice(0, m), b1 = b.slice(m);
