@@ -28,6 +28,18 @@
 ## Outcome
 
 - Part A: proven rewrites, certified decimals and numeric order are available to the read model.
+- Part B: the printer and the presentation read model present every corpus outcome. No production caller. This completes the gate.
+
+## Part B
+
+- **Authority**: the same approved plan, continuing without stopping; commit and push to #22 were pre-authorized.
+- **Scope**:
+  - `src/lib/display/printer/equation-v6.ts` and its test;
+  - `src/lib/symbolic-engine/equation/presentation/layout.ts` and its test;
+  - `readRootBinders` in `equation/result-read.ts`;
+  - spec, roadmap (13b verified, three ledger rows closed, two added), README and memory.
+
+  No edits to the result contract, New Integration, OOE or UI.
 
 ## Evidence
 

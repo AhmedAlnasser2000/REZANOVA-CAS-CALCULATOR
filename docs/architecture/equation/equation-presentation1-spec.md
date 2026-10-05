@@ -3,7 +3,7 @@
 Date: 2026-10-05
 Status:
 - **Part A (proven display rewrites, certified decimals, numeric order)**: implemented and verified on 2026-10-05.
-- **Part B (printer, presentation read model, settings, corpus goldens)**: in progress, in the same PR.
+- **Part B (printer, presentation read model, settings, corpus goldens)**: implemented and verified on 2026-10-05, in the same PR. This completes the gate.
 
 Gate: presentation read model plus tests. There are no screens before `EQUATION-ADOPTION1`. Stage 13b of the [roadmap](equation-reconstruction-roadmap.md).
 
@@ -76,6 +76,74 @@ This file is registered in the core isolation test as an adapter. It works in a 
   - x³ = 1 over ℂ: 1, then −½ + (√3/2)i, then −½ − (√3/2)i;
   - x⁴ = 4 over ℂ: −√2, √2, √2·i, −√2·i;
   - a real quintic in ascending order.
+
+## Part B: printer and read model
+
+### The printer (`src/lib/display/printer/equation-v6.ts`)
+
+The printer is a canonical printer adapter (`equationV6Printer`), plus `printEquationMath` and `printRelation`. It turns V6 math into visible LaTeX and plain text, deterministically, and needs no core. Everything it does is a ring identity; it changes no value:
+- **Sums**: a −1 is distributed over an inner sum (−(1 − e) reads e − 1), and a positive term comes first. Polynomial definitions are ordered by descending degree.
+- **Products**:
+  - constants come first (π, e), then symbols alphabetically (4ac, ax, πx³), then the rest, with i last;
+  - rational coefficients and factors with negative integer exponents go under a fraction bar;
+  - a common integer factor of a lone sum and the denominator cancels: (6 − 2√2)/14 reads (3 − √2)/7;
+  - `\cdot` goes between digits, and a space after a control word (`\pi k`).
+- **Powers and functions**: q^(1/n) is shown as √ or ⁿ√; e^u; ln, trig and inverse trig, |u|, log_b, W₀ and W₋₁.
+- **Relations**:
+  - 0 moves to the right;
+  - a lone negative term flips the relation (−b ≥ 0 reads b ≤ 0);
+  - a variable term and a constant term separate (1 − a ≥ 0 reads a ≤ 1; k − 1 ≥ 0 reads k ≥ 1);
+  - paired bounds chain (−1 ≤ y ≤ 1).
+- **Failure**: an unknown head is refused, and the caller falls back to the canonical LaTeX of the leaf.
+
+### The read model (`presentation/layout.ts`)
+
+`presentEquationV6(document, { outputStyle, approxDigits }, ctx)` returns:
+- the rows, each with a role (solution, case, definition, message), a depth, LaTeX and text;
+- `copyLatex`, always exact;
+- `plainText`;
+- the owner, for an `incomplete` outcome;
+- a `fallback` flag.
+
+**Rows by set kind:**
+- **finite sets**: rows in numeric order, as `x = …` or `(x, y) = (…)`, or "No solution";
+- **cofinite sets**: "All real/complex numbers except …";
+- **intervals**: x ∈ (a, b] ∪ …, or "All real numbers";
+- **unions**: their parts in turn;
+- **case trees**: "If … and …:" with conditions in reading order, then nested rows;
+- **periodic sets**: x = a + Pk, k ∈ ℤ, with a range when restricted;
+- **periodic families**: x = value, k ∈ ℤ, constraints;
+- **interval families**: x ∈ [lo, hi), k = 0, 1, 2, …;
+- **root sets**: "x is any root of p = 0";
+- **parametric sets**: x = …, y ∈ ℝ, constraints;
+- **reduced forms**: "Equivalent to: …";
+- **unconfirmed sets**: "(candidate, not confirmed)";
+- **non-answers**: a message with the owner code.
+
+**Values:**
+- **Exact form**: proven rewrites first. A binder's closed `form` is used only when the core proves it equal to the root.
+- **Output style**: Exact gives `= exact`; Decimal gives `≈ decimal`; Both gives `= exact ≈ decimal`. Integers never repeat as decimals. Values with free symbols always show exact.
+- **A root with no closed form**: shows its certified decimal, with the definition on the next line: "the real root of …" when it is the only real root, otherwise "the smallest / 2nd smallest / largest real root of …" (ranked exactly). A complex root shows "a root of …".
+- **Roots inside larger expressions**: they keep their name r₁, defined at the end with its decimal ("r₁ ≈ −1.649385: the real root of 256r₁⁵ + 3125 = 0").
+- **Copy**: always exact. Every root is defined by its polynomial and its exact isolating interval or disk, so copied text never depends on a decimal.
+
+**Fallback**: a typed stop anywhere in the core work gives the printer-only presentation (canonical values, canonical order, no decimals). The V6 document is never modified.
+
+## Evidence (part B)
+
+- **`display/printer/equation-v6.test.ts`** (20 tests): signs and distribution; roots and fractions; content cancellation; functions; binder names; the `\cdot` and control-word spacing; huge integers; polynomial order; refusal of unknown heads; the adapter contract.
+- **`presentation/layout.test.ts`** (76 tests):
+  - **goldens**:
+    - P4 and P9 (decimal plus ranked definitions);
+    - R2 in Exact, Decimal and Both;
+    - T1 and T2 families;
+    - Q1 and a·x² + 2x + 1 conditions;
+    - Katsura-3, intervals, a cofinite set, the circle;
+    - x³ = 1 over ℂ in a + bi;
+    - cos x = x as incomplete with its owner;
+  - **all 67 corpus cases**: each presents, the document is byte-identical afterwards, copy contains no `≈`, and every root in copy is defined;
+  - **fallback** under a 1-unit budget;
+  - **rejection** of an invalid document.
 
 ## Not in this gate
 

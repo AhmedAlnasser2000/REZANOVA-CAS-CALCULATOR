@@ -1,22 +1,24 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1` and `EQUATION-RESULT-CONTRACT1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1`, `EQUATION-RESULT-CONTRACT1` and `EQUATION-PRESENTATION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-PRESENTATION1` (stage 13b) is in progress in one PR with two commits (see its [specification](equation-presentation1-spec.md)).
+`EQUATION-PRESENTATION1` (stage 13b) is verified in one PR with two commits (see its [specification](equation-presentation1-spec.md)).
 
-Part A (verified):
-- proven display rewrites (k-th root extraction, odd functions);
+Part A:
+- proven display rewrites;
 - certified decimals;
 - numeric order of points.
 
-Part B: the printer, the presentation read model with Exact/Decimal/Both, and corpus goldens.
+Part B:
+- the V6 printer (ring-identity layout, relations, chains);
+- the presentation read model, with Exact/Decimal/Both, roots shown as decimal plus definition, family rows and an exact copy.
 
-`EQUATION-RESULT-CONTRACT1` (stage 13) is complete. After 13b comes `EQUATION-ADOPTION1`. It needs its own approval.
+This completes stage 13b. The next gate is `EQUATION-ADOPTION1`. It needs its own approval.
 
 ## Implementation sequence
 
@@ -35,7 +37,7 @@ Part B: the printer, the presentation read model with Exact/Decimal/Both, and co
 | 11 (backend verified) | `EQUATION-SYSTEMS1` (slice 6) | Multivariate polynomials, resultants, Gröbner bases, FGLM, RUR, triangular decomposition | Zero- and positive-dimensional systems with exact output |
 | 12 (backend verified) | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
-| 13b (in progress) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
+| 13b (verified) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
 | 16 | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs | N cases certified; numerical results typed as numerical |
@@ -66,14 +68,14 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 
 | Item | From | Owner |
 | --- | --- | --- |
-| Non-real points ordered by canonical identity, not numerically (display order) | `EQUATION-POLYNOMIAL-DECISION1` | `EQUATION-PRESENTATION1` |
-| Radical presentation: √D unsimplified (½·√8), √12 rather than 2√3, −(1 − e) not distributed, asin/atan residues not normalized | slices 1, 2 and 4 | `EQUATION-PRESENTATION1` |
+| ~~Non-real points ordered by canonical identity, not numerically (display order)~~ (closed by `EQUATION-PRESENTATION1`) | `EQUATION-POLYNOMIAL-DECISION1` | `EQUATION-PRESENTATION1` |
+| ~~Radical presentation: √D unsimplified (½·√8), √12 rather than 2√3, −(1 − e) not distributed, asin/atan residues not normalized~~ (closed by `EQUATION-PRESENTATION1`) | slices 1, 2 and 4 | `EQUATION-PRESENTATION1` |
 | Two different closed forms of one value ordered only by refinement under the budget (the gate-6 caveat) | `EQUATION-GENERATORS1`, `EQUATION-PERIODIC1` | unassigned |
 | Wider Lambert W simplification (several log bases) and algebraic bases with non-binomial minimal polynomials in the exponent lattice | `EQUATION-GENERATORS1` | unassigned |
 | Dependent radicals (norm identically zero, e.g. √(x²+2x+1)) | `EQUATION-CONSTRAINTS1` | unassigned |
 | Complex modulus and complex radicals (`unsupported` by decision) | `EQUATION-CONSTRAINTS1` | unassigned (see "Decisions remaining") |
 | Transcendental constants inside a radical tower (√x + √(x+1) = ln 2) | `EQUATION-CONSTRAINTS1` | `EQUATION-CERTIFIED-NUMERICS1` |
-| Radical forms beyond quadratic and pure binomial roots (S4 stays a RootOf) | `EQUATION-CONSTRAINTS1` | `EQUATION-PRESENTATION1` |
+| ~~Radical forms beyond quadratic and pure binomial roots (S4 stays a RootOf)~~ (closed by `EQUATION-PRESENTATION1`) | `EQUATION-CONSTRAINTS1` | `EQUATION-PRESENTATION1` |
 | Families in several integer parameters under further conditions | `EQUATION-PERIODIC1` | unassigned |
 | The complement of an infinite family over ℂ (needs a set kind; not in V6's first version, user decision 2026-10-04) | `EQUATION-PERIODIC1` (part B) | a later V6 kind, with the slice that produces it |
 | Complex intersections and exclusions with non-affine families; nested families whose level is quadratic in its parameter | `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1` | unassigned |
@@ -96,6 +98,8 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition) | `EQUATION-SYSTEMS1` | unassigned |
 | Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` |
 | Evidence cases still over 1 s to decide and verify (atan x + atan 2x = π/4 at 1.8 s; the depth-25 ln chain at 1.1 s); the user accepted them for now (2026-10-04) | `EQUATION-PROOF-PERFORMANCE1` | a later performance gate |
+| Radical simplification inside expressions with free symbols (√(−4(y² − 1)) is not shown as 2√(1 − y²)); rewrites are proven only on constant subexpressions | `EQUATION-PRESENTATION1` | unassigned |
+| Closed forms for pure binomial roots inside larger values (e^{r₁} with r₁ = ∛4 shows r₁ and its definition) | `EQUATION-PRESENTATION1` | unassigned |
 
 ## Attribution
 
