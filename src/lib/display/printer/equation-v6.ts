@@ -21,12 +21,17 @@ export interface EquationPrintOptions {
 export interface PrintedEquationMath { readonly latex: string; readonly text: string }
 export interface PrintedRelation extends PrintedEquationMath {
   readonly left: PrintedEquationMath; readonly op: RelationOperator; readonly right: PrintedEquationMath;
+  /** The structure of the two sides, for ordering and chaining (never the printed text). */
+  readonly leftJson: SerializableMathJson; readonly rightJson: SerializableMathJson;
 }
+/** A value printed as sign and magnitude, from its structure. */
+export interface PrintedSigned { readonly negative: boolean; readonly magnitude: PrintedEquationMath }
 
 type Json = SerializableMathJson;
-interface Out { latex: string; text: string; prec: number }
+/** A printed fragment, with the structural facts its neighbours need (never read back from its text). */
+interface Out { latex: string; text: string; prec: number; starts: 'digit' | 'letter' | 'other'; endsWord: boolean }
 const SUM = 1, PRODUCT = 2, POWER = 4, ATOM = 5;
-const atom = (latex: string, text: string): Out => ({ latex, text, prec: ATOM });
+const atom = (latex: string, text: string, starts: Out['starts'] = 'other', endsWord = false): Out => ({ latex, text, prec: ATOM, starts, endsWord });
 const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
 const FUNCTIONS: Readonly<Record<string, [string, string]>> = {
   Ln: ['\\ln', 'ln'], Sin: ['\\sin', 'sin'], Cos: ['\\cos', 'cos'], Tan: ['\\tan', 'tan'],
@@ -57,12 +62,12 @@ class Printer {
   symbol(name: string): Out {
     const given = this.#options.names?.get(name);
     if (given) return atom(given.latex, given.text);
-    if (name === 'Pi') return atom('\\pi', 'π');
-    if (name === 'ExponentialE') return atom('e', 'e');
-    if (name === 'ImaginaryUnit') return atom('i', 'i');
+    if (name === 'Pi') return atom('\\pi', 'π', 'other', true);
+    if (name === 'ExponentialE') return atom('e', 'e', 'letter');
+    if (name === 'ImaginaryUnit') return atom('i', 'i', 'letter');
     const m = /^([A-Za-z]+)_([0-9]+)$/.exec(name);
-    if (m) return atom(`${m[1]}_{${m[2]}}`, m[1] + [...m[2]].map(d => SUBSCRIPT[Number(d)]).join(''));
-    return atom(name.length === 1 ? name : `\\mathrm{${name}}`, name);
+    if (m) return atom(`${m[1]}_{${m[2]}}`, m[1] + [...m[2]].map(d => SUBSCRIPT[Number(d)]).join(''), 'letter');
+    return name.length === 1 ? atom(name, name, 'letter') : atom(`\\mathrm{${name}}`, name);
   }
 
   /** Split a value into sign and magnitude, structurally. */
@@ -142,14 +147,16 @@ class Printer {
       if (i === 0) { latex = (t.negative ? '-' : '') + bl; text = (t.negative ? '-' : '') + bt; }
       else { latex += (t.negative ? ' - ' : ' + ') + bl; text += (t.negative ? ' - ' : ' + ') + bt; }
     });
-    return { latex, text, prec: ts.length > 1 ? SUM : (ts[0]?.negative ? PRODUCT : this.print(ts[0].body, depth + 1).prec) };
+    const first = ts.length ? this.print(ts[0].body, depth + 1) : undefined, last = ts.length ? this.print(ts[ts.length - 1].body, depth + 1) : undefined;
+    return { latex, text, prec: ts.length > 1 ? SUM : (ts[0]?.negative ? PRODUCT : (first as Out).prec),
+      starts: !first || ts[0].negative || first.prec <= SUM ? 'other' : first.starts, endsWord: !!last && last.prec > SUM && last.endsWord };
   }
 
   product(v: Json, depth: number): Out {
     const s = this.signed(v);
     if (s.negative) {
       const b = this.print(s.body, depth + 1), wrap = b.prec <= SUM;
-      return { latex: `-${wrap ? `\\left(${b.latex}\\right)` : b.latex}`, text: `-${wrap ? `(${b.text})` : b.text}`, prec: PRODUCT };
+      return { latex: `-${wrap ? `\\left(${b.latex}\\right)` : b.latex}`, text: `-${wrap ? `(${b.text})` : b.text}`, prec: PRODUCT, starts: 'other', endsWord: !wrap && b.endsWord };
     }
     // Numerator and denominator factors; a rational coefficient splits across the bar.
     const flat: Json[] = [];
@@ -166,18 +173,20 @@ class Printer {
     }
     const join = (factors: Json[], coefficient: bigint): Out => {
       const parts = this.ordered(factors).map(f => this.print(f, depth + 1));
-      const items: Out[] = coefficient !== 1n || parts.length === 0 ? [atom(coefficient.toString(), coefficient.toString()), ...parts] : parts;
+      const items: Out[] = coefficient !== 1n || parts.length === 0 ? [atom(coefficient.toString(), coefficient.toString(), 'digit'), ...parts] : parts;
       if (items.length === 1) return items[0];
-      let latex = '', text = '';
+      let latex = '', text = '', previousEndsWord = false;
       items.forEach((p, i) => {
         const wrap = p.prec <= SUM || (i > 0 && p.prec === PRODUCT);
         const pl = wrap ? `\\left(${p.latex}\\right)` : p.latex, pt = wrap ? `(${p.text})` : p.text;
-        const digitNext = /^[0-9]/.test(pt);
-        // A control word (such as \pi) followed by a letter needs a space: "\pi k", not "\pik".
-        latex += i === 0 ? pl : (digitNext ? `\\cdot ${pl}` : /\\[A-Za-z]+$/.test(latex) && /^[A-Za-z]/.test(pl) ? ` ${pl}` : pl);
-        text += i === 0 ? pt : (digitNext ? `·${pt}` : pt);
+        // Juxtaposed digits need a dot (2·3^x); a control word followed by a letter needs a space (\pi k).
+        const digitNext = !wrap && p.starts === 'digit', spaced = previousEndsWord && !wrap && p.starts === 'letter';
+        latex += i === 0 ? pl : digitNext ? `\\cdot ${pl}` : spaced ? ` ${pl}` : pl;
+        text += i === 0 ? pt : digitNext ? `·${pt}` : pt;
+        previousEndsWord = !wrap && p.endsWord;
       });
-      return { latex, text, prec: PRODUCT };
+      const head0 = items[0], last = items[items.length - 1];
+      return { latex, text, prec: PRODUCT, starts: head0.prec <= SUM ? 'other' : head0.starts, endsWord: last.prec > PRODUCT && last.endsWord };
     };
     // (6 − 2√2)/14 reads (3 − √2)/7: a common integer factor of a lone sum and the denominator cancels.
     if (cd > 1n && up.length === 1 && head(up[0]) === 'Add') {
@@ -206,7 +215,7 @@ class Printer {
     if (cd === 1n && down.length === 0) return num;
     const den = join(down, cd);
     const tn = num.prec <= SUM ? `(${num.text})` : num.text, td = den.prec < POWER ? `(${den.text})` : den.text;
-    return { latex: `\\frac{${num.latex}}{${den.latex}}`, text: `${tn}/${td}`, prec: PRODUCT };
+    return { latex: `\\frac{${num.latex}}{${den.latex}}`, text: `${tn}/${td}`, prec: PRODUCT, starts: 'other', endsWord: false };
   }
 
   power(base: Json, exponent: Json, depth: number): Out {
@@ -220,13 +229,14 @@ class Printer {
     }
     const e = this.print(exponent, depth + 1);
     const bl = b.prec < ATOM || this.signed(base).negative ? `\\left(${b.latex}\\right)` : b.latex;
-    return { latex: `${bl}^{${e.latex}}`, text: `${bt}^${e.prec < ATOM ? `(${e.text})` : e.text}`, prec: POWER };
+    const wrapped = b.prec < ATOM || this.signed(base).negative;
+    return { latex: `${bl}^{${e.latex}}`, text: `${bt}^${e.prec < ATOM ? `(${e.text})` : e.text}`, prec: POWER, starts: wrapped ? 'other' : b.starts, endsWord: false };
   }
 
   print(v: Json, depth = 0): Out {
     if (depth > CANONICAL_RESULT_MAX_DEPTH * 4) throw new Error('Equation math is too deep to print.');
     const n = integerOf(v);
-    if (n !== undefined) return n < 0n ? { latex: `-${-n}`, text: `-${-n}`, prec: PRODUCT } : atom(n.toString(), n.toString());
+    if (n !== undefined) return n < 0n ? { latex: `-${-n}`, text: `-${-n}`, prec: PRODUCT, starts: 'other', endsWord: false } : atom(n.toString(), n.toString(), 'digit');
     if (typeof v === 'string') return this.symbol(v);
     const h = head(v), a = args(v);
     switch (h) {
@@ -241,9 +251,9 @@ class Printer {
       case 'Sqrt': return this.power(a[0], ['Rational', 1, 2], depth);
       case 'Root': { const k = integerOf(a[1]); return k !== undefined ? this.power(a[0], ['Rational', 1, { num: k.toString() }], depth) : this.power(a[0], ['Divide', 1, a[1]], depth); }
       case 'Exp': {
-        if (integerOf(a[0]) === 1n) return atom('e', 'e');
+        if (integerOf(a[0]) === 1n) return atom('e', 'e', 'letter');
         const e = this.print(a[0], depth + 1);
-        return { latex: `e^{${e.latex}}`, text: `e^${e.prec < ATOM ? `(${e.text})` : e.text}`, prec: POWER };
+        return { latex: `e^{${e.latex}}`, text: `e^${e.prec < ATOM ? `(${e.text})` : e.text}`, prec: POWER, starts: 'letter', endsWord: false };
       }
       case 'Abs': { const u = this.print(a[0], depth + 1); return atom(`\\left|${u.latex}\\right|`, `|${u.text}|`); }
       case 'Log': { const u = this.print(a[0], depth + 1), b = this.print(a[1], depth + 1); return atom(`\\log_{${b.latex}}\\left(${u.latex}\\right)`, `log_${b.prec < ATOM ? `(${b.text})` : b.text}(${u.text})`); }
@@ -269,7 +279,7 @@ const FLIP: Readonly<Record<RelationOperator, RelationOperator>> = { eq: 'eq', n
 
 /** a ≤ V ≤ b from V ≥ a and V ≤ b (strictness kept), or undefined when they do not pair. */
 export function chainRelations(lower: PrintedRelation, upper: PrintedRelation): PrintedEquationMath | undefined {
-  if (lower.left.text !== upper.left.text || !['gt', 'ge'].includes(lower.op) || !['lt', 'le'].includes(upper.op)) return undefined;
+  if (JSON.stringify(lower.leftJson) !== JSON.stringify(upper.leftJson) || !['gt', 'ge'].includes(lower.op) || !['lt', 'le'].includes(upper.op)) return undefined;
   const lo = FLIP[lower.op], [ll, lt] = RELATION[lo], [ul, ut] = RELATION[upper.op];
   return { latex: `${lower.right.latex} ${ll} ${lower.left.latex} ${ul} ${upper.right.latex}`, text: `${lower.right.text} ${lt} ${lower.left.text} ${ut} ${upper.right.text}` };
 }
@@ -296,7 +306,19 @@ export function printRelation(expr: Json, op: RelationOperator, other: Json = 0,
     }
     const a = pr.print(lhs), b = pr.print(rhs);
     return { latex: `${a.latex} ${RELATION[o][0]} ${b.latex}`, text: `${a.text} ${RELATION[o][1]} ${b.text}`,
-      left: { latex: a.latex, text: a.text }, op: o, right: { latex: b.latex, text: b.text } };
+      left: { latex: a.latex, text: a.text }, op: o, right: { latex: b.latex, text: b.text }, leftJson: lhs, rightJson: rhs };
+  } catch {
+    return undefined;
+  }
+}
+
+/** Sign and magnitude of a value from its structure (a sum counts as positive), for "a + b" / "a − b" layout. */
+export function printSigned(value: Json, options: EquationPrintOptions = {}): PrintedSigned | undefined {
+  try {
+    const pr = new Printer(options), ts = pr.terms(value);
+    const s = ts.length === 1 ? ts[0] : { negative: false, body: value };
+    const out = pr.print(s.body);
+    return { negative: s.negative, magnitude: { latex: out.latex, text: out.text } };
   } catch {
     return undefined;
   }

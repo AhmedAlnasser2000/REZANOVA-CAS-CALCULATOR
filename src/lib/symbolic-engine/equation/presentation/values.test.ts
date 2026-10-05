@@ -78,8 +78,8 @@ group('certified decimals', () => {
     const c = finitePoints(['Equal', ['Add', ['Power', 'x', 3], 2], 0], 'complex');
     const texts = c.points.map(p => decimalOf(c.store, p[0], 10, 'complex'));
     expect(texts).toContainEqual({ re: '-1.2599210499' });
-    expect(texts).toContainEqual({ re: '0.6299605249', im: '1.0911236360' });
-    expect(texts).toContainEqual({ re: '0.6299605249', im: '-1.0911236360' });
+    expect(texts).toContainEqual({ re: '0.6299605249', im: { negative: false, magnitude: '1.0911236360' }, reZero: false });
+    expect(texts).toContainEqual({ re: '0.6299605249', im: { negative: true, magnitude: '1.0911236360' }, reZero: false });
   });
 
   it('gives no decimal when the budget stops', () => {
@@ -90,7 +90,7 @@ group('certified decimals', () => {
 
 group('numeric order', () => {
   const show = (store: ExpressionStore, points: readonly (readonly PointValue[])[]) =>
-    points.map(p => { const d = decimalOf(store, p[0], 3, 'complex'); return d ? (d.im ? `${d.re}${d.im.startsWith('-') ? '' : '+'}${d.im}i` : d.re) : '?'; });
+    points.map(p => { const d = decimalOf(store, p[0], 3, 'complex'); return d ? (d.im ? `${d.re}${d.im.negative ? '-' : '+'}${d.im.magnitude}i` : d.re) : '?'; });
   it('x³ = 1 over ℂ: 1, then −½ ± (√3/2)i with + first', () => {
     const { store, points } = finitePoints(['Equal', ['Power', 'x', 3], 1], 'complex');
     expect(show(store, orderPoints(store, points, 'complex'))).toEqual(['1.000', '-0.500+0.866i', '-0.500-0.866i']);

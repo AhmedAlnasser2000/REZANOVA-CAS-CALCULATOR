@@ -23,3 +23,4 @@
 - Commit identity: the commit containing this record (resolve with git log for this path); no self-referential hash is embedded.
 - Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.
 - Part B: pushed normally on top of part A in #22 (no history rewrite). Memory protocol, file-size and diff-hygiene checks passed immediately before the commit.
+- Follow-up (third commit, user request): no layout decision from rendered text; pushed normally to #22.

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe as group, expect, it } from 'vitest';
 import type { OutputStyle } from '../../../../types/calculator';
 import { context } from '../core/test-support';
@@ -95,5 +96,14 @@ group('copy, authority and fallback', () => {
 
   it('rejects a document that is not valid V6', () => {
     expect(() => presentEquationV6({ version: 6 }, { outputStyle: 'exact', approxDigits: 6 }, context())).toThrow(/valid V6/);
+  });
+});
+
+group('no layout decision reads rendered text', () => {
+  // Rendering is output only: decisions come from MathJSON structure or engine facts, never from printed strings.
+  const RENDERED = /\.(text|latex)\.(startsWith|endsWith|slice|includes|match|localeCompare|indexOf|charAt)\(|\.(text|latex)\s*[!=]==|\/[^/\n]*\/[a-z]*\.test\((latex|text|pl|pt|[a-z]*\.(latex|text))\)/;
+  it.each(['src/lib/symbolic-engine/equation/presentation/layout.ts', 'src/lib/display/printer/equation-v6.ts'])('%s', file => {
+    const offending = readFileSync(file, 'utf8').split('\n').filter(line => RENDERED.test(line));
+    expect(offending).toEqual([]);
   });
 });

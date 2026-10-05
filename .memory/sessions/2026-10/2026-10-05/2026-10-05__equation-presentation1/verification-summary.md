@@ -34,3 +34,8 @@
   - decimals leaking into copy LaTeX;
   - an inverted fallback flag.
 - **Other checks**: `tsc -b`, ESLint (Equation, printer), OOE, compartment, file sizes, memory protocol, codex agent-workflow, the V2 enforcement checker and the display-contract inversion test and ratchet all passed.
+
+## Follow-up commit (no decisions from rendered text): pass
+
+- **Scope**: the six text-driven layout decisions were replaced by structural facts or exact engine facts, and a source-scan guard test was added. I confirmed that the guard regex matches every replaced line.
+- **Tests**: the presentation and printer tests (111) pass with unchanged goldens. The Equation, result-contract and printer suites pass: 68 files / 985 tests (1 skipped). `tsc -b`, ESLint, OOE, compartment, file sizes, memory protocol, codex agent-workflow, display-contract inversion and V2 enforcement all passed.

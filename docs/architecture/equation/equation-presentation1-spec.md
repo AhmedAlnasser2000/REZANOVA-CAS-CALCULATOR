@@ -129,10 +129,22 @@ The printer is a canonical printer adapter (`equationV6Printer`), plus `printEqu
 
 **Fallback**: a typed stop anywhere in the core work gives the printer-only presentation (canonical values, canonical order, no decimals). The V6 document is never modified.
 
+### No decision from rendered text
+
+This follows the repository's no-reparse rule: printed LaTeX and text are output only. Every layout decision comes from MathJSON structure or engine facts:
+- **printer spacing** (`\cdot` between digits, a space after a control word): each printed fragment carries structural flags (what it starts with, whether it ends with a control word);
+- **the sign of a family's step** (π/6 + 2πk vs π/(6a) − 2πk/a): `printSigned`, from the term structure;
+- **chained bounds** (−1 ≤ y ≤ 1): the two sides are compared as MathJSON;
+- **condition order**: a structural key (left side, relation, right side);
+- **whether a root's definition goes under its row**: a flag from where the value is chosen;
+- **complex decimals**: the sign of the imaginary part and an exactly-zero real part come from the exact real and imaginary parts, not from digit strings.
+
+A source-scan test fails if `layout.ts` or the printer ever inspects `.text`/`.latex` or runs a regex over printed output.
+
 ## Evidence (part B)
 
 - **`display/printer/equation-v6.test.ts`** (20 tests): signs and distribution; roots and fractions; content cancellation; functions; binder names; the `\cdot` and control-word spacing; huge integers; polynomial order; refusal of unknown heads; the adapter contract.
-- **`presentation/layout.test.ts`** (76 tests):
+- **`presentation/layout.test.ts`** (78 tests, including the source-scan guard):
   - **goldens**:
     - P4 and P9 (decimal plus ranked definitions);
     - R2 in Exact, Decimal and Both;

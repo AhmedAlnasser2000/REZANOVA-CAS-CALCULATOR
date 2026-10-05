@@ -1,7 +1,7 @@
 import { EquationAlgebraError } from '../core/execution';
 import { iroot, ipow } from '../core/algebra/integer';
 import { rational, type Rational } from '../core/algebra/rational';
-import { complexDecimal, realDecimal, type ComplexRootOf, type RealRootOf } from '../core/algebraic/root-of';
+import { realDecimal, type RealRootOf } from '../core/algebraic/root-of';
 import { complexIsZero } from '../core/periodic/rectangular';
 import { enclose } from '../core/representation/enclosure';
 import { evaluateExact, imaginaryPart, realPart, type ExactValue } from '../core/representation/evaluate';
@@ -109,7 +109,15 @@ export function displayForm(store: ExpressionStore, id: ExprId, binders: Readonl
 
 // ---- certified decimals ----
 
-export interface Decimal { readonly re: string; readonly im?: string }
+/**
+ * A certified decimal. A non-real value carries the sign and magnitude of its imaginary part and whether its real
+ * part is exactly zero, as facts from the exact value (layout never inspects the digit strings).
+ */
+export interface Decimal {
+  readonly re: string;
+  readonly im?: { readonly negative: boolean; readonly magnitude: string };
+  readonly reZero?: boolean;
+}
 
 /** x rounded to `digits` places as text, ties away from zero (irrational values never tie). */
 function rationalDecimal(q: Rational, digits: number): string {
@@ -126,8 +134,14 @@ function exactDecimal(store: ExpressionStore, v: ExactValue, digits: number): De
   if (v.kind === 'rational') return { re: rationalDecimal(v.value, digits) };
   const root = store.roots.canonical(ctx, v.root).root;
   if (root.kind === 'real') return { re: realDecimal(ctx, root as RealRootOf, digits) };
-  const c = complexDecimal(ctx, root as ComplexRootOf, digits);
-  return { re: c.re, im: c.im };
+  // Real and imaginary parts are exact real values: their decimals, sign and zero-ness come from them.
+  const re = realPart(ctx, v), im = imaginaryPart(ctx, v), zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
+  const negative = compareValues(store, im, zero) < 0;
+  return {
+    re: exactDecimal(store, re, digits).re,
+    im: { negative, magnitude: exactDecimal(store, negative ? negated(store, im) : im, digits).re },
+    reZero: compareValues(store, re, zero) === 0,
+  };
 }
 
 /** The certified decimal of a value, or undefined (not a number, not real-enclosable, or stopped). */

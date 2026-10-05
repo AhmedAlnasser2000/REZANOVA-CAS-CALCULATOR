@@ -2,7 +2,7 @@ import type {
   CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationIntervalV6, CanonicalEquationOutcomeV6,
   CanonicalEquationRootBinderV6, CanonicalEquationSetV6, CanonicalMathValueV2, CanonicalResultDocumentV6, OutputStyle, SerializableMathJson,
 } from '../../../../types/calculator';
-import { chainRelations, printEquationMath, printRelation, type PrintedRelation, type RelationOperator } from '../../../display/printer/equation-v6';
+import { chainRelations, printEquationMath, printRelation, printSigned, type PrintedRelation, type RelationOperator } from '../../../display/printer/equation-v6';
 import { validateCanonicalResultDocumentV6 } from '../../../result-contract/validation-v6';
 import { EquationAlgebraError, type ExecutionContext } from '../core/execution';
 import { compareReal, type RealRootOf } from '../core/algebraic/root-of';
@@ -126,19 +126,18 @@ class Layout {
   }
 
   decimalText(d: Decimal): P {
-    const zero = (s: string) => /^-?0(\.0*)?$/.test(s);
-    if (!d.im || zero(d.im)) return { latex: d.re, text: d.re };
-    const im = d.im.startsWith('-') ? d.im.slice(1) : d.im, sign = d.im.startsWith('-') ? '-' : '+';
-    if (zero(d.re)) return { latex: `${sign === '-' ? '-' : ''}${im}i`, text: `${sign === '-' ? '-' : ''}${im}i` };
-    return { latex: `${d.re} ${sign} ${im}i`, text: `${d.re} ${sign} ${im}i` };
+    if (!d.im) return { latex: d.re, text: d.re };
+    const { negative, magnitude } = d.im;
+    if (d.reZero) return { latex: `${negative ? '-' : ''}${magnitude}i`, text: `${negative ? '-' : ''}${magnitude}i` };
+    return { latex: `${d.re} ${negative ? '-' : '+'} ${magnitude}i`, text: `${d.re} ${negative ? '-' : '+'} ${magnitude}i` };
   }
 
   /** "= exact", "≈ decimal" or "= exact ≈ decimal" for one value, by the output style. */
-  valued(v: CanonicalMathValueV2): { rel: P; bare: boolean } {
+  valued(v: CanonicalMathValueV2): { rel: P; bare: boolean; rootDecimal?: true } {
     const bareRoot = this.bareRoot(v);
     if (bareRoot && !this.#copy) {
       const d = this.#decimal(v);
-      if (d) { const t = this.decimalText(d); return { rel: { latex: `\\approx ${t.latex}`, text: `≈ ${t.text}` }, bare: true }; }
+      if (d) { const t = this.decimalText(d); return { rel: { latex: `\\approx ${t.latex}`, text: `≈ ${t.text}` }, bare: true, rootDecimal: true }; }
     }
     const exact = this.exact(v);
     const integer = typeof v.mathJson === 'number' || (typeof v.mathJson === 'object' && v.mathJson !== null && !Array.isArray(v.mathJson));
@@ -167,17 +166,23 @@ class Layout {
 
   // ---- conditions, intervals ----
 
-  condition(c: CanonicalEquationConditionV6): P | PrintedRelation {
-    if (c.kind === 'in-domain') { const e = this.exact(c.expr); return { latex: `${e.latex}\\text{ is defined}`, text: `${e.text} is defined` }; }
+  condition(c: CanonicalEquationConditionV6): { printed: P | PrintedRelation; key: string } {
+    if (c.kind === 'in-domain') {
+      const json = this.exactJson(c.expr), e = printEquationMath(json, { constants: this.#constants }) ?? { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex };
+      return { printed: { latex: `${e.latex}\\text{ is defined}`, text: `${e.text} is defined` }, key: `${JSON.stringify(json)}\u0000z` };
+    }
     const op: Record<string, RelationOperator> = { nonzero: 'ne', positive: 'gt', nonnegative: 'ge', equal: 'eq', 'not-equal': 'ne' };
     const other = 'other' in c ? this.exactJson(c.other) : 0;
     const printed = printRelation(this.exactJson(c.expr), op[c.kind], other, { constants: this.#constants });
-    return printed ?? { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex };
+    if (!printed) return { printed: { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex }, key: JSON.stringify(c.expr.mathJson) };
+    // Reading order from structure: the left side, then the relation, then the right side.
+    const rank: Record<RelationOperator, number> = { eq: 0, ne: 1, lt: 2, le: 3, gt: 4, ge: 5 };
+    return { printed, key: `${JSON.stringify(printed.leftJson)}\u0000${rank[printed.op]}\u0000${JSON.stringify(printed.rightJson)}` };
   }
 
   /** Conditions joined by "and", in reading order, with paired bounds chained (−1 ≤ y ≤ 1). */
   conditions(cs: readonly CanonicalEquationConditionV6[]): P {
-    let parts: (P | PrintedRelation)[] = cs.map(c => this.condition(c)).sort((a, b) => a.text.localeCompare(b.text));
+    let parts: (P | PrintedRelation)[] = cs.map(c => this.condition(c)).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).map(c => c.printed);
     for (let i = 0; i < parts.length; i++) {
       const a = parts[i];
       if (!('op' in a)) continue;
@@ -217,14 +222,13 @@ class Layout {
 
   /** a + P·k with a first (the user's family notation), each part with proven rewrites. */
   shifted(a: CanonicalMathValueV2, period: CanonicalMathValueV2, k: string): P {
-    const step = this.exact({ mathJson: ['Multiply', period.mathJson, k], canonicalLatex: '' });
+    const stepJson = this.exactJson({ mathJson: ['Multiply', period.mathJson, k], canonicalLatex: '' });
+    const step = printSigned(stepJson, { constants: this.#constants });
     const base = typeof a.mathJson === 'number' && a.mathJson === 0 ? undefined : this.exact(a);
-    if (!base) return step;
-    const minus = step.text.startsWith('-');
-    return {
-      latex: `${base.latex} ${minus ? '-' : '+'} ${minus ? step.latex.slice(1) : step.latex}`,
-      text: `${base.text} ${minus ? '-' : '+'} ${minus ? step.text.slice(1) : step.text}`,
-    };
+    if (!step) return this.exact({ mathJson: ['Add', a.mathJson, stepJson], canonicalLatex: '' });
+    if (!base) return step.negative ? { latex: `-${step.magnitude.latex}`, text: `-${step.magnitude.text}` } : step.magnitude;
+    const sign = step.negative ? '-' : '+';
+    return { latex: `${base.latex} ${sign} ${step.magnitude.latex}`, text: `${base.text} ${sign} ${step.magnitude.text}` };
   }
 
   // ---- rows ----
@@ -234,9 +238,9 @@ class Layout {
   solutionRow(depth: number, values: readonly CanonicalMathValueV2[], suffix: P = { latex: '', text: '' }): void {
     const lhs = this.lhs();
     if (values.length === 1) {
-      const { rel, bare } = this.valued(values[0]);
+      const { rel, rootDecimal } = this.valued(values[0]);
       this.push('solution', depth, { latex: `${lhs.latex} ${rel.latex}${suffix.latex}`, text: `${lhs.text} ${rel.text}${suffix.text}` });
-      if (bare && !this.#copy && !rel.text.startsWith('=')) this.inlineDefinition(depth + 1, values[0].mathJson as string, this.#targets[0], false);
+      if (rootDecimal) this.inlineDefinition(depth + 1, values[0].mathJson as string, this.#targets[0], false);
       return;
     }
     const parts = values.map(v => this.plainOrRoot(v));
