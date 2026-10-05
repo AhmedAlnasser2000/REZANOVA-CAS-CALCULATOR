@@ -27,6 +27,10 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **2026-09-30 differential-field posture:** the [field specification](integration-differential-field1-spec.md) fixes the approved Q-only, backend-only boundary. Formal arithmetic and certified function admission are distinct; no automatic transcendental integration or application adoption is implied.
 
+**2026-10-05 approved adoption sequence:** [general checked exponential normalization](integration-exponential-normalization1-spec.md) first, then the bounded V6 exponential result contract, then New Integration adoption. Normalization is backend-verified (515 core tests, independent replay and serial observations); the UI remains rational-only. The user selected general hidden common-factor discovery across families before testing the surviving one-family boundary. No commits or pushes accompany implementation.
+
+**2026-10-05 user-directed stop:** complete normalization only, then discuss catching up with the cloud branch. Cached `origin/main` contains Equation canonical-result V6 at `f3a0bf15`; local `main` is `7a1d9c5a`, ahead one and behind eight. The earlier Integration V6 designation is superseded. Result-contract and UI execution are on hold until repository/contract reconciliation; no automatic version renumbering.
+
 ## Updated implementation sequence
 
 The first three foundation gates and their proof-performance follow-up are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.

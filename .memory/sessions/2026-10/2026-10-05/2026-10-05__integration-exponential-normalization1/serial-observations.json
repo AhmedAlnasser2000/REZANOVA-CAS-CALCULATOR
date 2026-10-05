@@ -1,0 +1,395 @@
+{
+  "node": "v24.19.0",
+  "cpu": "Intel(R) Core(TM) Ultra 7 265K",
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "bounds": {
+    "towerHeight": 8,
+    "artifactDepth": 64,
+    "artifactNodes": 100000,
+    "artifactBytes": 16777216
+  },
+  "policy": "one warm-up and three serial measured runs; fresh contexts; fixture construction, JSON parsing and I/O excluded; allocation is cumulative accounting, RSS/heap are bytes",
+  "results": {
+    "twoFamily": {
+      "construction": [
+        {
+          "ms": 89.20610700000003,
+          "work": 3427942,
+          "allocation": 26194383,
+          "rss": 115556352,
+          "heapUsed": 23881128
+        },
+        {
+          "ms": 103.83118300000001,
+          "work": 3427942,
+          "allocation": 26194383,
+          "rss": 138752000,
+          "heapUsed": 27667552
+        },
+        {
+          "ms": 91.12267800000006,
+          "work": 3427942,
+          "allocation": 26194383,
+          "rss": 145166336,
+          "heapUsed": 38532080
+        }
+      ],
+      "verification": [
+        {
+          "ms": 21.37100799999996,
+          "work": 813019,
+          "allocation": 5768090,
+          "rss": 115720192,
+          "heapUsed": 20356480
+        },
+        {
+          "ms": 21.52871700000003,
+          "work": 813019,
+          "allocation": 5768090,
+          "rss": 139079680,
+          "heapUsed": 32632048
+        },
+        {
+          "ms": 22.401368000000048,
+          "work": 813019,
+          "allocation": 5768090,
+          "rss": 145330176,
+          "heapUsed": 43216400
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 27.987873000000036,
+          "work": 1191409,
+          "allocation": 6142350,
+          "rss": 116375552,
+          "heapUsed": 24636448
+        },
+        {
+          "ms": 29.502339000000006,
+          "work": 1191409,
+          "allocation": 6142350,
+          "rss": 139571200,
+          "heapUsed": 36458912
+        },
+        {
+          "ms": 24.794192000000066,
+          "work": 1191409,
+          "allocation": 6142350,
+          "rss": 145494016,
+          "heapUsed": 45581544
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 78.74850100000003,
+          "work": 2331053,
+          "allocation": 16627727,
+          "rss": 135966720,
+          "heapUsed": 25843624
+        },
+        {
+          "ms": 65.47894399999996,
+          "work": 2331053,
+          "allocation": 16627727,
+          "rss": 144019456,
+          "heapUsed": 38119864
+        },
+        {
+          "ms": 75.41426999999999,
+          "work": 2331053,
+          "allocation": 16627727,
+          "rss": 181841920,
+          "heapUsed": 45395160
+        }
+      ]
+    },
+    "threeFamily": {
+      "construction": [
+        {
+          "ms": 138.11254699999995,
+          "work": 5002345,
+          "allocation": 37917448,
+          "rss": 196718592,
+          "heapUsed": 70967312
+        },
+        {
+          "ms": 126.038906,
+          "work": 5002345,
+          "allocation": 37917448,
+          "rss": 187629568,
+          "heapUsed": 28760416
+        },
+        {
+          "ms": 138.69032300000003,
+          "work": 5002345,
+          "allocation": 37917448,
+          "rss": 251232256,
+          "heapUsed": 93604744
+        }
+      ],
+      "verification": [
+        {
+          "ms": 34.08970199999999,
+          "work": 1162997,
+          "allocation": 8139333,
+          "rss": 196882432,
+          "heapUsed": 59164848
+        },
+        {
+          "ms": 26.376447999999982,
+          "work": 1162997,
+          "allocation": 8139333,
+          "rss": 187629568,
+          "heapUsed": 50620176
+        },
+        {
+          "ms": 32.70966700000008,
+          "work": 1162997,
+          "allocation": 8139333,
+          "rss": 251232256,
+          "heapUsed": 82289080
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 34.97446799999989,
+          "work": 1721162,
+          "allocation": 8711641,
+          "rss": 197210112,
+          "heapUsed": 68684776
+        },
+        {
+          "ms": 43.39734900000008,
+          "work": 1721162,
+          "allocation": 8711641,
+          "rss": 187629568,
+          "heapUsed": 27612512
+        },
+        {
+          "ms": 38.63343799999984,
+          "work": 1721162,
+          "allocation": 8711641,
+          "rss": 251232256,
+          "heapUsed": 91725400
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 98.50272900000004,
+          "work": 3389215,
+          "allocation": 24058504,
+          "rss": 187465728,
+          "heapUsed": 42065024
+        },
+        {
+          "ms": 91.04950400000007,
+          "work": 3389215,
+          "allocation": 24058504,
+          "rss": 198311936,
+          "heapUsed": 72940456
+        },
+        {
+          "ms": 99.72592399999985,
+          "work": 3389215,
+          "allocation": 24058504,
+          "rss": 252428288,
+          "heapUsed": 37218952
+        }
+      ]
+    },
+    "shifted": {
+      "construction": [
+        {
+          "ms": 23.37083500000017,
+          "work": 598229,
+          "allocation": 5175907,
+          "rss": 252428288,
+          "heapUsed": 44498728
+        },
+        {
+          "ms": 12.183157000000392,
+          "work": 598229,
+          "allocation": 5175907,
+          "rss": 252428288,
+          "heapUsed": 96205040
+        },
+        {
+          "ms": 12.142491999999947,
+          "work": 598229,
+          "allocation": 5175907,
+          "rss": 252428288,
+          "heapUsed": 81231496
+        }
+      ],
+      "verification": [
+        {
+          "ms": 3.592203000000154,
+          "work": 191391,
+          "allocation": 1682028,
+          "rss": 252428288,
+          "heapUsed": 51280056
+        },
+        {
+          "ms": 16.605435999999827,
+          "work": 191391,
+          "allocation": 1682028,
+          "rss": 252428288,
+          "heapUsed": 36307904
+        },
+        {
+          "ms": 3.8171409999999923,
+          "work": 191391,
+          "allocation": 1682028,
+          "rss": 252428288,
+          "heapUsed": 88037056
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 4.363446999999724,
+          "work": 239649,
+          "allocation": 1729134,
+          "rss": 252428288,
+          "heapUsed": 59964472
+        },
+        {
+          "ms": 4.783195999999862,
+          "work": 239649,
+          "allocation": 1729134,
+          "rss": 252428288,
+          "heapUsed": 44918016
+        },
+        {
+          "ms": 4.902951999999914,
+          "work": 239649,
+          "allocation": 1729134,
+          "rss": 252428288,
+          "heapUsed": 96680088
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 7.827913999999964,
+          "work": 383203,
+          "allocation": 3056092,
+          "rss": 252428288,
+          "heapUsed": 74192992
+        },
+        {
+          "ms": 7.80557299999964,
+          "work": 383203,
+          "allocation": 3056092,
+          "rss": 252428288,
+          "heapUsed": 59165024
+        },
+        {
+          "ms": 17.81122000000005,
+          "work": 383203,
+          "allocation": 3056092,
+          "rss": 252428288,
+          "heapUsed": 44279304
+        }
+      ]
+    },
+    "canceledRationalArgument": {
+      "construction": [
+        {
+          "ms": 6.2773830000001,
+          "work": 312476,
+          "allocation": 2570981,
+          "rss": 252428288,
+          "heapUsed": 85569408
+        },
+        {
+          "ms": 6.680511000000024,
+          "work": 312476,
+          "allocation": 2570981,
+          "rss": 252428288,
+          "heapUsed": 48347544
+        },
+        {
+          "ms": 6.401444000000083,
+          "work": 312476,
+          "allocation": 2570981,
+          "rss": 252428288,
+          "heapUsed": 77222768
+        }
+      ],
+      "verification": [
+        {
+          "ms": 1.6512750000001688,
+          "work": 79476,
+          "allocation": 613822,
+          "rss": 252428288,
+          "heapUsed": 89002992
+        },
+        {
+          "ms": 1.7015379999998004,
+          "work": 79476,
+          "allocation": 613822,
+          "rss": 252428288,
+          "heapUsed": 51779912
+        },
+        {
+          "ms": 1.6346139999996012,
+          "work": 79476,
+          "allocation": 613822,
+          "rss": 252428288,
+          "heapUsed": 80655136
+        }
+      ],
+      "encoding": [
+        {
+          "ms": 2.1535249999997177,
+          "work": 112058,
+          "allocation": 646575,
+          "rss": 252428288,
+          "heapUsed": 93691104
+        },
+        {
+          "ms": 2.1689219999998386,
+          "work": 112058,
+          "allocation": 646575,
+          "rss": 252428288,
+          "heapUsed": 56466384
+        },
+        {
+          "ms": 2.154645999999957,
+          "work": 112058,
+          "allocation": 646575,
+          "rss": 252428288,
+          "heapUsed": 85341608
+        }
+      ],
+      "decoding": [
+        {
+          "ms": 17.101814000000104,
+          "work": 205692,
+          "allocation": 1511902,
+          "rss": 252428288,
+          "heapUsed": 35891688
+        },
+        {
+          "ms": 4.499873000000207,
+          "work": 205692,
+          "allocation": 1511902,
+          "rss": 252428288,
+          "heapUsed": 64784632
+        },
+        {
+          "ms": 4.477938999999878,
+          "work": 205692,
+          "allocation": 1511902,
+          "rss": 252428288,
+          "heapUsed": 93666016
+        }
+      ]
+    }
+  }
+}
