@@ -36,10 +36,16 @@ function rationalOf(store: ExpressionStore, v: CanonicalMathValueV2): Rational {
   return n.kind === 'number' ? n.value : fail('a bound is not rational');
 }
 
-export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): ReadEquationOutcome {
-  const checked = validateCanonicalResultDocumentV6(input);
-  if (!checked.ok) return fail(`not a valid V6 document: ${checked.failure.message}`);
-  const doc: CanonicalResultDocumentV6 = checked.validated.value, p = doc.primary, ctx = store.ctx;
+/** Root binders of a validated document, decoded in `store`, and a reader of math leaves that inlines them. */
+export interface RootBinders {
+  readonly algebraic: ReadonlyMap<string, Extract<PointValue, { kind: 'algebraic' }>>;
+  readonly indexed: ReadonlyMap<string, PointValue>;
+  /** A math leaf as a core expression, with algebraic binders inlined (indexed roots are refused inside expressions). */
+  readonly read: (v: CanonicalMathValueV2) => ExprId;
+}
+
+export function readRootBinders(store: ExpressionStore, doc: CanonicalResultDocumentV6): RootBinders {
+  const p = doc.primary, ctx = store.ctx;
   const algebraic = new Map<string, Extract<PointValue, { kind: 'algebraic' }>>();
   const indexed = new Map<string, PointValue>();
   const read = (v: CanonicalMathValueV2): ExprId => {
@@ -78,6 +84,14 @@ export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): R
     if (matches.length !== 1) fail('a root binder does not isolate exactly one root');
     algebraic.set(b.symbol, Object.freeze(b.form === undefined ? { kind: 'algebraic', root: matches[0] } : { kind: 'algebraic', root: matches[0], form: read(b.form) }));
   }
+  return { algebraic, indexed, read };
+}
+
+export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): ReadEquationOutcome {
+  const checked = validateCanonicalResultDocumentV6(input);
+  if (!checked.ok) return fail(`not a valid V6 document: ${checked.failure.message}`);
+  const doc: CanonicalResultDocumentV6 = checked.validated.value, p = doc.primary;
+  const { algebraic, indexed, read } = readRootBinders(store, doc);
   const value = (v: CanonicalMathValueV2): PointValue => {
     const j = v.mathJson;
     if (typeof j === 'string' && algebraic.has(j)) return algebraic.get(j) as PointValue;
