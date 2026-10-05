@@ -63,7 +63,7 @@ describe('workspace runtime probe registry', () => {
 
     expect(registeredWorkspaces).toEqual(launcherWorkspaces);
     expect(new Set(registeredWorkspaces).size).toBe(registeredWorkspaces.length);
-    expect(runtimeProbeFloor).toEqual({ version: 1, workspaceCount: 10 });
+    expect(runtimeProbeFloor).toEqual({ version: 1, workspaceCount: 11 });
     expect(registeredWorkspaces.length).toBe(runtimeProbeFloor.workspaceCount);
   });
 
@@ -89,7 +89,7 @@ describe('workspace runtime probe registry', () => {
       expect(listRecentOoeJobs()[0]).toMatchObject({
         capabilityId: probe.capabilityId,
         hostId: probe.primaryHostId,
-        workspaceInstanceId: 'runtime-probe-new-integration',
+        workspaceInstanceId: probe.requestSnapshot.instanceId,
         status: 'completed',
       });
       const diagnostic = listOoeDiagnostics().find(record => record.job.hostId === probe.primaryHostId);

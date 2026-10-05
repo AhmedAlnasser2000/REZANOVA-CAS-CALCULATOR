@@ -161,3 +161,10 @@ This is the V6 read model. It validates the document and rebuilds core values:
 - Display polish (`EQUATION-PRESENTATION1`).
 - Runtime transport, worker, History persistence and UI (`EQUATION-ADOPTION1`).
 - Set kinds the core does not produce yet, such as the complement of a family over ℂ (ledger).
+
+## Amendment (`EQUATION-ADOPTION1`, 2026-10-05): assumptions
+
+- The primary may carry `assumptions`: a non-empty list of relations (`eq`, `ne`, `lt`, `le`) whose sides use only the declared parameters. Root binders are not allowed, and orders are real only.
+- When present, the outcome describes the solutions for parameter values that satisfy every assumption; cases ruled out by them are omitted.
+- The adapter verifies the full outcome first, then the assumed outcome against it (`verifyAssumedOutcome`), and the replay compares the assumptions too.
+- See the [adoption specification](equation-adoption1-spec.md).

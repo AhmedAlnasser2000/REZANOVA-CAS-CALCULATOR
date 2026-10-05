@@ -276,10 +276,16 @@ export const COMPARTMENT_MANIFEST = [
     surfaceExposureCandidate: 'future-surface',
     ownedPaths: [
       'src/lib/equation/',
+      'src/lib/new-equation/',
       'src/lib/modes/equation.ts',
       'src/lib/modes/equation/',
     ],
     publicSeams: [
+      'src/lib/new-equation/types.ts',
+      'src/lib/new-equation/parse.ts',
+      'src/lib/new-equation/runtime.ts',
+      'src/lib/new-equation/error.ts',
+      'src/lib/new-equation/verification.ts',
       'src/lib/equation/guarded-solve.ts',
       'src/lib/equation/implicit-derivative-solve.ts',
       'src/lib/equation/equation-solve-result.ts',

@@ -301,7 +301,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('main-editor')).toBeInTheDocument();
 
     await user.click(await screen.findByRole('button', { name: /core/i }));
-    await user.click(await screen.findByRole('button', { name: /equation/i }));
+    await user.click(await screen.findByRole('button', { name: /^\d*\s*equation/i }));
     await waitFor(() => expect(document.querySelector('.equation-menu-list')).toBeInTheDocument());
     await waitFor(() => expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument());
   });
@@ -542,10 +542,10 @@ describe('AppMain UI automation flows', () => {
     await user.click(within(launcherPanel).getByRole('button', { name: /core/i }));
     await waitFor(() => {
       const activeLauncherPanel = document.querySelector('.launcher-panel') as HTMLElement;
-      expect(within(activeLauncherPanel).getByRole('button', { name: /equation/i })).toBeInTheDocument();
+      expect(within(activeLauncherPanel).getByRole('button', { name: /^\d*\s*equation/i })).toBeInTheDocument();
     });
     launcherPanel = document.querySelector('.launcher-panel') as HTMLElement;
-    await user.click(within(launcherPanel).getByRole('button', { name: /equation/i }));
+    await user.click(within(launcherPanel).getByRole('button', { name: /^\d*\s*equation/i }));
 
     await waitFor(() => expect(screen.getByTestId('soft-action-back')).toBeInTheDocument());
     fireEvent.keyDown(window, { key: 'Escape' });

@@ -131,6 +131,11 @@ export interface CanonicalEquationPrimaryV6 {
   targets: string[];
   parameters: string[];
   roots: CanonicalEquationRootBinderV6[];
+  /**
+   * Relations on the parameters only, entered beside the problem. When present, the outcome describes the
+   * solutions for parameter values satisfying every assumption (cases ruled out by them are omitted).
+   */
+  assumptions?: CanonicalEquationRelationV6[];
   outcome: CanonicalEquationOutcomeV6;
   /**
    * A summary only; derivations stay outside the document. Answers (solved, empty) were verified independently by

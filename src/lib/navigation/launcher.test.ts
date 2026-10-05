@@ -1,4 +1,4 @@
-import { ensureNewIntegrationLauncherEntry } from './launcher';
+import { ensureNewEquationLauncherEntry, ensureNewIntegrationLauncherEntry } from './launcher';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
@@ -122,4 +122,11 @@ it('retains the client-owned New Integration entry with older host launcher cata
   const merged = ensureNewIntegrationLauncherEntry(old);
   expect(merged.find(c => c.id === 'calculus')?.entries.map(e => e.id)).toEqual(['calculus', 'new-integration']);
   expect(ensureNewIntegrationLauncherEntry(merged)).toBe(merged);
+});
+
+it('retains the client-owned New Equation entry with older host launcher catalogs', () => {
+  const old = DEFAULT_LAUNCHER_CATEGORIES.map(c => ({ ...c, entries: c.entries.filter(e => e.id !== 'new-equation') }));
+  const merged = ensureNewEquationLauncherEntry(old);
+  expect(merged.find(c => c.id === 'core')?.entries.map(e => e.id)).toEqual(['calculate', 'equation', 'table', 'new-equation']);
+  expect(ensureNewEquationLauncherEntry(merged)).toBe(merged);
 });

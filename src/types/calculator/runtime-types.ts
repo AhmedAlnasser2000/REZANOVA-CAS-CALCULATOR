@@ -414,7 +414,7 @@ export type MenuNode = {
 
 export type LauncherLaunchTarget =
   | { mode: 'calculate'; calculateScreen?: CalculateScreen }
-  | { mode: 'equation'; equationScreen?: EquationScreen }
+  | { mode: 'equation'; equationScreen?: EquationScreen; workspace?: 'new-equation' }
   | { mode: 'matrix' }
   | { mode: 'vector' }
   | { mode: 'table' }
@@ -1210,6 +1210,13 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
         description: 'Function tables over a range',
         hotkey: '3',
         launch: { mode: 'table' },
+      },
+      {
+        id: 'new-equation',
+        label: 'New Equation',
+        description: 'Verified exact equations, inequalities and systems, one relation per row',
+        hotkey: '4',
+        launch: { mode: 'equation', workspace: 'new-equation' },
       },
     ],
   },

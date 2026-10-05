@@ -43,8 +43,8 @@ export function setVisibleSecondaryMathFieldLatex(latex: string, index = 0) {
 export async function openLauncherApp(user: AppUser, categoryLabel: string, appLabel: string) {
   await user.click(screen.getByTestId('keypad-menu'));
   const menuInspector = await screen.findByTestId('left-menu-inspector');
-  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(categoryLabel, 'i') }));
-  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(appLabel, 'i') }));
+  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${categoryLabel}`, 'i') }));
+  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${appLabel}`, 'i') }));
 }
 
 export async function openEquationSymbolic(user: AppUser) {

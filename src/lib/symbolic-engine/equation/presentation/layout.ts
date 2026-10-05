@@ -21,7 +21,7 @@ import { decimalOf, displayForm, orderPoints, provenEqual, type Decimal } from '
  * to the printer alone: the canonical values, unsimplified and without decimals. The document is never changed.
  */
 export interface EquationPresentationSettings { readonly outputStyle: OutputStyle; readonly approxDigits: number }
-export type PresentationRole = 'solution' | 'case' | 'definition' | 'message';
+export type PresentationRole = 'assumption' | 'solution' | 'case' | 'definition' | 'message';
 export interface PresentationRow { readonly role: PresentationRole; readonly depth: number; readonly latex: string; readonly text: string }
 export interface EquationPresentation {
   readonly outcome: CanonicalEquationOutcomeV6['kind'];
@@ -38,6 +38,7 @@ interface P { latex: string; text: string }
 const ORDINAL = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 const escapeText = (s: string) => s.replace(/[\\{}$&#^_%~]/g, c => `\\${c === '\\' ? 'textbackslash' : c}${c === '\\' ? '{}' : ''}`);
 const textRow = (role: PresentationRole, depth: number, text: string): PresentationRow => ({ role, depth, latex: `\\text{${escapeText(text)}}`, text });
+const RELATION_LATEX: Readonly<Record<'eq' | 'ne' | 'lt' | 'le', string>> = { eq: '=', ne: '\\ne', lt: '<', le: '\\le' };
 const STOPS: Readonly<Record<string, string>> = {
   work: 'Stopped: the work limit was reached.', allocation: 'Stopped: the memory limit was reached.',
   cancelled: 'Stopped: cancelled.', 'result-size': 'Stopped: the answer is too large to show.',
@@ -423,8 +424,23 @@ class Layout {
     this.push('definition', 1, { latex: `${name.latex}${approx.latex}:\\ ${what.latex}`, text: `${name.text}${approx.text}: ${what.text}` });
   }
 
+  /** "Assuming a > 0 and b ≠ 1": the assumptions, laid out like conditions. */
+  assumptions(): void {
+    const rs = this.#doc.primary.assumptions ?? [];
+    if (rs.length === 0) return;
+    const zero = (v: SerializableMathJson) => v === 0;
+    // As one side against 0 (ring identity), so the printer lays it out like a condition: 1 < a reads a > 1.
+    const parts = rs.map(r => {
+      const l = this.exactJson(r.lhs), g = this.exactJson(r.rhs);
+      const side: SerializableMathJson = zero(g) ? l : zero(l) ? ['Negate', g] : ['Add', l, ['Negate', g]];
+      return printRelation(side, r.op, 0, { constants: this.#constants }) ?? { latex: `${r.lhs.canonicalLatex} ${RELATION_LATEX[r.op]} ${r.rhs.canonicalLatex}`, text: `${r.lhs.canonicalLatex} ${RELATION_LATEX[r.op]} ${r.rhs.canonicalLatex}` };
+    });
+    this.push('assumption', 0, { latex: `\\text{Assuming }${parts.map(p => p.latex).join('\\text{ and }')}`, text: `Assuming ${parts.map(p => p.text).join(' and ')}` });
+  }
+
   build(): void {
     const o = this.#doc.primary.outcome;
+    this.assumptions();
     switch (o.kind) {
       case 'solved': this.set(o.set, 0); break;
       case 'empty': this.push('solution', 0, { latex: '\\text{No solution}', text: 'No solution' }); break;
@@ -464,6 +480,18 @@ function present(doc: CanonicalResultDocumentV6, settings: EquationPresentationS
     ...(o.kind === 'incomplete' ? { owner: o.owner } : {}),
     fallback: core === undefined,
   };
+}
+
+/**
+ * Conditions on the problem's own expressions (no root binders), each laid out like a case condition, in reading
+ * order. Each value must be in the V6 grammar with its canonical LaTeX (the caller projects them).
+ */
+export function presentConditionList(conditions: readonly CanonicalEquationConditionV6[]): { latex: string; text: string }[] {
+  const op: Record<string, RelationOperator> = { nonzero: 'ne', positive: 'gt', nonnegative: 'ge', equal: 'eq', 'not-equal': 'ne' };
+  return conditions.map(c => {
+    if (c.kind === 'in-domain') { const e = printEquationMath(c.expr.mathJson); return e ? { latex: `${e.latex}\\text{ is defined}`, text: `${e.text} is defined` } : { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex }; }
+    return printRelation(c.expr.mathJson, op[c.kind], 'other' in c ? c.other.mathJson : 0) ?? { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex };
+  }).map(p => ({ latex: p.latex, text: p.text }));
 }
 
 /** Present a V6 Equation document. `ctx` budgets the core work (rewrites, decimals, order); a stop falls back. */

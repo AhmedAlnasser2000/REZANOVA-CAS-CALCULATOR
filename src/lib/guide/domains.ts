@@ -22,7 +22,7 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
     id: 'algebra',
     title: 'Algebra',
     summary: 'Simplify, factor, expand, symbolic equations, and relation notation.',
-    articleIds: ['algebra-manipulation', 'algebra-equations'],
+    articleIds: ['algebra-manipulation', 'algebra-equations', 'algebra-new-equation'],
   },
   {
     id: 'discrete',

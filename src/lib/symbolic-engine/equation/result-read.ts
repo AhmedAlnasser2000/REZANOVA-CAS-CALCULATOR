@@ -11,7 +11,7 @@ import { sameSet } from './core/parameters/verify';
 import { asRoot } from './core/representation/evaluate';
 import type { ExprId, ExpressionStore } from './core/representation/expression';
 import { readExpression } from './core/representation/mathjson';
-import { relationProblem, type Condition, type RelationProblem } from './core/representation/relation';
+import { canonicalRelation, relationKey, relationProblem, type Condition, type Relation, type RelationProblem } from './core/representation/relation';
 import { minimalPolynomial } from './core/representation/root-identity';
 import {
   normalizeSet, setKey, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type SolutionSet,
@@ -138,9 +138,20 @@ export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): R
   }
 }
 
-/** The document must read back to the same outcome: the same kind and reason, or the same set by value. */
-export function replayEquationDocument(problem: RelationProblem, outcome: EquationOutcome, doc: CanonicalResultDocumentV6): void {
+/** The assumptions of a validated document, read in `store` (canonical relations). */
+export function readAssumptions(store: ExpressionStore, doc: CanonicalResultDocumentV6): Relation[] {
+  const { read } = readRootBinders(store, doc);
+  return (doc.primary.assumptions ?? []).map(r => canonicalRelation(store, { op: r.op, lhs: read(r.lhs), rhs: read(r.rhs) }));
+}
+
+/**
+ * The document must read back to the same outcome: the same kind and reason, or the same set by value; and to the
+ * same assumptions.
+ */
+export function replayEquationDocument(problem: RelationProblem, outcome: EquationOutcome, doc: CanonicalResultDocumentV6, assumptions: readonly Relation[] = []): void {
   const store = problem.store, domain = problem.domain, back = readEquationOutcomeV6(store, doc);
+  const keys = (rs: readonly Relation[]) => rs.map(r => relationKey(store, canonicalRelation(store, r))).sort().join('\u0000');
+  if (keys(readAssumptions(store, doc)) !== keys(assumptions)) fail('the document reads back to different assumptions');
   if (back.kind !== outcome.kind) fail('the document reads back to a different outcome');
   if (back.kind === 'solved' && outcome.kind === 'solved') {
     const a = normalizeSet(store, back.set, domain), b = normalizeSet(store, outcome.set, domain);
