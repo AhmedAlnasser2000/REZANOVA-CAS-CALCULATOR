@@ -29,7 +29,7 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **2026-10-05 approved adoption sequence:** [general checked exponential normalization](integration-exponential-normalization1-spec.md) first, then the bounded V6 exponential result contract, then New Integration adoption. Normalization is backend-verified (515 core tests, independent replay and serial observations); the UI remains rational-only. The user selected general hidden common-factor discovery across families before testing the surviving one-family boundary. No commits or pushes accompany implementation.
 
-**2026-10-05 user-directed stop:** complete normalization only, then discuss catching up with the cloud branch. Cached `origin/main` contains Equation canonical-result V6 at `f3a0bf15`; local `main` is `7a1d9c5a`, ahead one and behind eight. The earlier Integration V6 designation is superseded. Result-contract and UI execution are on hold until repository/contract reconciliation; no automatic version renumbering.
+**2026-10-05 user-directed stop:** complete normalization only, then discuss catching up with the cloud branch. Normalization was subsequently committed at `b80aef7e`; authorized synchronization incorporates cloud main through `7b85f646`, including Equation V6, presentation and New Equation adoption. The earlier Integration V6 designation is superseded. Result-contract and UI execution are on hold until repository/contract reconciliation; no automatic version renumbering.
 
 ## Updated implementation sequence
 

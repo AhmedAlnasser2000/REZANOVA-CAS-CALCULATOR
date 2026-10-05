@@ -1,4 +1,5 @@
 import type { NewIntegrationRuntime } from '../runtime/useNewIntegrationRuntime';
+import type { NewEquationRuntime } from '../runtime/useNewEquationRuntime';
 import {
   lazy,
   Suspense,
@@ -34,6 +35,7 @@ import type {
 import type { GraphWorkspaceSessionStateV7 } from '../graphing/graph-workspace-session';
 
 const NewIntegrationPage = lazy(() => import('../new-integration/NewIntegrationPage'));
+const NewEquationPage = lazy(() => import('../new-equation/NewEquationPage'));
 const GraphWorkspacePageHost = lazy(() => import('../graphing/GraphWorkspacePageHost'));
 const FormulaViewerPage = lazy(() => import('./FormulaViewerPage').then((module) => ({
   default: module.FormulaViewerPage,
@@ -61,6 +63,7 @@ function PageSurfaceSuspense({ children, label }: { children: ReactNode; label: 
 
 type ActiveSurfaceHostProps = {
   newIntegrationRuntime?: NewIntegrationRuntime;
+  newEquationRuntime?: NewEquationRuntime;
   activeInstance: WorkspaceInstance | null | undefined;
   guide: GuideWorkspaceProps;
   history: HistoryEntry[];
@@ -87,6 +90,7 @@ type ActiveSurfaceHostProps = {
 
 export function ActiveSurfaceHost({
   newIntegrationRuntime,
+  newEquationRuntime,
   activeInstance,
   guide,
   history,
@@ -138,6 +142,12 @@ export function ActiveSurfaceHost({
   if (surfaceDescriptor.pageKind === 'new-integration' && activeInstance && newIntegrationRuntime) {
     return <section className={pageSurfaceClassName} data-surface-kind="new-integration" data-testid="active-surface-page" style={pageSurfaceStyle}>
       <PageSurfaceSuspense label="New Integration"><NewIntegrationPage key={activeInstance.id} instance={activeInstance} runtime={newIntegrationRuntime} /></PageSurfaceSuspense>
+    </section>;
+  }
+
+  if (surfaceDescriptor.pageKind === 'new-equation' && activeInstance && newEquationRuntime) {
+    return <section className={pageSurfaceClassName} data-surface-kind="new-equation" data-testid="active-surface-page" style={pageSurfaceStyle}>
+      <PageSurfaceSuspense label="New Equation"><NewEquationPage key={activeInstance.id} instance={activeInstance} runtime={newEquationRuntime} /></PageSurfaceSuspense>
     </section>;
   }
 

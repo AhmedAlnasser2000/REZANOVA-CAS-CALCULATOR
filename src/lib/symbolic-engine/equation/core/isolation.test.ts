@@ -3,8 +3,14 @@ import { dirname, join, resolve, sep } from 'node:path';
 import ts from 'typescript';
 import { expect, it } from 'vitest';
 
-/** Named adapter files outside the core that may import it. None exist before adoption. */
-const ADAPTERS: readonly string[] = [];
+/** Named adapter files outside the core that may import it: the V6 result adapter (EQUATION-RESULT-CONTRACT1). */
+const ADAPTERS: readonly string[] = [
+  'src/lib/symbolic-engine/equation/result.ts', 'src/lib/symbolic-engine/equation/result-read.ts',
+  // EQUATION-PRESENTATION1: the presentation read model.
+  'src/lib/symbolic-engine/equation/presentation/values.ts', 'src/lib/symbolic-engine/equation/presentation/layout.ts',
+  // EQUATION-ADOPTION1: the New Equation worker service and its row lowering.
+  'src/lib/symbolic-engine/equation/service/input.ts', 'src/lib/symbolic-engine/equation/service/service.ts',
+];
 
 it('keeps the private Equation core disconnected in both directions', () => {
   const src = resolve('src'), core = resolve('src/lib/symbolic-engine/equation/core');

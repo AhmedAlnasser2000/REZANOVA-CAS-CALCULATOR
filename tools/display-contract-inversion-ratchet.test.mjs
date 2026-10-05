@@ -549,8 +549,8 @@ describe('display contract inversion ratchet', () => {
     );
 
     assert.equal(report.summary.producerCount, 445);
-    // New Integration adds three canonical adapter authority reads and its page read model.
-    assert.equal(report.summary.consumerCount, 62);
+    // New Integration contributes four reads; New Equation adds its two registered adapter reads.
+    assert.equal(report.summary.consumerCount, 64);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 94);

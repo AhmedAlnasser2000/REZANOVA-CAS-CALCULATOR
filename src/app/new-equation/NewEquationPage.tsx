@@ -1,0 +1,119 @@
+import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
+import type { MathfieldElement } from 'mathlive';
+import { MathEditor } from '../../components/MathEditor';
+import { checkRows, parseRow, pickOrder } from '../../lib/new-equation/parse';
+import type { EquationDraft, EquationLimits } from '../../lib/new-equation/types';
+import type { WorkspaceInstance } from '../runtime/workspace-instances';
+import { answerOutdated, resolvedTargets, type NewEquationRuntime } from '../runtime/useNewEquationRuntime';
+import { NewEquationAnswer } from './NewEquationAnswer';
+import '../../styles/app/new-equation.css';
+
+const EXAMPLES: readonly { label: string; rows: string[] }[] = [
+  { label: 'Quadratic', rows: ['x^2-5x+6=0'] },
+  { label: 'System', rows: ['x^2+y^2=5', 'xy=2'] },
+  { label: 'Inequality', rows: ['x^2-4\\le0'] },
+  { label: 'Trigonometric', rows: ['\\sin x=\\frac{1}{2}'] },
+  { label: 'With an assumption', rows: ['x^2=a', 'a>0'] },
+];
+const LIMIT_LABELS: Readonly<Record<keyof EquationLimits, string>> = { work: 'Work', allocation: 'Memory (allocation units)' };
+
+export default function NewEquationPage({ instance, runtime }: { instance: WorkspaceInstance; runtime: NewEquationRuntime }) {
+  const draft = runtime.draftOf(instance.id), view = runtime.views[instance.id] ?? {};
+  const fields = useRef<(MathfieldElement | null)[]>([]);
+  const focusRow = useRef<number | undefined>(undefined);
+  const parsed = useMemo(() => draft.rows.map(parseRow), [draft.rows]);
+  const targets = resolvedTargets(draft);
+  const check = checkRows(parsed, targets, draft.domain);
+  const names = pickOrder(parsed.flatMap(r => (r.kind === 'relation' ? r.symbols : [])));
+  const response = view.response;
+  const outdated = answerOutdated(draft, response);
+  const notes = response && !outdated ? response.rowNotes : undefined;
+  const update = (patch: Partial<EquationDraft>) => runtime.change(instance.id, { ...draft, ...patch });
+  const solve = () => void runtime.run(instance.id);
+
+  // A row added by Shift+Enter or "+ Add row" takes the focus once it is rendered.
+  useEffect(() => {
+    if (focusRow.current === undefined) return;
+    fields.current[focusRow.current]?.focus();
+    focusRow.current = undefined;
+  });
+
+  const setRow = (i: number, latex: string) => update({ rows: draft.rows.map((r, k) => (k === i ? latex : r)) });
+  const addRow = (after: number) => { update({ rows: [...draft.rows.slice(0, after + 1), '', ...draft.rows.slice(after + 1)] }); focusRow.current = after + 1; };
+  const removeRow = (i: number) => update({ rows: draft.rows.length > 1 ? draft.rows.filter((_, k) => k !== i) : [''] });
+  const rowKeys = (i: number) => (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) { e.preventDefault(); e.stopPropagation(); addRow(i); }
+  };
+  const setTargets = (next: string[] | null) => update({ targets: next });
+
+  return <main className="new-equation-page" data-testid="new-equation-page">
+    <header>
+      <div><h1>New Equation</h1><p>Equations, inequalities and systems · exact answers, each verified</p></div>
+      <button onClick={runtime.open}>New tab</button>
+    </header>
+
+    <section className="ne-panel" aria-label="Rows">
+      <ol className="ne-rows">
+        {draft.rows.map((latex, i) => {
+          const live = check.rows[i], solved = notes?.[i];
+          const error = live.kind === 'error' ? live.message : solved?.kind === 'error' ? solved.message : undefined;
+          return <li key={i} className="ne-row" data-row-kind={error ? 'error' : live.kind} onKeyDownCapture={rowKeys(i)}>
+            <span className="ne-row-number" aria-hidden="true">{i + 1}</span>
+            <div className="ne-row-field">
+              <MathEditor ref={el => { fields.current[i] = el; }} value={latex} onChange={v => setRow(i, v)} onSubmit={solve}
+                placeholder={i === 0 ? 'An equation, inequality or ≠' : 'Another row (optional)'} dataTestId={`new-equation-row-${i + 1}`} />
+              {live.kind === 'assumption' && <p className="ne-row-hint">Assumption: cases where it fails are left out of the answer.</p>}
+              {error && <p className="ne-row-note" role="alert">{error}</p>}
+            </div>
+            <button className="ne-remove" aria-label={`Remove row ${i + 1}`} onClick={() => removeRow(i)}>×</button>
+          </li>;
+        })}
+      </ol>
+      <div className="ne-actions">
+        <button onClick={() => addRow(draft.rows.length - 1)}>+ Add row</button>
+        <details className="ne-examples">
+          <summary>Example ▾</summary>
+          <div role="menu">{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={e => { update({ rows: [...x.rows], targets: null }); (e.currentTarget.closest('details') as HTMLDetailsElement).open = false; }}>{x.label}</button>)}</div>
+        </details>
+      </div>
+      <p className="ne-tip">Enter to solve · Shift+Enter for a new row</p>
+    </section>
+
+    <section className="ne-panel ne-setup" aria-label="Setup">
+      <div className="ne-solve-for" role="group" aria-label="Solve for">
+        <span>Solve for</span>
+        {targets.map(t => <span className="ne-chip" key={t}>{t}
+          <button aria-label={`Stop solving for ${t}`} onClick={() => setTargets(targets.filter(x => x !== t))}>×</button></span>)}
+        {names.filter(n => !targets.includes(n)).length > 0 && <select aria-label="Add an unknown" value="" onChange={e => { if (e.target.value) setTargets([...targets, e.target.value]); }}>
+          <option value="">+</option>
+          {names.filter(n => !targets.includes(n)).map(n => <option key={n} value={n}>{n}</option>)}
+        </select>}
+        {draft.targets !== null && <button className="ne-link" onClick={() => setTargets(null)}>Automatic</button>}
+      </div>
+      <div className="ne-segmented" role="group" aria-label="Number domain">
+        <button aria-pressed={draft.domain === 'real'} onClick={() => update({ domain: 'real' })}>Real</button>
+        <button aria-pressed={draft.domain === 'complex'} onClick={() => update({ domain: 'complex' })}>Complex</button>
+      </div>
+    </section>
+    {check.orderOverComplex && <p className="ne-message" role="alert">Inequalities need real numbers. <button onClick={() => update({ domain: 'real' })}>Switch to Real</button></p>}
+    {check.missingTargets.length > 0 && <p className="ne-message" role="alert">{check.missingTargets.join(', ')} {check.missingTargets.length > 1 ? 'do' : 'does'} not appear in an equation row.</p>}
+
+    <div className="ne-actions ne-run">
+      <button className="ne-primary" onClick={solve} disabled={!check.ready}>{view.running ? 'Restart' : 'Solve'}</button>
+      <button disabled={!view.running} onClick={() => runtime.stop(instance.id)}>Stop</button>
+      {view.running && <span role="status">Solving and verifying…</span>}
+      {view.notice && <span role="status">{view.notice}</span>}
+    </div>
+
+    {response && <NewEquationAnswer response={response} style={draft.style} outdated={outdated} onStyle={style => update({ style })} onSolve={solve} />}
+
+    <details className="ne-panel ne-limits-panel">
+      <summary>Advanced limits</summary>
+      <p>Solving stops when it reaches a limit and says which one. Work counts steps; memory counts allocation units, not bytes of RAM. Raise them for very large problems.</p>
+      <div className="ne-limits">{(['work', 'allocation'] as const).map(key => <label key={key}>{LIMIT_LABELS[key]}
+        <input type="number" aria-label={LIMIT_LABELS[key]} min={0} step="1" value={draft.limits[key]}
+          onChange={e => { const n = Number(e.target.value); if (Number.isSafeInteger(n) && n >= 0) update({ limits: { ...draft.limits, [key]: n } }); }} /></label>)}</div>
+    </details>
+
+  </main>;
+}

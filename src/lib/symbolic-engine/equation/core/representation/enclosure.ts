@@ -1,6 +1,6 @@
 import type { ExecutionContext } from '../execution';
 import { bitLength, imul, iroot, ipow } from '../algebra/integer';
-import { rAbs, rAdd, rational, rDivide, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
+import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { refineReal } from '../algebraic/root-of';
 import type { ExprId, ExpressionStore } from './expression';
@@ -15,8 +15,10 @@ import type { ExprId, ExpressionStore } from './expression';
  *
  * Covered: rationals, real algebraic numbers, π (Machin), exp (Taylor with
  * halving and squaring), log (atanh series with 2-power reduction), W₀ and
- * W₋₁ (certified bisection on u·eᵘ), field operations, integer and rational
- * powers, abs. Non-real values, trig and inverse trig are reported, not guessed.
+ * W₋₁ (certified bisection on u·eᵘ), sin and cos (reduction by π/2, alternating
+ * Taylor series), tan, atan (Euler series), asin and acos (through atan),
+ * field operations, integer and rational powers, abs. Non-real values are
+ * reported, not guessed.
  */
 export interface Bounds { readonly lo: Rational; readonly hi: Rational }
 export type Enclosed =
@@ -31,8 +33,11 @@ const zero = (ctx: ExecutionContext) => rational(ctx, 0n);
 function floorDiv(n: bigint, d: bigint): bigint { return n >= 0n ? n / d : -((-n + d - 1n) / d); }
 function down(ctx: ExecutionContext, r: Rational, bits: number): Rational {
   ctx.tick();
+  // Already a dyadic with at most `bits` fractional bits: exact.
+  const d = r.denominator;
+  if ((d & (d - 1n)) === 0n && d <= 1n << BigInt(bits)) return r;
   const scale = 1n << BigInt(bits);
-  return rational(ctx, floorDiv(imul(ctx, r.numerator, scale), r.denominator), scale);
+  return rDyadic(ctx, floorDiv(imul(ctx, r.numerator, scale), d), bits);
 }
 function up(ctx: ExecutionContext, r: Rational, bits: number): Rational {
   const n = rNegate(ctx, r);
@@ -110,8 +115,21 @@ function atanInverseBounds(ctx: ExecutionContext, k: bigint, W: number): Bounds 
   return { lo: min(ctx, [previous, sum]), hi: max(ctx, [previous, sum]) };
 }
 
+/** π at precision ≥ bits, computed once per 64-bit step and context (per context, so work charged, and hence typed stops, never depends on other computations). */
+const PI_CACHE = new WeakMap<ExecutionContext, Map<number, Bounds>>();
+
 /** π = 16·atan(1/5) − 4·atan(1/239) (Machin). */
 export function piBounds(ctx: ExecutionContext, bits: number): Bounds {
+  const step = Math.ceil(bits / 64) * 64;
+  let known = PI_CACHE.get(ctx);
+  if (!known) { known = new Map(); PI_CACHE.set(ctx, known); }
+  let cached = known.get(step);
+  if (!cached) { cached = machin(ctx, step); known.set(step, cached); }
+  ctx.tick();
+  return { lo: down(ctx, cached.lo, bits), hi: up(ctx, cached.hi, bits) };
+}
+
+function machin(ctx: ExecutionContext, bits: number): Bounds {
   const W = bits + 8, a = atanInverseBounds(ctx, 5n, W), b = atanInverseBounds(ctx, 239n, W);
   const s = rational(ctx, 16n), f = rational(ctx, 4n);
   return {
@@ -193,6 +211,198 @@ function bisectLambert(ctx: ExecutionContext, K: Rational, branch: 0 | -1, bits:
   return { lo: a, hi: b };
 }
 
+// ---- trig ----
+
+/**
+ * Σ tₖ for an alternating series whose terms decrease in absolute value
+ * (t₀ given, tₖ₊₁ = tₖ·factor(k)), to 2^−W: the first omitted term bounds the
+ * remainder; each rounded term adds at most one unit of 2^−(W+8).
+ */
+function alternatingBounds(ctx: ExecutionContext, first: Rational, factor: (k: number) => Rational, W: number): Bounds {
+  const stop = rational(ctx, 1n, 1n << BigInt(W)), unit = W + 8;
+  let sum = zero(ctx), term = first, k = 0;
+  for (;;) {
+    ctx.tick();
+    sum = rAdd(ctx, sum, term);
+    term = down(ctx, rMultiply(ctx, term, factor(k)), unit);
+    k++;
+    if (lt(ctx, rAbs(ctx, term), stop)) break;
+  }
+  const slack = rAdd(ctx, rAbs(ctx, term), rational(ctx, BigInt(2 * (k + 1)), 1n << BigInt(unit)));
+  return { lo: down(ctx, rSubtract(ctx, sum, slack), W), hi: up(ctx, rAdd(ctx, sum, slack), W) };
+}
+
+/**
+ * sin y or cos y for a rational |y| ≤ 1 (larger |y| uses the rational series), in fixed point with U = W + 16 fractional bits
+ * (no rational normalization). Error budget, in units of 2^−U:
+ * - y and y² are truncated to Y and Y2 (one unit each); sin and cos are 1-Lipschitz in y,
+ *   and the series is 1-Lipschitz in z = y² on |y| ≤ 1, so each costs at most one unit;
+ * - every term tₖ₊₁ = −tₖ·Y2/(dₖ·2^U) is truncated toward zero (one unit), and an earlier
+ *   error is carried with a factor Y2/dₖ ≤ 1/2, so each term is off by at most 2 units;
+ * - the series alternates with decreasing terms (y²/dₖ < 1), so the remainder after the last
+ *   computed term is at most the first omitted term, below 2 + 2 units.
+ * The enclosure is the fixed-point sum ± (2·terms + 8) units.
+ */
+function trigSeries(ctx: ExecutionContext, y: Rational, sine: boolean, W: number): Bounds {
+  const U = W + 16, S = 1n << BigInt(U);
+  const Y = floorDiv(imul(ctx, y.numerator, S), y.denominator), Y2 = imul(ctx, Y, Y) >> BigInt(U);
+  let term = sine ? Y : S, sum = 0n, k = 0;
+  for (;;) {
+    ctx.tick();
+    sum += term;
+    const d = BigInt(sine ? (2 * k + 2) * (2 * k + 3) : (2 * k + 1) * (2 * k + 2));
+    term = -(imul(ctx, term, Y2) / (d << BigInt(U)));
+    k++;
+    if (term < 2n && term > -2n) break;
+  }
+  const E = BigInt(2 * (k + 1) + 8);
+  return { lo: rDyadic(ctx, sum - E, U), hi: rDyadic(ctx, sum + E, U) };
+}
+const withinOne = (ctx: ExecutionContext, y: Rational) => le(ctx, rAbs(ctx, y), rational(ctx, 1n));
+function sinSmall(ctx: ExecutionContext, y: Rational, W: number): Bounds {
+  if (withinOne(ctx, y)) return trigSeries(ctx, y, true, W);
+  const y2 = rNegate(ctx, rMultiply(ctx, y, y));
+  return alternatingBounds(ctx, y, k => rDivide(ctx, y2, rational(ctx, BigInt((2 * k + 2) * (2 * k + 3)))), W);
+}
+function cosSmall(ctx: ExecutionContext, y: Rational, W: number): Bounds {
+  if (withinOne(ctx, y)) return trigSeries(ctx, y, false, W);
+  const y2 = rNegate(ctx, rMultiply(ctx, y, y));
+  return alternatingBounds(ctx, rational(ctx, 1n), k => rDivide(ctx, y2, rational(ctx, BigInt((2 * k + 1) * (2 * k + 2)))), W);
+}
+
+/** q = n·π/2 + r with |r| < 1: the integer n and an enclosure of r (π enclosed at enough precision). */
+function quarterTurns(ctx: ExecutionContext, q: Rational, W: number): { n: bigint; r: Bounds } {
+  const extra = Math.max(0, bitLength(q.numerator) - bitLength(q.denominator)) + 8;
+  const pi = piBounds(ctx, W + extra);
+  const half = { lo: rDivide(ctx, pi.lo, rational(ctx, 2n)), hi: rDivide(ctx, pi.hi, rational(ctx, 2n)) };
+  const t = rDivide(ctx, q, half.lo), n = floorDiv(imul(ctx, 2n, t.numerator) + t.denominator, imul(ctx, 2n, t.denominator));
+  const N = rational(ctx, n), a = rSubtract(ctx, q, rMultiply(ctx, N, half.lo)), b = rSubtract(ctx, q, rMultiply(ctx, N, half.hi));
+  return { n, r: { lo: min(ctx, [a, b]), hi: max(ctx, [a, b]) } };
+}
+
+/** sin or cos at a rational point. */
+export function sinCosBounds(ctx: ExecutionContext, fn: 'sin' | 'cos', q: Rational, bits: number): Bounds {
+  if (q.numerator === 0n) return fn === 'sin' ? { lo: zero(ctx), hi: zero(ctx) } : { lo: rational(ctx, 1n), hi: rational(ctx, 1n) };
+  // A point with a long denominator: sin and cos are 1-Lipschitz, so the value at the point rounded to
+  // working precision, widened by the rounding distance, bounds it at the same accuracy with short arithmetic.
+  if (bitLength(q.denominator) > bits + 48) {
+    const p = down(ctx, q, bits + 24), delta = rational(ctx, 1n, 1n << BigInt(bits + 24)), b = sinCosBounds(ctx, fn, p, bits + 8);
+    return { lo: down(ctx, rSubtract(ctx, b.lo, delta), bits), hi: up(ctx, rAdd(ctx, b.hi, delta), bits) };
+  }
+  const W = bits + 16, { n, r } = quarterTurns(ctx, q, W);
+  // sin is increasing on [−1, 1]; cos has its maximum 1 at 0.
+  const sinR = { lo: sinSmall(ctx, r.lo, W).lo, hi: sinSmall(ctx, r.hi, W).hi };
+  const cl = cosSmall(ctx, r.lo, W), ch = cosSmall(ctx, r.hi, W);
+  const cosR = r.lo.numerator >= 0n ? { lo: ch.lo, hi: cl.hi } : r.hi.numerator <= 0n ? { lo: cl.lo, hi: ch.hi } : { lo: min(ctx, [cl.lo, ch.lo]), hi: rational(ctx, 1n) };
+  const neg = (b: Bounds): Bounds => ({ lo: rNegate(ctx, b.hi), hi: rNegate(ctx, b.lo) });
+  // sin(r + n·π/2) and cos(r + n·π/2) by the quadrant n mod 4.
+  const m = Number(((n % 4n) + 4n) % 4n) + (fn === 'cos' ? 1 : 0);
+  const box = [sinR, cosR, neg(sinR), neg(cosR)][m % 4];
+  return { lo: down(ctx, box.lo, bits), hi: up(ctx, box.hi, bits) };
+}
+
+/** atan at a rational point: odd; π/2 − atan(1/q) above 1; Euler's series Σ tₖ, tₖ₊₁ = tₖ·y·(2k+2)/(2k+3), y = q²/(1+q²) ≤ 1/2, below. */
+export function atanBounds(ctx: ExecutionContext, q: Rational, bits: number): Bounds {
+  if (q.numerator === 0n) return { lo: zero(ctx), hi: zero(ctx) };
+  if (q.numerator < 0n) { const b = atanBounds(ctx, rNegate(ctx, q), bits); return { lo: rNegate(ctx, b.hi), hi: rNegate(ctx, b.lo) }; }
+  const W = bits + 16;
+  // A point with a long denominator (an enclosure of a nested value): atan is increasing and 1-Lipschitz,
+  // so the point rounded outward to working precision bounds it at the same accuracy, with short arithmetic.
+  if (bitLength(q.denominator) > W + 32) {
+    return { lo: atanBounds(ctx, down(ctx, q, W + 8), bits).lo, hi: atanBounds(ctx, up(ctx, q, W + 8), bits).hi };
+  }
+  if (lt(ctx, rational(ctx, 1n), q)) {
+    const inner = atanBounds(ctx, rDivide(ctx, rational(ctx, 1n), q), W), pi = piBounds(ctx, W);
+    const two = rational(ctx, 2n);
+    return { lo: down(ctx, rSubtract(ctx, rDivide(ctx, pi.lo, two), inner.hi), bits), hi: up(ctx, rSubtract(ctx, rDivide(ctx, pi.hi, two), inner.lo), bits) };
+  }
+  const q2 = rMultiply(ctx, q, q), d = rAdd(ctx, rational(ctx, 1n), q2), y = rDivide(ctx, q2, d), t0 = rDivide(ctx, q, d);
+  // Fixed point with `unit` fractional bits: a lower chain (floors of y and of every step) and an upper chain
+  // (ceilings) bracket the true terms by induction, since every step is monotone in its inputs.
+  const unit = W + 8, S = 1n << BigInt(unit), stop = 1n << 8n;
+  const floorS = (r: Rational) => floorDiv(r.numerator * S, r.denominator), ceilS = (r: Rational) => -floorDiv(-r.numerator * S, r.denominator);
+  const yD = floorS(y), yU = ceilS(y);
+  let tD = floorS(t0), tU = ceilS(t0), sumD = 0n, sumU = 0n;
+  for (let k = 0n; ; k++) {
+    ctx.tick();
+    sumD += tD; sumU += tU;
+    tD = floorDiv(tD * yD * (2n * k + 2n), (2n * k + 3n) * S);
+    tU = -floorDiv(-(tU * yU * (2n * k + 2n)), (2n * k + 3n) * S);
+    if (tU < stop) break;
+  }
+  // The terms decrease with ratio ≤ y ≤ 1/2 (+ one unit): the tail is below three times the first omitted term.
+  return { lo: down(ctx, rational(ctx, sumD, S), bits), hi: up(ctx, rational(ctx, sumU + 3n * tU + 1n, S), bits) };
+}
+
+/** asin at a rational point of [−1, 1]: ±π/2 at the ends, else 2·atan(q/(1 + √(1 − q²))). */
+export function asinBounds(ctx: ExecutionContext, q: Rational, bits: number): Bounds {
+  const W = bits + 16, one = rational(ctx, 1n), two = rational(ctx, 2n);
+  if (rAbs(ctx, q).numerator === rAbs(ctx, q).denominator) {
+    const pi = piBounds(ctx, W), h = { lo: rDivide(ctx, pi.lo, two), hi: rDivide(ctx, pi.hi, two) };
+    return q.numerator > 0n ? { lo: down(ctx, h.lo, bits), hi: up(ctx, h.hi, bits) } : { lo: down(ctx, rNegate(ctx, h.hi), bits), hi: up(ctx, rNegate(ctx, h.lo), bits) };
+  }
+  // A point with a long denominator inside (−1, 1): asin is increasing, so outward-rounded points (clamped
+  // to [−1, 1]) bound it: sound everywhere, and as tight as the target precision away from ±1.
+  if (bitLength(q.denominator) > W + 32) {
+    const clamp = (r: Rational) => (lt(ctx, one, r) ? one : lt(ctx, r, rNegate(ctx, one)) ? rNegate(ctx, one) : r);
+    return { lo: asinBounds(ctx, clamp(down(ctx, q, W + 16)), bits).lo, hi: asinBounds(ctx, clamp(up(ctx, q, W + 16)), bits).hi };
+  }
+  const s = rootBounds(ctx, rSubtract(ctx, one, rMultiply(ctx, q, q)), 2, W);
+  const a = rDivide(ctx, q, rAdd(ctx, one, s.hi)), b = rDivide(ctx, q, rAdd(ctx, one, s.lo));
+  const lo = atanBounds(ctx, min(ctx, [a, b]), W).lo, hi = atanBounds(ctx, max(ctx, [a, b]), W).hi;
+  return { lo: down(ctx, rMultiply(ctx, two, lo), bits), hi: up(ctx, rMultiply(ctx, two, hi), bits) };
+}
+
+/** sin or cos over an interval: endpoint values, plus ±1 wherever an extremum k·π/2 may lie inside. */
+export function sinCosBox(ctx: ExecutionContext, fn: 'sin' | 'cos', a: Bounds, bits: number): Bounds {
+  if (rSubtract(ctx, a.hi, a.lo).numerator === 0n) return sinCosBounds(ctx, fn, a.lo, bits);
+  const one = rational(ctx, 1n), minusOne = rational(ctx, -1n);
+  if (lt(ctx, rational(ctx, 4n), rSubtract(ctx, a.hi, a.lo))) return { lo: minusOne, hi: one };
+  const values = [sinCosBounds(ctx, fn, a.lo, bits), sinCosBounds(ctx, fn, a.hi, bits)];
+  const pi = piBounds(ctx, bits + 8), two = rational(ctx, 2n);
+  const ratios = [a.lo, a.hi].flatMap(x => [rDivide(ctx, rMultiply(ctx, two, x), pi.lo), rDivide(ctx, rMultiply(ctx, two, x), pi.hi)]);
+  const from = floorDiv(min(ctx, ratios).numerator, min(ctx, ratios).denominator), to = -floorDiv(-max(ctx, ratios).numerator, max(ctx, ratios).denominator);
+  for (let m = from; m <= to; m++) {
+    ctx.tick();
+    // Only where m·π/2 may lie inside the interval.
+    const M = rational(ctx, m), ends = [rDivide(ctx, rMultiply(ctx, M, pi.lo), two), rDivide(ctx, rMultiply(ctx, M, pi.hi), two)];
+    if (lt(ctx, a.hi, min(ctx, ends)) || lt(ctx, max(ctx, ends), a.lo)) continue;
+    const r = Number(((m % 4n) + 4n) % 4n);
+    // sin peaks at m ≡ 1 (+1) and m ≡ 3 (−1); cos at m ≡ 0 (+1) and m ≡ 2 (−1), with x = m·π/2.
+    if (fn === 'sin' && r % 2 === 1) values.push(r === 1 ? pointBox(one) : pointBox(minusOne));
+    if (fn === 'cos' && r % 2 === 0) values.push(r === 0 ? pointBox(one) : pointBox(minusOne));
+  }
+  return { lo: min(ctx, values.map(v => v.lo)), hi: max(ctx, values.map(v => v.hi)) };
+}
+
+/** sin or cos of q·π for a rational q. */
+export function piMultipleBounds(ctx: ExecutionContext, fn: 'sin' | 'cos', q: Rational, bits: number): Bounds {
+  const pi = piBounds(ctx, bits + Math.max(0, bitLength(q.numerator) - bitLength(q.denominator)) + 16);
+  const ends = [rMultiply(ctx, q, pi.lo), rMultiply(ctx, q, pi.hi)];
+  return sinCosBox(ctx, fn, { lo: min(ctx, ends), hi: max(ctx, ends) }, bits);
+}
+
+function trigBox(ctx: ExecutionContext, fn: string, a: Box, bits: number): Box | Exclude<Enclosed, { kind: 'bounds' }> {
+  const one = rational(ctx, 1n), minusOne = rational(ctx, -1n);
+  switch (fn) {
+    case 'sin': case 'cos': return sinCosBox(ctx, fn, a, bits);
+    case 'tan': {
+      const s = sinCosBox(ctx, 'sin', a, bits + 8), c = boxInverse(ctx, sinCosBox(ctx, 'cos', a, bits + 8), bits + 8);
+      return c === 'zero' ? { kind: 'undefined', detail: 'tan at a pole' } : c === 'unknown' ? { kind: 'unknown' } : boxMul(ctx, s, c, bits);
+    }
+    case 'atan': return { lo: atanBounds(ctx, a.lo, bits).lo, hi: atanBounds(ctx, a.hi, bits).hi };
+    case 'asin': case 'acos': {
+      if (lt(ctx, a.hi, minusOne) || lt(ctx, one, a.lo)) return { kind: 'undefined', detail: `${fn} outside [−1, 1]` };
+      if (lt(ctx, a.lo, minusOne) || lt(ctx, one, a.hi)) return { kind: 'unknown' };
+      const s = { lo: asinBounds(ctx, a.lo, bits + 8).lo, hi: asinBounds(ctx, a.hi, bits + 8).hi };
+      if (fn === 'asin') return { lo: down(ctx, s.lo, bits), hi: up(ctx, s.hi, bits) };
+      const pi = piBounds(ctx, bits + 8), two = rational(ctx, 2n);
+      return { lo: down(ctx, rSubtract(ctx, rDivide(ctx, pi.lo, two), s.hi), bits), hi: up(ctx, rSubtract(ctx, rDivide(ctx, pi.hi, two), s.lo), bits) };
+    }
+    default: return { kind: 'unsupported', detail: `${fn} is not enclosed` };
+  }
+}
+
 /**
  * Exact integer roots are used for small root indices; beyond this crossover
  * exp(x·log b) is cheaper. An algorithm choice, not a limit.
@@ -200,7 +410,7 @@ function bisectLambert(ctx: ExecutionContext, K: Rational, branch: 0 | -1, bits:
 const ROOT_CROSSOVER = 64n;
 
 /** Floor and ceiling bounds of r^(1/q) for r ≥ 0, q ≥ 2, at `bits` (exact integer roots). */
-function rootBounds(ctx: ExecutionContext, r: Rational, q: number, bits: number): Bounds {
+export function rootBounds(ctx: ExecutionContext, r: Rational, q: number, bits: number): Bounds {
   if (r.numerator === 0n) return { lo: zero(ctx), hi: zero(ctx) };
   const scale = 1n << BigInt(bits);
   const radicand = imul(ctx, imul(ctx, r.numerator, ipow(ctx, r.denominator, q - 1)), ipow(ctx, scale, q));
@@ -241,12 +451,23 @@ export function minusInverseE(ctx: ExecutionContext, bits: number): Bounds {
 }
 
 /** Enclose a real number-only expression at working precision `bits` (explicit stack). */
+const ENCLOSURES = new WeakMap<ExpressionStore, Map<number, Map<ExprId, Box>>>();
+
 export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclosed {
-  const ctx = store.ctx, boxes = new Map<ExprId, Box>();
+  // Boxes are pure facts of (node, precision): kept per store, so repeated questions (and a verifier
+  // re-deriving on the same store) reuse them.
+  let byBits = ENCLOSURES.get(store);
+  if (!byBits) { byBits = new Map(); ENCLOSURES.set(store, byBits); }
+  let boxes = byBits.get(bits);
+  if (!boxes) { boxes = new Map(); byBits.set(bits, boxes); }
+  const known = boxes.get(id);
+  if (known) return { kind: 'bounds', lo: known.lo, hi: known.hi };
+  const ctx = store.ctx;
   const fail = (e: Exclude<Enclosed, { kind: 'bounds' }>) => e;
   for (const n of store.postorder([id])) {
+    if (boxes.has(n)) continue;
     ctx.tick();
-    const node = store.node(n), get = (c: ExprId) => boxes.get(c) as Box;
+    const node = store.node(n), get = (c: ExprId) => (boxes as Map<ExprId, Box>).get(c) as Box;
     let box: Box | Exclude<Enclosed, { kind: 'bounds' }>;
     switch (node.kind) {
       case 'number': box = pointBox(node.value); break;
@@ -337,6 +558,6 @@ function applyBox(ctx: ExecutionContext, fn: string, a: Box, bits: number): Box 
       if (le(ctx, zero(ctx), a.hi)) return { kind: 'unknown' };
       return { lo: lambertBounds(ctx, a.hi, -1, bits).lo, hi: lambertBounds(ctx, a.lo, -1, bits).hi };
     }
-    default: return { kind: 'unsupported', detail: `${fn} is not enclosed by this gate` };
+    default: return trigBox(ctx, fn, a, bits);
   }
 }

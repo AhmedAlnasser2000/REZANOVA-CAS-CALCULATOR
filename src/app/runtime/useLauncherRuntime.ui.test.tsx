@@ -58,7 +58,8 @@ describe('useLauncherRuntime', () => {
     const hook = renderLauncherRuntime({ onCloseHistoryPanel: closeHistoryPanel });
 
     await waitFor(() => {
-      expect(hook.result.current.launcherCategories[0]).toBe(loadedCategories[0]);
+      // Client-owned New Equation is appended to an older Core catalog.
+      expect(hook.result.current.launcherCategories[0].entries.map(e => e.id)).toEqual(['equation', 'new-equation']);
       expect(hook.result.current.launcherCategories.find(category => category.id === 'calculus')?.entries)
         .toContainEqual(expect.objectContaining({ id: 'new-integration' }));
     });

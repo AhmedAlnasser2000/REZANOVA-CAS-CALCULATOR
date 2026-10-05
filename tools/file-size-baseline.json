@@ -2,6 +2,6 @@
   "src/app/logic/appFlowHandlers.ts": 1350,
   "src/AppMain.tsx": 3306,
   "src/AppMain.ui.test.tsx": 2539,
-  "src/lib/guide/content/selectors.ts": 2528,
+  "src/lib/guide/content/selectors.ts": 2498,
   "src/types/calculator/runtime-types.ts": 1340
 }

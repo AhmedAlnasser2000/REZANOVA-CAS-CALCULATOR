@@ -2,16 +2,23 @@ import { decidePolynomialProblem } from './decision/solve';
 import { verifyOutcome as verifyPolynomialOutcome } from './decision/verify';
 import { decideGeneratorProblem } from './generators/solve';
 import { verifyGeneratorOutcome } from './generators/verify';
+import { decideConstantProblem, hasTranscendentalConstants, verifyConstantOutcome } from './parameters/constants';
+import { decideParametricProblem } from './parameters/solve';
+import { verifyParametricOutcome } from './parameters/verify';
+import { verifyComplexOutcome } from './periodic/complex-verify';
+import { decideSystem } from './systems/solve';
+import { verifySystemOutcome } from './systems/verify';
 import type { ExprId } from './representation/expression';
 import type { RelationProblem } from './representation/relation';
-import type { EquationOutcome } from './representation/solution-set';
+import { resourceOutcome, type EquationOutcome } from './representation/solution-set';
 
 /**
  * Entry point of the private Equation core: route a problem to the slice that
  * owns it. Problems whose target appears inside exp, log, Lambert W or an
- * exponent (slice 2), or inside an absolute value or a radical (slice 3, real
- * only), go to the closed-form engine; everything else starts at the
- * polynomial slice, which names the owning gate when it cannot decide.
+ * exponent (slice 2), inside an absolute value or a radical (slice 3, real
+ * only), or inside trig and inverse trig (slice 4; over ℂ the complex
+ * families of slice 4) go to the closed-form engine; everything else starts
+ * at the polynomial slice, which names the owning gate when it cannot decide.
  */
 function someNode(problem: RelationProblem, test: (n: ExprId, x: string) => boolean): boolean {
   const s = problem.store, x = problem.targets[0];
@@ -24,7 +31,7 @@ export function hasTranscendentalKernels(problem: RelationProblem): boolean {
   const s = problem.store;
   return someNode(problem, (n, x) => {
     const node = s.node(n);
-    if (node.kind === 'apply' && ['exp', 'log', 'lambertw', 'lambertwm1'].includes(node.fn) && s.freeSymbols(node.arg).includes(x)) return true;
+    if (node.kind === 'apply' && ['exp', 'log', 'lambertw', 'lambertwm1', 'sin', 'cos', 'tan', 'asin', 'acos', 'atan'].includes(node.fn) && s.freeSymbols(node.arg).includes(x)) return true;
     return node.kind === 'pow' && s.freeSymbols(node.exponent).includes(x);
   });
 }
@@ -44,12 +51,29 @@ export function hasConstraintKernels(problem: RelationProblem): boolean {
 const closedForm = (problem: RelationProblem) => hasTranscendentalKernels(problem) || hasConstraintKernels(problem);
 
 export function decideEquation(problem: RelationProblem): EquationOutcome {
+  // A typed stop raised while routing (before a slice's own handler) is still the typed `resource` outcome.
+  try {
+    return route(problem);
+  } catch (e) {
+    return resourceOutcome(e);
+  }
+}
+
+function route(problem: RelationProblem): EquationOutcome {
   if (problem.domain === 'complex' && hasConstraintKernels(problem)) {
     return { kind: 'unsupported', reason: 'absolute values and radicals of the target are decided over the reals only' };
   }
-  return closedForm(problem) ? decideGeneratorProblem(problem) : decidePolynomialProblem(problem);
+  if (problem.targets.length > 1) return decideSystem(problem);
+  if (problem.parameters.length) return decideParametricProblem(problem);
+  if (closedForm(problem)) return decideGeneratorProblem(problem);
+  return hasTranscendentalConstants(problem) ? decideConstantProblem(problem) : decidePolynomialProblem(problem);
 }
 
 export function verifyEquationOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
-  if (closedForm(problem)) verifyGeneratorOutcome(problem, outcome); else verifyPolynomialOutcome(problem, outcome);
+  if (problem.targets.length > 1) verifySystemOutcome(problem, outcome);
+  else if (problem.parameters.length) verifyParametricOutcome(problem, outcome);
+  else if (!closedForm(problem) && hasTranscendentalConstants(problem)) verifyConstantOutcome(problem, outcome);
+  else if (!closedForm(problem)) verifyPolynomialOutcome(problem, outcome);
+  else if (problem.domain === 'complex') verifyComplexOutcome(problem, outcome);
+  else verifyGeneratorOutcome(problem, outcome);
 }

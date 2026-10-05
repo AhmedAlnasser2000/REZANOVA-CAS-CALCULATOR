@@ -98,6 +98,18 @@ export function useWorkspaceInstancesRuntime(
     return ids;
   }, [factoryOptions]);
 
+  const newEquationSequence = useRef(0);
+  const createNewEquationTabs = useCallback((drafts: { title: string; state: WorkspaceInstanceStateSlot }[]) => {
+    const ids = drafts.map(() => `workspace.new-equation.${Date.now().toString(36)}.${++newEquationSequence.current}`);
+    setState(previous => drafts.reduce((current, draft, index) => {
+      const options = { ...factoryOptions(), idFactory: () => ids[index] };
+      let next = createBlankWorkspaceInstance(current, 'new-equation', options);
+      next = updateWorkspaceInstanceSurfaceState(next, ids[index], draft.state, options);
+      return renameWorkspaceInstance(next, ids[index], draft.title, options);
+    }, previous));
+    return ids;
+  }, [factoryOptions]);
+
   const renameInstance = useCallback((instanceId: WorkspaceInstanceId, title: string) => {
     setState((currentState) =>
       renameWorkspaceInstance(currentState, instanceId, title, factoryOptions()));
@@ -201,6 +213,7 @@ export function useWorkspaceInstancesRuntime(
     closeInstance,
     closeOtherInstances,
     createBlankInstance,
+    createNewEquationTabs,
     createNewIntegrationTabs,
     duplicateInstance,
     focusInstance,
@@ -222,6 +235,7 @@ export function useWorkspaceInstancesRuntime(
     closeInstance,
     closeOtherInstances,
     createBlankInstance,
+    createNewEquationTabs,
     createNewIntegrationTabs,
     duplicateInstance,
     focusInstance,

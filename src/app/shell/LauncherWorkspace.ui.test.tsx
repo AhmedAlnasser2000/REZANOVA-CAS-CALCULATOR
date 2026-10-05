@@ -53,7 +53,7 @@ function renderLauncher(options: {
 }
 
 function launcherRow(label: string) {
-  const button = screen.getByRole('button', { name: new RegExp(label, 'i') });
+  const button = screen.getByRole('button', { name: new RegExp(`^\\d*\\s*${label}`, 'i') });
   const row = button.closest('.launcher-entry-row');
   if (!row) {
     throw new Error(`Missing launcher row for ${label}`);
@@ -66,7 +66,7 @@ describe('LauncherWorkspace', () => {
     const { activeCategory, onLaunchApp } = renderLauncher();
     const equationEntry = activeCategory.entries.find((entry) => entry.id === 'equation');
 
-    fireEvent.click(screen.getByRole('button', { name: /Equation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^\d*\s*Equation/i }));
 
     expect(onLaunchApp).toHaveBeenCalledWith(equationEntry, 'current-tab');
   });

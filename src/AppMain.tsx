@@ -1,4 +1,4 @@
-import { useNewIntegrationRuntime } from './app/runtime/useNewIntegrationRuntime';
+import { useNewPageRuntimes } from './app/runtime/useNewPageRuntimes';
 import {
   lazy, Suspense,
   useCallback,
@@ -286,8 +286,8 @@ export default function App() {
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
-  const newIntegrationRuntime = useNewIntegrationRuntime(workspaceInstancesRuntime);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const { newIntegrationRuntime, newEquationRuntime } = useNewPageRuntimes(workspaceInstancesRuntime, settings);
   const [keypadLayer, setKeypadLayer] = useState<KeypadLayer>('base');
   const [keypadMomentaryLayer, setKeypadMomentaryLayer] = useState<KeypadLayer | null>(null);
   const [keypadLayerLocked, setKeypadLayerLocked] = useState(false);
@@ -432,7 +432,7 @@ export default function App() {
     onCloseHistoryPanel: closeHistoryPanel,
     previousNonGuideMode,
     onLaunchApp: (entry, intent) => launchWorkspaceEntryFromLauncher(entry, intent, {
-      openNewIntegration: newIntegrationRuntime.open,
+      openNewIntegration: newIntegrationRuntime.open, openNewEquation: newEquationRuntime.open,
       clearDisplayOutcome: () => setDisplayOutcome(null),
       clearEquationSolveTarget: () => setEquationSolveTarget(null),
       commitVisibleModeSelection,
@@ -2744,7 +2744,7 @@ export default function App() {
       >
         <WorkspaceTabs {...workspaceTabsRuntime} />
         <ActiveSurfaceHost
-          newIntegrationRuntime={newIntegrationRuntime} activeInstance={workspaceInstancesRuntime.activeInstance}
+          newIntegrationRuntime={newIntegrationRuntime} newEquationRuntime={newEquationRuntime} activeInstance={workspaceInstancesRuntime.activeInstance}
           guide={{
             article: guideArticle ?? null,
             currentSelectionIndex: currentGuideSelectionIndex,

@@ -123,6 +123,25 @@ export function factorQ(ctx: ExecutionContext, ring: PolynomialRing<Rational>, a
   z: PolynomialRing<bigint> = new PolynomialRing(ZZ, ring.variable)): Factorization {
   demand(ring.domain === QQ && z.domain === ZZ, 'domain-mismatch', 'rational factorization needs Q[x] and a Z[x] result ring');
   demand(!ring.isZero(ctx, a), 'invalid-input', 'factorization of zero');
+  // A factorization is a pure fact of the coefficients: kept per context, rebuilt in the caller's ring and
+  // re-verified (the product identity) on every return.
+  let known = FACTORED.get(ctx);
+  if (!known) { known = new Map(); FACTORED.set(ctx, known); }
+  const key = a.coefficients.map(c => `${c.numerator}/${c.denominator}`).join(',');
+  const hit = known.get(key);
+  if (hit) {
+    const rebuilt = Object.freeze({ unit: hit.unit, factors: Object.freeze(hit.factors.map(f => Object.freeze({ factor: z.make(ctx, [...f.coefficients]), multiplicity: f.multiplicity }))) });
+    verifyFactorization(ctx, ring, z, a, rebuilt);
+    return rebuilt;
+  }
+  const result = factorFresh(ctx, ring, a, z);
+  known.set(key, { unit: result.unit, factors: result.factors.map(f => ({ coefficients: f.factor.coefficients, multiplicity: f.multiplicity })) });
+  return result;
+}
+
+const FACTORED = new WeakMap<ExecutionContext, Map<string, { unit: Rational; factors: { coefficients: readonly bigint[]; multiplicity: number }[] }>>();
+
+function factorFresh(ctx: ExecutionContext, ring: PolynomialRing<Rational>, a: Polynomial<Rational>, z: PolynomialRing<bigint>): Factorization {
   const factors: IrreducibleFactor[] = [];
   const sf = squareFree(ctx, ring, a);
   let unit = sf.unit;

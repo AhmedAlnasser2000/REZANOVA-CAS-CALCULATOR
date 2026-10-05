@@ -62,10 +62,20 @@ export function ensureNewIntegrationLauncherEntry(categories: LauncherCategory[]
   return current ? categories.map(c => c.id === 'calculus' ? {...c, entries: [...c.entries, entry]} : c) : [...categories, standard];
 }
 
+/** The same for New Equation (Core, after Equation and Table). */
+export function ensureNewEquationLauncherEntry(categories: LauncherCategory[]): LauncherCategory[] {
+  const current = categories.find(c => c.id === 'core');
+  if (current?.entries.some(e => e.id === 'new-equation')) return categories;
+  const standard = DEFAULT_LAUNCHER_CATEGORIES.find(c => c.id === 'core')!;
+  const entry = standard.entries.find(e => e.id === 'new-equation')!;
+  return current ? categories.map(c => (c.id === 'core' ? { ...c, entries: [...c.entries, entry] } : c)) : [standard, ...categories];
+}
+
 function categoryForLeafId(id: LauncherLeafId): LauncherCategoryId {
   switch (id) {
     case 'calculate':
     case 'equation':
+    case 'new-equation':
     case 'table':
       return 'core';
     case 'matrix':

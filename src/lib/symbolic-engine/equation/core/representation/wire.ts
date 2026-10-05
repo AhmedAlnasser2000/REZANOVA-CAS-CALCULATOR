@@ -8,7 +8,7 @@ import {
 } from './relation';
 import { minimalPolynomial } from './root-identity';
 import {
-  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Point, type PointValue, type SolutionSet,
+  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type SolutionSet,
 } from './solution-set';
 import { EQUIVALENCE_KINDS, OBLIGATIONS, type EquivalenceKind, type Obligation, type ProofLog, type TransformRecord } from './transform';
 
@@ -276,6 +276,10 @@ function encodeValue(enc: GraphEncoder, v: PointValue): Json {
     const base = ['a', c.poly.coefficients.map(String), c.index];
     return 'form' in v && v.form !== undefined ? [...base, enc.ref(v.form)] : base;
   }
+  if (v.kind === 'root') {
+    const base = ['r', enc.ref(v.poly), v.variable, v.index];
+    return v.lo && v.hi ? [...base, encodeRational(enc.store.ctx, v.lo), encodeRational(enc.store.ctx, v.hi)] : base;
+  }
   return ['e', enc.ref(v.id)];
 }
 
@@ -283,6 +287,15 @@ function decodeValue(dec: GraphDecoder, value: Json): PointValue {
   const e = list(value), ctx = dec.store.ctx;
   if (e[0] === 'q' && e.length === 2) return Object.freeze({ kind: 'rational', value: decodeRational(ctx, e[1]) });
   if (e[0] === 'e' && e.length === 2) return Object.freeze({ kind: 'expression', id: dec.id(e[1]) });
+  if (e[0] === 'r' && (e.length === 4 || e.length === 6)) {
+    const variable = text(e[2]), index = e[3];
+    if (typeof index !== 'number' || !Number.isSafeInteger(index) || index < 1) fail('root index');
+    const base = { kind: 'root' as const, poly: dec.id(e[1]), variable, index: index as number };
+    if (e.length === 4) return Object.freeze(base);
+    const lo = decodeRational(ctx, e[4]), hi = decodeRational(ctx, e[5]);
+    if (lo.numerator * hi.denominator >= hi.numerator * lo.denominator) fail('root bounds');
+    return Object.freeze({ ...base, lo, hi });
+  }
   if (e[0] === 'a' && (e.length === 3 || e.length === 4)) {
     const roots = dec.store.roots.roots(ctx, minimalPolynomial(ctx, list(e[1]).map(integerText)));
     const k = e[2];
@@ -319,7 +332,16 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
     case 'cofinite': return { kind: 'cofinite', variables: [...set.variables], except: set.except.map(point) };
     case 'union': return { kind: 'union', sets: set.sets.map(s => encodeSet(enc, s)) };
     case 'case-tree': return { kind: 'case-tree', cases: set.cases.map(c => ({ conditions: conds(c.conditions), set: encodeSet(enc, c.set) })) };
+    case 'periodic-set': {
+      const iv = (i: Interval) => [encodeEndpoint(enc, i.lo), encodeEndpoint(enc, i.hi), i.loClosed, i.hiClosed];
+      return { kind: 'periodic-set', variables: [...set.variables], period: encodeValue(enc, set.period), components: set.components.map(iv), range: iv(set.range) };
+    }
     case 'periodic': return { kind: 'periodic', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), integerParameters: [...set.integerParameters], constraints: conds(set.constraints) };
+    case 'interval-family': return {
+      kind: 'interval-family', variables: [...set.variables], parameter: set.parameter, from: set.from === undefined ? null : set.from.toString(), to: set.to === undefined ? null : set.to.toString(),
+      lo: enc.ref(set.lo), hi: enc.ref(set.hi), loClosed: set.loClosed, hiClosed: set.hiClosed,
+    };
+    case 'root-set': return { kind: 'root-set', variables: [...set.variables], poly: enc.ref(set.poly) };
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
     case 'unconfirmed': return { kind: 'unconfirmed', variables: [...set.variables], candidates: set.candidates.map(c => ({ point: point(c.point), derivations: [...c.derivations] })) };
@@ -331,25 +353,36 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
   const conds = (l: Json) => Object.freeze(list(l).map(c => decodeCondition(dec, c)));
   const point = (p: Json) => Object.freeze(list(p).map(v => decodeValue(dec, v)));
   const names = (l: Json) => Object.freeze(list(l).map(text));
+  const flag = (b: Json) => (typeof b === 'boolean' ? b : fail('interval closedness flag'));
+  const interval = (x: Json): Interval => {
+    const e = list(x);
+    if (e.length !== 4) fail('interval arity');
+    return Object.freeze({ lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) });
+  };
   switch (kind) {
     case 'finite': { const r = record(value, ['kind', 'variables', 'points']); return Object.freeze({ kind, variables: names(r.variables), points: Object.freeze(list(r.points).map(point)) }); }
     case 'intervals': {
       const r = record(value, ['kind', 'variables', 'intervals']);
-      const flag = (b: Json) => (typeof b === 'boolean' ? b : fail('interval closedness flag'));
-      return Object.freeze({
-        kind, variables: names(r.variables),
-        intervals: Object.freeze(list(r.intervals).map(x => {
-          const e = list(x);
-          if (e.length !== 4) fail('interval arity');
-          return Object.freeze({ lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) });
-        })),
-      });
+      return Object.freeze({ kind, variables: names(r.variables), intervals: Object.freeze(list(r.intervals).map(interval)) });
+    }
+    case 'periodic-set': {
+      const r = record(value, ['kind', 'variables', 'period', 'components', 'range']);
+      return Object.freeze({ kind, variables: names(r.variables), period: decodeValue(dec, r.period), components: Object.freeze(list(r.components).map(interval)), range: interval(r.range) });
     }
     case 'cofinite': { const r = record(value, ['kind', 'variables', 'except']); return Object.freeze({ kind, variables: names(r.variables), except: Object.freeze(list(r.except).map(point)) }); }
     case 'union': { const r = record(value, ['kind', 'sets']); return Object.freeze({ kind, sets: Object.freeze(list(r.sets).map(s => decodeSet(dec, s))) }); }
     case 'case-tree': {
       const r = record(value, ['kind', 'cases']);
       return Object.freeze({ kind, cases: Object.freeze(list(r.cases).map(c => { const o = record(c, ['conditions', 'set']); return Object.freeze({ conditions: conds(o.conditions), set: decodeSet(dec, o.set) }); })) });
+    }
+    case 'interval-family': {
+      const r = record(value, ['kind', 'variables', 'parameter', 'from', 'to', 'lo', 'hi', 'loClosed', 'hiClosed']);
+      const bound = (b: Json) => (b === null ? undefined : typeof b === 'string' && /^-?[0-9]+$/.test(b) ? BigInt(b) : fail('interval-family bound'));
+      const from = bound(r.from), to = bound(r.to), [parameter] = names([r.parameter]);
+      return Object.freeze({
+        kind, variables: names(r.variables), parameter, ...(from === undefined ? {} : { from }), ...(to === undefined ? {} : { to }),
+        lo: dec.id(r.lo), hi: dec.id(r.hi), loClosed: flag(r.loClosed), hiClosed: flag(r.hiClosed),
+      });
     }
     case 'periodic': {
       const r = record(value, ['kind', 'variables', 'values', 'integerParameters', 'constraints']);
@@ -359,6 +392,7 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
       const r = record(value, ['kind', 'variables', 'values', 'freeParameters', 'constraints']);
       return Object.freeze({ kind, variables: names(r.variables), values: Object.freeze(list(r.values).map(v => dec.id(v))), freeParameters: names(r.freeParameters), constraints: conds(r.constraints) });
     }
+    case 'root-set': { const r = record(value, ['kind', 'variables', 'poly']); return Object.freeze({ kind, variables: names(r.variables), poly: dec.id(r.poly) }); }
     case 'reduced-form': { const r = record(value, ['kind', 'problem']); return Object.freeze({ kind, problem: decodeProblemBody(dec, r.problem) }); }
     case 'unconfirmed': {
       const r = record(value, ['kind', 'variables', 'candidates']);

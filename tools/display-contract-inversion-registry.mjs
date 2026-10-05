@@ -60,7 +60,7 @@ export const DISPLAY_CONTRACT_LANES = [
   {
     id: 'equation',
     matchers: [
-      ...prefix('src/lib/equation/', 'src/lib/modes/equation'),
+      ...prefix('src/lib/equation/', 'src/lib/new-equation/', 'src/lib/modes/equation'),
       ...exact(
         'src/lib/modes/worker-clients/equation-worker-client.ts',
         'src/lib/modes/worker-entrypoints/equation.worker.ts',
@@ -633,6 +633,7 @@ export const PRODUCER_DRAFT_OWNER_MATCHERS = prefix(
   'src/lib/algebra/',
   'src/lib/calculus/',
   'src/lib/equation/',
+  'src/lib/new-equation/',
   'src/lib/geometry/',
   'src/lib/kernel/',
   'src/lib/linear-algebra/',

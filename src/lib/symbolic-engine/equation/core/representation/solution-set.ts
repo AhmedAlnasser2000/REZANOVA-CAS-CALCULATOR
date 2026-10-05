@@ -1,10 +1,12 @@
 import { demand, EquationAlgebraError, type EquationStop } from '../execution';
-import { rCompare } from '../algebra/rational';
+import { rational, rCompare, type Rational } from '../algebra/rational';
 import { compareReal, type RealRootOf, type RootOf } from '../algebraic/root-of';
 import { asRoot, evaluateExact, type EvaluationDomain, type ExactValue } from './evaluate';
 import { isSymbolName, type ExprId, type ExpressionStore } from './expression';
 import { canonicalCondition, conditionKey, type Condition, type RelationProblem } from './relation';
-import { realCompare } from './real-order';
+import { expandConstant } from './angles';
+import { enclose } from './enclosure';
+import { realCompare, realSign, START_BITS } from './real-order';
 import type { ProofLog } from './transform';
 
 /**
@@ -30,7 +32,17 @@ export type EquationOutcome =
  * log 2). An algebraic value may carry `form`, a closed form (radicals) proven
  * to evaluate exactly to the same root; identity always stays the RootOf.
  */
-export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly root: RootOf; readonly form?: ExprId } | { readonly kind: 'expression'; readonly id: ExprId };
+export type PointValue = ExactValue | { readonly kind: 'algebraic'; readonly root: RootOf; readonly form?: ExprId } | { readonly kind: 'expression'; readonly id: ExprId } | RootValue;
+/**
+ * The index-th real root (1 = smallest) of a polynomial `poly` in `variable` whose
+ * coefficients carry parameters (parameters gate): valid inside a case whose
+ * conditions fix the number of real roots.
+ */
+export interface RootValue {
+  readonly kind: 'root'; readonly poly: ExprId; readonly variable: string; readonly index: number;
+  /** For a polynomial with constant (possibly transcendental) coefficients: rationals lo < root < hi isolating it. */
+  readonly lo?: Rational; readonly hi?: Rational;
+}
 export type Point = readonly PointValue[];
 
 /** An interval endpoint: ±∞ or an exact real value. */
@@ -49,6 +61,21 @@ export type SolutionSet =
   | { readonly kind: 'cofinite'; readonly variables: readonly string[]; readonly except: readonly Point[] }
   | { readonly kind: 'union'; readonly sets: readonly SolutionSet[] }
   | { readonly kind: 'case-tree'; readonly cases: readonly Case[] }
+  /**
+   * One real variable: {x ∈ range : x − k·period ∈ some component for an integer k}.
+   * Each component (a point or an interval shorter than the period) is stored
+   * once, by its left end in the window (−period/2, period/2]; the range is ℝ or
+   * a half-line that starts or ends at a component occurrence.
+   */
+  | { readonly kind: 'periodic-set'; readonly variables: readonly string[]; readonly period: PointValue; readonly components: readonly Interval[]; readonly range: Interval }
+  /**
+   * One real variable: the union over integers k with from ≤ k ≤ to (either bound may be absent) of
+   * the intervals between lo(k) and hi(k), expressions in the parameter. Members are pairwise disjoint
+   * and ordered in k (proven when the set is built); lower-bounded ranges start at k = 0.
+   */
+  | { readonly kind: 'interval-family'; readonly variables: readonly string[]; readonly parameter: string; readonly from?: bigint; readonly to?: bigint; readonly lo: ExprId; readonly hi: ExprId; readonly loClosed: boolean; readonly hiClosed: boolean }
+  /** One variable: every root of `poly` in that variable (parameters gate, over ℂ, degree ≥ 3). */
+  | { readonly kind: 'root-set'; readonly variables: readonly string[]; readonly poly: ExprId }
   /** values[i] gives variables[i] in terms of integer parameters (k ∈ ℤ), under constraints. */
   | { readonly kind: 'periodic'; readonly variables: readonly string[]; readonly values: readonly ExprId[]; readonly integerParameters: readonly string[]; readonly constraints: readonly Condition[] }
   /** values[i] gives variables[i] in terms of free continuous parameters, under constraints. */
@@ -58,7 +85,7 @@ export type SolutionSet =
   /** Candidates whose verification could not be decided, each with the derivations that produced it. */
   | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] };
 
-export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
+export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'root-set', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
 
 const fail = (reason: string): never => demand(false, 'invalid-input', reason) as never;
 
@@ -87,14 +114,17 @@ export function resourceOutcome(error: unknown): EquationOutcome {
 export function valueKey(store: ExpressionStore, v: PointValue): string {
   if (v.kind === 'rational') return `q:${v.value.numerator}/${v.value.denominator}`;
   if (v.kind === 'algebraic') return `a:${store.roots.canonical(store.ctx, v.root).key}`;
+  if (v.kind === 'root') return `r:${store.digest(v.poly)}:${v.variable}:${v.index}`;
   return `e:${store.digest(v.id)}`;
 }
 
 function rank(v: PointValue): number {
-  return v.kind === 'rational' || (v.kind === 'algebraic' && v.root.kind === 'real') ? 0 : v.kind === 'algebraic' ? 1 : 2;
+  return v.kind === 'rational' || (v.kind === 'algebraic' && v.root.kind === 'real') ? 0 : v.kind === 'algebraic' ? 1 : v.kind === 'root' ? 3 : 2;
 }
 
-function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
+/** A point value as an expression (a parametric root has none). */
+export function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
+  demand(v.kind !== 'root', 'invalid-input', 'a parametric root has no closed form');
   return v.kind === 'expression' ? v.id : v.kind === 'rational' ? store.number(v.value) : store.algebraic(v.root);
 }
 
@@ -105,9 +135,13 @@ function valueExpression(store: ExpressionStore, v: PointValue): ExprId {
  */
 export function compareValues(store: ExpressionStore, a: PointValue, b: PointValue): number {
   const ctx = store.ctx;
+  if ((a.kind === 'root' && a.lo) || (b.kind === 'root' && b.lo)) {
+    const c = boundedCompare(store, a, b);
+    if (c !== undefined) return c;
+  }
   if (a.kind === 'expression' || b.kind === 'expression') {
     if (valueKey(store, a) === valueKey(store, b)) return 0;
-    const real = (v: PointValue) => v.kind !== 'algebraic' || v.root.kind === 'real';
+    const real = (v: PointValue) => v.kind !== 'root' && (v.kind !== 'algebraic' || v.root.kind === 'real') && (v.kind !== 'expression' || store.freeSymbols(v.id).length === 0);
     if (real(a) && real(b)) {
       try {
         return realCompare(store, valueExpression(store, a), valueExpression(store, b));
@@ -128,8 +162,39 @@ export function compareValues(store: ExpressionStore, a: PointValue, b: PointVal
   return ka < kb ? -1 : ka > kb ? 1 : 0;
 }
 
+/**
+ * Order against a root carrying isolating bounds: a value at or beyond one of
+ * its bounds is on that side (the root lies strictly inside). Undefined when
+ * the bounds do not separate the two values.
+ */
+function boundedCompare(store: ExpressionStore, a: PointValue, b: PointValue): number | undefined {
+  if (valueKey(store, a) === valueKey(store, b)) return 0;
+  const below = (v: PointValue, q: Rational): boolean | undefined => {
+    // v ≤ q, exactly.
+    if (v.kind === 'root') return v.hi ? rCompare(store.ctx, v.hi, q) <= 0 : undefined;
+    if (v.kind === 'expression' && store.freeSymbols(v.id).length) return undefined;
+    return realCompare(store, valueExpression(store, v), store.number(q)) <= 0;
+  };
+  const above = (v: PointValue, q: Rational): boolean | undefined => {
+    if (v.kind === 'root') return v.lo ? rCompare(store.ctx, v.lo, q) >= 0 : undefined;
+    if (v.kind === 'expression' && store.freeSymbols(v.id).length) return undefined;
+    return realCompare(store, valueExpression(store, v), store.number(q)) >= 0;
+  };
+  if (a.kind === 'root' && a.lo && a.hi) {
+    if (below(b, a.lo)) return 1;
+    if (above(b, a.hi)) return -1;
+  }
+  if (b.kind === 'root' && b.lo && b.hi) {
+    if (below(a, b.lo)) return -1;
+    if (above(a, b.hi)) return 1;
+  }
+  return undefined;
+}
+
 /** Exact numbers in canonical form; expressions that evaluate exactly become numbers. */
 function normalizeValue(store: ExpressionStore, v: PointValue, domain: EvaluationDomain): PointValue {
+  if (v.kind === 'root') { store.node(v.poly); return Object.freeze({ ...v }); }
+  if (v.kind === 'expression' && store.freeSymbols(v.id).length) return Object.freeze({ kind: 'expression', id: v.id });
   if (v.kind === 'expression') {
     store.node(v.id);
     const e = evaluateExact(store, v.id, domain);
@@ -160,6 +225,20 @@ function checkVariables(variables: readonly string[]): readonly string[] {
 }
 
 // ---- construction ----
+
+/** Whether a set mentions parameter symbols or parametric roots (then it has no numeric normal form). */
+export function parametric(store: ExpressionStore, set: SolutionSet): boolean {
+  const value = (v: PointValue | Endpoint) => v.kind === 'root' || (v.kind === 'expression' && store.freeSymbols(v.id).length > 0);
+  switch (set.kind) {
+    case 'finite': return set.points.some(p => p.some(value));
+    case 'cofinite': return set.except.some(p => p.some(value));
+    case 'intervals': return set.intervals.some(i => value(i.lo) || value(i.hi));
+    case 'union': return set.sets.some(x => parametric(store, x));
+    case 'root-set': return true;
+    case 'periodic-set': return value(set.period) || set.components.some(i => value(i.lo) || value(i.hi));
+    default: return false;
+  }
+}
 
 export function finiteSet(variables: readonly string[], points: readonly Point[]): SolutionSet {
   const vars = checkVariables(variables);
@@ -192,6 +271,8 @@ export function setVariables(set: SolutionSet): readonly string[] {
 export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: EvaluationDomain): SolutionSet {
   const ctx = store.ctx;
   ctx.tick();
+  // Interval ends and family members in the parameters have no numeric order: kept as the parameters engine built them.
+  if ((set.kind === 'intervals' || set.kind === 'periodic-set') && parametric(store, set)) return Object.freeze({ ...set, variables: checkVariables(set.variables) });
   switch (set.kind) {
     case 'finite': {
       ctx.allocate(set.points.length);
@@ -215,11 +296,17 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
       while (pending.length) {
         const s = pending.shift() as SolutionSet;
         if (setVariables(s).join(',') !== vars) fail('union of sets over different variables');
-        if (s.kind === 'union') pending.unshift(...s.sets); else flat.push(normalizeSet(store, s, domain));
+        if (s.kind === 'union') { pending.unshift(...s.sets); continue; }
+        const n = normalizeSet(store, s, domain);
+        if (n.kind === 'union') flat.push(...n.sets); else flat.push(n);
       }
-      const finite = flat.filter(s => s.kind === 'finite') as Extract<SolutionSet, { kind: 'finite' }>[];
-      const others = flat.filter(s => s.kind !== 'finite');
-      const merged = normalizeSet(store, finiteSet(setVariables(set), finite.flatMap(s => s.points)), domain);
+      const mergedPeriodic = mergePeriodicSets(store, flat.filter(s => s.kind === 'periodic-set') as PeriodicSet[], domain);
+      const periodicSets = mergedPeriodic.filter(s => s.kind === 'periodic-set') as PeriodicSet[];
+      const finite = [...flat, ...mergedPeriodic].filter(s => s.kind === 'finite') as Extract<SolutionSet, { kind: 'finite' }>[];
+      const others = [...flat.filter(s => s.kind !== 'finite' && s.kind !== 'periodic-set'), ...mergedPeriodic.filter(s => s.kind !== 'finite')];
+      // Points that a periodic set already contains are absorbed by it.
+      const loose = finite.flatMap(s => s.points).filter(p => p.length !== 1 || !periodicSets.some(ps => periodicContains(store, ps, p[0])));
+      const merged = normalizeSet(store, finiteSet(setVariables(set), loose), domain);
       const parts = (merged.kind === 'finite' && merged.points.length === 0 ? [] : [merged]).concat(others);
       const byKey = new Map(parts.map(s => [setKey(store, s), s] as const));
       const ordered = [...byKey.keys()].sort().map(k => byKey.get(k) as SolutionSet);
@@ -227,12 +314,28 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
       return ordered.length === 1 ? ordered[0] : unionSet(ordered);
     }
     case 'case-tree': {
-      const cases = set.cases.map(c => Object.freeze({ conditions: canonicalConditions(store, c.conditions), set: normalizeSet(store, c.set, domain) }));
+      // A case set in the parameters (ends such as (−b − √D)/(2a) or parametric roots) has no numeric order:
+      // it keeps the order in which the parameters engine built it.
+      // Finite sets have no order, so parametric points are still deduplicated and sorted (by identity).
+      const cases = set.cases.map(c => Object.freeze({ conditions: canonicalConditions(store, c.conditions), set: parametric(store, c.set) && c.set.kind !== 'finite' ? Object.freeze(c.set) : normalizeSet(store, c.set, domain) }));
       const byKey = new Map(cases.map(c => [caseKey(store, c), c] as const));
       return Object.freeze({ kind: 'case-tree', cases: Object.freeze([...byKey.keys()].sort().map(k => byKey.get(k) as Case)) });
     }
+    case 'periodic-set': return normalizePeriodicSet(store, set, domain);
     case 'periodic': case 'parametric':
       return Object.freeze({ ...set, constraints: canonicalConditions(store, set.constraints) });
+    case 'root-set': {
+      checkVariables(set.variables);
+      store.node(set.poly);
+      return Object.freeze({ ...set });
+    }
+    case 'interval-family': {
+      checkVariables(set.variables);
+      if (!isSymbolName(set.parameter) || set.variables.includes(set.parameter)) fail('interval-family parameter');
+      if (set.from !== undefined && set.to !== undefined && set.from > set.to) fail('interval-family range');
+      store.node(set.lo); store.node(set.hi);
+      return Object.freeze({ ...set });
+    }
     case 'reduced-form':
       return set;
     case 'unconfirmed': {
@@ -269,7 +372,13 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
     case 'cofinite': return `cofinite(${set.variables.join(',')}){${set.except.map(p => pointKey(store, p)).join('|')}}`;
     case 'union': return `union{${set.sets.map(s => setKey(store, s)).join('|')}}`;
     case 'case-tree': return `cases{${set.cases.map(c => caseKey(store, c)).join('|')}}`;
+    case 'periodic-set': {
+      const iv = (i: Interval) => `${i.loClosed ? '[' : '('}${endpointKey(store, i.lo)},${endpointKey(store, i.hi)}${i.hiClosed ? ']' : ')'}`;
+      return `periodic-set(${set.variables.join(',')}){${valueKey(store, set.period)}}{${set.components.map(iv).join('|')}}${iv(set.range)}`;
+    }
     case 'periodic': return `periodic(${set.variables.join(',')};${set.integerParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
+    case 'root-set': return `root-set(${set.variables.join(',')}){${store.digest(set.poly)}}`;
+    case 'interval-family': return `interval-family(${set.variables.join(',')};${set.parameter}:${set.from ?? '-inf'}..${set.to ?? 'inf'})${set.loClosed ? '[' : '('}${store.digest(set.lo)},${store.digest(set.hi)}${set.hiClosed ? ']' : ')'}`;
     case 'parametric': return `parametric(${set.variables.join(',')};${set.freeParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
     case 'reduced-form': return `reduced{${set.problem.hash}}`;
     case 'unconfirmed': return `unconfirmed(${set.variables.join(',')}){${set.candidates.map(c => `${pointKey(store, c.point)}<${c.derivations.join(',')}>`).join('|')}}`;
@@ -331,6 +440,237 @@ function normalizeIntervals(store: ExpressionStore, set: Extract<SolutionSet, { 
     merged.push(Object.freeze(it));
   }
   return Object.freeze({ kind: 'intervals', variables: vars, intervals: Object.freeze(merged) });
+}
+
+// ---- periodic sets ----
+
+type PeriodicSet = Extract<SolutionSet, { kind: 'periodic-set' }>;
+function isFullLine(i: Interval): boolean { return i.lo.kind === 'infinity' && i.hi.kind === 'infinity'; }
+
+/** ⌊t⌋ of a real closed form, and whether t is exactly that integer (enclosures, then an exact sign at an integer). */
+export function floorExact(store: ExpressionStore, t: ExprId): { readonly n: bigint; readonly integer: boolean } {
+  const ctx = store.ctx;
+  const floorOf = (r: { numerator: bigint; denominator: bigint }) => (r.numerator >= 0n ? r.numerator / r.denominator : -((-r.numerator + r.denominator - 1n) / r.denominator));
+  for (let bits = START_BITS; ; bits *= 2) {
+    ctx.tick();
+    const e = enclose(store, t, bits);
+    if (e.kind === 'undefined') fail(`floor of an undefined value: ${e.detail}`);
+    if (e.kind !== 'bounds') continue;
+    const a = floorOf(e.lo), b = floorOf(e.hi);
+    if (b - a > 1n) continue;
+    // At most one integer m with lo ≤ m ≤ hi: the exact sign of t − m decides.
+    const m = b, inside = rCompare(ctx, e.lo, rational(ctx, m)) <= 0;
+    if (!inside) return { n: a, integer: false };
+    const sign = realSign(store, store.sub(t, store.integer(m)));
+    return sign === 0 ? { n: m, integer: true } : sign > 0 ? { n: m, integer: false } : { n: m - 1n, integer: false };
+  }
+}
+
+/**
+ * v − k·P in the window: (−P/2, P/2] for points (principal residues), and
+ * [−P/2, P/2) for the left end of an interval, so (−π/2, π/2) + πℤ stays as written.
+ */
+function intoWindow(store: ExpressionStore, v: ExprId, P: ExprId, intervalEnd = false): { value: ExprId; k: bigint } {
+  const half = store.number(rational(store.ctx, 1n, 2n)), t = store.div(v, P);
+  let k: bigint;
+  if (intervalEnd) k = floorExact(store, store.add(t, half)).n;
+  else { const f = floorExact(store, store.sub(t, half)); k = f.integer ? f.n : f.n + 1n; }
+  return { value: k === 0n ? v : expandConstant(store, store.sub(v, store.mul(store.integer(k), P))), k };
+}
+
+const expr = (store: ExpressionStore, v: PointValue | Endpoint) => valueExpression(store, v as PointValue);
+const asValue = (store: ExpressionStore, id: ExprId, domain: EvaluationDomain): PointValue => normalizeValue(store, { kind: 'expression', id }, domain);
+const sameEnd = (store: ExpressionStore, a: Endpoint, b: Endpoint) => compareEndpoints(store, a, b) === 0;
+function sameComponent(store: ExpressionStore, a: Interval, b: Interval): boolean {
+  return a.loClosed === b.loClosed && a.hiClosed === b.hiClosed && sameEnd(store, a.lo, b.lo) && sameEnd(store, a.hi, b.hi);
+}
+
+/** Components shifted by `shift` and re-windowed, sorted and merged (also across the window edge). */
+function windowed(store: ExpressionStore, components: readonly Interval[], P: ExprId, domain: EvaluationDomain, shift?: ExprId): Interval[] {
+  const items = components.map(c => {
+    const lo = shift === undefined ? expr(store, c.lo) : store.add(expr(store, c.lo), shift);
+    const hi = shift === undefined ? expr(store, c.hi) : store.add(expr(store, c.hi), shift);
+    const w = intoWindow(store, lo, P, !(c.loClosed && c.hiClosed && compareEndpoints(store, c.lo, c.hi) === 0));
+    const hiShifted = w.k === 0n ? hi : store.sub(hi, store.mul(store.integer(w.k), P));
+    return { lo: asValue(store, w.value, domain), hi: asValue(store, hiShifted, domain), loClosed: c.loClosed, hiClosed: c.hiClosed } as Interval;
+  });
+  items.sort((a, b) => compareEndpoints(store, a.lo, b.lo) || (a.loClosed === b.loClosed ? 0 : a.loClosed ? -1 : 1));
+  const merged: Interval[] = [];
+  const joins = (a: Interval, b: Interval) => { const c = compareEndpoints(store, a.hi, b.lo); return c > 0 || (c === 0 && (a.hiClosed || b.loClosed)); };
+  const union = (a: Interval, b: Interval): Interval => {
+    const d = compareEndpoints(store, b.hi, a.hi);
+    return { lo: a.lo, loClosed: a.loClosed, hi: d > 0 ? b.hi : a.hi, hiClosed: d > 0 ? b.hiClosed : d < 0 ? a.hiClosed : a.hiClosed || b.hiClosed };
+  };
+  for (const it of items) {
+    store.ctx.tick();
+    const last = merged[merged.length - 1];
+    if (last && joins(last, it)) merged[merged.length - 1] = union(last, it); else merged.push(it);
+  }
+  // Across the edge: the last component reaching the first one's next occurrence.
+  while (merged.length > 1) {
+    const last = merged[merged.length - 1], first = merged[0];
+    const next: Interval = { lo: asValue(store, store.add(expr(store, first.lo), P), domain), hi: asValue(store, store.add(expr(store, first.hi), P), domain), loClosed: first.loClosed, hiClosed: first.hiClosed };
+    if (!joins(last, next)) break;
+    merged.pop();
+    merged[0] = union(last, next);
+    merged.push(merged.shift() as Interval);
+    merged.sort((a, b) => compareEndpoints(store, a.lo, b.lo));
+  }
+  return merged.map(c => Object.freeze(c));
+}
+
+function divisorsDescending(n: number): number[] {
+  const out: number[] = [];
+  for (let m = n; m >= 2; m--) if (n % m === 0) out.push(m);
+  return out;
+}
+
+/** The whole period is covered: the set is its range. */
+function coversPeriod(store: ExpressionStore, components: readonly Interval[], P: ExprId): boolean {
+  if (components.length !== 1) return false;
+  const c = components[0], length = store.sub(expr(store, c.hi), expr(store, c.lo));
+  const cmp = realCompare(store, length, P);
+  return cmp > 0 || (cmp === 0 && (c.loClosed || c.hiClosed));
+}
+
+function rangeSet(store: ExpressionStore, variables: readonly string[], range: Interval, domain: EvaluationDomain): SolutionSet {
+  return normalizeSet(store, { kind: 'intervals', variables, intervals: [range] }, domain);
+}
+
+export function normalizePeriodicSet(store: ExpressionStore, set: PeriodicSet, domain: EvaluationDomain): SolutionSet {
+  if (domain !== 'real') fail('periodic sets need the real domain');
+  const vars = checkVariables(set.variables);
+  if (vars.length !== 1) fail('periodic sets describe one variable');
+  let period = normalizeValue(store, set.period, 'real'), P = expr(store, period);
+  if (realSign(store, P) <= 0) fail('period must be positive');
+  const range = (normalizeIntervals(store, { kind: 'intervals', variables: vars, intervals: [set.range] }, 'real') as Extract<SolutionSet, { kind: 'intervals' }>).intervals;
+  if (range.length !== 1 || (range[0].lo.kind !== 'infinity' && range[0].hi.kind !== 'infinity')) fail('a periodic range is ℝ or a half-line');
+  for (const c of set.components) {
+    const lo = normalizeEndpoint(store, c.lo), hi = normalizeEndpoint(store, c.hi);
+    if (lo.kind === 'infinity' || hi.kind === 'infinity') fail('periodic components are bounded');
+    const cmp = compareEndpoints(store, lo, hi);
+    if (cmp > 0 || (cmp === 0 && !(c.loClosed && c.hiClosed))) fail('empty or reversed periodic component');
+  }
+  let components = windowed(store, set.components, P, 'real');
+  if (components.length === 0) return finiteSet(vars, []);
+  if (coversPeriod(store, components, P)) return rangeSet(store, vars, range[0], 'real');
+  // Minimal period: a translation by P/m that maps the components onto themselves.
+  for (let reduced = true; reduced;) {
+    reduced = false;
+    for (const m of divisorsDescending(components.length)) {
+      const step = store.div(P, store.integer(m));
+      const moved = windowed(store, components, P, 'real', step);
+      if (moved.length !== components.length || !moved.every((c, i) => sameComponent(store, c, components[i]))) continue;
+      period = asValue(store, step, 'real');
+      P = step;
+      components = windowed(store, components, P, 'real');
+      reduced = true;
+      break;
+    }
+  }
+  const r = range[0];
+  if (!isFullLine(r)) {
+    // A half-line starts (or ends) exactly at a component occurrence, with its closedness.
+    const end = r.lo.kind !== 'infinity' ? { at: r.lo, closed: r.loClosed, side: 'lo' as const } : { at: r.hi, closed: r.hiClosed, side: 'hi' as const };
+    const ok = components.some(c => {
+      const e = end.side === 'lo' ? c.lo : c.hi, closed = end.side === 'lo' ? c.loClosed : c.hiClosed;
+      return closed === end.closed && floorExact(store, store.div(store.sub(expr(store, end.at), expr(store, e)), P)).integer;
+    });
+    if (!ok) fail('a periodic half-line must start or end at a component occurrence');
+  }
+  const base = Object.freeze({ kind: 'periodic-set' as const, variables: vars, period, components: Object.freeze(components), range: r });
+  return isFullLine(r) && components.every(c => c.lo === c.hi || sameEnd(store, c.lo, c.hi)) ? orbitDecomposition(store, base) : base;
+}
+
+/**
+ * Point families split canonically into maximal orbits: residues r + j·P/m
+ * (j = 0…m−1) all present form one family of period P/m, largest m first;
+ * cosets of one subgroup are disjoint, so the split is unique.
+ */
+function orbitDecomposition(store: ExpressionStore, set: PeriodicSet): SolutionSet {
+  const P = expr(store, set.period);
+  let remaining = [...set.components];
+  const families = new Map<string, { period: PointValue; points: Interval[] }>();
+  for (let m = remaining.length; m >= 2; m--) {
+    for (let i = 0; i < remaining.length; i++) {
+      store.ctx.tick();
+      const r = remaining[i], step = store.div(P, store.integer(m));
+      const orbit: number[] = [];
+      for (let j = 0; j < m; j++) {
+        const shifted = intoWindow(store, store.add(expr(store, r.lo), store.mul(store.integer(j), step)), P).value;
+        const at = remaining.findIndex(c => compareEndpoints(store, c.lo, asValue(store, shifted, 'real')) === 0);
+        if (at < 0) break;
+        orbit.push(at);
+      }
+      if (orbit.length !== m) continue;
+      const residue = asValue(store, intoWindow(store, expr(store, r.lo), step).value, 'real');
+      const key = valueKey(store, asValue(store, step, 'real'));
+      const family = families.get(key) ?? { period: asValue(store, step, 'real'), points: [] };
+      family.points.push(Object.freeze({ lo: residue, hi: residue, loClosed: true, hiClosed: true }));
+      families.set(key, family);
+      remaining = remaining.filter((_, k) => !orbit.includes(k));
+      i = -1;
+    }
+  }
+  const sets: SolutionSet[] = [...families.values()].map(f => Object.freeze({ ...set, period: f.period, components: Object.freeze(windowed(store, f.points, expr(store, f.period), 'real')) }));
+  if (remaining.length) sets.push(Object.freeze({ ...set, components: Object.freeze(remaining) }));
+  if (sets.length === 1) return sets[0];
+  const byKey = new Map(sets.map(x => [setKey(store, x), x] as const));
+  return unionSet([...byKey.keys()].sort().map(k => byKey.get(k) as SolutionSet));
+}
+
+/** Whether a real point lies in a periodic set (exact). */
+export function periodicContains(store: ExpressionStore, set: PeriodicSet, v: PointValue): boolean {
+  const P = expr(store, set.period), x = valueExpression(store, v);
+  const r = set.range;
+  if (r.lo.kind !== 'infinity') { const c = compareValues(store, v, r.lo); if (c < 0 || (c === 0 && !r.loClosed)) return false; }
+  if (r.hi.kind !== 'infinity') { const c = compareValues(store, v, r.hi); if (c > 0 || (c === 0 && !r.hiClosed)) return false; }
+  const w = intoWindow(store, x, P).value;
+  for (const shift of [store.sub(w, P), w, store.add(w, P)]) {
+    const p = asValue(store, shift, 'real');
+    for (const c of set.components) {
+      const a = compareEndpoints(store, p, c.lo), b = compareEndpoints(store, p, c.hi);
+      if ((a > 0 || (a === 0 && c.loClosed)) && (b < 0 || (b === 0 && c.hiClosed))) return true;
+    }
+  }
+  return false;
+}
+
+/** Periodic sets with one range and commensurable periods merge over their common period. */
+function mergePeriodicSets(store: ExpressionStore, sets: readonly PeriodicSet[], domain: EvaluationDomain): SolutionSet[] {
+  const groups = new Map<string, PeriodicSet[]>();
+  for (const s of sets) {
+    const k = `${s.range.loClosed}${endpointKey(store, s.range.lo)}|${endpointKey(store, s.range.hi)}${s.range.hiClosed}`;
+    groups.set(k, [...(groups.get(k) ?? []), s]);
+  }
+  const out: SolutionSet[] = [];
+  for (const group of groups.values()) {
+    const pending = [...group];
+    while (pending.length) {
+      let acc = pending.shift() as PeriodicSet;
+      for (let i = 0; i < pending.length; i++) {
+        const ratio = store.numberValue(store.div(expr(store, pending[i].period), expr(store, acc.period)));
+        if (!ratio) continue;
+        // Common period L = b·P_acc = a·P_other for ratio a/b.
+        const common = store.mul(store.integer(ratio.numerator), expr(store, acc.period));
+        const expand = (s: PeriodicSet, times: bigint) => {
+          const parts: Interval[] = [];
+          for (let j = 0n; j < times; j++) {
+            store.ctx.tick();
+            const shift = store.mul(store.integer(j), expr(store, s.period));
+            for (const c of s.components) parts.push({ ...c, lo: asValue(store, store.add(expr(store, c.lo), shift), domain), hi: asValue(store, store.add(expr(store, c.hi), shift), domain) });
+          }
+          return parts;
+        };
+        acc = Object.freeze({ ...acc, period: asValue(store, common, domain), components: [...expand(acc, ratio.numerator), ...expand(pending[i], ratio.denominator)] });
+        pending.splice(i, 1);
+        i = -1;
+      }
+      const n = normalizePeriodicSet(store, acc, domain);
+      if (n.kind === 'union') out.push(...n.sets); else if (!(n.kind === 'finite' && n.points.length === 0)) out.push(n);
+    }
+  }
+  return out;
 }
 
 // ---- membership ----

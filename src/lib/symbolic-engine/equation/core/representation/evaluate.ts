@@ -4,8 +4,11 @@ import {
 } from '../algebra/rational';
 import * as algebraic from '../algebraic/arithmetic';
 import { compareRational } from '../algebraic/real-roots';
-import { ALGEBRAIC_RING, compareReal, realRoots, refineReal, rootsOfIrreducible, type RealRootOf, type RootOf } from '../algebraic/root-of';
-import { minusInverseE } from './enclosure';
+import { cyclotomic } from '../algebraic/cyclotomic';
+import {
+  ALGEBRAIC_RING, compareReal, realRoots, refineComplex, refineReal, rootsOfIrreducible, type ComplexRootOf, type RealRootOf, type RootOf,
+} from '../algebraic/root-of';
+import { minusInverseE, piMultipleBounds, type Bounds } from './enclosure';
 import { childrenOf as childrenOfNode, safeCount, type ExprId, type ExpressionStore } from './expression';
 
 /**
@@ -221,6 +224,209 @@ function power(ctx: ExecutionContext, b: ExactValue, e: ExactValue, domain: Eval
   return notExact('transcendental', 'algebraic number to an irrational algebraic power (Gelfond–Schneider)');
 }
 
+// ---- angles: e^{iθ} exactly, for θ = Σ nⱼ·arcⱼ(cⱼ) + q·π with real algebraic cⱼ ----
+
+function conjugate(ctx: ExecutionContext, v: ExactValue): ExactValue {
+  return v.kind === 'algebraic' && v.root.kind === 'complex' ? normalizeValue(Object.freeze({ ...v.root, im: rNegate(ctx, v.root.im) })) : v;
+}
+
+/** Re v and Im v of an algebraic number (exact). */
+export function realPart(ctx: ExecutionContext, v: ExactValue): ExactValue {
+  if (v.kind === 'rational' || v.root.kind === 'real') return v;
+  return multiplyValues(ctx, addValues(ctx, v, conjugate(ctx, v)), q(rational(ctx, 1n, 2n)));
+}
+export function imaginaryPart(ctx: ExecutionContext, v: ExactValue): ExactValue {
+  if (v.kind === 'rational' || v.root.kind === 'real') return q(rational(ctx, 0n));
+  const difference = addValues(ctx, v, negateValue(ctx, conjugate(ctx, v)));
+  return multiplyValues(ctx, difference, multiplyValues(ctx, imaginaryUnit(ctx), q(rational(ctx, -1n, 2n))));
+}
+
+/** Whether the certified disk of r can meet the box [re] × [im]. */
+export function diskMeetsBox(ctx: ExecutionContext, r: ComplexRootOf, re: Bounds, im: Bounds): boolean {
+  const gap = (c: Rational, b: Bounds) => (rCompare(ctx, c, b.lo) < 0 ? rAdd(ctx, b.lo, rNegate(ctx, c)) : rCompare(ctx, b.hi, c) < 0 ? rAdd(ctx, c, rNegate(ctx, b.hi)) : rational(ctx, 0n));
+  const dx = gap(r.re, re), dy = gap(r.im, im);
+  return rCompare(ctx, rAdd(ctx, rMultiply(ctx, dx, dx), rMultiply(ctx, dy, dy)), rMultiply(ctx, r.radius, r.radius)) <= 0;
+}
+
+/**
+ * e^{2πi·t} for a rational t: a root of Φ_b (t = a/b reduced), chosen among
+ * the roots of Φ_b as the one whose certified disk meets the enclosure of
+ * (cos 2πt, sin 2πt); distinct roots separate as precision grows.
+ */
+export function rootOfUnity(ctx: ExecutionContext, t: Rational): ExactValue {
+  const b = t.denominator, a = ((t.numerator % b) + b) % b;
+  if (a === 0n) return q(rational(ctx, 1n));
+  if (2n * a === b) return q(rational(ctx, -1n));
+  if (b === 4n) return a === 1n ? imaginaryUnit(ctx) : negateValue(ctx, imaginaryUnit(ctx));
+  const turn = rational(ctx, 2n * a, b);
+  let candidates = rootsOfIrreducible(ctx, cyclotomic(ctx, b)) as ComplexRootOf[];
+  for (let bits = 32; ; bits *= 2) {
+    ctx.tick();
+    const re = piMultipleBounds(ctx, 'cos', turn, bits), im = piMultipleBounds(ctx, 'sin', turn, bits);
+    const hits = candidates.filter(r => diskMeetsBox(ctx, r, re, im));
+    if (hits.length === 1) return normalizeValue(hits[0]);
+    candidates = hits.map(r => refineComplex(ctx, r, rational(ctx, 1n, 1n << BigInt(bits))));
+  }
+}
+
+/** e^{i·arc(u)} for real algebraic u in the arc's domain; undefined outside it. */
+function arcUnit(ctx: ExecutionContext, fn: 'asin' | 'acos' | 'atan', u: ExactValue): ExactValue | undefined {
+  if (u.kind === 'algebraic' && u.root.kind !== 'real') return undefined;
+  const one = q(rational(ctx, 1n)), i = imaginaryUnit(ctx), u2 = multiplyValues(ctx, u, u);
+  const root = (v: ExactValue) => (isZero(v) ? v : positiveRoot(ctx, v, 2));
+  if (fn === 'atan') return multiplyValues(ctx, addValues(ctx, one, multiplyValues(ctx, i, u)), inverseValue(ctx, root(addValues(ctx, one, u2))));
+  const rest = addValues(ctx, one, negateValue(ctx, u2));
+  if (realSign(ctx, rest) === -1) return undefined;
+  const s = root(rest);
+  return fn === 'asin' ? addValues(ctx, s, multiplyValues(ctx, i, u)) : addValues(ctx, u, multiplyValues(ctx, i, s));
+}
+
+/**
+ * W = e^{iθ} exactly when θ is a sum of integer multiples of asin/acos/atan of
+ * real algebraic numbers and a rational multiple of π; undefined otherwise
+ * (e.g. a nonzero rational term, whose exponential is transcendental).
+ * `exact` gives the exact value of an arc argument, when known.
+ */
+export function unitValue(store: ExpressionStore, theta: ExprId, exact: (id: ExprId) => ExactValue | undefined): ExactValue | undefined {
+  const ctx = store.ctx;
+  // Angle structure only: sums, integer multiples, π, arcs (arc arguments are not angles).
+  const order: ExprId[] = [], stack = [theta], seen = new Set<ExprId>();
+  while (stack.length) {
+    const n = stack.pop() as ExprId;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    order.push(n);
+    const node = store.node(n);
+    if (node.kind === 'add') stack.push(...node.args);
+    if (node.kind === 'mul' && node.args.length === 2) stack.push(node.args[1]);
+  }
+  const w = new Map<ExprId, ExactValue | undefined>();
+  for (const n of order.reverse()) {
+    ctx.tick();
+    const node = store.node(n);
+    let v: ExactValue | undefined;
+    if (node.kind === 'constant' && node.name === 'pi') v = q(rational(ctx, -1n));
+    else if (node.kind === 'add') {
+      const parts = node.args.map(a => w.get(a));
+      v = parts.every(p => p !== undefined) ? (parts as ExactValue[]).reduce((x, y) => multiplyValues(ctx, x, y)) : undefined;
+    } else if (node.kind === 'mul' && node.args.length === 2) {
+      const c = store.numberValue(node.args[0]), rest = store.node(node.args[1]);
+      if (c && rest.kind === 'constant' && rest.name === 'pi') v = rootOfUnity(ctx, rational(ctx, c.numerator, 2n * c.denominator));
+      else if (c && c.denominator === 1n && w.get(node.args[1]) !== undefined) v = integerPower(ctx, w.get(node.args[1]) as ExactValue, c.numerator);
+    } else if (node.kind === 'apply' && (node.fn === 'asin' || node.fn === 'acos' || node.fn === 'atan')) {
+      const u = exact(node.arg);
+      v = u === undefined ? undefined : arcUnit(ctx, node.fn, u);
+    }
+    w.set(n, v);
+  }
+  return w.get(theta);
+}
+
+/** sin, cos or tan of an angle with an exact unit point; undefined when the unit point is not exact. */
+function trigByAngle(store: ExpressionStore, fn: string, arg: ExprId, exact: (id: ExprId) => ExactValue | undefined): ExactValue | undefined {
+  if (fn !== 'sin' && fn !== 'cos' && fn !== 'tan') return undefined;
+  const ctx = store.ctx, w = unitValue(store, arg, exact);
+  if (w === undefined) return undefined;
+  if (fn === 'sin') return imaginaryPart(ctx, w);
+  if (fn === 'cos') return realPart(ctx, w);
+  const c = realPart(ctx, w);
+  return isZero(c) ? undefinedValue('tan at a pole') : multiplyValues(ctx, imaginaryPart(ctx, w), inverseValue(ctx, c));
+}
+
+// ---- exponentials of complex linear forms ----
+
+/** A Gaussian rational re + i·im. */
+interface Gauss { readonly re: Rational; readonly im: Rational }
+
+/**
+ * e^{s·θ} exactly, when s·θ (products distributed over sums) is Σ cⱼ·atomⱼ with
+ * Gaussian-rational cⱼ and atoms π, log v (v exact and nonzero) and arcs of
+ * real algebraic numbers: e^{i·q·π} is a root of unity, e^{n·log v} = vⁿ
+ * (exp∘Log is the identity), e^{i·n·arc} a unit point. Anything else —
+ * a nonzero algebraic part (Lindemann–Weierstrass), e^{a·π} with a ≠ 0
+ * (Gelfond), v^{i·b} or a non-integer power of a non-positive v — gives
+ * undefined.
+ */
+export function expValue(store: ExpressionStore, theta: ExprId, exact: (id: ExprId) => ExactValue | undefined, scale: 'one' | 'i'): ExactValue | undefined {
+  const ctx = store.ctx, zero = rational(ctx, 0n);
+  const times = (a: Gauss, b: Gauss): Gauss => ({
+    re: rAdd(ctx, rMultiply(ctx, a.re, b.re), rNegate(ctx, rMultiply(ctx, a.im, b.im))),
+    im: rAdd(ctx, rMultiply(ctx, a.re, b.im), rMultiply(ctx, a.im, b.re)),
+  });
+  const plus = (a: Gauss, b: Gauss): Gauss => ({ re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im) });
+  let constant: Gauss = { re: zero, im: zero }, pi: Gauss = { re: zero, im: zero };
+  const logs = new Map<string, { v: ExactValue; c: Gauss }>(), arcs: { fn: 'asin' | 'acos' | 'atan'; u: ExactValue; c: Gauss }[] = [];
+  const work: { id: ExprId; c: Gauss }[] = [{ id: theta, c: scale === 'one' ? { re: rational(ctx, 1n), im: zero } : { re: zero, im: rational(ctx, 1n) } }];
+  while (work.length) {
+    ctx.tick();
+    const { id, c } = work.pop() as { id: ExprId; c: Gauss };
+    const node = store.node(id);
+    if (node.kind === 'number') { constant = plus(constant, times(c, { re: node.value, im: zero })); continue; }
+    if (node.kind === 'constant') {
+      if (node.name === 'pi') pi = plus(pi, c);
+      else if (node.name === 'i') constant = plus(constant, times(c, { re: zero, im: rational(ctx, 1n) }));
+      else return undefined;
+      continue;
+    }
+    if (node.kind === 'add') { for (const a of node.args) work.push({ id: a, c }); continue; }
+    if (node.kind === 'mul') {
+      let factor: Gauss = { re: rational(ctx, 1n), im: zero };
+      const rest: ExprId[] = [];
+      for (const a of node.args) {
+        const v = store.numberValue(a), n = store.node(a);
+        if (v) factor = times(factor, { re: v, im: zero });
+        else if (n.kind === 'constant' && n.name === 'i') factor = times(factor, { re: zero, im: rational(ctx, 1n) });
+        else rest.push(a);
+      }
+      if (rest.length > 1) return undefined;
+      if (rest.length === 0) constant = plus(constant, times(c, factor)); else work.push({ id: rest[0], c: times(c, factor) });
+      continue;
+    }
+    if (node.kind !== 'apply') return undefined;
+    const u = exact(node.arg);
+    if (u === undefined) return undefined;
+    if (node.fn === 'log') {
+      if (isZero(u)) return undefined;
+      const key = u.kind === 'rational' ? `q:${u.value.numerator}/${u.value.denominator}` : `a:${store.roots.canonical(ctx, u.root).key}`;
+      const prior = logs.get(key);
+      logs.set(key, { v: u, c: prior ? plus(prior.c, c) : c });
+      continue;
+    }
+    if ((node.fn === 'asin' || node.fn === 'acos' || node.fn === 'atan') && realSign(ctx, u) !== undefined) { arcs.push({ fn: node.fn, u, c }); continue; }
+    return undefined;
+  }
+  if (constant.re.numerator !== 0n || constant.im.numerator !== 0n || pi.re.numerator !== 0n) return undefined;
+  let value = rootOfUnity(ctx, rational(ctx, pi.im.numerator, 2n * pi.im.denominator));
+  for (const { v, c } of logs.values()) {
+    if (c.im.numerator !== 0n) return undefined;
+    if (c.re.denominator === 1n) { value = multiplyValues(ctx, value, integerPower(ctx, v, c.re.numerator)); continue; }
+    if (realSign(ctx, v) !== 1) return undefined;
+    value = multiplyValues(ctx, value, integerPower(ctx, positiveRoot(ctx, v, safeCount(ctx, c.re.denominator)), c.re.numerator));
+  }
+  for (const { fn, u, c } of arcs) {
+    if (c.re.numerator !== 0n || c.im.denominator !== 1n) return undefined;
+    const w = arcUnit(ctx, fn, u);
+    if (w === undefined) return undefined;
+    value = multiplyValues(ctx, value, integerPower(ctx, w, c.im.numerator));
+  }
+  return value;
+}
+
+/** exp, sin, cos or tan of a complex linear form with an exact exponential; undefined otherwise. */
+function byExponential(store: ExpressionStore, fn: string, arg: ExprId, exact: (id: ExprId) => ExactValue | undefined): ExactValue | undefined {
+  const ctx = store.ctx;
+  if (fn === 'exp') return expValue(store, arg, exact, 'one');
+  if (fn !== 'sin' && fn !== 'cos' && fn !== 'tan') return undefined;
+  const w = expValue(store, arg, exact, 'i');
+  if (w === undefined) return undefined;
+  const inv = inverseValue(ctx, w), i = imaginaryUnit(ctx);
+  const sin = multiplyValues(ctx, addValues(ctx, w, negateValue(ctx, inv)), inverseValue(ctx, multiplyValues(ctx, q(rational(ctx, 2n)), i)));
+  const cos = multiplyValues(ctx, addValues(ctx, w, inv), q(rational(ctx, 1n, 2n)));
+  if (fn === 'sin') return sin;
+  if (fn === 'cos') return cos;
+  return isZero(cos) ? undefinedValue('tan at a pole') : multiplyValues(ctx, sin, inverseValue(ctx, cos));
+}
+
 export function evaluateExact(store: ExpressionStore, id: ExprId, domain: EvaluationDomain): Evaluation {
   const ctx = store.ctx;
   demand(domain === 'real' || domain === 'complex', 'invalid-input', 'evaluation domain');
@@ -233,8 +439,15 @@ export function evaluateExact(store: ExpressionStore, id: ExprId, domain: Evalua
     const unknown = new Set<ExprId>();
     for (const n of store.postorder([id])) {
       const node = store.node(n);
-      if (childrenOfNode(node).some(c => unknown.has(c))) { unknown.add(n); continue; }
       try {
+        if (childrenOfNode(node).some(c => unknown.has(c))) {
+          // sin/cos/tan of π-multiples and arcs of algebraic numbers are algebraic although their argument is not;
+          // a product with an exact zero factor is 0 (the other factors are defined: undefined values stop at once).
+          const zeroFactor = node.kind === 'mul' && node.args.some(c => { const v = values.get(c); return v !== undefined && isZero(v); });
+          const v = zeroFactor ? q(rational(ctx, 0n)) : node.kind === 'apply' ? (trigByAngle(store, node.fn, node.arg, c => values.get(c)) ?? byExponential(store, node.fn, node.arg, c => values.get(c))) : undefined;
+          if (v === undefined) unknown.add(n); else values.set(n, v);
+          continue;
+        }
         let v: ExactValue;
         switch (node.kind) {
           case 'number': v = q(node.value); break;
@@ -257,7 +470,7 @@ export function evaluateExact(store: ExpressionStore, id: ExprId, domain: Evalua
         unknown.add(n);
       }
     }
-    if (deferred) throw deferred;
+    if (unknown.has(id)) throw deferred as Stop;
     return { kind: 'exact', value: get(id) };
   } catch (e) {
     if (e instanceof Stop) return e.result;

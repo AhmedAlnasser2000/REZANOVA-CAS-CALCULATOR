@@ -116,6 +116,16 @@ const BUILTIN_PLAN_DEFINITIONS: &[OoeBuiltinPlanDefinition] = &[
         commit_policy: OoeCommitPolicy::CommitLatestOnly,
     },
     OoeBuiltinPlanDefinition {
+        category: OoeBuiltinPlanCategory::Equation,
+        capability_id: "equation.new-equation",
+        host_id: "new-equation-worker-runtime",
+        entrypoint: "runNewEquationWorker",
+        description: "Solve and verify a New Equation problem through the isolated New Equation worker.",
+        task_class: OoeTaskClass::Explicit,
+        priority_class: OoePriorityClass::UserVisible,
+        commit_policy: OoeCommitPolicy::CommitLatestOnly,
+    },
+    OoeBuiltinPlanDefinition {
         category: OoeBuiltinPlanCategory::Editor,
         capability_id: "editor.variableHints",
         host_id: "editor-analysis-runtime",
@@ -366,6 +376,7 @@ mod tests {
         "calculus-runtime",
         "calculus-worker-runtime",
         "new-integration-worker-runtime",
+        "new-equation-worker-runtime",
         "editor-analysis-runtime",
         "geometry-runtime",
         "geometry-worker-runtime",
@@ -408,6 +419,7 @@ mod tests {
                 "calculate.workbench",
                 "calculate.algebraTransform",
                 "equation.solve",
+                "equation.new-equation",
                 "editor.variableHints",
                 "editor.equationTargetDiscovery",
                 "editor.calculateTransformEligibility",
@@ -544,6 +556,7 @@ mod tests {
                 "table.build"
                     | "calculus.evaluate"
                     | "calculus.new-integration"
+                    | "equation.new-equation"
                     | "trigonometry.evaluate"
                     | "statistics.evaluate"
                     | "geometry.evaluate"

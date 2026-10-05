@@ -24,3 +24,5 @@
 - Scope: new private core normalization/arithmetic modules, focused tests and measurements, specification, provisional roadmap and required durable memory. No result-contract/UI implementation.
 - Verification: 515 core tests, incremental TypeScript, scoped and repository lint, production build, isolation, OOE/compartments, memory/file-size and diff checks pass.
 - Next: fetch and merge cloud main without rewriting either history; reconcile shared memory and verify affected result-contract seams.
+
+- Recorded in the subsequent synchronization checkpoint: normalization commit_hash: b80aef7e.

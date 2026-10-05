@@ -5,6 +5,7 @@ import type {
   CanonicalResultDocumentV3,
   CanonicalResultDocumentV4,
   CanonicalResultDocumentV5,
+  CanonicalResultDocumentV6,
   ResultProducerDraft,
   ResultProducerDraftV2,
   ResultProducerDraftV3,
@@ -14,6 +15,7 @@ import type {
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
 
 export function requireCanonicalResultAuthority(outcome: {kind: 'success'; canonicalResult: CanonicalResultDocumentV5}, owner: string): {kind: 'success'; canonicalResult: CanonicalResultDocumentV5};
+export function requireCanonicalResultAuthority(outcome: {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6}, owner: string): {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6};
 export function requireCanonicalResultAuthority<
   Outcome extends Exclude<ResultProducerDraft, { kind: 'prompt' }>,
 >(
@@ -57,9 +59,9 @@ export function requireCanonicalResultAuthority(
   owner: string,
 ): VersionedResultProducerDraft;
 export function requireCanonicalResultAuthority(
-  outcome: VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5},
+  outcome: VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5} | {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6},
   owner: string,
-): VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5} {
+): VersionedResultProducerDraft | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5} | {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6} {
   if (outcome.kind === 'prompt') return outcome;
   if (!outcome.canonicalResult) {
     throw new Error(`${owner} ${outcome.kind} is missing native canonical result authority.`);

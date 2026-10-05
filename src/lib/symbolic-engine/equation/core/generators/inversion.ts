@@ -1,7 +1,7 @@
 import { exactPolynomial, OWNERS, rationalForm, type CPoly, type Refusal } from '../decision/rational-form';
 import { zerosOf as polynomialZeros } from '../decision/univariate';
 import { evaluateExact } from '../representation/evaluate';
-import type { ExprId, ExpressionStore, FunctionName } from '../representation/expression';
+import type { ExprId, ExpressionStore } from '../representation/expression';
 import { realSign } from '../representation/real-order';
 import { isZero as logLinearIsZero, parseLogLinear } from './constants';
 import {
@@ -9,11 +9,16 @@ import {
   rationalRatio, replaceSubexpressions, scanKernels,
 } from './lattice';
 import { solveLambertForm } from './lambert';
+import { dependsOn } from './normal-form';
 import { sampleBetween } from './samples';
 import type { Polynomial } from '../algebra/polynomial';
 import { eliminateRadicals } from '../constraints/elimination';
 import { absPiecewise, containsAbs } from '../constraints/piecewise';
 import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } from '../constraints/radicals';
+import { mergeAffineFamilies, type FamilyZeros, type Param, type PeriodicZeros } from '../periodic/families';
+import { ARCS, arcSum, halfAngle, invertArc, invertTrig, parametricStep, TRIG, type Sink } from '../periodic/inversion';
+import { cancelInjective } from '../composition/injective';
+import { rangeZeros } from '../composition/zeros';
 
 /**
  * Complete real zero sets of target-dependent expressions built from
@@ -32,6 +37,10 @@ import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } fr
  * - absolute values elsewhere: lazy branching on the signs of their arguments;
  * - radicals of one base: one generator t = v^{1/L}; of several bases, nested,
  *   or algebraic constants alongside: the tower norm, each candidate confirmed;
+ * - trig kernels: families of zeros (periodic, or in integer parameters through
+ *   further kernels), several kernels by the half-angle substitution, sums of
+ *   inverse trig kernels by elimination (`periodic/inversion.ts`);
+ * - a product with several target-dependent factors at level 0: the factors' zeros;
  * - several exponential kernels: the exponent lattice gives one generator;
  * - logarithmic kernels: one factor class, or several combined linearly
  *   (then exponentiated);
@@ -42,19 +51,21 @@ import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } fr
 export interface ZeroInterval { readonly lo?: ExprId; readonly hi?: ExprId; readonly loClosed: boolean; readonly hiClosed: boolean }
 
 export type ZeroResult =
-  | { readonly kind: 'zeros'; readonly values: readonly ExprId[]; readonly intervals?: readonly ZeroInterval[] }
+  | {
+    readonly kind: 'zeros'; readonly values: readonly ExprId[]; readonly intervals?: readonly ZeroInterval[];
+    /** Affine families r + P·ℤ. */
+    readonly periodic?: readonly PeriodicZeros[];
+    /** Families in integer parameters with ranges. */
+    readonly families?: readonly FamilyZeros[];
+  }
   | { readonly kind: 'all' }
   | { readonly kind: 'refused'; readonly refusal: Refusal };
 
-interface Goal { readonly h: ExprId; readonly level: ExprId; readonly variable: string; readonly back: ExprId; readonly top: boolean }
+interface Goal { readonly h: ExprId; readonly level: ExprId; readonly variable: string; readonly back: ExprId; readonly top: boolean; readonly params: readonly Param[] }
 
 class Refused { readonly refusal: Refusal; constructor(refusal: Refusal) { this.refusal = refusal; } }
 const refuse = (owner: string, detail: string): never => { throw new Refused({ owner, detail }); };
 
-const KERNEL_OWNER: Partial<Record<FunctionName, string>> = {
-  sin: OWNERS.periodic, cos: OWNERS.periodic, tan: OWNERS.periodic,
-  asin: OWNERS.periodic, acos: OWNERS.periodic, atan: OWNERS.periodic,
-};
 
 /** Exact zero test for closed forms we can decide; undefined when undecidable here. */
 function provablyZero(store: ExpressionStore, id: ExprId): boolean | undefined {
@@ -72,8 +83,13 @@ function liftCoefficients(store: ExpressionStore, p: CPoly): ExprId[] {
 
 type Rooted = { kind: 'values'; values: ExprId[] } | { kind: 'all' };
 
-/** Zeros of H(v) − L for H rational in v. `quadratic` allows degree 2 with a transcendental constant term. */
-export function solveRational(store: ExpressionStore, h: ExprId, level: ExprId, v: string, quadratic: boolean): Rooted {
+/**
+ * Zeros of H(v) − L for H rational in v. `quadratic` allows degree 2 with a
+ * transcendental constant term; 'any' allows degree 2 with every coefficient
+ * transcendental (the half-angle polynomials of slice 4), the signs of the
+ * leading coefficient and the discriminant certified.
+ */
+export function solveRational(store: ExpressionStore, h: ExprId, level: ExprId, v: string, quadratic: boolean | 'any'): Rooted {
   const f = rationalForm(store, store.sub(h, level), v);
   if (!f.ok) {
     if ('undefinedEverywhere' in f) return { kind: 'values', values: [] };
@@ -93,7 +109,18 @@ export function solveRational(store: ExpressionStore, h: ExprId, level: ExprId, 
   if (d < 0) return { kind: 'all' };
   if (d === 0) return { kind: 'values', values: [] };
   if (d === 1) return { kind: 'values', values: [store.neg(store.div(c[0], c[1]))] };
-  if (d === 2 && quadratic && evaluateExact(store, c[2], 'real').kind === 'exact' && evaluateExact(store, c[1], 'real').kind === 'exact') {
+  // a·vᵈ = 0 has the single zero 0 (a ≠ 0 after trimming).
+  if (c.slice(0, d).every(ci => provablyZero(store, ci) === true)) return { kind: 'values', values: [store.integer(0)] };
+  if (d === 2 && quadratic && provablyZero(store, c[1]) === true) {
+    // a·v² + c = 0: v = ±√(−c/a), with the sign of −c/a certified (any coefficients).
+    const q = store.neg(store.div(c[0], c[2])), sq = realSign(store, q);
+    if (sq < 0) return { kind: 'values', values: [] };
+    if (sq === 0) return { kind: 'values', values: [store.integer(0)] };
+    const r = store.sqrt(q);
+    return { kind: 'values', values: [r, store.neg(r)] };
+  }
+  const exactLead = evaluateExact(store, c[2] ?? c[0], 'real').kind === 'exact' && evaluateExact(store, c[1] ?? c[0], 'real').kind === 'exact';
+  if (d === 2 && quadratic && (exactLead || (quadratic === 'any' && realSign(store, c[2]) !== 0))) {
     if (provablyZero(store, c[1]) === true) {
       // a·v² + c = 0: v = ±√(−c/a), with the sign of −c/a certified.
       const q = store.neg(store.div(c[0], c[2])), sq = realSign(store, q);
@@ -120,6 +147,7 @@ function invertKernel(store: ExpressionStore, kernel: ExprId, c: ExprId): { h: E
     return radical ? invertRadical(store, radical, c) : refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
   }
   const plusOne = () => realSign(store, store.add(c, store.integer(1)));
+  if (ARCS.has(node.fn)) return invertArc(store, node.fn as 'asin' | 'acos' | 'atan', node.arg, c);
   switch (node.fn) {
     case 'abs': {
       const sc = realSign(store, c);
@@ -129,7 +157,7 @@ function invertKernel(store: ExpressionStore, kernel: ExprId, c: ExprId): { h: E
     case 'log': return [{ h: node.arg, level: store.exp(c) }];
     case 'lambertw': return plusOne() < 0 ? [] : [{ h: node.arg, level: store.mul(c, store.exp(c)) }];
     case 'lambertwm1': return plusOne() > 0 ? [] : [{ h: node.arg, level: store.mul(c, store.exp(c)) }];
-    default: return refuse(KERNEL_OWNER[node.fn] ?? OWNERS.generators, `${node.fn} of the variable`);
+    default: return refuse(OWNERS.generators, `${node.fn} of the variable`);
   }
 }
 
@@ -148,13 +176,28 @@ function freshNames(): (prefix: string) => string {
 
 export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = freshNames()): ZeroResult {
   try {
-    const values = new Map<ExprId, true>(), intervals: ZeroInterval[] = [];
-    const stack: Goal[] = [{ h: f, level: store.integer(0), variable: x, back: store.symbol(x), top: true }];
+    const values = new Map<ExprId, true>(), intervals: ZeroInterval[] = [], periodic: PeriodicZeros[] = [], families: FamilyZeros[] = [];
+    const stack: Goal[] = [{ h: f, level: store.integer(0), variable: x, back: store.symbol(x), top: true, params: [] }];
+    const emitFor = (goal: Goal) => (v: ExprId) => values.set(goal.back === store.symbol(goal.variable) ? v : store.substitute(goal.back, new Map([[goal.variable, v]])), true);
+    const sink: Sink = {
+      push: goal => stack.push(goal), value: (goal, v) => emitFor(goal)(v), periodic: z => periodic.push(z), family: fz => families.push(fz),
+      refuse, fresh, solveRational: (h, level, v, quadratic) => solveRational(store, h, level, v, quadratic),
+    };
     while (stack.length) {
       store.ctx.tick();
       const g = stack.pop() as Goal;
-      const emit = (v: ExprId) => values.set(g.back === store.symbol(g.variable) ? v : store.substitute(g.back, new Map([[g.variable, v]])), true);
-      const push = (h: ExprId, level: ExprId) => stack.push({ h, level, variable: g.variable, back: g.back, top: false });
+      if (g.params.length) { parametricStep(store, g, sink); continue; }
+      const emit = emitFor(g);
+      try {
+      const push = (h: ExprId, level: ExprId) => stack.push({ h, level, variable: g.variable, back: g.back, top: false, params: [] });
+      // A product of target-dependent factors vanishes where a factor does (domains are conditions of the decision).
+      const product = store.node(g.h);
+      if (store.numberValue(g.level)?.numerator === 0n && product.kind === 'mul' && product.args.filter(a => dependsOn(store, a, g.variable)).length > 1) {
+        for (const a of product.args) if (dependsOn(store, a, g.variable)) push(a, g.level);
+        continue;
+      }
+      const injective = store.numberValue(g.level)?.numerator === 0n ? cancelInjective(store, g.h, g.variable) : undefined;
+      if (injective !== undefined) { for (const h of injective) push(h, g.level); continue; }
       const scan = scanKernels(store, g.h, g.variable);
       if (scan.kernels.length === 0) {
         const r = solveRational(store, g.h, g.level, g.variable, true);
@@ -163,22 +206,26 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
         continue;
       }
       const kinds = scan.kernels.map(k => kernelFunction(store, k));
-      for (const k of kinds) {
-        if (k in KERNEL_OWNER) refuse(KERNEL_OWNER[k as FunctionName] as string, `${k} of the variable`);
-        if (k === 'variable-exponent') refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
-      }
+      for (const k of kinds) if (k === 'variable-exponent') refuse(OWNERS.generators, 'power with a non-positive base and a variable exponent');
       const tau = fresh('τ'), t = store.symbol(tau);
       if (!scan.variableOutside && scan.kernels.length === 1) {
-        const kernel = scan.kernels[0];
+        const kernel = scan.kernels[0], node = store.node(kernel);
         const r = solveRational(store, replaceSubexpressions(store, g.h, new Map([[kernel, t]])), g.level, tau, false);
         if (r.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.generators, 'an identity in a kernel'); }
-        for (const c of (r as { values: ExprId[] }).values) for (const goal of invertKernel(store, kernel, c)) push(goal.h, goal.level);
+        for (const c of (r as { values: ExprId[] }).values) {
+          if (node.kind === 'apply' && TRIG.has(node.fn)) invertTrig(store, g, node.fn as 'sin' | 'cos' | 'tan', node.arg, c, sink);
+          else for (const goal of invertKernel(store, kernel, c)) push(goal.h, goal.level);
+        }
         continue;
       }
       if (containsAbs(store, g.h, g.variable)) {
         const split = absPiecewise(store, store.sub(g.h, g.level), g.variable, e => zerosOf(store, e, g.variable, fresh), (a, b) => sampleBetween(store, a, b));
-        if ('refusal' in split) return { kind: 'refused', refusal: split.refusal };
+        if ('refusal' in split) throw new Refused(split.refusal);
         split.values.forEach(emit);
+        if (split.periodic?.length) {
+          if (g.back !== store.symbol(g.variable)) refuse('EQUATION-COMPOSITION1', 'periodic zeros behind a substitution');
+          periodic.push(...split.periodic);
+        }
         if (split.intervals.length) {
           if (g.back !== store.symbol(g.variable)) refuse(OWNERS.constraints, 'a zero interval behind a substitution');
           intervals.push(...split.intervals);
@@ -196,7 +243,7 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
           continue;
         }
         const el = eliminateRadicals(store, store.sub(g.h, g.level), g.variable);
-        if (el.kind === 'refused') return { kind: 'refused', refusal: el.refusal };
+        if (el.kind === 'refused') throw new Refused(el.refusal);
         if (el.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.constraints, 'an inner identity among radicals'); continue; }
         el.values.forEach(emit);
         continue;
@@ -221,9 +268,28 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
         logGoals(store, g, scan.kernels, scan.variableOutside, stack, fresh);
         continue;
       }
+      if (kinds.every(k => TRIG.has(k))) {
+        const groups = halfAngle(store, g, sink);
+        if (groups === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.periodic, 'an inner trig identity'); continue; }
+        if (g.back !== store.symbol(g.variable)) refuse('EQUATION-COMPOSITION1', 'trig families behind a substitution');
+        periodic.push(...groups);
+        continue;
+      }
+      if (kinds.every(k => ARCS.has(k)) && !scan.variableOutside) {
+        arcSum(store, g, scan.kernels, sink).forEach(emit);
+        continue;
+      }
       refuse(CERTIFIED_NUMERICS, 'mixed transcendental kernels');
+      } catch (e) {
+        // Composition (slice 5): the complete zero set by certified ranges, monotonicity and exact candidates.
+        if (!(e instanceof Refused) || e.refusal.owner === OWNERS.parameters || e.refusal.owner === OWNERS.systems) throw e;
+        const r = rangeZeros(store, store.sub(g.h, g.level), g.variable, h => zerosOf(store, h, g.variable, fresh));
+        if ('refusal' in r) throw e;
+        r.values.forEach(emit);
+      }
     }
-    return { kind: 'zeros', values: [...values.keys()], intervals };
+    const merged = mergeAffineFamilies(store, [...values.keys()], families);
+    return { kind: 'zeros', values: merged.values, intervals, periodic: [...periodic, ...merged.periodic], families: merged.families };
   } catch (e) {
     if (e instanceof Refused) return { kind: 'refused', refusal: e.refusal };
     throw e;
@@ -281,7 +347,7 @@ function logGoals(store: ExpressionStore, g: Goal, kernels: readonly ExprId[], o
   if (args.some(a => a === undefined)) refuse(OWNERS.generators, 'log of an argument with irrational coefficients');
   const parsed = args as NonNullable<(typeof args)[number]>[];
   const keys = [...new Set(parsed.flatMap(a => [...a.factors.keys()]))];
-  const push = (h: ExprId, level: ExprId, variable = g.variable, back = g.back) => stack.push({ h, level, variable, back, top: false });
+  const push = (h: ExprId, level: ExprId, variable = g.variable, back = g.back) => stack.push({ h, level, variable, back, top: false, params: [] });
   if (keys.length === 1) {
     const f = factorExpression(store, catalog.get(keys[0]) as Polynomial<bigint>, g.variable);
     const xi = fresh('ξ'), y = store.symbol(xi);
@@ -339,7 +405,7 @@ function logGoals(store: ExpressionStore, g: Goal, kernels: readonly ExprId[], o
  * e = c₀ + Σ cᵢ·σᵢ with number-only cᵢ, for the given symbols σᵢ (explicit stack),
  * distributing numeric and constant factors over sums; undefined when not linear.
  */
-function linearForm(store: ExpressionStore, e: ExprId, symbols: readonly ExprId[]): { constant: ExprId; coefficients: Map<ExprId, ExprId> } | undefined {
+export function linearForm(store: ExpressionStore, e: ExprId, symbols: readonly ExprId[]): { constant: ExprId; coefficients: Map<ExprId, ExprId> } | undefined {
   type Form = { constant: ExprId; coefficients: Map<ExprId, ExprId> };
   const forms = new Map<ExprId, Form | null>();
   const isSymbol = new Set(symbols);

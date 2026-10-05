@@ -120,6 +120,7 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
   }
 
   if (workspaceKind === 'new-integration') return {compartmentId: 'calculus' as CompartmentId, compartmentLabel: 'Calculus', surfaceLabel: 'New Integration'};
+  if (workspaceKind === 'new-equation') return { compartmentId: 'equation' as CompartmentId, compartmentLabel: 'Equation', surfaceLabel: 'New Equation' };
 
   if (workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
     return {
@@ -165,7 +166,7 @@ export function workspaceInstanceRuntimeContext(
   if (
     isFormulaViewerWorkspaceKind(instance.workspaceKind)
     || (isAppPageWorkspaceKind(instance.workspaceKind)
-      && instance.workspaceKind !== GRAPHING_PAGE_WORKSPACE_KIND && instance.workspaceKind !== 'new-integration')
+      && instance.workspaceKind !== GRAPHING_PAGE_WORKSPACE_KIND && instance.workspaceKind !== 'new-integration' && instance.workspaceKind !== 'new-equation')
   ) {
     return null;
   }

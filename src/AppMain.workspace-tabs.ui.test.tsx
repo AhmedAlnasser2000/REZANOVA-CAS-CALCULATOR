@@ -35,8 +35,8 @@ function setViewportWidth(width: number) {
 async function openLauncherAppInNewTab(user: AppUser, categoryLabel: string, appLabel: string) {
   await user.click(screen.getByTestId('keypad-menu'));
   const menuInspector = await screen.findByTestId('left-menu-inspector');
-  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(categoryLabel, 'i') }));
-  const appButton = await within(menuInspector).findByRole('button', { name: new RegExp(appLabel, 'i') });
+  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${categoryLabel}`, 'i') }));
+  const appButton = await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${appLabel}`, 'i') });
   const appRow = appButton.closest('.launcher-entry-row');
   if (!appRow) {
     throw new Error(`Missing launcher row for ${appLabel}`);

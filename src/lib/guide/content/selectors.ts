@@ -1,44 +1,14 @@
 import type {
   CapabilityId,
   GuideArticle,
-  GuideExample,
   GuideHomeEntry,
   GuideModeId,
   GuideModeRef,
 } from '../../../types/calculator';
 import { GUIDE_DOMAIN_CAPABILITY, GUIDE_DOMAINS, getActiveGuideDomains } from '../domains';
 
-type GuideExampleDraft = Omit<GuideExample, 'steps'> & { steps?: string[] };
-type GuideArticleDraft = Omit<GuideArticle, 'whatItIs' | 'howToUse' | 'examples'> & {
-  whatItIs?: string[];
-  whatItMeans?: string[];
-  howToUse?: string[];
-  examples: GuideExampleDraft[];
-};
-
-function defineGuideExample(example: GuideExampleDraft): GuideExample {
-  return {
-    steps: example.steps ?? [
-      'Open the matching tool from the launcher or Guide example card.',
-      'Load the example into the target editor.',
-      'Press EXE or F1 when you are ready to run it.',
-    ],
-    ...example,
-  };
-}
-
-function defineGuideArticle(article: GuideArticleDraft): GuideArticle {
-  return {
-    whatItIs: article.whatItIs ?? [article.summary],
-    howToUse: article.howToUse ?? [
-      'Open the matching tool or guide article for this topic.',
-      'Use the worked examples to load a ready-made expression into the right editor.',
-      'Press EXE or F1 when the expression is ready.',
-    ],
-    ...article,
-    examples: article.examples.map(defineGuideExample),
-  };
-}
+import { defineGuideArticle, type GuideArticleDraft } from './builders';
+import { NEW_EQUATION_ARTICLE } from './article-new-equation';
 
 const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   {
@@ -2286,7 +2256,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   },
 ];
 
-export const GUIDE_ARTICLES: GuideArticle[] = GUIDE_ARTICLE_DRAFTS.map(defineGuideArticle);
+export const GUIDE_ARTICLES: GuideArticle[] = [...GUIDE_ARTICLE_DRAFTS, NEW_EQUATION_ARTICLE].map(defineGuideArticle);
 
 export const GUIDE_MODE_REFS: GuideModeRef[] = [
   {

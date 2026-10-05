@@ -64,18 +64,57 @@ function sign(ctx: ExecutionContext, f: Polynomial<bigint>, x: Rational): number
 /** Halve the isolating interval, keeping the sign change. */
 export function bisectReal(ctx: ExecutionContext, r: RealRootOf): RealRootOf {
   if (isRationalRoot(r)) return r;
-  const mid = rDivide(ctx, rAdd(ctx, r.lo, r.hi), rational(ctx, 2n));
-  const sMid = sign(ctx, r.poly, mid), sLo = sign(ctx, r.poly, r.lo);
+  const mid = rational(ctx, r.lo.numerator * r.hi.denominator + r.hi.numerator * r.lo.denominator, 2n * r.lo.denominator * r.hi.denominator);
+  const sMid = signHomogeneous(ctx, r.poly, mid), sLo = signHomogeneous(ctx, r.poly, r.lo);
   demand(sMid !== 0 && sLo !== 0, 'verification-failed', 'irreducible polynomial vanished at a rational point');
   return Object.freeze({ ...r, ...(sMid === sLo ? { lo: mid } : { hi: mid }) });
 }
 
-/** Refine until the interval width is at most `width` (> 0). */
+/** Sign of f(p/q), q > 0, by homogeneous integer Horner Σ cᵢ·pⁱ·q^(n−i) (no rational normalization). */
+function signHomogeneous(ctx: ExecutionContext, f: Polynomial<bigint>, x: Rational): number {
+  return signScaled(ctx, f, x.numerator, x.denominator);
+}
+function signScaled(ctx: ExecutionContext, f: Polynomial<bigint>, p: bigint, q: bigint): number {
+  const c = f.coefficients;
+  let acc = c[c.length - 1], qPower = 1n;
+  for (let i = c.length - 2; i >= 0; i--) {
+    qPower = imul(ctx, qPower, q);
+    acc = imul(ctx, acc, p) + imul(ctx, c[i], qPower);
+  }
+  return acc === 0n ? 0 : acc < 0n ? -1 : 1;
+}
+
+/** The narrowest refinement reached so far for each isolating interval object (refinement is pure), per context. */
+const REFINED = new WeakMap<ExecutionContext, WeakMap<RealRootOf, RealRootOf>>();
+
+/**
+ * Refine until the interval width is at most `width` (> 0): bisection keeping the sign at lo, on
+ * unreduced numerators over B·2^m (B = the product of the end denominators), so no gcd is taken until
+ * the final endpoints are built. A finer refinement already reached for the same root is reused.
+ */
 export function refineReal(ctx: ExecutionContext, r: RealRootOf, width: Rational): RealRootOf {
   demand(width.numerator > 0n, 'invalid-input', 'refinement width must be positive');
-  let cur = r;
-  while (compareRational(ctx, rSubtract(ctx, cur.hi, cur.lo), width) > 0) cur = bisectReal(ctx, cur);
-  return cur;
+  let refined = REFINED.get(ctx);
+  if (!refined) { refined = new WeakMap(); REFINED.set(ctx, refined); }
+  const start = refined.get(r) ?? r;
+  // A cached refinement narrower than asked is still a valid isolating interval of r.
+  if (isRationalRoot(start) || compareRational(ctx, rSubtract(ctx, start.hi, start.lo), width) <= 0) return start;
+  const B = imul(ctx, start.lo.denominator, start.hi.denominator);
+  let L = imul(ctx, start.lo.numerator, start.hi.denominator), H = imul(ctx, start.hi.numerator, start.lo.denominator), scale = B;
+  const sLo = signScaled(ctx, start.poly, L, scale);
+  demand(sLo !== 0, 'verification-failed', 'irreducible polynomial vanished at a rational point');
+  // (H − L)/scale ≤ wn/wd  ⇔  (H − L)·wd ≤ wn·scale.
+  while (imul(ctx, H - L, width.denominator) > imul(ctx, width.numerator, scale)) {
+    ctx.tick();
+    const mid = L + H;
+    L <<= 1n; H <<= 1n; scale <<= 1n;
+    const s = signScaled(ctx, start.poly, mid, scale);
+    demand(s !== 0, 'verification-failed', 'irreducible polynomial vanished at a rational point');
+    if (s === sLo) L = mid; else H = mid;
+  }
+  const out = Object.freeze({ ...r, lo: rational(ctx, L, scale), hi: rational(ctx, H, scale) });
+  refined.set(r, out);
+  return out;
 }
 
 function floorRational(n: bigint, d: bigint): bigint { return n >= 0n ? n / d : -((-n + d - 1n) / d); }

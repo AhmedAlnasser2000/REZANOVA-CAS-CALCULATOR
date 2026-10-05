@@ -3,6 +3,7 @@ import {
   createLauncherCategories,
   createLauncherStateForMode,
   ensureLauncherLabsCategory,
+  ensureNewEquationLauncherEntry,
   ensureNewIntegrationLauncherEntry,
   getLauncherAppAtIndex,
   getLauncherAppByHotkey,
@@ -78,7 +79,7 @@ export function useLauncherRuntime({
     void loadLauncherCategories()
       .then((loadedLauncherCategories) => {
         if (!cancelled) {
-          setLauncherCategories(ensureLauncherLabsCategory(ensureNewIntegrationLauncherEntry(loadedLauncherCategories), { labsEnabled }));
+          setLauncherCategories(ensureLauncherLabsCategory(ensureNewEquationLauncherEntry(ensureNewIntegrationLauncherEntry(loadedLauncherCategories)), { labsEnabled }));
         }
       })
       .catch(() => {});

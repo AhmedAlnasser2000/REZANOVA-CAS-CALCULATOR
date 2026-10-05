@@ -1,4 +1,5 @@
 import { validateCanonicalResultDocumentV5 } from './validation-v5';
+import { validateCanonicalResultDocumentV6 } from './validation-v6';
 import type { CanonicalResultDocument } from '../../types/calculator';
 import { inspectJsonCompatibleStructuredValue } from './structured-value';
 import {
@@ -56,6 +57,7 @@ export function validateCanonicalResultDocumentVersioned(
   if (version === 3) return validateCanonicalResultDocumentV3(cloned, limits);
   if (version === 5) return validateCanonicalResultDocumentV5(cloned, limits);
   if (version === 4) return validateCanonicalResultDocumentV4(cloned, limits);
+  if (version === 6) return validateCanonicalResultDocumentV6(cloned, limits);
   return {
     ok: false,
     failure: {

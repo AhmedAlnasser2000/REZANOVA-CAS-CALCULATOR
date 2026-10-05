@@ -1,9 +1,10 @@
 import { demand, type ExecutionContext } from '../execution';
 import type { Polynomial } from '../algebra/polynomial';
 import { determinant } from '../algebra/linear';
-import { rAbs, rAdd, rational, rDivide, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
+import { bitLength, iexact, igcd, imul } from '../algebra/integer';
+import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
-import { compareReal, refineComplex, refineReal, type RealRootOf } from '../algebraic/root-of';
+import { refineComplex, refineReal } from '../algebraic/root-of';
 import { addValues, asRoot, multiplyValues, type ExactValue } from '../representation/evaluate';
 import type { ExpressionStore } from '../representation/expression';
 import { QX } from './rational-form';
@@ -16,8 +17,9 @@ import { QX } from './rational-form';
  * Σ x₀ⁱ·M(cᵢ) with Kronecker companion matrices, and N(x) = det(Σ xⁱ·M(cᵢ))
  * is a polynomial over ℚ vanishing at every root of f (the true embedding is
  * one of the conjugate tuples). Nonzero coefficients have nonzero conjugates,
- * so N ≢ 0 whenever f ≢ 0. Candidate roots of N are then tested on f itself:
- * cheaply rejected by certified disk evaluation, otherwise decided exactly.
+ * so N ≢ 0 whenever f ≢ 0. Candidate roots of N are then tested on f itself
+ * by certified disk evaluation, refined until the disk excludes zero or falls
+ * below Liouville's lower bound for nonzero values (then the value is zero).
  */
 type Matrix = Rational[][];
 
@@ -93,9 +95,9 @@ export function normPolynomial(store: ExpressionStore, coefficients: readonly Ex
 
 // ---- certified disk evaluation ----
 
-interface Disk { readonly re: Rational; readonly im: Rational; readonly r: Rational }
+export interface Disk { readonly re: Rational; readonly im: Rational; readonly r: Rational }
 
-function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
+export function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
   const zero = rational(ctx, 0n), two = rational(ctx, 2n);
   if (v.kind === 'rational') return { re: v.value, im: zero, r: zero };
   const root = v.root;
@@ -107,9 +109,9 @@ function diskOf(ctx: ExecutionContext, v: ExactValue, width: Rational): Disk {
   return { re: t.re, im: t.im, r: t.radius };
 }
 
-function diskAdd(ctx: ExecutionContext, a: Disk, b: Disk): Disk { return { re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im), r: rAdd(ctx, a.r, b.r) }; }
+export function diskAdd(ctx: ExecutionContext, a: Disk, b: Disk): Disk { return { re: rAdd(ctx, a.re, b.re), im: rAdd(ctx, a.im, b.im), r: rAdd(ctx, a.r, b.r) }; }
 
-function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
+export function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
   const re = rSubtract(ctx, rMultiply(ctx, a.re, b.re), rMultiply(ctx, a.im, b.im));
   const im = rAdd(ctx, rMultiply(ctx, a.re, b.im), rMultiply(ctx, a.im, b.re));
   const size = (d: Disk) => rAdd(ctx, rAbs(ctx, d.re), rAbs(ctx, d.im));
@@ -117,19 +119,57 @@ function diskMultiply(ctx: ExecutionContext, a: Disk, b: Disk): Disk {
   return { re, im, r };
 }
 
-function mayContainZero(ctx: ExecutionContext, d: Disk): boolean {
+export function mayContainZero(ctx: ExecutionContext, d: Disk): boolean {
   return compareRational(ctx, rAdd(ctx, rMultiply(ctx, d.re, d.re), rMultiply(ctx, d.im, d.im)), rMultiply(ctx, d.r, d.r)) <= 0;
 }
 
-/** Two refinement levels for the cheap disk test before exact arithmetic decides. */
-const PREFILTER_WIDTHS = [16n, 64n] as const;
+/**
+ * A disk in fixed point: centre (re, im)·2^−W and radius r·2^−W. Every truncated
+ * centre coordinate moves the centre by less than one unit in each coordinate, so
+ * the radius grows by 2 units per rounding (√2 < 2); radii round up.
+ */
+interface FixedDisk { readonly re: bigint; readonly im: bigint; readonly r: bigint }
+
+const floorDiv = (n: bigint, d: bigint) => (n >= 0n ? n / d : -((-n + d - 1n) / d));
+const ceilDiv = (n: bigint, d: bigint) => -floorDiv(-n, d);
+function fixedOf(ctx: ExecutionContext, v: ExactValue, width: Rational, W: bigint): FixedDisk {
+  const S = 1n << W;
+  const at = (q: Rational) => floorDiv(imul(ctx, q.numerator, S), q.denominator);
+  const up = (q: Rational) => ceilDiv(imul(ctx, q.numerator, S), q.denominator);
+  // A rational is exact when q·2^W is an integer; otherwise its truncation is off by less than one unit.
+  if (v.kind === 'rational') return { re: at(v.value), im: 0n, r: imul(ctx, v.value.numerator, S) % v.value.denominator === 0n ? 0n : 1n };
+  const root = v.root;
+  if (root.kind === 'real') {
+    const t = root.poly.coefficients.length === 2 ? root : refineReal(ctx, root, width);
+    // centre (lo + hi)/2, radius (hi − lo)/2, from one common denominator.
+    const d = imul(ctx, 2n * t.lo.denominator, t.hi.denominator);
+    const sum = imul(ctx, t.lo.numerator, t.hi.denominator) + imul(ctx, t.hi.numerator, t.lo.denominator);
+    const diff = imul(ctx, t.hi.numerator, t.lo.denominator) - imul(ctx, t.lo.numerator, t.hi.denominator);
+    return { re: floorDiv(imul(ctx, sum, S), d), im: 0n, r: ceilDiv(imul(ctx, diff, S), d) + 2n };
+  }
+  const t = root.radius.numerator === 0n ? root : refineComplex(ctx, root, width);
+  return { re: at(t.re), im: at(t.im), r: up(t.radius) + 2n };
+}
 
 function diskValue(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue, width: Rational): Disk {
-  const x = diskOf(ctx, point, width);
-  let acc = diskOf(ctx, coefficients[coefficients.length - 1], width);
-  for (let i = coefficients.length - 2; i >= 0; i--) acc = diskAdd(ctx, diskMultiply(ctx, acc, x), diskOf(ctx, coefficients[i], width));
-  return acc;
+  // Working precision: the requested width plus room for the Horner steps.
+  const W = BigInt(bitLength(width.denominator) + 8 + bitLength(BigInt(coefficients.length)));
+  const x = fixedOf(ctx, point, width, W), xs = abs(x.re) + abs(x.im);
+  let acc = fixedOf(ctx, coefficients[coefficients.length - 1], width, W);
+  for (let i = coefficients.length - 2; i >= 0; i--) {
+    ctx.tick();
+    const c = fixedOf(ctx, coefficients[i], width, W);
+    // (a·x)·2^−2W truncated to 2^−W: each centre coordinate loses less than one unit.
+    const re = floorDiv(imul(ctx, acc.re, x.re) - imul(ctx, acc.im, x.im), 1n << W);
+    const im = floorDiv(imul(ctx, acc.re, x.im) + imul(ctx, acc.im, x.re), 1n << W);
+    const as = abs(acc.re) + abs(acc.im);
+    const r = ceilDiv(imul(ctx, as, x.r) + imul(ctx, xs, acc.r) + imul(ctx, acc.r, x.r), 1n << W) + 2n;
+    acc = { re: re + c.re, im: im + c.im, r: r + c.r };
+  }
+  const k = Number(W);
+  return { re: rDyadic(ctx, acc.re, k), im: rDyadic(ctx, acc.im, k), r: rDyadic(ctx, acc.r, k) };
 }
+const abs = (v: bigint) => (v < 0n ? -v : v);
 
 export function exactValueAt(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): ExactValue {
   let acc = coefficients[coefficients.length - 1];
@@ -137,25 +177,75 @@ export function exactValueAt(ctx: ExecutionContext, coefficients: readonly Exact
   return acc;
 }
 
+/** ⌈log₂ ‖P‖₂⌉ for an integer polynomial: an upper bound for log₂ of its Mahler measure (Landau). */
+function log2Norm(ctx: ExecutionContext, poly: Polynomial<bigint>): bigint {
+  let sum = 0n;
+  for (const c of poly.coefficients) sum += imul(ctx, c, c);
+  return BigInt((sum.toString(2).length + 1) >> 1);
+}
+
+const bits = (n: bigint) => BigInt((n < 0n ? -n : n).toString(2).length);
+
+/**
+ * A rational T > 0 such that f(point) ≠ 0 implies |f(point)| ≥ T, by Liouville's
+ * inequality (Waldschmidt, Diophantine Approximation on Linear Algebraic Groups,
+ * Prop. 3.14): for F ∈ ℤ[X₁…Xₖ] of degree Nᵢ in Xᵢ and algebraic αᵢ in a field of
+ * degree D, F(α) ≠ 0 implies log|F(α)| ≥ −(D−1)·log L(F) − D·Σ Nᵢ·h(αᵢ), where L
+ * is the sum of |coefficients| and h(α) = log M(min α)/deg α ≤ log ‖min α‖₂/deg α.
+ * Here f = Σ cᵢ xⁱ is F(point, generators…)/Q with Q the common denominator of
+ * the rational coefficients, each distinct non-rational coefficient a variable of
+ * degree 1, D bounded by the product of the degrees (a larger D only weakens the
+ * bound, as does D·log L in place of (D−1)·log L). RootOf polynomials are minimal.
+ */
+function liouvilleThreshold(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): Rational {
+  let Q = 1n;
+  for (const c of coefficients) if (c.kind === 'rational') Q = iexact(ctx, imul(ctx, Q, c.value.denominator), igcd(ctx, Q, c.value.denominator));
+  let L = 0n;
+  const generators = new Map<string, Polynomial<bigint>>();
+  for (const c of coefficients) {
+    if (c.kind === 'rational') { L += imul(ctx, Q, c.value.numerator < 0n ? -c.value.numerator : c.value.numerator) / c.value.denominator; continue; }
+    L += Q;
+    generators.set(c.root.poly.coefficients.join(','), c.root.poly);
+  }
+  const pointPoly = asRoot(ctx, point).poly, n = BigInt(coefficients.length - 1);
+  const degree = (p: Polynomial<bigint>) => BigInt(p.coefficients.length - 1);
+  let D = degree(pointPoly);
+  for (const g of generators.values()) D *= degree(g);
+  // log₂(1/T) ≤ D·log₂ L + (D/deg x₀)·n·log₂ M(x₀) + Σ (D/deg g)·log₂ M(g) + log₂ Q.
+  let total = D * bits(L) + (D / degree(pointPoly)) * n * log2Norm(ctx, pointPoly) + bits(Q);
+  for (const g of generators.values()) total += (D / degree(g)) * log2Norm(ctx, g);
+  return rational(ctx, 1n, 1n << total);
+}
+
+/**
+ * f(point) as a certified disk that either excludes zero or is smaller than the
+ * Liouville threshold (then f(point) = 0 exactly): refining doubles the precision.
+ */
+function decideValue(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): Disk | 'zero' {
+  let threshold: Rational | undefined;
+  for (let w = 16n; ;) {
+    ctx.tick();
+    const d = diskValue(ctx, coefficients, point, rational(ctx, 1n, 1n << w));
+    if (!mayContainZero(ctx, d)) return d;
+    threshold ??= liouvilleThreshold(ctx, coefficients, point);
+    if (compareRational(ctx, rAdd(ctx, rAdd(ctx, rAbs(ctx, d.re), rAbs(ctx, d.im)), d.r), threshold) < 0) return 'zero';
+    // The radius scales with the width: aim directly below the threshold, at least doubling.
+    const growth = bits(d.r.numerator) - bits(d.r.denominator) + w + 1n;
+    w = [w * 2n, growth + bits(threshold.denominator) + 4n].reduce((a, b) => (a > b ? a : b));
+  }
+}
+
 /** Whether f(point) = 0, exactly. */
 export function vanishesAt(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): boolean {
   if (coefficients.length === 0) return true;
-  for (const w of PREFILTER_WIDTHS) {
-    if (!mayContainZero(ctx, diskValue(ctx, coefficients, point, rational(ctx, 1n, 1n << w)))) return false;
-  }
-  const v = exactValueAt(ctx, coefficients, point);
-  return v.kind === 'rational' && v.value.numerator === 0n;
+  return decideValue(ctx, coefficients, point) === 'zero';
 }
 
 /** Sign of f(point) for real coefficients at a real point, exactly. */
 export function signAt(ctx: ExecutionContext, coefficients: readonly ExactValue[], point: ExactValue): -1 | 0 | 1 {
   if (coefficients.length === 0) return 0;
-  for (const w of PREFILTER_WIDTHS) {
-    const d = diskValue(ctx, coefficients, point, rational(ctx, 1n, 1n << w));
-    if (!mayContainZero(ctx, d)) return d.re.numerator < 0n ? -1 : 1;
-  }
-  const v = exactValueAt(ctx, coefficients, point);
-  if (v.kind === 'rational') return v.value.numerator === 0n ? 0 : v.value.numerator < 0n ? -1 : 1;
-  demand(v.root.kind === 'real', 'verification-failed', 'real polynomial took a non-real value at a real point');
-  return compareReal(ctx, v.root, asRoot(ctx, { kind: 'rational', value: rational(ctx, 0n) }) as RealRootOf) as -1 | 1;
+  const d = decideValue(ctx, coefficients, point);
+  if (d === 'zero') return 0;
+  demand(d.im.numerator === 0n, 'verification-failed', 'real polynomial took a non-real value at a real point');
+  return d.re.numerator < 0n ? -1 : 1;
 }

@@ -252,7 +252,7 @@ export function validateCanonicalRuntimeVersionedResultOutcome(
     CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3
   > | undefined;
   if (value.actions !== undefined) {
-    if (document.validated.value.version === 4 || document.validated.value.version === 5) {
+    if (document.validated.value.version === 4 || document.validated.value.version === 5 || document.validated.value.version === 6) {
       return fail(
         'invalid-action',
         'Typed formal results derive editor and clipboard transfer from typed expression authority.',

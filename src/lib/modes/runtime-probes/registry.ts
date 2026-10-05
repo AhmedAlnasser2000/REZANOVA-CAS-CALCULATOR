@@ -7,6 +7,8 @@ import type { OoeRuntimeMetadata } from '../../ooe/runtime-control/runtime-envel
 import type { OoeRuntimeShellEvidence } from '../../ooe/runtime-control/runtime-shell-contract';
 import { INTEGRATION_CAPABILITY, INTEGRATION_HOST, runIntegrationJob } from '../../calculus/new-integration/runtime';
 import { DEFAULT_INTEGRATION_LIMITS } from '../../calculus/new-integration/types';
+import { EQUATION_CAPABILITY, EQUATION_HOST, runEquationJob } from '../../new-equation/runtime';
+import { DEFAULT_EQUATION_LIMITS, type EquationRequest } from '../../new-equation/types';
 import {
   buildCalculateRuntimeOoeSnapshot,
   runCalculateRuntimeWithOoePilot,
@@ -52,6 +54,7 @@ export type RuntimeProbeWorkspaceId = Exclude<LauncherLeafId, 'labs'>;
 // Worker-required workspaces have no fallback host or History launch ticket.
 // Their successful worker path is covered by the workspace tests and browser probes.
 const integrationRequest = { request: { source: '\\int x\\,dx', limits: DEFAULT_INTEGRATION_LIMITS } };
+const newEquationRequest: EquationRequest = { rows: ['x^2=1'], targets: ['x'], domain: 'real', limits: DEFAULT_EQUATION_LIMITS, digits: 6 };
 export const WORKER_REQUIRED_RUNTIME_PROBES = [{
   workspace: 'new-integration',
   capabilityId: INTEGRATION_CAPABILITY,
@@ -63,6 +66,19 @@ export const WORKER_REQUIRED_RUNTIME_PROBES = [{
     workspaceInstanceLabel: 'New Integration probe',
     workspaceInstanceRevision: 3,
     compartmentId: 'calculus',
+  }, 3, () => stale ? 4 : 3, () => true, new AbortController().signal,
+  () => { throw new Error('Worker execution is unavailable.'); }),
+}, {
+  workspace: 'new-equation',
+  capabilityId: EQUATION_CAPABILITY,
+  primaryHostId: EQUATION_HOST,
+  request: newEquationRequest,
+  requestSnapshot: {instanceId: 'runtime-probe-new-equation', revision: 3},
+  executeUnavailable: (stale: boolean) => runEquationJob(newEquationRequest, {
+    workspaceInstanceId: 'runtime-probe-new-equation',
+    workspaceInstanceLabel: 'New Equation probe',
+    workspaceInstanceRevision: 3,
+    compartmentId: 'equation',
   }, 3, () => stale ? 4 : 3, () => true, new AbortController().signal,
   () => { throw new Error('Worker execution is unavailable.'); }),
 }] as const;

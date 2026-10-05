@@ -120,19 +120,20 @@ group('inequalities and conjunctions', () => {
 
 group('routing to the gates that own a problem', () => {
   it.each([
-    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 5), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
+    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 6), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
     [eq(['Add', exp('x'), ln('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
     [eq(['Add', exp(times(2, 'x')), exp('x')], 'ExponentialE'), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-2 equation with transcendental coefficients'],
     [eq(ln(['Add', ['Power', 'x', 3], 'x']), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-3 equation with transcendental coefficients'],
     [eq(['Add', ['Sqrt', 'x'], exp('x')], 3), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(exp(['Sin', 'x']), 2), 'incomplete-implementation: EQUATION-PERIODIC1: sin of the variable'],
-    [eq(times('a', exp('x')), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: parameters a'],
+    [eq(['Add', exp('x'), ['Sin', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
+    // a·eˣ = 1 is decided by the parameters gate; a kernel next to the target with a parameter stays refused.
+    [eq(['Add', exp('x'), times('a', 'x')], 1), 'incomplete-implementation: EQUATION-PARAMETERS1: the target outside its kernel with parameters (mixed kernels, follow-up ledger)'],
   ])('%j', (json, expected) => {
     expect(run(json).text).toBe(expected);
   });
 
-  it('sends complex exp/log to the periodic gate and polynomial problems to slice 1', () => {
-    expect(run(eq(exp('x'), 2), 'complex').text).toBe('incomplete-implementation: EQUATION-PERIODIC1: complex exponential and logarithmic equations');
+  it('sends complex exp/log to the complex families of the periodic slice and polynomial problems to slice 1', () => {
+    expect(run(eq(exp('x'), 2), 'complex').text).toBe('{["Add",["Multiply",2,"Pi","k","ImaginaryUnit"],["Ln",2]] : k ∈ ℤ}');
     expect(run(eq(['Power', 'x', 2], 2)).text).toBe('{≈-1.414214, ≈1.414214}');
   });
 });

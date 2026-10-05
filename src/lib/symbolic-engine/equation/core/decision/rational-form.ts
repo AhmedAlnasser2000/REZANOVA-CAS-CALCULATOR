@@ -125,6 +125,21 @@ class Algebra {
   }
 }
 
+/**
+ * A product as a balanced tree, so long products multiply large halves (where fast multiplication pays)
+ * instead of one factor at a time. Reduced forms are canonical, so the grouping does not change the result.
+ */
+function balanced<T>(xs: readonly T[], op: (a: T, b: T) => T): T {
+  let level = [...xs];
+  while (level.length > 1) {
+    const next: T[] = [];
+    for (let i = 0; i + 1 < level.length; i += 2) next.push(op(level[i], level[i + 1]));
+    if (level.length % 2) next.push(level[level.length - 1]);
+    level = next;
+  }
+  return level[0];
+}
+
 /** Recognize `id` as a rational function of `variable` (explicit-stack walk). */
 export function rationalForm(store: ExpressionStore, id: ExprId, variable: string): Recognition {
   const alg = new Algebra(store), ctx = store.ctx;
@@ -149,7 +164,7 @@ export function rationalForm(store: ExpressionStore, id: ExprId, variable: strin
     const f = (k: ExprId) => forms.get(k) as RationalForm;
     switch (node.kind) {
       case 'add': forms.set(n, node.args.map(f).reduce((a, b) => alg.sum(a, b))); break;
-      case 'mul': forms.set(n, node.args.map(f).reduce((a, b) => alg.product(a, b))); break;
+      case 'mul': forms.set(n, balanced(node.args.map(f), (a, b) => alg.product(a, b))); break;
       case 'pow': {
         if (free.get(node.exponent) === false) return refuse(OWNERS.generators, 'the variable appears in an exponent');
         const e = store.numberValue(node.exponent);
