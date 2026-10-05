@@ -1,0 +1,61 @@
+.new-equation-page {width: min(100%, 1040px); margin: 0 auto; padding: 24px; box-sizing: border-box; overflow: auto; color: var(--text-primary, inherit);}
+.new-equation-page header {display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px;}
+.new-equation-page h1 {margin: 0 0 6px; font-size: 1.65rem;}
+.new-equation-page h2 {margin: 0; font-size: 1.15rem;}
+.new-equation-page p {line-height: 1.55;}
+.new-equation-page button, .new-equation-page select {padding: 7px 13px; border: 1px solid #64748b66; border-radius: 7px; cursor: pointer; font: inherit; background: transparent; color: inherit;}
+.new-equation-page button:disabled {opacity: .45; cursor: default;}
+.new-equation-page .ne-primary {background: #275dad; border-color: #275dad; color: white;}
+.ne-panel {padding: 18px; border: 1px solid #64748b55; border-radius: 12px; margin-bottom: 16px; min-width: 0;}
+.ne-rows {list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px;}
+.ne-row {display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; align-items: start; gap: 10px;}
+.ne-row-number {padding-top: 14px; text-align: end; opacity: .6; font-variant-numeric: tabular-nums;}
+.ne-row-field {min-width: 0; position: relative;}
+.ne-row-field math-field {display: block; width: 100%; min-height: 52px; font-size: 1.35rem; box-sizing: border-box; border: 1px solid #64748b55; border-radius: 8px; padding: 6px 10px;}
+.ne-row[data-row-kind='error'] math-field {border-color: #c2410c;}
+.ne-row[data-row-kind='assumption'] math-field {border-style: dashed;}
+.ne-row .ne-remove {margin-top: 9px; padding: 4px 10px;}
+.ne-row-note {margin: 4px 0 0; color: #c2410c; font-size: .92rem;}
+.ne-row-hint {margin: 4px 0 0; font-size: .88rem; opacity: .7;}
+.ne-actions {display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0;}
+.ne-examples {position: relative;}
+.ne-examples summary {list-style: none; padding: 7px 13px; border: 1px solid #64748b66; border-radius: 7px; cursor: pointer;}
+.ne-examples summary::-webkit-details-marker {display: none;}
+.ne-examples [role='menu'] {position: absolute; z-index: 5; margin-top: 6px; display: flex; flex-direction: column; min-width: 190px; padding: 6px; border: 1px solid #64748b55; border-radius: 9px; background: var(--surface-elevated, var(--app-background, #fff));}
+.ne-examples [role='menu'] button {border: 0; text-align: start;}
+.ne-tip {margin: 4px 0 0; font-size: .88rem; opacity: .65;}
+.ne-setup {display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;}
+.ne-solve-for {display: flex; flex-wrap: wrap; align-items: center; gap: 8px;}
+.ne-chip {display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 12px; border-radius: 999px; background: #275dad22; font-style: italic; font-family: 'Times New Roman', serif; font-size: 1.1rem;}
+.ne-chip button {border: 0; padding: 0 7px; font-style: normal;}
+.ne-link {border: 0 !important; text-decoration: underline;}
+.ne-segmented {display: inline-flex; border: 1px solid #64748b66; border-radius: 8px; overflow: hidden;}
+.ne-segmented button {border: 0; border-radius: 0;}
+.ne-segmented button[aria-pressed='true'] {background: #275dad; color: white;}
+.ne-message {margin: 8px 0; color: #c2410c;}
+.ne-message.ne-plain {color: inherit; font-size: 1.05rem;}
+.ne-limits-panel summary, .ne-answer summary {cursor: pointer; font-weight: 600;}
+.ne-limits-panel p {opacity: .8;}
+.ne-limits {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;}
+.ne-limits label {display: flex; flex-direction: column; gap: 6px;}
+.ne-limits input {min-width: 0; padding: 7px;}
+.ne-answer[data-outdated='true'] > :not(.ne-outdated) {opacity: .45;}
+.ne-outdated {margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; background: #f59e0b22;}
+.ne-outdated button {margin-inline-start: 4px;}
+.ne-answer-head {display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;}
+.ne-rows-out {min-width: 0; overflow-x: auto;}
+.ne-out {min-width: 0;}
+.ne-out-assumption {opacity: .8; font-style: italic;}
+.ne-out-definition {opacity: .85; font-size: .95em;}
+.ne-math {max-width: 100%; overflow-x: auto; padding: 4px 0; font-size: 1.3rem;}
+.ne-conditions .ne-math {font-size: 1.1rem;}
+.ne-answer details {border-top: 1px solid #64748b44; padding: 10px 0;}
+.ne-verified summary {color: #15803d;}
+.ne-note {opacity: .8; font-size: .92rem;}
+.ne-usage {margin: 6px 0 0; font-size: .8rem; opacity: .55;}
+@media (max-width: 640px) {
+  .new-equation-page {padding: 12px;}
+  .ne-panel {padding: 12px;}
+  .new-equation-page header {align-items: flex-start;}
+  .ne-row {grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 6px;}
+}

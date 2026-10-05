@@ -21,6 +21,7 @@ export type LauncherCategoryId =
 
 export type LauncherLeafId =
   | 'new-integration'
+  | 'new-equation'
   | 'calculate'
   | 'equation'
   | 'matrix'

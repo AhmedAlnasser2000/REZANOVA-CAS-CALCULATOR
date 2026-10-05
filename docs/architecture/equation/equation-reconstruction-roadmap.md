@@ -1,24 +1,27 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1`, `EQUATION-RESULT-CONTRACT1` and `EQUATION-PRESENTATION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1`, `EQUATION-RESULT-CONTRACT1`, `EQUATION-PRESENTATION1` and `EQUATION-ADOPTION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
 ## Immediate next task
 
-`EQUATION-PRESENTATION1` (stage 13b) is verified in one PR with two commits (see its [specification](equation-presentation1-spec.md)).
+`EQUATION-ADOPTION1` (stage 14) is verified in one PR with two commits (see its [specification](equation-adoption1-spec.md)).
 
 Part A:
-- proven display rewrites;
-- certified decimals;
-- numeric order of points.
+- rows read as relations, with automatic unknowns;
+- assumptions applied exactly with independent evidence, and recorded in V6 (an optional `assumptions` field);
+- the New Equation worker service, OOE runtime shell and Rust descriptors;
+- drafts per tab.
 
 Part B:
-- the V6 printer (ring-identity layout, relations, chains);
-- the presentation read model, with Exact/Decimal/Both, roots shown as decimal plus definition, family rows and an exact copy.
+- the New Equation page (rows, Enter / Shift+Enter, Solve for chips, Real | Complex, Exact | Decimal | Both, the verified line, conditions used, copy, the outdated state, Stop, limits);
+- the menu entry and tabs;
+- the Guide article;
+- Playwright evidence on the real app.
 
-This completes stage 13b. The next gate is `EQUATION-ADOPTION1`. It needs its own approval.
+This completes stage 14. The next gates (15 `EQUATION-SEMIALGEBRAIC1`, 16 `EQUATION-CERTIFIED-NUMERICS1`) each need their own approval.
 
 ## Implementation sequence
 
@@ -38,7 +41,7 @@ This completes stage 13b. The next gate is `EQUATION-ADOPTION1`. It needs its ow
 | 12 (backend verified) | `EQUATION-PROOF-PERFORMANCE1` | Fast replay verification; measured hot paths | Recorded medians; no correctness regression |
 | 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 13b (verified) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
-| 14 | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
+| 14 (verified) | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
 | 16 | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs | N cases certified; numerical results typed as numerical |
 | 17 | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Corpus parity, then retirement of the old Equation engine | Capability ledger; no regression versus the baseline table |
@@ -57,7 +60,6 @@ Stages 15 and 16 may move before adoption if the user wants them in the first pr
 
 ## Decisions remaining before later gates
 
-- V6 scope and whether adoption precedes stages 15–16.
 - The exact interface of the future OOE resource subsystem that replaces the core's budgets.
 - When, if ever, to extract a shared exact-arithmetic layer with the integration core.
 - Whether complex modulus and complex radicals (`unsupported` since stage 7, by user decision) get a gate of their own.
@@ -91,7 +93,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Kernels with parameters over ℂ (e^{az} = b as (ln b + 2πik)/a) | `EQUATION-PARAMETERS1` | unassigned |
 | A RootOf expression node, so roots with transcendental coefficients can sit inside kernels (e^{3x} + π·eˣ = e; ln(x³ + x) = 1 at degree 3) | `EQUATION-PARAMETERS1` | unassigned |
 | Transcendental constants together with parameters (π·x = a); several relations or ≠ with transcendental constants over ℂ | `EQUATION-PARAMETERS1` | unassigned |
-| Choosing the target automatically (prefer x, then other conventions); today the caller names it | `EQUATION-PARAMETERS1` (user question) | unassigned, after the roadmap |
+| ~~Choosing the target automatically (prefer x, then other conventions); today the caller names it~~ (closed by `EQUATION-ADOPTION1`: x, y, z, t, then alphabetical, editable) | `EQUATION-PARAMETERS1` (user question) | `EQUATION-ADOPTION1` |
 | Complex or algebraic coefficients in systems (the polynomial atoms read rational coefficients) | `EQUATION-SYSTEMS1` | unassigned |
 | Nonlinear systems with parameters (comprehensive Gröbner systems) | `EQUATION-SYSTEMS1` | unassigned |
 | Kernels with parameters or extra conditions in a system; elimination that leaves several targets or interval answers | `EQUATION-SYSTEMS1` | unassigned |
@@ -100,6 +102,10 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Evidence cases still over 1 s to decide and verify (atan x + atan 2x = π/4 at 1.8 s; the depth-25 ln chain at 1.1 s); the user accepted them for now (2026-10-04) | `EQUATION-PROOF-PERFORMANCE1` | a later performance gate |
 | Radical simplification inside expressions with free symbols (√(−4(y² − 1)) is not shown as 2√(1 − y²)); rewrites are proven only on constant subexpressions | `EQUATION-PRESENTATION1` | unassigned |
 | Closed forms for pure binomial roots inside larger values (e^{r₁} with r₁ = ∛4 shows r₁ and its definition) | `EQUATION-PRESENTATION1` | unassigned |
+| The detailed verification report (one entry per check behind "Verified exactly") | `EQUATION-ADOPTION1` (user decision) | `EQUATION-VERIFICATION-REPORT1` |
+| Global History for New Equation; export, open and verify of saved problems | `EQUATION-ADOPTION1` (user decision) | unassigned |
+| Step-by-step explanations, by an agent through MCP in Notebook | `EQUATION-ADOPTION1` (user decision) | unassigned |
+| Assumptions coupling several parameters beyond monomials (cases kept as they are, with a note) | `EQUATION-ADOPTION1` | `EQUATION-SEMIALGEBRAIC1` |
 
 ## Attribution
 

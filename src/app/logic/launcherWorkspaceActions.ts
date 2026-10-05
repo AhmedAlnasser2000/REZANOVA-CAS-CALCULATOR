@@ -13,6 +13,7 @@ import type {
 
 type LauncherWorkspaceLaunchDeps = {
   openNewIntegration?: () => void;
+  openNewEquation?: () => void;
   clearDisplayOutcome: () => void;
   clearEquationSolveTarget: () => void;
   commitVisibleModeSelection: (mode: ModeId) => void;
@@ -89,6 +90,7 @@ export function launchWorkspaceEntryFromLauncher(
   deps: LauncherWorkspaceLaunchDeps,
 ) {
   if (entry.launch.mode === 'calculus' && entry.launch.workspace === 'new-integration') {deps.openNewIntegration?.(); return;}
+  if (entry.launch.mode === 'equation' && entry.launch.workspace === 'new-equation') { deps.openNewEquation?.(); return; }
   if (entry.launch.mode === 'calculate') {
     const screen = entry.launch.calculateScreen ?? 'standard';
     openLauncherDestination(entry, intent, deps, () =>
