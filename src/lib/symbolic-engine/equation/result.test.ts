@@ -139,3 +139,25 @@ group('Equation V6 adapter: kinds, outcomes and replay', () => {
     expect(unconfirmed.kind === 'solved' && unconfirmed.set.kind === 'unconfirmed' && unconfirmed.set.candidates[0].point[0].kind).toBe('algebraic');
   });
 });
+
+group('Equation V6 adapter: assumptions', () => {
+  it('records assumptions, validates, replays and refuses a mismatch', async () => {
+    const { canonicalRelation } = await import('./core/representation/relation');
+    const { assumeOutcome } = await import('./core/parameters/assume');
+    const store = new ExpressionStore(context());
+    const { problem, outcome: full } = setup(eq(['Power', 'x', 2], 'a'), ['x'], 'real', store);
+    const read = readRelations(store, ['Greater', 'a', 0]);
+    if (read.kind !== 'ok') throw new Error('read');
+    const assumptions = read.value.map(r => canonicalRelation(store, r));
+    const { outcome } = assumeOutcome(problem, assumptions, full);
+    const d = projectEquationOutcome(problem, outcome, {}, { assumptions, full }).canonicalResult;
+    expect(d.primary.assumptions?.map(r => r.op)).toEqual(['lt']);
+    expect(validateCanonicalResultDocumentVersioned(d).ok).toBe(true);
+    rejects(() => replayEquationDocument(problem, outcome, d), /different assumptions/);
+    const bad = clone(d);
+    bad.primary.assumptions = [{ op: 'lt', lhs: { mathJson: 'x', canonicalLatex: 'x' }, rhs: { mathJson: 0, canonicalLatex: '0' } }];
+    expect(validateCanonicalResultDocumentVersioned(bad).ok).toBe(false);
+    // Without the assumptions the pruned outcome does not verify.
+    expect(() => projectEquationOutcome(problem, outcome)).toThrow();
+  });
+});

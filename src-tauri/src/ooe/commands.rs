@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn list_command_helper_returns_builtin_descriptors() {
-        assert_eq!(list_builtin_plans_for_command().len(), 22);
+        assert_eq!(list_builtin_plans_for_command().len(), 23);
     }
 
     #[test]
@@ -117,6 +117,7 @@ mod tests {
             "calculus-runtime",
             "calculus-worker-runtime",
             "new-integration-worker-runtime",
+            "new-equation-worker-runtime",
             "calculate-runtime",
             "calculate-worker-runtime",
             "editor-analysis-runtime",

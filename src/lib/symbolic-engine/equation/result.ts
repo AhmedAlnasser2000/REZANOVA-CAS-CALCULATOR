@@ -1,5 +1,5 @@
 import type {
-  CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationIntervalV6, CanonicalEquationOutcomeV6,
+  CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationRelationV6, CanonicalEquationIntervalV6, CanonicalEquationOutcomeV6,
   CanonicalEquationRootBinderV6, CanonicalEquationSetV6, CanonicalMathValueV2, CanonicalResultDocumentV6, SerializableMathJson,
 } from '../../../types/calculator';
 import { equationMathLatex } from '../../result-contract/equation-math-latex';
@@ -11,7 +11,8 @@ import { EquationAlgebraError } from './core/execution';
 import type { Rational } from './core/algebra/rational';
 import type { RootOf } from './core/algebraic/root-of';
 import type { ExprId, ExpressionStore, FunctionName } from './core/representation/expression';
-import type { Condition, RelationProblem } from './core/representation/relation';
+import type { Condition, Relation, RelationProblem } from './core/representation/relation';
+import { verifyAssumedOutcome } from './core/parameters/assume';
 import type { Endpoint, EquationOutcome, Interval, PointValue, RootValue, SolutionSet } from './core/representation/solution-set';
 import { replayEquationDocument } from './result-read';
 
@@ -134,6 +135,10 @@ class Projector {
       : { kind: c.kind, expr: math(this.expr(c.expr)) };
   }
 
+  relation(r: Relation): CanonicalEquationRelationV6 {
+    return { op: r.op, lhs: math(this.expr(r.lhs)), rhs: math(this.expr(r.rhs)) };
+  }
+
   endpoint(e: Endpoint): CanonicalEquationEndpointV6 {
     return e.kind === 'infinity' ? { kind: 'infinity', sign: e.sign } : { kind: 'value', value: this.value(e) };
   }
@@ -183,8 +188,9 @@ function v6Outcome(p: Projector, outcome: EquationOutcome): CanonicalEquationOut
   }
 }
 
-function document(problem: RelationProblem, p: Projector, outcome: CanonicalEquationOutcomeV6, rules: string[]): CanonicalResultDocumentV6 {
+function document(problem: RelationProblem, p: Projector, outcome: CanonicalEquationOutcomeV6, rules: string[], assumptions: readonly Relation[]): CanonicalResultDocumentV6 {
   const answer = outcome.kind === 'solved' || outcome.kind === 'empty';
+  const assumed = assumptions.length ? { assumptions: assumptions.map(r => p.relation(r)) } : {};
   return {
     version: 6,
     outcomeKind: answer ? 'success' : 'error',
@@ -193,7 +199,7 @@ function document(problem: RelationProblem, p: Projector, outcome: CanonicalEqua
     warnings: [],
     primary: {
       kind: 'equation-outcome', domain: problem.domain, targets: [...problem.targets], parameters: [...problem.parameters],
-      roots: p.binders, outcome, provenance: answer ? { verification: 'independent', rules } : { verification: 'not-applicable', rules: [] },
+      roots: p.binders, ...assumed, outcome, provenance: answer ? { verification: 'independent', rules } : { verification: 'not-applicable', rules: [] },
     },
   };
 }
@@ -202,21 +208,38 @@ function finish(d: CanonicalResultDocumentV6): EquationV6Result {
   return requireCanonicalResultAuthority({ kind: d.outcomeKind, canonicalResult: d }, 'Equation V6 adapter');
 }
 
+/** Conditions on the problem's own expressions (no algebraic numbers), in the V6 grammar, for display. */
+export function projectConditions(problem: RelationProblem, conditions: readonly Condition[]): CanonicalEquationConditionV6[] {
+  const p = new Projector(problem), out = conditions.map(c => p.condition(c));
+  if (p.binders.length) throw new Error('Displayed conditions carry no algebraic numbers.');
+  return out;
+}
+
+/**
+ * Assumptions (relations on the parameters only) and the full outcome they were applied to: the full outcome is
+ * verified independently, then the assumed outcome against it (core/parameters/assume.ts).
+ */
+export interface EquationAssumed { readonly assumptions: readonly Relation[]; readonly full: EquationOutcome }
+
 /** Project a core outcome for `problem` to a verified, replayed, authority-checked V6 document. */
-export function projectEquationOutcome(problem: RelationProblem, outcome: EquationOutcome, limits: CanonicalResultValidationLimits = {}): EquationV6Result {
+export function projectEquationOutcome(problem: RelationProblem, outcome: EquationOutcome, limits: CanonicalResultValidationLimits = {}, assumed?: EquationAssumed): EquationV6Result {
+  const assumptions = assumed?.assumptions ?? [];
   const stopped = (stop: 'work' | 'allocation' | 'cancelled' | 'result-size') =>
-    finish(document(problem, new Projector(problem), { kind: 'stopped', stop }, []));
+    finish(document(problem, new Projector(problem), { kind: 'stopped', stop }, [], assumptions));
   try {
-    verifyEquationOutcome(problem, outcome);
+    if (assumed && assumptions.length) {
+      verifyEquationOutcome(problem, assumed.full);
+      verifyAssumedOutcome(problem, assumptions, assumed.full, outcome);
+    } else verifyEquationOutcome(problem, outcome);
     const p = new Projector(problem);
     const rules = 'proof' in outcome ? [...new Set(outcome.proof.records.map(r => r.rule))].sort() : [];
-    const d = document(problem, p, v6Outcome(p, outcome), rules);
+    const d = document(problem, p, v6Outcome(p, outcome), rules, assumptions);
     const checked = validateCanonicalResultDocumentV6(d, limits);
     if (!checked.ok) {
       if (SIZE.has(checked.failure.reason)) return stopped('result-size');
       throw new Error(`Equation V6 projection is invalid: ${checked.failure.message} at ${checked.failure.path ?? '$'}`);
     }
-    replayEquationDocument(problem, outcome, checked.validated.value);
+    replayEquationDocument(problem, outcome, checked.validated.value, assumptions);
     return finish(checked.validated.value);
   } catch (e) {
     if (e instanceof EquationAlgebraError && e.code === 'resource' && e.stop) return stopped(e.stop);

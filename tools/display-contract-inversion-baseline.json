@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "INTEGRATION-RATIONAL-PRESENTATION1 moves the New Integration canonical read into its typed presentation read model; no legacy reads or compatibility additions.",
-  "registryDigest": "e9622195ae9f83dcd1a7",
+  "acceptedReason": "EQUATION-ADOPTION1: New Equation reads canonicalResult from its own authority-checked V2 error document and V6 projection (same pattern as New Integration)",
+  "registryDigest": "5ca32e337a2587acd334",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -1146,6 +1146,9 @@
         "d6469c8e8aba22767996:1",
         "d6469c8e8aba22767996:2"
       ],
+      "src/lib/new-equation/error.ts": [
+        "7d3bdbb9b0cf15bf2f3b:1"
+      ],
       "src/lib/ooe/diagnostics/diagnostics-buffer.ts": [
         "a38be4c2d858859cf6b7:1",
         "460215011ba296477c53:1"
@@ -1173,6 +1176,9 @@
       ],
       "src/lib/surface-protocol/dto.ts": [
         "f5241ac7967818ec85b6:1"
+      ],
+      "src/lib/symbolic-engine/equation/service/service.ts": [
+        "02093eae935e7e473fff:1"
       ],
       "src/lib/trigonometry/core.ts": [
         "a0f19ec74facf020da8d:1",

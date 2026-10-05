@@ -120,6 +120,18 @@ describe('canonical-result V6 (Equation outcomes)', () => {
     rejected(doc({ kind: 'solved', set: { kind: 'intervals', variables: ['x'], intervals: [{ ...interval(null, 1), loClosed: true }] } }), /Infinite ends/);
   });
 
+  it('accepts assumptions on parameters only (EQUATION-ADOPTION1), orders over ℝ only', () => {
+    const lt = { op: 'lt' as const, lhs: m(0), rhs: m('a') };
+    valid(doc({ kind: 'empty' }, { parameters: ['a'], assumptions: [lt] }));
+    rejected(doc({ kind: 'empty' }, { parameters: ['a'], assumptions: [] }), /non-empty/);
+    rejected(doc({ kind: 'empty' }, { assumptions: [lt] }), /non-empty list on parameters/);
+    rejected(doc({ kind: 'empty' }, { parameters: ['a'], assumptions: [{ ...lt, rhs: m('x') }] }), /scope/);
+    rejected(doc({ kind: 'empty' }, { parameters: ['a'], roots: [sqrt2], assumptions: [{ ...lt, rhs: m('r_1') }] }), /scope/);
+    rejected(doc({ kind: 'empty' }, { domain: 'complex', parameters: ['a'], assumptions: [lt] }), /real only/);
+    valid(doc({ kind: 'empty' }, { domain: 'complex', parameters: ['a'], assumptions: [{ ...lt, op: 'ne' }] }));
+    rejected(doc({ kind: 'empty' }, { parameters: ['a'], assumptions: [{ ...lt, op: 'gt' } as never] }), /Invalid assumption/);
+  });
+
   it('reports oversize documents as bounds failures, never as accepted', () => {
     const big = doc({ kind: 'solved', set: { kind: 'finite', variables: ['x'], points: Array.from({ length: 50 }, (_, i) => [m(i)]) } });
     const r = validateCanonicalResultDocumentV6(big, { maxNodes: 100 });

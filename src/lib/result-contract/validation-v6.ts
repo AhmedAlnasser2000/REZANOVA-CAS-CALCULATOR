@@ -87,7 +87,7 @@ export function validateCanonicalResultDocumentV6(input: unknown, limits: Canoni
 
 function checkPrimary(p: unknown, outcomeKind: unknown, counted: () => void): void {
   const bad = (message: string, path: string): never => { throw new Invalid(message, path); };
-  if (!record(p) || !keys(p, ['kind', 'domain', 'targets', 'parameters', 'roots', 'outcome', 'provenance']) || p.kind !== 'equation-outcome'
+  if (!record(p) || !keys(p, ['kind', 'domain', 'targets', 'parameters', 'roots', 'outcome', 'provenance'], ['assumptions']) || p.kind !== 'equation-outcome'
     || (p.domain !== 'real' && p.domain !== 'complex')) return bad('Invalid V6 primary.', '$.primary');
   if (!names(p.targets) || p.targets.length === 0 || !names(p.parameters) || p.parameters.some(n => (p.targets as string[]).includes(n))) return bad('Targets and parameters must be distinct symbols.', '$.primary.targets');
   const targets = p.targets, parameters = p.parameters, domain = p.domain;
@@ -121,6 +121,17 @@ function checkPrimary(p: unknown, outcomeKind: unknown, counted: () => void): vo
     } else bad('Unknown root binder kind.', path);
   });
   const outer = new Set([...parameters, ...roots]);
+  // Assumptions: relations on the declared parameters only (no root binders), orders over ℝ only.
+  if (p.assumptions !== undefined) {
+    if (!Array.isArray(p.assumptions) || p.assumptions.length === 0 || parameters.length === 0) return bad('Assumptions are a non-empty list on parameters.', '$.primary.assumptions');
+    const scope = new Set(parameters);
+    p.assumptions.forEach((r, i) => {
+      const path = `$.primary.assumptions[${i}]`;
+      if (!record(r) || !keys(r, ['op', 'lhs', 'rhs']) || !['eq', 'ne', 'lt', 'le'].includes(r.op as string)) return bad('Invalid assumption.', path);
+      if (domain === 'complex' && (r.op === 'lt' || r.op === 'le')) bad('Orders are real only.', path);
+      math(r.lhs, scope, `${path}.lhs`); math(r.rhs, scope, `${path}.rhs`);
+    });
+  }
   const fresh = (list: unknown, path: string): string[] => {
     if (!names(list) || list.some(n => taken.has(n))) return bad('Bound parameters must be fresh symbols.', path);
     return list;
