@@ -40,7 +40,6 @@
   --key-util: #6e5846;
   --key-confirm: #b88f45;
   --accent: #d7dfab;
-  --ui-scale: 1;
   --math-scale: 1;
   --result-scale: 1;
 }
@@ -76,7 +75,6 @@
 }
 
 .active-surface--page {
-  --page-ui-scale: 1;
   --math-scale: 1;
   --result-scale: 1;
   min-height: min(900px, calc(100vh - 150px));
@@ -111,10 +109,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   color: var(--page-ink);
   overflow: hidden;
-}
-
-.active-surface--page .app-page {
-  zoom: var(--page-ui-scale, 1);
 }
 
 .active-surface--page.is-high-contrast .app-page {
@@ -724,6 +718,13 @@
     linear-gradient(180deg, rgba(184, 212, 156, 0.22), rgba(184, 212, 156, 0.1)),
     rgba(66, 88, 61, 0.6);
   color: #ecffd7;
+}
+
+/* In a browser the UI scale is the browser's own zoom (GRAPHING-UI1). */
+.settings-page-hint {
+  margin: 0;
+  color: var(--page-subtle);
+  font-size: 0.82rem;
 }
 
 .settings-page-scale-control {
@@ -1555,7 +1556,6 @@
 .calculator-shell {
   width: min(1480px, 100%);
   margin-inline: auto;
-  zoom: var(--ui-scale, 1);
   border: 1px solid var(--shell-border);
   border-radius: 32px;
   background:

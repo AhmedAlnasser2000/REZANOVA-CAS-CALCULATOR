@@ -957,7 +957,8 @@ export type Settings = {
   calculatorMemoryAutosaveMode: 'settled' | 'interval';
   calculatorMemoryAutosaveIntervalSeconds: number;
   autoSwitchToEquation: boolean;
-  uiScale: 100 | 115 | 130 | 145;
+  /** Desktop native zoom step (see `src/lib/app-state/ui-scale.ts`); the browser's own zoom on the web. */
+  uiScale: 80 | 90 | 100 | 110 | 125 | 150 | 175 | 200;
   mathScale: 100 | 115 | 130 | 145;
   resultScale: 100 | 115 | 130 | 145;
   highContrast: boolean;

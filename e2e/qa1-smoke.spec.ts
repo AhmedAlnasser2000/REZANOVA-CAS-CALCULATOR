@@ -341,14 +341,15 @@ test('Settings smoke uses the outboard inspector on wide layouts and keeps shell
   expect(shellWidthBefore).toBeTruthy();
   expect(shellWidthAfterOpen).toBe(shellWidthBefore);
 
-  await page.getByTestId('settings-ui-scale-130').click();
+  // In a browser, UI scale is the browser's own zoom (GRAPHING-UI1): the panel says so instead of offering steps.
+  await expect(page.getByTestId('settings-ui-scale-browser-hint')).toBeVisible();
   const highContrastSwitch = page.getByTestId('settings-high-contrast');
   await highContrastSwitch.locator('..').click();
   await expect(highContrastSwitch).toBeChecked();
 
   const shellClass = await shell.getAttribute('class');
   expect(shellClass).toContain('is-high-contrast');
-  await expect(shell).toHaveAttribute('style', /--ui-scale: 1.3/);
+  await expect(shell).not.toHaveAttribute('style', /ui-scale/);
 });
 
 test('Settings smoke uses a transparent, responsive overlay sheet on narrow layouts', async ({ page }) => {

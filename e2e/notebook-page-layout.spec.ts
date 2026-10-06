@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 type StoredPageNotebook = {
   document?: {
@@ -214,16 +215,12 @@ test('Notebook V14 directly authors running matter and renders two physical shee
   }
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await expectPageStageContained(page);
   await attachScreenshot(page, 'notebook-pages-80');
 
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await attachScreenshot(page, 'notebook-pages-forced-colors-130');
   await expectPageStageContained(page);
   await expect(page.locator('.notebook-page-sheet').first()).toHaveCSS('border-top-style', 'solid');

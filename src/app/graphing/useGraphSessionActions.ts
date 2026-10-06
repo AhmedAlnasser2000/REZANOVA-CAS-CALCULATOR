@@ -24,6 +24,12 @@ export function useGraphSessionActions({
     } }, true);
   }, [commitSession, sessionRef]);
 
+  /** Rail width or Both split after a drag; not an undoable edit, like collapsing the rail. */
+  const updateLayout = useCallback((values: NonNullable<GraphWorkspaceSessionStateV7['surface']['layout']>) => {
+    const current = sessionRef.current;
+    commitSession({ ...current, surface: { ...current.surface, layout: { ...current.surface.layout, ...values } } }, true);
+  }, [commitSession, sessionRef]);
+
   const updateGrid = useCallback((values: Partial<GraphWorkspaceSessionStateV7['surface']['grid']>) => {
     const current = sessionRef.current;
     const grid = { ...current.surface.grid, ...values };
@@ -130,6 +136,7 @@ export function useGraphSessionActions({
     removeAssumption,
     toggleRail,
     updateAnalyze,
+    updateLayout,
     updateAppearance,
     updateComplexView,
     updateGrid,

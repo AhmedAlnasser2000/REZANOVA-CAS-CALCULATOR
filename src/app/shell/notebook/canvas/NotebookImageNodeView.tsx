@@ -255,12 +255,12 @@ export function createNotebookImageNodeView(
       ?? displayAspectRatio
       ?? (naturalSize ? naturalSize.width / naturalSize.height : undefined);
     const imageWidth = interaction.activeGesture === 'resize' && interaction.preview?.rectanglePx.width
-      ? `calc(${interaction.preview.rectanglePx.width}px / var(--page-ui-scale, 1))`
+      ? `${interaction.preview.rectanglePx.width}px`
       : effectiveDisplayWidthPt !== undefined
         ? `${effectiveDisplayWidthPt}pt`
         : `${effectiveWidthPercent}%`;
     const imageHeight = interaction.activeGesture === 'resize' && interaction.preview?.rectanglePx.height
-      ? `calc(${interaction.preview.rectanglePx.height}px / var(--page-ui-scale, 1))`
+      ? `${interaction.preview.rectanglePx.height}px`
       : effectiveDisplayHeightPt !== undefined
         ? `${effectiveDisplayHeightPt}pt`
         : undefined;

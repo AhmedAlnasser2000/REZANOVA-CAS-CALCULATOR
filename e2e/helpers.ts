@@ -194,3 +194,15 @@ export async function openSettingsPanel(page: Page) {
   await page.getByTestId('settings-toggle').click();
   await expect(page.getByTestId('settings-panel')).toBeVisible();
 }
+
+const uiScaleBaseViewports = new WeakMap<Page, { width: number; height: number }>();
+
+/**
+ * UI scale is the webview's (or browser's) native zoom (GRAPHING-UI1): at a scale the page gets 1/scale as many CSS
+ * pixels. This emulates that on the window size the test set before its first call.
+ */
+export async function emulateUiScale(page: Page, scale: number, window?: { width: number; height: number }) {
+  const base = window ?? uiScaleBaseViewports.get(page) ?? page.viewportSize() ?? { width: 1440, height: 1000 };
+  uiScaleBaseViewports.set(page, base);
+  await page.setViewportSize({ width: Math.round(base.width / scale), height: Math.round(base.height / scale) });
+}

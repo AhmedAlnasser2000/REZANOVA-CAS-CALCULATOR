@@ -32,10 +32,8 @@ import {
 } from './app/runtime/app-page-workspaces';
 import { useQuickInspectorPolicy } from './app/runtime/useQuickInspectorPolicy';
 import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
-import {
-  useSideSurfaceRuntime,
-  type SideSurfacePresentation,
-} from './app/runtime/useSideSurfaceRuntime';
+import { useSideSurfaceRuntime, type SideSurfacePresentation } from './app/runtime/useSideSurfaceRuntime';
+import { useNativeUiScale } from './app/runtime/useNativeUiScale';
 import {
   useAppPersistenceDirtySignal,
   useAppPersistenceRuntime,
@@ -388,10 +386,10 @@ export default function App() {
   } = useSideSurfaceRuntime({
     appStageRef,
     calculatorShellRef,
-    uiScale: settings.uiScale,
     mathScale: settings.mathScale,
     resultScale: settings.resultScale,
   });
+  useNativeUiScale(settings.uiScale, (uiScale) => patchSettings({ uiScale }));
   const quickInspectorPolicy = useQuickInspectorPolicy({
     activeWorkspaceKind: workspaceInstancesRuntime.activeInstance?.workspaceKind ?? null,
     closeLeftInspector,

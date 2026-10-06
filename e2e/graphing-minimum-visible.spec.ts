@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 async function openGraph(page: Page) {
   await page.getByTestId('workspace-tab-add-menu').click();
@@ -341,9 +342,10 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await enterExpression(page, 'x');
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(1);
 
-    await page.getByTestId('active-surface-page').evaluate((element) => {
-      element.style.setProperty('--page-ui-scale', '1.3');
-    });
+    await emulateUiScale(page, 1.3);
+    // The window got fewer CSS pixels: let the graph resample at its new size before reading the stroke.
+    await expect(page.getByTestId('graph-viewport')).toHaveAttribute('data-scene-pending', 'false');
+    await page.waitForTimeout(600);
     const path = page.getByTestId('graph-scene-paths').locator('path');
     const visiblePoint = await path.evaluate((node: SVGPathElement) => {
       const length = node.getTotalLength();

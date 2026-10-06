@@ -14,6 +14,7 @@ export const englishSettings = {
   },
   fields: {
     uiScale: 'UI Scale',
+    uiScaleBrowserHint: 'Use your browser\'s zoom: Ctrl + / − / 0 (⌘ on a Mac).',
     mathSize: 'Math Size',
     resultSize: 'Result Size',
     highContrast: 'High Contrast',

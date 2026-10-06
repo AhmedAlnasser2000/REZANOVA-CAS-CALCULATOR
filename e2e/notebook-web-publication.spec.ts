@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import JSZip from 'jszip';
+import { emulateUiScale } from './helpers';
 
 async function openWorkedNotebook(page: Page) {
   await page.goto('/');
@@ -65,16 +66,12 @@ test('Notebook Web publication is responsive and saves a safe offline package', 
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await expectDialogContained(page);
   await attachScreenshot(page, 'notebook-web-forced-colors-130');
 
   await page.emulateMedia({ colorScheme: 'dark', forcedColors: 'none' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await attachScreenshot(page, 'notebook-web-80');
 
   const downloadPromise = page.waitForEvent('download');

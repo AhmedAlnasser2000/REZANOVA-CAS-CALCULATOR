@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 type StoredNotebookRecord = {
   revision: number;
@@ -234,9 +235,7 @@ test('Notebook derives fixed pages, paragraph anchors, wrap exclusions, and Draf
   ]) {
     await page.setViewportSize({ width: evidence.width, height: evidence.height });
     await page.emulateMedia({ forcedColors: evidence.forcedColors ? 'active' : 'none' });
-    await page.locator('.active-surface--page').evaluate((element, scale) => {
-      (element as HTMLElement).style.setProperty('--page-ui-scale', scale);
-    }, evidence.scale);
+    await emulateUiScale(page, Number(evidence.scale), { width: evidence.width, height: evidence.height });
     await expect(page.locator('.notebook-page-stage'))
       .toHaveAttribute('data-notebook-floating-count', '2');
     const containment = await page.evaluate(() => {
@@ -267,9 +266,6 @@ test('Notebook derives fixed pages, paragraph anchors, wrap exclusions, and Draf
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ forcedColors: 'none' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1');
-  });
 
   const tabs = page.getByRole('tablist', { name: 'Notebook ribbon tabs' });
   const toolbar = page.getByLabel('Notebook formatting toolbar');

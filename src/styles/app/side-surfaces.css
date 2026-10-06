@@ -1044,3 +1044,10 @@
   overflow-x: auto;
   white-space: nowrap;
 }
+
+/* In a browser the UI scale is the browser's own zoom (GRAPHING-UI1). */
+.settings-hint {
+  margin: 0;
+  opacity: 0.78;
+  font-size: 0.8rem;
+}

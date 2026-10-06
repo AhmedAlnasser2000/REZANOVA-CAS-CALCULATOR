@@ -143,4 +143,14 @@ describe('Graph workspace session V7', () => {
       document: { title: 'Named graph', contentRevision: 1, mathematicsRevision: 0 },
     });
   });
+
+  it('keeps a dragged rail width and Both split, and rejects layouts out of bounds (GRAPHING-UI1)', () => {
+    const current = createGraphWorkspaceSessionState('graph.layout', 'Graph');
+    expect(migrateGraphWorkspaceSessionState(current)?.surface.layout).toBeUndefined();
+    const dragged = { ...current, surface: { ...current.surface, layout: { railWidth: 420, bothSplit: 0.62, bothStackSplit: 0.4 } } };
+    expect(migrateGraphWorkspaceSessionState(dragged)?.surface.layout).toEqual({ railWidth: 420, bothSplit: 0.62, bothStackSplit: 0.4 });
+    for (const layout of [{ railWidth: 120 }, { railWidth: 5000 }, { bothSplit: 0.9 }, { bothStackSplit: 0.1 }, { bothSplit: 0.5, extra: 1 }]) {
+      expect(migrateGraphWorkspaceSessionState({ ...current, surface: { ...current.surface, layout } })).toBeNull();
+    }
+  });
 });

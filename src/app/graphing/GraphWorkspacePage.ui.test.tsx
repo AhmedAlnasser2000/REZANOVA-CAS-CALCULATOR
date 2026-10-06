@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GraphAnalysisRequestV1, GraphSampleRequestV6 } from '../../lib/graphing';
 import { createGraphWorkspaceSessionState } from './graph-workspace-session';
@@ -714,7 +714,7 @@ describe('GraphWorkspacePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '3D' }));
     await waitFor(() => expect(screen.getByTestId('graph-three-viewport')).toHaveAttribute('data-ready', 'true'));
     expect(screen.getByRole('button', { name: '3D' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Real · Three interactive')).toBeVisible();
+    expect(within(screen.getByRole('toolbar', { name: 'Graph controls' })).getByText('Real · Three interactive')).toBeVisible();
     expect(onUpdateSession.mock.calls.at(-1)?.[0]).toMatchObject({
       version: 7,
       document: { mathematicsRevision: 0 },

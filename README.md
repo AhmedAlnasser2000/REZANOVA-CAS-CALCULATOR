@@ -38,7 +38,8 @@ The project is deliberately **exact-first, bounded, and evidence-oriented**. It 
 - **Desktop shell:** Tauri 2
 - **Frontend:** React 19 + TypeScript + Vite
 - **Current posture:** functional and substantial, but still actively developed and intentionally bounded
-- **Graphing:** active production workspace with renderer-neutral scene contracts, deterministic SVG reference/fallback rendering, and a private on-demand Three.js/WebGL2 adapter for interactive 3D views; the render-governor boundary allows future renderer adapters without coupling Graphing’s document, mathematics, or scene authority to Three.js.
+- **Graphing:** active production workspace — GPU-drawn (WebGL2) implicit curves, regions, complex planes and surfaces with an exact SVG/CPU fallback, point tracing whose readouts are proved by interval arithmetic where possible, points of interest, asymptotes, piecewise functions, complex mappings and loci, and an adaptive full-window layout.
+- **Layout and scaling:** the whole app scales natively (80–200 %, <kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd> / <kbd>0</kbd> on desktop, the browser's own zoom on the web), and Graphing adapts its layout from phone-narrow to ultra-wide windows — see [Layout and UI scale](#layout-and-ui-scale).
 
 Windows and macOS remain plausible Tauri targets, but the current release and verification work is Linux-first.
 
@@ -51,7 +52,8 @@ REZANOVA is not intended to be a thin interface over one expression engine. Its 
 - **Target-aware equation solving** — the selected unknown is distinguished from symbolic parameters and stored numeric values.
 - **First-class complex mathematics** — bounded exact and numeric complex solving, branch-aware evidence, complex graph mappings, Argand trajectories, domain colouring, and component views are real parts of the current project.
 - **Serious symbolic integration work** — direct and rule-based integration is supplemented by bounded Risch–Norman work, Lazard–Rioboo–Trager/Rothstein–Trager-family rational-integration routes, algebraic-function reductions, elliptic/special-function output, and proof-backed non-elementary certificates.
-- **Relation-first Graphing** — Graphing is not limited to `y=f(x)` and is not a detached static plot window.
+- **Relation-first Graphing** — Graphing is not limited to `y=f(x)` and is not a detached static plot window: implicit curves, regions, parametric, polar, piecewise and complex graphs are first-class, drawn on the GPU, and traced with proved or verified readouts.
+- **Adaptive layout and native scaling** — one app-wide scale (like browser zoom) keeps text, controls and layout consistent at every size, and workspaces rearrange themselves for the space they actually get.
 - **A real Notebook environment** — rich mathematical documents, pages, images, structured blocks, persistence, revisions, and publication are part of the application rather than an external afterthought.
 - **Dedicated workspaces** — Equation, Calculus, Statistics, Matrix, Vector, Geometry, Trigonometry, Table, Graphing, Notebook, Guide, Settings, and History retain domain-specific workflows instead of collapsing into one command prompt.
 - **Governed execution** — Order of Execution (OOE) controls launch, host choice, cancellation, stale-result rejection, commit legality, diagnostics, and runtime evidence.
@@ -63,34 +65,47 @@ Everything below describes capabilities that exist in the current repository. Th
 
 ### Graphing
 
-Graphing is now a production app-page workspace opened through **New Graph**. It uses versioned Graph documents, renderer-neutral scenes, OOE-governed sampling and analysis, exact SVG paths for 2D output, and a private on-demand Three.js/WebGL2 renderer for supported 3D views.
+Graphing is a full workspace opened through **New Graph**: type relations in the expression list and they are drawn, traced and analysed in a Real view, a Complex view, or both side by side. Graph documents are versioned, sampling and analysis run in background workers under OOE governance, and every drawing passes through a renderer-neutral scene, so the same mathematics feeds SVG, GPU, Three.js and headless tests.
 
- Graphing does not expose Three.js types to its mathematical, document, sampling, or renderer-neutral scene contracts. Sampled scenes pass through a render-governor and adapter boundary, allowing SVG, headless validation, Three.js, and future renderer implementations to consume the same authoritative scene model.
+**What you can graph**
 
-Current Graphing work includes:
+- explicit `y = f(x)` and `x = g(y)`; implicit equalities such as `x² + y² = 9` or `sin(x − y) = 6x`
+- inequality regions (dashed edge when strict, solid when inclusive) and chained conditions such as `x < y ≤ 2`
+- parametric curves `(cos t, sin t)` and polar curves `r = 2cos 2θ`, with optional `{0 ≤ t ≤ π}` restrictions
+- piecewise functions, typed with `cases` or built branch by branch from **Add item**: the first matching branch is drawn, conditions accept `or` and `≠`, and jumps get open and filled end circles
+- point sets, notes, and sliders created from any unknown symbol
+- real surfaces `z = f(x, y)` in an interactive 3D view (orbit, pan, zoom; Top/Front/Right/Iso; perspective or orthographic; fly-through)
+- complex mappings `f(z)` as continuous domain colouring or four synchronised Re / Im / |f| / arg panels; complex loci (`|z − 1| = 2`, `Arg z = π/4`, rays, discs) on an Argand plane; complex roots of polynomials; and an optional ℂ overlay that shows the real and imaginary parts of `y = f(x)` where it turns complex
+- graph-local assumptions; typing `z` switches to the Complex view on its own (with Undo)
 
-- explicit `y=f(x)` and `x=g(y)` relations
-- implicit equalities
-- strict and inclusive inequality regions with shaded output
-- chained conditions and structured piecewise relations
-- document-local symbolic parameters and sliders
-- visibility controls for individual graph items
-- adaptive Cartesian and polar grids
-- smooth curve tracing tied to the selected mathematical branch
-- parametric and polar sampling routes
-- bounded real surfaces
-- Graph-owned analysis for roots, intercepts, extrema, intersections, domain features, and asymptotic evidence where supported
-- separate `graph.sample` and `graph.analyze` OOE workloads
-- Real, Complex, and Both view policies
-- Argand-plane trajectories for complex-valued mappings
-- continuous complex domain colouring
-- synchronised real/imaginary, magnitude, and phase component views
-- graph-local assumptions and principal branch/cut evidence
-- bounded exact or numerically validated complex zero/pole evidence with explicit non-completeness
-- accessible phase-colour handling
-- headless scene inspection and renderer-boundary tests
+**How it is drawn**
 
-Still pending in the current Graphing program are the dedicated Riemann-sheet/surface work, presentation/export closeout, durable graph-project persistence, and cross-workspace “Open in Graph” flows.
+- **GPU rendering:** implicit curves, regions, domain colouring, complex loci and surfaces are drawn in WebGL2 shaders. A chip shows whether the view is on the GPU, standard or precise rendering; the CPU path stays the exact reference and fallback, and tracing and Analyze always use the precise CPU evaluation.
+- **Faithful implicit curves:** interval arithmetic rules out cells that cannot contain the curve and refines the ones that might, so thin features are not missed; curves that only touch zero, such as `(x − y)² = 0`, and isolated points, such as `x² + y² = 0`, are still drawn; a Plantinga–Vegter test certifies that each cell holds a single simple arc, and crossings such as `x² = y²` are joined through their singular point.
+- **Spikes and poles:** interval checks between samples catch spikes narrower than the sampling, and curves such as `tan x` and `1/x` are not joined across their poles.
+- **Fast feedback:** a typical preview appears in about 0.1 s and the settled picture in about 0.2–0.3 s, then a polished pass follows; outdated work is cancelled as you type or pan.
+
+**Tracing, points of interest and proofs**
+
+- Click to trace, move to sweep along the curve, or trace from the keyboard. Every readout carries a badge: **exact** (symbolic), **proved** (an interval-arithmetic Krawczyk proof with outward rounding), **verified**, or **numeric**.
+- The selected curve shows its points of interest as dots that the trace snaps to: roots, intercepts, extrema, turning points of parametric, polar and implicit curves, curve ends and origin passes, intersections between any two kinds of curve, and region corners.
+- Holes and jumps are drawn as open or filled circles; asymptotes — vertical, horizontal and oblique, including `tan`/`sec`/`cot` poles named as multiples of π — are drawn per curve with an Auto / Always / Off setting.
+- Regions can be traced along their edge (inside or outside) or anywhere inside.
+- Complex traces read out exact `z(t)` positions; Analyze counts zeros and poles of a complex map exactly by the argument principle ("exactly 2 zeros and 1 pole") and proves their locations; double-double arithmetic keeps readouts accurate where ordinary floating point cancels, such as `(eˣ − 1)/x` near 0.
+
+**Analyze**
+
+- a floating Analyze panel lists roots, intercepts, extrema, intersections, domain features and asymptotes with the evidence behind each finding, and can recentre on or pin any of them
+- graph-local assumptions, principal branch and cut evidence, and bounded exact or validated complex zero/pole evidence with explicit non-completeness
+
+**The workspace**
+
+- a full-window layout that adapts from phone-narrow to ultra-wide windows (see [Layout and UI scale](#layout-and-ui-scale)): a resizable expression list (a drawer in narrow windows), a Both view with a draggable divider (stacked in compact windows), and a toolbar that folds controls into a **…** menu as it narrows
+- menus close on an outside click, <kbd>Esc</kbd> or <kbd>Tab</kbd>, and a click on the graph that only closes a menu never also traces
+- four themes (Technical, Paper, Aurora, Luminous), accessible colours, per-curve colour and line style, equal axes (1:1), Cartesian or polar grids with an optional unit circle, undo and redo
+- the list width and view splits are remembered with each graph
+
+Still to come in the Graphing program: tracing on 3D surfaces, Riemann sheets and surfaces, export and presentation, durable graph projects, and "Open in Graph" from other workspaces.
 
 <table>
   <tr>
@@ -127,6 +142,57 @@ Still pending in the current Graphing program are the dedicated Riemann-sheet/su
       <img src="docs/assets/screenshots/graphing-complex-2x2-components.png" alt="2x2 component grid for sqrt(-z) showing Re f, Im f, magnitude, and argument panels" />
       <br />
       <sub><b>2×2 components mode.</b> The same mapping split into four synchronized panels — Re&nbsp;f, Im&nbsp;f, |f|, and arg&nbsp;f — each tracking the same traced point.</sub>
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-points-of-interest-proved.png" alt="tan(sin x) with grey dots at its roots and extrema and a trace readout tagged PROVED" />
+      <br />
+      <sub><b>Points of interest and proved readouts.</b> <code>tan(sin x)</code> shows its roots and extrema as dots; the trace readout carries a <code>PROVED</code> badge from an interval-arithmetic proof.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-tan-asymptotes.png" alt="tan x with dashed vertical asymptotes labelled as multiples of pi and a proved root readout" />
+      <br />
+      <sub><b>Asymptotes named exactly.</b> <code>tan x</code> with its vertical asymptotes labelled <code>x = π/2</code>, <code>x = 3π/2</code>, …; the curve is never joined across a pole, and the root readout is proved.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-complex-values-overlay.png" alt="log x with the complex-values overlay showing real and imaginary parts for negative x" />
+      <br />
+      <sub><b>Complex values of a real function.</b> With ℂ on, <code>log x</code> also shows its real and imaginary parts where <code>x &lt; 0</code>; the readout gives <code>f(−4.11) = 0.614 + 1.364i</code>, proved.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-complex-log-cos-trace.png" alt="Domain colouring of log(cos z) with points marked on the real axis and a pinned verified trace" />
+      <br />
+      <sub><b>Complex trace on a domain-coloured plane.</b> <code>log(cos z)</code> on the GPU, with special points marked along the real axis and a pinned trace reading <code>z</code> and <code>w</code>, verified.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-piecewise-jump-limit.png" alt="Piecewise function with a jump at x=5 showing open and filled end circles and a limit readout" />
+      <br />
+      <sub><b>Piecewise jumps.</b> At a jump, open and filled circles show which branch owns the point; tracing the open end reports the one-sided limit (<code>limit 25</code>).</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-piecewise-branch-editor.png" alt="Piecewise branch editor listing branches and conditions with Add branch and Apply branch changes" />
+      <br />
+      <sub><b>Piecewise branch editor.</b> Branches and their conditions are edited row by row and applied together; an open circle marks the end the next branch does not own.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-piecewise-endpoint.png" alt="Piecewise function x for x<0 and x squared for x>=0 traced at its endpoint (0,0)" />
+      <br />
+      <sub><b>Branch ends.</b> Tracing a piecewise curve snaps to branch ends such as <code>(0, 0)</code>, with the evidence level shown.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/graphing-complex-domain-color-polynomial.png" alt="Domain colouring of z + z^4 rendered on the GPU with a traced point readout" />
+      <br />
+      <sub><b>GPU domain colouring.</b> <code>z + z⁴</code> drawn in a WebGL2 shader (chip: <code>GPU</code>), with <code>z</code>, <code>w</code>, <code>|w|</code> and <code>arg</code> read out at the traced point.</sub>
     </td>
   </tr>
 </table>
@@ -331,6 +397,17 @@ Notebook video support was removed from the current authoring/storage/publicatio
     </td>
   </tr>
 </table>
+
+## Layout and UI scale
+
+REZANOVA adapts to the window it is given instead of assuming one screen size.
+
+- **One app-wide scale.** In the desktop app, **Settings → UI Scale** offers 80, 90, 100, 110, 125, 150, 175 and 200 %, and <kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>Ctrl</kbd> <kbd>−</kbd> / <kbd>Ctrl</kbd> <kbd>0</kbd> (<kbd>⌘</kbd> on a Mac) step through the same setting. The whole app — tabs, workspaces, menus and dialogs — scales together, exactly like browser zoom, so nothing is cropped, misaligned or scaled twice. In the browser version, use your browser's own zoom; Settings points to it.
+- **Layouts by window size.** Graphing follows the Material 3 window size classes on the space it actually has: from 840 px wide the expression list sits beside the graph and can be dragged wider; below that it becomes a drawer over the graph; under 600 px the Real and Complex panes stack. Because UI scale is native zoom, a larger scale simply moves a window into a smaller class (a 1440 px window at 150 % behaves like a 960 px one).
+- **Controls that fold, not crop.** The Graph toolbar moves its less-used controls into a **…** menu as it narrows, very short windows give the header and status bar's room to the graph, and expression rows rearrange themselves when the list is narrow. Notebook keeps its outline usable and its document header compact in short windows.
+- **Remembered per graph.** The expression list width and the Real/Complex split are saved with each graph.
+
+The Graph layout is checked at 1280×720, 1920×1080, 2560×1440 and 1024×768 at 80 % to 200 % zoom in Chrome, and in the packaged Linux app.
 
 ## Mathematical honesty and current boundaries
 

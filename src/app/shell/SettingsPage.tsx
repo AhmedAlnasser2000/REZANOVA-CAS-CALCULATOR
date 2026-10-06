@@ -1,3 +1,4 @@
+import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../../lib/app-state/ui-scale';
 import {
   BookOpen,
   ChartSpline,
@@ -192,8 +193,8 @@ function ScaleControl({
   value,
 }: {
   label: string;
-  onChange: (value: Settings['uiScale']) => void;
-  value: Settings['uiScale'];
+  onChange: (value: Settings['mathScale']) => void;
+  value: Settings['mathScale'];
 }) {
   return (
     <div className="settings-page-scale-control">
@@ -204,7 +205,33 @@ function ScaleControl({
         max={145}
         step={15}
         value={value}
-        onChange={(event) => onChange(Number(event.currentTarget.value) as Settings['uiScale'])}
+        onChange={(event) => onChange(Number(event.currentTarget.value) as Settings['mathScale'])}
+      />
+      <strong>{formatScale(value)}</strong>
+    </div>
+  );
+}
+
+/** The app's native zoom steps (desktop); a browser zooms with its own controls instead. */
+function UiScaleControl({ hint, label, onChange, value }: {
+  hint: string;
+  label: string;
+  onChange: (value: Settings['uiScale']) => void;
+  value: Settings['uiScale'];
+}) {
+  if (!isNativeUiScaleHost()) return <p className="settings-page-hint" data-testid="settings-ui-scale-browser-hint">{hint}</p>;
+  const index = Math.max(0, UI_SCALE_STEPS.indexOf(value));
+  return (
+    <div className="settings-page-scale-control">
+      <input
+        aria-label={label}
+        aria-valuetext={formatScale(value)}
+        type="range"
+        min={0}
+        max={UI_SCALE_STEPS.length - 1}
+        step={1}
+        value={index}
+        onChange={(event) => onChange(UI_SCALE_STEPS[Number(event.currentTarget.value)] ?? 100)}
       />
       <strong>{formatScale(value)}</strong>
     </div>
@@ -439,7 +466,8 @@ export function SettingsPage({
     return (
       <SettingsSection title="Appearance" eyebrow="Display">
         <SettingsRow icon={Monitor} label={settingsText.fields.uiScale}>
-          <ScaleControl
+          <UiScaleControl
+            hint={settingsText.fields.uiScaleBrowserHint}
             label={settingsText.fields.uiScale}
             value={settings.uiScale}
             onChange={(value) => onPatch({ uiScale: value })}

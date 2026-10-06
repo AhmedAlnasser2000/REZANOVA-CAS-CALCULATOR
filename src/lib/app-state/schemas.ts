@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeUiScale, UI_SCALE_STEPS, type UiScale } from './ui-scale';
 import type {
   CanonicalResultDocument,
   LauncherCategory,
@@ -168,7 +169,9 @@ export const settingsSchema = z.object({
     z.number().int().default(20),
   ),
   autoSwitchToEquation: z.boolean().default(false),
-  uiScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),
+  // Old saves used 100/115/130/145; each maps to the nearest current step.
+  uiScale: z.preprocess((value) => (value === undefined ? value : normalizeUiScale(value)),
+    z.union(UI_SCALE_STEPS.map((step) => z.literal(step)) as unknown as [z.ZodLiteral<UiScale>, z.ZodLiteral<UiScale>, ...z.ZodLiteral<UiScale>[]]).default(100)),
   mathScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),
   resultScale: z.union([z.literal(100), z.literal(115), z.literal(130), z.literal(145)]).default(100),
   highContrast: z.boolean().default(false),

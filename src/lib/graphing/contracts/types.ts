@@ -425,6 +425,17 @@ export type GraphSurfaceStateV6 = Omit<GraphSurfaceStateV5, 'version' | 'viewPol
     displayMode: GraphComplexDisplayModeV1;
     searchRegion: { reMin: number; reMax: number; imMin: number; imMax: number } | null;
   };
+  /** Workbench layout the user dragged (GRAPHING-UI1); absent fields use the defaults. */
+  layout?: GraphSurfaceLayoutV1;
+};
+
+export type GraphSurfaceLayoutV1 = {
+  /** Expression list width in CSS pixels at 100% UI scale. */
+  railWidth?: number;
+  /** The Real pane's share of the Both view, 0.25–0.75. */
+  bothSplit?: number;
+  /** The same share when a compact window stacks Real above Complex. */
+  bothStackSplit?: number;
 };
 
 export type GraphRevisionSetV1 = {

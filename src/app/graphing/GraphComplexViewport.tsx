@@ -418,6 +418,7 @@ export function GraphComplexViewport({ displayMode, document, gpuRendering, onDi
         ptx.step(direction, { live: liveRef.current, width: bounds.width, height: bounds.height });
       }}
       data-tile-bounds={tile ? `${tile.bounds.reMin},${tile.bounds.reMax},${tile.bounds.imMin},${tile.bounds.imMax}` : undefined}
+      data-graph-dismiss-swallow=""
       onPointerDown={(event) => { dragRef.current = { x: event.clientX, y: event.clientY, viewport: liveRef.current }; event.currentTarget.setPointerCapture(event.pointerId); }}
       onPointerMove={(event) => {
         const drag = dragRef.current;

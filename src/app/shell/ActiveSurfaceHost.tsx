@@ -121,7 +121,6 @@ export function ActiveSurfaceHost({
     activeInstance?.surfaceState ?? null,
   );
   const pageSurfaceStyle = {
-    '--page-ui-scale': `${settings.uiScale / 100}`,
     '--math-scale': `${settings.mathScale / 100}`,
     '--result-scale': `${settings.resultScale / 100}`,
   } as CSSProperties;

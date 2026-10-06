@@ -191,14 +191,14 @@ describe('ActiveSurfaceHost', () => {
           highContrast: true,
           mathScale: 130,
           resultScale: 115,
-          uiScale: 145,
+          uiScale: 150,
         }}
       />,
     );
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveClass('is-high-contrast');
-    expect(pageSurface.getAttribute('style') ?? '').toContain('--page-ui-scale: 1.45');
+    expect(pageSurface.getAttribute('style') ?? '').not.toContain('ui-scale'); // native zoom, never CSS zoom
     expect(pageSurface.getAttribute('style') ?? '').toContain('--math-scale: 1.3');
     expect(pageSurface.getAttribute('style') ?? '').toContain('--result-scale: 1.15');
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();

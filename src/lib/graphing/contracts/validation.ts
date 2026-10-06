@@ -531,6 +531,10 @@ const surfaceV5ObjectSchema = surfaceV3ObjectSchema.extend({
 });
 const surfaceV5Schema = surfaceV5ObjectSchema as z.ZodType<GraphSurfaceStateV5>;
 
+/** Bounds of the dragged expression-list width (GRAPHING-UI1). */
+export const GRAPH_RAIL_MIN_WIDTH = 240;
+export const GRAPH_RAIL_MAX_WIDTH = 900;
+
 const complexViewPolicySchema = z.discriminatedUnion('mode', [
   z.strictObject({ mode: z.literal('real') }),
   z.strictObject({ mode: z.literal('complex'), interpretation: z.literal('complex-mapping') }),
@@ -544,6 +548,11 @@ const surfaceV6Schema: z.ZodType<GraphSurfaceStateV6> = surfaceV5ObjectSchema.ex
     searchRegion: z.strictObject({ reMin: finiteSchema, reMax: finiteSchema, imMin: finiteSchema, imMax: finiteSchema })
       .refine((value) => value.reMin < value.reMax && value.imMin < value.imMax).nullable(),
   }),
+  layout: z.strictObject({
+    railWidth: finiteSchema.min(GRAPH_RAIL_MIN_WIDTH).max(GRAPH_RAIL_MAX_WIDTH).optional(),
+    bothSplit: finiteSchema.min(0.25).max(0.75).optional(),
+    bothStackSplit: finiteSchema.min(0.25).max(0.75).optional(),
+  }).optional(),
 }) as z.ZodType<GraphSurfaceStateV6>;
 
 const rendererCapabilitiesSchema: z.ZodType<GraphRendererCapabilities> = z.strictObject({

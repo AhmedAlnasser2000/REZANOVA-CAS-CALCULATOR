@@ -305,8 +305,62 @@ async function runPtx3Smoke(session) {
   return { curveDots, openCorners, touching, badge, screenshot: image };
 }
 
-function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) {
+async function runLayoutSmoke(session) {
+  // GRAPHING-UI1: the Graph page fits the window (status bar visible, no page scroll) and Add item closes on Escape.
+  const layout = await execute(session, `
+    const footer = document.querySelector('.graph-page-footer')?.getBoundingClientRect();
+    return { innerHeight, innerWidth, footerBottom: footer ? footer.bottom : null,
+      scrollHeight: document.documentElement.scrollHeight, scrollWidth: document.documentElement.scrollWidth };`);
+  await click(session, 'css selector', '.graph-add-point-button');
+  const opened = await waitFor('Add item menu', () => execute(session, `return document.querySelector('.graph-add-item-menu') ? true : null;`));
+  const button = await findElement(session, 'css selector', '.graph-add-point-button');
+  await webdriver('POST', `/session/${session}/element/${button}/value`, { text: '\uE00C' });
+  const closed = await waitFor('Add item closed', () => execute(session, `
+    return document.querySelector('.graph-add-item-menu') ? null
+      : { focusBack: document.activeElement?.classList.contains('graph-add-point-button') === true };`));
+  await delay(300);
+  const image = await screenshot(session);
+  return { ...layout, menuOpened: opened, menuClosedOnEscape: true, focusBack: closed.focusBack, screenshot: image };
+}
+
+async function runUiScaleSmoke(session) {
+  // GRAPHING-UI1: UI scale is the webview's native zoom. Ctrl+= three times is 100 → 110 → 125 → 150 %: the window
+  // then has 1.5× fewer CSS pixels and the Graph page still fits; Ctrl+0 returns to 100 %.
+  const key = (value) => execute(session, `window.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(value)}, ctrlKey: true, bubbles: true }));`);
+  const size = () => execute(session, `
+    const footer = document.querySelector('.graph-page-footer');
+    const panel = document.querySelector('.graph-viewport-panel')?.getBoundingClientRect();
+    return { width: innerWidth, height: innerHeight, scrollWidth: document.documentElement.scrollWidth,
+      panelBottom: panel ? panel.bottom : null,
+      footerBottom: footer && getComputedStyle(footer).display !== 'none' ? footer.getBoundingClientRect().bottom : null };`);
+  const before = await size();
+  for (let step = 0; step < 3; step += 1) { await key('='); await delay(400); }
+  const scaled = await waitFor('native zoom 150 %', async () => {
+    const now = await size();
+    return Math.abs(before.width / now.width - 1.5) < 0.05 ? now : null;
+  }, 15_000).catch(() => null);
+  await delay(800);
+  const image = await screenshot(session);
+  await key('0');
+  const restored = await waitFor('native zoom 100 %', async () => {
+    const now = await size();
+    return Math.abs(now.width - before.width) <= 2 ? now : null;
+  }, 15_000).catch(() => null);
+  return { before, scaled, restored: Boolean(restored), screenshot: image };
+}
+
+function smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3, layout, uiScale) {
   const failures = [];
+  if (uiScale && !(uiScale.scaled && uiScale.scaled.scrollWidth <= uiScale.scaled.width
+    && uiScale.scaled.panelBottom !== null && uiScale.scaled.panelBottom <= uiScale.scaled.height
+    && (uiScale.scaled.footerBottom === null || uiScale.scaled.footerBottom <= uiScale.scaled.height) && uiScale.restored)) {
+    failures.push(`native UI scale did not zoom the app to 150 % and back, or the Graph page did not fit (${JSON.stringify(uiScale)})`);
+  }
+  if (layout && !(layout.footerBottom !== null && layout.footerBottom <= layout.innerHeight
+    && layout.scrollHeight <= layout.innerHeight && layout.scrollWidth <= layout.innerWidth)) {
+    failures.push(`Graph page does not fit the window (${JSON.stringify(layout)})`);
+  }
+  if (layout && !(layout.menuClosedOnEscape && layout.focusBack)) failures.push(`Add item did not close on Escape with focus back (${JSON.stringify(layout)})`);
   if (!probe.webgl2) failures.push('WebGL2 context unavailable');
   if (probe.software === true) failures.push(`software renderer: ${probe.unmaskedRenderer ?? probe.renderer}`);
   if (!probe.extensions?.EXT_color_buffer_float) failures.push('EXT_color_buffer_float unavailable');
@@ -343,6 +397,7 @@ let driverLog = '';
 driver.stdout.on('data', (chunk) => { driverLog += chunk; });
 driver.stderr.on('data', (chunk) => { driverLog += chunk; });
 let sessionId = null;
+let restoreUiScale = null;
 try {
   await waitForDriver();
   log('driver ready; creating session');
@@ -356,6 +411,26 @@ try {
     script: `return (${runWebglProbe.toString()})();`,
     args: [],
   });
+  // WebKit's WebDriver places synthetic clicks without the page zoom, so the smoke runs at 100 % and puts the
+  // person's own UI scale back at the end (Ctrl+0, then Ctrl+= up to the step they had).
+  let savedUiScaleSteps = 0;
+  if (smoke) {
+    const zoomKey = (value) => webdriver('POST', `/session/${sessionId}/execute/sync`, {
+      script: `window.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(value)}, ctrlKey: true, bubbles: true }));`, args: [] });
+    const widthNow = () => webdriver('POST', `/session/${sessionId}/execute/sync`, { script: 'return innerWidth;', args: [] });
+    const zoomed = await widthNow();
+    await zoomKey('0');
+    await delay(800);
+    const ratio = (await widthNow()) / zoomed;
+    const steps = [80, 90, 100, 110, 125, 150, 175, 200];
+    const saved = steps.reduce((best, step) => (Math.abs(step / 100 - ratio) < Math.abs(best / 100 - ratio) ? step : best), 100);
+    savedUiScaleSteps = steps.indexOf(saved) - steps.indexOf(100);
+    log(`UI scale was ${saved} %; smoke runs at 100 %`);
+    restoreUiScale = async () => {
+      await zoomKey('0');
+      for (let step = 0; step < Math.abs(savedUiScaleSteps); step += 1) { await zoomKey(savedUiScaleSteps > 0 ? '=' : '-'); await delay(300); }
+    };
+  }
   let graphThree = null;
   if (smoke) {
     log('probe captured; running Graph 3D smoke');
@@ -414,14 +489,29 @@ try {
     ptx3 = { curveDots: run.curveDots, openCorners: run.openCorners, touching: run.touching, badge: run.badge };
     if (outFile && run.screenshot) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-region.png', Buffer.from(run.screenshot, 'base64'));
   }
-  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3) : [];
+  let layout = null;
+  if (smoke) {
+    log('running layout and menu smoke');
+    const { screenshot: image, ...run } = await runLayoutSmoke(sessionId);
+    layout = run;
+    if (outFile && image) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-layout.png', Buffer.from(image, 'base64'));
+  }
+  let uiScale = null;
+  if (smoke) {
+    log('running native UI scale smoke');
+    const { screenshot: image, ...run } = await runUiScaleSmoke(sessionId);
+    uiScale = run;
+    if (outFile && image) await fs.writeFile(outFile.replace(/\.json$/u, '') + '-ui-scale-150.png', Buffer.from(image, 'base64'));
+  }
+  const failures = smoke ? smokeFailures(probe, graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3, layout, uiScale) : [];
+  if (restoreUiScale) await restoreUiScale();
   const report = {
     environment: 'packaged-tauri-webkitgtk',
     binary: path.relative(repoRoot, binary),
     extraEnv,
     capturedAt: new Date().toISOString(),
     probe,
-    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3, screenshotsMissing, failures } : {}),
+    ...(smoke ? { graphThree, complexGpu, realGpu, surfaceHeat, complexLocus, piecewise, ptx2, ptx3, layout, uiScale, screenshotsMissing, failures } : {}),
   };
   const text = `${JSON.stringify(report, null, 2)}\n`;
   if (outFile) await fs.writeFile(outFile, text);

@@ -657,7 +657,7 @@ export function GraphSvgViewport({
   const gpuChipText = gpuStatus.gpuItems === 0
     ? (gpuStatus.reasons.includes('deep zoom uses precise CPU rendering') ? 'Precise mode' : 'Standard rendering')
     : gpuStatus.gpuItems === gpuStatus.candidates ? 'GPU' : `GPU ${gpuStatus.gpuItems}/${gpuStatus.candidates}`;
-  return <div className="graph-svg-viewport" data-scene-pending={pending ? 'true' : 'false'} data-testid="graph-viewport"
+  return <div className="graph-svg-viewport" data-graph-dismiss-swallow="" data-scene-pending={pending ? 'true' : 'false'} data-testid="graph-viewport"
     aria-describedby="graph-trace-instructions" aria-label={`Interactive ${grid.kind} graph. Press Enter to start keyboard tracing.`}
     role="region" onKeyDown={handleKeyDown} onPointerCancel={finishPointer} onPointerDown={handlePointerDown}
     onPointerMove={handlePointerMove} onPointerUp={finishPointer} ref={hostRef} tabIndex={0}>

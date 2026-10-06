@@ -41,7 +41,7 @@ describe('settings schema', () => {
     });
 
     expect(parsed.languageCode).toBe(DEFAULT_LANGUAGE_CODE);
-    expect(parsed.uiScale).toBe(130);
+    expect(parsed.uiScale).toBe(125); // a save from before the native scale: 130 → the nearest step
     expect(parsed.mathScale).toBe(115);
     expect(parsed.resultScale).toBe(145);
     expect(parsed.highContrast).toBe(true);

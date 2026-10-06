@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../lib/app-state/ui-scale';
 import { MathStatic } from './MathStatic';
 import { SettingsSwitch } from './SettingsSwitch';
 import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
@@ -39,7 +40,7 @@ type SettingsPanelProps = {
 };
 
 const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
-const SCALE_OPTIONS: Array<Settings['uiScale']> = [100, 115, 130, 145];
+const SCALE_OPTIONS: Array<Settings['mathScale']> = [100, 115, 130, 145];
 const ANGLE_OPTIONS: AngleUnit[] = ['deg', 'rad', 'grad'];
 const OUTPUT_OPTIONS: OutputStyle[] = ['exact', 'decimal', 'both'];
 const EQUATION_ANSWER_MODE_OPTIONS: EquationAnswerMode[] = ['exact', 'isolate'];
@@ -212,8 +213,8 @@ export function SettingsPanel({
           <div className="settings-section-title">{settingsText.sections.display}</div>
           <div className="settings-field">
             <span>{settingsText.fields.uiScale}</span>
-            <div className="settings-chip-row">
-              {SCALE_OPTIONS.map((option) => (
+            {isNativeUiScaleHost() ? <div className="settings-chip-row">
+              {UI_SCALE_STEPS.map((option) => (
                 <button
                   key={`ui-scale-${option}`}
                   type="button"
@@ -224,7 +225,7 @@ export function SettingsPanel({
                   {settingsText.options.scalePercent(option)}
                 </button>
               ))}
-            </div>
+            </div> : <p className="settings-hint" data-testid="settings-ui-scale-browser-hint">{settingsText.fields.uiScaleBrowserHint}</p>}
           </div>
           <div className="settings-field">
             <span>{settingsText.fields.mathSize}</span>

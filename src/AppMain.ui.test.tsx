@@ -738,7 +738,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
 
-    await user.click(screen.getByTestId('settings-ui-scale-130'));
+    expect(screen.getByTestId('settings-ui-scale-browser-hint')).toBeInTheDocument(); // a browser zooms itself
     await user.click(screen.getByTestId('settings-math-scale-115'));
     await user.click(screen.getByTestId('settings-result-scale-145'));
     await user.click(screen.getByTestId('settings-high-contrast'));
@@ -747,7 +747,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('settings-auto-switch-equation'));
 
     const shell = screen.getByTestId('calculator-shell') as HTMLElement;
-    expect(shell.style.getPropertyValue('--ui-scale')).toBe('1.3');
+    expect(shell.style.getPropertyValue('--ui-scale')).toBe('');
     expect(shell.style.getPropertyValue('--math-scale')).toBe('1.15');
     expect(shell.style.getPropertyValue('--result-scale')).toBe('1.45');
     expect(shell.className).toContain('is-high-contrast');

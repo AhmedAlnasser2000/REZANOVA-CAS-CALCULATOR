@@ -314,7 +314,7 @@ export function GraphThreeViewport({
     data-camera-orientation={camera.orientation} data-camera-position={`${camera.position.x},${camera.position.y},${camera.position.z}`}
     data-camera-projection={camera.projection} data-camera-target={`${camera.target.x},${camera.target.y},${camera.target.z}`}
     data-surface-mesh-count={scene?.surfaceMeshes.length ?? 0} data-gpu-surfaces={gpuSurfaces}
-    data-ready={ready ? 'true' : 'false'} data-testid="graph-three-viewport" onContextMenu={(event) => event.preventDefault()}
+    data-graph-dismiss-swallow="" data-ready={ready ? 'true' : 'false'} data-testid="graph-three-viewport" onContextMenu={(event) => event.preventDefault()}
     onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
     onPointerCancel={onPointerCancel} onPointerUp={onPointerUp} ref={hostRef} tabIndex={fallback ? -1 : 0}>
     <div className="graph-three-renderer-host" ref={rendererHostRef} />

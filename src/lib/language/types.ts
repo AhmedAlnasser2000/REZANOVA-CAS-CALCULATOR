@@ -156,6 +156,8 @@ export type SettingsLanguageCatalog = {
   };
   fields: {
     uiScale: string;
+    /** Shown in a browser instead of the UI-scale steps. */
+    uiScaleBrowserHint: string;
     mathSize: string;
     resultSize: string;
     highContrast: string;

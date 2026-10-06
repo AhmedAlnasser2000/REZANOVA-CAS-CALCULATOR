@@ -166,7 +166,3 @@
   filter: drop-shadow(0 0 3px currentColor);
 }
 
-@media (max-width: 1260px) {
-  .graph-theme-controls label > span,
-  .graph-theme-controls button { display: none; }
-}

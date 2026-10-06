@@ -1084,7 +1084,7 @@ describe('NotebookPage', () => {
     fireEvent.pointerDown(rotatedEastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 46 });
     fireEvent.pointerMove(figure, { clientX: 500, clientY: 350, pointerId: 46 });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
-      .getPropertyValue('--notebook-image-width')).toBe('calc(600px / var(--page-ui-scale, 1))'));
+      .getPropertyValue('--notebook-image-width')).toBe('600px'));
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
       .getPropertyValue('--notebook-image-width')).toBe('62.5%'));

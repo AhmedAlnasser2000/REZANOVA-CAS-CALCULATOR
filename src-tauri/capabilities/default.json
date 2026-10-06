@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "core:webview:allow-print",
+    "core:webview:allow-set-webview-zoom",
     "core:window:allow-set-fullscreen",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",

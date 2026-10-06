@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 async function openBlankNotebook(page: Page) {
   await page.goto('/');
@@ -97,9 +98,7 @@ test('Notebook library stays usable across desktop widths, scaling, contrast, an
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await page.getByRole('button', { name: 'File', exact: true }).click();
   const scaled = page.getByRole('dialog', { name: 'Notebook File' });
   await expect(scaled).toBeVisible();
@@ -116,9 +115,7 @@ test('Notebook library stays usable across desktop widths, scaling, contrast, an
   await scaled.getByRole('button', { name: 'Close Notebook File' }).click();
 
   await page.emulateMedia({ colorScheme: 'dark', forcedColors: 'none' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await page.getByRole('button', { name: 'File', exact: true }).click();
   const compact = page.getByRole('dialog', { name: 'Notebook File' });
   await compact.getByRole('button', { name: 'Open', exact: true }).click();

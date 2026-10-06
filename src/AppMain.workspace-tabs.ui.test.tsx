@@ -64,12 +64,12 @@ describe('AppMain workspace tabs', () => {
     expect(calculatorShell.querySelector('.mode-strip')).toBeTruthy();
   });
 
-  it('keeps app chrome stable while applying UI scale to the calculator surface', async () => {
+  it('never zooms single surfaces: UI scale is the webview\'s native zoom (GRAPHING-UI1)', async () => {
     window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
       currentMode: 'calculate',
       settings: {
         ...DEFAULT_SETTINGS,
-        uiScale: 145,
+        uiScale: 145, // saved by an older version; it becomes the 150 % step
       },
       history: [],
       variableMemory: [],
@@ -80,7 +80,7 @@ describe('AppMain workspace tabs', () => {
     expect(screen.getByTestId('app-frame').getAttribute('style') ?? '')
       .not.toContain('--ui-scale');
     expect(screen.getByTestId('calculator-shell').getAttribute('style') ?? '')
-      .toContain('--ui-scale: 1.45');
+      .not.toContain('--ui-scale');
   });
 
   it('suppresses quick inspectors when a page surface becomes active', async () => {

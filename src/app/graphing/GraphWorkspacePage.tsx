@@ -15,16 +15,8 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Focus,
   GripVertical,
-  Grid3X3,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Redo2,
-  Search,
   Trash2,
-  Undo2,
-  X,
 } from 'lucide-react';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { MathEditor } from '../../components/MathEditor';
@@ -49,7 +41,10 @@ import {
   graphPiecewiseUsesBranchEditor,
 } from './graph-document';
 import { GraphViewportHost } from './GraphViewportHost';
-import { GraphStylePopover, GraphThemeControls } from './GraphAppearanceControls';
+import { GraphStylePopover } from './GraphAppearanceControls';
+import { GraphToolbar } from './GraphToolbar';
+import { useGraphWorkbenchLayout } from './useGraphWorkbenchLayout';
+import { useLightDismiss } from '../../components/useLightDismiss';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
 import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
@@ -200,6 +195,7 @@ function GraphExpressionRow({
 }: GraphExpressionRowProps) {
   const [piecewiseCollapsed, setPiecewiseCollapsed] = useState(false);
   const [styleOpen, setStyleOpen] = useState(false);
+  const styleButtonRef = useRef<HTMLButtonElement | null>(null);
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editorOverflowing, setEditorOverflowing] = useState(false);
@@ -262,11 +258,11 @@ function GraphExpressionRow({
     >
       {item && 'presentation' in item ? <button aria-expanded={styleOpen}
         aria-label="Style graph item" className="graph-expression-color" onClick={() => setStyleOpen((open) => !open)}
-        type="button" /> : <span className="graph-expression-color" aria-hidden="true" />}
+        ref={styleButtonRef} type="button" /> : <span className="graph-expression-color" aria-hidden="true" />}
       {styleOpen && item && 'presentation' in item && onUpdatePresentation ? <GraphStylePopover
         colorVisionMode={appearance.colorVisionMode} onClose={() => setStyleOpen(false)}
         onUpdate={onUpdatePresentation} presentation={normalizeGraphItemPresentation(item.presentation)}
-        theme={appearance.theme} /> : null}
+        theme={appearance.theme} triggerRef={styleButtonRef} /> : null}
       {item?.kind === 'parameter' && item.parameter.origin === 'slider-created' ? (
         <strong className="graph-parameter-symbol" aria-label={`Parameter ${item.parameter.symbol}`}>
           {item.parameter.symbol}
@@ -475,6 +471,10 @@ export default function GraphWorkspacePage({
   const [viewportSize, setViewportSize] = useState({ width: 960, height: 600 });
   const [gridPanelOpen, setGridPanelOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
+  const addItemButtonRef = useRef<HTMLButtonElement>(null);
+  const addItemMenuRef = useRef<HTMLDivElement>(null);
+  const addItemTriggers = useMemo(() => [addItemButtonRef], []);
+  useLightDismiss({ open: addItemOpen, onClose: () => setAddItemOpen(false), layerRef: addItemMenuRef, triggerRefs: addItemTriggers });
   const promotedItemIdRef = useRef<string | null>(null);
   const piecewiseFocusItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
@@ -483,6 +483,10 @@ export default function GraphWorkspacePage({
     onPersistSession: onUpdateSession,
     workspaceContext,
   });
+  const {
+    bothDivider, panelClassName, panelRef, panelStyle, railCollapsed, railResizer, sizeClass, toggleRail, workbenchClassName,
+    workbenchRef, workbenchStyle,
+  } = useGraphWorkbenchLayout(controller);
   const { equalAxes, reportSize: reportPaneSize, setEqualAxes } = useGraphEqualAxes({
     setViewport: controller.setViewport, viewport: controller.session.surface.viewport,
   });
@@ -617,7 +621,7 @@ export default function GraphWorkspacePage({
   }, [controller.session.authoring?.piecewiseDrafts.length]);
 
   return (
-    <article className="app-page graph-page" data-graph-theme={controller.session.surface.appearance.theme}
+    <article className="app-page app-page--graphing graph-page" data-size-class={sizeClass} data-graph-theme={controller.session.surface.appearance.theme}
       data-testid="graph-page">
       <header className="app-page-shell-header graph-page-header">
         <span className="graph-brand-mark" aria-hidden="true">
@@ -628,130 +632,11 @@ export default function GraphWorkspacePage({
         <span>Graphing</span>
       </header>
 
-      <main
-        className={`graph-workbench${controller.session.surface.expressionRailCollapsed ? ' is-rail-collapsed' : ''}`}
-      >
-        <div className="graph-toolbar" role="toolbar" aria-label="Graph controls">
-          <button
-            aria-label={controller.session.surface.expressionRailCollapsed ? 'Expand expression rail' : 'Collapse expression rail'}
-            className="graph-toolbar-button graph-toolbar-button--icon"
-            onClick={controller.toggleRail}
-            type="button"
-          >
-            {controller.session.surface.expressionRailCollapsed
-              ? <PanelLeftOpen aria-hidden="true" size={18} />
-              : <PanelLeftClose aria-hidden="true" size={18} />}
-          </button>
-          <span className="graph-toolbar-separator" aria-hidden="true" />
-          <button
-            aria-label="Undo graph edit"
-            className="graph-toolbar-button graph-toolbar-button--icon"
-            disabled={!controller.canUndo}
-            onClick={controller.undo}
-            type="button"
-          >
-            <Undo2 aria-hidden="true" size={18} />
-          </button>
-          <button
-            aria-label="Redo graph edit"
-            className="graph-toolbar-button graph-toolbar-button--icon"
-            disabled={!controller.canRedo}
-            onClick={controller.redo}
-            type="button"
-          >
-            <Redo2 aria-hidden="true" size={18} />
-          </button>
-          <span className="graph-toolbar-separator" aria-hidden="true" />
-          <button className="graph-toolbar-button" onClick={controller.autoFit} type="button">
-            <Focus aria-hidden="true" size={17} />
-            <span>Auto-Fit</span>
-          </button>
-          <button
-            aria-expanded={gridPanelOpen}
-            className="graph-toolbar-button"
-            onClick={() => setGridPanelOpen((open) => !open)}
-            type="button"
-          >
-            <Grid3X3 aria-hidden="true" size={17} />
-            <span>Grid &amp; Axes</span>
-          </button>
-          <GraphThemeControls colorVisionMode={controller.session.surface.appearance.colorVisionMode}
-            onChange={controller.updateAppearance} theme={controller.session.surface.appearance.theme} />
-          <button aria-pressed={controller.session.surface.analyzeOpen} className="graph-toolbar-button"
-            onClick={() => {
-              if (!controller.session.surface.analyzeOpen && !controller.session.surface.selectedItemId) {
-                const first = controller.session.document.items.find((item) => item.kind !== 'note' && item.kind !== 'parameter' && item.visible);
-                if (first) controller.selectItem(first.itemId);
-              }
-              controller.updateAnalyze({ open: !controller.session.surface.analyzeOpen });
-            }} type="button"><Search aria-hidden="true" size={16} /><span>Analyze</span></button>
-          <div aria-label="Graph number domain" className="graph-domain-switch" role="group">
-            {(['real', 'complex', 'both'] as const).map((mode) => <button
-              aria-pressed={controller.session.surface.viewPolicy.mode === mode} key={mode}
-              onClick={() => controller.updateViewPolicy(mode)} type="button">
-              {mode[0].toUpperCase() + mode.slice(1)}
-            </button>)}
-          </div>
-          <button aria-label="Equal axes" aria-pressed={equalAxes} className="graph-toolbar-button"
-            onClick={() => setEqualAxes((current) => !current)}
-            title="Equal axes: one unit is the same length on x and y, so circles are round" type="button">
-            <span>1:1</span></button>
-          {/* The auto-switch notice names the view while it shows, so the context chip steps aside. */}
-          {controller.autoViewNotice ? null : <span className="graph-toolbar-context">{controller.session.surface.viewPolicy.mode === 'real'
-            ? `Real · ${controller.session.surface.panes.real.dimension === '3d' ? 'Three interactive' : 'SVG reference'}`
-            : controller.session.surface.viewPolicy.mode === 'complex' ? 'Complex · mapping' : 'Real + Complex'}</span>}
-          {controller.autoViewNotice ? <span className="graph-view-notice" data-testid="graph-view-notice" role="status"
-            title={controller.autoViewNotice.to === 'complex'
-              ? 'This expression uses z, the complex variable, so the Complex view opened.'
-              : 'No complex map is left, so the view returned to Real.'}>
-            {controller.autoViewNotice.to === 'complex' ? 'Opened Complex for z' : 'Back to Real'}
-            <button onClick={() => controller.updateViewPolicy(controller.autoViewNotice!.from)} type="button">Undo</button>
-          </span> : null}
-        </div>
-
-        {gridPanelOpen ? (
-          <section aria-label="Grid and axes settings" className="graph-grid-panel">
-            <div className="graph-grid-panel-heading">
-              <strong>Grid &amp; Axes</strong>
-              <button aria-label="Close grid settings" onClick={() => setGridPanelOpen(false)} type="button">
-                <X aria-hidden="true" size={15} />
-              </button>
-            </div>
-            <span className="graph-grid-panel-label">Grid type</span>
-            <div className="graph-grid-kind" role="group" aria-label="Grid type">
-              {(['cartesian', 'polar', 'none'] as const).map((kind) => (
-                <button
-                  aria-pressed={controller.session.surface.grid.kind === kind}
-                  key={kind}
-                  onClick={() => controller.updateGrid({
-                    kind,
-                    angleLabels: kind === 'polar',
-                  })}
-                  type="button"
-                >
-                  {kind[0].toUpperCase() + kind.slice(1)}
-                </button>
-              ))}
-            </div>
-            {([
-              ['major', 'Major grid'],
-              ['minor', 'Minor grid'],
-              ['axisNumbers', 'Axis numbers'],
-              ['angleLabels', 'Angle values'],
-              ['unitCircle', 'Unit Circle overlay'],
-            ] as const).map(([key, label]) => (
-              <label className="graph-grid-toggle" key={key}>
-                <span>{label}</span>
-                <input
-                  checked={controller.session.surface.grid[key]}
-                  disabled={key === 'angleLabels' && controller.session.surface.grid.kind !== 'polar'}
-                  onChange={(event) => controller.updateGrid({ [key]: event.currentTarget.checked })}
-                  type="checkbox"
-                />
-              </label>
-            ))}
-          </section>
-        ) : null}
+      <main className={workbenchClassName} ref={workbenchRef} style={workbenchStyle}>
+        <GraphToolbar controller={controller} equalAxes={equalAxes} gridPanelOpen={gridPanelOpen}
+          onToggleRail={toggleRail} railCollapsed={railCollapsed}
+          setEqualAxes={setEqualAxes} setGridPanelOpen={setGridPanelOpen} />
+        {railResizer}
 
         <aside className="graph-expression-rail" aria-label="Expressions">
           <div className="graph-expression-list">
@@ -870,14 +755,15 @@ export default function GraphWorkspacePage({
               </div>
             ) : null}
             <div className="graph-add-item">
-              <button aria-expanded={addItemOpen} aria-haspopup="menu" className="graph-add-point-button"
+              <button aria-expanded={addItemOpen} aria-haspopup="menu" className="graph-add-point-button" ref={addItemButtonRef}
                 onClick={(event) => {
                   setAddItemOpen((open) => !open);
                   // Opened from the keyboard (Enter/Space): focus the first item, as a menu button should.
                   const container = event.currentTarget.parentElement;
                   if (event.detail === 0) requestAnimationFrame(() => container?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
                 }} type="button">+ Add item</button>
-              {addItemOpen ? <div className="graph-add-item-menu" onKeyDown={graphMenuKeyDown(() => setAddItemOpen(false))} role="menu">
+              {addItemOpen ? <div className="graph-add-item-menu" onKeyDown={graphMenuKeyDown(() => setAddItemOpen(false))}
+                ref={addItemMenuRef} role="menu">
                 <button onClick={() => {
                   const itemId = controller.addNote();
                   setAddItemOpen(false);
@@ -905,7 +791,8 @@ export default function GraphWorkspacePage({
           </div>
         </aside>
 
-        <section className={`graph-viewport-panel is-${controller.session.surface.viewPolicy.mode}`} aria-label="Graph viewport">
+        <section className={`graph-viewport-panel is-${controller.session.surface.viewPolicy.mode}${panelClassName}`} aria-label="Graph viewport"
+          ref={panelRef} style={panelStyle}>
           {controller.session.surface.viewPolicy.mode !== 'complex' ? <GraphViewportHost
             document={controller.session.document} gestureLane={gestureLane} gpuRendering={gpuRendering}
             grid={controller.session.surface.grid}
@@ -924,6 +811,7 @@ export default function GraphWorkspacePage({
             selectedItemId={controller.session.surface.selectedItemId}
             viewport={controller.session.surface.viewport}
           /> : null}
+          {bothDivider}
           {controller.session.surface.viewPolicy.mode !== 'real' ? <GraphComplexViewport
             colorVisionMode={controller.session.surface.appearance.colorVisionMode}
             displayMode={controller.session.surface.complex.displayMode}

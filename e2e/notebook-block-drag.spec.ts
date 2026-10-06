@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 async function openWorkedExample(page: Page) {
   await page.goto('/');
@@ -153,9 +154,7 @@ for (const evidence of [
     await page.setViewportSize({ width: evidence.width, height: evidence.height });
     await page.emulateMedia({ forcedColors: evidence.forcedColors ? 'active' : 'none' });
     await openWorkedExample(page);
-    await page.locator('.active-surface--page').evaluate((element, scale) => {
-      (element as HTMLElement).style.setProperty('--page-ui-scale', scale);
-    }, evidence.scale);
+    await emulateUiScale(page, Number(evidence.scale), { width: evidence.width, height: evidence.height });
 
     if (evidence.width <= 1100) {
       const toggle = page.getByRole('button', { name: 'Toggle Notebook outline' });

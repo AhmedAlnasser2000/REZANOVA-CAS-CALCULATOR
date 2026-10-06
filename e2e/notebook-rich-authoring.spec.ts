@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 async function openWorkedExample(page: Page) {
   await page.goto('/');
@@ -391,8 +392,8 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
   expect(Math.round((await outline.boundingBox())!.width)).toBe(320);
 
   const tabsBefore = await page.locator('.workspace-tabs-shell').boundingBox();
+  await emulateUiScale(page, 1.3);
   await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
     element.classList.add('is-high-contrast');
   });
   const scaledGeometry = await page.evaluate(() => {
@@ -407,16 +408,17 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
   expect(scaledGeometry.left).toBeGreaterThanOrEqual(0);
   expect(scaledGeometry.right).toBeLessThanOrEqual(2400);
   expect(scaledGeometry.overflow).toBeLessThanOrEqual(0);
-  expect(tabsAfter).toEqual(tabsBefore);
+  // UI scale is native zoom: the whole app, tab strip included, scales together and stays inside the window.
+  expect(tabsBefore).not.toBeNull();
+  expect(tabsAfter!.x).toBeGreaterThanOrEqual(0);
+  expect(tabsAfter!.x + tabsAfter!.width).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
 
   await test.info().attach('notebook-wide-high-contrast-130', {
     body: await page.screenshot(),
     contentType: 'image/png',
   });
 
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await expect(stage).toBeVisible();
   await expect(notebook).toBeVisible();
   await expect(template).toBeVisible();

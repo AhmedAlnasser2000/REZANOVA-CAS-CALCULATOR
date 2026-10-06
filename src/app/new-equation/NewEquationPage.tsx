@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useLightDismiss } from '../../components/useLightDismiss';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
 import { checkRows, parseRow, pickOrder } from '../../lib/new-equation/parse';
@@ -20,6 +21,12 @@ const LIMIT_LABELS: Readonly<Record<keyof EquationLimits, string>> = { work: 'Wo
 export default function NewEquationPage({ instance, runtime }: { instance: WorkspaceInstance; runtime: NewEquationRuntime }) {
   const draft = runtime.draftOf(instance.id), view = runtime.views[instance.id] ?? {};
   const fields = useRef<(MathfieldElement | null)[]>([]);
+  // The Example picker closes on an outside press, Escape (focus back to its summary) or Tab out (GRAPHING-UI1).
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const examplesMenu = useRef<HTMLDivElement>(null);
+  const examplesSummary = useRef<HTMLElement>(null);
+  const examplesTriggers = useMemo(() => [examplesSummary], []);
+  useLightDismiss({ open: examplesOpen, onClose: () => setExamplesOpen(false), layerRef: examplesMenu, triggerRefs: examplesTriggers });
   const focusRow = useRef<number | undefined>(undefined);
   const parsed = useMemo(() => draft.rows.map(parseRow), [draft.rows]);
   const targets = resolvedTargets(draft);
@@ -71,9 +78,9 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
       </ol>
       <div className="ne-actions">
         <button onClick={() => addRow(draft.rows.length - 1)}>+ Add row</button>
-        <details className="ne-examples">
-          <summary>Example ▾</summary>
-          <div role="menu">{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={e => { update({ rows: [...x.rows], targets: null }); (e.currentTarget.closest('details') as HTMLDetailsElement).open = false; }}>{x.label}</button>)}</div>
+        <details className="ne-examples" open={examplesOpen} onToggle={e => setExamplesOpen(e.currentTarget.open)}>
+          <summary ref={examplesSummary}>Example ▾</summary>
+          <div role="menu" ref={examplesMenu}>{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={() => { update({ rows: [...x.rows], targets: null }); setExamplesOpen(false); }}>{x.label}</button>)}</div>
         </details>
       </div>
       <p className="ne-tip">Enter to solve · Shift+Enter for a new row</p>

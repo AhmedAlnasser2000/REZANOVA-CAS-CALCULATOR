@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 async function openBlankNotebook(page: Page) {
   await page.goto('/');
@@ -120,16 +121,12 @@ test('Notebook ribbon separates Home, Insert, Layout, and File without disturbin
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await expectRibbonContained(page);
   await attachScreenshot(page, 'notebook-ribbon-forced-colors-130');
 
   await page.emulateMedia({ colorScheme: 'dark', forcedColors: 'none' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await expectRibbonContained(page);
   await attachScreenshot(page, 'notebook-ribbon-80');
 });

@@ -20,7 +20,6 @@ export type SideSurfacePresentation = 'outboard' | 'overlay';
 type UseSideSurfaceRuntimeOptions = {
   appStageRef: RefObject<HTMLDivElement | null>;
   calculatorShellRef: RefObject<HTMLDivElement | null>;
-  uiScale: number;
   mathScale: number;
   resultScale: number;
 };
@@ -28,7 +27,6 @@ type UseSideSurfaceRuntimeOptions = {
 export function useSideSurfaceRuntime({
   appStageRef,
   calculatorShellRef,
-  uiScale,
   mathScale,
   resultScale,
 }: UseSideSurfaceRuntimeOptions) {
@@ -62,7 +60,6 @@ export function useSideSurfaceRuntime({
   const appFrameStyle = {} as CSSProperties;
 
   const calculatorShellStyle = {
-    '--ui-scale': `${uiScale / 100}`,
     '--math-scale': `${mathScale / 100}`,
     '--result-scale': `${resultScale / 100}`,
   } as CSSProperties;
@@ -143,7 +140,7 @@ export function useSideSurfaceRuntime({
     }
 
     return () => observer.disconnect();
-  }, [appStageRef, calculatorShellRef, uiScale, viewportWidth]);
+  }, [appStageRef, calculatorShellRef, viewportWidth]);
 
   function closeSettingsPanel() {
     setSideSurface((currentSurface) => (currentSurface === 'settings' ? 'none' : currentSurface));

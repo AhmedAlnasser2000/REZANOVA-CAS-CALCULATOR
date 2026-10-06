@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { emulateUiScale } from './helpers';
 
 type StoredBrowserNotebook = {
   assetIds?: string[];
@@ -274,16 +275,12 @@ test('Notebook inserts a durable safe SVG figure and exposes contextual Picture 
   }
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await expectImageContained(page);
   await attachScreenshot(page, 'notebook-image-80');
 
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await expectImageContained(page);
   await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await attachScreenshot(page, 'notebook-image-forced-colors-130');
@@ -410,17 +407,13 @@ test('Notebook image direct resizing keeps the selected boundary on the visible 
   }
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
-  });
+  await emulateUiScale(page, 0.8);
   await expectImageContained(page);
   await expectImageControlsMatchVisibleFrame(figure);
   await attachScreenshot(page, 'notebook-image-direct-resize-80');
 
   await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
-  await page.locator('.active-surface--page').evaluate((element) => {
-    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
-  });
+  await emulateUiScale(page, 1.3);
   await expectImageContained(page);
   await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await expectImageControlsMatchVisibleFrame(figure);

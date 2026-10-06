@@ -1,4 +1,5 @@
-import { type CSSProperties, useEffect, useRef } from 'react';
+import { type CSSProperties, type RefObject, useEffect, useMemo, useRef } from 'react';
+import { useLightDismiss } from '../../components/useLightDismiss';
 import {
   GRAPH_COLOR_TOKENS,
   graphThemeLabel,
@@ -14,6 +15,7 @@ const THEMES: GraphAppearanceThemeV1[] = ['technical', 'paper', 'aurora', 'lumin
 export function GraphThemeControls({
   colorVisionMode,
   onChange,
+  parts = { theme: true, colors: true },
   theme,
 }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
@@ -21,10 +23,12 @@ export function GraphThemeControls({
     theme?: GraphAppearanceThemeV1;
     colorVisionMode?: 'standard' | 'color-vision-friendly';
   }) => void;
+  /** Which of the two controls to show (the toolbar moves each into its overflow menu separately). */
+  parts?: { theme: boolean; colors: boolean };
   theme: GraphAppearanceThemeV1;
 }) {
   return <div className="graph-theme-controls">
-    <label>
+    {parts.theme ? <label>
       <span>Theme</span>
       <select aria-label="Graph theme" onChange={(event) => onChange({
         theme: event.currentTarget.value as GraphAppearanceThemeV1,
@@ -33,12 +37,12 @@ export function GraphThemeControls({
           {graphThemeLabel(candidate)}
         </option>)}
       </select>
-    </label>
-    <button aria-pressed={colorVisionMode === 'color-vision-friendly'}
+    </label> : null}
+    {parts.colors ? <button aria-pressed={colorVisionMode === 'color-vision-friendly'}
       onClick={() => onChange({ colorVisionMode: colorVisionMode === 'standard'
         ? 'color-vision-friendly' : 'standard' })} type="button">
       Accessible colors
-    </button>
+    </button> : null}
   </div>;
 }
 
@@ -61,25 +65,28 @@ export function GraphStylePopover({
   onUpdate,
   presentation,
   theme,
+  triggerRef,
 }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   onClose: () => void;
+  /** The row's colour swatch: pressing it toggles the popover, and focus returns to it on Escape or Close. */
+  triggerRef: RefObject<HTMLButtonElement | null>;
   onUpdate: (presentation: GraphItemPresentationV2) => void;
   presentation: GraphItemPresentation;
   theme: GraphAppearanceThemeV1;
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const triggerRefs = useMemo(() => [triggerRef], [triggerRef]);
+  useLightDismiss({ open: true, onClose, layerRef: panelRef, triggerRefs });
   const value = normalizeGraphItemPresentation(presentation);
   const resolvedColor = resolveGraphPresentationColor(value, colorVisionMode);
   useEffect(() => {
     panelRef.current?.focus({ preventScroll: true });
   }, []);
   const patch = (next: Partial<GraphItemPresentationV2>) => onUpdate({ ...value, ...next });
-  return <div aria-label="Curve style" className="graph-style-popover" onKeyDown={(event) => {
-    if (event.key === 'Escape') onClose();
-  }} ref={panelRef} role="dialog" tabIndex={-1}>
+  return <div aria-label="Curve style" className="graph-style-popover" ref={panelRef} role="dialog" tabIndex={-1}>
     <div className="graph-style-heading"><strong>Curve style</strong>
-      <button aria-label="Close curve style" onClick={onClose} type="button">Close</button></div>
+      <button aria-label="Close curve style" onClick={() => { onClose(); triggerRef.current?.focus(); }} type="button">Close</button></div>
     <div aria-label="Curve palette" className="graph-style-palette" role="group">
       {GRAPH_COLOR_TOKENS.map((token) => {
         const candidate: GraphItemPresentationV2 = { ...value, color: { kind: 'token', token } };
