@@ -1,3 +1,4 @@
+import type { SerializableMathJson } from '../../../types/calculator';
 import { mergeExactSupplementLatex } from '../exact-supplements';
 import {
   boxLatex,
@@ -19,6 +20,8 @@ export function rewriteExpressionAsRoot(node: unknown): AlgebraTransformResult |
 
   return {
     exactLatex: normalized.normalizedLatex,
+    exactMathJson: normalized.normalizedNode as SerializableMathJson,
+    domainConstraints: normalized.conditionConstraints,
     exactSupplementLatex: normalized.exactSupplementLatex,
     transformBadges: ['Rewrite as Root'],
     transformSummaryText: 'Rewrote the supported power form as exact root notation',
@@ -33,6 +36,8 @@ export function rewriteExpressionAsPower(node: unknown): AlgebraTransformResult 
 
   return {
     exactLatex: normalized.normalizedLatex,
+    exactMathJson: normalized.normalizedNode as SerializableMathJson,
+    domainConstraints: normalized.conditionConstraints,
     exactSupplementLatex: normalized.exactSupplementLatex,
     transformBadges: ['Rewrite as Power'],
     transformSummaryText: 'Rewrote the supported root form as an exact rational exponent',
@@ -47,6 +52,8 @@ export function changeExpressionBase(node: unknown): AlgebraTransformResult | nu
 
   return {
     exactLatex: normalized.normalizedLatex,
+    exactMathJson: normalized.normalizedNode as SerializableMathJson,
+    domainConstraints: normalized.conditionConstraints,
     exactSupplementLatex: normalized.exactSupplementLatex,
     transformBadges: ['Change Base'],
     transformSummaryText: 'Rewrote the logarithm using exact natural-log change of base',
@@ -65,12 +72,15 @@ export function combineFractionsExpression(node: unknown): AlgebraTransformResul
 
   return {
     exactLatex: rational.normalizedLatex,
+    exactMathJson: rational.normalizedNode as SerializableMathJson,
+    domainConstraints: rational.exclusionConstraints,
     exactSupplementLatex: rational.exactSupplementLatex,
     transformBadges: ['Combine Fractions'],
     transformSummaryText: rational.denominatorLatex
       ? 'Combined fractions over LCD'
       : 'Combined fractions into one exact rational form',
     transformSummaryLatex: rational.denominatorLatex,
+    transformSummaryMathJson: rational.denominatorNode as SerializableMathJson | undefined,
   };
 }
 
@@ -94,6 +104,8 @@ export function cancelFactorsExpression(node: unknown): AlgebraTransformResult |
     exactLatex: compactedFactoredNode && factoredSimplified
       ? boxLatex(compactedFactoredNode)
       : simplified.normalizedLatex,
+    exactMathJson: (compactedFactoredNode ?? simplified.normalizedNode) as SerializableMathJson,
+    domainConstraints: simplified.exclusionConstraints,
     exactSupplementLatex: simplified.exactSupplementLatex,
     transformBadges: ['Cancel Factors'],
     transformSummaryText: 'Canceled supported common factors while preserving original exclusions',
@@ -112,12 +124,15 @@ export function rewriteWithLcdExpression(node: unknown): AlgebraTransformResult 
 
   return {
     exactLatex: rational.normalizedLatex,
+    exactMathJson: rational.normalizedNode as SerializableMathJson,
+    domainConstraints: rational.exclusionConstraints,
     exactSupplementLatex: rational.exactSupplementLatex,
     transformBadges: ['Use LCD'],
     transformSummaryText: rational.denominatorLatex
       ? 'Rewrote the expression over LCD'
       : 'Rewrote the expression over an exact common denominator',
     transformSummaryLatex: rational.denominatorLatex,
+    transformSummaryMathJson: rational.denominatorNode as SerializableMathJson | undefined,
   };
 }
 
@@ -129,6 +144,8 @@ export function rationalizeExpression(node: unknown): AlgebraTransformResult | n
 
   return {
     exactLatex: radical.normalizedLatex,
+    exactMathJson: radical.normalizedNode as SerializableMathJson,
+    domainConstraints: radical.conditionConstraints,
     exactSupplementLatex: mergeExactSupplementLatex(
       { latex: radical.exactSupplementLatex, source: 'legacy' },
     ),
@@ -145,6 +162,8 @@ export function conjugateExpression(node: unknown): AlgebraTransformResult | nul
 
   return {
     exactLatex: conjugate.normalizedLatex,
+    exactMathJson: conjugate.normalizedNode as SerializableMathJson,
+    domainConstraints: conjugate.conditionConstraints,
     exactSupplementLatex: mergeExactSupplementLatex(
       { latex: conjugate.exactSupplementLatex, source: 'legacy' },
     ),

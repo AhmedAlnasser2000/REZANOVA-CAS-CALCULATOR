@@ -376,6 +376,12 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
   if (head === 'Apply' && operands.length === 2) {
     return normalizeFormalCall(operands[0], operands[1]);
   }
+  if (head === 'Apply' && operands.length > 2) {
+    const name = normalizeFormalName(operands[0]);
+    const args = operands.slice(1).map(normalizeFormalValue);
+    return name === undefined || args.some(argument => argument === undefined)
+      ? undefined : ['FormalCall', name, ...(args as FormalComparisonValue[])];
+  }
   if (FORMAL_STANDARD_HEADS.has(head) && operands.length >= 1) {
     const args = operands.map(normalizeFormalValue);
     return args.some((argument) => argument === undefined)
@@ -400,8 +406,9 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
     const product = exactIntegerProduct(value);
     const factors = product.factors.map(normalizeFormalValue);
     if (factors.some((factor) => factor === undefined)) return undefined;
-    const normalizedFactors = factors as FormalComparisonValue[];
-    const magnitude = Math.abs(product.coefficient);
+    const normalizedProduct = exactIntegerProduct(['Multiply', product.coefficient, ...factors]);
+    const normalizedFactors = normalizedProduct.factors as FormalComparisonValue[];
+    const magnitude = Math.abs(normalizedProduct.coefficient);
     const unsigned: FormalComparisonValue = normalizedFactors.length === 0
       ? magnitude
       : magnitude === 1
@@ -409,7 +416,7 @@ function normalizeFormalValue(value: unknown): FormalComparisonValue | undefined
           ? normalizedFactors[0]
           : ['Multiply', ...normalizedFactors]
         : ['Multiply', magnitude, ...normalizedFactors];
-    return product.coefficient < 0 ? ['Negate', unsigned] : unsigned;
+    return normalizedProduct.coefficient < 0 ? ['Negate', unsigned] : unsigned;
   }
   if (head === 'Subscript' && operands.length === 2) {
     const base = normalizeFormalName(operands[0]) ?? normalizeFormalValue(operands[0]);
@@ -465,7 +472,17 @@ function alignParsedFormalOperators(
   canonicalLatex: string,
 ): FormalComparisonValue {
   if (!Array.isArray(producer) || !Array.isArray(canonical)) return canonical;
+  // Apply names an ordinary function explicitly. CE may parse that same function
+  // as its own head; require the exact name, arity and corresponding operands.
+  if (producer[0] === 'FormalCall' && producer[1] === canonical[0]
+    && producer.length === canonical.length + 1) {
+    return ['FormalCall', producer[1], ...producer.slice(2).map((operand, index) =>
+      alignParsedFormalOperators(operand, canonical[index + 1], canonicalLatex))];
+  }
   if (producer[0] === 'FormalCall' && canonical[0] === 'Delimiter' && canonical.length >= 2) {
+    return alignParsedFormalOperators(producer, canonical[1], canonicalLatex);
+  }
+  if (producer[0] === 'FormalCall' && canonical[0] === 'InfixGroup' && canonical.length === 2) {
     return alignParsedFormalOperators(producer, canonical[1], canonicalLatex);
   }
 
@@ -518,13 +535,26 @@ function canonicalInfixOperators(canonicalLatex: string): string[] {
   ));
 }
 
+// CE represents both vector operators as Multiply. Preserve its explicit
+// parentheses until the producer's dot/cross binding has been compared; ordinary
+// scalar-product flattening would erase the triple product's grouping.
+function preserveInfixGroups(value: unknown): unknown {
+  if (!Array.isArray(value)) return value;
+  if (value[0] === 'Delimiter' && Array.isArray(value[1]) && value[1][0] === 'Multiply') {
+    return ['InfixGroup', preserveInfixGroups(value[1])];
+  }
+  return value.map(preserveInfixGroups);
+}
+
 export function compareFormalMathJson(
   producerMathJson: unknown,
   parsedCanonicalMathJson: unknown,
   canonicalLatex: string,
 ): { applicable: boolean; equal: boolean } {
   const producer = normalizeFormalValue(producerMathJson);
-  const parsedCanonical = normalizeFormalValue(parsedCanonicalMathJson);
+  const infix = producer !== undefined && formalInfixOperators(producer).length > 0;
+  const parsedCanonical = normalizeFormalValue(infix
+    ? preserveInfixGroups(parsedCanonicalMathJson) : parsedCanonicalMathJson);
   if (!containsFormalProducerNode(producerMathJson)) {
     return {
       applicable: false,

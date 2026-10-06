@@ -1,4 +1,4 @@
-import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../../lib/app-state/ui-scale';
+import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../runtime/ui-scale-policy';
 import {
   BookOpen,
   ChartSpline,

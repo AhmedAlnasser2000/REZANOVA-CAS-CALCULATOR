@@ -1,6 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
-  normalizeExplicitNamedVariablesInLatex,
+  normalizeExplicitNamedVariablesInLatex, namedVariableLatex,
 } from '../named-variable';
 import type {
   StoredVariableValue,
@@ -127,6 +127,7 @@ export function applyStoredVariableSubstitutions(
       collectSymbolNames(parsed.json, usedNames);
       return {
         latex,
+        mathJson: parsed.json,
         substitutions: [],
         protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, usedNames)),
       };
@@ -152,6 +153,7 @@ export function applyStoredVariableSubstitutions(
     if (substitutions.length === 0) {
       return {
         latex,
+        mathJson: parsed.json,
         substitutions: [],
         protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, originalNames)),
       };
@@ -160,6 +162,17 @@ export function applyStoredVariableSubstitutions(
     const boxed = ce.box(substitutedJson as Parameters<typeof ce.box>[0]);
     return {
       latex: boxed.latex,
+      mathJson: boxed.json,
+      mathJsonLeaves: [
+        { canonicalLatex: boxed.latex, mathJson: boxed.json, source: 'stored-value:effective-expression' },
+        ...substitutions.flatMap((entry) => {
+          const value = cloneJson(replacements.get(entry.name));
+          return [
+            { canonicalLatex: entry.valueLatex, mathJson: value, source: 'stored-value:exact-value' },
+            { canonicalLatex: `${entry.name.length === 1 ? entry.name : namedVariableLatex(entry.name)}=${entry.valueLatex}`, mathJson: ['Equal', entry.name, value], source: 'stored-value:binding' },
+          ];
+        }),
+      ],
       substitutions,
       protectedSubstitutions: snapshotsForNames(usableEntries, intersectNames(protectedNames, originalNames)),
     };

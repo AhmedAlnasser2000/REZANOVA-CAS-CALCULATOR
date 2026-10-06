@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { CanonicalResultDocumentV6, OutputStyle } from '../../types/calculator';
+import type { OutputStyle } from '../../types/calculator';
+import type { CanonicalEquationDocument } from '../../types/calculator/canonical-result-current';
 import { MathStatic } from '../../components/MathStatic';
 import { writeTextClipboard } from '../../lib/clipboard/system-clipboard';
 import type { EquationResponse } from '../../lib/new-equation/types';
@@ -25,14 +26,14 @@ export function NewEquationAnswer({ response, style, outdated, onStyle, onSolve 
   const [notice, setNotice] = useState('');
   const doc = response.document;
   const copy = (text: string, what: string) => void writeTextClipboard(text).then(ok => setNotice(ok ? `${what} copied.` : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));
-  if (doc.version !== 6) {
+  if (doc.primary?.kind !== 'equation-outcome') {
     return <section className="ne-panel ne-answer" data-testid="new-equation-answer" data-outdated={outdated} aria-label="Answer">
       {outdated && <Outdated onSolve={onSolve} />}
       <h2>{doc.title}</h2>
       <p role="alert" className="ne-message">{doc.error}</p>
     </section>;
   }
-  const v6 = doc as CanonicalResultDocumentV6, outcome = v6.primary.outcome;
+  const v6 = doc as CanonicalEquationDocument, outcome = v6.primary.outcome;
   const shown = response.presentations?.[style];
   const verified = verificationSummary(v6);
   const later = outcome.kind === 'incomplete' ? LATER[outcome.owner] ?? 'Not solved yet: this kind of problem is coming in a later update.' : undefined;

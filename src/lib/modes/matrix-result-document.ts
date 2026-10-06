@@ -1,14 +1,14 @@
+import type { CurrentResultProducerDraft } from '../../types/calculator/canonical-result-runtime';
 import type {
   ResultProducerDraft,
-  ResultProducerDraftV2,
 } from '../../types/calculator';
 import { exactScalarToLatex } from '../linear-algebra/exact-matrix-format';
 import type { LinearAlgebraCanonicalEvidence } from '../linear-algebra/canonical-evidence';
 import {
-  attachCanonicalResultV2ToProducerDraft,
-  buildCanonicalResultDocumentV2FromProducerDraft,
-  type CanonicalResultProducerInputV2,
-} from '../result-contract';
+  attachCurrentResultToDraft,
+  buildCanonicalResultFromDraft,
+  type CanonicalResultProducerInput,
+} from '../result-contract/current/producer-draft';
 import {
   proveMatrixCanonicalEvidence,
   type MatrixMathJsonRouteId,
@@ -16,11 +16,11 @@ import {
 
 type MatrixResultProducerInput = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
-function matrixDetailsV2(
+function matrixDetails(
   input: MatrixResultProducerInput,
   routeId: MatrixMathJsonRouteId,
   evidence: LinearAlgebraCanonicalEvidence,
-): CanonicalResultProducerInputV2['details'] {
+): CanonicalResultProducerInput['details'] {
   let evidenceIndex = 0;
   const consume = (canonicalLatex: string, path: string) => {
     const candidate = evidence.details?.[evidenceIndex];
@@ -101,14 +101,14 @@ function matrixDetailsV2(
   return details;
 }
 
-export function createMatrixResultOutcomeV2(
+export function createMatrixResultOutcome(
   input: MatrixResultProducerInput,
   options: {
     routeId: MatrixMathJsonRouteId;
     evidence: LinearAlgebraCanonicalEvidence;
-    mathValue: Parameters<typeof buildCanonicalResultDocumentV2FromProducerDraft>[0]['mathValue'];
+    mathValue: Parameters<typeof buildCanonicalResultFromDraft>[0]['mathValue'];
   },
-): ResultProducerDraftV2 {
+): CurrentResultProducerDraft {
   const success = input.kind === 'success' ? input : undefined;
   const semantic = options.evidence.semanticPrimary;
   const primary = semantic?.kind === 'linear-map-profile' && input.exactLatex
@@ -133,11 +133,11 @@ export function createMatrixResultOutcomeV2(
   ) {
     throw new Error('Matrix profile is missing aligned semantic-primary evidence.');
   }
-  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+  const canonicalResult = buildCanonicalResultFromDraft({
     draft: input,
     mathValue: options.mathValue,
     ...(primary ? { primary, answerRows: null } : {}),
-    details: matrixDetailsV2(input, options.routeId, options.evidence),
+    details: matrixDetails(input, options.routeId, options.evidence),
   });
-  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+  return attachCurrentResultToDraft(canonicalResult, input);
 }

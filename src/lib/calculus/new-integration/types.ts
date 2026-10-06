@@ -1,4 +1,4 @@
-import type { CanonicalResultDocumentV2, CanonicalResultDocumentV5 } from '../../../types/calculator';
+import type { CanonicalResultDocument } from '../../../types/calculator/canonical-result-current';
 export interface IntegrationLimits { work: number; allocation: number; integerBits: number; degree: number }
 export const DEFAULT_INTEGRATION_LIMITS: Readonly<IntegrationLimits> = Object.freeze({work: 20_000_000_000, allocation: 1_000_000_000_000, integerBits: 2048, degree: 256});
 export const MAX_INTEGRATION_SOURCE_BYTES = 64 * 1024;
@@ -6,7 +6,7 @@ export const MAX_INTEGRATION_ARTIFACT_BYTES = 16 * 1024 * 1024;
 export interface IntegrationRequest { source: string; limits: IntegrationLimits }
 export type IntegrationJob = {request: IntegrationRequest; artifact?: string; action?: 'open' | 'verify'};
 export interface IntegrationResponse {
-  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV5;
+  document: CanonicalResultDocument;
   request: IntegrationRequest;
   artifact?: string;
   elapsedMs: number;

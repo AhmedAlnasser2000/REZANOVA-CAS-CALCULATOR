@@ -1,3 +1,4 @@
+import type { SerializableMathJson } from '../../../types/calculator';
 import type { SolveDomainConstraint } from '../../../types/calculator';
 import type { Monomial } from '../../algebra/radical-core';
 import { needsEvenRootConstraint } from '../../algebra/radical-core';
@@ -40,6 +41,7 @@ export function normalizeMonomialRoot(
     constraints.push({
       kind: 'nonzero',
       expressionLatex: monomial.variable,
+      expressionMathJson: monomial.variable,
     });
   }
 
@@ -100,6 +102,7 @@ export function normalizeMonomialRoot(
       constraints.push({
         kind: 'nonnegative',
         expressionLatex: boxLatex(numeratorResidualNode),
+        expressionMathJson: numeratorResidualNode as SerializableMathJson,
       });
     }
 
@@ -108,6 +111,7 @@ export function normalizeMonomialRoot(
       constraints.push({
         kind: 'nonnegative',
         expressionLatex: boxLatex(denominatorResidualNode),
+        expressionMathJson: denominatorResidualNode as SerializableMathJson,
       });
     }
   }

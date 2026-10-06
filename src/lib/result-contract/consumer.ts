@@ -3,6 +3,7 @@ import type {
 } from '../../types/calculator';
 import {
   normalizeCanonicalResultDocument,
+  canUseOrdinaryReadModel,
   type NormalizedCanonicalResult,
 } from './normalized-result';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
@@ -22,7 +23,7 @@ export type CanonicalResultConsumerResolution =
   | {
       ok: true;
       source: 'native';
-      sourceVersion: 1 | 2 | 3 | 4;
+      sourceVersion: 1 | 2 | 3 | 4 | 7;
       rawDocument: NormalizedCanonicalResult['rawDocument'];
       presentation: NormalizedCanonicalResult['presentation'];
       semantics: NormalizedCanonicalResult['semantics'];
@@ -76,6 +77,7 @@ export function resolveCanonicalResultForConsumer(
   }
   if (validation.validated.value.version === 5) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the rational-antiderivative V5 read model; generic answer reuse is unsupported.'}};
   if (validation.validated.value.version === 6) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the Equation outcome V6 read model; generic answer reuse is unsupported.'}};
+  if (validation.validated.value.version === 7 && !canUseOrdinaryReadModel(validation.validated.value)) return {ok: false, failure: {reason: 'unsupported-semantics', message: 'Use the typed workspace read model; generic answer reuse does not support this answer or its restrictions.'}};
   const normalized = normalizeCanonicalResultDocument(validation.validated.value);
   return {
     ok: true,

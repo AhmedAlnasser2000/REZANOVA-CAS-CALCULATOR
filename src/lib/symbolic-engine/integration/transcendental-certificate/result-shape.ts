@@ -32,6 +32,7 @@ export type TranscendentalNonElementaryCertificate = {
   proofSummary: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  mathJsonLeaves?: Array<{ canonicalLatex: string; mathJson: unknown; source: string }>;
 };
 
 const CERTIFICATE_MESSAGE_LATEX = String.raw`\text{No elementary antiderivative in the stated field.}`;
@@ -54,7 +55,7 @@ function certificateFacts(profile: TranscendentalCertificateTowerReady) {
 }
 
 function fieldLatex(profile: TranscendentalCertificateTowerReady) {
-  return String.raw`K\left(${profile.variable}, e^{${profile.exponentLatex}}\right)`;
+  return String.raw`K\left(${profile.variable}, \exp\left(${profile.exponentLatex}\right)\right)`;
 }
 
 function detailSectionsFor(profile: TranscendentalCertificateTowerReady): DisplayDetailSection[] {
@@ -101,6 +102,9 @@ export function buildTranscendentalNonElementaryCertificate(
     proofSummary: 'Quadratic exponential non-elementarity certificate prepared for the stated coefficient field.',
     exactSupplementLatex: certificateFacts(profile),
     detailSections: detailSectionsFor(profile),
+    mathJsonLeaves: [{ canonicalLatex: fieldLatex(profile),
+      mathJson: ['Apply', 'K', profile.variable, ['Exp', profile.exponentNode]],
+      source: 'calculus.integration:exponential-certificate-field' }],
   });
 }
 
@@ -117,5 +121,6 @@ export function buildTranscendentalNonElementaryCertificateFromProof(
     proofSummary: proof.proofSummary,
     exactSupplementLatex: proof.exactSupplementLatex ?? certificate.exactSupplementLatex,
     detailSections: [...certificate.detailSections, ...proof.proofDetails],
+    mathJsonLeaves: [...(certificate.mathJsonLeaves ?? []), ...proof.mathJsonLeaves],
   };
 }

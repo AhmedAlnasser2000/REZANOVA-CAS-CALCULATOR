@@ -286,7 +286,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     });
     expect(result.payload).toEqual(runCanonicalVectorMode(scalarVectorRequest));
     if (result.payload.kind === 'prompt') throw new Error('Expected completed Vector payload.');
-    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.payload.canonicalResult?.version).toBe(7);
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'vector-worker-runtime',
@@ -308,7 +308,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     });
     expect(result.payload).toEqual(runCanonicalMatrixMode(scalarMatrixRequest));
     if (result.payload.kind === 'prompt') throw new Error('Expected completed Matrix payload.');
-    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.payload.canonicalResult?.version).toBe(7);
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'matrix-worker-runtime',
@@ -324,7 +324,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.payload).toEqual(runCanonicalMatrixMode(scalarSpectralMatrixRequest));
     expect(result.payload.kind).toBe('success');
     if (result.payload.kind !== 'success') throw new Error('Expected completed spectral payload.');
-    expect(result.payload.canonicalResult?.version).toBe(2);
+    expect(result.payload.canonicalResult?.version).toBe(7);
     expect(result.payload.canonicalResult?.answerRows?.rows.filter((row) => row.label === 'Eigenvalue'))
       .toHaveLength(2);
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
@@ -345,7 +345,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     });
     expect(result.payload).toEqual(runCanonicalVectorMode(variadicVectorRequest));
     const canonical = result.payload.kind === 'success'
-      && result.payload.canonicalResult?.version === 2
+      && result.payload.canonicalResult?.version === 7
       ? result.payload.canonicalResult
       : undefined;
     expect(canonical?.primary)
@@ -376,7 +376,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.payload).toMatchObject({
       kind: 'success',
       canonicalResult: {
-        version: 2,
+        version: 7,
         primary: {
           kind: 'math',
           value: { canonicalLatex: '6' },
@@ -403,7 +403,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.payload).toMatchObject({
       kind: 'success',
       canonicalResult: {
-        version: 2,
+        version: 7,
         primary: {
           kind: 'math',
           value: { canonicalLatex: '\\operatorname{definite}(A)=\\text{Positive definite}' },
@@ -431,7 +431,7 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.payload).toMatchObject({
       kind: 'success',
       canonicalResult: {
-        version: 2,
+        version: 7,
         primary: {
           kind: 'math',
           value: { canonicalLatex: '\\operatorname{pinv}\\left(A\\right)\\approx \\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}' },

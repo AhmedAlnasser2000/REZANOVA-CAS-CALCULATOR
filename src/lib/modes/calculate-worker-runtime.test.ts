@@ -189,10 +189,10 @@ describe('calculate worker runtime shell', () => {
     if (valid.payload.kind !== 'success') {
       throw new Error('Expected a successful worker payload');
     }
-    if (valid.payload.canonicalResult.version !== 1) {
-      throw new Error('Expected the untouched Calculate producer to remain V1');
+    if (valid.payload.canonicalResult.version !== 7 || valid.payload.canonicalResult.primary?.kind !== 'math') {
+      throw new Error('Expected current Calculate mathematics');
     }
-    expect(valid.payload.canonicalResult.primaryMath?.canonicalLatex)
+    expect(valid.payload.canonicalResult.primary.value.canonicalLatex)
       .toBe('x^{\\frac{1}{6}}');
     expect(invalid.payload).toMatchObject({
       kind: 'error',
@@ -224,11 +224,11 @@ describe('calculate worker runtime shell', () => {
       if (request.kind === 'standard') {
         expect(result.payload.kind).toBe('success');
         if (result.payload.kind === 'success') {
-          if (result.payload.canonicalResult.version !== 1) {
-            throw new Error('Expected the untouched Calculate producer to remain V1');
+          if (result.payload.canonicalResult.version !== 7 || result.payload.canonicalResult.primary?.kind !== 'math') {
+            throw new Error('Expected current Calculate mathematics');
           }
-          expect(result.payload.canonicalResult.primaryMath?.canonicalLatex).toBeTruthy();
-          expect(result.payload.canonicalResult.primaryMath?.mathJson).toBeDefined();
+          expect(result.payload.canonicalResult.primary.value.canonicalLatex).toBeTruthy();
+          expect(result.payload.canonicalResult.primary.value.mathJson).toBeDefined();
         }
       } else {
         expect(result.payload).not.toHaveProperty('primaryMath');

@@ -1,3 +1,4 @@
+import type { CanonicalResultDocument as CurrentDocument } from '../../types/calculator/canonical-result-current';
 import type {
   CanonicalMathValueV1,
   CanonicalMathValueV2,
@@ -127,6 +128,7 @@ export type CanonicalResultSemantics = {
     lines: Array<Array<
       | { kind: 'text'; text: string }
       | { kind: 'math'; math: CanonicalMathValueV1 }
+      | { kind: 'special-function'; expression: import('../../types/calculator/canonical-result-special').CanonicalSpecialFunctionExpression }
       | {
           kind: 'row-operation';
           operation: CanonicalResultRowOperationSemantics;
@@ -137,6 +139,7 @@ export type CanonicalResultSemantics = {
     solve?: Array<Array<
       | { kind: 'text'; text: string }
       | { kind: 'math'; math: CanonicalMathValueV1 }
+      | { kind: 'special-function'; expression: import('../../types/calculator/canonical-result-special').CanonicalSpecialFunctionExpression }
       | {
           kind: 'row-operation';
           operation: CanonicalResultRowOperationSemantics;
@@ -162,23 +165,25 @@ export type CanonicalResultSemantics = {
 };
 
 export type NormalizedCanonicalResult = {
-  sourceVersion: 1 | 2 | 3 | 4;
+  sourceVersion: 1 | 2 | 3 | 4 | 7;
   rawDocument: CanonicalResultDocument;
   presentation: CanonicalResultPresentation;
   semantics: CanonicalResultSemantics;
 };
 
 function presentationPart(
-  part: CanonicalResultDetailPartV1 | CanonicalResultDetailPartV2,
+  part: CanonicalResultDetailPartV1 | CanonicalResultDetailPartV2 | import('../../types/calculator/canonical-result-common').CanonicalResultDetailPart,
 ): CanonicalResultPresentationDetailPart {
   if (part.kind === 'text') return { kind: 'text', text: part.text };
   if (part.kind === 'math') return { kind: 'math', latex: part.math.canonicalLatex };
+  if (part.kind === 'special-function') return { kind: 'math', latex: renderCanonicalSpecialFunctionExpressionV4(part.expression) };
   return { kind: 'math', latex: part.presentationLatex };
 }
 
-function semanticPart(part: CanonicalResultDetailPartV1 | CanonicalResultDetailPartV2) {
+function semanticPart(part: CanonicalResultDetailPartV1 | CanonicalResultDetailPartV2 | import('../../types/calculator/canonical-result-common').CanonicalResultDetailPart) {
   if (part.kind === 'text') return { kind: 'text' as const, text: part.text };
   if (part.kind === 'math') return { kind: 'math' as const, math: part.math };
+  if (part.kind === 'special-function') return part;
   return {
     kind: 'row-operation' as const,
     operation: part.operation as CanonicalResultRowOperationSemantics,
@@ -426,8 +431,10 @@ function modernRequestLatex(request: CanonicalResultDocumentV2['request']) {
   return request.kind === 'math' ? request.value.canonicalLatex : request.presentationLatex;
 }
 
+type CurrentOrdinaryDocument = Omit<CurrentDocument, 'primary'> & { primary?: CanonicalResultDocumentV2['primary'] | CanonicalResultDocumentV3['primary'] | CanonicalResultDocumentV4['primary'] };
+
 function normalizeModern(
-  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV3 | CanonicalResultDocumentV4,
+  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV3 | CanonicalResultDocumentV4 | CurrentOrdinaryDocument,
 ): NormalizedCanonicalResult {
   const compoundPresentation = document.primary
     && document.primary.kind !== 'math'
@@ -534,5 +541,15 @@ export function normalizeCanonicalResultDocument(
 ): NormalizedCanonicalResult {
   if (document.version === 5) throw new Error('V5 requires the rational-antiderivative read model.');
   if (document.version === 6) throw new Error('V6 requires the Equation outcome read model.');
+  if (document.version === 7) {
+    if (!canUseOrdinaryReadModel(document)) throw new Error('This answer requires its typed workspace read model.');
+    return normalizeModern(document);
+  }
   return document.version === 1 ? normalizeV1(document) : normalizeModern(document);
+}
+
+export function canUseOrdinaryReadModel(document: CurrentDocument): document is CurrentOrdinaryDocument {
+  return document.integrationRestrictions === undefined && (!document.primary || [
+    'math', 'period-phase', 'linear-map-profile', 'linear-independence', 'angle-quantity', 'special-function-expression',
+  ].includes(document.primary.kind));
 }

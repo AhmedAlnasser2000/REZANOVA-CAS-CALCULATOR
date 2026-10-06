@@ -1,3 +1,4 @@
+import type { SerializableMathJson } from '../../../types/calculator';
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { SolveDomainConstraint } from '../../../types/calculator';
 import type { ExactScalar } from '../../algebra/polynomial-core';
@@ -112,6 +113,7 @@ function normalizeNode(
       ? mergeConstraints(childResult.conditionConstraints, [{
         kind: 'nonnegative',
         expressionLatex: boxLatex(childResult.node),
+        expressionMathJson: childResult.node as SerializableMathJson,
       }])
       : childResult.conditionConstraints;
 
@@ -168,6 +170,7 @@ function normalizeNode(
       ? mergeConstraints(childResult.conditionConstraints, [{
         kind: 'nonnegative',
         expressionLatex: boxLatex(childResult.node),
+        expressionMathJson: childResult.node as SerializableMathJson,
       }])
       : childResult.conditionConstraints;
 
@@ -244,6 +247,7 @@ function normalizeNode(
       ? [{
           kind: 'nonzero' as const,
           expressionLatex: boxLatex(children[1]),
+          expressionMathJson: children[1] as SerializableMathJson,
         }]
       : [];
 

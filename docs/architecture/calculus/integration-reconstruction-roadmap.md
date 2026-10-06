@@ -1,7 +1,17 @@
 # Elementary Integration Reconstruction Roadmap
 
+Current program (2026-10-06): user approved unified canonical-result consolidation,
+wire 7. The subsequent user-approved scope revision defers unfinished old-workspace
+migrations and global retirement. Current authority for New Equation, rational New
+Integration and Graphing analysis, shared consumers/actions and scoped persistence
+cleanup are now verified prerequisites for exponential result projection and adoption. See
+[consolidation specification](../result-contract/consolidation-spec.md).
+The pre-v0.5.0 compatibility requirement is removed; private mathematical verification
+and current artifact replay remain mandatory. The focused migration is verified;
+New Integration still executes rational inputs only. Sequencing remains provisional.
+
 Date: 2026-09-27
-Updated: 2026-10-04
+Updated: 2026-10-06
 Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is committed in `1b7ab181`. The differential-field foundation is committed in `6cd21935`; the rational-RDE prerequisite is committed as `9f222979`. The single-product hyperexponential decision gate is committed as `b4517300`. Differential arithmetic performance is committed as `49848767` with both 5x targets exceeded. Finite one-family exponential sums are committed in `c5dce1e2`. The exponential-rational representation gate landed in `d2281e6e`; the complete one-generator rational decision gate is verified with replayable positive/negative evidence. Nested arithmetic performance now exceeds both 5x targets (10.25x/10.99x), resolves the selected quadratic/inverse input-growth failures and covers 481 core tests; no application adoption or push accompanies them. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
@@ -72,7 +82,7 @@ Parameters, branch interpretation, exact proof verification and mixed-field repr
 
 ## Decisions remaining before later gates
 
-- Adopted rational results use the reviewed V5 all-roots local-complex contract and source-exclusion lowering. Wider transcendental results, algebraic display rewrites and real forms still require their own representation/adoption decisions.
+- Adopted rational results now use the current schema-7 all-roots local-complex contract and source-exclusion lowering. Wider transcendental results, algebraic display rewrites and real forms still require their own representation/adoption decisions.
 - After Stage 5: broader simultaneous/mixed/nested admission, effective constant extensions and parameter domains; higher-field/parameterized RDE, limited-integration and logarithmic-derivative obligations. Rational-coefficient RDEs are now covered by [RATIONAL-RDE1](integration-rational-rde1-spec.md). The [single-product hyperexponential gate](integration-hyperexponential-decision1-spec.md) now verifies its Liouville reduction and constant-descent hypotheses. The [differential arithmetic performance gate](integration-differential-arithmetic-performance1-spec.md) now exceeds both inverse-generator 5x targets while retaining exact checks. Finite sums have completed those ownership, coverage and replay prerequisites. Full one-generator rational expressions are now covered by the two verified backend gates; their dossiers define the exact scope and resource limitations. Any exponential UI adoption first needs a reviewed result contract for exponential-field primitives and negative authority, plus exact input lowering and retained exclusions. The nested arithmetic performance follow-up now exceeds its targets and resolves the selected coefficient-growth exhaustion cases; review the exponential result contract next, followed by exact input lowering and New Integration adoption. The completed first-level sufficient certificates are not a general dependency algorithm. Review these prerequisites before committing to the scope of Stage 6.
 - Stage 7–9: concrete integral-basis/local/divisor implementations and their effective-field requirements. General algorithms must not be replaced by genus-specific templates while retaining a completeness claim.
 - Adoption/closeout: exceptional parameter partitions and bounded main-thread fallback behavior; decide exact runtime budgets using measured workloads.

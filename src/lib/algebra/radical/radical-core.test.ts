@@ -48,6 +48,7 @@ describe('radical-core direct contracts', () => {
       {
         kind: 'nonnegative',
         expressionLatex: 'x+1',
+        expressionMathJson: ['Add', 'x', 1],
       },
     ]);
     expect(buildEvenRootConditionConstraints(['Power', 'x', 2])).toEqual([]);
@@ -77,8 +78,8 @@ describe('radical-core direct contracts', () => {
       residualCleanupEligible: false,
     });
     expect(twoRadical?.conditionConstraints).toEqual([
-      { kind: 'nonnegative', expressionLatex: 'x' },
-      { kind: 'nonnegative', expressionLatex: 'x+1' },
+      { kind: 'nonnegative', expressionLatex: 'x', expressionMathJson: 'x' },
+      { kind: 'nonnegative', expressionLatex: 'x+1', expressionMathJson: ['Add', 1, 'x'] },
     ]);
     expect(threeTerm).toMatchObject({
       familyId: 'three-term-scalar-double-radical',

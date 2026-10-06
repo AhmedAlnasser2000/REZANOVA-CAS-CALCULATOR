@@ -1,3 +1,4 @@
+import { buildCanonicalResultDocument } from '../../result-contract/current';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { GraphAnalysisRequestV1, GraphAnalysisResultV1 } from '../contracts';
 import { GraphExpressionPlanCache } from '../evaluator';
@@ -33,7 +34,7 @@ function cancelledResult(request: GraphAnalysisRequestV1): GraphAnalysisResultV1
   return {
     version: 1, requestId: request.requestId, workspaceInstanceId: request.workspaceInstanceId,
     documentId: request.documentId, revisions: { ...request.revisions }, status: 'cancelled', evidence: [],
-    canonicalResult: { version: 2, outcomeKind: 'success', title: 'Graph analysis', warnings: ['Analysis was cancelled.'] },
+    canonicalResult: buildCanonicalResultDocument({ outcomeKind: 'success', title: 'Graph analysis', warnings: ['Analysis was cancelled.'] }),
     stopReasons: [{ code: 'analysis-inconclusive', detailCode: 'cancelled' }],
     diagnostics: { elapsedMs: 0, evaluatedPointCount: 0, exactFindingCount: 0, validatedFindingCount: 0, analysisRevision: request.revisions.mathematics },
   };

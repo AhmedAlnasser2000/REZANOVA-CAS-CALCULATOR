@@ -772,7 +772,7 @@ export const historyEntrySchema = z.object({
   resultDocument: z.custom<CanonicalResultDocument>((value) => {
     const validation = validateCanonicalResultDocumentVersioned(value);
     return validation.ok && validation.validated.value.outcomeKind === 'success';
-  }, 'Expected a valid success CanonicalResultDocumentV1, V2, V3, or V4'),
+  }, 'Expected a valid supported success canonical result'),
   resultStorageMode: z.literal('canonical-only-fallback').optional(),
   timestamp: z.string(),
 }).passthrough().superRefine((entry, context) => {

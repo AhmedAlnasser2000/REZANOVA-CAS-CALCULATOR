@@ -1,3 +1,4 @@
+import { buildCanonicalRuntimeAction } from '../result-contract/current/producer-draft';
 import { runMatrixOperationWithEvidence } from '../linear-algebra/matrix';
 import { runMatrixLinearSystemWithEvidence } from '../linear-algebra/matrix-system';
 import type { LinearAlgebraCanonicalEvidence } from '../linear-algebra/canonical-evidence';
@@ -13,15 +14,13 @@ import {
   runMatrixModeViaIsolatedWorker,
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
-import { createMatrixResultOutcomeV2 } from './matrix-result-document';
+import { createMatrixResultOutcome } from './matrix-result-document';
 import {
   matrixMathJsonRouteForRequest,
   matrixV2MathResolverFromEvidence,
   proveMatrixCanonicalEvidence,
 } from './matrix-math-values';
 import {
-  buildCanonicalRuntimeActionV2,
-  canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
@@ -129,16 +128,12 @@ export function runMatrixMode(request: RunMatrixModeRequest): VersionedResultPro
   const { outcome, evidence } = runMatrixModeOutcome(request);
   if (outcome.kind === 'prompt') return outcome;
   const routeId = matrixMathJsonRouteForRequest(request);
-  const version = canonicalResultVersionForProducer({ routeId });
-  if (version !== 2) {
-    throw new Error(`Matrix route ${routeId} must select canonical result V2.`);
-  }
-  const canonical = createMatrixResultOutcomeV2(outcome, {
+  const canonical = createMatrixResultOutcome(outcome, {
     routeId,
     evidence,
     mathValue: matrixV2MathResolverFromEvidence({ routeId, evidence }),
   });
-  const actions = evidence.runtimeActions?.map((action, index) => buildCanonicalRuntimeActionV2({
+  const actions = evidence.runtimeActions?.map((action, index) => buildCanonicalRuntimeAction({
     kind: 'send',
     target: 'equation',
     math: proveMatrixCanonicalEvidence(routeId, action, `actions[${index}].math`),

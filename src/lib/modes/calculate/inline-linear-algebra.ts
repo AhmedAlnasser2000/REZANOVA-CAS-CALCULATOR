@@ -1,7 +1,6 @@
-import type { VersionedResultProducerDraft } from '../../../types/calculator';
+import { attachCurrentResultToDraft, buildCanonicalResultDocument } from '../../result-contract/current/producer-draft';
+import type { CurrentResultProducerDraft } from '../../../types/calculator/canonical-result-runtime';
 import {
-  attachCanonicalResultV2ToProducerDraft,
-  buildCanonicalResultDocumentV2,
   requireProvenCanonicalMathValueV2,
 } from '../../result-contract';
 import { evaluateTypedLinearAlgebraExpression } from '../../linear-algebra/typed-expression';
@@ -12,7 +11,7 @@ const INLINE_LINEAR_ALGEBRA_LITERAL = /\\begin\{(?:[bBpvV]?matrix|array)\}|\[[^[
 
 export function runCalculateInlineLinearAlgebra(
   input: RunCalculateModeRequest,
-): VersionedResultProducerDraft | null {
+): CurrentResultProducerDraft | null {
   if (input.action !== 'evaluate' || !INLINE_LINEAR_ALGEBRA_LITERAL.test(input.latex)) return null;
   const storedVariables = input.variableSubstitutionSnapshot ?? input.storedVariables;
   const result = evaluateTypedLinearAlgebraExpression({
@@ -31,7 +30,7 @@ export function runCalculateInlineLinearAlgebra(
       sourceMode: 'calculate',
     });
   }
-  const canonicalResult = buildCanonicalResultDocumentV2({
+  const canonicalResult = buildCanonicalResultDocument({
     outcomeKind: 'success',
     title: 'Calculate',
     primary: {
@@ -46,7 +45,7 @@ export function runCalculateInlineLinearAlgebra(
     },
     warnings: [],
   });
-  return attachCanonicalResultV2ToProducerDraft(canonicalResult, {
+  return attachCurrentResultToDraft(canonicalResult, {
     kind: 'success',
     title: 'Calculate',
     exactLatex: result.latex,

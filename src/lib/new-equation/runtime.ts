@@ -3,7 +3,7 @@ import { runOoeRuntimeJob } from '../ooe/runtime-control/runtime-coordinator';
 import { buildOoeInputRevisionId } from '../ooe/job-launch/job-contract';
 import { subscribeToOoeActiveJobChanges, requestOoeJobCancellation } from '../ooe/job-launch/active-job-registry';
 import { buildOoeRuntimeShellEvidence } from '../ooe/runtime-control/runtime-shell-contract';
-import { validateCanonicalResultDocumentVersioned } from '../result-contract/validation-router';
+import { validateCanonicalResultDocument } from '../result-contract/current';
 import { equationError } from './error';
 import { validEquationRequest, type EquationRequest, type EquationResponse } from './types';
 
@@ -20,7 +20,7 @@ const workerFactory: EquationWorkerFactory = () => {
   return new Worker(new URL('../symbolic-engine/equation/service/equation.worker.ts', import.meta.url), { type: 'module' });
 };
 
-/** A failed run as a response (no answer): the request, a V2 error document and no presentations. */
+/** A failed run as a response (no answer): the request, a current error document and no presentations. */
 export function equationFailure(request: EquationRequest, message: string): EquationResponse {
   return { request, document: equationError(message), rowNotes: request.rows.map(() => ({ kind: 'empty' })), domainConditions: [], assumptionsComplete: true,
     elapsedMs: 0, usage: { work: 0, allocation: 0 } };
@@ -61,8 +61,9 @@ export async function runEquationJob(suppliedRequest: EquationRequest, workspace
         worker.onmessage = (event: MessageEvent<EquationResponse>) => {
           if (signal.aborted || context.shouldCancel()) { stop(); return; }
           try {
-            const checked = validateCanonicalResultDocumentVersioned(event.data.document);
-            if (!checked.ok) finish(undefined, new Error(checked.failure.message)); else finish(event.data);
+            const checked = validateCanonicalResultDocument(event.data.document);
+            if (!checked.ok) finish(undefined, new Error(checked.failure.message)); else if (checked.validated.value.primary && checked.validated.value.primary.kind !== 'equation-outcome') finish(undefined, new Error('Unsupported Equation answer kind.'));
+            else finish({ ...event.data, document: checked.validated.value });
           } catch {
             finish(undefined, new Error('Invalid equation worker response.'));
           }

@@ -14,9 +14,9 @@ import {
   resolveStoredValueModePolicy,
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
-import type { ResultProducerDraft } from '../../../types/calculator';
-import { attachCanonicalResultToProducerDraft } from '../../result-contract';
-import { buildCalculateResultDocument } from './result-document';
+import type { ResultProducerDraft, VersionedResultProducerDraft } from '../../../types/calculator';
+import { calculateMathResolver } from './math-values';
+import { createCalculateResultOutcome, createCalculateErrorResultOutcome } from './result-document';
 import type { RunCalculateAlgebraTransformRequest } from './types';
 
 export function runCalculateAlgebraTransform({
@@ -25,7 +25,7 @@ export function runCalculateAlgebraTransform({
   angleUnit,
   storedVariables,
   variableSubstitutionSnapshot,
-}: RunCalculateAlgebraTransformRequest): ResultProducerDraft {
+}: RunCalculateAlgebraTransformRequest): VersionedResultProducerDraft {
   const title = getAlgebraTransformLabel(action);
   const planner = planMathExecution(latex, {
     mode: 'calculate',
@@ -34,8 +34,20 @@ export function runCalculateAlgebraTransform({
     screenHint: 'standard',
   });
 
+  const attachError = (draft: Extract<ResultProducerDraft, { kind: 'error' }>, options: Parameters<typeof attachRuntimeEnvelope>[1]) => {
+    const enclosed = attachRuntimeEnvelope(draft, options);
+    if (enclosed.kind !== 'error') throw new Error('Expected Calculate error.');
+    const requestMath = planner.kind === 'blocked' ? undefined : planner.resolvedMathJson;
+    return createCalculateErrorResultOutcome({ ...enclosed,
+      ...(requestMath === undefined ? { resolvedInputLatex: undefined } : {}),
+    }, requestMath === undefined ? undefined : calculateMathResolver('calculate.transforms', [{
+      canonicalLatex: planner.kind === 'blocked' ? planner.canonicalLatex : planner.resolvedLatex,
+      mathJson: requestMath, source: 'calculate-error:planned-input',
+    }]));
+  };
+
   if (planner.kind === 'blocked') {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -66,7 +78,7 @@ export function runCalculateAlgebraTransform({
   }
 
   if (isRelationalOperator(analysis.topLevelOperator)) {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -84,7 +96,7 @@ export function runCalculateAlgebraTransform({
   }
 
   if (analysis.kind === 'invalid') {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -117,7 +129,7 @@ export function runCalculateAlgebraTransform({
 
   const result = applyExpressionTransform(planner.resolvedLatex, action);
   if (!result) {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -144,24 +156,15 @@ export function runCalculateAlgebraTransform({
   const resolvedInputLatex = planner.resolvedLatex !== latex.trim()
     ? planner.resolvedLatex
     : undefined;
-  const canonicalResult = buildCalculateResultDocument({
-    outcomeKind: 'success',
-    title,
-    exactLatex: result.exactLatex,
-    supplements: exactSupplementLatex,
-    detailSections,
-    warnings: [],
-    resultOrigin: 'symbolic-engine',
-    plannerBadges: planner.badges,
-    resolvedInputLatex,
-    transformBadges: result.transformBadges,
-    transformSummaryText: result.transformSummaryText,
-    transformSummaryLatex: result.transformSummaryLatex,
-  });
+  const mathValue = calculateMathResolver('calculate.transforms', [
+    { canonicalLatex: result.exactLatex, mathJson: result.exactMathJson, source: 'explicit-transform:answer' },
+    ...(result.transformSummaryLatex ? [{ canonicalLatex: result.transformSummaryLatex,
+      mathJson: result.transformSummaryMathJson, source: 'explicit-transform:summary' }] : []),
+    ...(resolvedInputLatex ? [{ canonicalLatex: resolvedInputLatex, mathJson: planner.resolvedMathJson,
+      source: 'explicit-transform:request' }] : []),
+  ]);
 
-  return attachRuntimeEnvelope(
-    attachCanonicalResultToProducerDraft<Extract<ResultProducerDraft, { kind: 'success' }>>(
-      canonicalResult,
+  return createCalculateResultOutcome(
       {
         kind: 'success',
         title,
@@ -173,13 +176,10 @@ export function runCalculateAlgebraTransform({
         transformBadges: result.transformBadges,
         transformSummaryText: result.transformSummaryText,
         transformSummaryLatex: result.transformSummaryLatex,
+        resolvedInputLatex,
+        plannerBadges: planner.badges,
       },
-    ),
-    {
-      originalLatex: latex,
-      resolvedLatex: planner.resolvedLatex,
-      plannerBadges: planner.badges,
-      plannerBadgeMode: 'replace',
-    },
+      mathValue,
+      result.domainConstraints,
   );
 }

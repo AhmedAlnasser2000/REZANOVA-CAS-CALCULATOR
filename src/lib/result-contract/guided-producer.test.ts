@@ -61,9 +61,9 @@ describe('guided-domain canonical result producers', () => {
     expect(result.outcome.detailSections?.[0]?.title).toBe('Quality Summary');
     expect(requireCanonicalResultAuthority(result.outcome, 'Statistics test').canonicalResult)
       .toBeDefined();
-    expect(result.outcome.canonicalResult?.version).toBe(2);
-    if (result.outcome.canonicalResult?.version !== 2) {
-      throw new Error('Expected Statistics regression to use Canonical Result V2.');
+    expect(result.outcome.canonicalResult?.version).toBe(7);
+    if (result.outcome.canonicalResult?.version !== 7) {
+      throw new Error('Expected Statistics regression to use the current canonical result.');
     }
     expect(result.outcome.canonicalResult.primary?.kind).toBe('math');
     expect(result.outcome.canonicalResult.primary?.kind === 'math'

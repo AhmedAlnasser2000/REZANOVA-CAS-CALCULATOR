@@ -15,6 +15,9 @@ export type ParsedVariableValue = {
 
 export type StoredVariableSubstitutionResult = {
   latex: string;
+  /** Produced by the substitution operation; never recovered from result presentation. */
+  mathJson?: unknown;
+  mathJsonLeaves?: Array<{ canonicalLatex: string; mathJson: unknown; source: string }>;
   substitutions: VariableSubstitutionSnapshot[];
   protectedSubstitutions: VariableSubstitutionSnapshot[];
 };

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "EQUATION-ADOPTION1: New Equation reads canonicalResult from its own authority-checked V2 error document and V6 projection (same pattern as New Integration)",
-  "registryDigest": "5ca32e337a2587acd334",
+  "acceptedReason": "Explicit current producer types and Calculate checked adapters are inventoried; current consumers retain exact typed semantics. No compatibility debt, legacy reads or native coverage floor is relaxed.",
+  "registryDigest": "9487bbbd94b29e34d85b",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -31,12 +31,12 @@
     "calculate": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 9
+      "nativeDocument": 12
     },
     "calculus": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 6
+      "nativeDocument": 7
     },
     "display-read-model": {
       "compatibilityProjection": 0,
@@ -86,7 +86,7 @@
     "matrix": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "ooe-observability": {
       "compatibilityProjection": 0,
@@ -96,7 +96,7 @@
     "result-contract": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 1
+      "nativeDocument": 4
     },
     "shared-algebra": {
       "compatibilityProjection": 0,
@@ -146,7 +146,7 @@
     "vector": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 4
     }
   },
   "entries": {
@@ -156,7 +156,8 @@
         "65afd2d6e9a26cb45590:1"
       ],
       "src/lib/calculus/workspace/integration-result-document.ts": [
-        "ac4ff5320d4132f0b56b:1"
+        "7e254f8b5a6697b15a94:1",
+        "af80b1993b5108b858ca:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
         "a80cb0dc818ddbe48aed:1",
@@ -258,22 +259,27 @@
       ],
       "src/lib/modes/calculate/inline-linear-algebra.ts": [
         "086bb9bb202365950d27:1",
-        "59d7717ae1a7ae333bcc:1",
-        "0c91106b2843991c40b8:1"
+        "6e9bab2c974c05fcf7ce:1",
+        "d3a396fcba42c039e1e6:1"
+      ],
+      "src/lib/modes/calculate/mode.ts": [
+        "7dd665c778a66dc4ceea:1",
+        "68fe4cdd97180edc1eb5:1"
       ],
       "src/lib/modes/calculate/result-document.ts": [
-        "78520e92fc97c65e11c6:1"
+        "abce84a812dc10b523e0:1",
+        "6b9d41006785f23c14b2:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
         "552873394d37356bb012:1",
         "c1abe668ab60e4b219cd:1"
       ],
       "src/lib/modes/calculate/standard.ts": [
-        "dc37586ce58dbaf4dd10:1"
+        "179a1e742964616bc876:1"
       ],
       "src/lib/modes/calculate/transforms.ts": [
-        "713c42128ff6948a414f:1",
-        "24f6d20c8b89d5b0b8fc:1"
+        "1cd85c5affc672bb9be9:1",
+        "80b84cec61664a9e67b4:1"
       ],
       "src/lib/modes/equation/complex-abs-boundary.ts": [
         "77c670037f44cede1493:1"
@@ -401,9 +407,10 @@
         "48c5c356a08c2e788f35:1"
       ],
       "src/lib/modes/matrix-result-document.ts": [
-        "f8e32d27187ad5dc69dc:1"
+        "d435f1ac5b1095777ab9:1"
       ],
       "src/lib/modes/matrix.ts": [
+        "4c6025964dcdd27a153b:1",
         "9f7ef7f3358813ec4635:1"
       ],
       "src/lib/modes/table-core.ts": [
@@ -416,17 +423,25 @@
         "9708d74d9677fb0670f3:1"
       ],
       "src/lib/modes/vector-result-document.ts": [
-        "00dc0cb475432b0e40c5:1",
-        "2e491ef4778a20d68759:1"
+        "f7a76d0d19c36422a766:1",
+        "f5f672111ed6d6057d97:1"
       ],
       "src/lib/modes/vector.ts": [
-        "6a8292aa3f7b5c321673:1"
+        "9126405a542e23172e87:1",
+        "21dc29facde35bd1fadb:1"
+      ],
+      "src/lib/result-contract/current/index.ts": [
+        "c91f52a929ae6c8c228f:1",
+        "4c05330862624e48ed82:1"
+      ],
+      "src/lib/result-contract/integration-presentation.ts": [
+        "8fed69486f2af4a3041a:1"
       ],
       "src/lib/result-contract/native-result.ts": [
         "339eb4b79d8ecba20ea0:1"
       ],
       "src/lib/statistics/result-document.ts": [
-        "1ac73576eedd880ce64c:1"
+        "b05db2d1178c8dd6584a:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
         "5f8417c06e5c61551f6a:1",
@@ -452,7 +467,6 @@
         "38457ffb293e1a321e58:1",
         "9fe36c9fb5da25f66c10:1",
         "601a765545b3e80d6f05:1",
-        "6d135e2b26c7358cd8b6:1",
         "a4816f5cb77f118cbd8b:1"
       ],
       "src/lib/equation/guarded/direct-trig-stage.ts": [
@@ -522,7 +536,6 @@
     "forwarder": {
       "src/lib/calculus/workspace/engine.ts": [
         "7e3028849fc3b0a8e60f:1",
-        "c7aa4a26355adbd0365e:1",
         "edd6f139f6aa655632f4:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
@@ -824,12 +837,6 @@
       "src/lib/kernel/runtime-envelope.ts": [
         "83041b56ab4ce7891e36:1"
       ],
-      "src/lib/modes/calculate/standard.ts": [
-        "210ee0e19c667152705d:1",
-        "69d54ca8626acd1b17a5:1",
-        "60b718827f7809cbd077:1",
-        "3b4ee2036a30b5446ff9:1"
-      ],
       "src/lib/modes/calculate/transforms.ts": [
         "39df407fffb470e04bdb:1",
         "57270dceb397d3e631d6:1",
@@ -881,7 +888,12 @@
       "src/lib/calculus/workspace/engine.ts": [
         "28b0a2d56bca3cf52068:1",
         "4b002d8bc91be72275d1:1",
-        "132218ff5aac5fe4a38b:1",
+        "cc412bcca5559bf04a1d:1",
+        "cc412bcca5559bf04a1d:2",
+        "e7f6f1f54201570d936c:1",
+        "e7f6f1f54201570d936c:2",
+        "cc412bcca5559bf04a1d:3",
+        "cc412bcca5559bf04a1d:4",
         "d5b85f7d5f58ade9d147:1",
         "97f8b20965d34d966544:1"
       ],
@@ -955,6 +967,9 @@
         "3f6258af468d7d187fcf:1",
         "c4169812f10afbd65d0c:1",
         "a07c624d1c1b7cbf1d6e:1"
+      ],
+      "src/lib/modes/calculate/mode.ts": [
+        "e894395a00867680cb1b:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
         "ce5e3bd009964e660c9d:1"
@@ -1079,13 +1094,6 @@
       "src/lib/__golden__/print-hygiene-baseline.ts": [
         "64570c39e2fee23b334e:1"
       ],
-      "src/lib/calculus/new-integration/error.ts": [
-        "fb3cfa814e863abf23e9:1"
-      ],
-      "src/lib/calculus/new-integration/result.ts": [
-        "10bd9c3c95350989e398:1",
-        "6ee017c523ec4472e260:1"
-      ],
       "src/lib/calculus/workspace/engine.ts": [
         "d16a586960bc0b56a0c0:1",
         "46e51933d462813a2519:1"
@@ -1146,9 +1154,6 @@
         "d6469c8e8aba22767996:1",
         "d6469c8e8aba22767996:2"
       ],
-      "src/lib/new-equation/error.ts": [
-        "7d3bdbb9b0cf15bf2f3b:1"
-      ],
       "src/lib/ooe/diagnostics/diagnostics-buffer.ts": [
         "a38be4c2d858859cf6b7:1",
         "460215011ba296477c53:1"
@@ -1156,9 +1161,6 @@
       "src/lib/result-contract/consumer.ts": [
         "3ff7d4c54b0a1ee0ad4a:1",
         "3ff7d4c54b0a1ee0ad4a:2"
-      ],
-      "src/lib/result-contract/integration-presentation.ts": [
-        "094ffacdc6b2d538e9c2:1"
       ],
       "src/lib/result-contract/mathjson-coverage.ts": [
         "e91614bdc560475ad735:1",

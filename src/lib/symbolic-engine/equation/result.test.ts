@@ -1,7 +1,8 @@
 import { describe as group, expect, it } from 'vitest';
-import type { CanonicalEquationSetV6, CanonicalResultDocumentV6 } from '../../../types/calculator';
+import type { CanonicalEquationSet } from '../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationDocument } from '../../../types/calculator/canonical-result-current';
 import { equationMathLatex } from '../../result-contract/equation-math-latex';
-import { validateCanonicalResultDocumentVersioned } from '../../result-contract/validation-router';
+import { validateCanonicalResultDocument } from '../../result-contract/current';
 import { context } from './core/test-support';
 import { decideEquation } from './core/decide';
 import { EquationAlgebraError } from './core/execution';
@@ -11,7 +12,7 @@ import { relationProblem, type ProblemDomain } from './core/representation/relat
 import type { EquationOutcome } from './core/representation/solution-set';
 import { CORPUS } from './core/bench/corpus';
 import { projectEquationOutcome } from './result';
-import { readEquationOutcomeV6, replayEquationDocument } from './result-read';
+import { readEquationOutcome, replayEquationDocument } from './result-read';
 
 function setup(json: unknown, targets = ['x'], domain: ProblemDomain = 'real', store = new ExpressionStore(context())) {
   const r = readRelations(store, json);
@@ -20,7 +21,7 @@ function setup(json: unknown, targets = ['x'], domain: ProblemDomain = 'real', s
   return { problem, outcome: decideEquation(problem) };
 }
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
-function kinds(s: CanonicalEquationSetV6, out: Set<string>): Set<string> {
+function kinds(s: CanonicalEquationSet, out: Set<string>): Set<string> {
   out.add(s.kind);
   if (s.kind === 'union') s.sets.forEach(x => kinds(x, out));
   if (s.kind === 'case-tree') s.cases.forEach(c => kinds(c.set, out));
@@ -39,20 +40,20 @@ const OUTCOME_NAMES: Record<EquationOutcome['kind'], string> = {
 
 const seen = new Set<string>();
 
-group('Equation V6 adapter: the corpus', () => {
+group('Equation adapter: the corpus', () => {
   it.each(CORPUS.map(c => [c.id, c] as const))('%s projects, validates and replays', (_, c) => {
     const { problem, outcome } = setup(c.json, [...(c.targets ?? ['x'])], c.domain ?? 'real');
     const { kind, canonicalResult: d } = projectEquationOutcome(problem, outcome);
     expect(d.primary.outcome.kind).toBe(OUTCOME_NAMES[outcome.kind]);
     expect(kind).toBe(outcome.kind === 'solved' || outcome.kind === 'empty' ? 'success' : 'error');
-    expect(validateCanonicalResultDocumentVersioned(d).ok).toBe(true);
+    expect(validateCanonicalResultDocument(d).ok).toBe(true);
     // An independent read in a fresh store reaches the same outcome kind.
-    expect(readEquationOutcomeV6(new ExpressionStore(context()), clone(d)).kind).toBe(outcome.kind);
+    expect(readEquationOutcome(new ExpressionStore(context()), clone(d)).kind).toBe(outcome.kind);
     if (d.primary.outcome.kind === 'solved') kinds(d.primary.outcome.set, seen);
   }, 600_000);
 });
 
-group('Equation V6 adapter: kinds, outcomes and replay', () => {
+group('Equation adapter: kinds, outcomes and replay', () => {
   const cases: [string, unknown, string[], ProblemDomain, string][] = [
     ['cofinite', eq(['Divide', 'x', 'x'], 1), ['x'], 'complex', 'cofinite'],
     ['intervals', ['Less', ['Add', ['Power', 'x', 2], -1], 0], ['x'], 'real', 'intervals'],
@@ -103,7 +104,7 @@ group('Equation V6 adapter: kinds, outcomes and replay', () => {
     // A moved isolation interval: the binder no longer isolates the root of x⁵ − x − 1 (≈ 1.1673).
     const p = setup(eq(['Add', ['Power', 'x', 5], ['Negate', 'x'], -1]));
     const d = projectEquationOutcome(p.problem, p.outcome).canonicalResult;
-    const moved = clone(d) as CanonicalResultDocumentV6;
+    const moved = clone(d) as CanonicalEquationDocument;
     const b = moved.primary.roots[0];
     if (b.kind !== 'real-algebraic') throw new Error(b.kind);
     b.lo = { mathJson: 2, canonicalLatex: '2' }; b.hi = { mathJson: 3, canonicalLatex: '3' };
@@ -120,27 +121,27 @@ group('Equation V6 adapter: kinds, outcomes and replay', () => {
     const df = clone(projectEquationOutcome(f.problem, f.outcome).canonicalResult);
     if (df.primary.outcome.kind !== 'solved' || df.primary.outcome.set.kind !== 'periodic') throw new Error('periodic expected');
     df.primary.outcome.set.values = [{ mathJson: ['Ln', 2], canonicalLatex: '\\ln\\left(2\\right)' }];
-    rejects(() => replayEquationDocument(f.problem, f.outcome, df), /not a valid V6 document|different set/);
+    rejects(() => replayEquationDocument(f.problem, f.outcome, df), /not a valid current document|different set/);
     // A forged outcomeKind fails validation.
-    rejects(() => replayEquationDocument(p.problem, p.outcome, { ...d, outcomeKind: 'error', error: 'x' }), /not a valid V6 document/);
+    rejects(() => replayEquationDocument(p.problem, p.outcome, { ...d, outcomeKind: 'error', error: 'x' }), /not a valid current document/);
   }, 120_000);
 
   it('reads the kinds no slice produces yet (reduced forms, unconfirmed candidates)', () => {
     const m = (mathJson: never) => ({ mathJson, canonicalLatex: equationMathLatex(mathJson) });
-    const base = (outcome: CanonicalResultDocumentV6['primary']['outcome'], roots: CanonicalResultDocumentV6['primary']['roots'] = []): CanonicalResultDocumentV6 => ({
-      version: 6, outcomeKind: 'success', title: 'Equation', warnings: [],
+    const base = (outcome: CanonicalEquationDocument['primary']['outcome'], roots: CanonicalEquationDocument['primary']['roots'] = []): CanonicalEquationDocument => ({
+      version: 7, outcomeKind: 'success', title: 'Equation', warnings: [],
       primary: { kind: 'equation-outcome', domain: 'real', targets: ['x'], parameters: [], roots, outcome, provenance: { verification: 'independent', rules: [] } },
     });
     const store = new ExpressionStore(context());
-    const reduced = readEquationOutcomeV6(store, base({ kind: 'solved', set: { kind: 'reduced-form', targets: ['x'], relations: [{ op: 'eq', lhs: m(['Cos', 'x'] as never), rhs: m('x' as never) }], conditions: [] } }));
+    const reduced = readEquationOutcome(store, base({ kind: 'solved', set: { kind: 'reduced-form', targets: ['x'], relations: [{ op: 'eq', lhs: m(['Cos', 'x'] as never), rhs: m('x' as never) }], conditions: [] } }));
     expect(reduced.kind === 'solved' && reduced.set.kind === 'reduced-form' && reduced.set.problem.relations.length).toBe(1);
     const sqrt2 = { kind: 'real-algebraic' as const, symbol: 'r_1', polynomial: m(['Add', ['Power', 'r_1', 2], -2] as never), lo: m(1 as never), hi: m(2 as never) };
-    const unconfirmed = readEquationOutcomeV6(store, base({ kind: 'solved', set: { kind: 'unconfirmed', variables: ['x'], candidates: [{ point: [m('r_1' as never)], derivations: ['squaring'] }] } }, [sqrt2]));
+    const unconfirmed = readEquationOutcome(store, base({ kind: 'solved', set: { kind: 'unconfirmed', variables: ['x'], candidates: [{ point: [m('r_1' as never)], derivations: ['squaring'] }] } }, [sqrt2]));
     expect(unconfirmed.kind === 'solved' && unconfirmed.set.kind === 'unconfirmed' && unconfirmed.set.candidates[0].point[0].kind).toBe('algebraic');
   });
 });
 
-group('Equation V6 adapter: assumptions', () => {
+group('Equation adapter: assumptions', () => {
   it('records assumptions, validates, replays and refuses a mismatch', async () => {
     const { canonicalRelation } = await import('./core/representation/relation');
     const { assumeOutcome } = await import('./core/parameters/assume');
@@ -152,11 +153,11 @@ group('Equation V6 adapter: assumptions', () => {
     const { outcome } = assumeOutcome(problem, assumptions, full);
     const d = projectEquationOutcome(problem, outcome, {}, { assumptions, full }).canonicalResult;
     expect(d.primary.assumptions?.map(r => r.op)).toEqual(['lt']);
-    expect(validateCanonicalResultDocumentVersioned(d).ok).toBe(true);
+    expect(validateCanonicalResultDocument(d).ok).toBe(true);
     rejects(() => replayEquationDocument(problem, outcome, d), /different assumptions/);
     const bad = clone(d);
     bad.primary.assumptions = [{ op: 'lt', lhs: { mathJson: 'x', canonicalLatex: 'x' }, rhs: { mathJson: 0, canonicalLatex: '0' } }];
-    expect(validateCanonicalResultDocumentVersioned(bad).ok).toBe(false);
+    expect(validateCanonicalResultDocument(bad).ok).toBe(false);
     // Without the assumptions the pruned outcome does not verify.
     expect(() => projectEquationOutcome(problem, outcome)).toThrow();
   });

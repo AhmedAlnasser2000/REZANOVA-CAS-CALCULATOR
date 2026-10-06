@@ -1,12 +1,12 @@
+import type { CurrentResultProducerDraft } from '../../types/calculator/canonical-result-runtime';
 import type {
   ResultProducerDraft,
-  ResultProducerDraftV2,
 } from '../../types/calculator';
 import {
-  attachCanonicalResultV2ToProducerDraft,
-  buildCanonicalResultDocumentV2FromProducerDraft,
-  type CanonicalResultV2MathResolver,
-} from '../result-contract';
+  attachCurrentResultToDraft,
+  buildCanonicalResultFromDraft,
+  type CanonicalResultMathResolver,
+} from '../result-contract/current/producer-draft';
 
 type StatisticsSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
 type StatisticsErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
@@ -15,17 +15,17 @@ type StatisticsResultProducerInput =
   | Omit<StatisticsSuccessOutcome, 'canonicalResult'>
   | Omit<StatisticsErrorOutcome, 'canonicalResult'>;
 
-const missingStatisticsMath: CanonicalResultV2MathResolver = (_canonicalLatex, path) => {
-  throw new Error(`Statistics selected Canonical Result V2 without producer MathJSON for ${path}.`);
+const missingStatisticsMath: CanonicalResultMathResolver = (_canonicalLatex, path) => {
+  throw new Error(`Statistics requires current canonical authority without producer MathJSON for ${path}.`);
 };
 
 export function createStatisticsResultOutcome(
   input: StatisticsResultProducerInput,
-  mathValue: CanonicalResultV2MathResolver = missingStatisticsMath,
-): ResultProducerDraftV2 {
-  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+  mathValue: CanonicalResultMathResolver = missingStatisticsMath,
+): CurrentResultProducerDraft {
+  const canonicalResult = buildCanonicalResultFromDraft({
     draft: input,
     mathValue,
   });
-  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+  return attachCurrentResultToDraft(canonicalResult, input);
 }

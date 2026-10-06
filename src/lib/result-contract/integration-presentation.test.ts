@@ -6,7 +6,7 @@ const run = (source: string) => executeIntegration({request: {source, limits: {.
 describe('New Integration presentation preserves verified authority', () => {
   it('expands all binding data, deduplicates conditions and preserves the original document/artifact', () => {
     const response = run(String.raw`\int \frac{1}{x^2+1}\,dx`), before = JSON.stringify(response);
-    expect(response.document.version).toBe(5);
+    expect(response.document.primary?.kind).toBe('rational-antiderivative');
     const p = readIntegrationPresentation(response.document)!;
     expect(p.compact).toBe('L_{1}+C'); expect(p.terms[0].argument).not.toContain('0');
     expect(p.conditions).toHaveLength(1); expect(p.conditions[0].origins).toEqual(['Source exclusion', 'Input denominator', 'Log norm']);
@@ -18,8 +18,8 @@ describe('New Integration presentation preserves verified authority', () => {
     expect(fallback.expanded()).toContain('\\sum_'); expect(fallback.conditions).toHaveLength(2);
     expect(JSON.stringify(response)).toBe(before);
   });
-  it.each([String.raw`\int \frac{x}{x}\,dx`, String.raw`\int \frac{0}{x-1}\,dx`])('keeps source exclusions in V2: %s', source => {
-    const response = run(source); expect(response.document.version).toBe(2);
+  it.each([String.raw`\int \frac{x}{x}\,dx`, String.raw`\int \frac{0}{x-1}\,dx`])('keeps source exclusions in ordinary results: %s', source => {
+    const response = run(source); expect(response.document.primary?.kind).toBe('math');
     const p = readIntegrationPresentation(response.document)!;
     expect(p.terms).toHaveLength(0); expect(p.conditions).toHaveLength(1);
     expect(p.copy()).toContain('\\ne0'); expect(p.originals).toHaveLength(3);

@@ -1,14 +1,13 @@
-import type { CanonicalResultDocumentV2, CanonicalResultDocumentV5, SerializableMathJson } from '../../../types/calculator';
-import { buildCanonicalResultDocumentV2 } from '../../result-contract/producer-v2';
-import { validateCanonicalResultDocumentV5 } from '../../result-contract/validation-v5';
-import { requireCanonicalResultAuthority } from '../../result-contract/native-result';
+import type { CanonicalResultDocument } from '../../../types/calculator/canonical-result-current';
+import type { SerializableMathJson } from '../../../types/calculator';
+import { buildCanonicalResultDocument } from '../../result-contract/current';
 import { demand, type ExecutionContext } from '../../symbolic-engine/integration/core/execution';
 import { FormalPrimitiveDomain, type QPolynomial, type QRationalFunction } from '../../symbolic-engine/integration/core/formal-primitive';
 import { verifyRationalDecision, type RationalDecision } from '../../symbolic-engine/integration/core/rational-decision';
 import { fractionTree, polynomialTree, provenMath, treeFraction } from './exact-math';
 
 export function rationalDecisionResult(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction,
-  decision: RationalDecision, sourceExclusions: readonly QPolynomial[] = []): CanonicalResultDocumentV2 | CanonicalResultDocumentV5 {
+  decision: RationalDecision, sourceExclusions: readonly QPolynomial[] = []): CanonicalResultDocument {
   verifyRationalDecision(ctx, owner, input, decision);
   return ctx.operation(() => {
     const x = owner.x.variable;
@@ -32,9 +31,9 @@ export function rationalDecisionResult(ctx: ExecutionContext, owner: FormalPrimi
     };
     const common = {outcomeKind: 'success' as const, title: 'Verified antiderivative', warnings: ['Formal local complex primitive; logarithm choices differ locally by constants.']};
     if (decision.primitive.terms.length === 0) {
-      const doc = buildCanonicalResultDocumentV2({...common, primary: {kind: 'math', value: provenMath(ctx, ['Add', rationalTree, constant])},
+      const doc = buildCanonicalResultDocument({...common, primary: {kind: 'math', value: provenMath(ctx, ['Add', rationalTree, constant])},
         supplements: [...conditions.sourceExclusions, conditions.inputDenominator, conditions.rationalDenominator].map(v => ({role: 'exclusion' as const, presentationLatex: v.canonicalLatex + '\\ne0', math: provenMath(ctx, ['NotEqual', v.mathJson, 0])}))});
-      return requireCanonicalResultAuthority({kind: 'success', title: doc.title, warnings: doc.warnings, canonicalResult: doc}, 'New Integration').canonicalResult;
+      return doc;
     }
     const terms = decision.primitive.terms.map((t, index) => {
       const rootVariable = fresh('a', used);
@@ -44,10 +43,8 @@ export function rationalDecisionResult(ctx: ExecutionContext, owner: FormalPrimi
       const argumentTree: SerializableMathJson = parts.length === 1 ? parts[0] : ['Add', ...parts];
       return {rootVariable, modulus: polynomial(t.modulus, rootVariable), weight: polynomial(t.weight, rootVariable), argument: provenMath(ctx, argumentTree), norm: conditions.logNorms[index]};
     });
-    const candidate: CanonicalResultDocumentV5 = {version: 5, ...common, primary: {kind: 'rational-antiderivative', semantics: 'formal-local-complex', variable: x,
-      integrationConstant: constant, rationalPart: provenMath(ctx, rationalTree), terms, conditions}};
-    const checked = validateCanonicalResultDocumentV5(candidate);
-    demand(checked.ok, 'verification-failed', checked.ok ? '' : checked.failure.message);
-    return requireCanonicalResultAuthority({kind: 'success', canonicalResult: checked.validated.value}, 'New Integration').canonicalResult;
+    return buildCanonicalResultDocument({...common, primary: {kind: 'rational-antiderivative', semantics: 'formal-local-complex', variable: x,
+      integrationConstant: constant, rationalPart: provenMath(ctx, rationalTree), terms, conditions}});
+
   });
 }

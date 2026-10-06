@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { isNativeUiScaleHost, nextUiScale, type UiScale } from '../../lib/app-state/ui-scale';
+import { isNativeUiScaleHost, nextUiScale, type UiScale } from '../../lib/app-state/persistence';
 
 // The desktop app's UI scale is the webview's native zoom (GRAPHING-UI1): the
 // whole app scales exactly like browser zoom, so CSS pixels, viewport units,

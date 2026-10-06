@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { requireCanonicalResultAuthority as requireCurrentDocument } from '../../result-contract/current';
 import { requireCanonicalResultAuthority } from '../../result-contract';
 import { runCalculateMode } from './standard';
+import { renderCanonicalSpecialFunctionExpressionV4 } from '../../result-contract/special-function-expression-v4';
 
 function canonicalDocument(result: ReturnType<typeof runCalculateMode>) {
   if (result.kind === 'prompt' || !result.canonicalResult) {
@@ -11,10 +13,28 @@ function canonicalDocument(result: ReturnType<typeof runCalculateMode>) {
 
 function detailLines(result: ReturnType<typeof runCalculateMode>, index: number) {
   return canonicalDocument(result).details?.[index]?.lines.map((line) =>
-    line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join(''));
+    line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.kind === 'text' ? part.text
+      : part.kind === 'special-function' ? renderCanonicalSpecialFunctionExpressionV4(part.expression) : part.presentationLatex).join(''));
 }
 
 describe('runCalculateMode', () => {
+  it('keeps the original derivative-at-point request executable without stored values', () => {
+    const result = runCalculateMode({ action: 'evaluate',
+      latex: String.raw`\left.\frac{d}{dx}\left(x^2\right)\right|_{x=3}`,
+      angleUnit: 'rad', outputStyle: 'exact', ansLatex: '0', calculateScreen: 'derivativePoint' });
+    expect(result).toMatchObject({ kind: 'success', exactLatex: '6', canonicalResult: {
+      version: 7, primary: { kind: 'math', value: { canonicalLatex: '6', mathJson: 6 } },
+    } });
+  });
+
+  it('retains the typed special-function answer of an explicit integral', () => {
+    const result = runCalculateMode({ action: 'evaluate', latex: String.raw`\int e^{x^2}\,dx`,
+      angleUnit: 'rad', outputStyle: 'exact', ansLatex: '0' });
+    expect(result).toMatchObject({ kind: 'success', canonicalResult: {
+      version: 7, primary: { kind: 'special-function-expression' },
+    } });
+    expect(structuredClone(result)).toEqual(result);
+  });
   it('evaluates textual nth-root input through the existing structured exact route', () => {
     const textual = runCalculateMode({
       action: 'simplify',
@@ -83,7 +103,7 @@ describe('runCalculateMode', () => {
       expect(result.primaryMath?.canonicalLatex).toBe(result.exactLatex);
       expect(result.primaryMath?.mathJson).toBeDefined();
       expect(structuredClone(result.primaryMath)).toEqual(result.primaryMath);
-      expect(result.canonicalResult?.primaryMath).toEqual({
+      expect((requireCurrentDocument(result.canonicalResult).primary as { kind: 'math'; value: unknown }).value).toEqual({
         canonicalLatex: result.exactLatex,
         mathJson: result.primaryMath?.mathJson,
       });
@@ -129,9 +149,9 @@ describe('runCalculateMode', () => {
       },
     });
     expect(integral).not.toHaveProperty('primaryMath');
-    expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
+    expect(integral.kind === 'success' ? (requireCurrentDocument(integral.canonicalResult).primary as { kind: 'math'; value: unknown }).value : undefined)
       .toMatchObject({ canonicalLatex: expect.any(String) });
-    expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
+    expect(integral.kind === 'success' ? (requireCurrentDocument(integral.canonicalResult).primary as { kind: 'math'; value: unknown }).value : undefined)
       .toHaveProperty('mathJson');
   });
 
@@ -154,8 +174,8 @@ describe('runCalculateMode', () => {
     }
     expect(result.exactLatex).toBe('2');
     expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
-      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
-      { name: 'k', value: { canonicalLatex: '-2' }, numericValue: -2 },
+      { name: 'a', value: { canonicalLatex: '4', mathJson: 4 }, numericValue: 4 },
+      { name: 'k', value: { canonicalLatex: '-2', mathJson: -2 }, numericValue: -2 },
     ]);
     expect(result.canonicalResult?.details?.[0].title).toBe('Stored Values');
     expect(detailLines(result, 0)).toEqual([
@@ -180,7 +200,7 @@ describe('runCalculateMode', () => {
     }
     expect(explicit.exactLatex).toBe('7');
     expect(explicit.canonicalResult?.metadata?.variableSubstitutions).toEqual([
-      { name: 'mass', value: { canonicalLatex: '5' }, numericValue: 5 },
+      { name: 'mass', value: { canonicalLatex: '5', mathJson: 5 }, numericValue: 5 },
     ]);
 
     const raw = runCalculateMode({
@@ -239,7 +259,7 @@ describe('runCalculateMode', () => {
       throw new Error('Expected a success outcome');
     }
     expect(workbench.canonicalResult?.metadata?.variableSubstitutions).toEqual([
-      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
+      { name: 'a', value: { canonicalLatex: '4', mathJson: 4 }, numericValue: 4 },
     ]);
     expect(workbench.exactLatex).toContain('x');
     expect(workbench.exactLatex).not.toContain('9');
@@ -264,7 +284,7 @@ describe('runCalculateMode', () => {
     }
     expect(result.canonicalResult?.title).toBe('Derivative');
     expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
-      { name: 'c', value: { canonicalLatex: '4' }, numericValue: 4 },
+      { name: 'c', value: { canonicalLatex: '4', mathJson: 4 }, numericValue: 4 },
     ]);
     expect(result.exactLatex).toContain('x^2');
     expect(result.exactLatex).not.toContain('\\mathrm{d}2');
@@ -298,8 +318,8 @@ describe('runCalculateMode', () => {
     }
     expect(result.exactLatex).toContain('26');
     expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
-      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
-      { name: 'c', value: { canonicalLatex: '2' }, numericValue: 2 },
+      { name: 'a', value: { canonicalLatex: '4', mathJson: 4 }, numericValue: 4 },
+      { name: 'c', value: { canonicalLatex: '2', mathJson: 2 }, numericValue: 2 },
     ]);
     expect(result.canonicalResult?.details?.[1].title).toBe('Variable Policy');
     expect(detailLines(result, 1)).toEqual(['Kept x symbolic as the derivative variable.']);

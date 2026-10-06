@@ -1,5 +1,6 @@
 import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
-import type { CanonicalMathValueV2, CanonicalResultDocumentV2 } from '../../../types/calculator';
+import type { CanonicalMathValue } from '../../../types/calculator/canonical-result-common';
+import type { CanonicalResultDocument } from '../../../types/calculator/canonical-result-current';
 
 export type GraphSourceV1 = {
   sourceKind: 'mathlive-latex';
@@ -835,7 +836,7 @@ export type GraphEvidenceLevel =
   | 'unsupported';
 
 export type GraphFeatureValueV1 =
-  | { kind: 'exact'; value: CanonicalMathValueV2 }
+  | { kind: 'exact'; value: CanonicalMathValue }
   | { kind: 'approximate'; value: number; errorBound?: number };
 
 export type GraphAnalysisEvidenceV1 = {
@@ -858,7 +859,7 @@ export type GraphAnalysisEvidenceV1 = {
     included?: boolean;
     parameter?: { symbol: string; value: number };
   };
-  conditions: CanonicalMathValueV2[];
+  conditions: CanonicalMathValue[];
   basis: {
     source: 'graph-symbolic' | 'reviewed-public-fact' | 'numeric-validator' | 'sampler';
     validator?: string;
@@ -896,7 +897,7 @@ export type GraphAnalysisResultV1 = {
   revisions: GraphRevisionSetV2;
   status: 'complete' | 'partial' | 'cancelled';
   evidence: GraphAnalysisEvidenceV1[];
-  canonicalResult: CanonicalResultDocumentV2;
+  canonicalResult: CanonicalResultDocument;
   stopReasons: GraphStopReason[];
   diagnostics: {
     elapsedMs: number;

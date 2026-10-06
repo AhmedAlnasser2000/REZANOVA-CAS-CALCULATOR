@@ -14,13 +14,10 @@ import {
 } from '../../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import type { ResultProducerDraft } from '../../../types/calculator';
+import type { CurrentResultProducerDraft } from '../../../types/calculator/canonical-result-runtime';
 import { profileDomainMathValue } from '../../display/printer';
-import {
-  attachCanonicalResultToProducerDraft,
-  tryProvenCanonicalMathValue,
-} from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
-import { calculateMathValuesFromOwnedLeaves } from './math-values';
+import { calculateMathResolver } from './math-values';
 import {
   applyCalculateStoredVariableSubstitutions,
   calculateSubstitutionPolicy,
@@ -33,7 +30,8 @@ import {
   mergeDerivativeStrategies,
   responseTitle,
 } from './titles';
-import { buildCalculateResultDocument } from './result-document';
+import { createCalculateResultOutcome, createCalculateErrorResultOutcome } from './result-document';
+import { provenSpecialExpression } from '../../result-contract/current/special-producer';
 import type { RunCalculateModeRequest } from './types';
 
 function calculateMathJsonRouteId(input: {
@@ -67,7 +65,7 @@ export function runCalculateMode({
   limitTargetKind,
   storedVariables,
   variableSubstitutionSnapshot,
-}: RunCalculateModeRequest): ResultProducerDraft {
+}: RunCalculateModeRequest): CurrentResultProducerDraft | Extract<ResultProducerDraft, {kind: 'prompt'}> {
   const title = actionTitle(action);
   const directionalLimit = action === 'evaluate'
     ? normalizeDirectionalLimitLatex(latex)
@@ -88,8 +86,20 @@ export function runCalculateMode({
     screenHint: 'standard',
   });
 
+  const attachError = (draft: Extract<ResultProducerDraft, { kind: 'error' }>, options: Parameters<typeof attachRuntimeEnvelope>[1]) => {
+    const enclosed = attachRuntimeEnvelope(draft, options);
+    if (enclosed.kind !== 'error') throw new Error('Expected Calculate error.');
+    const requestMath = planner.kind === 'blocked' ? undefined : planner.resolvedMathJson;
+    return createCalculateErrorResultOutcome({ ...enclosed,
+      ...(requestMath === undefined ? { resolvedInputLatex: undefined } : {}),
+    }, requestMath === undefined ? undefined : calculateMathResolver('calculate.transforms', [{
+      canonicalLatex: planner.kind === 'blocked' ? planner.canonicalLatex : planner.resolvedLatex,
+      mathJson: requestMath, source: 'calculate-error:planned-input',
+    }]));
+  };
+
   if (planner.kind === 'blocked') {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -120,7 +130,7 @@ export function runCalculateMode({
   }
 
   if (isRelationalOperator(analysis.topLevelOperator)) {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -138,7 +148,7 @@ export function runCalculateMode({
   }
 
   if (analysis.kind === 'invalid') {
-    return attachRuntimeEnvelope(
+    return attachError(
       {
         kind: 'error',
         title,
@@ -177,13 +187,13 @@ export function runCalculateMode({
       });
   const responseTitleText = responseTitle(action, planner.resolvedLatex, planner.canonicalLatex);
   const substitution =
-    substitutionSource
+    (substitutionSource || (responseTitleText === 'Derivative' && planner.canonicalLatex.includes('\\left.')))
     && storedValuePolicy.kind === 'apply'
       ? applyCalculateStoredVariableSubstitutions(
           responseTitleText === 'Derivative' && planner.canonicalLatex.includes('\\left.')
             ? planner.canonicalLatex
             : planner.resolvedLatex,
-          substitutionSource,
+          substitutionSource ?? [],
           storedValuePolicy.protectedNames,
           responseTitleText,
         )
@@ -244,60 +254,18 @@ export function runCalculateMode({
     outputStyle,
     responseTitle: responseTitleText,
   });
-  const ownsCalculateCoverage = calculateScreen === 'standard';
-  const ownedMathValues = calculateMathValuesFromOwnedLeaves({
-    routeId,
-    exactLatex,
-    answerRows: response.answerRows,
-    supplements: response.exactSupplementLatex,
-    detailSections: detailSections.length > 0 ? detailSections : undefined,
-    leaves: ownsCalculateCoverage
-      ? [
-          ...(profiledMath?.primaryMath?.mathJson !== undefined && exactLatex
-            ? [{
-                canonicalLatex: exactLatex,
-                mathJson: profiledMath.primaryMath.mathJson,
-                source: 'calculate-expression-answer',
-              }]
-            : []),
-          ...(response.mathJsonLeaves ?? []),
-        ]
-      : [],
-  });
-  const resolvedInput = ownsCalculateCoverage
-    && resolvedInputLatex
-    && executionLatex === planner.resolvedLatex
-    ? tryProvenCanonicalMathValue({
-        canonicalLatex: resolvedInputLatex,
-        mathJson: planner.resolvedMathJson,
-        owner: 'calculate',
-        routeId,
-        source: 'calculate-semantic-planner-resolved-input',
-      })
-    : undefined;
-  const canonicalResult = buildCalculateResultDocument({
-    outcomeKind: response.error ? 'error' : 'success',
-    title: responseTitleText,
-    ...(response.error ? { error: response.error } : {}),
-    ...(exactLatex ? { exactLatex } : {}),
-    ...(profiledMath?.primaryMath ? { primaryMath: profiledMath.primaryMath } : {}),
-    answerRows: response.answerRows,
-    supplements: response.exactSupplementLatex,
-    approxText: response.approxText,
-    detailSections: detailSections.length > 0 ? detailSections : undefined,
-    warnings: response.warnings,
-    resultOrigin: response.resultOrigin,
-    calculusStrategy: response.calculusStrategy,
-    calculusDerivativeStrategies: derivativeStrategies,
-    plannerBadges: planner.badges,
-    resolvedInputLatex,
-    variableSubstitutions,
-  }, {
-    mathValues: {
-      ...ownedMathValues,
-      ...(resolvedInput ? { metadata: { resolvedInput } } : {}),
-    },
-  });
+  const mathValue = calculateMathResolver(routeId, [
+    ...(profiledMath?.primaryMath?.mathJson !== undefined && exactLatex
+      ? [{ canonicalLatex: exactLatex, mathJson: profiledMath.primaryMath.mathJson, source: 'calculate-expression-answer' }] : []),
+    ...(response.mathJsonLeaves ?? []),
+    ...('mathJsonLeaves' in substitution ? substitution.mathJsonLeaves ?? [] : []),
+    ...substitution.protectedSubstitutions.map(entry => ({ canonicalLatex: entry.name,
+      mathJson: entry.name, source: 'stored-value:protected-symbol' })),
+    ...(resolvedInputLatex ? [{ canonicalLatex: resolvedInputLatex,
+      mathJson: 'mathJson' in substitution && substitution.mathJson !== undefined
+        ? substitution.mathJson : executionLatex === planner.resolvedLatex ? planner.resolvedMathJson : undefined,
+      source: 'calculate-native-resolved-input' }] : []),
+  ]);
   const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({
       title: responseTitleText,
@@ -322,8 +290,9 @@ export function runCalculateMode({
     },
   );
 
-  return attachCanonicalResultToProducerDraft<Exclude<ResultProducerDraft, { kind: 'prompt' }>>(
-    canonicalResult,
-    outcome,
-  );
+  const special = response.indefiniteIntegralAuthority?.specialExpression;
+  return createCalculateResultOutcome({ ...outcome, ...(special ? { answerRows: undefined } : {}),
+    ...(outcome.kind === 'success' && variableSubstitutions ? { variableSubstitutions } : {}) },
+    mathValue, response.domainConstraints, special ? { kind: 'special-function-expression',
+      expression: provenSpecialExpression(special, mathValue, 'primary.expression') } : undefined);
 }

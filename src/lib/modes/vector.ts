@@ -12,15 +12,14 @@ import {
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
 import {
-  createVectorAngleResultOutcomeV3,
-  createVectorResultOutcomeV2,
+  createVectorAngleResultOutcome,
+  createVectorResultOutcome,
 } from './vector-result-document';
 import {
   vectorMathJsonRouteForRequest,
   vectorV2MathResolverFromEvidence,
 } from './vector-math-values';
 import {
-  canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
@@ -124,17 +123,11 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
 export function runVectorMode(request: RunVectorModeRequest): VersionedResultProducerDraft {
   const { outcome, evidence } = runVectorModeOutcome(request);
   const routeId = vectorMathJsonRouteForRequest(request);
-  const version = canonicalResultVersionForProducer({
-    routeId,
-    selector: request.operation === 'angle'
-      ? `angle:${request.angleUnit}`
-      : request.operation,
-  });
   const mathValue = vectorV2MathResolverFromEvidence({ routeId, evidence });
   return requireCanonicalResultAuthority(
-    version === 3
-      ? createVectorAngleResultOutcomeV3(outcome, { routeId, evidence, mathValue })
-      : createVectorResultOutcomeV2(outcome, { routeId, evidence, mathValue }),
+    evidence.semanticPrimary?.kind === 'angle-quantity'
+      ? createVectorAngleResultOutcome(outcome, { routeId, evidence, mathValue })
+      : createVectorResultOutcome(outcome, { routeId, evidence, mathValue }),
     'Vector',
   );
 }

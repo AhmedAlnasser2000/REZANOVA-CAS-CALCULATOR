@@ -9,6 +9,7 @@ import type { CanonicalResultDocumentV4 } from './canonical-result-v4-types';
 import type { TransferTarget } from './execution-types';
 import type { ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
+import type { CurrentCanonicalRuntimeAction, CurrentCanonicalRuntimeResult } from './canonical-result-runtime';
 
 export type PromptOutcome = {
   kind: 'prompt';
@@ -101,6 +102,7 @@ export type CanonicalRuntimeResultOutcomeV4 =
   | (CanonicalRuntimeResultBaseV4 & { kind: 'error' });
 
 export type CanonicalRuntimeVersionedResultOutcome =
+  | CurrentCanonicalRuntimeResult
   | CanonicalRuntimeResultOutcome
   | CanonicalRuntimeResultOutcomeV2
   | CanonicalRuntimeResultOutcomeV3
@@ -108,6 +110,7 @@ export type CanonicalRuntimeVersionedResultOutcome =
   | {kind: 'success'; canonicalResult: CanonicalResultDocumentV5; actions?: never; runtimeAdvisories?: RuntimeAdvisories};
 
 export type CanonicalRuntimeAction =
+  | CurrentCanonicalRuntimeAction
   | CanonicalRuntimeActionV1
   | CanonicalRuntimeActionV2
   | CanonicalRuntimeActionV3;

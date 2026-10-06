@@ -1,4 +1,6 @@
 type PersistenceModule = typeof import('./tauri');
+export { isNativeUiScaleHost, nextUiScale, UI_SCALE_STEPS, type UiScale } from './ui-scale';
+export { acknowledgeResultCleanupNotice } from './result-cleanup-notice';
 
 export const HISTORY_CANONICAL_CLEANUP_NOTICE =
   (count: number) => `${count} incompatible History ${count === 1 ? 'record was' : 'records were'} removed.`;
@@ -69,6 +71,12 @@ export async function loadCalculatorMemorySnapshot(
   ...args: Parameters<PersistenceModule['loadCalculatorMemorySnapshot']>
 ) {
   return (await loadPersistence()).loadCalculatorMemorySnapshot(...args);
+}
+
+export async function loadCalculatorMemorySnapshotWithCleanup(
+  ...args: Parameters<PersistenceModule['loadCalculatorMemorySnapshotWithCleanup']>
+) {
+  return (await loadPersistence()).loadCalculatorMemorySnapshotWithCleanup(...args);
 }
 
 export async function persistCalculatorMemorySnapshot(

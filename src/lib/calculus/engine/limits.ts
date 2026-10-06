@@ -431,6 +431,9 @@ export function evaluateFiniteLimitFromAst(input: {
     return {
       exactLatex,
       approxText,
+      mathJsonLeaves: exactLatex && symbolic.value !== undefined ? [{ canonicalLatex: exactLatex,
+        mathJson: symbolic.value === 'posInfinity' ? 'PositiveInfinity' : symbolic.value === 'negInfinity'
+          ? ['Negate', 'PositiveInfinity'] : symbolic.value, source: 'calculus:finite-limit-rule-value' }] : [],
       warnings:
         symbolic.origin === 'heuristic-symbolic'
           ? ["Rule-based limit resolution used capped L'Hopital on a supported ratio form."]

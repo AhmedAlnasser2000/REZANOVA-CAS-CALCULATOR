@@ -1,3 +1,4 @@
+import type { CurrentResultProducerDraft } from '../../types/calculator/canonical-result-runtime';
 import type {
   CanonicalResultDocument,
   CanonicalResultDocumentV1,
@@ -14,6 +15,7 @@ import type {
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
 
+export function requireCanonicalResultAuthority<Outcome extends CurrentResultProducerDraft>(outcome: Outcome, owner: string): Outcome;
 export function requireCanonicalResultAuthority(outcome: {kind: 'success'; canonicalResult: CanonicalResultDocumentV5}, owner: string): {kind: 'success'; canonicalResult: CanonicalResultDocumentV5};
 export function requireCanonicalResultAuthority(outcome: {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6}, owner: string): {kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6};
 export function requireCanonicalResultAuthority<

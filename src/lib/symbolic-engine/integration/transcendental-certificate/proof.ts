@@ -1,4 +1,4 @@
-import type { DisplayDetailSection } from '../../../../types/calculator';
+import type { DisplayDetailSection, DisplayDetailLinePart } from '../../../../types/calculator';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
 import {
@@ -41,6 +41,7 @@ export type ExpQuadraticCertificateProof = {
   liouvilleEquationLatex: string;
   proofSummary: string;
   proofDetails: DisplayDetailSection[];
+  mathJsonLeaves: Array<{ canonicalLatex: string; mathJson: unknown; source: string }>;
   profile: TranscendentalCertificateTowerReady;
   exponentDifferentiation: CertificateDifferentiationSuccess;
   integrandDifferentiation: CertificateDifferentiationSuccess;
@@ -175,6 +176,19 @@ export function proveExpQuadraticNonElementary(
   const exponentDerivativeLatex = certificateProofNodeLatex(exponentDifferentiation.derivativeNode);
   const integrandDerivativeLatex = certificateProofNodeLatex(integrandDifferentiation.derivativeNode);
   const liouvilleEquationLatex = String.raw`\text{Required equation for }r(${profile.variable}):\quad r'(${profile.variable}) + \left(${exponentDerivativeLatex}\right)r(${profile.variable}) = 1`;
+  const equationLatex = String.raw`r'(${profile.variable}) + ${exponentDerivativeLatex}\cdot\operatorname{r}(${profile.variable}) = 1`;
+  const rationalFunction = ['Apply', 'r', profile.variable];
+  const equation = ['Equal', ['Add', ['D', rationalFunction, profile.variable],
+    ['Multiply', exponentDifferentiation.derivativeNode, rationalFunction]], 1];
+  const proofDetails = proofDetailsFor(profile, exponentDerivativeLatex, liouvilleEquationLatex)
+    .map(section => ({ ...section, lineParts: section.lines.map((line, index): DisplayDetailLinePart[] => {
+      if (line === liouvilleEquationLatex) return [
+        { kind: 'text', text: `Required equation for r(${profile.variable}): ` },
+        { kind: 'math', latex: equationLatex },
+      ];
+      return (section.lineKinds?.[index] ?? section.lineKind) === 'math'
+        ? [{ kind: 'math', latex: line }] : [{ kind: 'text', text: line }];
+    }) }));
 
   return {
     kind: 'proof-ready',
@@ -193,7 +207,14 @@ export function proveExpQuadraticNonElementary(
     theorem: 'quadratic-exponential-liouville-obstruction',
     liouvilleEquationLatex,
     proofSummary: 'Quadratic exponential non-elementarity follows from the Liouville rational-certificate obstruction for q of degree 2.',
-    proofDetails: proofDetailsFor(profile, exponentDerivativeLatex, liouvilleEquationLatex),
+    proofDetails,
+    mathJsonLeaves: [
+      { canonicalLatex: `q(${profile.variable})=${profile.exponentLatex}`,
+        mathJson: ['Equal', ['Apply', 'q', profile.variable], profile.exponentNode], source: 'calculus.integration:exponent-certificate' },
+      { canonicalLatex: String.raw`q'(${profile.variable})=${exponentDerivativeLatex}`,
+        mathJson: ['Equal', ['D', ['Apply', 'q', profile.variable], profile.variable], exponentDifferentiation.derivativeNode], source: 'calculus.integration:exponent-derivative-certificate' },
+      { canonicalLatex: equationLatex, mathJson: equation, source: 'calculus.integration:liouville-equation' },
+    ],
     profile,
     exponentDifferentiation,
     integrandDifferentiation,

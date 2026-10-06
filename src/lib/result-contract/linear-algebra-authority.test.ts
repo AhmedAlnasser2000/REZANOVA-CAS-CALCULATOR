@@ -56,29 +56,29 @@ function vectorRequest(operation: VectorOperation): VectorRequest & { vectorB: n
 }
 
 describe('Linear Algebra canonical authority', () => {
-  it('keeps all 62 Matrix selectors on canonical result V2', () => {
+  it('keeps all 62 Matrix selectors on the current canonical result', () => {
     expect(MATRIX_OPERATIONS).toHaveLength(62);
     for (const operation of MATRIX_OPERATIONS) {
       const outcome = runMatrixMode(matrixRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');
       if (outcome.kind === 'prompt') throw new Error(`Unexpected Matrix prompt for ${operation}.`);
-      expect(outcome.canonicalResult?.version, operation).toBe(2);
+      expect(outcome.canonicalResult?.version, operation).toBe(7);
     }
   });
 
-  it('keeps all 23 Vector selectors on V2 except the narrow gradian angle selector', () => {
+  it('keeps all 23 Vector selectors on the current contract including the typed gradian angle', () => {
     expect(VECTOR_OPERATIONS).toHaveLength(23);
     for (const operation of VECTOR_OPERATIONS) {
       const outcome = runVectorMode(vectorRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');
       if (outcome.kind === 'prompt') throw new Error(`Unexpected Vector prompt for ${operation}.`);
-      expect(outcome.canonicalResult?.version, operation).toBe(2);
+      expect(outcome.canonicalResult?.version, operation).toBe(7);
     }
 
     for (const angleUnit of ['deg', 'rad', 'grad'] as const) {
       const outcome = runVectorMode({ ...vectorRequest('angle'), angleUnit });
       if (outcome.kind === 'prompt') throw new Error(`Unexpected Vector prompt for ${angleUnit}.`);
-      expect(outcome.canonicalResult?.version, angleUnit).toBe(angleUnit === 'grad' ? 3 : 2);
+      expect(outcome.canonicalResult?.version, angleUnit).toBe(7);
     }
 
     const gradian = runVectorMode({
@@ -91,7 +91,7 @@ describe('Linear Algebra canonical authority', () => {
     if (gradian.kind !== 'success') throw new Error('Expected gradian Vector success.');
     expect(gradian.exactLatex).toBe('100^{g}');
     expect(gradian.canonicalResult).toMatchObject({
-      version: 3,
+      version: 7,
       primary: {
         kind: 'angle-quantity',
         presentation: { primaryLatex: '100^{g}' },
@@ -109,9 +109,9 @@ describe('Linear Algebra canonical authority', () => {
     });
     expect(outcome.kind).toBe('error');
     if (outcome.kind !== 'error') throw new Error('Expected unsupported Matrix spectral result.');
-    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult?.version).toBe(7);
     expect(outcome.actions).toEqual([{
-      version: 2,
+      version: 7,
       kind: 'send',
       target: 'equation',
       math: {
@@ -137,7 +137,7 @@ describe('Linear Algebra canonical authority', () => {
     });
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected rational Matrix spectral success.');
-    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult?.version).toBe(7);
   });
 
   it('proves a singular Matrix null space as the span of its native basis', () => {
@@ -152,7 +152,7 @@ describe('Linear Algebra canonical authority', () => {
     if (outcome.kind !== 'success') throw new Error('Expected singular null-space success.');
     const document = outcome.canonicalResult;
     expect(document).toMatchObject({
-      version: 2,
+      version: 7,
       primary: {
         kind: 'math',
         value: {
@@ -161,7 +161,7 @@ describe('Linear Algebra canonical authority', () => {
         },
       },
     });
-    if (document?.version !== 2) throw new Error('Expected singular null-space V2 authority.');
+    if (document?.version !== 7) throw new Error('Expected singular null-space current authority.');
     expect(JSON.stringify(document.primary)).toContain('"Null"');
     expect(JSON.stringify(document.primary)).toContain('"span"');
   });

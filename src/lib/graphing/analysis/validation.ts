@@ -1,5 +1,5 @@
 import { inspectJsonCompatibleStructuredValue } from '../../result-contract/structured-value';
-import { validateCanonicalResultDocumentV2 } from '../../result-contract';
+import { validateCanonicalResultDocument } from '../../result-contract/current';
 import {
   GRAPH_ANALYSIS_FEATURES,
   validateGraphSampleRequest,
@@ -92,6 +92,6 @@ export function validateGraphAnalysisResult(input: unknown): Validation<GraphAna
       return { ok: false, message: 'Graph analysis evidence is invalid.' };
     }
   }
-  const canonical = validateCanonicalResultDocumentV2(value.canonicalResult);
+  const canonical = validateCanonicalResultDocument(value.canonicalResult);
   return canonical.ok ? cloned : { ok: false, message: canonical.failure.message };
 }

@@ -9,13 +9,14 @@ import {
   mixedDetailSection,
   textPart,
 } from '../../display/result-detail-lines';
+import { namedVariableLatex } from '../named-variable';
 import { sameLatex } from './format';
 import type { StoredValueReadbackInput } from './types';
 
 function substitutionParts(entries: readonly VariableSubstitutionSnapshot[]) {
   return entries.flatMap<DisplayDetailLinePart>((entry, index) => [
     ...(index > 0 ? [textPart(', ')] : []),
-    mathPart(`${entry.name}=${entry.valueLatex}`),
+    mathPart(`${entry.name.length === 1 ? entry.name : namedVariableLatex(entry.name)}=${entry.valueLatex}`),
   ]);
 }
 

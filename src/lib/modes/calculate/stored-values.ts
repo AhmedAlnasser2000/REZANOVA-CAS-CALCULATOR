@@ -195,8 +195,18 @@ function derivativeAtPointSubstitution(
     });
     const pointLatex = ce.box(pointRule[2] as Parameters<typeof ce.box>[0]).latex;
 
+    const effectiveLatex = `\\left.\\frac{\\mathrm{d}}{\\mathrm{d}${variable}}\\left(${bodySubstitution.latex}\\right)\\right|_{${variable}=${pointLatex}}`;
+    // EvaluateAt uses the derivative's explicit variable; CE's Function/Block
+    // execution wrappers and inferred free-argument list are not display semantics.
+    const effectiveNode = ['Subscript', ['EvaluateAt',
+      ['D', bodySubstitution.mathJson ?? derivativeNode[1], variable]], pointRule];
     return {
-      latex: `\\left.\\frac{\\mathrm{d}}{\\mathrm{d}${variable}}\\left(${bodySubstitution.latex}\\right)\\right|_{${variable}=${pointLatex}}`,
+      latex: effectiveLatex,
+      mathJson: effectiveNode,
+      mathJsonLeaves: [
+        ...(bodySubstitution.mathJsonLeaves ?? []),
+        { canonicalLatex: effectiveLatex, mathJson: effectiveNode, source: 'stored-value:derivative-request' },
+      ],
       substitutions: bodySubstitution.substitutions,
       protectedSubstitutions: bodySubstitution.protectedSubstitutions,
     };

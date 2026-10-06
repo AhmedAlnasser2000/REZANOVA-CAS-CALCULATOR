@@ -9,6 +9,7 @@ import {
   clearHistoryEntries,
   deleteHistoryEntry,
   loadCalculatorMemorySnapshot,
+  loadCalculatorMemorySnapshotWithCleanup,
   loadHistoryEntries,
   loadHistoryEntriesWithCleanup,
   persistCalculatorMemorySnapshot,
@@ -230,6 +231,21 @@ describe('web-preview app-state persistence', () => {
     });
   });
 
+  it('persists and clears current results as supported history rather than opaque future data', async () => {
+    const entry: HistoryEntry = {
+      id: 'current-contract', mode: 'calculate', inputLatex: '1+1',
+      resultDocument: { version: 7, outcomeKind: 'success', title: 'Current answer',
+        primary: { kind: 'math', value: { canonicalLatex: '2', mathJson: 2 } }, warnings: [] },
+      timestamp: '2026-10-06T00:00:00.000Z',
+    };
+    expect(await appendHistoryEntry(entry)).toEqual({ ok: true });
+    expect(await loadHistoryEntries()).toEqual([entry]);
+    await clearHistoryEntries();
+    expect(await loadHistoryEntries()).toEqual([]);
+    const stored = JSON.parse(storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}');
+    expect(stored.history).toEqual([]);
+  });
+
   it('persists mode, settings, history, variables, and calculator memory', async () => {
     await persistMode('equation');
     const settings = await persistSettings({
@@ -418,7 +434,7 @@ describe('web-preview app-state persistence', () => {
 
     expect(await loadHistoryEntries()).toEqual([createHistoryEntry('1')]);
     expect(await loadCalculatorMemorySnapshot()).toMatchObject({
-      ansLatex: '4',
+      ansLatex: '0',
       history: [createHistoryEntry('1')],
       displayOutcome: null,
       session: {},
@@ -430,6 +446,41 @@ describe('web-preview app-state persistence', () => {
       historyCount: 0,
       variableMemory: [],
     });
+  });
+
+  it('cleans only incompatible memory results, invalidates dependent Ans and preserves drafts and settings', async () => {
+    const valid = createV2HistoryEntry('deferred-result');
+    const bad = { ...valid, id: 'invalid-result', resultDocument: { version: 7 } };
+    const settings = { ...DEFAULT_SETTINGS, angleUnit: 'rad' as const };
+    const raw = { settings, currentMode: 'calculate', history: [valid], variableMemory: [],
+      calculatorMemory: { version: 1, savedAt: '2026-10-06T00:00:00Z', settings,
+        history: [valid, bad], variableMemory: [], ansLatex: '99', displayOutcome: {kind: 'success', canonicalResult: bad.resultDocument}, session: {} } };
+    storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify(raw));
+    storage.setItem('rezanova.new-integration.drafts.v1', 'integration draft');
+    storage.setItem('rezanova.new-equation.drafts.v1', 'equation draft');
+    storage.setItem('notebook-document', 'notebook content');
+    const first = await loadCalculatorMemorySnapshotWithCleanup();
+    expect(first).toMatchObject({removedCount: 1, snapshot: {history: [valid], ansLatex: '0', displayOutcome: null, settings}});
+    expect(await loadCalculatorMemorySnapshotWithCleanup()).toEqual({...first, removedCount: 0});
+    expect(await loadHistoryEntries()).toEqual([valid]);
+    expect((await bootApp()).settings).toEqual(settings);
+    expect(storage.getItem('rezanova.new-integration.drafts.v1')).toBe('integration draft');
+    expect(storage.getItem('rezanova.new-equation.drafts.v1')).toBe('equation draft');
+    expect(storage.getItem('notebook-document')).toBe('notebook content');
+  });
+
+  it('can repeat memory cleanup after an interrupted atomic storage replacement', async () => {
+    const raw = JSON.stringify({ settings: DEFAULT_SETTINGS, history: [], calculatorMemory: {
+      version: 1, savedAt: '2026-10-06T00:00:00Z', settings: DEFAULT_SETTINGS,
+      history: [{id: 'bad'}], variableMemory: [], ansLatex: '99', session: {},
+    }});
+    storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, raw);
+    const write = vi.spyOn(storage, 'setItem').mockImplementationOnce(() => { throw Error('Interrupted write'); });
+    await expect(loadCalculatorMemorySnapshotWithCleanup()).rejects.toThrow('Interrupted write');
+    expect(storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY)).toBe(raw);
+    write.mockRestore();
+    expect(await loadCalculatorMemorySnapshotWithCleanup()).toMatchObject({removedCount: 1, snapshot: {ansLatex: '0', history: []}});
+    expect(await loadCalculatorMemorySnapshotWithCleanup()).toMatchObject({removedCount: 0});
   });
 
   it('removes legacy rows once while preserving versions above V4 verbatim and outside retention', async () => {

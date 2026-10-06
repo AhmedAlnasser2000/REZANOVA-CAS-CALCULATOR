@@ -8,7 +8,7 @@ import { EquationAlgebraError, ExecutionContext } from '../core/execution';
 import { assumeOutcome } from '../core/parameters/assume';
 import { ExpressionStore } from '../core/representation/expression';
 import { resourceOutcome, type EquationOutcome } from '../core/representation/solution-set';
-import { presentConditionList, presentEquationV6 } from '../presentation/layout';
+import { presentConditionList, presentEquation } from '../presentation/layout';
 import { projectConditions, projectEquationOutcome } from '../result';
 import { domainConditions, EquationInputError, lowerEquation } from './input';
 
@@ -43,7 +43,7 @@ export function executeEquation(request: EquationRequest): EquationResponse {
     const document = projectEquationOutcome(problem, outcome, {}, assumptions.length ? { assumptions, full: outcome.kind === 'resource' ? outcome : full } : undefined).canonicalResult;
     const presentations: Partial<Record<OutputStyle, EquationPresentationSnapshot>> = {};
     for (const style of PRESENTATION_STYLES) {
-      const p = presentEquationV6(document, { outputStyle: style, approxDigits: request.digits }, ctx);
+      const p = presentEquation(document, { outputStyle: style, approxDigits: request.digits }, ctx);
       presentations[style] = { rows: p.rows.map(r => ({ ...r })), copyLatex: p.copyLatex, plainText: p.plainText, fallback: p.fallback };
     }
     let shown: EquationShownCondition[] = [];

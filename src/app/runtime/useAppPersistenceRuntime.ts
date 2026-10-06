@@ -8,10 +8,11 @@ import {
 } from 'react';
 import {
   HISTORY_CANONICAL_CLEANUP_NOTICE,
+  acknowledgeResultCleanupNotice,
   bootApp,
   clearCalculatorMemorySnapshot,
   isDesktopRuntime,
-  loadCalculatorMemorySnapshot,
+  loadCalculatorMemorySnapshotWithCleanup,
   loadHistoryEntriesWithCleanup,
   persistMode,
   persistSettings,
@@ -130,18 +131,20 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
 
     void (async () => {
       try {
-        const [bootstrap, loadedHistory, savedMemory] = await Promise.all([
+        const [bootstrap, loadedHistory, loadedMemory] = await Promise.all([
           bootApp().catch(() => null),
           loadHistoryEntriesWithCleanup().catch(() => ({
             entries: [] as HistoryEntry[],
             removedCount: 0,
+            pendingNoticeCount: 0,
           })),
-          loadCalculatorMemorySnapshot().catch(() => null),
+          loadCalculatorMemorySnapshotWithCleanup().catch(() => ({ snapshot: null, removedCount: 0, pendingNoticeCount: 0 })),
         ]);
         if (cancelled) {
           return;
         }
 
+        const savedMemory = loadedMemory.snapshot;
         if ((savedMemory?.settings.calculatorMemoryEnabled ?? bootstrap?.settings.calculatorMemoryEnabled) && savedMemory) {
           restoreCalculatorMemoryFromSnapshot(savedMemory);
         } else if (bootstrap) {
@@ -160,10 +163,13 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
         } else {
           optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
         }
-        if (loadedHistory.removedCount > 0) {
+        const removedCount = (loadedHistory.pendingNoticeCount ?? loadedHistory.removedCount)
+          + (loadedMemory.pendingNoticeCount ?? loadedMemory.removedCount);
+        if (removedCount > 0) {
           optionsRef.current.setClipboardNotice(
-            HISTORY_CANONICAL_CLEANUP_NOTICE(loadedHistory.removedCount),
+            HISTORY_CANONICAL_CLEANUP_NOTICE(removedCount),
           );
+          acknowledgeResultCleanupNotice();
         }
       } catch {
         // Keep the default shell state if a non-critical bootstrap read fails.

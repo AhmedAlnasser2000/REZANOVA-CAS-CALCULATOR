@@ -1,3 +1,4 @@
+import type { CalculusIntegrationDetailNode } from '../../calculus/engine/antiderivative-expression';
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { ExactSupplementEntry } from '../../../types/calculator/exact-supplement-types';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
@@ -38,6 +39,7 @@ type BoundedCarrierSubstitutionResult = {
   verification: AntiderivativeBackcheck;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  detailNodes: CalculusIntegrationDetailNode[];
   trustMode?: 'precomputed-exact';
 };
 
@@ -433,12 +435,23 @@ function expandedExtraPowerTerms(
   return terms;
 }
 
+function nativeDetailNodes(input: { detailTitle: string; detailRows: readonly IntegrationDetailRow[]; detailMathNodes: unknown[] }): CalculusIntegrationDetailNode[] {
+  const native = input.detailMathNodes.map(mathJson => ({ canonicalLatex: boxLatex(mathJson), mathJson }));
+  return [{ title: input.detailTitle, lines: input.detailRows.map(row => row.map(part => {
+    if (part.kind === 'text') return part;
+    const value = native.find(value => value.canonicalLatex === part.latex);
+    if (!value) throw new Error('Carrier detail is missing its native expression.');
+    return { kind: 'math', ...value, source: 'integration:carrier-native-detail' };
+  })) }];
+}
+
 function verifiedResult(input: {
   node: unknown;
   variable: string;
   antiderivativeNode: unknown;
   detailTitle: string;
   detailRows: readonly IntegrationDetailRow[];
+  detailMathNodes: unknown[];
   exactSupplementLatex?: string[];
   trustMode?: 'precomputed-exact';
 }): BoundedCarrierSubstitutionResult | undefined {
@@ -462,6 +475,7 @@ function verifiedResult(input: {
       reason: 'verified by bounded carrier substitution after derivative backcheck',
     },
     exactSupplementLatex: input.exactSupplementLatex,
+    detailNodes: nativeDetailNodes(input),
     detailSections: [carrierDetail(input.detailTitle, [
       ...input.detailRows,
       integrationTextRow('Accepted only after derivative backcheck against the original integrand.'),
@@ -474,6 +488,7 @@ function provenTemplateResult(input: {
   antiderivativeNode: unknown;
   detailTitle: string;
   detailRows: readonly IntegrationDetailRow[];
+  detailMathNodes: unknown[];
   exactSupplementLatex?: string[];
   reason: string;
 }): BoundedCarrierSubstitutionResult {
@@ -485,6 +500,7 @@ function provenTemplateResult(input: {
       reason: input.reason,
     },
     exactSupplementLatex: input.exactSupplementLatex,
+    detailNodes: nativeDetailNodes(input),
     detailSections: [carrierDetail(input.detailTitle, [
       ...input.detailRows,
       integrationTextRow('Accepted by a bounded route-owned template proof.'),
@@ -552,6 +568,7 @@ function tryAffinePowerCarrierSubstitution(
       variable,
       antiderivativeNode,
       detailTitle: 'Integration Carrier Substitution',
+      detailMathNodes: [carrier.base, exactScalarNode(carrier.exponent)],
       detailRows: [
         integrationMathRow('Carrier: ', boxLatex(carrier.base), '.'),
         integrationMathRow('Carrier power: ', boxLatex(exactScalarNode(carrier.exponent)), '.'),
@@ -668,6 +685,7 @@ function tryExponentialShiftCarrierSubstitution(
       variable,
       antiderivativeNode,
       detailTitle: 'Integration Carrier Substitution',
+      detailMathNodes: [carrier.base, expShift.argument],
       detailRows: [
         integrationMathRow('Carrier: ', boxLatex(carrier.base), '.'),
         integrationMathRow('Exponential argument: ', boxLatex(expShift.argument), '.'),
@@ -756,6 +774,7 @@ function tryTrigCarrierPowerSubstitution(
       variable,
       antiderivativeNode,
       detailTitle: 'Integration Carrier Substitution',
+      detailMathNodes: [carrier.base],
       detailRows: [
         integrationMathRow('Carrier: ', boxLatex(carrier.base), '.'),
         integrationTextRow('Matched the trigonometric derivative factor structurally.'),
@@ -843,6 +862,7 @@ function tryCircleRootSecondMomentRule(
   return provenTemplateResult({
     antiderivativeNode,
     detailTitle: 'Integration Radical Template',
+    detailMathNodes: [node, parsed.radicand],
     detailRows: [
       integrationMathRow('Recognized moment radical: ', boxLatex(node), '.'),
       integrationMathRow('Template radicand: ', boxLatex(parsed.radicand), '.'),
@@ -905,6 +925,7 @@ function tryReciprocalSumRootRule(
   return provenTemplateResult({
     antiderivativeNode: ['Divide', ['Negate', ['Sqrt', parsed.radicand]], variable],
     detailTitle: 'Integration Radical Template',
+    detailMathNodes: [node, parsed.radicand],
     detailRows: [
       integrationMathRow('Recognized reciprocal sum-root: ', boxLatex(node), '.'),
       integrationMathRow('Template radicand: ', boxLatex(parsed.radicand), '.'),

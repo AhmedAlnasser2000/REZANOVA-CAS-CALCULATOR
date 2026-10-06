@@ -61,7 +61,11 @@ function producerVersionPolicyFromSource(source) {
   return {
     source,
     frozenRouteIds,
-    explicitV2DefaultRouteIds,
+    // Current migrated routes satisfy the same stronger-than-V1 release condition.
+    explicitV2DefaultRouteIds: [...new Set([...explicitV2DefaultRouteIds,
+      ...(source.includes('export const CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES')
+        ? quotedValues(exportedLiteralBlock(source, 'CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES')) : []),
+    ])],
   };
 }
 

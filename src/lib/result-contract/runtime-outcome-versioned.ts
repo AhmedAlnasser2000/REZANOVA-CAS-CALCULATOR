@@ -1,3 +1,4 @@
+import type { CurrentCanonicalRuntimeAction } from '../../types/calculator/canonical-result-runtime';
 import type {
   CanonicalMathValueV1,
   CanonicalMathValueV2,
@@ -147,8 +148,8 @@ function validateActionV1(
 function validateActionVersioned(
   value: unknown,
   index: number,
-  version: 2 | 3,
-): { ok: true; value: CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 } | Failure {
+  version: 2 | 3 | 7,
+): { ok: true; value: CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 | CurrentCanonicalRuntimeAction } | Failure {
   const path = '$.actions[' + index + ']';
   if (!isRecord(value)) {
     return fail('invalid-action', `V${version} runtime actions must be typed plain objects.`, path);
@@ -197,7 +198,7 @@ function validateActionVersioned(
       };
   return {
     ok: true,
-    value: action as CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3,
+    value: action as CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 | CurrentCanonicalRuntimeAction,
   };
 }
 
@@ -249,10 +250,10 @@ export function validateCanonicalRuntimeVersionedResultOutcome(
   }
 
   let actions: Array<
-    CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3
+    CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 | CurrentCanonicalRuntimeAction
   > | undefined;
   if (value.actions !== undefined) {
-    if (document.validated.value.version === 4 || document.validated.value.version === 5 || document.validated.value.version === 6) {
+    if ((document.validated.value.version === 7 && (document.validated.value.integrationRestrictions !== undefined || ['special-function-expression', 'rational-antiderivative', 'exponential-antiderivative', 'non-elementary', 'equation-outcome'].includes(document.validated.value.primary?.kind ?? ''))) || document.validated.value.version === 4 || document.validated.value.version === 5 || document.validated.value.version === 6) {
       return fail(
         'invalid-action',
         'Typed formal results derive editor and clipboard transfer from typed expression authority.',

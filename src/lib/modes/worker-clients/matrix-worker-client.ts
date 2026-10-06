@@ -12,7 +12,7 @@ import {
 import type { RunMatrixModeRequest } from '../matrix';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
-import { createMatrixResultOutcomeV2 } from '../matrix-result-document';
+import { createMatrixResultOutcome } from '../matrix-result-document';
 
 export type CreateMatrixWorker = CreateLinearAlgebraWorkspaceWorker<RunMatrixModeRequest>;
 
@@ -41,7 +41,7 @@ export function runMatrixModeViaIsolatedWorker(
       fallbackHostId: OOE_MATRIX_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultMatrixWorker,
       buildCancelledPayload: () => finalizeCanonicalRuntimeOutcomeFromProducer(
-        createMatrixResultOutcomeV2({
+        createMatrixResultOutcome({
           kind: 'error',
           title: 'Matrix',
           error: 'Matrix operation stopped before it finished.',

@@ -319,7 +319,6 @@ function proveAnswerMathJsonForMode(
   }
   if (
     formalComparison.applicable
-    && !producerSerializedSame
     && !formalComparison.equal
   ) {
     return failure(

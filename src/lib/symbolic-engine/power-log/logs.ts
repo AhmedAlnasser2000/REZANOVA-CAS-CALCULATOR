@@ -1,3 +1,4 @@
+import type { SerializableMathJson } from '../../../types/calculator';
 import { isNodeArray } from '../patterns';
 import { normalizeAst } from '../normalize';
 import type { LogCall, SerializedNode } from './types';
@@ -100,8 +101,8 @@ export function tryCombineSameBaseLogs(node: unknown, left: SerializedNode, righ
     mergeConstraints(
       right.conditionConstraints,
       [
-        { kind: 'positive' as const, expressionLatex: leftCall.argumentLatex },
-        { kind: 'positive' as const, expressionLatex: rightCall.argumentLatex },
+        { kind: 'positive' as const, expressionLatex: leftCall.argumentLatex, expressionMathJson: leftCall.argumentNode as SerializableMathJson },
+        { kind: 'positive' as const, expressionLatex: rightCall.argumentLatex, expressionMathJson: rightCall.argumentNode as SerializableMathJson },
       ],
     ),
   );
@@ -141,6 +142,7 @@ export function changeBase(node: unknown): SerializedNode | null {
     conditionConstraints: [{
       kind: 'positive',
       expressionLatex: call.argumentLatex,
+      expressionMathJson: call.argumentNode as SerializableMathJson,
     }],
     containsTrackedNotation: true,
   };

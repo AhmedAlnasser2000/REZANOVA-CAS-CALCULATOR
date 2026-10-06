@@ -1,9 +1,9 @@
-import type { CanonicalMathValueV2, CanonicalResultDocumentV2, CanonicalResultDocumentV5, SerializableMathJson } from '../../types/calculator';
+import type { CanonicalResultDocument } from '../../types/calculator/canonical-result-current';
+import type { CanonicalMathValueV2, SerializableMathJson } from '../../types/calculator';
 import { integrationPrinter, presentIntegrationMath, type IntegrationMathPresentation } from '../display/printer/integration';
 import type { MathJsonValidationLimits } from '../display/printer/math-json';
 import { exactSymbolLatex } from './exact-arithmetic-latex';
-import { validateCanonicalResultDocumentV5 } from './validation-v5';
-import { resolveCanonicalResultForConsumer } from './consumer';
+import { requireCanonicalResultAuthority } from './current';
 
 type Condition = {latex: string; origins: string[]};
 type Term = {definition: string; modulus: string; argument: string};
@@ -15,14 +15,11 @@ const aligned = (parts: string[]) => parts.length === 1 ? parts[0]
   : `\\begin{aligned}&${parts[0]}${parts.slice(1).map(v => `\\\\&${v.startsWith('-') ? '' : '\\mathbin{\\large\\boldsymbol{+}}\\;'}${v}`).join('')}\\end{aligned}`;
 
 /** A canonical-derived, optional display projection. Never used by proof checking or artifact export. */
-export function readIntegrationPresentation(document: CanonicalResultDocumentV2 | CanonicalResultDocumentV5,
+export function readIntegrationPresentation(document: CanonicalResultDocument,
   limits: MathJsonValidationLimits = {}): IntegrationPresentation | undefined {
   // Authority/shape errors are not optional formatting errors.
-  const checked = document.version === 5 ? validateCanonicalResultDocumentV5(document) : undefined;
-  if (checked && !checked.ok) throw Error(checked.failure.message);
-  const formal = checked?.ok ? {document: checked.validated.value} : undefined;
-  const ordinary = document.version === 2 ? resolveCanonicalResultForConsumer(document.outcomeKind === 'success' ? {kind: 'success', canonicalResult: document} : {kind: 'error', canonicalResult: document}) : undefined;
-  if (ordinary && !ordinary.ok) throw Error(ordinary.failure.message);
+  const native = requireCanonicalResultAuthority(document);
+  const formal = native.primary?.kind === 'rational-antiderivative' ? native.primary : undefined;
   if (document.outcomeKind !== 'success') return undefined;
   const originalConditions: Condition[] = [], conditions: Condition[] = [], seen = new Map<string, Condition>();
   const format = (value: CanonicalMathValueV2, variables: string[]): IntegrationMathPresentation => {
@@ -44,11 +41,11 @@ export function readIntegrationPresentation(document: CanonicalResultDocumentV2 
       if (!Array.isArray(t) || t[0] !== 'NotEqual' || t.length !== 3 || !(t[2] === 0 || (typeof t[2] === 'object' && t[2] && 'num' in t[2] && t[2].num === '0'))) {
         conditions.push({latex: format(value, variables).latex, origins: [origin]}); return;
       }
-      // Existing V2 supplements expose their polynomial as native MathJSON. No LaTeX readback.
+      // Existing Ordinary supplements expose their polynomial as native MathJSON. No LaTeX readback.
       operand = {mathJson: t[1], canonicalLatex: ''};
     }
     const p = format(operand, variables);
-    // A failed V2 operand format falls back to the entire original relation.
+    // A failed ordinary operand format falls back to the entire original relation.
     const latex = p.latex ? p.latex + '\\ne0' : original;
     if (p.nonzeroConstant) return;
     const found = seen.get(p.key);
@@ -59,7 +56,7 @@ export function readIntegrationPresentation(document: CanonicalResultDocumentV2 
   let compact: string;
   let expanded: () => string;
   if (formal) {
-    const p = formal.document.primary, variable = exactSymbolLatex(p.variable), constant = exactSymbolLatex(p.integrationConstant);
+    const p = formal, variable = exactSymbolLatex(p.variable), constant = exactSymbolLatex(p.integrationConstant);
     const rational = format(p.rationalPart, [p.variable]);
     const formatted = p.terms.map((t, i) => {
       const vars = [p.variable, t.rootVariable], root = exactSymbolLatex(t.rootVariable), j = i + 1;
@@ -80,11 +77,9 @@ export function readIntegrationPresentation(document: CanonicalResultDocumentV2 
     addCondition(p.conditions.rationalDenominator, 'Primitive denominator', [p.variable]);
     p.conditions.logNorms.forEach(v => addCondition(v, 'Log norm', [p.variable]));
   } else {
-    if (document.version !== 2 || !ordinary?.ok) return undefined;
-    const native = ordinary.rawDocument;
-    if (native.version !== 2 || native.primary?.kind !== 'math') return undefined;
+    if (native.primary?.kind !== 'math') return undefined;
     const tree = native.primary.value.mathJson;
-    // A V2 integration answer is rationalPart + fresh constant. Derive symbols from native data only.
+    // An ordinary integration answer is rationalPart + fresh constant. Derive symbols from native data only.
     const symbols = new Set<string>();
     const collect = (t: SerializableMathJson) => {if (typeof t === 'string') symbols.add(t); else if (Array.isArray(t)) (t as SerializableMathJson[]).slice(1).forEach(collect);};
     if (Array.isArray(tree) && tree[0] === 'Add') (tree as SerializableMathJson[]).slice(1, -1).forEach(collect);

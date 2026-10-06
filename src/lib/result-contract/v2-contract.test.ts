@@ -14,6 +14,7 @@ import {
 } from './producer-v2';
 import {
   CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY,
+  CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES,
   CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES,
   CANONICAL_RESULT_V2_PRODUCER_SELECTORS,
   CANONICAL_RESULT_V3_PRODUCER_SELECTORS,
@@ -253,7 +254,7 @@ describe('Canonical Result V2 contract', () => {
       validated: { value: { version: 4 } },
     });
     expect(validateCanonicalResultDocumentVersioned({
-      version: 7,
+      version: 8,
       outcomeKind: 'success',
       title: 'Future',
       warnings: [],
@@ -385,7 +386,7 @@ describe('Canonical Result V2 contract', () => {
       'calculus.integrals': ['indefiniteIntegral:special-function'],
     });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
-      const defaultVersion = [
+      const defaultVersion = (CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES as readonly string[]).includes(routeId) ? 7 : [
         'trigonometry.angle-conversion',
         'trigonometry.period-phase',
         'table.domain-boundary',
@@ -461,15 +462,15 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'vector.span-independence',
       selector: 'independent',
-    })).toBe(2);
+    })).toBe(7);
     expect(canonicalResultVersionForProducer({
       routeId: 'vector.geometric-measures',
       selector: 'volume',
-    })).toBe(2);
+    })).toBe(7);
     expect(canonicalResultVersionForProducer({
       routeId: 'vector.angle',
       selector: 'angle:grad',
-    })).toBe(3);
+    })).toBe(7);
     expect(canonicalResultVersionForProducer({
       routeId: 'calculus.integrals',
       selector: 'indefiniteIntegral:special-function',

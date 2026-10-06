@@ -428,13 +428,13 @@ fn history_result_document_version(entry: &serde_json::Value) -> Option<u64> {
 }
 
 fn is_future_history_value(entry: &serde_json::Value) -> bool {
-    history_result_document_version(entry).is_some_and(|version| version > 3)
+    history_result_document_version(entry).is_some_and(|version| version > 3 && version != 7)
 }
 
 fn validate_current_history_append(entry: &serde_json::Value) -> Result<(), String> {
     validate_history_envelope(entry, true)?;
-    if !matches!(history_result_document_version(entry), Some(1..=3)) {
-        return Err("History append requires a version-1, version-2, or version-3 canonical result document.".into());
+    if !matches!(history_result_document_version(entry), Some(1..=3 | 7)) {
+        return Err("History append requires a supported canonical result document (schema 7 for migrated producers).".into());
     }
     let object = entry
         .as_object()
@@ -1381,6 +1381,25 @@ mod tests {
             append_history_value(entry, &state).expect("current history version should append");
         }
         assert_eq!(load_history_values(&state).unwrap().len(), 3);
+        fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
+    }
+
+    #[test]
+    fn current_schema_seven_history_is_supported_and_clearable() {
+        let storage_dir = unique_test_storage_dir("history-schema-seven");
+        let state = AppState::load(storage_dir.clone()).expect("state should initialize");
+        let entry = serde_json::json!({
+            "id": "history.current", "mode": "calculate", "inputLatex": "1+1",
+            "resultDocument": { "version": 7, "outcomeKind": "success", "title": "Result",
+                "primary": { "kind": "math", "value": { "canonicalLatex": "2", "mathJson": 2 } },
+                "warnings": [] },
+            "timestamp": "2026-10-06T00:00:00.000Z"
+        });
+        assert!(!is_future_history_value(&entry));
+        append_history_value(entry, &state).expect("current result should append");
+        assert_eq!(load_history_values(&state).unwrap().len(), 1);
+        clear_history_values(&state).expect("current history should clear");
+        assert!(load_history_values(&state).unwrap().is_empty());
         fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
     }
 

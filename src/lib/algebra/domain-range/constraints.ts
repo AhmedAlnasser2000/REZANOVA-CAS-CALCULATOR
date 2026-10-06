@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { SolveDomainConstraint } from '../../../types/calculator';
+import type { SolveDomainConstraint, SerializableMathJson } from '../../../types/calculator';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { boxLatex, isNodeArray } from '../../symbolic-engine/patterns';
 import { DOMAIN_SAMPLE_STEPS, EPSILON } from './constants';
@@ -35,25 +35,25 @@ export function collectRealDomainConstraints(node: unknown): SolveDomainConstrai
 
     const [head, ...children] = entry;
     if (head === 'Divide' && children.length === 2) {
-      constraints.push({ kind: 'nonzero', expressionLatex: boxLatex(children[1]) });
+      constraints.push({ kind: 'nonzero', expressionLatex: boxLatex(children[1]), expressionMathJson: children[1] as SerializableMathJson });
     }
 
     if ((head === 'Ln' || head === 'Log') && children.length >= 1) {
-      constraints.push({ kind: 'positive', expressionLatex: boxLatex(children[0]) });
+      constraints.push({ kind: 'positive', expressionLatex: boxLatex(children[0]), expressionMathJson: children[0] as SerializableMathJson });
     }
 
     if (head === 'Sqrt' && children.length === 1) {
-      constraints.push({ kind: 'nonnegative', expressionLatex: boxLatex(children[0]) });
+      constraints.push({ kind: 'nonnegative', expressionLatex: boxLatex(children[0]), expressionMathJson: children[0] as SerializableMathJson });
     }
 
     if (head === 'Power' && children.length === 2 && isNegativeNumericExponent(children[1])) {
-      constraints.push({ kind: 'nonzero', expressionLatex: boxLatex(children[0]) });
+      constraints.push({ kind: 'nonzero', expressionLatex: boxLatex(children[0]), expressionMathJson: children[0] as SerializableMathJson });
     }
 
     if ((head === 'Arcsin' || head === 'Arccos') && children.length === 1) {
       constraints.push({
         kind: 'expression-interval',
-        expressionLatex: boxLatex(children[0]),
+        expressionLatex: boxLatex(children[0]), expressionMathJson: children[0] as SerializableMathJson,
         min: -1,
         minInclusive: true,
         max: 1,

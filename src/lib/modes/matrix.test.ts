@@ -56,8 +56,8 @@ describe('runMatrixMode', () => {
     expect(result.kind).toBe('success');
     if (result.kind === 'success') {
       const document = result.canonicalResult;
-      expect(document?.version).toBe(2);
-      expect(document?.version === 2 ? document.primary : undefined)
+      expect(document?.version).toBe(7);
+      expect(document?.version === 7 ? document.primary : undefined)
         .toMatchObject({
           kind: 'linear-map-profile',
           domainDimension: 2,
@@ -88,7 +88,7 @@ describe('runMatrixMode', () => {
 
     expect(result.kind).toBe('success');
     const document = result.kind === 'success' ? result.canonicalResult : undefined;
-    expect(document?.version === 2
+    expect(document?.version === 7
       && document.primary?.kind === 'linear-map-profile'
       ? document.primary.operand.mathJson
       : undefined).toBeDefined();
@@ -346,7 +346,7 @@ describe('runMatrixMode', () => {
     expect(result.title).toBe('definite(A)');
     expect(result.kind).toBe('success');
     if (result.kind === 'success') {
-      expect(result.canonicalResult?.version).toBe(2);
+      expect(result.canonicalResult?.version).toBe(7);
       expect(result.exactLatex).toBe('\\operatorname{definite}(A)=\\text{Positive definite}');
       expect(result.detailSections?.[0]?.title).toBe('Exact Principal-Minor Evidence');
       expect(detailMathValues(result)).toHaveLength(3);
@@ -363,7 +363,7 @@ describe('runMatrixMode', () => {
     expect(result.title).toBe('pinv(A)');
     expect(result.kind).toBe('success');
     if (result.kind === 'success') {
-      expect(result.canonicalResult?.version).toBe(2);
+      expect(result.canonicalResult?.version).toBe(7);
       expect(result.exactLatex).toContain('\\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}');
       expect(result.detailSections?.[0]?.title).toBe('SVD Diagnostics');
       expect(detailMathValues(result)).toHaveLength(6);
@@ -382,7 +382,7 @@ describe('runMatrixMode', () => {
       title: 'eigen(A)',
       error: 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.',
       actions: [{
-        version: 2,
+        version: 7,
         kind: 'send',
         target: 'equation',
         math: {

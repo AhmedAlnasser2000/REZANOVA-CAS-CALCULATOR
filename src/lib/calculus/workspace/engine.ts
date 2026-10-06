@@ -1,3 +1,4 @@
+import { collectCanonicalResultMathValues } from '../../result-contract/current';
 import {
   evaluateCalculusDefiniteIntegral,
   evaluateCalculusImproperIntegral,
@@ -102,8 +103,8 @@ import type {
 import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 import type { CalculusIndefiniteIntegralAuthority } from '../engine/shared';
 import {
-  createCalculusIndefiniteIntegralOutcomeV2,
-  createCalculusIndefiniteIntegralOutcomeV4,
+  createCalculusIndefiniteIntegralOutcome,
+  createCalculusSpecialIntegralOutcome,
 } from './integration-result-document';
 
 export type RunCalculusWorkspaceModeRequest = {
@@ -292,15 +293,16 @@ function normalizePointDraft(pointLatex: string) {
 }
 
 function withDerivativeSteps(
-  outcome: ResultProducerDraft,
+  outcome: VersionedResultProducerDraft,
   detailSection: DisplayDetailSection | undefined,
 ): ResultProducerDraft {
-  if (!detailSection || outcome.kind !== 'success') {
-    return outcome;
-  }
-
+  if (outcome.kind === 'prompt') return outcome;
+  // Calculus owns the augmented output and will establish its own authority.
+  // Preserve the native draft, never convert a current result document to V1.
+  const nativeDraft = { ...outcome, canonicalResult: undefined, actions: undefined };
+  if (!detailSection || outcome.kind !== 'success') return nativeDraft;
   const nextOutcome = {
-    ...outcome,
+    ...nativeDraft,
     detailSections: [
       ...(outcome.detailSections ?? []),
       detailSection,
@@ -384,6 +386,11 @@ export async function runCalculusWorkspaceMode(
           operator: derivativeInput.operator,
         });
         mathJsonLeaves.push(...(steps?.mathJsonLeaves ?? []));
+        if (calculated.kind !== 'prompt' && calculated.canonicalResult?.version === 7) {
+          mathJsonLeaves.push(...collectCanonicalResultMathValues(calculated.canonicalResult).filter(value => !mathJsonLeaves.some(leaf => leaf.canonicalLatex === value.value.canonicalLatex)).map(value => ({
+            ...value.value, source: 'calculus:calculate-owned-result',
+          })));
+        }
         outcome = withDerivativeSteps(calculated, steps?.detailSection);
       }
       break;
@@ -484,6 +491,11 @@ export async function runCalculusWorkspaceMode(
             mathJson: effectiveSteps.derivativeAtPoint.requestMathJson,
             source: 'calculus.derivative-at-point:effective-request',
           });
+        }
+        if (calculated.kind !== 'prompt' && calculated.canonicalResult?.version === 7) {
+          mathJsonLeaves.push(...collectCanonicalResultMathValues(calculated.canonicalResult).filter(value => !mathJsonLeaves.some(leaf => leaf.canonicalLatex === value.value.canonicalLatex)).map(value => ({
+            ...value.value, source: 'calculus:calculate-owned-result',
+          })));
         }
         outcome = withDerivativeSteps(calculated, steps?.detailSection);
       }
@@ -764,7 +776,7 @@ export async function runCalculusWorkspaceMode(
                 && indefiniteIntegralAuthority?.selector === 'indefiniteIntegral:standard'
                 && indefiniteIntegralEvaluation
               ) {
-                return createCalculusIndefiniteIntegralOutcomeV2({
+                return createCalculusIndefiniteIntegralOutcome({
                   outcome: finalOutcome,
                   evaluation: indefiniteIntegralEvaluation,
                   authority: indefiniteIntegralAuthority,
@@ -791,7 +803,7 @@ export async function runCalculusWorkspaceMode(
               && indefiniteIntegralAuthority
               && indefiniteIntegralEvaluation
             ) {
-              return createCalculusIndefiniteIntegralOutcomeV2({
+              return createCalculusIndefiniteIntegralOutcome({
                 outcome: finalOutcome,
                 evaluation: indefiniteIntegralEvaluation,
                 authority: indefiniteIntegralAuthority,
@@ -827,7 +839,7 @@ export async function runCalculusWorkspaceMode(
                 && indefiniteIntegralEvaluation
                 && finalOutcome.kind === 'success'
               ) {
-                return createCalculusIndefiniteIntegralOutcomeV4({
+                return createCalculusSpecialIntegralOutcome({
                   outcome: finalOutcome,
                   evaluation: indefiniteIntegralEvaluation,
                   authority: indefiniteIntegralAuthority,

@@ -19,13 +19,13 @@ const CASES: Array<{
 ];
 
 describe('Statistics vertical answer rows', () => {
-  it.each(CASES)('proves labeled Canonical Result V2 rows for $screenHint', (request) => {
+  it.each(CASES)('proves labeled current canonical result rows for $screenHint', (request) => {
     const outcome = buildStatisticsModeRunPayload(request).outcome;
 
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Statistics success.');
     if (!outcome.canonicalResult) throw new Error('Expected a canonical Statistics result.');
-    expect(outcome.canonicalResult.version).toBe(2);
+    expect(outcome.canonicalResult.version).toBe(7);
     expect(outcome.exactLatex).toBeTruthy();
     expect(outcome.answerRows?.rows.length).toBeGreaterThan(0);
     expect(outcome.answerRows?.rows.every((row) => Boolean(row.label))).toBe(true);
@@ -65,8 +65,8 @@ describe('Statistics vertical answer rows', () => {
     }).outcome;
 
     expect(outcome.kind).toBe('success');
-    if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 2) {
-      throw new Error('Expected a Canonical Result V2 mean-test success.');
+    if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 7) {
+      throw new Error('Expected a current canonical result mean-test success.');
     }
     const hypotheses = outcome.canonicalResult.answerRows?.rows
       .find((row) => row.label === 'Hypotheses');

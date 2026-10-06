@@ -18,6 +18,7 @@ import {
   type StoredVariableValue,
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from '../result-contract/validation-router';
+import { rememberResultCleanup } from './result-cleanup-notice';
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,
@@ -45,6 +46,7 @@ type WebPreviewState = {
   history: unknown[];
   variableMemory: StoredVariableValue[];
   calculatorMemory: CalculatorMemorySnapshot | null;
+  calculatorMemoryRemovedCount?: number;
 };
 
 function hasTauriRuntime() {
@@ -100,6 +102,7 @@ export const HISTORY_CANONICAL_CLEANUP_NOTICE =
 export type HistoryLoadResult = {
   entries: HistoryEntry[];
   removedCount: number;
+  pendingNoticeCount?: number;
 };
 
 type ParsedHistoryLedger = HistoryLoadResult & {
@@ -124,7 +127,7 @@ function hasHistoryEnvelope(value: unknown): value is Record<string, unknown> {
 function isFutureHistoryRow(value: unknown) {
   if (!hasHistoryEnvelope(value) || !isRecord(value.resultDocument)) return false;
   const version = value.resultDocument.version;
-  return typeof version === 'number' && Number.isInteger(version) && version > 4;
+  return typeof version === 'number' && Number.isInteger(version) && version > 4 && version !== 7;
 }
 
 function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {
@@ -202,12 +205,14 @@ function parseCalculatorMemory(payload: unknown): CalculatorMemorySnapshot | nul
   }
 
   const candidate = payload as Record<string, unknown>;
-  const history = parseHistoryLedger(candidate.history).entries;
+  const ledger = parseHistoryLedger(candidate.history);
+  const history = ledger.entries;
   const parsed = calculatorMemorySnapshotSchema.safeParse({
     ...candidate,
     currentMode: 'calculate',
     previousNonGuideMode: 'calculate',
     history,
+    ...(ledger.removedCount > 0 ? { ansLatex: '0' } : {}),
     displayOutcome: null,
     session: {},
   });
@@ -254,6 +259,8 @@ function readWebPreviewState(): WebPreviewState {
       history: Array.isArray(payload.history) ? payload.history : [],
       variableMemory: parseVariableMemory(payload.variableMemory),
       calculatorMemory: parseCalculatorMemory(payload.calculatorMemory),
+      calculatorMemoryRemovedCount: isRecord(payload.calculatorMemory)
+        ? parseHistoryLedger(payload.calculatorMemory.history).removedCount : 0,
     };
   } catch {
     storage.removeItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY);
@@ -350,7 +357,8 @@ export async function loadHistoryEntriesWithCleanup(): Promise<HistoryLoadResult
       writeWebPreviewState((state) => ({ ...state, history: parsed.storageRows }));
     }
   }
-  return { entries: parsed.entries, removedCount: parsed.removedCount };
+  return { entries: parsed.entries, removedCount: parsed.removedCount,
+    pendingNoticeCount: rememberResultCleanup('history', parsed.removedCount) };
 }
 
 export async function loadHistoryEntries(): Promise<HistoryEntry[]> {
@@ -463,8 +471,29 @@ export async function persistVariableMemory(entries: StoredVariableValue[]): Pro
 }
 
 export async function loadCalculatorMemorySnapshot(): Promise<CalculatorMemorySnapshot | null> {
+  return (await loadCalculatorMemorySnapshotWithCleanup()).snapshot;
+}
+
+export async function loadCalculatorMemorySnapshotWithCleanup(): Promise<{
+  snapshot: CalculatorMemorySnapshot | null;
+  removedCount: number;
+  pendingNoticeCount: number;
+}> {
   const payload = await optionalInvoke<CalculatorMemorySnapshot | null>('load_calculator_memory');
-  return hasTauriRuntime() ? parseCalculatorMemory(payload) : readWebPreviewState().calculatorMemory;
+  if (hasTauriRuntime()) {
+    const removedCount = isRecord(payload) ? parseHistoryLedger(payload.history).removedCount : 0;
+    const snapshot = parseCalculatorMemory(payload);
+    if (snapshot && removedCount > 0) await optionalInvoke('save_calculator_memory', { snapshot });
+    return { snapshot, removedCount, pendingNoticeCount: rememberResultCleanup('memory', removedCount) };
+  }
+  const state = readWebPreviewState();
+  const removedCount = state.calculatorMemoryRemovedCount ?? 0;
+  if (removedCount > 0) {
+    // One atomic localStorage replacement; a failed write leaves the original
+    // intact so the next load can safely repeat cleanup.
+    writeWebPreviewState(current => ({ ...current, calculatorMemory: state.calculatorMemory }));
+  }
+  return { snapshot: state.calculatorMemory, removedCount, pendingNoticeCount: rememberResultCleanup('memory', removedCount) };
 }
 
 export async function persistCalculatorMemorySnapshot(

@@ -1,4 +1,5 @@
 // Snapshot of Compute Engine 0.54.1's standard-library definition names.
+// Includes the installed standard LaTeX dictionary heads To and Superminus.
 // Keeping this lookup data-only avoids loading the full engine in display validation.
 const STANDARD_MATHJSON_OPERATORS = new Set(`
 About Abs AbsArg Add AdjugateMatrix AiryAi AiryBi And Annotated Apart Apply Approx
@@ -45,9 +46,9 @@ Reverse Root RotateLeft RotateRight Round Rule SVD Sample Sec Sech Second Sequen
 SetFrom SetMinus Shape Shuffle Sigma0 Sigma1 SigmaMinus1 Sign Signature Simplify Sin Sinc
 Single Sinh Skewness Slice SlidingWindow Sort SpeedOfLight Sqrt Square StandardDeviation
 StandardGravity StefanBoltzmannConstant Stirling String StringFrom Subfactorial Subscript
-Subset SubsetEqual Subtract Succeeds Sum Superset SupersetEqual Supremum Symbol
+Subset SubsetEqual Subtract Succeeds Superminus Sum Superset SupersetEqual Supremum Symbol
 SymmetricDifference Tabulate Tail Take Tally Tan Tanh Text TildeEqual TildeFullEqual Timing
-ToCNF ToDNF Together Totient Trace Transpose Trigamma Triple True Truncate TruthTable Tuple
+To ToCNF ToDNF Together Totient Trace Transpose Trigamma Triple True Truncate TruthTable Tuple
 TupleFrom Type Unevaluated UnicodeScalars Union Unique UnitConvert UnitDimension UnitSimplify
 Utf16 Utf8 VacuumPermittivity Variance Vector Which Wildcard WildcardOptionalSequence
 WildcardSequence Xor ZeroMatrix Zeta Zip __unit__ e i

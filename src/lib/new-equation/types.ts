@@ -1,4 +1,5 @@
-import type { CanonicalResultDocumentV2, CanonicalResultDocumentV6, OutputStyle } from '../../types/calculator';
+import type { OutputStyle } from '../../types/calculator';
+import type { CanonicalResultDocument } from '../../types/calculator/canonical-result-current';
 
 /** New Equation (EQUATION-ADOPTION1): the request, response and draft shapes shared by the page and the worker. */
 export interface EquationLimits { work: number; allocation: number }
@@ -30,11 +31,11 @@ export interface EquationShownCondition { latex: string; text: string }
 
 export interface EquationResponse {
   request: EquationRequest;
-  /** The V6 outcome, or a V2 error document when the input could not be read or the run failed. */
-  document: CanonicalResultDocumentV6 | CanonicalResultDocumentV2;
+  /** The typed Equation outcome, or an ordinary controlled error when the input could not be read or the run failed. */
+  document: CanonicalResultDocument;
   /** Per row: what the row became, or why it could not be read (same length as `request.rows`). */
   rowNotes: EquationRowNote[];
-  /** Presentations per answer style (V6 documents only). */
+  /** Presentations per answer style (current documents only). */
   presentations?: Partial<Record<OutputStyle, EquationPresentationSnapshot>>;
   /** Where the expressions are defined (x > 0 for ln x), as the engine applies it. */
   domainConditions: EquationShownCondition[];

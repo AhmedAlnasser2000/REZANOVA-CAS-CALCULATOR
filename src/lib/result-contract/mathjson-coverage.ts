@@ -1,3 +1,4 @@
+import { collectCanonicalResultMathValues } from './current';
 import { collectCanonicalResultMathValuesV5 } from './validation-v5';
 import { collectCanonicalResultMathValuesV6 } from './validation-v6';
 import type {
@@ -81,6 +82,9 @@ function addParts(
   parts?.forEach((line, lineIndex) => line.forEach((part, partIndex) => {
     if (part.kind === 'math') {
       add(references, part.math, `${path}[${lineIndex}][${partIndex}].math`, mathLeafPath);
+    } else if (part.kind === 'special-function') {
+      addSpecialExpressionLeaves(references, part.expression, `${path}[${lineIndex}][${partIndex}].expression`,
+        path.startsWith('details') ? 'details[*].lines[*][*].expression' : 'summaries.solve[*][*].expression');
     } else if (part.kind === 'row-operation' && 'factor' in part.operation) {
       add(
         references,
@@ -99,13 +103,14 @@ function addSpecialExpressionLeaves(
     { kind: 'special-function-expression' }
   >['expression'],
   path: string,
+  leafBase = 'primary.expression',
 ) {
   if (expression.kind === 'standard-math') {
     add(
       references,
       expression.value,
       path + '.value',
-      'primary.expression.standardMath[*]',
+      `${leafBase}.standardMath[*]` as CanonicalMathLeafPath,
     );
     return;
   }
@@ -113,7 +118,7 @@ function addSpecialExpressionLeaves(
     expression.arguments.forEach((argument, index) => addSpecialExpressionLeaves(
       references,
       argument,
-      `${path}.arguments[${index}]`,
+      `${path}.arguments[${index}]`, leafBase,
     ));
     return;
   }
@@ -123,22 +128,22 @@ function addSpecialExpressionLeaves(
     entries.forEach((entry, index) => addSpecialExpressionLeaves(
       references,
       entry,
-      `${path}.${key}[${index}]`,
+      `${path}.${key}[${index}]`, leafBase,
     ));
     return;
   }
   if (expression.kind === 'quotient') {
-    addSpecialExpressionLeaves(references, expression.numerator, path + '.numerator');
-    addSpecialExpressionLeaves(references, expression.denominator, path + '.denominator');
+    addSpecialExpressionLeaves(references, expression.numerator, path + '.numerator', leafBase);
+    addSpecialExpressionLeaves(references, expression.denominator, path + '.denominator', leafBase);
     return;
   }
   if (expression.kind === 'power') {
-    addSpecialExpressionLeaves(references, expression.base, path + '.base');
-    addSpecialExpressionLeaves(references, expression.exponent, path + '.exponent');
+    addSpecialExpressionLeaves(references, expression.base, path + '.base', leafBase);
+    addSpecialExpressionLeaves(references, expression.exponent, path + '.exponent', leafBase);
     return;
   }
   if (expression.kind === 'negation') {
-    addSpecialExpressionLeaves(references, expression.operand, path + '.operand');
+    addSpecialExpressionLeaves(references, expression.operand, path + '.operand', leafBase);
     return;
   }
   expression.branches.forEach((branch, index) => {
@@ -146,22 +151,45 @@ function addSpecialExpressionLeaves(
       references,
       branch.condition,
       `${path}.branches[${index}].condition`,
-      'primary.expression.piecewiseConditions[*]',
+      `${leafBase}.piecewiseConditions[*]` as CanonicalMathLeafPath,
     );
     addSpecialExpressionLeaves(
       references,
       branch.value,
-      `${path}.branches[${index}].value`,
+      `${path}.branches[${index}].value`, leafBase,
     );
   });
   if (expression.otherwise) {
-    addSpecialExpressionLeaves(references, expression.otherwise, path + '.otherwise');
+    addSpecialExpressionLeaves(references, expression.otherwise, path + '.otherwise', leafBase);
   }
 }
 
 export function collectCanonicalMathLeaves(
   input: CanonicalResultDocument | Pick<NormalizedCanonicalResult, 'sourceVersion' | 'semantics'>,
 ): CanonicalMathLeafReference[] {
+  if ('version' in input && input.version === 7) {
+    const typedPaths = {
+      'rational-antiderivative': 'primary.rationalPrimitive[*]',
+      'exponential-antiderivative': 'primary.exponentialPrimitive[*]',
+      'non-elementary': 'primary.nonElementary[*]',
+      'equation-outcome': 'primary.equationOutcome[*]',
+    } as const;
+    const kind = input.primary?.kind;
+    const typedPath = kind && Object.hasOwn(typedPaths, kind)
+      ? typedPaths[kind as keyof typeof typedPaths] : undefined;
+    if (typedPath || input.integrationRestrictions !== undefined) {
+      const typedLeaves = collectCanonicalResultMathValues(input).flatMap(leaf => {
+        const leafPath = leaf.path.startsWith('$.integrationRestrictions.')
+          ? 'integrationRestrictions[*]' as const
+          : typedPath && leaf.path.startsWith('$.primary.') ? typedPath : undefined;
+        return leafPath ? [{ ...leaf, leafPath }] : [];
+      });
+      const { integrationRestrictions: _restrictions, ...common } = input;
+      void _restrictions;
+      if (typedPath) delete common.primary;
+      return [...typedLeaves, ...collectCanonicalMathLeaves(common)];
+    }
+  }
   if ('version' in input && input.version === 5) {
     const {primary: _primary, ...common} = input; void _primary;
     return [...collectCanonicalResultMathValuesV5(input).map(v => ({...v, leafPath: 'primary.rationalPrimitive[*]' as const})),

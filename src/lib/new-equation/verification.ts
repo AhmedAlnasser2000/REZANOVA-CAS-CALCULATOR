@@ -1,13 +1,14 @@
-import type { CanonicalEquationSetV6, CanonicalResultDocumentV6 } from '../../types/calculator';
+import type { CanonicalEquationSet } from '../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationDocument } from '../../types/calculator/canonical-result-current';
 
 /**
- * The closed "Verified exactly" line of an answer: one fixed sentence per answer type, chosen from the typed V6
+ * The closed "Verified exactly" line of an answer: one fixed sentence per answer type, chosen from the typed Equation
  * outcome (never from printed text). Non-answers have nothing verified and get no line. The per-check report is
  * a later gate (EQUATION-VERIFICATION-REPORT1).
  */
 export interface VerificationSummary { readonly headline: string; readonly detail: string }
 
-type Kind = CanonicalEquationSetV6['kind'];
+type Kind = CanonicalEquationSet['kind'];
 const SENTENCES: Readonly<Record<Kind, string>> = {
   finite: 'Each solution was substituted back into the original rows exactly, and the engine proved there are no others.',
   cofinite: 'The excluded values were checked exactly, and every other value was proved to satisfy the rows.',
@@ -23,14 +24,14 @@ const SENTENCES: Readonly<Record<Kind, string>> = {
   unconfirmed: 'The candidates were checked exactly; they are shown as candidates.',
 };
 
-function kinds(s: CanonicalEquationSetV6, out: Set<Kind>): Set<Kind> {
+function kinds(s: CanonicalEquationSet, out: Set<Kind>): Set<Kind> {
   out.add(s.kind);
   if (s.kind === 'union') s.sets.forEach(x => kinds(x, out));
   if (s.kind === 'case-tree') s.cases.forEach(c => kinds(c.set, out));
   return out;
 }
 
-export function verificationSummary(doc: CanonicalResultDocumentV6): VerificationSummary | undefined {
+export function verificationSummary(doc: CanonicalEquationDocument): VerificationSummary | undefined {
   const p = doc.primary, o = p.outcome;
   if (p.provenance.verification !== 'independent' || (o.kind !== 'solved' && o.kind !== 'empty')) return undefined;
   const assumed = p.assumptions?.length ? ' Cases ruled out by the assumptions were checked to be excluded.' : '';

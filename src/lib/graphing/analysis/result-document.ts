@@ -1,5 +1,5 @@
+import { buildCanonicalResultDocument } from '../../result-contract/current';
 import {
-  buildCanonicalResultDocumentV2,
   requireProvenCanonicalMathValueV2,
 } from '../../result-contract';
 import type {
@@ -44,7 +44,7 @@ export function buildGraphAnalysisCanonicalResult(
   const provisional = evidence.filter((entry) => ![
     'exact-proved', 'numeric-validated',
   ].includes(entry.level)).length;
-  return buildCanonicalResultDocumentV2({
+  return buildCanonicalResultDocument({
     outcomeKind: 'success',
     title: 'Graph analysis',
     ...(firstExact ? { primary: { kind: 'math' as const, value: firstExact } } : {}),

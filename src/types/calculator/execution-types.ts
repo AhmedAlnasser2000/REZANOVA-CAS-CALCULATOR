@@ -180,6 +180,9 @@ export type EvaluateRequest = {
 };
 
 export type EvaluateResponse = {
+  indefiniteIntegralAuthority?: import('../../lib/calculus/engine/shared').CalculusIndefiniteIntegralAuthority;
+  /** Native domain evidence retained by expression normalization. */
+  domainConstraints?: import('./solver-types').SolveDomainConstraint[];
   exactLatex?: string;
   answerMathJson?: import('./math-payload-types').SerializableMathJson;
   answerRows?: EvaluateAnswerRowsReadback;

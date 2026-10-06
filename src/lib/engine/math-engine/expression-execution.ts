@@ -1,4 +1,4 @@
-import type { EvaluateResponse, SerializableMathJson } from '../../../types/calculator';
+import type { EvaluateResponse, SerializableMathJson, SolveDomainConstraint } from '../../../types/calculator';
 import { resolveCalculusEvaluation } from '../../calculus/engine/eval';
 import { latexToApproxText, solutionsToLatex } from '../../display/format';
 import { canUseExpressionNumericFallback } from '../../kernel/runtime-profile';
@@ -102,17 +102,18 @@ function isInvalidRealNumericApprox(approxLatex?: string) {
   return !approxText || approxText.includes('i') || approxText.includes('NaN');
 }
 
-export function executePreparedExpressionAction(
+function executePreparedExpressionActionInternal(
   context: ExpressionActionContext,
+  retain: <T extends { conditionConstraints?: SolveDomainConstraint[]; exclusionConstraints?: SolveDomainConstraint[] } | null>(value: T) => T,
 ): EvaluateResponse {
   const { request, action, executionBudget, preparedRequest, preparedRuntime } = context;
   const { expr, sourceLatex, warnings } = preparedRuntime;
 
   const radical =
     action === 'simplify' || action === 'factor'
-      ? normalizeExactRadicalNode(expr.json, action)
+      ? retain(normalizeExactRadicalNode(expr.json, action))
       : action === 'expand'
-        ? normalizeExactRadicalNode(exactExpression(expr, action).json, 'expand')
+        ? retain(normalizeExactRadicalNode(exactExpression(expr, action).json, 'expand'))
         : null;
 
   const radicalExpr = radical
@@ -135,16 +136,16 @@ export function executePreparedExpressionAction(
 
   const rational =
     action === 'simplify'
-      ? normalizeExactRationalNode(simplifyNormalizedExpr.json, action)
+      ? retain(normalizeExactRationalNode(simplifyNormalizedExpr.json, action))
       : action === 'factor'
-        ? normalizeExactRationalNode(radicalExpr.json, action)
+        ? retain(normalizeExactRationalNode(radicalExpr.json, action))
       : null;
   if (rational) {
       const rationalDetailSections = assumptionFactsToDetailSections(rational.assumptionFacts);
       const detailSections = rationalDetailSections.length > 0 ? rationalDetailSections : undefined;
       const powerLog =
         action === 'simplify'
-          ? normalizeExactPowerLogNode(rational.normalizedNode, 'simplify')
+          ? retain(normalizeExactPowerLogNode(rational.normalizedNode, 'simplify'))
           : null;
       const exactExpr = ce.box(rational.normalizedNode as Parameters<typeof ce.box>[0]) as BoxedLike;
       const approx = isNumericOnlyNode(exactExpr.json)
@@ -234,7 +235,7 @@ export function executePreparedExpressionAction(
     }
 
     if ((radical || absoluteValue) && action === 'simplify') {
-      const powerLog = normalizeExactPowerLogNode(simplifyNormalizedExpr.json, 'simplify');
+      const powerLog = retain(normalizeExactPowerLogNode(simplifyNormalizedExpr.json, 'simplify'));
       const approx = isNumericOnlyNode(simplifyNormalizedExpr.json)
         ? numericExpression(simplifyNormalizedExpr)
         : undefined;
@@ -313,7 +314,7 @@ export function executePreparedExpressionAction(
     }
 
     if (action === 'simplify') {
-      const powerLog = normalizeExactPowerLogNode(simplifyNormalizedExpr.json, 'simplify');
+      const powerLog = retain(normalizeExactPowerLogNode(simplifyNormalizedExpr.json, 'simplify'));
       if (powerLog?.handled) {
         if (
           canUseExpressionNumericFallback(
@@ -463,6 +464,7 @@ export function executePreparedExpressionAction(
             warnings: [...warnings, ...calculus.warnings],
             resultOrigin: calculus.resultOrigin,
             calculusStrategy: calculus.integrationStrategy,
+            indefiniteIntegralAuthority: calculus.indefiniteIntegralAuthority,
             calculusDerivativeStrategies: calculus.derivativeStrategies,
             detailSections: calculus.detailSections,
             mathJsonLeaves: calculus.mathJsonLeaves,
@@ -593,4 +595,25 @@ export function executePreparedExpressionAction(
           ? 'symbolic-engine'
           : undefined,
     };
+}
+
+/** Collect proof-bearing normalization data at its owning engine boundary. */
+export function executePreparedExpressionAction(context: ExpressionActionContext): EvaluateResponse {
+  const constraints: SolveDomainConstraint[] = [];
+  const response = executePreparedExpressionActionInternal(context, value => {
+    constraints.push(...(value?.conditionConstraints ?? []), ...(value?.exclusionConstraints ?? []));
+    return value;
+  });
+  if (!constraints.length) return response;
+  return {
+    ...response,
+    domainConstraints: constraints,
+    mathJsonLeaves: [
+      ...(response.mathJsonLeaves ?? []),
+      ...constraints.flatMap(constraint => 'expressionLatex' in constraint && constraint.expressionMathJson !== undefined
+        ? [{ canonicalLatex: constraint.expressionLatex, mathJson: constraint.expressionMathJson,
+            source: `expression-normalization:${constraint.kind}` }]
+        : []),
+    ],
+  };
 }

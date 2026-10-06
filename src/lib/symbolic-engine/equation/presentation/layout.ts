@@ -1,9 +1,9 @@
-import type {
-  CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationIntervalV6, CanonicalEquationOutcomeV6,
-  CanonicalEquationRootBinderV6, CanonicalEquationSetV6, CanonicalMathValueV2, CanonicalResultDocumentV6, OutputStyle, SerializableMathJson,
-} from '../../../../types/calculator';
+import type { OutputStyle, SerializableMathJson } from '../../../../types/calculator';
+import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationDocument } from '../../../../types/calculator/canonical-result-current';
+import type { CanonicalMathValue } from '../../../../types/calculator/canonical-result-common';
 import { chainRelations, printEquationMath, printRelation, printSigned, type PrintedRelation, type RelationOperator } from '../../../display/printer/equation-v6';
-import { validateCanonicalResultDocumentV6 } from '../../../result-contract/validation-v6';
+import { validateCanonicalAnswer } from '../../../result-contract/current';
 import { EquationAlgebraError, type ExecutionContext } from '../core/execution';
 import { compareReal, type RealRootOf } from '../core/algebraic/root-of';
 import { ExpressionStore, type ExprId } from '../core/representation/expression';
@@ -13,7 +13,7 @@ import { readRootBinders, type RootBinders } from '../result-read';
 import { decimalOf, displayForm, orderPoints, provenEqual, type Decimal } from './values';
 
 /**
- * The presentation read model of a V6 Equation document (EQUATION-PRESENTATION1, part B).
+ * The presentation read model of a typed Equation document (EQUATION-PRESENTATION1, part B).
  *
  * Rows for the screen follow the user's settings (Exact, Decimal, Both; decimal places); `copyLatex` is always
  * exact and carries the definition of every root it mentions. Value rewrites come from `values.ts` (proven by the
@@ -24,7 +24,7 @@ export interface EquationPresentationSettings { readonly outputStyle: OutputStyl
 export type PresentationRole = 'assumption' | 'solution' | 'case' | 'definition' | 'message';
 export interface PresentationRow { readonly role: PresentationRole; readonly depth: number; readonly latex: string; readonly text: string }
 export interface EquationPresentation {
-  readonly outcome: CanonicalEquationOutcomeV6['kind'];
+  readonly outcome: CanonicalEquationOutcome['kind'];
   readonly rows: readonly PresentationRow[];
   readonly copyLatex: string;
   readonly plainText: string;
@@ -50,16 +50,16 @@ interface Core { store: ExpressionStore; binders: RootBinders; values: Map<strin
 class Layout {
   readonly rows: PresentationRow[] = [];
   readonly used = new Set<string>();
-  readonly #binder = new Map<string, CanonicalEquationRootBinderV6>();
+  readonly #binder = new Map<string, CanonicalEquationRootBinder>();
   readonly #domain: 'real' | 'complex';
   readonly #targets: string[];
   readonly #taken: Set<string>;
-  readonly #doc: CanonicalResultDocumentV6;
+  readonly #doc: CanonicalEquationDocument;
   readonly #core: Core | undefined;
   readonly #style: OutputStyle;
   readonly #digits: number;
   readonly #copy: boolean;
-  constructor(doc: CanonicalResultDocumentV6, core: Core | undefined, settings: EquationPresentationSettings, copy: boolean) {
+  constructor(doc: CanonicalEquationDocument, core: Core | undefined, settings: EquationPresentationSettings, copy: boolean) {
     this.#doc = doc; this.#core = core; this.#copy = copy;
     this.#style = copy ? 'exact' : settings.outputStyle;
     this.#digits = settings.approxDigits;
@@ -72,14 +72,14 @@ class Layout {
   // ---- values ----
 
   /** Exact display of a math leaf (proven rewrites when the core is available). */
-  exact(v: CanonicalMathValueV2): P {
+  exact(v: CanonicalMathValue): P {
     const json = this.exactJson(v);
     return printEquationMath(json, { constants: this.#constants }) ?? { latex: v.canonicalLatex, text: v.canonicalLatex };
   }
 
   get #constants(): ReadonlySet<string> { return new Set(this.#binder.keys()); }
 
-  exactJson(v: CanonicalMathValueV2): SerializableMathJson {
+  exactJson(v: CanonicalMathValue): SerializableMathJson {
     let json = v.mathJson;
     const core = this.#core;
     if (core) {
@@ -104,14 +104,14 @@ class Layout {
     }
   }
 
-  #decimal(v: CanonicalMathValueV2): Decimal | undefined {
+  #decimal(v: CanonicalMathValue): Decimal | undefined {
     const core = this.#core;
     if (!core) return undefined;
     const value = this.pointValue(v);
     return value ? decimalOf(core.store, value, this.#digits, this.#domain) : undefined;
   }
 
-  pointValue(v: CanonicalMathValueV2): PointValue | undefined {
+  pointValue(v: CanonicalMathValue): PointValue | undefined {
     const core = this.#core;
     if (!core) return undefined;
     const j = v.mathJson;
@@ -134,7 +134,7 @@ class Layout {
   }
 
   /** "= exact", "≈ decimal" or "= exact ≈ decimal" for one value, by the output style. */
-  valued(v: CanonicalMathValueV2): { rel: P; bare: boolean; rootDecimal?: true } {
+  valued(v: CanonicalMathValue): { rel: P; bare: boolean; rootDecimal?: true } {
     const bareRoot = this.bareRoot(v);
     if (bareRoot && !this.#copy) {
       const d = this.#decimal(v);
@@ -152,7 +152,7 @@ class Layout {
   }
 
   /** A value without its relation sign (endpoints, excepted points): exact, or decimal in Decimal style. */
-  plain(v: CanonicalMathValueV2): P {
+  plain(v: CanonicalMathValue): P {
     const exact = this.exact(v);
     if (this.#style !== 'decimal') return exact;
     const d = this.#decimal(v);
@@ -167,7 +167,7 @@ class Layout {
 
   // ---- conditions, intervals ----
 
-  condition(c: CanonicalEquationConditionV6): { printed: P | PrintedRelation; key: string } {
+  condition(c: CanonicalEquationCondition): { printed: P | PrintedRelation; key: string } {
     if (c.kind === 'in-domain') {
       const json = this.exactJson(c.expr), e = printEquationMath(json, { constants: this.#constants }) ?? { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex };
       return { printed: { latex: `${e.latex}\\text{ is defined}`, text: `${e.text} is defined` }, key: `${JSON.stringify(json)}\u0000z` };
@@ -182,7 +182,7 @@ class Layout {
   }
 
   /** Conditions joined by "and", in reading order, with paired bounds chained (−1 ≤ y ≤ 1). */
-  conditions(cs: readonly CanonicalEquationConditionV6[]): P {
+  conditions(cs: readonly CanonicalEquationCondition[]): P {
     let parts: (P | PrintedRelation)[] = cs.map(c => this.condition(c)).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).map(c => c.printed);
     for (let i = 0; i < parts.length; i++) {
       const a = parts[i];
@@ -196,12 +196,12 @@ class Layout {
     return { latex: parts.map(p => p.latex).join('\\text{ and }'), text: parts.map(p => p.text).join(' and ') };
   }
 
-  endpoint(e: CanonicalEquationEndpointV6): P {
+  endpoint(e: CanonicalEquationEndpoint): P {
     if (e.kind === 'infinity') return e.sign < 0 ? { latex: '-\\infty', text: '-∞' } : { latex: '\\infty', text: '∞' };
     return this.plain(e.value);
   }
 
-  interval(i: CanonicalEquationIntervalV6): P {
+  interval(i: CanonicalEquationInterval): P {
     if (i.lo.kind === 'value' && i.hi.kind === 'value' && JSON.stringify(i.lo.value.mathJson) === JSON.stringify(i.hi.value.mathJson)) {
       const v = this.plain(i.lo.value);
       return { latex: `\\left\\{${v.latex}\\right\\}`, text: `{${v.text}}` };
@@ -210,7 +210,7 @@ class Layout {
     return { latex: `\\left${i.loClosed ? '[' : '('}${lo.latex}, ${hi.latex}\\right${i.hiClosed ? ']' : ')'}`, text: `${i.loClosed ? '[' : '('}${lo.text}, ${hi.text}${i.hiClosed ? ']' : ')'}` };
   }
 
-  whole(i: CanonicalEquationIntervalV6): boolean { return i.lo.kind === 'infinity' && i.hi.kind === 'infinity'; }
+  whole(i: CanonicalEquationInterval): boolean { return i.lo.kind === 'infinity' && i.hi.kind === 'infinity'; }
 
   space(): P { return this.#domain === 'real' ? { latex: '\\mathbb{R}', text: 'ℝ' } : { latex: '\\mathbb{C}', text: 'ℂ' }; }
 
@@ -222,7 +222,7 @@ class Layout {
   }
 
   /** a + P·k with a first (the user's family notation), each part with proven rewrites. */
-  shifted(a: CanonicalMathValueV2, period: CanonicalMathValueV2, k: string): P {
+  shifted(a: CanonicalMathValue, period: CanonicalMathValue, k: string): P {
     const stepJson = this.exactJson({ mathJson: ['Multiply', period.mathJson, k], canonicalLatex: '' });
     const step = printSigned(stepJson, { constants: this.#constants });
     const base = typeof a.mathJson === 'number' && a.mathJson === 0 ? undefined : this.exact(a);
@@ -236,7 +236,7 @@ class Layout {
 
   push(role: PresentationRole, depth: number, p: P): void { this.rows.push({ role, depth, latex: p.latex, text: p.text }); }
 
-  solutionRow(depth: number, values: readonly CanonicalMathValueV2[], suffix: P = { latex: '', text: '' }): void {
+  solutionRow(depth: number, values: readonly CanonicalMathValue[], suffix: P = { latex: '', text: '' }): void {
     const lhs = this.lhs();
     if (values.length === 1) {
       const { rel, rootDecimal } = this.valued(values[0]);
@@ -253,22 +253,22 @@ class Layout {
 
   /** "the 2nd smallest real root of x⁷ − 3x + 1 = 0" under a row that shows the root's decimal. */
   inlineDefinition(depth: number, symbol: string, variable: string, named: boolean): void {
-    const what = this.describe(this.#binder.get(symbol) as CanonicalEquationRootBinderV6, variable);
+    const what = this.describe(this.#binder.get(symbol) as CanonicalEquationRootBinder, variable);
     const name = printEquationMath(variable) ?? { latex: variable, text: variable };
     this.push('definition', depth, named ? { latex: `${name.latex}:\\ ${what.latex}`, text: `${name.text}: ${what.text}` } : what);
   }
 
-  plainOrRoot(v: CanonicalMathValueV2): P {
+  plainOrRoot(v: CanonicalMathValue): P {
     if (this.bareRoot(v) && !this.#copy) { const d = this.#decimal(v); if (d) return this.decimalText(d); }
     return this.plain(v);
   }
 
   /** A value that is a root binder without a proven closed form. */
-  bareRoot(v: CanonicalMathValueV2): boolean {
+  bareRoot(v: CanonicalMathValue): boolean {
     return typeof v.mathJson === 'string' && this.#binder.has(v.mathJson) && !this.#core?.forms.has(v.mathJson);
   }
 
-  set(s: CanonicalEquationSetV6, depth: number): void {
+  set(s: CanonicalEquationSet, depth: number): void {
     const lhs = this.lhs(), space = this.space();
     switch (s.kind) {
       case 'finite': {
@@ -356,7 +356,7 @@ class Layout {
     }
   }
 
-  order(points: readonly CanonicalMathValueV2[][]): CanonicalMathValueV2[][] {
+  order(points: readonly CanonicalMathValue[][]): CanonicalMathValue[][] {
     const core = this.#core;
     if (!core) return [...points];
     const values = points.map(p => p.map(v => this.pointValue(v)));
@@ -374,13 +374,13 @@ class Layout {
       for (const s of [...this.used]) {
         if (seen.has(s)) continue;
         seen.add(s); progress = true;
-        this.definition(this.#binder.get(s) as CanonicalEquationRootBinderV6);
+        this.definition(this.#binder.get(s) as CanonicalEquationRootBinder);
       }
     }
   }
 
   /** Which root a binder is, in words, with its polynomial in `variable`. */
-  describe(b: CanonicalEquationRootBinderV6, variable: string): P {
+  describe(b: CanonicalEquationRootBinder, variable: string): P {
     const rename = (j: SerializableMathJson): SerializableMathJson => (j === b.symbol ? variable : Array.isArray(j) ? (j.map(x => rename(x as SerializableMathJson)) as unknown as SerializableMathJson) : j);
     const poly = printEquationMath(rename(b.polynomial.mathJson), { descendingIn: variable }) ?? { latex: b.polynomial.canonicalLatex, text: b.polynomial.canonicalLatex };
     const eq = { latex: `${poly.latex} = 0`, text: `${poly.text} = 0` };
@@ -416,7 +416,7 @@ class Layout {
     }
   }
 
-  definition(b: CanonicalEquationRootBinderV6): void {
+  definition(b: CanonicalEquationRootBinder): void {
     const name = printEquationMath(b.symbol) ?? { latex: b.symbol, text: b.symbol };
     const d = this.#copy ? undefined : this.#decimal({ mathJson: b.symbol, canonicalLatex: '' });
     const approx = d ? (() => { const t = this.decimalText(d); return { latex: ` \\approx ${t.latex}`, text: ` ≈ ${t.text}` }; })() : { latex: '', text: '' };
@@ -453,7 +453,7 @@ class Layout {
   }
 }
 
-function coreFor(doc: CanonicalResultDocumentV6, ctx: ExecutionContext): Core {
+function coreFor(doc: CanonicalEquationDocument, ctx: ExecutionContext): Core {
   const store = new ExpressionStore(ctx), binders = readRootBinders(store, doc);
   const values = new Map<string, ExprId>(), forms = new Map<string, ExprId>();
   for (const [s, v] of binders.algebraic) {
@@ -466,7 +466,7 @@ function coreFor(doc: CanonicalResultDocumentV6, ctx: ExecutionContext): Core {
   return { store, binders, values, forms };
 }
 
-function present(doc: CanonicalResultDocumentV6, settings: EquationPresentationSettings, core: Core | undefined): EquationPresentation {
+function present(doc: CanonicalEquationDocument, settings: EquationPresentationSettings, core: Core | undefined): EquationPresentation {
   const screen = new Layout(doc, core, settings, false);
   screen.build();
   const copy = new Layout(doc, core, settings, true);
@@ -484,9 +484,9 @@ function present(doc: CanonicalResultDocumentV6, settings: EquationPresentationS
 
 /**
  * Conditions on the problem's own expressions (no root binders), each laid out like a case condition, in reading
- * order. Each value must be in the V6 grammar with its canonical LaTeX (the caller projects them).
+ * order. Each value must be in the Equation grammar with its canonical LaTeX (the caller projects them).
  */
-export function presentConditionList(conditions: readonly CanonicalEquationConditionV6[]): { latex: string; text: string }[] {
+export function presentConditionList(conditions: readonly CanonicalEquationCondition[]): { latex: string; text: string }[] {
   const op: Record<string, RelationOperator> = { nonzero: 'ne', positive: 'gt', nonnegative: 'ge', equal: 'eq', 'not-equal': 'ne' };
   return conditions.map(c => {
     if (c.kind === 'in-domain') { const e = printEquationMath(c.expr.mathJson); return e ? { latex: `${e.latex}\\text{ is defined}`, text: `${e.text} is defined` } : { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex }; }
@@ -494,10 +494,10 @@ export function presentConditionList(conditions: readonly CanonicalEquationCondi
   }).map(p => ({ latex: p.latex, text: p.text }));
 }
 
-/** Present a V6 Equation document. `ctx` budgets the core work (rewrites, decimals, order); a stop falls back. */
-export function presentEquationV6(input: unknown, settings: EquationPresentationSettings, ctx: ExecutionContext): EquationPresentation {
-  const checked = validateCanonicalResultDocumentV6(input);
-  if (!checked.ok) throw new Error(`Not a valid V6 Equation document: ${checked.failure.message}`);
+/** Present a typed Equation document. `ctx` budgets the core work (rewrites, decimals, order); a stop falls back. */
+export function presentEquation(input: unknown, settings: EquationPresentationSettings, ctx: ExecutionContext): EquationPresentation {
+  const checked = validateCanonicalAnswer(input, 'equation-outcome');
+  if (!checked.ok) throw new Error(`Not a valid typed Equation document: ${checked.failure.message}`);
   const doc = checked.validated.value;
   try {
     return present(doc, settings, coreFor(doc, ctx));

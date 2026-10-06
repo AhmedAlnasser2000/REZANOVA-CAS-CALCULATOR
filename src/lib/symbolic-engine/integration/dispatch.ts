@@ -96,7 +96,7 @@ function tryBoundedCarrierSubstitutionRoute(node: unknown, variable: string) {
         'calculus.integration:bounded-carrier-substitution',
       ),
       undefined,
-      undefined,
+      boundedCarrierSubstitution.detailNodes,
       boundedCarrierSubstitution.trustMode ?? 'backcheck')
     : undefined;
 }

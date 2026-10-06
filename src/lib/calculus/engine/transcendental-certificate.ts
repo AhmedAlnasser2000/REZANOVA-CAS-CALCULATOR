@@ -11,5 +11,6 @@ export function transcendentalCertificateToCalculusEvaluation(
     warnings: [],
     resultOrigin: 'rule-based-symbolic',
     detailSections: certificate.detailSections,
+    mathJsonLeaves: certificate.mathJsonLeaves,
   };
 }

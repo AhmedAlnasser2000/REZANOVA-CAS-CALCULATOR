@@ -22,7 +22,7 @@ import {
   bootApp,
   clearCalculatorMemorySnapshot,
   isDesktopRuntime,
-  loadCalculatorMemorySnapshot,
+  loadCalculatorMemorySnapshotWithCleanup,
   loadHistoryEntriesWithCleanup,
   persistCalculatorMemorySnapshot,
   persistMode,
@@ -38,10 +38,11 @@ import { historyEntryFixture } from '../../test-utils/history-result-document';
 vi.mock('../../lib/app-state/persistence', () => ({
   HISTORY_CANONICAL_CLEANUP_NOTICE: (count: number) =>
     `${count} incompatible History ${count === 1 ? 'record was' : 'records were'} removed.`,
+  acknowledgeResultCleanupNotice: vi.fn(),
   bootApp: vi.fn(),
   clearCalculatorMemorySnapshot: vi.fn(),
   isDesktopRuntime: vi.fn(),
-  loadCalculatorMemorySnapshot: vi.fn(),
+  loadCalculatorMemorySnapshotWithCleanup: vi.fn(),
   loadHistoryEntriesWithCleanup: vi.fn(),
   persistCalculatorMemorySnapshot: vi.fn(),
   persistMode: vi.fn(),
@@ -170,7 +171,7 @@ describe('useAppPersistenceRuntime', () => {
     vi.mocked(isDesktopRuntime).mockReturnValue(false);
     vi.mocked(bootApp).mockResolvedValue(null as unknown as AppBootstrap);
     vi.mocked(loadHistoryEntriesWithCleanup).mockResolvedValue({ entries: [], removedCount: 0 });
-    vi.mocked(loadCalculatorMemorySnapshot).mockResolvedValue(null);
+    vi.mocked(loadCalculatorMemorySnapshotWithCleanup).mockResolvedValue({snapshot: null, removedCount: 0, pendingNoticeCount: 0});
     vi.mocked(persistCalculatorMemorySnapshot).mockImplementation(async (snapshot) => snapshot);
     vi.mocked(persistMode).mockResolvedValue({
       activeMode: 'calculate',
@@ -199,7 +200,7 @@ describe('useAppPersistenceRuntime', () => {
         calculatorMemoryEnabled: true,
       },
     }));
-    vi.mocked(loadCalculatorMemorySnapshot).mockResolvedValue(snapshot);
+    vi.mocked(loadCalculatorMemorySnapshotWithCleanup).mockResolvedValue({snapshot, removedCount: 0, pendingNoticeCount: 0});
 
     const { hook } = renderAppPersistenceRuntime({ delegates });
 
@@ -259,6 +260,17 @@ describe('useAppPersistenceRuntime', () => {
     expect(delegates.setClipboardNotice).toHaveBeenCalledWith(
       '2 incompatible History records were removed.',
     );
+  });
+
+  it('restores cleaned calculator memory and reports its removed results once', async () => {
+    const delegates = createDelegates();
+    const snapshot = createSnapshot({ ansLatex: '0', displayOutcome: null });
+    vi.mocked(loadCalculatorMemorySnapshotWithCleanup).mockResolvedValue({snapshot, removedCount: 1, pendingNoticeCount: 1});
+    const { hook } = renderAppPersistenceRuntime({ delegates });
+    await waitFor(() => expect(hook.result.current.hydrated).toBe(true));
+    expect(delegates.restoreHistoryDisplayMemorySnapshot).toHaveBeenCalledWith(snapshot);
+    expect(delegates.setClipboardNotice).toHaveBeenCalledTimes(1);
+    expect(delegates.setClipboardNotice).toHaveBeenCalledWith('1 incompatible History record was removed.');
   });
 
   it('persists settings only after the hydrated settings baseline is established', async () => {

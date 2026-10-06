@@ -223,6 +223,7 @@ export type ResultProducerDraftV4 =
     });
 
 export type VersionedResultProducerDraft =
+  | import('./canonical-result-runtime').CurrentResultProducerDraft
   | ResultProducerDraft
   | ResultProducerDraftV2
   | ResultProducerDraftV3

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateCanonicalResultDocumentV2 } from '../../result-contract';
+import { validateCanonicalResultDocument } from '../../result-contract/current';
 import type { GraphAnalysisRequestV1, GraphExpressionIR } from '../contracts';
 import { runGraphAnalysisRequest } from './analyze';
 import { validateGraphAnalysisRequest, validateGraphAnalysisResult } from './validation';
@@ -44,7 +44,7 @@ describe('Graph analysis authority', () => {
     expect(result.evidence.find((entry) => entry.feature === 'extremum')).toMatchObject({
       level: 'exact-proved', coordinates: { x: { value: { canonicalLatex: '0' } }, y: { value: { canonicalLatex: '-4' } } },
     });
-    expect(validateCanonicalResultDocumentV2(result.canonicalResult).ok).toBe(true);
+    expect(validateCanonicalResultDocument(result.canonicalResult).ok).toBe(true);
     expect(validateGraphAnalysisResult(structuredClone(result)).ok).toBe(true);
   });
 

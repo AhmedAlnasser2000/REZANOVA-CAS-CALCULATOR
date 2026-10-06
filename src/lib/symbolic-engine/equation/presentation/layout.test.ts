@@ -8,7 +8,7 @@ import { readRelations } from '../core/representation/mathjson';
 import { relationProblem, type ProblemDomain } from '../core/representation/relation';
 import { CORPUS } from '../core/bench/corpus';
 import { projectEquationOutcome } from '../result';
-import { presentEquationV6 } from './layout';
+import { presentEquation } from './layout';
 
 function documentOf(json: unknown, targets = ['x'], domain: ProblemDomain = 'real') {
   const store = new ExpressionStore(context());
@@ -18,7 +18,7 @@ function documentOf(json: unknown, targets = ['x'], domain: ProblemDomain = 'rea
   return projectEquationOutcome(problem, decideEquation(problem)).canonicalResult;
 }
 const text = (json: unknown, outputStyle: OutputStyle = 'both', approxDigits = 6, targets = ['x'], domain: ProblemDomain = 'real') =>
-  presentEquationV6(documentOf(json, targets, domain), { outputStyle, approxDigits }, context()).plainText;
+  presentEquation(documentOf(json, targets, domain), { outputStyle, approxDigits }, context()).plainText;
 const eq = (a: unknown, b: unknown = 0) => ['Equal', a, b];
 const add = (...a: unknown[]) => ['Add', ...a], mul = (...a: unknown[]) => ['Multiply', ...a], pow = (a: unknown, k: unknown) => ['Power', a, k];
 
@@ -67,7 +67,7 @@ group('presentation goldens', () => {
   });
 
   it('non-answers carry a message and the owner', () => {
-    const p = presentEquationV6(documentOf(eq(['Cos', 'x'], 'x')), { outputStyle: 'both', approxDigits: 6 }, context());
+    const p = presentEquation(documentOf(eq(['Cos', 'x'], 'x')), { outputStyle: 'both', approxDigits: 6 }, context());
     expect(p.outcome).toBe('incomplete');
     expect(p.owner).toBe('EQUATION-CERTIFIED-NUMERICS1');
     expect(p.rows[0].role).toBe('message');
@@ -78,7 +78,7 @@ group('copy, authority and fallback', () => {
   it.each(CORPUS.map(c => [c.id, c] as const))('%s presents; copy is exact with every root defined; the document is untouched', (_, c) => {
     const d = documentOf(c.json, [...(c.targets ?? ['x'])], c.domain ?? 'real');
     const before = JSON.stringify(d);
-    const p = presentEquationV6(d, { outputStyle: 'both', approxDigits: 6 }, context());
+    const p = presentEquation(d, { outputStyle: 'both', approxDigits: 6 }, context());
     expect(JSON.stringify(d)).toBe(before);
     expect(p.rows.length).toBeGreaterThan(0);
     expect(p.copyLatex).not.toContain('\\approx');
@@ -87,15 +87,15 @@ group('copy, authority and fallback', () => {
 
   it('a stopped core falls back to the printer alone (no rewrites, no decimals)', () => {
     const d = documentOf(eq(add(pow('x', 2), -12)));
-    const full = presentEquationV6(d, { outputStyle: 'both', approxDigits: 6 }, context());
+    const full = presentEquation(d, { outputStyle: 'both', approxDigits: 6 }, context());
     expect(full.plainText).toBe('x = -2√3 ≈ -3.464102\nx = 2√3 ≈ 3.464102');
-    const fallback = presentEquationV6(d, { outputStyle: 'both', approxDigits: 6 }, context({ work: 1 }));
+    const fallback = presentEquation(d, { outputStyle: 'both', approxDigits: 6 }, context({ work: 1 }));
     expect(fallback.fallback).toBe(true);
     expect(fallback.plainText).not.toContain('≈');
   });
 
-  it('rejects a document that is not valid V6', () => {
-    expect(() => presentEquationV6({ version: 6 }, { outputStyle: 'exact', approxDigits: 6 }, context())).toThrow(/valid V6/);
+  it('rejects a document that is not valid current', () => {
+    expect(() => presentEquation({ version: 7 }, { outputStyle: 'exact', approxDigits: 6 }, context())).toThrow(/valid typed Equation/);
   });
 });
 

@@ -3,7 +3,7 @@ import {
   type MathJsonRouteId,
 } from './mathjson-route-registry';
 
-export type CanonicalResultProducerVersion = 1 | 2 | 3 | 4 | 5 | 6;
+export type CanonicalResultProducerVersion = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type CanonicalResultProducerVersionPolicy = {
   defaultVersion: CanonicalResultProducerVersion;
@@ -129,6 +129,23 @@ export const CANONICAL_RESULT_V4_PRODUCER_SELECTORS = (
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
+// Temporary migration inventory; removed with historical version dispatch at retirement.
+export const CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES = (
+  [
+    'graphing.analysis',
+    'calculate.arithmetic', 'calculate.exact-forms', 'calculate.trigonometry',
+    'calculate.inverse-trigonometry', 'calculate.transforms', 'calculate.ans',
+    'calculate.numeric-format', 'calculate.derivatives', 'calculate.integrals', 'calculate.limits',
+    'statistics.descriptive', 'statistics.frequency', 'statistics.probability',
+    'statistics.relationship', 'statistics.inference',
+    'matrix.matrix-arithmetic', 'matrix.determinant', 'matrix.inverse', 'matrix.rank',
+    'matrix.linear-system', 'matrix.profile', 'matrix.definiteness', 'matrix.numeric-decomposition',
+    'vector.dot-product', 'vector.cross-product', 'vector.norm', 'vector.angle',
+    'vector.orthogonalization', 'vector.span-independence', 'vector.geometric-measures',
+  ] as const satisfies readonly MathJsonRouteId[]
+);
+const currentRoutes = new Set<string>(CANONICAL_RESULT_CURRENT_PRODUCER_ROUTES);
+
 const v2DefaultRoutes = new Set<string>(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES);
 const v2Selectors = CANONICAL_RESULT_V2_PRODUCER_SELECTORS as Partial<
   Record<MathJsonRouteId, readonly string[]>
@@ -145,7 +162,7 @@ export const CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY = Object.freeze(
     (Object.keys(MATHJSON_ROUTE_REGISTRY) as MathJsonRouteId[]).map((routeId) => [
       routeId,
       {
-        defaultVersion: v2DefaultRoutes.has(routeId) || !frozenV1Routes.has(routeId)
+        defaultVersion: currentRoutes.has(routeId) ? 7 : v2DefaultRoutes.has(routeId) || !frozenV1Routes.has(routeId)
           ? 2
           : 1,
         selectorVersions: Object.freeze(Object.fromEntries([
@@ -167,6 +184,7 @@ export function canonicalResultVersionForProducer(input: {
   if (!policy) {
     throw new Error('Unknown canonical result producer route: ' + input.routeId + '.');
   }
+  if (currentRoutes.has(input.routeId)) return 7;
   if (input.selector) {
     const selectedVersion = policy.selectorVersions[input.selector];
     if (selectedVersion !== undefined) return selectedVersion;

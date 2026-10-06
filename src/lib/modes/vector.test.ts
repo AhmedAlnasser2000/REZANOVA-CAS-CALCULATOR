@@ -67,7 +67,7 @@ describe('runVectorMode', () => {
     expect(outcome.kind === 'success' ? outcome.detailSections?.map((section) => section.title) : [])
       .toEqual(['Span Facts', 'Dependence Relation', 'RREF Evidence']);
     const document = outcome.kind === 'success' ? outcome.canonicalResult : undefined;
-    expect(document?.version === 2
+    expect(document?.version === 7
       ? document.primary
       : undefined).toMatchObject({
       kind: 'linear-independence',

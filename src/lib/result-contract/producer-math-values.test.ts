@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createCalculusResultOutcome } from '../calculus/workspace/result-document';
 import { createEquationResultOutcome } from '../equation/equation-solve-result';
 import { createGeometryResultOutcome } from '../geometry/result-document';
-import { buildCalculateResultDocument } from '../modes/calculate/result-document';
+import { createCalculateResultOutcome } from '../modes/calculate/result-document';
 import { createTableResultOutcome } from '../modes/table-result-document';
 import { createStatisticsResultOutcome } from '../statistics/result-document';
 import { createTrigonometryResultOutcome } from '../trigonometry/result-document';
@@ -44,13 +44,11 @@ function expectNativeProvenPrimary(
 
 describe('workspace canonical producer math values', () => {
   it('passes direct proven values through Calculate, Equation, and Calculus owners', () => {
-    const calculate = buildCalculateResultDocument({
-      outcomeKind: 'success',
-      title: success.title,
-      exactLatex: success.exactLatex,
-      warnings: [],
-    }, options);
-    expect(calculate.primaryMath).toEqual(primaryMath);
+    const currentMath = requireProvenCanonicalMathValueV2({ canonicalLatex: success.exactLatex,
+      mathJson: ['Equal', 'x', 1], owner: 'calculate', routeId: 'calculate.arithmetic', source: 'native-adapter-test' });
+    const calculate = createCalculateResultOutcome(success, () => currentMath);
+    expect(calculate.canonicalResult.version).toBe(7);
+    expect(calculate.canonicalResult.primary).toEqual({ kind: 'math', value: currentMath });
 
     expectNativeProvenPrimary(createEquationResultOutcome(success, options));
     expectNativeProvenPrimary(createCalculusResultOutcome(success, options));
@@ -68,7 +66,7 @@ describe('workspace canonical producer math values', () => {
       source: 'workspace-adapter-test',
     });
     const statistics = createStatisticsResultOutcome(success, () => statisticsMath);
-    expect(statistics.canonicalResult.version).toBe(2);
+    expect(statistics.canonicalResult.version).toBe(7);
     expect(statistics.canonicalResult.primary).toEqual({
       kind: 'math',
       value: statisticsMath,

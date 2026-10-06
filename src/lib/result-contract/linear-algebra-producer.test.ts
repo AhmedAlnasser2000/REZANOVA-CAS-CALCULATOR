@@ -58,14 +58,14 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runMatrixMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Matrix success.');
-    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult?.version).toBe(7);
     expect(outcome.canonicalResult
       ? collectCanonicalMathLeaves(outcome.canonicalResult)
         .find((entry) => entry.path === 'primary.value')?.value.mathJson
       : undefined).toBeDefined();
   });
 
-  it('stores Matrix-system row operations as typed V2 semantics with proven factors', () => {
+  it('stores Matrix-system row operations as current typed semantics with proven factors', () => {
     const outcome = runMatrixMode({
       operation: 'linearSystem',
       matrixA: [[2, 1], [1, -1]],
@@ -78,12 +78,12 @@ describe('Linear Algebra canonical result producers', () => {
       throw new Error('Expected Matrix-system canonical result.');
     }
     const leaves = collectCanonicalMathLeaves(outcome.canonicalResult);
-    expect(outcome.canonicalResult.version).toBe(2);
+    expect(outcome.canonicalResult.version).toBe(7);
     expect(leaves).toHaveLength(12);
     expect(leaves.every((entry) => entry.value.mathJson !== undefined)).toBe(true);
     expect(leaves.find((entry) => entry.path === 'primary.value')?.value.mathJson).toBeDefined();
     expect(leaves.filter((entry) => entry.path.endsWith('.operation.factor'))).toHaveLength(4);
-    expect(outcome.canonicalResult.version === 2
+    expect(outcome.canonicalResult.version === 7
       ? outcome.canonicalResult.details?.[3]?.lines[0]?.[0]
       : undefined).toMatchObject({
       kind: 'row-operation',
@@ -100,14 +100,14 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runVectorMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector success.');
-    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult?.version).toBe(7);
     expect(outcome.canonicalResult
       ? collectCanonicalMathLeaves(outcome.canonicalResult)
         .find((entry) => entry.path === 'primary.value')?.value.mathJson
       : undefined).toBeDefined();
   });
 
-  it('attaches producer-proven V2 MathJSON to geometric measure details', () => {
+  it('attaches producer-proven current MathJSON to geometric measure details', () => {
     const outcome = runVectorMode({
       operation: 'parallelogramArea',
       vectorA: [1, 0, 0],
@@ -120,13 +120,13 @@ describe('Linear Algebra canonical result producers', () => {
     if (outcome.kind !== 'success' || !outcome.canonicalResult) {
       throw new Error('Expected geometric Vector canonical result.');
     }
-    expect(outcome.canonicalResult.version).toBe(2);
+    expect(outcome.canonicalResult.version).toBe(7);
     expect(collectCanonicalMathLeaves(outcome.canonicalResult).every((entry) => (
       entry.value.mathJson !== undefined
     ))).toBe(true);
   });
 
-  it('attaches producer-proven V2 MathJSON to exact definiteness evidence', () => {
+  it('attaches producer-proven current MathJSON to exact definiteness evidence', () => {
     const outcome = runMatrixMode({
       operation: 'definiteA',
       matrixA: [[2, -1], [-1, 2]],
@@ -136,14 +136,14 @@ describe('Linear Algebra canonical result producers', () => {
     if (outcome.kind !== 'success' || !outcome.canonicalResult) {
       throw new Error('Expected definiteness canonical result.');
     }
-    expect(outcome.canonicalResult.version).toBe(2);
+    expect(outcome.canonicalResult.version).toBe(7);
     expect(collectCanonicalMathLeaves(outcome.canonicalResult)).toHaveLength(4);
     expect(collectCanonicalMathLeaves(outcome.canonicalResult).every((entry) => (
       entry.value.mathJson !== undefined
     ))).toBe(true);
   });
 
-  it('attaches producer-proven V2 MathJSON to numerical decomposition evidence', () => {
+  it('attaches producer-proven current MathJSON to numerical decomposition evidence', () => {
     const outcome = runMatrixMode({
       operation: 'pinvA',
       matrixA: [[3, 0], [4, 0]],
@@ -153,7 +153,7 @@ describe('Linear Algebra canonical result producers', () => {
     if (outcome.kind !== 'success' || !outcome.canonicalResult) {
       throw new Error('Expected numerical decomposition canonical result.');
     }
-    expect(outcome.canonicalResult.version).toBe(2);
+    expect(outcome.canonicalResult.version).toBe(7);
     expect(collectCanonicalMathLeaves(outcome.canonicalResult)).toHaveLength(7);
     expect(collectCanonicalMathLeaves(outcome.canonicalResult).every((entry) => (
       entry.value.mathJson !== undefined
@@ -187,7 +187,7 @@ describe('Linear Algebra canonical result producers', () => {
     if (outcome.kind !== 'success') throw new Error('Expected Vector angle success.');
     expect(outcome.exactLatex).toBe('100^{g}');
     expect(outcome.canonicalResult).toMatchObject({
-      version: 3,
+      version: 7,
       primary: {
         kind: 'angle-quantity',
         presentation: { primaryLatex: '100^{g}' },

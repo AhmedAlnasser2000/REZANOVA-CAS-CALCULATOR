@@ -1,30 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  CanonicalResultDetailPartV2,
-  CanonicalResultDocumentV2,
-} from '../../types/calculator';
+import type { CanonicalResultDetailPart } from '../../types/calculator/canonical-result-common';
+import type { CanonicalResultDocument } from '../../types/calculator/canonical-result-current';
 import { runMatrixMode, type RunMatrixModeRequest } from '../modes/matrix';
 import { runVectorMode, type RunVectorModeRequest } from '../modes/vector';
 import { collectCanonicalMathLeaves } from './mathjson-coverage';
 
 function matrixDocument(request: RunMatrixModeRequest) {
   const outcome = runMatrixMode(request);
-  if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 2) {
-    throw new Error(`Expected successful Matrix V2 output for ${request.operation}.`);
+  if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 7) {
+    throw new Error(`Expected successful Matrix current output for ${request.operation}.`);
   }
-  return outcome.canonicalResult as CanonicalResultDocumentV2;
+  return outcome.canonicalResult as CanonicalResultDocument;
 }
 
 function vectorDocument(request: RunVectorModeRequest) {
   const outcome = runVectorMode(request);
-  if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 2) {
-    throw new Error(`Expected successful Vector V2 output for ${request.operation}.`);
+  if (outcome.kind !== 'success' || outcome.canonicalResult?.version !== 7) {
+    throw new Error(`Expected successful Vector current output for ${request.operation}.`);
   }
-  return outcome.canonicalResult as CanonicalResultDocumentV2;
+  return outcome.canonicalResult as CanonicalResultDocument;
 }
 
-function rowOperationParts(document: CanonicalResultDocumentV2) {
-  const parts: CanonicalResultDetailPartV2[] = [];
+function rowOperationParts(document: CanonicalResultDocument) {
+  const parts: CanonicalResultDetailPart[] = [];
   for (const section of document.details ?? []) {
     for (const line of section.lines) parts.push(...line);
   }
@@ -44,7 +42,7 @@ function linearSystemRequest(
   };
 }
 
-describe('Canonical Result V2 Linear Algebra semantics', () => {
+describe('Current Canonical Result Linear Algebra semantics', () => {
   it.each([
     {
       label: 'swap',
@@ -151,7 +149,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       .toBe(true);
   });
 
-  it('defaults the Vector span selector to canonical result V2', () => {
+  it('defaults the Vector span selector to the current canonical result', () => {
     const outcome = runVectorMode({
       operation: 'span',
       vectorA: [1, 0],
@@ -160,10 +158,10 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       angleUnit: 'rad',
     });
     expect(outcome.kind).toBe('success');
-    expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(2);
+    expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(7);
   });
 
-  it('keeps variadic Gram-Schmidt residuals producer-proven in canonical V2', () => {
+  it('keeps variadic Gram-Schmidt residuals producer-proven in the current contract', () => {
     const document = vectorDocument({
       operation: 'gramSchmidtUV',
       vectorA: [1, 0, 0],
@@ -187,7 +185,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       .toBe(true);
   });
 
-  it('keeps exact geometric measures and 3D interpretation producer-proven in canonical V2', () => {
+  it('keeps exact geometric measures and 3D interpretation producer-proven in the current contract', () => {
     const document = vectorDocument({
       operation: 'volume',
       vectorA: [1, 0, 0],
@@ -198,7 +196,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       angleUnit: 'rad',
     });
 
-    expect(document.version).toBe(2);
+    expect(document.version).toBe(7);
     expect(document.primary).toMatchObject({
       kind: 'math',
       value: { canonicalLatex: '6', mathJson: 6 },
@@ -244,7 +242,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       request: linearSystemRequest([[1, 0, 0]], [1]),
       primaryLatex: 'x=\\begin{bmatrix}1\\\\t_{1}\\\\t_{2}\\end{bmatrix}\\quad t_{1},t_{2}\\in\\mathbb{R}',
     },
-  ])('keeps $label system presentation on the fail-closed V2 route', ({
+  ])('keeps $label system presentation on the fail-closed current route', ({
     request,
     primaryLatex,
   }) => {

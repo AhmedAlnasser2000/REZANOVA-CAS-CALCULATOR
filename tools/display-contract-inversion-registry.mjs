@@ -423,11 +423,13 @@ export const NATIVE_RESULT_CARRIER_CALL_NAMES = new Set([
 ]);
 
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
+  'attachCurrentResultToDraft',
   'attachCanonicalResultToProducerDraft',
   'attachCanonicalResultV2ToProducerDraft',
   'attachCanonicalResultV3ToProducerDraft',
   'attachParameterizedSelectedTargetOutcome',
   'createCalculusResultOutcome',
+  'createCalculateResultOutcome',
   'createCalculateErrorResultOutcome',
   'createBoundedComplexEquationOutcome',
   'createEquationResultOutcome',

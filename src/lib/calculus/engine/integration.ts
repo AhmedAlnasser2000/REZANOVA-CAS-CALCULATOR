@@ -121,7 +121,7 @@ function evaluateAntiderivativeAtBounds(input: {
   variable: string;
   lower: number;
   upper: number;
-}): Pick<CalculusCoreEvaluation, 'exactLatex' | 'approxText' | 'error'> {
+}): Pick<CalculusCoreEvaluation, 'exactLatex' | 'approxText' | 'error' | 'mathJsonLeaves'> {
   try {
     const antiderivative = ce.parse(input.antiderivativeLatex) as BoxedLike;
     const upper = antiderivative.subs({ [input.variable]: input.upper });
@@ -139,6 +139,7 @@ function evaluateAntiderivativeAtBounds(input: {
 
     return profileCalculusResult({
       exactLatex: exact.latex,
+      mathJsonLeaves: [{ canonicalLatex: exact.latex, mathJson: exact.json, source: 'calculus:exact-bound-evaluation' }],
       approxText,
     });
   } catch {
@@ -496,6 +497,11 @@ export function evaluateDefiniteIntegralFromAst(input: {
       const partialFractionDetail = partialFractionReadbackDetail(antiderivative.integrationCandidate);
       return {
         exactLatex: evaluated.exactLatex,
+        mathJsonLeaves: [
+          ...(evaluated.mathJsonLeaves ?? []),
+          ...safetyCheck.constraints.flatMap(c => 'expressionLatex' in c && c.expressionMathJson !== undefined
+            ? [{ canonicalLatex: c.expressionLatex, mathJson: c.expressionMathJson, source: 'calculus:interval-domain-constraint' }] : []),
+        ],
         approxText: evaluated.approxText,
         warnings: [],
         resultOrigin: antiderivative.resultOrigin,

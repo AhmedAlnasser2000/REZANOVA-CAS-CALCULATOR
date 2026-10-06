@@ -1,5 +1,6 @@
 import { validateCanonicalResultDocumentV5 } from './validation-v5';
 import { validateCanonicalResultDocumentV6 } from './validation-v6';
+import { validateCanonicalResultDocument as validateCurrentDocument } from './current';
 import type { CanonicalResultDocument } from '../../types/calculator';
 import { inspectJsonCompatibleStructuredValue } from './structured-value';
 import {
@@ -52,6 +53,7 @@ export function validateCanonicalResultDocumentVersioned(
     };
   }
   const version = (cloned as Record<string, unknown>).version;
+  if (version === 7) return validateCurrentDocument(cloned, limits);
   if (version === 1) return validateCanonicalResultDocumentV1(cloned, limits);
   if (version === 2) return validateCanonicalResultDocumentV2(cloned, limits);
   if (version === 3) return validateCanonicalResultDocumentV3(cloned, limits);

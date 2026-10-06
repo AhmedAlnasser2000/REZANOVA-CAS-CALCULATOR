@@ -1,3 +1,4 @@
+import type { SerializableMathJson } from '../../../types/calculator';
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { isNodeArray } from '../../symbolic-engine/patterns';
@@ -31,6 +32,7 @@ export function buildEvenRootConditionConstraints(node: unknown) {
     ? [{
         kind: 'nonnegative' as const,
         expressionLatex: ce.box(node as Parameters<typeof ce.box>[0]).latex,
+        expressionMathJson: node as SerializableMathJson,
       }]
     : [];
 }

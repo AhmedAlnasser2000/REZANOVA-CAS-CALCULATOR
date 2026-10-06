@@ -1,8 +1,7 @@
-import type {
-  CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationIntervalV6, CanonicalEquationSetV6,
-  CanonicalMathValueV2, CanonicalResultDocumentV6,
-} from '../../../types/calculator';
-import { validateCanonicalResultDocumentV6 } from '../../result-contract/validation-v6';
+import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationInterval, CanonicalEquationSet } from '../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationDocument } from '../../../types/calculator/canonical-result-current';
+import type { CanonicalMathValue } from '../../../types/calculator/canonical-result-common';
+import { validateCanonicalAnswer } from '../../result-contract/current';
 import { demand } from './core/execution';
 import type { Rational } from './core/algebra/rational';
 import { compareReal, type RealRootOf, type RootOf } from './core/algebraic/root-of';
@@ -18,7 +17,7 @@ import {
 } from './core/representation/solution-set';
 
 /**
- * The V6 read model for Equation outcomes: a validated document read back into core values in a given store.
+ * The Equation read model for Equation outcomes: a validated document read back into core values in a given store.
  * Root binders are matched exactly: a real binder must isolate exactly one real root of its (minimal)
  * polynomial between its rational bounds; a complex binder must carry the canonical isolation disk of one root.
  */
@@ -29,7 +28,7 @@ export type ReadEquationOutcome =
 
 const fail = (reason: string): never => demand(false, 'verification-failed', reason) as never;
 
-function rationalOf(store: ExpressionStore, v: CanonicalMathValueV2): Rational {
+function rationalOf(store: ExpressionStore, v: CanonicalMathValue): Rational {
   const r = readExpression(store, v.mathJson);
   if (r.kind !== 'ok') return fail('a bound is not readable');
   const n = store.node(r.value);
@@ -41,14 +40,14 @@ export interface RootBinders {
   readonly algebraic: ReadonlyMap<string, Extract<PointValue, { kind: 'algebraic' }>>;
   readonly indexed: ReadonlyMap<string, PointValue>;
   /** A math leaf as a core expression, with algebraic binders inlined (indexed roots are refused inside expressions). */
-  readonly read: (v: CanonicalMathValueV2) => ExprId;
+  readonly read: (v: CanonicalMathValue) => ExprId;
 }
 
-export function readRootBinders(store: ExpressionStore, doc: CanonicalResultDocumentV6): RootBinders {
+export function readRootBinders(store: ExpressionStore, doc: CanonicalEquationDocument): RootBinders {
   const p = doc.primary, ctx = store.ctx;
   const algebraic = new Map<string, Extract<PointValue, { kind: 'algebraic' }>>();
   const indexed = new Map<string, PointValue>();
-  const read = (v: CanonicalMathValueV2): ExprId => {
+  const read = (v: CanonicalMathValue): ExprId => {
     const r = readExpression(store, v.mathJson);
     if (r.kind !== 'ok') return fail('a math value is not readable by the core');
     const free = store.freeSymbols(r.value);
@@ -87,24 +86,24 @@ export function readRootBinders(store: ExpressionStore, doc: CanonicalResultDocu
   return { algebraic, indexed, read };
 }
 
-export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): ReadEquationOutcome {
-  const checked = validateCanonicalResultDocumentV6(input);
-  if (!checked.ok) return fail(`not a valid V6 document: ${checked.failure.message}`);
-  const doc: CanonicalResultDocumentV6 = checked.validated.value, p = doc.primary;
+export function readEquationOutcome(store: ExpressionStore, input: unknown): ReadEquationOutcome {
+  const checked = validateCanonicalAnswer(input, 'equation-outcome');
+  if (!checked.ok) return fail(`not a valid current document: ${checked.failure.message}`);
+  const doc: CanonicalEquationDocument = checked.validated.value, p = doc.primary;
   const { algebraic, indexed, read } = readRootBinders(store, doc);
-  const value = (v: CanonicalMathValueV2): PointValue => {
+  const value = (v: CanonicalMathValue): PointValue => {
     const j = v.mathJson;
     if (typeof j === 'string' && algebraic.has(j)) return algebraic.get(j) as PointValue;
     if (typeof j === 'string' && indexed.has(j)) return indexed.get(j) as PointValue;
     const id = read(v), n = store.node(id);
     return n.kind === 'number' ? Object.freeze({ kind: 'rational', value: n.value }) : Object.freeze({ kind: 'expression', id });
   };
-  const condition = (c: CanonicalEquationConditionV6): Condition =>
+  const condition = (c: CanonicalEquationCondition): Condition =>
     (c.kind === 'equal' || c.kind === 'not-equal' ? { kind: c.kind, expr: read(c.expr), other: read(c.other) } : { kind: c.kind, expr: read(c.expr) });
-  const endpoint = (e: CanonicalEquationEndpointV6): Endpoint => (e.kind === 'infinity' ? { kind: 'infinity', sign: e.sign } : value(e.value));
-  const interval = (i: CanonicalEquationIntervalV6): Interval => ({ lo: endpoint(i.lo), hi: endpoint(i.hi), loClosed: i.loClosed, hiClosed: i.hiClosed });
-  const point = (pt: CanonicalMathValueV2[]): Point => pt.map(value);
-  const set = (s: CanonicalEquationSetV6): SolutionSet => {
+  const endpoint = (e: CanonicalEquationEndpoint): Endpoint => (e.kind === 'infinity' ? { kind: 'infinity', sign: e.sign } : value(e.value));
+  const interval = (i: CanonicalEquationInterval): Interval => ({ lo: endpoint(i.lo), hi: endpoint(i.hi), loClosed: i.loClosed, hiClosed: i.hiClosed });
+  const point = (pt: CanonicalMathValue[]): Point => pt.map(value);
+  const set = (s: CanonicalEquationSet): SolutionSet => {
     switch (s.kind) {
       case 'finite': return { kind: 'finite', variables: s.variables, points: s.points.map(point) };
       case 'cofinite': return { kind: 'cofinite', variables: s.variables, except: s.except.map(point) };
@@ -139,7 +138,7 @@ export function readEquationOutcomeV6(store: ExpressionStore, input: unknown): R
 }
 
 /** The assumptions of a validated document, read in `store` (canonical relations). */
-export function readAssumptions(store: ExpressionStore, doc: CanonicalResultDocumentV6): Relation[] {
+export function readAssumptions(store: ExpressionStore, doc: CanonicalEquationDocument): Relation[] {
   const { read } = readRootBinders(store, doc);
   return (doc.primary.assumptions ?? []).map(r => canonicalRelation(store, { op: r.op, lhs: read(r.lhs), rhs: read(r.rhs) }));
 }
@@ -148,8 +147,8 @@ export function readAssumptions(store: ExpressionStore, doc: CanonicalResultDocu
  * The document must read back to the same outcome: the same kind and reason, or the same set by value; and to the
  * same assumptions.
  */
-export function replayEquationDocument(problem: RelationProblem, outcome: EquationOutcome, doc: CanonicalResultDocumentV6, assumptions: readonly Relation[] = []): void {
-  const store = problem.store, domain = problem.domain, back = readEquationOutcomeV6(store, doc);
+export function replayEquationDocument(problem: RelationProblem, outcome: EquationOutcome, doc: CanonicalEquationDocument, assumptions: readonly Relation[] = []): void {
+  const store = problem.store, domain = problem.domain, back = readEquationOutcome(store, doc);
   const keys = (rs: readonly Relation[]) => rs.map(r => relationKey(store, canonicalRelation(store, r))).sort().join('\u0000');
   if (keys(readAssumptions(store, doc)) !== keys(assumptions)) fail('the document reads back to different assumptions');
   if (back.kind !== outcome.kind) fail('the document reads back to a different outcome');

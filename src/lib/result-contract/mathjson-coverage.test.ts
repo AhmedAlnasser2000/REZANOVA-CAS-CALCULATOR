@@ -18,6 +18,10 @@ import {
   MATHJSON_COVERAGE_EXEMPTIONS,
   MATHJSON_ROUTE_REGISTRY,
 } from './mathjson-route-registry';
+import type { CanonicalResultDocument as CurrentDocument } from '../../types/calculator/canonical-result-current';
+import { buildCanonicalResultDocument } from './current';
+import { exactIntegrationMathLatex } from './current/integration-schema';
+import type { SerializableMathJson } from '../../types/calculator';
 import { standardV2MathValue } from '../../test-utils/canonical-result-v2-fixture';
 
 const math = (canonicalLatex: string) => ({ canonicalLatex });
@@ -60,7 +64,16 @@ function completeDocument(): CanonicalResultDocumentV1 {
 
 function completeVersionedSemanticInputs(): Array<Parameters<typeof collectCanonicalMathLeaves>[0]> {
   const value = standardV2MathValue('1', 1);
+  const special = { kind: 'piecewise' as const,
+    branches: [{ value: { kind: 'named-function' as const, name: 'erfi' as const,
+      arguments: [{ kind: 'standard-math' as const, value }] }, condition: value }],
+  };
   return [
+    buildCanonicalResultDocument({ outcomeKind: 'success', title: 'Typed details', warnings: [],
+      primary: { kind: 'math', value },
+      details: [{ title: 'Special', lines: [[{ kind: 'special-function', expression: special }]] }],
+      summaries: { solve: [[{ kind: 'special-function', expression: special }]] },
+    }),
     {
       sourceVersion: 2,
       semantics: {
@@ -191,9 +204,30 @@ function equationOutcomeDocument(): CanonicalResultDocumentV6 {
   }};
 }
 
+function currentIntegrationDocuments(): CurrentDocument[] {
+  const value = (mathJson: SerializableMathJson) => ({ mathJson, canonicalLatex: exactIntegrationMathLatex(mathJson) });
+  const envelope = { outcomeKind: 'success' as const, title: 'Current integration', warnings: [] };
+  return [
+    buildCanonicalResultDocument({ ...envelope, primary: {
+      kind: 'exponential-antiderivative', semantics: 'formal-local-complex', variable: 'x', integrationConstant: 'C',
+      construction: { kind: 'rational-exponential', generator: 't', argument: value(['Add', 'x', 1]) },
+      fieldPart: value('t'), terms: [], restrictions: [],
+    } }),
+    buildCanonicalResultDocument({ ...envelope, primary: {
+      kind: 'non-elementary', variable: 'x', subject: value('t'),
+      construction: { kind: 'rational-exponential', generator: 't', argument: value(['Power', 'x', 2]) },
+      supportedClass: 'rational-in-one-rational-exponential', obstruction: 'laurent-component', restrictions: [],
+    } }),
+    buildCanonicalResultDocument({ ...envelope, primary: { kind: 'math', value: value('x') },
+      integrationRestrictions: { variable: 'x', entries: [{ kind: 'nonzero', value: value(['Exp', 'x']),
+        origins: [{ category: 'source', path: 'denominator' }] }] },
+    }),
+  ];
+}
+
 describe('MathJSON coverage registry', () => {
   it('enumerates every canonical math leaf path exactly once', () => {
-    const paths = [completeDocument(), formalPrimitiveDocument(), equationOutcomeDocument(), ...completeVersionedSemanticInputs()].flatMap((document) =>
+    const paths = [completeDocument(), formalPrimitiveDocument(), equationOutcomeDocument(), ...currentIntegrationDocuments(), ...completeVersionedSemanticInputs()].flatMap((document) =>
       collectCanonicalMathLeaves(document).map((entry) => entry.leafPath));
     expect([...new Set(paths)].sort()).toEqual([...CANONICAL_MATH_LEAF_PATHS].sort());
   });

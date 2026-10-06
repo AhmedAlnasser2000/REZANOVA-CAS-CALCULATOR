@@ -3,7 +3,7 @@ import { runOoeRuntimeJob } from '../../ooe/runtime-control/runtime-coordinator'
 import { buildOoeInputRevisionId } from '../../ooe/job-launch/job-contract';
 import { subscribeToOoeActiveJobChanges, requestOoeJobCancellation } from '../../ooe/job-launch/active-job-registry';
 import { buildOoeRuntimeShellEvidence } from '../../ooe/runtime-control/runtime-shell-contract';
-import { validateCanonicalRuntimeVersionedResultOutcome } from '../../result-contract/runtime-outcome-versioned';
+import { validateCanonicalResultDocument } from '../../result-contract/current';
 import { integrationError } from './error';
 import { boundedSource, validIntegrationLimits, MAX_INTEGRATION_ARTIFACT_BYTES, type IntegrationJob, type IntegrationResponse } from './types';
 export const INTEGRATION_HOST = 'new-integration-worker-runtime';
@@ -42,8 +42,10 @@ export async function runIntegrationJob(suppliedJob: IntegrationJob, workspace: 
           if (signal.aborted || context.shouldCancel()) {stop(); return;}
           try {
           const response = event.data;
-          const validation = validateCanonicalRuntimeVersionedResultOutcome({kind: response.document.outcomeKind, canonicalResult: response.document});
-          if (!validation.ok) finish(undefined, new Error(validation.failure.message)); else finish(response);
+          const validation = validateCanonicalResultDocument(response.document);
+          if (!validation.ok) finish(undefined, new Error(validation.failure.message));
+          else if (validation.validated.value.primary && !['math', 'rational-antiderivative'].includes(validation.validated.value.primary.kind)) finish(undefined, new Error('Unsupported Integration answer kind.'));
+          else finish({...response, document: validation.validated.value});
           } catch {finish(undefined, new Error('Invalid integration worker response.'));}
         };
         worker.onerror = () => finish(undefined, new Error('The integration worker failed.'));

@@ -1,30 +1,24 @@
+import { provenSpecialExpression } from '../../result-contract/current/special-producer';
+import type { CurrentResultProducerDraft } from '../../../types/calculator/canonical-result-runtime';
 import type {
-  CanonicalSpecialFunctionExpressionV4,
   ResultProducerDraft,
-  ResultProducerDraftV2,
-  ResultProducerDraftV4,
 } from '../../../types/calculator';
 import {
-  attachCanonicalResultV2ToProducerDraft,
-  buildCanonicalResultDocumentV2FromProducerDraft,
-  buildCanonicalResultDocumentV4,
-  type CanonicalResultProducerInputV2,
-  type CanonicalResultProducerInputV4,
-  type CanonicalResultV2MathResolver,
-} from '../../result-contract';
+  attachCurrentResultToDraft,
+  buildCanonicalResultFromDraft,
+  buildCanonicalResultDocument,
+  type CanonicalResultProducerInput,
+  type CanonicalResultMathResolver,
+} from '../../result-contract/current/producer-draft';
 import type {
   CalculusIndefiniteIntegralAuthority,
   CalculusCoreEvaluation,
 } from '../engine/shared';
 
 type Outcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
-type SpecialExpressionProducerInput = NonNullable<
-  CanonicalResultProducerInputV4['primary']
->['expression'];
-
 function textOnlyDetails(
   sections: CalculusCoreEvaluation['detailSections'],
-): NonNullable<CanonicalResultProducerInputV2['details']> {
+): NonNullable<CanonicalResultProducerInput['details']> {
   return (sections ?? []).flatMap((section) => {
     const lines = section.lines.flatMap((line, lineIndex) => {
       const parts = section.lineParts?.[lineIndex];
@@ -40,8 +34,8 @@ function textOnlyDetails(
 
 function typedDetails(
   nodes: CalculusCoreEvaluation['integrationDetailNodes'],
-  mathValue: CanonicalResultV2MathResolver,
-): NonNullable<CanonicalResultProducerInputV2['details']> {
+  mathValue: CanonicalResultMathResolver,
+): NonNullable<CanonicalResultProducerInput['details']> {
   return (nodes ?? []).map((section, sectionIndex) => ({
     title: section.title,
     lines: section.lines.map((line, lineIndex) => line.map((part, partIndex) =>
@@ -59,8 +53,8 @@ function typedDetails(
 
 function supplements(
   nodes: CalculusCoreEvaluation['integrationFactNodes'],
-  mathValue: CanonicalResultV2MathResolver,
-): NonNullable<CanonicalResultProducerInputV2['supplements']> {
+  mathValue: CanonicalResultMathResolver,
+): NonNullable<CanonicalResultProducerInput['supplements']> {
   return (nodes ?? []).map((fact, index) => ({
     role: fact.role,
     presentationLatex: fact.presentationLatex,
@@ -68,99 +62,11 @@ function supplements(
   }));
 }
 
-function typedDetailsV4(
-  nodes: CalculusCoreEvaluation['integrationDetailNodes'],
-  mathValue: CanonicalResultV2MathResolver,
-): NonNullable<CanonicalResultProducerInputV4['details']> {
-  return typedDetails(nodes, mathValue);
-}
-
-function supplementsV4(
-  nodes: CalculusCoreEvaluation['integrationFactNodes'],
-  mathValue: CanonicalResultV2MathResolver,
-): NonNullable<CanonicalResultProducerInputV4['supplements']> {
-  return supplements(nodes, mathValue);
-}
-
-function provenSpecialExpression(
-  expression: CanonicalSpecialFunctionExpressionV4,
-  mathValue: CanonicalResultV2MathResolver,
-  path: string,
-): SpecialExpressionProducerInput {
-  if (expression.kind === 'standard-math') {
-    return {
-      kind: 'standard-math',
-      value: mathValue(expression.value.canonicalLatex, `${path}.value`),
-    };
-  }
-  if (expression.kind === 'named-function') {
-    return {
-      kind: 'named-function',
-      name: expression.name,
-      arguments: expression.arguments.map((argument, index) =>
-        provenSpecialExpression(argument, mathValue, `${path}.arguments[${index}]`)),
-    };
-  }
-  if (expression.kind === 'sum') {
-    return {
-      kind: 'sum',
-      terms: expression.terms.map((term, index) =>
-        provenSpecialExpression(term, mathValue, `${path}.terms[${index}]`)),
-    };
-  }
-  if (expression.kind === 'product') {
-    return {
-      kind: 'product',
-      factors: expression.factors.map((factor, index) =>
-        provenSpecialExpression(factor, mathValue, `${path}.factors[${index}]`)),
-    };
-  }
-  if (expression.kind === 'quotient') {
-    return {
-      kind: 'quotient',
-      numerator: provenSpecialExpression(expression.numerator, mathValue, `${path}.numerator`),
-      denominator: provenSpecialExpression(expression.denominator, mathValue, `${path}.denominator`),
-    };
-  }
-  if (expression.kind === 'power') {
-    return {
-      kind: 'power',
-      base: provenSpecialExpression(expression.base, mathValue, `${path}.base`),
-      exponent: provenSpecialExpression(expression.exponent, mathValue, `${path}.exponent`),
-    };
-  }
-  if (expression.kind === 'negation') {
-    return {
-      kind: 'negation',
-      operand: provenSpecialExpression(expression.operand, mathValue, `${path}.operand`),
-    };
-  }
-  return {
-    kind: 'piecewise',
-    branches: expression.branches.map((branch, index) => ({
-      value: provenSpecialExpression(branch.value, mathValue, `${path}.branches[${index}].value`),
-      condition: mathValue(
-        branch.condition.canonicalLatex,
-        `${path}.branches[${index}].condition`,
-      ),
-    })),
-    ...(expression.otherwise
-      ? {
-          otherwise: provenSpecialExpression(
-            expression.otherwise,
-            mathValue,
-            `${path}.otherwise`,
-          ),
-        }
-      : {}),
-  };
-}
-
-function metadataV4(
+function metadata(
   outcome: Outcome,
-): CanonicalResultProducerInputV4['metadata'] {
+): CanonicalResultProducerInput['metadata'] {
   const success = outcome.kind === 'success' ? outcome : undefined;
-  const metadata: NonNullable<CanonicalResultProducerInputV4['metadata']> = {
+  const metadata: NonNullable<CanonicalResultProducerInput['metadata']> = {
     ...(outcome.answerMode ? { answerMode: outcome.answerMode } : {}),
     ...(outcome.answerDomain ? { answerDomain: outcome.answerDomain } : {}),
     ...(outcome.solutionKind ? { solutionKind: outcome.solutionKind } : {}),
@@ -185,21 +91,21 @@ function metadataV4(
   return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
-export function createCalculusIndefiniteIntegralOutcomeV2(input: {
+export function createCalculusIndefiniteIntegralOutcome(input: {
   outcome: Outcome;
   evaluation: CalculusCoreEvaluation;
   authority: CalculusIndefiniteIntegralAuthority;
-  mathValue: CanonicalResultV2MathResolver;
-}): ResultProducerDraftV2 {
+  mathValue: CanonicalResultMathResolver;
+}): CurrentResultProducerDraft {
   const { outcome, evaluation, authority, mathValue } = input;
   if (outcome.kind === 'success' && !authority.primary) {
-    throw new Error('Standard indefinite integration selected V2 without a native primary tree.');
+    throw new Error('Standard indefinite integration requires current authority without a native primary tree.');
   }
   const details = [
     ...textOnlyDetails(evaluation.detailSections),
     ...typedDetails(evaluation.integrationDetailNodes, mathValue),
   ];
-  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+  const canonicalResult = buildCanonicalResultFromDraft({
     draft: outcome,
     mathValue,
     ...(authority.primary
@@ -224,28 +130,28 @@ export function createCalculusIndefiniteIntegralOutcomeV2(input: {
     supplements: supplements(evaluation.integrationFactNodes, mathValue),
     details,
   });
-  return attachCanonicalResultV2ToProducerDraft(canonicalResult, outcome);
+  return attachCurrentResultToDraft(canonicalResult, outcome);
 }
 
-export function createCalculusIndefiniteIntegralOutcomeV4(input: {
+export function createCalculusSpecialIntegralOutcome(input: {
   outcome: Outcome;
   evaluation: CalculusCoreEvaluation;
   authority: CalculusIndefiniteIntegralAuthority;
-  mathValue: CanonicalResultV2MathResolver;
-}): ResultProducerDraftV4 {
+  mathValue: CanonicalResultMathResolver;
+}): CurrentResultProducerDraft {
   const { outcome, evaluation, authority, mathValue } = input;
   if (outcome.kind !== 'success') {
-    throw new Error('Special-function indefinite integration selected V4 for a non-success.');
+    throw new Error('Special-function indefinite integration requires special-function authority for a non-success.');
   }
   if (!authority.specialExpression) {
-    throw new Error('Special-function indefinite integration selected V4 without a typed expression.');
+    throw new Error('Special-function indefinite integration requires special-function authority without a typed expression.');
   }
-  const metadata = metadataV4(outcome);
+  const adaptedMetadata = metadata(outcome);
   const details = [
     ...textOnlyDetails(evaluation.detailSections),
-    ...typedDetailsV4(evaluation.integrationDetailNodes, mathValue),
+    ...typedDetails(evaluation.integrationDetailNodes, mathValue),
   ];
-  const canonicalResult = buildCanonicalResultDocumentV4({
+  const canonicalResult = buildCanonicalResultDocument({
     outcomeKind: outcome.kind,
     title: outcome.title,
     primary: {
@@ -264,11 +170,11 @@ export function createCalculusIndefiniteIntegralOutcomeV4(input: {
           },
         }
       : {}),
-    supplements: supplementsV4(evaluation.integrationFactNodes, mathValue),
+    supplements: supplements(evaluation.integrationFactNodes, mathValue),
     details,
     warnings: outcome.warnings,
     ...(outcome.approxText ? { approximations: { primary: outcome.approxText } } : {}),
-    ...(metadata ? { metadata } : {}),
+    ...(adaptedMetadata ? { metadata: adaptedMetadata } : {}),
   });
   const { actions, ...draftWithoutActions } = outcome;
   void actions;

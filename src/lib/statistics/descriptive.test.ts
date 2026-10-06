@@ -42,11 +42,11 @@ describe('statistics descriptive summaries', () => {
 
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('Expected compact descriptive success.');
-    expect(result.canonicalResult?.version).toBe(2);
+    expect(result.canonicalResult?.version).toBe(7);
     expect(result.exactLatex).toContain('n=10002');
     expect(result.exactLatex).toContain('\\sigma^2');
     expect(result.exactLatex).toContain('s^2');
-    if (result.canonicalResult?.version !== 2) throw new Error('Expected Canonical Result V2.');
+    if (result.canonicalResult?.version !== 7) throw new Error('Expected current canonical result.');
     const populationSpread = result.canonicalResult.answerRows?.rows
       .find((row) => row.label === 'Population spread');
     expect(populationSpread?.math).toEqual({

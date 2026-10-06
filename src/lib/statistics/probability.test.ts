@@ -17,7 +17,7 @@ describe('statistics probability outcomes', () => {
     ['moreThan', 'x=2'],
     ['atLeast', 'x=2'],
     ['between', 'lower=1,upper=3,lowerBound=exclusive,upperBound=inclusive'],
-  ])('proves Canonical Result V2 for the Binomial %s event', (event, eventArguments) => {
+  ])('proves current canonical result for the Binomial %s event', (event, eventArguments) => {
     const result = runProbability(
       `binomial(n=4,p=0.5,event=${event},${eventArguments})`,
       'binomial',
@@ -25,7 +25,7 @@ describe('statistics probability outcomes', () => {
 
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('Expected probability success.');
-    expect(result.canonicalResult?.version).toBe(2);
+    expect(result.canonicalResult?.version).toBe(7);
     expect(result.approxText).toContain('Probability=');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Percent:');
     expect(result.detailSections?.[1]?.lines.join(' ')).toContain('Expected value:');

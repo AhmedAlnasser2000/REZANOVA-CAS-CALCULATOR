@@ -1,3 +1,5 @@
+import type { CurrentCanonicalRuntimeAction, CurrentCanonicalRuntimeResult } from '../../types/calculator/canonical-result-runtime';
+import type { CanonicalResultDocument as CurrentDocument } from '../../types/calculator/canonical-result-current';
 import type {
   CanonicalMathValueV1,
   CanonicalResultDocument,
@@ -361,6 +363,10 @@ export function createCanonicalRuntimeError(
 }
 
 export function createCanonicalRuntimeResult(
+  canonicalResult: CurrentDocument,
+  options?: { actions?: readonly CurrentCanonicalRuntimeAction[]; runtimeAdvisories?: RuntimeAdvisories },
+): CurrentCanonicalRuntimeResult;
+export function createCanonicalRuntimeResult(
   canonicalResult: CanonicalResultDocumentV1,
   options?: {
     actions?: readonly CanonicalRuntimeActionV1[];
@@ -391,7 +397,7 @@ export function createCanonicalRuntimeResult(
   canonicalResult: CanonicalResultDocument,
   options: {
     actions?: readonly (
-      CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3
+      CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 | CurrentCanonicalRuntimeAction
     )[];
     runtimeAdvisories?: RuntimeAdvisories;
   } = {},

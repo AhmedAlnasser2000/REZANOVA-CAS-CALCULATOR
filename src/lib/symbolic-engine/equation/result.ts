@@ -1,11 +1,11 @@
-import type {
-  CanonicalEquationConditionV6, CanonicalEquationEndpointV6, CanonicalEquationRelationV6, CanonicalEquationIntervalV6, CanonicalEquationOutcomeV6,
-  CanonicalEquationRootBinderV6, CanonicalEquationSetV6, CanonicalMathValueV2, CanonicalResultDocumentV6, SerializableMathJson,
-} from '../../../types/calculator';
+import type { SerializableMathJson } from '../../../types/calculator';
+import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationRelation, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationDocument } from '../../../types/calculator/canonical-result-current';
+import type { CanonicalMathValue } from '../../../types/calculator/canonical-result-common';
 import { equationMathLatex } from '../../result-contract/equation-math-latex';
-import { requireCanonicalResultAuthority } from '../../result-contract/native-result';
+import { buildCanonicalResultDocument, requireCanonicalAnswer } from '../../result-contract/current';
 import type { CanonicalResultValidationLimits } from '../../result-contract/validation';
-import { validateCanonicalResultDocumentV6 } from '../../result-contract/validation-v6';
+import { validateCanonicalAnswer } from '../../result-contract/current';
 import { verifyEquationOutcome } from './core/decide';
 import { EquationAlgebraError } from './core/execution';
 import type { Rational } from './core/algebra/rational';
@@ -17,7 +17,7 @@ import type { Endpoint, EquationOutcome, Interval, PointValue, RootValue, Soluti
 import { replayEquationDocument } from './result-read';
 
 /**
- * The Equation adapter: projects a core outcome to canonical-result V6.
+ * The Equation adapter: projects a core outcome to the current canonical result.
  *
  * 1. The outcome is verified independently by the core first.
  * 2. Values become restricted standard MathJSON; algebraic numbers become root binders referenced by symbol.
@@ -28,7 +28,7 @@ import { replayEquationDocument } from './result-read';
  * A typed resource stop during verification or replay becomes the matching `stopped` outcome; a failed
  * verification or replay is thrown, never projected.
  */
-export type EquationV6Result = { kind: 'success' | 'error'; canonicalResult: CanonicalResultDocumentV6 };
+export type EquationResult = { kind: 'success' | 'error'; canonicalResult: CanonicalEquationDocument };
 
 const OWNER = /^(EQUATION-[A-Z0-9]+(?:-[A-Z0-9]+)*): ([\s\S]+)$/;
 const SIZE = new Set(['node-limit', 'depth-limit', 'byte-limit']);
@@ -40,10 +40,10 @@ const integer = (n: bigint): SerializableMathJson =>
   (n >= BigInt(Number.MIN_SAFE_INTEGER) && n <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(n) : { num: n.toString() });
 const rationalJson = (q: Rational): SerializableMathJson =>
   (q.denominator === 1n ? integer(q.numerator) : ['Rational', integer(q.numerator), integer(q.denominator)]);
-const math = (mathJson: SerializableMathJson): CanonicalMathValueV2 => ({ mathJson, canonicalLatex: equationMathLatex(mathJson) });
+const math = (mathJson: SerializableMathJson): CanonicalMathValue => ({ mathJson, canonicalLatex: equationMathLatex(mathJson) });
 
 class Projector {
-  readonly binders: CanonicalEquationRootBinderV6[] = [];
+  readonly binders: CanonicalEquationRootBinder[] = [];
   readonly #byKey = new Map<string, string>();
   readonly #taken: Set<string>;
   readonly store: ExpressionStore;
@@ -120,7 +120,7 @@ class Projector {
     return out.get(id) as SerializableMathJson;
   }
 
-  value(v: PointValue): CanonicalMathValueV2 {
+  value(v: PointValue): CanonicalMathValue {
     switch (v.kind) {
       case 'rational': return math(rationalJson(v.value));
       case 'algebraic': return math(this.algebraic(v.root, 'form' in v ? v.form : undefined));
@@ -129,25 +129,25 @@ class Projector {
     }
   }
 
-  condition(c: Condition): CanonicalEquationConditionV6 {
+  condition(c: Condition): CanonicalEquationCondition {
     return c.kind === 'equal' || c.kind === 'not-equal'
       ? { kind: c.kind, expr: math(this.expr(c.expr)), other: math(this.expr(c.other)) }
       : { kind: c.kind, expr: math(this.expr(c.expr)) };
   }
 
-  relation(r: Relation): CanonicalEquationRelationV6 {
+  relation(r: Relation): CanonicalEquationRelation {
     return { op: r.op, lhs: math(this.expr(r.lhs)), rhs: math(this.expr(r.rhs)) };
   }
 
-  endpoint(e: Endpoint): CanonicalEquationEndpointV6 {
+  endpoint(e: Endpoint): CanonicalEquationEndpoint {
     return e.kind === 'infinity' ? { kind: 'infinity', sign: e.sign } : { kind: 'value', value: this.value(e) };
   }
 
-  interval(i: Interval): CanonicalEquationIntervalV6 {
+  interval(i: Interval): CanonicalEquationInterval {
     return { lo: this.endpoint(i.lo), hi: this.endpoint(i.hi), loClosed: i.loClosed, hiClosed: i.hiClosed };
   }
 
-  set(s: SolutionSet): CanonicalEquationSetV6 {
+  set(s: SolutionSet): CanonicalEquationSet {
     const vars = (v: readonly string[]) => [...v];
     switch (s.kind) {
       case 'finite': return { kind: 'finite', variables: vars(s.variables), points: s.points.map(p => p.map(v => this.value(v))) };
@@ -174,7 +174,7 @@ class Projector {
   }
 }
 
-function v6Outcome(p: Projector, outcome: EquationOutcome): CanonicalEquationOutcomeV6 {
+function v6Outcome(p: Projector, outcome: EquationOutcome): CanonicalEquationOutcome {
   switch (outcome.kind) {
     case 'solved': return { kind: 'solved', set: p.set(outcome.set) };
     case 'empty': return { kind: 'empty' };
@@ -188,11 +188,10 @@ function v6Outcome(p: Projector, outcome: EquationOutcome): CanonicalEquationOut
   }
 }
 
-function document(problem: RelationProblem, p: Projector, outcome: CanonicalEquationOutcomeV6, rules: string[], assumptions: readonly Relation[]): CanonicalResultDocumentV6 {
+function document(problem: RelationProblem, p: Projector, outcome: CanonicalEquationOutcome, rules: string[], assumptions: readonly Relation[]): CanonicalEquationDocument {
   const answer = outcome.kind === 'solved' || outcome.kind === 'empty';
   const assumed = assumptions.length ? { assumptions: assumptions.map(r => p.relation(r)) } : {};
-  return {
-    version: 6,
+  return buildCanonicalResultDocument({
     outcomeKind: answer ? 'success' : 'error',
     title: 'Equation',
     ...(answer ? {} : { error: `No answer (${outcome.kind}).` }),
@@ -201,15 +200,15 @@ function document(problem: RelationProblem, p: Projector, outcome: CanonicalEqua
       kind: 'equation-outcome', domain: problem.domain, targets: [...problem.targets], parameters: [...problem.parameters],
       roots: p.binders, ...assumed, outcome, provenance: answer ? { verification: 'independent', rules } : { verification: 'not-applicable', rules: [] },
     },
-  };
+  });
 }
 
-function finish(d: CanonicalResultDocumentV6): EquationV6Result {
-  return requireCanonicalResultAuthority({ kind: d.outcomeKind, canonicalResult: d }, 'Equation V6 adapter');
+function finish(d: CanonicalEquationDocument): EquationResult {
+  return { kind: d.outcomeKind, canonicalResult: requireCanonicalAnswer(d, 'equation-outcome') };
 }
 
-/** Conditions on the problem's own expressions (no algebraic numbers), in the V6 grammar, for display. */
-export function projectConditions(problem: RelationProblem, conditions: readonly Condition[]): CanonicalEquationConditionV6[] {
+/** Conditions on the problem's own expressions (no algebraic numbers), in the Equation grammar, for display. */
+export function projectConditions(problem: RelationProblem, conditions: readonly Condition[]): CanonicalEquationCondition[] {
   const p = new Projector(problem), out = conditions.map(c => p.condition(c));
   if (p.binders.length) throw new Error('Displayed conditions carry no algebraic numbers.');
   return out;
@@ -221,8 +220,8 @@ export function projectConditions(problem: RelationProblem, conditions: readonly
  */
 export interface EquationAssumed { readonly assumptions: readonly Relation[]; readonly full: EquationOutcome }
 
-/** Project a core outcome for `problem` to a verified, replayed, authority-checked V6 document. */
-export function projectEquationOutcome(problem: RelationProblem, outcome: EquationOutcome, limits: CanonicalResultValidationLimits = {}, assumed?: EquationAssumed): EquationV6Result {
+/** Project a core outcome for `problem` to a verified, replayed, authority-checked current document. */
+export function projectEquationOutcome(problem: RelationProblem, outcome: EquationOutcome, limits: CanonicalResultValidationLimits = {}, assumed?: EquationAssumed): EquationResult {
   const assumptions = assumed?.assumptions ?? [];
   const stopped = (stop: 'work' | 'allocation' | 'cancelled' | 'result-size') =>
     finish(document(problem, new Projector(problem), { kind: 'stopped', stop }, [], assumptions));
@@ -234,10 +233,10 @@ export function projectEquationOutcome(problem: RelationProblem, outcome: Equati
     const p = new Projector(problem);
     const rules = 'proof' in outcome ? [...new Set(outcome.proof.records.map(r => r.rule))].sort() : [];
     const d = document(problem, p, v6Outcome(p, outcome), rules, assumptions);
-    const checked = validateCanonicalResultDocumentV6(d, limits);
+    const checked = validateCanonicalAnswer(d, 'equation-outcome', limits);
     if (!checked.ok) {
       if (SIZE.has(checked.failure.reason)) return stopped('result-size');
-      throw new Error(`Equation V6 projection is invalid: ${checked.failure.message} at ${checked.failure.path ?? '$'}`);
+      throw new Error(`Equation projection is invalid: ${checked.failure.message} at ${checked.failure.path ?? '$'}`);
     }
     replayEquationDocument(problem, outcome, checked.validated.value, assumptions);
     return finish(checked.validated.value);

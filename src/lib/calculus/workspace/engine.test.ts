@@ -1,3 +1,4 @@
+import type { CanonicalResultDocument } from '../../../types/calculator/canonical-result-current';
 import { describe, expect, it } from 'vitest';
 import { requireCanonicalResultAuthority } from '../../result-contract';
 import { collectCanonicalMathLeaves } from '../../result-contract/mathjson-coverage';
@@ -5,7 +6,6 @@ import { runCalculusWorkspaceMode } from './engine';
 import type {
   CalculusScreen,
   CanonicalResultDocumentV2,
-  CanonicalResultDocumentV4,
   VersionedResultProducerDraft,
 } from '../../../types/calculator';
 
@@ -38,11 +38,9 @@ function requireV2Document(
   return result.canonicalResult;
 }
 
-function requireV4Document(
-  result: VersionedResultProducerDraft,
-): CanonicalResultDocumentV4 {
-  if (result.kind === 'prompt' || result.canonicalResult?.version !== 4) {
-    throw new Error('Expected a V4 canonical result document.');
+function requireCurrentDocument(result: VersionedResultProducerDraft): CanonicalResultDocument {
+  if (result.kind === 'prompt' || result.canonicalResult?.version !== 7) {
+    throw new Error('Expected current canonical authority.');
   }
   return result.canonicalResult;
 }
@@ -110,7 +108,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.exactLatex).toBe(
       String.raw`\frac{\sqrt{\pi}}{2}\cdot \operatorname{erf}\left(x\right)`,
     );
-    const document = requireV2Document(result);
+    const document = requireCurrentDocument(result);
     expect(document.primary).toMatchObject({
       kind: 'math',
       value: {
@@ -329,7 +327,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
   });
 
-  it('keeps indefinite integration standard results and controlled errors on V2 authority', async () => {
+  it('keeps indefinite integration standard results and controlled errors on current authority', async () => {
     const cases = [
       {
         bodyLatex: String.raw`\sqrt{4-x^2}`,
@@ -359,8 +357,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
       if (result.kind === 'prompt') {
         throw new Error('Indefinite integration authority test must return a result.');
       }
-      const document = requireV2Document(result);
-      expect(document.version, entry.bodyLatex).toBe(2);
+      const document = requireCurrentDocument(result);
+      expect(document.version, entry.bodyLatex).toBe(7);
       if (entry.hasPrimary) {
         expect(document.primary, entry.bodyLatex).toMatchObject({ kind: 'math' });
       } else {
@@ -372,7 +370,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
   });
 
-  it('keeps special-function indefinite integration on typed V4 authority', async () => {
+  it('keeps special-function indefinite integration on typed special-function authority', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('indefiniteIntegral', {
       indefiniteIntegral: { bodyLatex: String.raw`\frac{1}{\ln(2x+1)}` },
     }));
@@ -381,7 +379,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected special-function integral success.');
     }
-    const document = requireV4Document(result);
+    const document = requireCurrentDocument(result);
     expect(document.primary).toMatchObject({
       kind: 'special-function-expression',
       expression: {
@@ -601,7 +599,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
       .toBe(true);
   });
 
-  it('corrects the derivative-at-point primary while preserving the reviewed presentation', async () => {
+  it('preserves the native derivative-at-point answer and reviewed request presentation', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
       derivativePoint: { bodyLatex: 'x^2', point: '3', variable: 'x' },
     }));
@@ -611,7 +609,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.title).toBe('Derivative');
-    expect(result.exactLatex).not.toBe('6');
+    expect(result.exactLatex).toBe('6');
     expect(result.detailSections?.find((section) => section.title === 'Derivative Steps')?.lines)
       .toEqual([
         'Differentiate with respect to x.',

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../lib/app-state/ui-scale';
+import { isNativeUiScaleHost, UI_SCALE_STEPS } from '../app/runtime/ui-scale-policy';
 import { MathStatic } from './MathStatic';
 import { SettingsSwitch } from './SettingsSwitch';
 import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';

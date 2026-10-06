@@ -16,6 +16,28 @@ function candidate(mathJson: unknown) {
 }
 
 describe('producer-proven answer MathJSON', () => {
+  it('checks multi-argument formal calls without confusing the function with an argument', () => {
+    const tree = ['Apply', 'K', 'x', ['Exp', ['Power', 'x', 2]]];
+    expect(proveStandardAnswerMathJson({ canonicalLatex: String.raw`K\left(x,\exp(x^2)\right)`,
+      candidate: candidate(tree) })).toMatchObject({ ok: true });
+    for (const latex of [String.raw`J\left(x,\exp(x^2)\right)`,
+      String.raw`K\left(y,\exp(x^2)\right)`, String.raw`K\left(x,\exp(x^3)\right)`,
+      String.raw`x\left(\exp(x^2)\right)`]) {
+      expect(proveStandardAnswerMathJson({ canonicalLatex: latex, candidate: candidate(tree) }).ok).toBe(false);
+    }
+  });
+
+  it('combines integer factors introduced by implicit products while preserving coefficient signs', () => {
+    const tree = ['Equal', ['Add', ['D', ['Apply', 'r', 'x'], 'x'],
+      ['Multiply', ['Multiply', 2, 'x'], ['Apply', 'r', 'x']]], 1];
+    expect(proveStandardAnswerMathJson({ canonicalLatex: String.raw`r'(x)+2x\cdot\operatorname{r}(x)=1`,
+      candidate: candidate(tree) })).toMatchObject({ ok: true });
+    for (const latex of [String.raw`r'(x)+3x\cdot\operatorname{r}(x)=1`,
+      String.raw`r'(x)-2x\cdot\operatorname{r}(x)=1`, String.raw`r'(x)+2x^2\cdot\operatorname{r}(x)=1`]) {
+      expect(proveStandardAnswerMathJson({ canonicalLatex: latex, candidate: candidate(tree) }).ok).toBe(false);
+    }
+  });
+
   it('returns the validated producer tree with structural and printer evidence', () => {
     const result = proveAnswerMathJson({
       canonicalLatex: 'x+1',
@@ -465,6 +487,14 @@ describe('producer-proven answer MathJSON', () => {
     });
     expect(proveAnswerMathJson({ canonicalLatex: '1', candidate: wrongOwner }))
       .toMatchObject({ ok: false, failure: { reason: 'invalid-provenance' } });
+  });
+
+  it('preserves nested vector operator binding instead of flattening the triple product', () => {
+    const tree = ['Equal', 's', ['Apply', 'dot', ['List', ['Apply', 'cross', ['List', 'u', 'v']], 'w']], 0];
+    expect(proveStandardAnswerMathJson({canonicalLatex: String.raw`s=(u\times v)\cdot w=0`, candidate: candidate(tree)})).toMatchObject({ok: true});
+    for (const canonicalLatex of [String.raw`s=(u\cdot v)\times w=0`, String.raw`s=u\times(v\cdot w)=0`, String.raw`s=(v\times u)\cdot w=0`, String.raw`s=(u\times v)\cdot w=1`]) {
+      expect(proveStandardAnswerMathJson({canonicalLatex, candidate: candidate(tree)})).toMatchObject({ok: false, failure: {reason: 'semantic-mismatch'}});
+    }
   });
 
   it('rejects private operators even when Compute Engine can box them', () => {

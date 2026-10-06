@@ -1,18 +1,15 @@
+import type { CurrentResultProducerDraft } from '../../types/calculator/canonical-result-runtime';
 import type {
   ResultProducerDraft,
-  ResultProducerDraftV2,
-  ResultProducerDraftV3,
 } from '../../types/calculator';
 import type { LinearAlgebraCanonicalEvidence } from '../linear-algebra/canonical-evidence';
 import {
-  attachCanonicalResultV2ToProducerDraft,
-  attachCanonicalResultV3ToProducerDraft,
-  buildCanonicalResultDocumentV2FromProducerDraft,
-  buildCanonicalResultDocumentV3,
-  type CanonicalResultProducerInputV3,
-  type CanonicalResultProducerInputV2,
-  type CanonicalResultV2MathResolver,
-} from '../result-contract';
+  attachCurrentResultToDraft,
+  buildCanonicalResultFromDraft,
+  buildCanonicalResultDocument,
+  type CanonicalResultProducerInput,
+  type CanonicalResultMathResolver,
+} from '../result-contract/current/producer-draft';
 import {
   proveVectorCanonicalEvidence,
   type VectorMathJsonRouteId,
@@ -20,11 +17,11 @@ import {
 
 type VectorResultProducerInput = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
-function vectorDetailsV2(
+function vectorDetails(
   input: VectorResultProducerInput,
   routeId: VectorMathJsonRouteId,
   evidence: LinearAlgebraCanonicalEvidence,
-): CanonicalResultProducerInputV2['details'] {
+): CanonicalResultProducerInput['details'] {
   let evidenceIndex = 0;
   const consume = (canonicalLatex: string, path: string) => {
     const candidate = evidence.details?.[evidenceIndex];
@@ -68,10 +65,10 @@ function vectorDetailsV2(
   return details;
 }
 
-function vectorV2Document(input: VectorResultProducerInput, options: {
+function vectorDocument(input: VectorResultProducerInput, options: {
   routeId: VectorMathJsonRouteId;
   evidence: LinearAlgebraCanonicalEvidence;
-  mathValue: CanonicalResultV2MathResolver;
+  mathValue: CanonicalResultMathResolver;
 }) {
   const success = input.kind === 'success' ? input : undefined;
   const semantic = options.evidence.semanticPrimary;
@@ -87,34 +84,34 @@ function vectorV2Document(input: VectorResultProducerInput, options: {
         independent: semantic.independent,
       }
     : undefined;
-  return buildCanonicalResultDocumentV2FromProducerDraft({
+  return buildCanonicalResultFromDraft({
     draft: input,
     mathValue: options.mathValue,
     ...(primary ? { primary, answerRows: null } : {}),
-    details: vectorDetailsV2(input, options.routeId, options.evidence),
+    details: vectorDetails(input, options.routeId, options.evidence),
   });
 }
 
-export function createVectorResultOutcomeV2(
+export function createVectorResultOutcome(
   input: VectorResultProducerInput,
   options: {
     routeId: VectorMathJsonRouteId;
     evidence: LinearAlgebraCanonicalEvidence;
-    mathValue: CanonicalResultV2MathResolver;
+    mathValue: CanonicalResultMathResolver;
   },
-): ResultProducerDraftV2 {
-  const canonicalResult = vectorV2Document(input, options);
-  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+): CurrentResultProducerDraft {
+  const canonicalResult = vectorDocument(input, options);
+  return attachCurrentResultToDraft(canonicalResult, input);
 }
 
-export function createVectorAngleResultOutcomeV3(
+export function createVectorAngleResultOutcome(
   input: VectorResultProducerInput,
   options: {
     routeId: VectorMathJsonRouteId;
     evidence: LinearAlgebraCanonicalEvidence;
-    mathValue: CanonicalResultV2MathResolver;
+    mathValue: CanonicalResultMathResolver;
   },
-): ResultProducerDraftV3 {
+): CurrentResultProducerDraft {
   const semantic = options.evidence.semanticPrimary;
   if (semantic?.kind !== 'angle-quantity' || !input.exactLatex) {
     throw new Error('Vector gradian angle is missing aligned angle-quantity evidence.');
@@ -124,7 +121,7 @@ export function createVectorAngleResultOutcomeV3(
     semantic.magnitude,
     'primary.magnitude',
   );
-  const inherited = vectorV2Document(input, {
+  const inherited = vectorDocument(input, {
     ...options,
     mathValue: (canonicalLatex, path) => path === 'primary.value'
       ? magnitude
@@ -133,7 +130,7 @@ export function createVectorAngleResultOutcomeV3(
   const { version: _version, primary: _primary, ...surface } = inherited;
   void _version;
   void _primary;
-  const canonicalResult = buildCanonicalResultDocumentV3({
+  const canonicalResult = buildCanonicalResultDocument({
     ...surface,
     primary: {
       kind: 'angle-quantity',
@@ -141,8 +138,8 @@ export function createVectorAngleResultOutcomeV3(
       magnitude,
       unit: semantic.unit,
     },
-  } as CanonicalResultProducerInputV3);
+  } as CanonicalResultProducerInput);
   const { actions: _actions, ...producerDraft } = input;
   void _actions;
-  return attachCanonicalResultV3ToProducerDraft(canonicalResult, producerDraft);
+  return attachCurrentResultToDraft(canonicalResult, producerDraft);
 }

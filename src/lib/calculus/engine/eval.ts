@@ -12,6 +12,7 @@ import {
   resolveIndefiniteIntegralFromAst,
 } from './integration';
 import { presentCalculusIndefiniteEvaluation } from './indefinite-presentation';
+import { withIndefiniteIntegralAuthority } from './integration-authority';
 import {
   basicFiniteLimitWarning,
   evaluateFiniteLimitFromAst,
@@ -49,6 +50,7 @@ type CalculusEvaluation =
       derivativeStrategies?: CalculusDerivativeStrategy[];
       detailSections?: { title: string; lines: string[] }[];
       mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
+      indefiniteIntegralAuthority?: import('./shared').CalculusIndefiniteIntegralAuthority;
     }
   | {
       kind: 'error';
@@ -279,6 +281,7 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
       return profileCalculusResult({
         kind: 'handled',
         exactLatex: numberToLatex(numeric),
+    mathJsonLeaves: [{ canonicalLatex: numberToLatex(numeric), mathJson: Number(numeric.toFixed(6)), source: 'calculus:computed-numeric-derivative' }],
         approxText: formatApproxNumber(numeric),
         warnings: [derivativeNumericFallbackWarning(preflight)],
         resultOrigin: 'numeric-fallback',
@@ -305,6 +308,7 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
       return profileCalculusResult({
         kind: 'handled',
         exactLatex: substituted.latex,
+        mathJsonLeaves: [{ canonicalLatex: substituted.latex, mathJson: substituted.json, source: 'calculus:computed-derivative' }],
         approxText: latexToApproxText((substituted.N?.() ?? substituted).latex),
         warnings: [],
         resultOrigin: 'symbolic-engine',
@@ -327,6 +331,7 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
   return profileCalculusResult({
     kind: 'handled',
     exactLatex: numberToLatex(numeric),
+    mathJsonLeaves: [{ canonicalLatex: numberToLatex(numeric), mathJson: Number(numeric.toFixed(6)), source: 'calculus:computed-numeric-derivative' }],
     approxText: formatApproxNumber(numeric),
     warnings: ['Symbolic derivative unavailable; showing a numeric derivative at the selected point.'],
     resultOrigin: 'numeric-fallback',
@@ -361,10 +366,9 @@ export function resolveCalculusEvaluation(
         unsupportedError: 'This antiderivative could not be determined symbolically in this milestone.',
         normalizeRuleLatex: true,
       });
-      const presented = presentCalculusIndefiniteEvaluation(
-        resolved,
-        integral.body,
-        integral.variable,
+      const presented = withIndefiniteIntegralAuthority(
+        presentCalculusIndefiniteEvaluation(resolved, integral.body, integral.variable),
+        integral.body, integral.variable, box(integral.body).latex,
       );
 
       if (presented.error) {
@@ -384,9 +388,15 @@ export function resolveCalculusEvaluation(
         warnings: presented.warnings,
         resultOrigin: presented.resultOrigin,
         integrationStrategy: presented.integrationStrategy,
+        indefiniteIntegralAuthority: presented.indefiniteIntegralAuthority,
         detailSections: presented.detailSections,
         mathJsonLeaves: [
           ...(presented.mathJsonLeaves ?? []),
+          ...(presented.integrationFactNodes ?? []).map(fact => ({ canonicalLatex: fact.presentationLatex,
+            mathJson: fact.mathJson, source: fact.source })),
+          ...(presented.integrationDetailNodes ?? []).flatMap(section => section.lines.flatMap(line =>
+            line.flatMap(part => part.kind === 'math' ? [{ canonicalLatex: part.canonicalLatex,
+              mathJson: part.mathJson, source: part.source }] : []))),
           ...calculateIndefiniteMathJsonLeaves({
             body: integral.body,
             variable: integral.variable,
@@ -572,6 +582,7 @@ export function resolveCalculusEvaluation(
       return profileCalculusResult({
         kind: 'handled',
         exactLatex: exactDerivative.latex,
+        mathJsonLeaves: [{ canonicalLatex: exactDerivative.latex, mathJson: exactDerivative.json, source: 'calculus:computed-derivative' }],
         approxText: latexToApproxText((exactDerivative.N?.() ?? exactDerivative).latex),
         warnings: [],
         resultOrigin: 'symbolic-engine',
@@ -582,6 +593,7 @@ export function resolveCalculusEvaluation(
         return profileCalculusResult({
           kind: 'handled',
           exactLatex: evaluatedExpr.latex,
+        mathJsonLeaves: [{ canonicalLatex: evaluatedExpr.latex, mathJson: evaluatedExpr.json, source: 'calculus:computed-derivative' }],
           approxText: latexToApproxText((evaluatedExpr.N?.() ?? evaluatedExpr).latex),
           warnings: [],
           resultOrigin: 'compute-engine',

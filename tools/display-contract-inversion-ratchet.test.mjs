@@ -257,6 +257,40 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.vector.forwarder, 0);
   });
 
+  it('recognizes current native draft attachment without a legacy projection exemption', () => {
+    const rootDir = fixture({
+      'src/lib/modes/vector/current.ts': `
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function attachCurrentResultToDraft(document: {version: 7}, draft: ResultProducerDraft): ResultProducerDraft;
+        export function current(): ResultProducerDraft {
+          return attachCurrentResultToDraft({version: 7}, {kind: 'success', title: 'Current', warnings: []});
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({rootDir});
+    assert.equal(report.lanes.vector['native-document'], 1);
+    assert.equal(report.summary.compatibilityProjectionCount, 0);
+    assert.equal(report.summary.legacyReadCount, 0);
+  });
+
+  it('counts the checked Calculate current adapter and leaves a bare producer exposed', () => {
+    const rootDir = fixture({
+      'src/lib/modes/calculate/current.ts': `
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function createCalculateResultOutcome(draft: ResultProducerDraft, resolver: unknown): ResultProducerDraft;
+        export function current(): ResultProducerDraft {
+          return createCalculateResultOutcome({kind: 'success', title: 'Current', warnings: []}, null);
+        }
+        export function unproved(): ResultProducerDraft {
+          return {kind: 'success', title: 'No authority', warnings: []};
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({rootDir});
+    assert.equal(report.lanes.calculate['native-document'], 1);
+    assert.equal(report.lanes.calculate['compatibility-projection'], 1);
+  });
+
   it('keeps versioned producer unions visible to the authority inventory', () => {
     const rootDir = fixture({
       'src/lib/modes/vector/versioned.ts': `
@@ -272,6 +306,24 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.vector['native-document'], 1);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.violations.length, 0);
+  });
+
+  it('inventories mandatory current producer types without hiding an unproved branch', () => {
+    const rootDir = fixture({
+      'src/lib/modes/calculate/current.ts': `
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        type CurrentResultProducerDraft = Omit<ResultProducerDraft, 'canonicalResult'> & {canonicalResult: {version: 7}};
+        export function current(): CurrentResultProducerDraft {
+          return {kind: 'success', title: 'Current', warnings: [], canonicalResult: {version: 7}};
+        }
+        export function unproved(): CurrentResultProducerDraft {
+          return {kind: 'success', title: 'Missing authority', warnings: []};
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({rootDir});
+    assert.equal(report.lanes.calculate['native-document'], 1);
+    assert.equal(report.lanes.calculate['compatibility-projection'], 1);
   });
 
   it('separates registered Equation owner assembly from its canonical rebuild wrapper', () => {
@@ -503,7 +555,7 @@ describe('display contract inversion ratchet', () => {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.ownerAssemblyCount, 40);
+    assert.equal(report.summary.ownerAssemblyCount, 39);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [],
@@ -548,18 +600,20 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 445);
-    // New Integration contributes four reads; New Equation adds its two registered adapter reads.
-    assert.equal(report.summary.consumerCount, 64);
+    // Current producers expose mandatory authority rather than the old optional
+    // draft envelope. Reviewed adapter consolidation removes two old assemblies.
+    assert.equal(report.summary.producerCount, 448);
+    // Current typed workspace readers replace five obsolete version-dispatch reads.
+    assert.equal(report.summary.consumerCount, 59);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
-    assert.equal(report.summary.producerDraftReadCount, 94);
-    assert.equal(report.summary.nativeDocumentCount, 165);
+    assert.equal(report.summary.producerDraftReadCount, 100);
+    assert.equal(report.summary.nativeDocumentCount, 174);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);
-    // Inline matrix/vector producer adds a V2 document and its error/attach wrappers.
-    assert.equal(report.lanes.calculate['native-document'], 9);
+    // Current Calculate's export and both paths carry checked native documents.
+    assert.equal(report.lanes.calculate['native-document'], 12);
     assert.equal(report.lanes['app-display']['legacy-read'], 0);
     assert.equal(report.lanes['app-shell']?.['legacy-read'] ?? 0, 0);
     assert.equal(report.lanes['display-read-model']['legacy-read'], 0);

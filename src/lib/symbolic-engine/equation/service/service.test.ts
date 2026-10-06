@@ -1,5 +1,5 @@
 import { describe as group, expect, it } from 'vitest';
-import type { CanonicalResultDocumentV6 } from '../../../../types/calculator';
+import type { CanonicalEquationDocument } from '../../../../types/calculator/canonical-result-current';
 import { autoTargets, checkRows, parseRow, pickOrder } from '../../../new-equation/parse';
 import { DEFAULT_EQUATION_LIMITS, type EquationRequest } from '../../../new-equation/types';
 import { verificationSummary } from '../../../new-equation/verification';
@@ -10,7 +10,7 @@ const request = (rows: string[], targets: string[], over: Partial<EquationReques
 const solve = (rows: string[], targets?: string[], over: Partial<EquationRequest> = {}) =>
   executeEquation(request(rows, targets ?? autoTargets(rows.map(parseRow)), over));
 const shown = (r: ReturnType<typeof solve>, style: 'exact' | 'decimal' | 'both' = 'exact') => r.presentations?.[style]?.plainText;
-const v6 = (r: ReturnType<typeof solve>) => r.document as CanonicalResultDocumentV6;
+const v6 = (r: ReturnType<typeof solve>) => r.document as CanonicalEquationDocument;
 
 group('New Equation rows', () => {
   it('reads relations, implicit products, constants and chains', () => {
@@ -93,7 +93,7 @@ group('New Equation service', () => {
 
   it('stops on the work limit with a typed stop', () => {
     const r = solve(['x^5-x-1=0'], ['x'], { limits: { work: 2_000, allocation: DEFAULT_EQUATION_LIMITS.allocation } });
-    const kind = r.document.version === 6 ? v6(r).primary.outcome.kind : r.document.title;
+    const kind = r.document.primary?.kind === 'equation-outcome' ? v6(r).primary.outcome.kind : r.document.title;
     expect(['stopped', 'Stopped']).toContain(kind);
   });
 
