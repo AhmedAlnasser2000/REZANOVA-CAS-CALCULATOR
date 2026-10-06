@@ -17,7 +17,9 @@ export type PtxDot = {
   plane: 'real' | 'complex';
   /** `endpoint` and `hole` are a piecewise branch's filled and open end circles (from the scene, not Analyze). */
   feature: 'root' | 'extremum' | 'intersection' | 'y-intercept' | 'x-intercept' | 'endpoint' | 'hole' | 'complex-zero' | 'complex-pole'
-    | 'turning-point' | 'curve-endpoint' | 'origin-crossing' | 'region-corner';
+    | 'turning-point' | 'curve-endpoint' | 'origin-crossing' | 'region-corner'
+    /** A curve that is a single point (x² + y² = 0), from the scene. */
+    | 'isolated-point';
   /** Which way a turning point faces, which end, whether an end or corner belongs to the curve, and the parameter there. */
   detail?: GraphAnalysisEvidenceV1['detail'];
   itemIds: string[];
@@ -141,6 +143,8 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
         parameterEnvironment: graphParameterEnvironment(snapshot.document),
         assumptions: snapshot.document.assumptions,
         features: [...FEATURES, ...LINE_FEATURES],
+        // Only the selected item's points and the items whose asymptotes show: every other curve only meets them.
+        focusItemIds: [...new Set([...(selectable && selectedItemId ? [selectedItemId] : []), ...showing])],
         numericWindow: snapshot.surface.viewport,
         // Each item gets a fair share inside the analysis; more items get more time in all.
         maximumTimeMs: Math.min(1500, 300 + 150 * items.length),

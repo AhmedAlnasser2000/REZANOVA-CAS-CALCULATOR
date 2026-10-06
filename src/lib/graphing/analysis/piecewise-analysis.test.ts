@@ -12,8 +12,9 @@ function item(itemId: string, latex: string): GraphAnalysisRequestV1['items'][nu
     : { version: 1, kind: 'relation', itemId, source, relation: (classified as Extract<typeof classified, { itemKind: 'relation' }>).relation, visible: true } as GraphAnalysisRequestV1['items'][number];
 }
 
-async function analyze(items: GraphAnalysisRequestV1['items'], features: GraphAnalysisRequestV1['features']) {
+async function analyze(items: GraphAnalysisRequestV1['items'], features: GraphAnalysisRequestV1['features'], focusItemIds?: string[]) {
   return runGraphAnalysisRequest({
+    ...(focusItemIds ? { focusItemIds } : {}),
     version: 1, requestId: 'a', workspaceInstanceId: 'w', documentId: 'd', revisions: { mathematics: 1, viewport: 1, parameter: 0 },
     items, parameterEnvironment: {}, features,
     numericWindow: { coordinateSystem: 'cartesian', xMin: -5, xMax: 5, yMin: -5, yMax: 5 }, maximumTimeMs: 2_000,
@@ -50,5 +51,16 @@ describe('Piecewise analysis', () => {
       .map((entry) => Number((entry.coordinates?.x as { value: number }).value.toFixed(9)));
     // x² = 2 at −√2 on the left branch, and 3 − x = 2 at x = 1, where the right branch (x ≥ 1) is drawn.
     expect(points).toEqual([-1.414213562, 1]);
+  });
+
+  it('works out only the focused items’ own points but still meets them with every other curve (GRAPHING-PERF1)', async () => {
+    const result = await analyze([item('p', 'y=x^2-1'), item('l', 'y=x+1'), item('q', 'y=x-3')], ['root', 'intersection'], ['p']);
+    const roots = result.evidence.filter((entry) => entry.feature === 'root');
+    expect(roots.length).toBeGreaterThan(0);
+    expect(roots.every((entry) => entry.itemIds.includes('p'))).toBe(true);
+    // p meets l at x = −1 and x = 2; l and q (both unfocused, and parallel anyway) are not paired.
+    const pairs = result.evidence.filter((entry) => entry.feature === 'intersection').map((entry) => [...entry.itemIds].sort().join('+'));
+    expect(pairs.length).toBeGreaterThan(0);
+    expect(pairs.every((pair) => pair.includes('p'))).toBe(true);
   });
 });

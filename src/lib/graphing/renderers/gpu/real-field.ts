@@ -136,17 +136,22 @@ vec4 graphFetch(ivec2 pixel, ivec2 size) { return texelFetch(uField, clamp(pixel
     // the neighbourhood search for them keeps the output identical and makes
     // most of the frame cost four fetches per clause.
     if (distance >= reach) continue;
-    bool crossing = false;
+    // A crossing needs strictly negative and strictly positive values nearby: a field that only touches
+    // zero ((x - y)^2 = 0, exactly 0 where a pixel centre lies on the curve) has none, and is drawn by its
+    // CPU touching path instead of as blobs at those pixels (GRAPHING-PERF1).
+    bool negative = value < 0.0;
+    bool positive = value > 0.0;
     for (int k = 1; k <= 12; k += 1) {
       if (k > radius) break;
       ivec2 offsets[8] = ivec2[8](ivec2(k, 0), ivec2(-k, 0), ivec2(0, k), ivec2(0, -k),
         ivec2(k, k), ivec2(-k, k), ivec2(k, -k), ivec2(-k, -k));
       for (int o = 0; o < 8; o += 1) {
         float neighbour = graphFetch(pixel + offsets[o], size)[i];
-        if (graphDefined(neighbour) && (neighbour <= 0.0) != (value <= 0.0)) crossing = true;
+        if (!graphDefined(neighbour)) continue;
+        if (neighbour < 0.0) negative = true; else if (neighbour > 0.0) positive = true;
       }
     }
-    if (!crossing) continue;
+    if (!(negative && positive)) continue;
     // Two-scale consistency: at a genuine root the field is locally linear,
     // so slopes over +-1 px and +-2 px agree. Across a pole (1/x, tan) the
     // sign also flips but the slopes disagree sharply; reject that crossing.

@@ -357,7 +357,9 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       ...(this.gesturePaths?.querySelectorAll<SVGPathElement>('[data-item-id]') ?? []),
     ];
     pathNodes.forEach((node) => {
-      suppressed(node, node.parentNode === this.paths);
+      // A touching curve ((x − y)² = 0) has no sign change, so the GPU field cannot draw it: its CPU path always shows.
+      if (node.dataset.pathId?.includes(':touching:') && this.suppressedItems.has(node.dataset.itemId ?? '')) node.style.display = '';
+      else suppressed(node, node.parentNode === this.paths);
       const style = this.itemPresentation(node.dataset.itemId ?? '');
       const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'stroke', color);

@@ -291,8 +291,10 @@ async function runPtx3Smoke(session) {
     return count === 1 ? count : null;`), 30_000);
   // PTX-ENGINE1: a curve that only touches zero is drawn, and a trace on sin x is proved by interval arithmetic.
   await setRow('(x-y)^2=0');
+  // GRAPHING-PERF1: the touching curve is its own CPU path, painted even while the GPU field draws the item.
   const touching = await waitFor('touching curve', () => execute(session, `
-    return document.querySelectorAll('[data-testid="graph-scene-paths"] path[data-item-id]').length || null;`), 30_000);
+    const path = document.querySelector('[data-testid="graph-scene-paths"] path[data-path-id$=":touching:0"]');
+    return path && getComputedStyle(path).display !== 'none' ? 1 : null;`), 30_000);
   await setRow(String.raw`\sin x`);
   await delay(1200);
   await traceFirst();

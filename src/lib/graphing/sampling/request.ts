@@ -603,6 +603,10 @@ export async function runGraphSampleRequest(
           ...(boundary.strict ? { strokeRole: 'strict-boundary' as const } : {}),
         });
       }
+      // Isolated points (x² + y² = 0) as dots: a path cannot show a single point, and dots are never GPU-suppressed.
+      for (const isolated of sampled.isolatedPoints ?? []) {
+        pointBatches.push({ pointBatchId: `${item.itemId}:isolated:${isolated.clauseIndex}`, itemId: item.itemId, marker: 'filled', coordinates: isolated.coordinates });
+      }
       if (sampled.region) {
         regions.push({
           regionId: `${item.itemId}:region:0`,

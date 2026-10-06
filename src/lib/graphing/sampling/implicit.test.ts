@@ -315,10 +315,26 @@ describe('Graph implicit contour and region sampler', () => {
       expect(along.every(({ x, y }) => Math.abs(x - y) < 1e-6)).toBe(true);
       expect(Math.min(...along.map(({ x }) => x))).toBeLessThan(-3);
       expect(Math.max(...along.map(({ x }) => x))).toBeGreaterThan(3);
+      // GRAPHING-PERF1: a touching curve is its own path (never hidden behind the GPU field) and one continuous chain.
+      expect(line.boundaries.map((boundary) => boundary.pathIdSuffix)).toEqual(['touching:0']);
+      expect(line.boundaries[0]!.segmentOffsets.length).toBe(1);
+      // A lone point is an isolated point, drawn as a dot (a point batch), not a path.
       const dot = sample({ kind: 'implicit-equality', left: circleLeft, right: expression(0, []) });
-      expect(points(dot).length).toBeGreaterThan(0);
-      // A lone point is drawn as a segment a thousandth of a cell long, so the renderer shows a dot.
-      expect(points(dot).every(({ x, y }) => Math.hypot(x, y) < 1e-3)).toBe(true);
+      expect(dot.boundaries).toEqual([]);
+      expect(dot.isolatedPoints).toHaveLength(1);
+      const [x, y] = dot.isolatedPoints![0]!.coordinates;
+      expect(Math.hypot(x!, y!)).toBeLessThan(1e-6);
+    });
+
+    it('draws a touching circle as one closed chain', () => {
+      const ring = sample({ kind: 'implicit-equality', left: expression(['Power', ['Add', ['Power', 'x', 2], ['Power', 'y', 2], -1], 2]), right: expression(0, []) });
+      const around = points(ring);
+      expect(ring.boundaries[0]!.pathIdSuffix).toBe('touching:0');
+      expect(ring.boundaries[0]!.segmentOffsets.length).toBe(1);
+      expect(around.length).toBeGreaterThan(20);
+      expect(around.every(({ x, y }) => Math.abs(Math.hypot(x, y) - 1) < 1e-6)).toBe(true);
+      expect(Math.hypot(around[0]!.x - around.at(-1)!.x, around[0]!.y - around.at(-1)!.y)).toBeLessThan(1e-9);
+      expect(ring.isolatedPoints).toBeUndefined();
     });
 
     it('joins the branches of x² = y² through their crossing and certifies smooth arcs', () => {

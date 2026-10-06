@@ -136,6 +136,7 @@ const DOT_NAMES: Record<PtxDot['feature'], string> = {
   root: 'Root', extremum: 'Extremum', intersection: 'Intersection', 'y-intercept': 'y-intercept', 'x-intercept': 'x-intercept',
   endpoint: 'Endpoint', hole: 'Hole', 'complex-zero': 'Zero', 'complex-pole': 'Pole',
   'turning-point': 'Turning point', 'curve-endpoint': 'End', 'origin-crossing': 'Origin', 'region-corner': 'Corner',
+  'isolated-point': 'Point',
 };
 const KIND_NAMES = { highest: 'Highest', lowest: 'Lowest', leftmost: 'Leftmost', rightmost: 'Rightmost', start: 'Start', end: 'End' } as const;
 
@@ -155,10 +156,11 @@ function dotSuffix(dot: Pick<PtxDot, 'detail'>) {
 /** A piecewise item's end circles from the scene, as snap targets: filled ends and open ones (holes). */
 export function ptxEndpointDots(pointBatches: ReadonlyArray<{ pointBatchId: string; itemId: string; coordinates: Float64Array; marker?: 'filled' | 'open' }>): PtxDot[] {
   return pointBatches.flatMap((batch) => {
-    if (!batch.marker || !batch.pointBatchId.includes(':endpoint:')) return [];
+    const isolated = batch.pointBatchId.includes(':isolated:');
+    if (!batch.marker || (!batch.pointBatchId.includes(':endpoint:') && !isolated)) return [];
     const dots: PtxDot[] = [];
     for (let index = 0; index + 1 < batch.coordinates.length; index += 2) {
-      dots.push({ key: `${batch.pointBatchId}:${index}`, plane: 'real', feature: batch.marker === 'open' ? 'hole' : 'endpoint', itemIds: [batch.itemId],
+      dots.push({ key: `${batch.pointBatchId}:${index}`, plane: 'real', feature: isolated ? 'isolated-point' : batch.marker === 'open' ? 'hole' : 'endpoint', itemIds: [batch.itemId],
         x: batch.coordinates[index]!, y: batch.coordinates[index + 1]!, level: batch.marker === 'open' ? 'sampled-estimate' : 'numeric-validated', errorBound: 1e-9 });
     }
     return dots;

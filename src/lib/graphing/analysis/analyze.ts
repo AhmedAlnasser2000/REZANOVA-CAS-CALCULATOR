@@ -88,6 +88,9 @@ function exactZeroAtOrigin(node: unknown): boolean {
 }
 
 
+/** The features an unfocused item contributes: none of its own (it is still intersected with focused items). */
+const NO_FEATURES = new Set<GraphAnalysisFeature>();
+
 function analyzeComplexMapping(input: {
   request: GraphAnalysisRequestV1;
   item: Extract<GraphClassifiedItemSnapshotV2, { kind: 'relation' }>;
@@ -406,6 +409,9 @@ export async function runGraphAnalysisRequest(
   const stopReasons: GraphStopReason[] = [];
   const window = request.numericWindow ?? { coordinateSystem: 'cartesian' as const, xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
   const requested = new Set(request.features);
+  // Points of interest only need the selected item's features (and its crossings with others); Analyze asks for all.
+  const focus = request.focusItemIds ? new Set(request.focusItemIds) : null;
+  const unfocusedPair = (a: string, b: string) => focus !== null && !focus.has(a) && !focus.has(b);
   // y = f(x) curves (piecewise ones too, with no single expression) that can meet each other.
   const explicitItems: Array<{ item: GraphClassifiedItemSnapshotV2; run: Evaluator; expression: GraphExpressionIR | null }> = [];
   const locusItems: Array<{ itemId: string; curve: PtxPlaneFunction }> = [];
@@ -416,6 +422,8 @@ export async function runGraphAnalysisRequest(
     evidence(request, feature, itemIds, level, serial++, extra));
 
   for (const [itemIndex, snapshot] of request.items.entries()) {
+    // Unfocused items only supply curves to intersect with focused ones: no features of their own are worked out.
+    const requestedHere = !focus || focus.has(snapshot.itemId) ? requested : NO_FEATURES;
     if (control.isCancelled?.()) break;
     if (now() - started > request.maximumTimeMs) {
       stopReasons.push({ code: 'analysis-inconclusive', detailCode: 'time-budget-exceeded' });
@@ -431,14 +439,14 @@ export async function runGraphAnalysisRequest(
     if (snapshot.kind !== 'relation') {
       if (snapshot.kind === 'piecewise') {
         const piecewise = analyzeGraphPiecewise({
-          snapshot, window, parameters: request.parameterEnvironment, requested,
+          snapshot, window, parameters: request.parameterEnvironment, requested: requestedHere,
           evidence: curveEvidence, approximate, exact, finder: itemFinder,
         });
         findings.push(...piecewise.findings);
         if (piecewise.run) explicitItems.push({ item: snapshot, run: piecewise.run, expression: null });
         else {
           // x = f(y) and polar piecewise curves: the same points as their plain forms.
-          const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested, evidence: curveEvidence, approximate, finder: itemFinder });
+          const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested: requestedHere, evidence: curveEvidence, approximate, finder: itemFinder });
           findings.push(...curve.findings);
           for (const each of curve.curves) curveItems.push({ itemId: snapshot.itemId, curve: each });
         }
@@ -449,20 +457,20 @@ export async function runGraphAnalysisRequest(
     if (snapshot.relation.kind === 'real-surface') {
       const run = surfaceEvaluatorFor(snapshot.relation, snapshot, request.parameterEnvironment, cache);
       if (run) findings.push(...analyzeSurface({
-        request, item: snapshot, run, window, requested, serial: () => serial++,
+        request, item: snapshot, run, window, requested: requestedHere, serial: () => serial++,
         onEvaluation: () => { evaluatedPointCount += 1; },
       }));
       await control.yieldBetweenItems?.();
       continue;
     }
     if (snapshot.relation.kind === 'complex-roots') {
-      if (requested.has('complex-zero')) findings.push(...analyzeComplexRoots(request, snapshot.itemId, snapshot.relation, () => serial++));
+      if (requestedHere.has('complex-zero')) findings.push(...analyzeComplexRoots(request, snapshot.itemId, snapshot.relation, () => serial++));
       await control.yieldBetweenItems?.();
       continue;
     }
     if (snapshot.relation.kind === 'complex-mapping') {
       findings.push(...analyzeComplexMapping({
-        request, item: snapshot, relation: snapshot.relation, requested,
+        request, item: snapshot, relation: snapshot.relation, requested: requestedHere,
         serial: () => serial++, onEvaluations: (count) => { evaluatedPointCount += count; },
       }));
       await control.yieldBetweenItems?.();
@@ -473,7 +481,7 @@ export async function runGraphAnalysisRequest(
       if (curve) locusItems.push({ itemId: snapshot.itemId, curve });
     }
     if (snapshot.relation.kind !== 'explicit-y' && snapshot.relation.kind !== 'complex-locus') {
-      const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested, evidence: curveEvidence, approximate, finder: itemFinder });
+      const curve = analyzeGraphCurve({ snapshot, window, parameters: request.parameterEnvironment, requested: requestedHere, evidence: curveEvidence, approximate, finder: itemFinder });
       if (curve.handled) {
         findings.push(...curve.findings);
         for (const each of curve.curves) curveItems.push({ itemId: snapshot.itemId, curve: each });
@@ -497,7 +505,7 @@ export async function runGraphAnalysisRequest(
     // The same function through the PTX port, with exact slopes and guaranteed ranges, for interval proofs (PTX-ENGINE1).
     const provable = ptx.realFunction(expression, 'x', request.parameterEnvironment);
     const finder = itemFinder;
-    if (requested.has('root') || requested.has('x-intercept')) {
+    if (requestedHere.has('root') || requestedHere.has('x-intercept')) {
       // PTX finders: exact polynomial roots of any degree the exact path splits; otherwise bracketed and touching roots.
       const roots = ptxRealRoots(run, window.xMin, window.xMax, finder,
         ptx.realPolynomialRoots(expression.mathJson, 'x', request.parameterEnvironment));
@@ -506,7 +514,7 @@ export async function runGraphAnalysisRequest(
         const root = proof ? { ...found, x: (proof.lo + proof.hi) / 2, errorBound: (proof.hi - proof.lo) / 2 + Number.EPSILON, level: 'interval-proved' as const } : found;
         const proved = root.level === 'exact-proved';
         const x = proved ? exact(root.x) : approximate(root.x, root.errorBound);
-        for (const feature of ['root', 'x-intercept'] as const) if (requested.has(feature)) {
+        for (const feature of ['root', 'x-intercept'] as const) if (requestedHere.has(feature)) {
           findings.push(evidence(request, feature, [snapshot.itemId], root.level, serial++, {
             coordinates: { x, y: proved ? exact(0) : approximate(0, root.residual || 1e-9) },
             relationValue: proved ? exact(0) : approximate(0, root.residual || 1e-9),
@@ -518,20 +526,20 @@ export async function runGraphAnalysisRequest(
         }
       }
     }
-    if (requested.has('y-intercept')) {
+    if (requestedHere.has('y-intercept')) {
       const y = run(0); evaluatedPointCount += 1;
       if (y !== undefined) findings.push(evidence(request, 'y-intercept', [snapshot.itemId], coefficients ? 'exact-proved' : 'numeric-validated', serial++, {
         coordinates: { x: coefficients ? exact(0) : approximate(0), y: coefficients ? exact(y) : approximate(y, 1e-10) },
       }));
     }
-    if (requested.has('extremum') && coefficients?.[2]) {
+    if (requestedHere.has('extremum') && coefficients?.[2]) {
       const x = -coefficients[1] / (2 * coefficients[2]);
       const y = run(x); evaluatedPointCount += 1;
       if (y !== undefined) findings.push(evidence(request, 'extremum', [snapshot.itemId], 'exact-proved', serial++, {
         coordinates: { x: exact(x), y: exact(y) },
         basis: { source: 'graph-symbolic', validator: coefficients[2] > 0 ? 'quadratic local minimum' : 'quadratic local maximum' },
       }));
-    } else if (requested.has('extremum')) {
+    } else if (requestedHere.has('extremum')) {
       for (const extremum of ptxRealExtrema(provable ?? run, window.xMin, window.xMax, finder)) {
         const proof = provable ? ptxProveRealExtremum(provable, extremum.x, extremum.errorBound, extremum.kind) : null;
         findings.push(evidence(request, 'extremum', [snapshot.itemId], proof ? 'interval-proved' : extremum.level, serial++, {
@@ -542,12 +550,12 @@ export async function runGraphAnalysisRequest(
     }
     const node = expression.mathJson;
     // Holes, poles and asymptotes from the PTX finders: exact lines for rational functions, numeric otherwise.
-    if (['hole', 'pole', 'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote', 'domain-boundary'].some((feature) => requested.has(feature as GraphAnalysisFeature))) {
+    if (['hole', 'pole', 'vertical-asymptote', 'horizontal-asymptote', 'oblique-asymptote', 'domain-boundary'].some((feature) => requestedHere.has(feature as GraphAnalysisFeature))) {
       const itemIds = [snapshot.itemId];
       // In a ratio of polynomials a hole sits at an exact root of the denominator.
       const rational = ptx.rationalEndBehaviour(node, 'x', request.parameterEnvironment) !== null;
       for (const hole of ptxRealDiscontinuities(run, node, 'x', window.xMin, window.xMax, ptx, request.parameterEnvironment, finder)) {
-        if (hole.kind === 'hole' && requested.has('hole')) findings.push(evidence(request, 'hole', itemIds, rational ? 'exact-proved' : 'numeric-validated', serial++, {
+        if (hole.kind === 'hole' && requestedHere.has('hole')) findings.push(evidence(request, 'hole', itemIds, rational ? 'exact-proved' : 'numeric-validated', serial++, {
           coordinates: { x: rational ? exact(hole.x) : approximate(hole.x, 1e-12 * Math.max(1, Math.abs(hole.x))), y: approximate(hole.limit, 1e-8 * Math.max(1, Math.abs(hole.limit))) },
           basis: rational ? { source: 'graph-symbolic', validator: 'common root of numerator and denominator' }
             : { source: 'numeric-validator', validator: 'both one-sided limits agree where the curve has no value' },
@@ -561,12 +569,12 @@ export async function runGraphAnalysisRequest(
         const value = (number: number) => (line.level === 'exact-proved' ? exact(number) : approximate(number, 1e-6 * Math.max(1, Math.abs(number))));
         if (line.kind === 'vertical') {
           // One-sided edges (ln x at 0) are domain boundaries already reported by the log and root rule below.
-          for (const feature of ['vertical-asymptote', 'pole', ...(line.sides.length === 2 ? ['domain-boundary' as const] : [])] as const) if (requested.has(feature)) {
+          for (const feature of ['vertical-asymptote', 'pole', ...(line.sides.length === 2 ? ['domain-boundary' as const] : [])] as const) if (requestedHere.has(feature)) {
             findings.push(evidence(request, feature, itemIds, line.level, serial++, { coordinates: { x: value(line.x) }, basis }));
           }
-        } else if (line.kind === 'horizontal' && requested.has('horizontal-asymptote')) {
+        } else if (line.kind === 'horizontal' && requestedHere.has('horizontal-asymptote')) {
           findings.push(evidence(request, 'horizontal-asymptote', itemIds, line.level, serial++, { coordinates: { y: value(line.y) }, basis }));
-        } else if (line.kind === 'oblique' && requested.has('oblique-asymptote')) {
+        } else if (line.kind === 'oblique' && requestedHere.has('oblique-asymptote')) {
           // The line y = mx + b: its y-intercept (0, b) as coordinates and its slope m as the relation value.
           findings.push(evidence(request, 'oblique-asymptote', itemIds, line.level, serial++, {
             coordinates: { x: exact(0), y: value(line.intercept) }, relationValue: value(line.slope), basis,
@@ -574,7 +582,7 @@ export async function runGraphAnalysisRequest(
         }
       }
     }
-    if (Array.isArray(node) && (node[0] === 'Ln' || node[0] === 'Sqrt') && requested.has('domain-boundary')) {
+    if (Array.isArray(node) && (node[0] === 'Ln' || node[0] === 'Sqrt') && requestedHere.has('domain-boundary')) {
       const argument = polynomial(node[1]);
       if (argument) for (const x of polynomialRoots(argument)) findings.push(evidence(request, 'domain-boundary', [snapshot.itemId], 'exact-proved', serial++, { coordinates: { x: exact(x) } }));
     }
@@ -585,6 +593,7 @@ export async function runGraphAnalysisRequest(
     const finder = { isCancelled: control.isCancelled, onEvaluation: () => { evaluatedPointCount += 2; } };
     for (let first = 0; first < explicitItems.length; first += 1) for (let second = first + 1; second < explicitItems.length; second += 1) {
       const a = explicitItems[first]; const b = explicitItems[second];
+      if (unfocusedPair(a!.item.itemId, b!.item.itemId)) continue;
       const exactDifference = a.expression && b.expression
         ? ptx.realPolynomialRoots(['Add', a.expression.mathJson, ['Negate', b.expression.mathJson]], 'x', request.parameterEnvironment) : null;
       // Guaranteed ranges of f − g, when both are plain expressions, prove the crossings found.
@@ -610,7 +619,7 @@ export async function runGraphAnalysisRequest(
     ];
     for (let first = 0; first < everyCurve.length; first += 1) for (let second = first + 1; second < everyCurve.length; second += 1) {
       const a = everyCurve[first]!; const b = everyCurve[second]!;
-      if ((a.graph && b.graph) || a.itemId === b.itemId || control.isCancelled?.()) continue;
+      if ((a.graph && b.graph) || a.itemId === b.itemId || unfocusedPair(a.itemId, b.itemId) || control.isCancelled?.()) continue;
       for (const point of ptxCurveIntersections(a.curve, b.curve, window, finder)) {
         findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
           coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },
@@ -621,6 +630,7 @@ export async function runGraphAnalysisRequest(
     // Complex loci meet where both clause functions vanish (two curves in the (Re z, Im z) plane).
     for (let first = 0; first < locusItems.length; first += 1) for (let second = first + 1; second < locusItems.length; second += 1) {
       const a = locusItems[first]!; const b = locusItems[second]!;
+      if (unfocusedPair(a.itemId, b.itemId)) continue;
       for (const point of ptxPlaneIntersections(a.curve, b.curve, window, ptx)) {
         findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
           coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },

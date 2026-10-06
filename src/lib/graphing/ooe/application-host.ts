@@ -151,6 +151,11 @@ export class GraphSamplingApplicationHost {
     this.#activeRun?.cancel(reason, true);
   }
 
+  /** Stops the active run cooperatively (the worker and its caches stay): a newer request is waiting (GRAPHING-PERF1). */
+  supersedeActive(reason = 'Superseded by a newer Graph sampling request.') {
+    this.#activeRun?.cancel(reason, false);
+  }
+
   dispose(reason = 'Graph sampling host was disposed.') {
     this.#activeRun?.cancel(reason, true);
     this.#terminateWorker();

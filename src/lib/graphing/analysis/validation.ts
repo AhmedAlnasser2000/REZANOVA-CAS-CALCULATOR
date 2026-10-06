@@ -41,6 +41,10 @@ export function validateGraphAnalysisRequest(input: unknown): Validation<GraphAn
     || !Number.isFinite(value.maximumTimeMs) || value.maximumTimeMs <= 0 || value.maximumTimeMs > 30_000) {
     return { ok: false, message: 'Graph analysis request identity, revisions, features, or budget are invalid.' };
   }
+  if (value.focusItemIds !== undefined && (!Array.isArray(value.focusItemIds) || value.focusItemIds.length > 512
+    || value.focusItemIds.some((itemId) => typeof itemId !== 'string' || !itemId))) {
+    return { ok: false, message: 'Graph analysis focus items are invalid.' };
+  }
   if (value.numericWindow && !validateGraphViewport(value.numericWindow).ok) {
     return { ok: false, message: 'Graph analysis numeric window is invalid.' };
   }

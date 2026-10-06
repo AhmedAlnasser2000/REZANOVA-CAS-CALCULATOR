@@ -76,6 +76,8 @@ export type GraphSampledImplicitRelation = {
   };
   /** Interval topology evidence (PTX-ENGINE1); absent for prebuilt clauses, which have no tape. */
   topology?: { certifiedCells: number; uncertifiedCells: number; singularPoints: number };
+  /** Isolated points of a clause (x² + y² = 0), drawn as dots: a path cannot show a single point. */
+  isolatedPoints?: Array<{ clauseIndex: number; coordinates: Float64Array }>;
 };
 
 export type GraphImplicitSamplingInput = {
@@ -748,7 +750,10 @@ export function sampleImplicitGraphRelation(
     }
   }
 
-  // Touching curves: join the touching points of neighbouring cells; a lone one (x² + y² = 0) is a dot.
+  // Touching curves (PTX-ENGINE1, GRAPHING-PERF1): walk neighbouring cells into ordered polylines so the line is
+  // continuous; a cluster with no neighbour (x² + y² = 0) is an isolated point, drawn as a dot.
+  const touchingPaths = compiled.clauses.map(() => [] as Array<Array<{ x: number; y: number }>>);
+  const isolated = compiled.clauses.map(() => [] as Array<{ x: number; y: number }>);
   touching.forEach((found, clauseIndex) => {
     // Cells that share a corner find the same point (x² + y² = 0 at a grid vertex): keep one, with the union of their cells.
     const points: typeof found = [];
@@ -759,24 +764,9 @@ export function sampleImplicitGraphRelation(
       same.bounds = { x0: Math.min(same.bounds.x0, point.bounds.x0), x1: Math.max(same.bounds.x1, point.bounds.x1),
         y0: Math.min(same.bounds.y0, point.bounds.y0), y1: Math.max(same.bounds.y1, point.bounds.y1) };
     }
-    const near = (a: CellBounds, b: CellBounds) => {
-      const slackX = 0.01 * (a.x1 - a.x0); const slackY = 0.01 * (a.y1 - a.y0);
-      return a.x0 <= b.x1 + slackX && b.x0 <= a.x1 + slackX && a.y0 <= b.y1 + slackY && b.y0 <= a.y1 + slackY;
-    };
-    points.forEach((point, index) => {
-      const vertex = evaluatePoint(point.x, point.y);
-      if (!vertex) return;
-      let joined = false;
-      for (let other = index + 1; other < points.length; other += 1) {
-        if (!near(point.bounds, points[other]!.bounds)) continue;
-        const next = evaluatePoint(points[other]!.x, points[other]!.y);
-        if (next) { segmentsByClause[clauseIndex]!.push({ first: vertex, second: next }); joined = true; }
-      }
-      if (!joined && !points.some((candidate, j) => j < index && near(candidate.bounds, point.bounds))) {
-        const tiny = 1e-3 * (point.bounds.x1 - point.bounds.x0);
-        segmentsByClause[clauseIndex]!.push({ first: vertex, second: { ...vertex, x: vertex.x + tiny } });
-      }
-    });
+    touchingPaths[clauseIndex] = chainTouchingPoints(points);
+    for (const chain of touchingPaths[clauseIndex]!) if (chain.length === 1) isolated[clauseIndex]!.push(chain[0]!);
+    touchingPaths[clauseIndex] = touchingPaths[clauseIndex]!.filter((chain) => chain.length > 1);
   });
 
   if (cancelled) {
@@ -802,6 +792,17 @@ export function sampleImplicitGraphRelation(
       segmentOffsets: stitched.segmentOffsets,
     }];
   });
+  // Touching curves as their own paths: the GPU field cannot draw them (no sign change), so they always stay CPU-drawn.
+  touchingPaths.forEach((chains, index) => {
+    const vertexCount = chains.reduce((total, chain) => total + chain.length, 0);
+    if (vertexCount < 2 || !canEmit(vertexCount)) return;
+    emittedVertices += vertexCount;
+    const offsets: number[] = []; const coordinates: number[] = [];
+    for (const chain of chains) { offsets.push(coordinates.length / 2); for (const point of chain) coordinates.push(point.x, point.y); }
+    boundaries.push({ pathIdSuffix: `touching:${index}`, strict: false, coordinates: new Float64Array(coordinates), segmentOffsets: new Uint32Array(offsets) });
+  });
+  const isolatedPoints = isolated.flatMap((points, clauseIndex) => (points.length
+    ? [{ clauseIndex, coordinates: new Float64Array(points.flatMap((point) => [point.x, point.y])) }] : []));
 
   if (topologyInconclusive) {
     stopReasons.push({ code: 'region-topology-inconclusive', detailCode: 'non-finite-implicit-cell' });
@@ -823,5 +824,53 @@ export function sampleImplicitGraphRelation(
       elapsedMs: Math.max(0, now() - startedAt),
     },
     ...(tester ? { topology } : {}),
+    ...(isolatedPoints.length ? { isolatedPoints } : {}),
   };
+}
+
+/**
+ * Orders touching points into polylines: each chain starts at a point with at most one neighbour (or anywhere on a
+ * loop) and repeatedly steps to the nearest unvisited neighbouring cell's point. A point with no neighbour is a chain
+ * of one (an isolated point).
+ */
+function chainTouchingPoints(points: Array<{ x: number; y: number; bounds: { x0: number; x1: number; y0: number; y1: number } }>) {
+  const near = (a: typeof points[number]['bounds'], b: typeof points[number]['bounds']) => {
+    const slackX = 0.01 * (a.x1 - a.x0); const slackY = 0.01 * (a.y1 - a.y0);
+    return a.x0 <= b.x1 + slackX && b.x0 <= a.x1 + slackX && a.y0 <= b.y1 + slackY && b.y0 <= a.y1 + slackY;
+  };
+  const neighbours = points.map((point, index) => points.flatMap((other, j) => (j !== index && near(point.bounds, other.bounds) ? [j] : [])));
+  const visited = new Array<boolean>(points.length).fill(false);
+  const chains: Array<Array<{ x: number; y: number }>> = [];
+  const order = points.map((_, index) => index).sort((a, b) => neighbours[a]!.length - neighbours[b]!.length);
+  for (const start of order) {
+    if (visited[start]) continue;
+    const chain = [points[start]!]; visited[start] = true;
+    let current = start;
+    for (;;) {
+      let next = -1; let best = Infinity;
+      for (const candidate of neighbours[current]!) {
+        if (visited[candidate]) continue;
+        const distance = Math.hypot(points[candidate]!.x - points[current]!.x, points[candidate]!.y - points[current]!.y);
+        if (distance < best) { best = distance; next = candidate; }
+      }
+      if (next < 0) break;
+      visited[next] = true; current = next;
+      // The same point found from two cells (a corner the curve passes through): a near-zero step would turn the
+      // stroke's join in an arbitrary direction and draw a bead, so it is walked through but not drawn.
+      const last = chain[chain.length - 1]!; const point = points[next]!;
+      const cell = Math.min(point.bounds.x1 - point.bounds.x0, point.bounds.y1 - point.bounds.y0);
+      if (Math.hypot(point.x - last.x, point.y - last.y) >= cell / 4) chain.push(point);
+    }
+    // A loop: close it when its end sits beside its start.
+    if (chain.length > 2 && neighbours[current]!.includes(start)) chain.push(chain[0]!);
+    // A point the walk passed by (it has neighbours, all visited) joins its nearest neighbour; only a point with no
+    // neighbour at all is an isolated point.
+    if (chain.length === 1 && neighbours[start]!.length > 0) {
+      const nearest = neighbours[start]!.reduce((best, j) => (Math.hypot(points[j]!.x - points[start]!.x, points[j]!.y - points[start]!.y)
+        < Math.hypot(points[best]!.x - points[start]!.x, points[best]!.y - points[start]!.y) ? j : best));
+      chain.unshift(points[nearest]!);
+    }
+    chains.push(chain);
+  }
+  return chains;
 }

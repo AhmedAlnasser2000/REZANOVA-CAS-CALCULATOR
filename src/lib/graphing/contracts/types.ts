@@ -868,6 +868,11 @@ export type GraphAnalysisRequestV1 = {
   assumptions?: GraphAuthoredAssumptionV1[];
   complexSearchRegion?: { reMin: number; reMax: number; imMin: number; imMax: number };
   features: GraphAnalysisFeature[];
+  /**
+   * Only these items' own features are worked out (all, when absent); other items are still intersected with
+   * them. Points of interest focus on the selected item and items whose asymptotes show (GRAPHING-PERF1).
+   */
+  focusItemIds?: string[];
   numericWindow?: GraphViewportV1;
   maximumTimeMs: number;
 };

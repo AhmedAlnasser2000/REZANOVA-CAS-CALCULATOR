@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   buildGraphSampleInputRevisionId,
+  graphSamplingApplicationHost,
   releaseGraphSampleResultBuffers,
   runGraphSampleWithOoe,
   type GraphDocumentV4,
@@ -56,6 +57,7 @@ import { graphAutoFitViewport } from './graph-auto-fit';
 import { useGraphSessionActions } from './useGraphSessionActions';
 import { useGraphViewAutoSwitch } from './graph-view-auto-switch';
 import { usePiecewiseSuppression } from './usePiecewiseSuppression';
+import { enqueueGraphSample, graphSampleInputKeys, type GraphQueuedSample } from './graph-sample-queue';
 
 const PREVIEW_DELAY_MS = 80;
 const SETTLED_DELAY_MS = 150;
@@ -96,11 +98,8 @@ export function useGraphWorkspaceController({
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestSequenceRef = useRef(0);
   const activeInputRevisionRef = useRef<string | null>(null);
-  const samplingInFlightRef = useRef(false);
-  const queuedSampleRef = useRef<{
-    quality: 'preview' | 'settled' | 'polish';
-    snapshot: GraphWorkspaceSessionStateV7;
-  } | null>(null);
+  const samplingInFlightRef = useRef<GraphQueuedSample<GraphWorkspaceSessionStateV7> | null>(null);
+  const queuedSamplesRef = useRef<GraphQueuedSample<GraphWorkspaceSessionStateV7>[]>([]);
   const launchSampleRef = useRef<(
     quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV7,
@@ -688,13 +687,23 @@ export function useGraphWorkspaceController({
       priority: { ...(activeItemId ? { activeItemId } : {}), dependentItemIds },
       movement: currentMovementRef.current,
     };
-    activeInputRevisionRef.current = buildGraphSampleInputRevisionId(request);
+    const inputRevisionId = buildGraphSampleInputRevisionId(request);
+    activeInputRevisionRef.current = inputRevisionId;
     const statusTimer = quality === 'preview'
       ? setTimeout(() => setStatus({ kind: 'sampling', label: 'Drawing preview…' }), 120)
       : undefined;
     try {
       const envelope = await runGraphSampleWithOoe(request, {
-        activeInputRevisionId: () => activeInputRevisionRef.current,
+        // A flush or a re-scheduled pass clears the active id while this run is in flight; the run still
+        // draws the current input when the document, view and parameters are unchanged and nothing newer started.
+        activeInputRevisionId: () => {
+          const latest = sessionRef.current;
+          const unchanged = sequence === requestSequenceRef.current
+            && latest.document.mathematicsRevision === request.revisions.mathematics
+            && latest.surface.viewportRevision === request.revisions.viewport
+            && latest.surface.parameterRevision === request.revisions.parameter;
+          return unchanged ? inputRevisionId : activeInputRevisionRef.current;
+        },
         isWorkspaceInstanceOpen: () => mountedRef.current,
         workspaceInstance: workspaceContextRef.current,
       });
@@ -713,7 +722,9 @@ export function useGraphWorkspaceController({
         const superseded = !mountedRef.current || sequence !== requestSequenceRef.current
           || latest.document.mathematicsRevision !== request.revisions.mathematics
           || latest.surface.viewportRevision !== request.revisions.viewport
-          || latest.surface.parameterRevision !== request.revisions.parameter;
+          || latest.surface.parameterRevision !== request.revisions.parameter
+          // Stopped for newer work waiting behind it (a resize changes no revision).
+          || (envelope.payload.status === 'cancelled' && queuedSamplesRef.current.length > 0);
         if (!superseded) clearStaleScene('Graph sampling was cancelled; nothing is drawn until it runs again. Edit or pan to retry.');
         return;
       }
@@ -755,22 +766,29 @@ export function useGraphWorkspaceController({
     quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV7,
   ) => {
-    if (samplingInFlightRef.current) {
-      queuedSampleRef.current = { quality, snapshot };
+    const next = { quality, snapshot, ...graphSampleInputKeys({
+      mathematics: snapshot.document.mathematicsRevision,
+      viewport: snapshot.surface.viewportRevision,
+      parameter: snapshot.surface.parameterRevision,
+    }, cssSize.width, cssSize.height) };
+    const inFlight = samplingInFlightRef.current;
+    if (inFlight) {
+      const { queue, supersede } = enqueueGraphSample(queuedSamplesRef.current, inFlight, next);
+      queuedSamplesRef.current = queue;
+      if (supersede) graphSamplingApplicationHost.supersedeActive();
       return;
     }
-    samplingInFlightRef.current = true;
+    samplingInFlightRef.current = next;
     try {
       await runSample(quality, snapshot);
     } finally {
-      samplingInFlightRef.current = false;
-      const queued = queuedSampleRef.current;
-      queuedSampleRef.current = null;
+      samplingInFlightRef.current = null;
+      const queued = queuedSamplesRef.current.shift();
       if (queued && mountedRef.current) {
         void launchSampleRef.current(queued.quality, queued.snapshot);
       }
     }
-  }, [runSample]);
+  }, [cssSize.height, cssSize.width, runSample]);
   launchSampleRef.current = launchSample;
 
   const flushSampling = useCallback(() => {
@@ -862,7 +880,7 @@ export function useGraphWorkspaceController({
     return () => {
       mountedRef.current = false;
       activeInputRevisionRef.current = null;
-      queuedSampleRef.current = null;
+      queuedSamplesRef.current = [];
       if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
       persistRef.current(sessionRef.current);
       retiredResultsRef.current.splice(0).forEach(releaseGraphSampleResultBuffers);
