@@ -2,11 +2,12 @@ import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
   collectCanonicalRuntimeMathFragments,
   collectTableResponseMathFragments,
+  collectTypedDocumentMathFragments,
   findMalformedMathFragments,
   normalizePrintHygieneValue,
   type MathematicalFragment,
 } from '../display/print-hygiene';
-import { goldenCases } from './golden-cases';
+import { ALL_GOLDEN_CASES as goldenCases } from './golden-cases';
 import { runGoldenCase } from './golden-execution';
 
 export type PrintHygieneBaselineEntry = {
@@ -42,8 +43,9 @@ export async function buildPrintHygieneBaseline(
 
   for (const goldenCase of goldenCases) {
     const execution = await runGoldenCase(goldenCase);
+    const typed = execution.typed?.document;
     const fragments = [
-      ...collectCanonicalRuntimeMathFragments(execution.outcome),
+      ...(typed ? collectTypedDocumentMathFragments(typed) : collectCanonicalRuntimeMathFragments(execution.outcome)),
       ...collectTableResponseMathFragments(execution.tableResponse),
     ];
     const malformed = findMalformedMathFragments(fragments);

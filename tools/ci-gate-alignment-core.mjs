@@ -11,7 +11,6 @@ export const STATIC_GATE_COMMANDS = [
   'npm run test:detail-segment-migration',
   'npm run test:display-contract-inversion',
   'npm run test:mathjson-coverage',
-  'npm run test:equation-solve-result',
   'npm run test:clipboard-contract',
   'npm run test:app-identity',
   'npm run test:surface-protocol',

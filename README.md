@@ -585,6 +585,21 @@ npm run test:surface-protocol
 npm run test:ci-gate-alignment
 ```
 
+Tests of the old Equation engine are inert in these runs while the new Equation core replaces it; they still run on demand:
+
+```bash
+npm run test:legacy-equation
+npm run test:legacy-equation:ui
+npm run test:legacy-equation:e2e
+```
+
+New Equation cases that take longer than a minute are abnormal. While testing, run them through the slow-case probe: it times each phase (reading rows, deciding, verifying, presenting) and kills a case at 60 s, naming the phase it was in. This is a development rule only; the app itself has no time limits.
+
+```bash
+node tools/equation-slow-case-probe.mjs
+node tools/equation-slow-case-probe.mjs '{"rows":["x^3y^2+x=4y","x+y=7-x^2"],"domain":"complex"}'
+```
+
 The repo also carries source-backed mathematical corpora, workspace freshness checks, file-size ratchets, printer/result-contract checks, and browser canaries.
 
 ## Contributing

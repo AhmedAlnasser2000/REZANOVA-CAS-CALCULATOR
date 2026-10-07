@@ -1,4 +1,10 @@
 import type { CanonicalRuntimeOutcome, TableResponse } from '../../types/calculator';
+import type { CanonicalResultDocument } from '../result-contract/current';
+import { executeIntegration } from '../calculus/new-integration/service';
+import { DEFAULT_INTEGRATION_LIMITS } from '../calculus/new-integration/types';
+import { DEFAULT_EQUATION_LIMITS } from '../new-equation/types';
+import { readIntegrationPresentation } from '../result-contract/integration-presentation';
+import { executeEquation } from '../symbolic-engine/equation/service/service';
 import { buildCanonicalGeometryModeRunPayload } from '../geometry/runtime-run';
 import { runCalculateCanonicalRuntimeRequest } from '../modes/calculate';
 import { runCalculusCanonicalRuntimeRequest } from '../modes/calculus';
@@ -21,7 +27,19 @@ import type { GoldenCase } from './golden-cases';
 export type GoldenExecution = {
   outcome: CanonicalRuntimeOutcome;
   tableResponse?: TableResponse;
+  /**
+   * New Equation and New Integration schema-7 documents: read through their own typed answer kinds, never the
+   * generic consumer (which refuses typed schema-7 kinds by design).
+   */
+  typed?: {
+    document: CanonicalResultDocument;
+    presentedText?: string;
+    presentedLatex?: string;
+  };
 };
+
+const typedOutcome = (document: CanonicalResultDocument) =>
+  ({ kind: document.outcomeKind, canonicalResult: document }) as unknown as CanonicalRuntimeOutcome;
 
 const system2 = [
   [1, 1, 3],
@@ -36,6 +54,15 @@ const system3 = [
 
 export async function runGoldenCase(goldenCase: GoldenCase): Promise<GoldenExecution> {
   switch (goldenCase.mode) {
+    case 'new-equation': {
+      const response = executeEquation({ rows: goldenCase.rows, targets: goldenCase.targets, domain: 'real',
+        limits: { ...DEFAULT_EQUATION_LIMITS }, digits: 6 });
+      return { outcome: typedOutcome(response.document), typed: { document: response.document, presentedText: response.presentations?.exact?.plainText } };
+    }
+    case 'new-integration': {
+      const response = executeIntegration({ request: { source: goldenCase.source, limits: { ...DEFAULT_INTEGRATION_LIMITS } } });
+      return { outcome: typedOutcome(response.document), typed: { document: response.document, presentedLatex: readIntegrationPresentation(response.document)?.compact } };
+    }
     case 'calculate':
       return {
         outcome: runCalculateCanonicalRuntimeRequest({

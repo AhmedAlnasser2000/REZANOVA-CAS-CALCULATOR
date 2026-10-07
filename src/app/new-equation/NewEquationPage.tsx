@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useLightDismiss } from '../../components/useLightDismiss';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
-import { checkRows, parseRow, pickOrder } from '../../lib/new-equation/parse';
+import { checkRows, pickOrder } from '../../lib/new-equation/parse';
 import type { EquationDraft, EquationLimits } from '../../lib/new-equation/types';
 import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import { answerOutdated, resolvedTargets, type NewEquationRuntime } from '../runtime/useNewEquationRuntime';
 import { NewEquationAnswer } from './NewEquationAnswer';
+import { useRowReadings } from './useRowReadings';
 import '../../styles/app/new-equation.css';
 
 const EXAMPLES: readonly { label: string; rows: string[] }[] = [
@@ -28,13 +29,16 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
   const examplesTriggers = useMemo(() => [examplesSummary], []);
   useLightDismiss({ open: examplesOpen, onClose: () => setExamplesOpen(false), layerRef: examplesMenu, triggerRefs: examplesTriggers });
   const focusRow = useRef<number | undefined>(undefined);
-  const parsed = useMemo(() => draft.rows.map(parseRow), [draft.rows]);
-  const targets = resolvedTargets(draft);
+  // Rows are read off the main thread (TYPING: an unfinished nested row can take long to read); never during render.
+  const readings = useRowReadings(instance.id, draft.rows);
+  const parsed = readings.settled;
+  const targets = resolvedTargets(draft, parsed);
   const check = checkRows(parsed, targets, draft.domain);
   const names = pickOrder(parsed.flatMap(r => (r.kind === 'relation' ? r.symbols : [])));
   const response = view.response;
-  const outdated = answerOutdated(draft, response);
-  const notes = response && !outdated ? response.rowNotes : undefined;
+  const shownRun = view.preview ?? response;
+  const outdated = answerOutdated(draft, shownRun, targets);
+  const notes = shownRun && !outdated ? shownRun.rowNotes : undefined;
   const update = (patch: Partial<EquationDraft>) => runtime.change(instance.id, { ...draft, ...patch });
   const solve = () => void runtime.run(instance.id);
 
@@ -62,14 +66,15 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
     <section className="ne-panel" aria-label="Rows">
       <ol className="ne-rows">
         {draft.rows.map((latex, i) => {
-          const live = check.rows[i], solved = notes?.[i];
-          const error = live.kind === 'error' ? live.message : solved?.kind === 'error' ? solved.message : undefined;
-          return <li key={i} className="ne-row" data-row-kind={error ? 'error' : live.kind} onKeyDownCapture={rowKeys(i)}>
+          const pending = readings.current[i] === undefined, live = check.rows[i], solved = notes?.[i];
+          const error = pending ? undefined : live.kind === 'error' ? live.message : solved?.kind === 'error' ? solved.message : undefined;
+          return <li key={i} className="ne-row" data-row-kind={pending ? 'reading' : error ? 'error' : live.kind} onKeyDownCapture={rowKeys(i)}>
             <span className="ne-row-number" aria-hidden="true">{i + 1}</span>
             <div className="ne-row-field">
               <MathEditor ref={el => { fields.current[i] = el; }} value={latex} onChange={v => setRow(i, v)} onSubmit={solve}
                 placeholder={i === 0 ? 'An equation, inequality or ≠' : 'Another row (optional)'} dataTestId={`new-equation-row-${i + 1}`} />
-              {live.kind === 'assumption' && <p className="ne-row-hint">Assumption: cases where it fails are left out of the answer.</p>}
+              {pending && <p className="ne-row-reading" aria-hidden="true">Reading…</p>}
+              {!pending && live.kind === 'assumption' && <p className="ne-row-hint">Assumption: cases where it fails are left out of the answer.</p>}
               {error && <p className="ne-row-note" role="alert">{error}</p>}
             </div>
             <button className="ne-remove" aria-label={`Remove row ${i + 1}`} onClick={() => removeRow(i)}>×</button>
@@ -106,13 +111,14 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
     {check.missingTargets.length > 0 && <p className="ne-message" role="alert">{check.missingTargets.join(', ')} {check.missingTargets.length > 1 ? 'do' : 'does'} not appear in an equation row.</p>}
 
     <div className="ne-actions ne-run">
-      <button className="ne-primary" onClick={solve} disabled={!check.ready}>{view.running ? 'Restart' : 'Solve'}</button>
+      <button className="ne-primary" onClick={solve} disabled={!check.ready && !readings.reading}>{view.running ? 'Restart' : 'Solve'}</button>
       <button disabled={!view.running} onClick={() => runtime.stop(instance.id)}>Stop</button>
-      {view.running && <span role="status">Solving and verifying…</span>}
+      {view.running && !view.preview && <span role="status">Solving…</span>}
       {view.notice && <span role="status">{view.notice}</span>}
     </div>
 
-    {response && <NewEquationAnswer response={response} style={draft.style} outdated={outdated} onStyle={style => update({ style })} onSolve={solve} />}
+    {shownRun && <NewEquationAnswer response={response} preview={view.preview} unchecked={view.unchecked} withdrawn={view.withdrawn}
+      style={draft.style} outdated={outdated} onStyle={style => update({ style })} onSolve={solve} />}
 
     <details className="ne-panel ne-limits-panel">
       <summary>Advanced limits</summary>

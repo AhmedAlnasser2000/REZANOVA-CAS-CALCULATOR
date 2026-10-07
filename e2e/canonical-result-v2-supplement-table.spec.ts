@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { legacyEquationTest } from './legacy-equation';
 import {
   openEquationSymbolic,
   openTable,
@@ -62,7 +63,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId('main-editor')).toBeVisible();
 });
 
-test('renders all five typed Equation supplement cases and stores V2 History', async ({ page }) => {
+legacyEquationTest('renders all five typed Equation supplement cases and stores V2 History', async ({ page }) => {
   await openEquationSymbolic(page);
   const cases = [
     { latex: '\\frac{1}{x}=0', role: 'exclusion', label: '\\text{Exclusions: } x\\ne0', visible: 'x\\ne0', history: false },

@@ -167,7 +167,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
@@ -238,7 +237,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
@@ -283,7 +281,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
@@ -308,7 +305,6 @@ describe('seam impact selector', () => {
       'feature-probes',
       'result-contracts',
       'canonical-result-v2-enforcement',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'history-replay',
     ]);
@@ -344,7 +340,6 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'feature-probes',
       'history-replay',
-      'equation-solve-result-contracts',
     ]) {
       assert.equal(plan.additionalCommands.some((entry) => entry.id === commandId), true);
     }
@@ -366,7 +361,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'history-replay',
@@ -397,7 +391,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'history-replay',
@@ -421,7 +414,6 @@ describe('seam impact selector', () => {
       'result-contracts',
       'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
-      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'history-replay',
