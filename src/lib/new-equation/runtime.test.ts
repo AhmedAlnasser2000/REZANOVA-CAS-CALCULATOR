@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { equationFailure, runEquationJob } from './runtime';
-import { DEFAULT_EQUATION_LIMITS as limits, type EquationRequest } from './types';
+import { DEFAULT_EQUATION_LIMITS as limits, type EquationPreview, type EquationRequest } from './types';
 import { clearOoeJobRegistry, listActiveOoeJobs, requestOoeJobCancellation } from '../ooe/job-launch/active-job-registry';
 
 const request: EquationRequest = { rows: ['x^2=1'], targets: ['x'], domain: 'real', limits, digits: 6 };
@@ -11,12 +11,12 @@ class FakeWorker {
   posted: unknown[] = [];
   postMessage(m: unknown) { this.posted.push(m); }
   terminate() { this.terminated = true; }
-  reply(data: unknown = equationFailure(request, 'Test reply')) { this.onmessage?.call(this as unknown as Worker, { data } as MessageEvent); }
+  reply(data: unknown = { phase: 'final', response: equationFailure(request, 'Test reply') }) { this.onmessage?.call(this as unknown as Worker, { data } as MessageEvent); }
 }
 const eventually = async (f: () => boolean) => { for (let i = 0; i < 100 && !f(); i++) await new Promise(r => setTimeout(r, 1)); expect(f()).toBe(true); };
-const start = (worker: FakeWorker, revision: () => number, open: () => boolean, signal = new AbortController().signal) => {
+const start = (worker: FakeWorker, revision: () => number, open: () => boolean, signal = new AbortController().signal, onPreview?: (p: EquationPreview) => void) => {
   let started = false;
-  const promise = runEquationJob(request, workspace, 1, revision, open, signal, () => { started = true; return worker as unknown as Worker; });
+  const promise = runEquationJob(request, workspace, 1, revision, open, signal, () => { started = true; return worker as unknown as Worker; }, onPreview);
   return { promise, started: () => started };
 };
 beforeEach(() => clearOoeJobRegistry());
@@ -69,8 +69,31 @@ describe('New Equation worker shell', () => {
     const run = start(worker, () => 1, () => true);
     const rejected = expect(run.promise).rejects.toThrow();
     await eventually(run.started);
-    worker.reply({ document: { version: 6, outcomeKind: 'success' } });
+    worker.reply({ phase: 'final', response: { document: { version: 6, outcomeKind: 'success' } } });
     await rejected;
     expect(worker.terminated).toBe(true);
+  });
+
+  it('hands over the unchecked preview while current, then the final response; drops a stale preview', async () => {
+    const snapshot = { rows: [], copyLatex: 'x=1', plainText: 'x = 1', fallback: false };
+    const preview: EquationPreview = { request, presentations: { exact: snapshot, decimal: snapshot, both: snapshot }, rowNotes: [{ kind: 'relation' }], assumptionsComplete: true };
+    for (const mode of ['current', 'stale']) {
+      const worker = new FakeWorker(), seen: EquationPreview[] = [];
+      let revision = 1;
+      const run = start(worker, () => revision, () => true, undefined, p => seen.push(p));
+      await eventually(run.started);
+      if (mode === 'stale') revision = 2;
+      worker.reply({ phase: 'preview', preview });
+      expect(seen).toEqual(mode === 'current' ? [preview] : []);
+      expect(worker.terminated).toBe(false);
+      worker.reply();
+      expect((await run.promise) === null).toBe(mode === 'stale');
+    }
+    const worker = new FakeWorker();
+    const run = start(worker, () => 1, () => true, undefined, () => {});
+    const rejected = expect(run.promise).rejects.toThrow('Invalid equation worker response.');
+    await eventually(run.started);
+    worker.reply({ phase: 'preview', preview: { ...preview, rowNotes: [] } });
+    await rejected;
   });
 });

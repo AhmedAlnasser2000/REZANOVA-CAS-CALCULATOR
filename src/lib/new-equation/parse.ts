@@ -65,9 +65,12 @@ function shape(raw: unknown, symbols: Set<string>): unknown {
   }
 }
 
-/** Read one row. */
+/** Whether a row holds nothing (spacing and placeholders only); exactly the rows `parseRow` reads as empty. */
+export const isBlankRow = (latex: string) => BLANK.test(latex);
+
+/** Read one row. Slow on some unfinished rows (Compute Engine's error recovery): the page reads rows in a worker. */
 export function parseRow(latex: string): ParsedRow {
-  if (BLANK.test(latex)) return { kind: 'empty' };
+  if (isBlankRow(latex)) return { kind: 'empty' };
   try {
     const raw = ce().parse(latex, { form: 'raw', parseNumbers: 'decimal' }).toMathJson({ shorthands: [], fractionalDigits: 'max', prettify: false });
     const symbols = new Set<string>();

@@ -220,6 +220,16 @@ export function projectConditions(problem: RelationProblem, conditions: readonly
  */
 export interface EquationAssumed { readonly assumptions: readonly Relation[]; readonly full: EquationOutcome }
 
+/**
+ * The decided outcome laid into the document shape before it is verified, for the page's "not checked yet" preview
+ * only: the presentation reads documents, so the preview is laid out from this one. It never leaves the worker;
+ * only its presentation rows do, marked unchecked. The real document comes from `projectEquationOutcome`.
+ */
+export function previewEquationDocument(problem: RelationProblem, outcome: EquationOutcome, assumptions: readonly Relation[] = []): CanonicalEquationDocument {
+  const p = new Projector(problem);
+  return requireCanonicalAnswer(document(problem, p, v6Outcome(p, outcome), [], assumptions), 'equation-outcome');
+}
+
 /** Project a core outcome for `problem` to a verified, replayed, authority-checked current document. */
 export function projectEquationOutcome(problem: RelationProblem, outcome: EquationOutcome, limits: CanonicalResultValidationLimits = {}, assumed?: EquationAssumed): EquationResult {
   const assumptions = assumed?.assumptions ?? [];

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "producer-owned canonical Integration readback normalization",
-  "caseCount": 47,
+  "acceptedReason": "TESTS-LEGACY-EQUATION-INERT1: New Equation and New Integration golden cases added, read through their own schema-7 typed answer kinds",
+  "caseCount": 51,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -12,7 +12,9 @@
     "matrix": 4,
     "vector": 3,
     "table": 2,
-    "graphing": 1
+    "graphing": 1,
+    "new-equation": 2,
+    "new-integration": 2
   },
   "successfulWorkspaceCounts": {
     "calculate": 21,
@@ -24,7 +26,9 @@
     "matrix": 4,
     "vector": 3,
     "table": 2,
-    "graphing": 1
+    "graphing": 1,
+    "new-equation": 2,
+    "new-integration": 2
   },
   "entries": [
     {
@@ -1465,6 +1469,128 @@
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-2"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-quadratic",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.outcome.set.points[0][0]",
+          "kind": "typed-math-leaf",
+          "value": "2"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[1][0]",
+          "kind": "typed-math-leaf",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-assumption",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.assumptions[0].lhs",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.assumptions[0].rhs",
+          "kind": "typed-math-leaf",
+          "value": "a"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[0][0]",
+          "kind": "typed-math-leaf",
+          "value": "\\left(a\\right)^{\\frac{1}{2}}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[1][0]",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(a\\right)^{\\frac{1}{2}}\\right)"
+        }
+      ]
+    },
+    {
+      "id": "new-integration-polynomial",
+      "workspace": "new-integration",
+      "outcomeKind": "success",
+      "title": "Verified antiderivative",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(x\\right)^{3}+C"
+        },
+        {
+          "path": "canonicalResult.supplements[0].math",
+          "kind": "typed-math-leaf",
+          "value": "1\\ne 0"
+        },
+        {
+          "path": "canonicalResult.supplements[1].math",
+          "kind": "typed-math-leaf",
+          "value": "1\\ne 0"
+        }
+      ]
+    },
+    {
+      "id": "new-integration-arctangent",
+      "workspace": "new-integration",
+      "outcomeKind": "success",
+      "title": "Verified antiderivative",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.rationalPart",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.terms[0].modulus",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{1}{4}+\\left(a\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.terms[0].weight",
+          "kind": "typed-math-leaf",
+          "value": "a"
+        },
+        {
+          "path": "canonicalResult.primary.terms[0].argument",
+          "kind": "typed-math-leaf",
+          "value": "\\left(2\\right)\\left(a\\right)+\\left(1\\right)\\left(x\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.terms[0].norm",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.conditions.sourceExclusions[0]",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.conditions.inputDenominator",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.conditions.rationalDenominator",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.conditions.logNorms[0]",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
         }
       ]
     }

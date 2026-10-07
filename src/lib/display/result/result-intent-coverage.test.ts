@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { goldenCases } from '../../__golden__/golden-cases';
+import { CONTRACT_GOLDEN_CASES as goldenCases } from '../../__golden__/golden-cases';
 import { runGoldenCase } from '../../__golden__/golden-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../../history-replay/fixtures';
 import { executeHistoryReplayRequest } from '../../history-replay/native-execution';

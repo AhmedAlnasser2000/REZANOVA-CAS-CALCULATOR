@@ -14,6 +14,7 @@ import type { ParamAtom } from '../parameters/specialize';
 import { checkCofactors, groebner, isGroebner, reduce } from './groebner';
 import { systemPolys } from './polynomial';
 import { hermite, multiplication, quotient, rankSignature } from './zero-dim';
+import { verifyPointsInNumberField } from './verify-zero-dim';
 
 /**
  * Evidence for nonlinear systems and systems with kernels.
@@ -35,7 +36,8 @@ import { hermite, multiplication, quotient, rankSignature } from './zero-dim';
  */
 const fail = (reason: string): never => demand(false, 'verification-failed', reason) as never;
 
-export function verifyPolynomialCertificate(problem: RelationProblem, atoms: readonly ParamAtom[], set: SolutionSet): void {
+/** Completeness of a finite answer; returns whether the claimed points were also proven solutions (in one number field). */
+export function verifyPolynomialCertificate(problem: RelationProblem, atoms: readonly ParamAtom[], set: SolutionSet): boolean {
   const store = problem.store, ctx = store.ctx, n = problem.targets.length;
   const { extended, width } = systemPolys(store, n, atoms, 'grevlex');
   const G = groebner(ctx, 'grevlex', extended, true);
@@ -45,13 +47,14 @@ export function verifyPolynomialCertificate(problem: RelationProblem, atoms: rea
   const claimed = set.kind === 'finite' ? set.points.length : fail(`expected a finite set, got ${set.kind}`);
   if (G.length === 1 && G[0].p.length === 1 && G[0].p[0].e.every(v => v === 0)) {
     if (claimed) fail('points claimed for an inconsistent system');
-    return;
+    return true;
   }
   const q = quotient(ctx, 'grevlex', G, width);
   if (!q) return fail('a finite answer for an infinite system');
   const vars = Array.from({ length: width }, (_, v) => multiplication(ctx, q, Array.from({ length: width }, (_, i) => (i === v ? 1 : 0))));
   const { rank, positive, negative } = rankSignature(ctx, hermite(ctx, q, vars));
   if (claimed !== (problem.domain === 'real' ? positive - negative : rank)) fail('the number of points differs from the number of solutions');
+  return set.kind === 'finite' && verifyPointsInNumberField(store, problem.domain, vars, rank, extended, set.points, n);
 }
 
 /** Whether the system's relations and conditions all hold at a point (exactly, or by certified sign). */

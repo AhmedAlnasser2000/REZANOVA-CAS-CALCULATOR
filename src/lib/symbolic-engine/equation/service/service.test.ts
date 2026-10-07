@@ -1,7 +1,7 @@
 import { describe as group, expect, it } from 'vitest';
 import type { CanonicalEquationDocument } from '../../../../types/calculator/canonical-result-current';
 import { autoTargets, checkRows, parseRow, pickOrder } from '../../../new-equation/parse';
-import { DEFAULT_EQUATION_LIMITS, type EquationRequest } from '../../../new-equation/types';
+import { DEFAULT_EQUATION_LIMITS, type EquationPreview, type EquationRequest } from '../../../new-equation/types';
 import { verificationSummary } from '../../../new-equation/verification';
 import { executeEquation } from './service';
 
@@ -108,5 +108,22 @@ group('New Equation service', () => {
     expect(verificationSummary(v6(solve(['x^2=a', 'a>-1'])))?.detail).toMatch(/Each case .* ruled out by the assumptions/);
     expect(verificationSummary(v6(solve(['x^2<1'])))?.detail).toMatch(/endpoint/);
     expect(verificationSummary(v6(solve(['\\cos x=x'])))).toBeUndefined();
+  });
+
+  it('hands over the decided answer before verification, laid out as the verified one', () => {
+    const order: string[] = [];
+    let preview: EquationPreview | undefined;
+    const rows = ['x^2+y^2=5', 'xy=2', 'x\\ne-1'];
+    const r = executeEquation(request(rows, ['x', 'y']), p => { order.push('preview'); preview = p; });
+    order.push('final');
+    expect(order).toEqual(['preview', 'final']);
+    expect(preview?.presentations.exact?.plainText).toBe(shown(r));
+    expect(preview?.presentations.decimal?.plainText).toBe(shown(r, 'decimal'));
+    expect(preview?.rowNotes).toEqual(r.rowNotes);
+    // Non-answers have nothing to preview.
+    const none: EquationPreview[] = [];
+    executeEquation(request(['\\cos x=x'], ['x']), p => none.push(p));
+    executeEquation(request(['x='], ['x']), p => none.push(p));
+    expect(none).toEqual([]);
   });
 });

@@ -1,10 +1,11 @@
 import { EquationAlgebraError } from '../core/execution';
 import { iroot, ipow } from '../core/algebra/integer';
-import { rational, type Rational } from '../core/algebra/rational';
+import { rational, rCompare, rSubtract, rAdd, type Rational } from '../core/algebra/rational';
 import { realDecimal, type RealRootOf } from '../core/algebraic/root-of';
 import { complexIsZero } from '../core/periodic/rectangular';
 import { enclose } from '../core/representation/enclosure';
-import { evaluateExact, imaginaryPart, realPart, type ExactValue } from '../core/representation/evaluate';
+import { diskOf } from '../core/decision/algebraic-coefficients';
+import { conjugate, evaluateExact, imaginaryPart, realPart, type ExactValue } from '../core/representation/evaluate';
 import type { ExprId, ExpressionStore } from '../core/representation/expression';
 import { realSign } from '../core/representation/real-order';
 import { compareValues, type Point, type PointValue } from '../core/representation/solution-set';
@@ -129,12 +130,46 @@ function rationalDecimal(q: Rational, digits: number): string {
   return negative && v !== 0n ? `-${text}` : text;
 }
 
+type Box = { re: [Rational, Rational]; im: [Rational, Rational] };
+/**
+ * Certified boxes around a non-real algebraic number, from its own isolating disk refined to 2^-bits, up to well
+ * past `digits` places. Reading Re and Im off the disk avoids computing them as algebraic numbers ((v + v̄)/2 has a
+ * polynomial of degree up to d², whose roots then had to be isolated: a minute for a degree-7 coordinate).
+ */
+function* boxes(store: ExpressionStore, v: ExactValue, digits: number): Generator<Box> {
+  const ctx = store.ctx, last = BigInt(4 * digits + 256);
+  for (let bits = 32n; bits <= last; bits *= 2n) {
+    ctx.tick();
+    const d = diskOf(ctx, v, rational(ctx, 1n, 1n << bits));
+    yield { re: [rSubtract(ctx, d.re, d.r), rAdd(ctx, d.re, d.r)], im: [rSubtract(ctx, d.im, d.r), rAdd(ctx, d.im, d.r)] };
+  }
+}
+const signOf = (store: ExpressionStore, [lo, hi]: [Rational, Rational]) => {
+  const zero = rational(store.ctx, 0n);
+  return rCompare(store.ctx, lo, zero) > 0 ? 1 : rCompare(store.ctx, hi, zero) < 0 ? -1 : 0;
+};
+
+/** The decimal of a non-real value from its disk, or undefined when the disk cannot decide (a rounding tie, Re = 0). */
+function diskDecimal(store: ExpressionStore, v: ExactValue, digits: number): Decimal | undefined {
+  for (const box of boxes(store, v, digits)) {
+    const reSign = signOf(store, box.re), imSign = signOf(store, box.im);
+    if (reSign === 0 || imSign === 0) continue;
+    const negative = imSign < 0, [lo, hi] = box.re, [ilo, ihi] = negative ? [rNegateQ(store, box.im[1]), rNegateQ(store, box.im[0])] : box.im;
+    const re = rationalDecimal(lo, digits), magnitude = rationalDecimal(ilo, digits);
+    if (re === rationalDecimal(hi, digits) && magnitude === rationalDecimal(ihi, digits)) return { re, im: { negative, magnitude }, reZero: false };
+  }
+  return undefined;
+}
+const rNegateQ = (store: ExpressionStore, q: Rational) => rational(store.ctx, -q.numerator, q.denominator);
+
 function exactDecimal(store: ExpressionStore, v: ExactValue, digits: number): Decimal {
   const ctx = store.ctx;
   if (v.kind === 'rational') return { re: rationalDecimal(v.value, digits) };
   const root = store.roots.canonical(ctx, v.root).root;
   if (root.kind === 'real') return { re: realDecimal(ctx, root as RealRootOf, digits) };
-  // Real and imaginary parts are exact real values: their decimals, sign and zero-ness come from them.
+  const fast = diskDecimal(store, v, digits);
+  if (fast) return fast;
+  // Undecided from the disk: real and imaginary parts as exact real values; decimals, sign and zero-ness from them.
   const re = realPart(ctx, v), im = imaginaryPart(ctx, v), zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
   const negative = compareValues(store, im, zero) < 0;
   return {
@@ -169,7 +204,7 @@ export function decimalOf(store: ExpressionStore, v: PointValue, digits: number,
 
 // ---- order ----
 
-type Key = { real: true; v: PointValue } | { real: false; re: ExactValue; im: ExactValue };
+type Key = { real: true; v: PointValue } | { real: false; v: ExactValue };
 
 function keyOf(store: ExpressionStore, v: PointValue, domain: 'real' | 'complex'): Key | undefined {
   return attempt((): Key | undefined => {
@@ -180,21 +215,43 @@ function keyOf(store: ExpressionStore, v: PointValue, domain: 'real' | 'complex'
       : store.freeSymbols(v.id).length ? undefined : (() => { const e = evaluateExact(store, v.id, domain); return e.kind === 'exact' ? e.value : undefined; })();
     if (exact === undefined) return v.kind === 'expression' && domain === 'real' && !store.freeSymbols(v.id).length ? { real: true, v } : undefined;
     if (exact.kind === 'rational' || exact.root.kind === 'real') return { real: true, v };
-    const ctx = store.ctx;
-    return { real: false, re: realPart(ctx, exact), im: imaginaryPart(ctx, exact) };
+    return { real: false, v: exact };
   }, undefined);
+}
+
+/**
+ * Non-real values by real part, then |imaginary part|, positive imaginary part first. Equal values and conjugate
+ * pairs are recognised exactly by root identity; otherwise disks decide, and only an undecided pair (equal real
+ * parts or |imaginary parts| of different numbers) takes the exact parts.
+ */
+function compareNonReal(store: ExpressionStore, a: ExactValue, b: ExactValue): number {
+  const ctx = store.ctx, digits = 16;
+  if (compareValues(store, a, b) === 0) return 0;
+  const imSign = (v: ExactValue) => { for (const box of boxes(store, v, digits)) { const s = signOf(store, box.im); if (s) return s; } return 0; };
+  if (compareValues(store, conjugate(ctx, a), b) === 0) return imSign(a) > 0 ? -1 : 1;
+  const left = boxes(store, a, digits), right = boxes(store, b, digits);
+  for (let x = left.next(), y = right.next(); !x.done && !y.done; x = left.next(), y = right.next()) {
+    const re = separated(store, x.value.re, y.value.re);
+    if (re) return re;
+  }
+  return exactCompare(store, a, b);
+}
+const separated = (store: ExpressionStore, [alo, ahi]: [Rational, Rational], [blo, bhi]: [Rational, Rational]) =>
+  (rCompare(store.ctx, ahi, blo) < 0 ? -1 : rCompare(store.ctx, bhi, alo) < 0 ? 1 : 0);
+
+function exactCompare(store: ExpressionStore, a: ExactValue, b: ExactValue): number {
+  const ctx = store.ctx, zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
+  const negative = (v: ExactValue) => compareValues(store, v, zero) < 0;
+  const magnitude = (v: ExactValue) => (negative(v) ? negated(store, v) : v);
+  const [xr, xi, yr, yi] = [realPart(ctx, a), imaginaryPart(ctx, a), realPart(ctx, b), imaginaryPart(ctx, b)];
+  return compareValues(store, xr, yr) || compareValues(store, magnitude(xi), magnitude(yi)) || Number(negative(xi)) - Number(negative(yi));
 }
 
 function compareKeys(store: ExpressionStore, a: Key, b: Key): number {
   if (a.real !== b.real) return a.real ? -1 : 1;
   if (a.real && b.real) return compareValues(store, a.v, b.v);
-  const x = a as Extract<Key, { real: false }>, y = b as Extract<Key, { real: false }>;
-  const zero: ExactValue = { kind: 'rational', value: rational(store.ctx, 0n) };
-  const negative = (v: ExactValue) => compareValues(store, v, zero) < 0;
-  const magnitude = (v: ExactValue) => (negative(v) ? negated(store, v) : v);
   // Real part, then |imaginary part|, then the positive imaginary part first (conjugates sit together).
-  return compareValues(store, x.re, y.re) || compareValues(store, magnitude(x.im), magnitude(y.im))
-    || Number(negative(x.im)) - Number(negative(y.im));
+  return compareNonReal(store, a.v as ExactValue, b.v as ExactValue);
 }
 
 function negated(store: ExpressionStore, v: ExactValue): ExactValue {

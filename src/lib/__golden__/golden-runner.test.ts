@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
-import { goldenCases, type GoldenExpectation } from './golden-cases';
+import { goldenCases, LEGACY_EQUATION_GOLDEN_ENABLED, type GoldenExpectation } from './golden-cases';
 import { runGoldenCase, type GoldenExecution } from './golden-execution';
 import { resolveCanonicalResultForConsumer } from '../result-contract';
 
@@ -12,6 +12,14 @@ function assertIncludesAll(label: string, actual: string | undefined, expected: 
 
 function assertExpectation(execution: GoldenExecution, expected: GoldenExpectation) {
   const { outcome, tableResponse } = execution;
+  if (execution.typed) {
+    // New Equation / New Integration: their own typed schema-7 answer kinds (the generic consumer refuses them).
+    expect(execution.typed.document.outcomeKind).toBe(expected.kind);
+    if (expected.title !== undefined) expect(execution.typed.document.title).toBe(expected.title);
+    if (expected.presentedText !== undefined) expect(execution.typed.presentedText).toBe(expected.presentedText);
+    assertIncludesAll('presentedLatex', execution.typed.presentedLatex, expected.exactIncludes);
+    return;
+  }
   const resolution = outcome.kind === 'prompt'
     ? undefined
     : resolveCanonicalResultForConsumer(outcome);
@@ -132,11 +140,13 @@ describe('MATH-GOLDEN0 shipped behavior corpus', () => {
     const launcherWorkspaces = DEFAULT_LAUNCHER_CATEGORIES
       .flatMap((category) => category.entries)
       .map((entry) => entry.id)
-      .filter((workspace) => workspace !== 'labs');
+      .filter((workspace) => workspace !== 'labs')
+      // Old Equation engine cases are inert unless the legacy flag is set (TESTS-LEGACY-EQUATION-INERT1).
+      .filter((workspace) => workspace !== 'equation' || LEGACY_EQUATION_GOLDEN_ENABLED);
 
     expect(new Set(ids).size).toBe(ids.length);
     expect(goldenCases.length).toBeGreaterThanOrEqual(43);
-    expect(goldenCases).toHaveLength(47);
+    expect(goldenCases).toHaveLength(LEGACY_EQUATION_GOLDEN_ENABLED ? 51 : 45);
 
     for (const workspace of launcherWorkspaces) {
       expect(

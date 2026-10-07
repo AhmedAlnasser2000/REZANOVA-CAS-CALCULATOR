@@ -4,7 +4,7 @@ import { collectCanonicalResultMathValuesV6 } from './validation-v6';
 import type {
   CanonicalResultDocument,
 } from '../../types/calculator';
-import { goldenCases } from '../__golden__/golden-cases';
+import { CONTRACT_GOLDEN_CASES as goldenCases } from '../__golden__/golden-cases';
 import { runGoldenCase } from '../__golden__/golden-execution';
 import { executeHistoryReplayRequest } from '../history-replay/native-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';

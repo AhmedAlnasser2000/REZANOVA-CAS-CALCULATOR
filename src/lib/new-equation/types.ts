@@ -45,6 +45,20 @@ export interface EquationResponse {
   usage: { work: number; allocation: number };
 }
 
+/**
+ * The decided answer before verification (NEW-EQUATION-RESPONSIVE1): presentation rows only, shown as "not checked
+ * yet". It is never a canonical document; the document is built only once verification passes.
+ */
+export interface EquationPreview {
+  request: EquationRequest;
+  presentations: Partial<Record<OutputStyle, EquationPresentationSnapshot>>;
+  rowNotes: EquationRowNote[];
+  assumptionsComplete: boolean;
+}
+
+/** Worker messages: at most one preview, then the final response. */
+export type EquationWorkerMessage = { phase: 'preview'; preview: EquationPreview } | { phase: 'final'; response: EquationResponse };
+
 export type EquationRowNote =
   | { kind: 'empty' }
   | { kind: 'relation' }

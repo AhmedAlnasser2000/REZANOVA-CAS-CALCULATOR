@@ -5,7 +5,7 @@ import { subscribeToOoeActiveJobChanges, requestOoeJobCancellation } from '../oo
 import { buildOoeRuntimeShellEvidence } from '../ooe/runtime-control/runtime-shell-contract';
 import { validateCanonicalResultDocument } from '../result-contract/current';
 import { equationError } from './error';
-import { validEquationRequest, type EquationRequest, type EquationResponse } from './types';
+import { validEquationRequest, type EquationPreview, type EquationRequest, type EquationResponse, type EquationWorkerMessage } from './types';
 
 export const EQUATION_HOST = 'new-equation-worker-runtime';
 export const EQUATION_CAPABILITY = 'equation.new-equation';
@@ -26,12 +26,23 @@ export function equationFailure(request: EquationRequest, message: string): Equa
     elapsedMs: 0, usage: { work: 0, allocation: 0 } };
 }
 
+const STYLES = ['exact', 'decimal', 'both'] as const;
+/** A preview from the worker: presentation rows in every style and one note per row. */
+function validPreview(v: unknown, request: EquationRequest): v is EquationPreview {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as Partial<EquationPreview>;
+  return Array.isArray(p.rowNotes) && p.rowNotes.length === request.rows.length && typeof p.assumptionsComplete === 'boolean'
+    && !!p.presentations && STYLES.every(s => { const x = p.presentations?.[s]; return !!x && Array.isArray(x.rows) && typeof x.copyLatex === 'string' && typeof x.plainText === 'string'; });
+}
+
 /**
  * Run one New Equation request in its own worker. Stop terminates the worker; an edit (a newer revision), a closed
- * tab or an abort drops the response. There is no main-thread fallback.
+ * tab or an abort drops the response. There is no main-thread fallback. `onPreview` receives the decided answer
+ * before verification (not checked yet), only while the run is still current.
  */
 export async function runEquationJob(suppliedRequest: EquationRequest, workspace: WorkspaceInstanceRuntimeContext, revision: number,
-  currentRevision: () => number, isOpen: () => boolean, signal: AbortSignal, createWorker: EquationWorkerFactory = workerFactory) {
+  currentRevision: () => number, isOpen: () => boolean, signal: AbortSignal, createWorker: EquationWorkerFactory = workerFactory,
+  onPreview?: (preview: EquationPreview) => void) {
   const request: EquationRequest = { ...suppliedRequest, rows: [...suppliedRequest.rows], targets: [...suppliedRequest.targets], limits: { ...suppliedRequest.limits } };
   let cancelled = false;
   const envelope = await runOoeRuntimeJob({
@@ -58,12 +69,19 @@ export async function runEquationJob(suppliedRequest: EquationRequest, workspace
       try {
         if (!validEquationRequest(request)) throw new Error('Invalid request or rows exceed 64 KiB.');
         worker = createWorker();
-        worker.onmessage = (event: MessageEvent<EquationResponse>) => {
+        worker.onmessage = (event: MessageEvent<EquationWorkerMessage>) => {
           if (signal.aborted || context.shouldCancel()) { stop(); return; }
           try {
-            const checked = validateCanonicalResultDocument(event.data.document);
+            const message = event.data;
+            if (message.phase === 'preview') {
+              if (!validPreview(message.preview, request)) { finish(undefined, new Error('Invalid equation worker response.')); return; }
+              if (isOpen() && revision === currentRevision()) onPreview?.(message.preview);
+              return;
+            }
+            if (message.phase !== 'final') throw new Error('Invalid equation worker response.');
+            const checked = validateCanonicalResultDocument(message.response.document);
             if (!checked.ok) finish(undefined, new Error(checked.failure.message)); else if (checked.validated.value.primary && checked.validated.value.primary.kind !== 'equation-outcome') finish(undefined, new Error('Unsupported Equation answer kind.'));
-            else finish({ ...event.data, document: checked.validated.value });
+            else finish({ ...message.response, document: checked.validated.value });
           } catch {
             finish(undefined, new Error('Invalid equation worker response.'));
           }

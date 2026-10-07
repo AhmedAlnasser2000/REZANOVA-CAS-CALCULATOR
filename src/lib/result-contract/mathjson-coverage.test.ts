@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import coverageBaseline from '../../../tools/mathjson-coverage-baseline.json';
 import type { CanonicalResultDocumentV1, CanonicalResultDocumentV5, CanonicalResultDocumentV6 } from '../../types/calculator';
-import { goldenCases } from '../__golden__/golden-cases';
+import { CONTRACT_GOLDEN_CASES as goldenCases } from '../__golden__/golden-cases';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import {
   buildMathJsonCoverageReport,

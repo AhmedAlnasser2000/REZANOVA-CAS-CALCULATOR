@@ -13,7 +13,7 @@ import {
   openGeometrySlope,
   openTable,
   openStatisticsRegression,
-  renderAppMain,
+  legacyEquationIt, renderAppMain,
   setMathFieldLatex,
   setVisibleSecondaryMathFieldLatex,
 } from './test/renderAppMain';
@@ -464,7 +464,7 @@ describe('AppMain UI automation flows', () => {
     await waitFor(() => expect(displayedDetailLatex()).toContain('a=4'), { timeout: 5000 });
   });
 
-  it('does not substitute stored values while solving Equation symbolic targets', async () => {
+  legacyEquationIt('does not substitute stored values while solving Equation symbolic targets', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
 
@@ -594,7 +594,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-expression-preview-card')).not.toBeInTheDocument();
   });
 
-  it('restart clears Equation preview and result cards while keeping the route intro', async () => {
+  legacyEquationIt('restart clears Equation preview and result cards while keeping the route intro', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
 
@@ -679,7 +679,7 @@ describe('AppMain UI automation flows', () => {
     expect(hints).toHaveTextContent('ambiguous');
   });
 
-  it('solves explicit named variables as Equation targets', async () => {
+  legacyEquationIt('solves explicit named variables as Equation targets', async () => {
     setViewportWidth(2400);
     const { user } = await renderAppMain();
 
@@ -757,7 +757,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex Off');
   });
 
-  it('persists the Complex toggle and marks Equation symbolic results without changing solving', async () => {
+  legacyEquationIt('persists the Complex toggle and marks Equation symbolic results without changing solving', async () => {
     const firstRender = await renderAppMain();
 
     expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex Off');
@@ -777,7 +777,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Domain intent: Complex')).toBeInTheDocument();
   });
 
-  it('renders Equation inequality solution sets with the visible solution chip', async () => {
+  legacyEquationIt('renders Equation inequality solution sets with the visible solution chip', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
@@ -796,7 +796,7 @@ describe('AppMain UI automation flows', () => {
     );
   });
 
-  it('routes typed split inequality operators through Equation instead of Calculate', async () => {
+  legacyEquationIt('routes typed split inequality operators through Equation instead of Calculate', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -809,7 +809,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByText(/Inequalities and .*notation are visible in Algebra/)).not.toBeInTheDocument();
   });
 
-  it('collapses verbose Equation inequality validity sections until expanded', async () => {
+  legacyEquationIt('collapses verbose Equation inequality validity sections until expanded', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -826,7 +826,7 @@ describe('AppMain UI automation flows', () => {
     expect(validWhen.open).toBe(true);
   });
 
-  it('marks complex Equation answers without duplicating the domain intent chip', async () => {
+  legacyEquationIt('marks complex Equation answers without duplicating the domain intent chip', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('quick-setting-equation-domain-intent'));
@@ -917,7 +917,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-approx')).toHaveTextContent('0.987688');
   });
 
-  it('respects the selected angle unit when running Equation numeric interval solve', async () => {
+  legacyEquationIt('respects the selected angle unit when running Equation numeric interval solve', async () => {
     const { user } = await renderAppMain();
 
     await openNumericIntervalPanel(user, '\\sin\\left(x\\right)=\\frac{1}{2}');
@@ -971,7 +971,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 33.3333');
   });
 
-  it('lets Equation numeric interval solve continue past unresolved composition guidance when a valid interval is provided', async () => {
+  legacyEquationIt('lets Equation numeric interval solve continue past unresolved composition guidance when a valid interval is provided', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1000,7 +1000,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getAllByText(/Bracket-first adaptive ITP \+ guarded Newton\/secant acceleration \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
 
-  it('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
+  legacyEquationIt('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
     const { user } = await renderAppMain();
 
     await openNumericIntervalPanel(user, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
@@ -1024,7 +1024,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent('45 deg + 180 deg * k');
   }, 10000);
 
-  it('accepts scientific notation in Equation numeric interval inputs', async () => {
+  legacyEquationIt('accepts scientific notation in Equation numeric interval inputs', async () => {
     const { user } = await renderAppMain();
 
     await openNumericIntervalPanel(user, '\\tan\\left(\\ln\\left(x+1\\right)\\right)=1');
@@ -1070,7 +1070,7 @@ describe('AppMain UI automation flows', () => {
     );
   });
 
-  it('applies numeric-output settings live to preview and approximate equation output', async () => {
+  legacyEquationIt('applies numeric-output settings live to preview and approximate equation output', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -1391,7 +1391,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByLabelText('6x^{2}')).toBeInTheDocument();
   });
 
-  it('renders Equation conditions and suppresses send action on solved cases', async () => {
+  legacyEquationIt('renders Equation conditions and suppresses send action on solved cases', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1405,7 +1405,7 @@ describe('AppMain UI automation flows', () => {
     expect(supplementLatex).toContain('x\\ne0');
   });
 
-  it('solves Equation simultaneous Polynomial 2x2 systems through resultant projection', async () => {
+  legacyEquationIt('solves Equation simultaneous Polynomial 2x2 systems through resultant projection', async () => {
     const { user } = await renderAppMain();
 
     await openLauncherApp(user, 'Core', 'Equation');
@@ -1455,7 +1455,7 @@ describe('AppMain UI automation flows', () => {
     expect(details).toHaveTextContent('Candidate Check');
   });
 
-  it('solves single-variable non-x equations without showing a target selector', async () => {
+  legacyEquationIt('solves single-variable non-x equations without showing a target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1470,7 +1470,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=2');
   });
 
-  it('solves affine multi-symbol equations through the explicit target selector', async () => {
+  legacyEquationIt('solves affine multi-symbol equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1486,7 +1486,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
-  it('shows target choices for raw adjacent-letter products while keeping the ambiguity hint', async () => {
+  legacyEquationIt('shows target choices for raw adjacent-letter products while keeping the ambiguity hint', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1507,7 +1507,7 @@ describe('AppMain UI automation flows', () => {
     expectAnyExactBranchLatex(/s=/);
   });
 
-  it('replays selected-target Equation history with the original target restored', async () => {
+  legacyEquationIt('replays selected-target Equation history with the original target restored', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1535,7 +1535,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'z=5-x');
   });
 
-  it('solves quadratic multi-symbol equations through the explicit target selector', async () => {
+  legacyEquationIt('solves quadratic multi-symbol equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1551,7 +1551,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Symbolic parameters: x/i)).toBeInTheDocument();
   });
 
-  it('solves rational multi-symbol equations through the explicit target selector', async () => {
+  legacyEquationIt('solves rational multi-symbol equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1567,7 +1567,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
   });
 
-  it('solves nested rational equations through the explicit target selector', async () => {
+  legacyEquationIt('solves nested rational equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1583,7 +1583,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Rational Solve')).toBeInTheDocument();
   });
 
-  it('solves factorable polynomial equations through the explicit target selector', async () => {
+  legacyEquationIt('solves factorable polynomial equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1599,7 +1599,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Factorable Polynomial Solve')).toBeInTheDocument();
   });
 
-  it('solves nonperiodic carrier equations through the explicit target selector', async () => {
+  legacyEquationIt('solves nonperiodic carrier equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1616,7 +1616,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Carrier Solve')).toBeInTheDocument();
   });
 
-  it('solves exp-log equations through the explicit target selector', async () => {
+  legacyEquationIt('solves exp-log equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1632,7 +1632,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
-  it('solves symbolic-base exp-log equations through the explicit target selector', async () => {
+  legacyEquationIt('solves symbolic-base exp-log equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1653,7 +1653,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
-  it('solves direct affine trig equations through the explicit target selector', async () => {
+  legacyEquationIt('solves direct affine trig equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1670,7 +1670,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Trig Solve')).toBeInTheDocument();
   });
 
-  it('solves mixed sine/cosine equations through the explicit target selector', async () => {
+  legacyEquationIt('solves mixed sine/cosine equations through the explicit target selector', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1687,7 +1687,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Mixed Trig Solve')).toBeInTheDocument();
   });
 
-  it('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
+  legacyEquationIt('shows the Equation algebra tray and keeps transforms separate from solve', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1703,7 +1703,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('algebra-transform-useLCD')).toBeInTheDocument();
   });
 
-  it('preprocesses fractional-power notation into existing Equation solve families without broadening solve scope', async () => {
+  legacyEquationIt('preprocesses fractional-power notation into existing Equation solve families without broadening solve scope', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1714,7 +1714,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=9');
   });
 
-  it('solves PRL4 same-base equality families with visible provenance and conditions', async () => {
+  legacyEquationIt('solves PRL4 same-base equality families with visible provenance and conditions', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1728,7 +1728,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Same-Base Equality')).toBeInTheDocument();
   });
 
-  it('uses preserved-domain wording when a same-base log equality reduces to an invalid real candidate', async () => {
+  legacyEquationIt('uses preserved-domain wording when a same-base log equality reduces to an invalid real candidate', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1739,7 +1739,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/undefined in the real domain/i);
   });
 
-  it('solves PRL4 bounded mixed-base log families exactly in Equation mode', async () => {
+  legacyEquationIt('solves PRL4 bounded mixed-base log families exactly in Equation mode', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1751,7 +1751,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Log Base Normalize')).toBeInTheDocument();
   });
 
-  it('solves PRL4 bounded rational-power families with power-lift provenance', async () => {
+  legacyEquationIt('solves PRL4 bounded rational-power families with power-lift provenance', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1763,7 +1763,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
-  it('solves COMP1 non-periodic outer inversions through the guarded Equation backend', async () => {
+  legacyEquationIt('solves COMP1 non-periodic outer inversions through the guarded Equation backend', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1775,7 +1775,7 @@ describe('AppMain UI automation flows', () => {
     expectAnyExactBranchLatex(/\\sqrt/);
   });
 
-  it('solves COMP2 two-step non-periodic chains with nested-recursion provenance', async () => {
+  legacyEquationIt('solves COMP2 two-step non-periodic chains with nested-recursion provenance', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1796,7 +1796,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/10/);
   });
 
-  it('hands COMP2 inversions into the bounded trig solver when the downstream branch set is finite', async () => {
+  legacyEquationIt('hands COMP2 inversions into the bounded trig solver when the downstream branch set is finite', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1817,7 +1817,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/k = 0/);
   });
 
-  it('hands COMP2 inversions into bounded PRL/algebra families without fabricating exact output', async () => {
+  legacyEquationIt('hands COMP2 inversions into bounded PRL/algebra families without fabricating exact output', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1838,7 +1838,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/28/);
   });
 
-  it('proves impossible COMP1 trig compositions from the bounded inner image', async () => {
+  legacyEquationIt('proves impossible COMP1 trig compositions from the bounded inner image', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -1850,7 +1850,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/inner image/i);
   });
 
-  it('renders finite COMP3 trig composition branches as symbolic periodic families', async () => {
+  legacyEquationIt('renders finite COMP3 trig composition branches as symbolic periodic families', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1870,7 +1870,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-intervals')).toHaveTextContent(/near x/i);
   });
 
-  it('renders COMP4 nonlinear-in-k families as symbolic periodic branches with parameter constraints', async () => {
+  legacyEquationIt('renders COMP4 nonlinear-in-k families as symbolic periodic branches with parameter constraints', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1893,7 +1893,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-intervals')).toHaveTextContent(/near x/i);
   });
 
-  it(
+  legacyEquationIt(
     'renders COMP10 quadratic periodic carriers as symbolic parameterized branches',
     async () => {
     const { user } = await renderAppMain();
@@ -1918,7 +1918,7 @@ describe('AppMain UI automation flows', () => {
     15000,
   );
 
-  it('returns reduced-carrier exact periodic families for broader mixed polynomial carriers after COMP11', async () => {
+  legacyEquationIt('returns reduced-carrier exact periodic families for broader mixed polynomial carriers after COMP11', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1938,7 +1938,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-periodic-family'), /x\^3\+x/);
   });
 
-  it('renders COMP3 tan-log composition families symbolically with interval guidance', async () => {
+  legacyEquationIt('renders COMP3 tan-log composition families symbolically with interval guidance', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1958,7 +1958,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-intervals')).toHaveTextContent(/1\.19328/);
   });
 
-  it('formats periodic composition families in degree mode with unit-native numeric branches', async () => {
+  legacyEquationIt('formats periodic composition families in degree mode with unit-native numeric branches', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1977,7 +1977,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-representatives')).toHaveTextContent(/x=90/);
   });
 
-  it('solves COMP4 bounded outer inverse-trig handoff through one supported follow-on step', async () => {
+  legacyEquationIt('solves COMP4 bounded outer inverse-trig handoff through one supported follow-on step', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -1996,7 +1996,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/e/);
   });
 
-  it('renders COMP5 deeper periodic reductions through inverse-trig carriers as symbolic families', async () => {
+  legacyEquationIt('renders COMP5 deeper periodic reductions through inverse-trig carriers as symbolic families', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2017,7 +2017,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-discovered-families')).toBeInTheDocument();
   });
 
-  it('renders COMP5 inverse-trig follow-on in degree mode with unit-aware periodic branches', async () => {
+  legacyEquationIt('renders COMP5 inverse-trig follow-on in degree mode with unit-aware periodic branches', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2037,7 +2037,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/360k\+60/);
   });
 
-  it('keeps COMP7 deep nested periodic carriers on structured multi-parameter guidance when exact closure would overreach', async () => {
+  legacyEquationIt('keeps COMP7 deep nested periodic carriers on structured multi-parameter guidance when exact closure would overreach', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2058,7 +2058,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/No default interval was searched/i);
   });
 
-  it('renders COMP6 reciprocal trig rewrites as symbolic periodic families', async () => {
+  legacyEquationIt('renders COMP6 reciprocal trig rewrites as symbolic periodic families', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2079,7 +2079,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-outcome-periodic-stop-reason')).not.toBeInTheDocument();
   });
 
-  it('renders COMP6 reciprocal trig range failures with rewrite provenance', async () => {
+  legacyEquationIt('renders COMP6 reciprocal trig range failures with rewrite provenance', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2098,7 +2098,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/inner image/i);
   });
 
-  it('renders COMP6 principal-range reductions with principal-range and piecewise details', async () => {
+  legacyEquationIt('renders COMP6 principal-range reductions with principal-range and piecewise details', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2119,7 +2119,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arctan/);
   });
 
-  it('renders COMP8 affine sawtooth closures with exact families and piecewise details', async () => {
+  legacyEquationIt('renders COMP8 affine sawtooth closures with exact families and piecewise details', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2140,7 +2140,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-principal-range')).toHaveTextContent(/90/);
   });
 
-  it('renders COMP9 mixed-carrier sawtooth closures beyond affine carriers', async () => {
+  legacyEquationIt('renders COMP9 mixed-carrier sawtooth closures beyond affine carriers', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2160,7 +2160,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arcsin/);
   });
 
-  it('renders COMP10 quadratic sawtooth carriers as exact families with piecewise details', async () => {
+  legacyEquationIt('renders COMP10 quadratic sawtooth carriers as exact families with piecewise details', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2181,7 +2181,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText(/Parameter constraints/i)).toBeInTheDocument();
   });
 
-  it('renders COMP10 shifted-power sawtooth carriers exactly', async () => {
+  legacyEquationIt('renders COMP10 shifted-power sawtooth carriers exactly', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2201,7 +2201,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arctan/);
   });
 
-  it('returns reduced-carrier exact sawtooth families for broader polynomial carriers after COMP11', async () => {
+  legacyEquationIt('returns reduced-carrier exact sawtooth families for broader polynomial carriers after COMP11', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2220,7 +2220,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-periodic-piecewise')).toHaveTextContent(/arcsin/);
   });
 
-  it('returns reduced-carrier exact periodic families for shifted radical carriers after COMP12A', async () => {
+  legacyEquationIt('returns reduced-carrier exact periodic families for shifted radical carriers after COMP12A', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2241,7 +2241,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-outcome-periodic-stop-reason')).not.toBeInTheDocument();
   });
 
-  it('returns reduced-carrier exact sawtooth families for abs-backed carriers after COMP12A', async () => {
+  legacyEquationIt('returns reduced-carrier exact sawtooth families for abs-backed carriers after COMP12A', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2262,7 +2262,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-outcome-periodic-stop-reason')).not.toBeInTheDocument();
   });
 
-  it('keeps mixed reduced-carrier composition guidance readable after COMP12B', async () => {
+  legacyEquationIt('keeps mixed reduced-carrier composition guidance readable after COMP12B', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2283,7 +2283,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/x\+1 ≥ 0/i);
   });
 
-  it('renders exact outer-nonperiodic abs context through detail sections after ABS5B', async () => {
+  legacyEquationIt('renders exact outer-nonperiodic abs context through detail sections after ABS5B', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2297,7 +2297,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByText('Exact Closure Boundary')).not.toBeInTheDocument();
   });
 
-  it('renders guided outer-nonperiodic abs boundaries separately from periodic-family context after ABS5B', async () => {
+  legacyEquationIt('renders guided outer-nonperiodic abs boundaries separately from periodic-family context after ABS5B', async () => {
     const { user } = await renderAppMain();
 
     await user.click(screen.getByTestId('settings-toggle'));
@@ -2317,7 +2317,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic carrier detected/i);
   });
 
-  it('shows the new PRL3 Equation transforms without auto-solving the rewritten equation', async () => {
+  legacyEquationIt('shows the new PRL3 Equation transforms without auto-solving the rewritten equation', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2332,7 +2332,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('algebra-transform-rewriteAsRoot')).toBeInTheDocument();
   });
 
-  it('renders Equation LCD-cleared rational solves with exclusions and provenance', async () => {
+  legacyEquationIt('renders Equation LCD-cleared rational solves with exclusions and provenance', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2345,7 +2345,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('LCD Clear')).toBeInTheDocument();
   });
 
-  it('renders POLY2 guided quartic exact roots through the bounded factor-first path', async () => {
+  legacyEquationIt('renders POLY2 guided quartic exact roots through the bounded factor-first path', async () => {
     const { user } = await renderAppMain();
 
     await openLauncherApp(user, 'Core', 'Equation');
@@ -2381,7 +2381,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent(/x²|x\^2|x/);
   });
 
-  it('renders bounded conjugate solves with conditions and provenance', async () => {
+  legacyEquationIt('renders bounded conjugate solves with conditions and provenance', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2399,7 +2399,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Conjugate Transform')).toBeInTheDocument();
   });
 
-  it('renders POLY-RAD5 selected three-term reciprocal solves only when the bounded sink closes cleanly', async () => {
+  legacyEquationIt('renders POLY-RAD5 selected three-term reciprocal solves only when the bounded sink closes cleanly', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2411,7 +2411,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('LCD Clear')).toBeInTheDocument();
   }, 30000);
 
-  it('renders RAD2 sequential radical solves with exact follow-on provenance', async () => {
+  legacyEquationIt('renders RAD2 sequential radical solves with exact follow-on provenance', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);
@@ -2428,7 +2428,7 @@ describe('AppMain UI automation flows', () => {
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });
 
-  it('renders POLY-RAD1 radical equations that hand off into algebraic biquadratic exact roots', async () => {
+  legacyEquationIt('renders POLY-RAD1 radical equations that hand off into algebraic biquadratic exact roots', async () => {
     const { user } = await renderAppMain();
 
     await openEquationSymbolic(user);

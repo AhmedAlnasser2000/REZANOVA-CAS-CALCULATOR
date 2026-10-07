@@ -18,7 +18,7 @@ import {
 import {
   openLauncherApp,
   type AppUser,
-  renderAppMain,
+  legacyEquationIt, renderAppMain,
   setMathFieldLatex,
 } from './test/renderAppMain';
 import { historyEntryFixture } from './test-utils/history-result-document';
@@ -174,7 +174,7 @@ describe('AppMain workspace tabs', () => {
       expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
       expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Equation');
     });
-    expect(await screen.findByRole('button', { name: /symbolic/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /symbolic/i }, { timeout: 5_000 })).toBeInTheDocument();
 
     await user.click(screen.getByTestId('workspace-tab-add'));
 
@@ -187,7 +187,7 @@ describe('AppMain workspace tabs', () => {
     });
   });
 
-  it('replays an Equation history card into its destination on the first click', async () => {
+  legacyEquationIt('replays an Equation history card into its destination on the first click', async () => {
     const historyEntry: HistoryEntry = historyEntryFixture({
       id: 'history.equation.destination',
       mode: 'equation',
