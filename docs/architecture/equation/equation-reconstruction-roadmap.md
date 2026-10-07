@@ -23,7 +23,7 @@ Part B:
 
 This completes stage 14.
 
-Done: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable, #25): certified isolated real roots as the schema-7 binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B (square systems): the schema-7 binder `isolated-real-point`, HC4 contraction, floating-point Newton guesses proven by the exact Krawczyk test, branch and prune with an independent exclusion cover, and a fix for systems eliminated to one numeric root. Next: stage 16 `EQUATION-SEMIALGEBRAIC1`, with its own approval.
+Done: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable, #25): certified isolated real roots as the schema-7 binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B (square systems): the schema-7 binder `isolated-real-point`, HC4 contraction, floating-point Newton guesses proven by the exact Krawczyk test, branch and prune with an independent exclusion cover, and a fix for systems eliminated to one numeric root. In progress: stage 16 `EQUATION-SEMIALGEBRAIC1` ([specification](equation-semialgebraic1-spec.md)). PR A (rows with ∧, ∨ and ¬; cylindrical algebraic decomposition with Lazard's projection, equational constraints and partial lifting; Reduce-style regions as the schema-7 set kind `cylindrical`; a verifier by samples and a reversed variable order; Logic keyboard keys and symbol tooltips) is pushed; PR B (∀, ∃ and parameters through the decomposition) follows.
 
 Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-INERT1`](tests-legacy-equation-inert1.md) and [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md):
 - rows read off the main thread;
@@ -150,12 +150,19 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Numeric roots over ℂ (complex isolation of non-polynomial expressions) stay refused | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
 | The independent completeness cover applies to one equation plus constant range rows; inequalities and other shapes rely on each root's certificate plus re-derivation | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
 | Systems after exact elimination (and systems where it reduces to one numeric root) are proven by certificates, identity and re-derivation; the independent box cover runs only for systems decided wholly numerically | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
-| Range rows on exact polynomial systems (x² + y² = 5, xy = 2 with 0 ≤ x ≤ 3) are refused as inequalities in a system (user decision 2026-10-07) | `EQUATION-CERTIFIED-NUMERICS1` PR B | `EQUATION-SEMIALGEBRAIC1` |
+| ~~Range rows on exact polynomial systems (x² + y² = 5, xy = 2 with 0 ≤ x ≤ 3) are refused as inequalities in a system~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR A: decided by cylindrical decomposition) | `EQUATION-CERTIFIED-NUMERICS1` PR B | `EQUATION-SEMIALGEBRAIC1` |
 | Conditions and ≠ rows in systems with kernels; systems with kernels over ℂ | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
 | A numeric system solution exactly on a range-row boundary (not an exact rational point) is refused | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
 | Solutions exact but not rational, such as (0, 0, ±√3), are shown as certified decimals (only wholly rational points are recognised exactly; PSLQ recognition is on the expansion roadmap) | `EQUATION-CERTIFIED-NUMERICS1` PR B | expansion roadmap |
 | ~~Systems reduced by elimination to one numeric root verified forever (y = sin x, x + eʸ = 2)~~ (fixed in PR B: zero by identity in the root's variable) | `EQUATION-CERTIFIED-NUMERICS1` PR A | `EQUATION-CERTIFIED-NUMERICS1` PR B |
 | An exact root where f′ = 0 (a closed-form double root next to numeric roots) skips the cover | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
+| Decomposition answers are verified at re-derivation strength (exact checks at each claimed cell's sample and a decomposition in the reversed variable order), not by a certificate | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
+| Cylindrical algebraic coverings (fast feasibility for conjunctions) and single-cell or NLSAT-style search | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
+| Four or more unknowns often end in a work stop (the decomposition is doubly exponential in the number of variables, by nature) | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
+| Rows with only inequalities choose one unknown automatically (one per equation row), so x² + y² < 1, y > x is decided in x with y as a parameter unless y is chosen too; the Region example chooses both | `EQUATION-SEMIALGEBRAIC1` PR A | user decision pending |
+| Cell merging is decided at one sample of the section between them; descriptions in three or more unknowns that differ only symbolically (equal after simplification) stay separate cells | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
+| Decimal style shows integer cell ends as 1.000000 (as interval answers do) | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
+| Quantifiers on non-polynomial rows, and over ℂ | `EQUATION-SEMIALGEBRAIC1` (plan) | unassigned |
 
 ## Attribution
 

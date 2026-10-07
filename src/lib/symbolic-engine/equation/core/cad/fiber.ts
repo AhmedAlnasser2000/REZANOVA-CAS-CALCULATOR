@@ -1,6 +1,8 @@
 import { demand } from '../execution';
-import { rational } from '../algebra/rational';
-import { ALGEBRAIC_RING, realRoots, type RealRootOf } from '../algebraic/root-of';
+import { rational, type Rational } from '../algebra/rational';
+import { ALGEBRAIC_RING, bisectReal, compareReal, realRoots, type RealRootOf } from '../algebraic/root-of';
+import { compareRational } from '../algebraic/real-roots';
+import type { ExecutionContext } from '../execution';
 import { normPolynomial } from '../decision/algebraic-coefficients';
 import { addValues, multiplyValues, normalizeValue, type ExactValue } from '../representation/evaluate';
 import type { ExpressionStore } from '../representation/expression';
@@ -125,11 +127,32 @@ export function fiberRoots(store: ExpressionStore, f: RPoly, k: number, alpha: r
     const values = coefficientValues(store, a, k, alpha);
     candidates = values.length <= 1 ? [] : realRoots(ctx, normPolynomial(store, values)).map(r => r.root);
   }
+  // Isolating intervals made pairwise disjoint: each then holds exactly one real root of the norm, and no root of the
+  // norm (so none of f(α, ·)) lies on an end. A sign change of f(α, ·) across a candidate's interval then proves the
+  // candidate is a root (an odd-multiplicity one) without a zero test; only the others need the exact test.
+  const sorted = separate(ctx, candidates);
   const out: ExactValue[] = [];
-  for (const r of candidates) {
+  const at = (y: Rational) => signAtPoint(ctx, a, k, [...alpha.slice(0, k - 1), { kind: 'rational', value: y }]);
+  for (const r of sorted) {
     ctx.tick();
     const v = rootValue(r);
+    if (v.kind === 'algebraic' && at(r.lo) * at(r.hi) < 0) { out.push(v); continue; }
     if (signAtPoint(ctx, a, k, [...alpha.slice(0, k - 1), v]) === 0) out.push(v);
+  }
+  return out;
+}
+
+/** Real roots in ascending order with isolating intervals refined until neighbours are strictly apart. */
+function separate(ctx: ExecutionContext, roots: readonly RealRootOf[]): RealRootOf[] {
+  const out = [...roots].sort((x, y) => compareReal(ctx, x, y));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let i = 0; i + 1 < out.length; i++) {
+      ctx.tick();
+      if (compareRational(ctx, out[i].hi, out[i + 1].lo) < 0) continue;
+      out[i] = bisectReal(ctx, out[i]); out[i + 1] = bisectReal(ctx, out[i + 1]);
+      changed = true;
+    }
   }
   return out;
 }

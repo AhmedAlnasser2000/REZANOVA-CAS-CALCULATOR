@@ -28,7 +28,7 @@ const region = (o: EquationOutcome) => (o as Solved).set as Extract<SolutionSet,
 const withCells = (o: EquationOutcome, cells: readonly RegionCell[]): EquationOutcome => ({ ...(o as Solved), set: { ...region(o), cells } });
 
 group('decomposition answers are verified', () => {
-  it('verifies regions in two and three unknowns, points, and ∅', () => {
+  it('verifies regions in two and three unknowns, points, and ∅', { timeout: 60_000 }, () => {
     for (const [rows, targets] of [
       [['x^2+y^2<1', 'y>x'], ['x', 'y']],
       [['x^2+y^2<4', 'x^2+y^2>1'], ['x', 'y']],
@@ -37,6 +37,12 @@ group('decomposition answers are verified', () => {
       [['x^2+y^2<1', 'x+y>2'], ['x', 'y']],
       [['x^2+y^2+z^2\\le1', 'z=x+y'], ['x', 'y', 'z']],
       [['y^3+xy+1<0'], ['x', 'y']],
+      // A disc minus a line, a quartic with root-function bounds, a cubic curve with a range row, the heart curve.
+      [['x^2+y^2<1', 'x\\ne y'], ['x', 'y']],
+      [['x^4+y^4-4xy<0'], ['x', 'y']],
+      [['y^2\\le x^3-x', 'x\\le2'], ['x', 'y']],
+      [['(x^2+y^2-1)^3<x^2y^3'], ['x', 'y']],
+      [['x^2+y^2+z^2<1', 'x+y+z>1', 'xyz>0'], ['x', 'y', 'z']],
     ] as const) {
       const r = solve(rows, targets);
       expect(['solved', 'empty']).toContain(r.outcome.kind);

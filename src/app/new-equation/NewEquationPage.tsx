@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { useLightDismiss } from '../../components/useLightDismiss';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
@@ -8,14 +8,16 @@ import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import { answerOutdated, resolvedTargets, type NewEquationRuntime } from '../runtime/useNewEquationRuntime';
 import { NewEquationAnswer } from './NewEquationAnswer';
 import { useRowReadings } from './useRowReadings';
+import { newEquationKeyboardLayouts, symbolTooltip } from './symbols';
 import '../../styles/app/new-equation.css';
 
-const EXAMPLES: readonly { label: string; rows: string[] }[] = [
+const EXAMPLES: readonly { label: string; rows: string[]; targets?: string[] }[] = [
   { label: 'Quadratic', rows: ['x^2-5x+6=0'] },
   { label: 'System', rows: ['x^2+y^2=5', 'xy=2'] },
   { label: 'Inequality', rows: ['x^2-4\\le0'] },
   { label: 'Trigonometric', rows: ['\\sin x=\\frac{1}{2}'] },
   { label: 'With an assumption', rows: ['x^2=a', 'a>0'] },
+  { label: 'Region', rows: ['x^2+y^2<1', 'y>x'], targets: ['x', 'y'] },
 ];
 const LIMIT_LABELS: Readonly<Record<keyof EquationLimits, string>> = { work: 'Work', allocation: 'Memory (allocation units)' };
 
@@ -29,6 +31,21 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
   const examplesTriggers = useMemo(() => [examplesSummary], []);
   useLightDismiss({ open: examplesOpen, onClose: () => setExamplesOpen(false), layerRef: examplesMenu, triggerRefs: examplesTriggers });
   const focusRow = useRef<number | undefined>(undefined);
+  const keyboardLayouts = useMemo(() => newEquationKeyboardLayouts(), []);
+  // The tooltip of the logic symbol under the pointer in a row (∧, ∨, ¬), placed beside it.
+  const [hover, setHover] = useState<{ row: number; text: string; x: number; y: number } | undefined>(undefined);
+  const hoverAt = (i: number) => (e: PointerEvent<HTMLDivElement>) => {
+    const field = fields.current[i];
+    if (!field || typeof field.getOffsetFromPoint !== 'function') return;
+    // The caret offset nearest the pointer sits beside the symbol: the atom on either side whose box holds the pointer.
+    const offset = field.getOffsetFromPoint(e.clientX, e.clientY, { bias: 0 });
+    const info = [offset, offset + 1].map(o => field.getElementInfo(o)).find(x => x?.bounds && x.bounds.left <= e.clientX && e.clientX <= x.bounds.right);
+    const text = symbolTooltip(info?.latex);
+    if (!text) { if (hover) setHover(undefined); return; }
+    const box = e.currentTarget.getBoundingClientRect();
+    if (hover?.row === i && hover.text === text) return;
+    setHover({ row: i, text, x: (info?.bounds?.left ?? e.clientX) - box.left, y: (info?.bounds?.bottom ?? e.clientY) - box.top + 4 });
+  };
   // Rows are read off the main thread (TYPING: an unfinished nested row can take long to read); never during render.
   const readings = useRowReadings(instance.id, draft.rows);
   const parsed = readings.settled;
@@ -70,9 +87,10 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
           const error = pending ? undefined : live.kind === 'error' ? live.message : solved?.kind === 'error' ? solved.message : undefined;
           return <li key={i} className="ne-row" data-row-kind={pending ? 'reading' : error ? 'error' : live.kind} onKeyDownCapture={rowKeys(i)}>
             <span className="ne-row-number" aria-hidden="true">{i + 1}</span>
-            <div className="ne-row-field">
-              <MathEditor ref={el => { fields.current[i] = el; }} value={latex} onChange={v => setRow(i, v)} onSubmit={solve}
+            <div className="ne-row-field" onPointerMove={hoverAt(i)} onPointerLeave={() => setHover(undefined)}>
+              <MathEditor ref={el => { fields.current[i] = el; }} value={latex} onChange={v => setRow(i, v)} onSubmit={solve} keyboardLayouts={keyboardLayouts}
                 placeholder={i === 0 ? 'An equation, inequality or ≠' : 'Another row (optional)'} dataTestId={`new-equation-row-${i + 1}`} />
+              {hover?.row === i && <span className="ne-symbol-tip" role="tooltip" data-testid="new-equation-symbol-tip" style={{ left: hover.x, top: hover.y }}>{hover.text}</span>}
               {pending && <p className="ne-row-reading" aria-hidden="true">Reading…</p>}
               {!pending && live.kind === 'assumption' && <p className="ne-row-hint">Assumption: cases where it fails are left out of the answer.</p>}
               {error && <p className="ne-row-note" role="alert">{error}</p>}
@@ -85,7 +103,7 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
         <button onClick={() => addRow(draft.rows.length - 1)}>+ Add row</button>
         <details className="ne-examples" open={examplesOpen} onToggle={e => setExamplesOpen(e.currentTarget.open)}>
           <summary ref={examplesSummary}>Example ▾</summary>
-          <div role="menu" ref={examplesMenu}>{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={() => { update({ rows: [...x.rows], targets: null }); setExamplesOpen(false); }}>{x.label}</button>)}</div>
+          <div role="menu" ref={examplesMenu}>{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={() => { update({ rows: [...x.rows], targets: x.targets ? [...x.targets] : null }); setExamplesOpen(false); }}>{x.label}</button>)}</div>
         </details>
       </div>
       <p className="ne-tip">Enter to solve · Shift+Enter for a new row</p>

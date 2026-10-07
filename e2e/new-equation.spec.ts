@@ -104,6 +104,37 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   await page.screenshot({ path: testInfo.outputPath('certified-system.png'), fullPage: true });
   await row(page, 2, '');
 
+  // Regions (EQUATION-SEMIALGEBRAIC1): cylindrical decomposition, cells written like Mathematica's Reduce.
+  await row(page, 1, 'x^2+y^2<1');
+  await row(page, 2, 'y>x');
+  // Rows without an equation pick one unknown automatically: both are chosen here.
+  await workspace.getByRole('combobox', { name: 'Add an unknown' }).selectOption('y');
+  await solve(page);
+  await workspace.getByRole('button', { name: 'Exact', exact: true }).click();
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText))
+    .toBe('-1 < x ≤ -√2/2 and -√(1 - x^2) < y < √(1 - x^2)\nor -√2/2 < x < √2/2 and x < y < √(1 - x^2)');
+  await page.screenshot({ path: testInfo.outputPath('region.png'), fullPage: true });
+  await row(page, 2, '');
+  // ∨ in a row: its tooltip on hover, and the Logic keyboard page.
+  await row(page, 1, 'x^2+y^2<1\\lor x>2');
+  const bounds = await page.getByTestId('new-equation-row-1').evaluate(el => {
+    const f = el as unknown as { getElementInfo(o: number): { latex?: string; bounds?: DOMRect } | undefined; lastOffset: number };
+    for (let o = 0; o <= f.lastOffset; o++) {
+      const info = f.getElementInfo(o);
+      if (info?.latex?.trim() === '\\lor' && info.bounds) return { x: info.bounds.left + info.bounds.width / 2, y: info.bounds.top + info.bounds.height / 2 };
+    }
+    return undefined;
+  });
+  expect(bounds).toBeDefined();
+  await page.mouse.move((bounds as { x: number }).x, (bounds as { y: number }).y);
+  await expect(workspace.getByTestId('new-equation-symbol-tip')).toContainText('or (∨)');
+  await page.screenshot({ path: testInfo.outputPath('symbol-tooltip.png'), fullPage: true });
+  await solve(page);
+  await expect(answer(page)).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('region-or.png'), fullPage: true });
+  await workspace.getByRole('button', { name: 'Automatic' }).click();
+
   // Domain conditions the engine applies.
   await row(page, 1, '\\ln(x-1)+\\sqrt{x}=\\sqrt{2}');
   await solve(page);

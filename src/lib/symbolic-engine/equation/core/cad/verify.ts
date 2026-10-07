@@ -10,6 +10,9 @@ import { exactSign } from '../representation/real-order';
 import { instantiate } from '../parameters/specialize';
 import { cadProblem } from './atoms';
 import { decompose, sectorSample, type CadCell } from './decompose';
+import { fiberRoots } from './fiber';
+import { fromMPoly } from './recursive';
+import { fractionOf } from '../parameters/mpoly';
 
 /**
  * Evidence for answers decided by cylindrical decomposition (EQUATION-SEMIALGEBRAIC1), at re-derivation strength:
@@ -64,9 +67,16 @@ export function rowsHold(problem: RelationProblem, point: readonly ExactValue[])
 /** A cell end at a point of the outer variables, exactly. */
 function endAt(problem: RelationProblem, e: Endpoint, outer: readonly ExactValue[]): Endpoint {
   if (e.kind === 'infinity' || e.kind === 'rational' || e.kind === 'algebraic') return e;
-  const store = problem.store, values = new Map(outer.map((v, i) => [problem.targets[i], valueExpression(store, v)] as const));
-  const variable = e.kind === 'root' ? e.variable : problem.targets[outer.length];
-  const set = instantiate(store, finiteSet([variable], [[e as PointValue]]), values, 'real');
+  const store = problem.store;
+  if (e.kind === 'root') {
+    // The index-th root of the cell's polynomial at the outer point, by the decomposition's fibres (norms by resultants).
+    const k = problem.targets.indexOf(e.variable) + 1, f = fractionOf(store, e.poly, problem.targets.slice(0, k));
+    if (k !== outer.length + 1 || !f) return fail('a cell end is not a root in its cell\'s variable');
+    const roots = fiberRoots(store, fromMPoly(store.ctx, f.num, problem.targets.slice(0, k).map((_, i) => i + 1), k), k, outer);
+    return roots !== 'nullified' && e.index <= roots.length ? roots[e.index - 1] : fail('a cell end is not defined over its cell');
+  }
+  const values = new Map(outer.map((v, i) => [problem.targets[i], valueExpression(store, v)] as const));
+  const set = instantiate(store, finiteSet([problem.targets[outer.length]], [[e as PointValue]]), values, 'real');
   if (!set || set.kind !== 'finite' || set.points.length !== 1) return fail('a cell end is not defined over its cell');
   return set.points[0][0];
 }
