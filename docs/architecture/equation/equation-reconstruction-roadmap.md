@@ -1,7 +1,7 @@
 # Equation Reconstruction Roadmap
 
 Date: 2026-10-04
-Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1`, `EQUATION-RESULT-CONTRACT1`, `EQUATION-PRESENTATION1` and `EQUATION-ADOPTION1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
+Status: provisional direction approved with the design gate. `EQUATION-RECONSTRUCTION-DESIGN1`, `EQUATION-EXACT-ALGEBRA1`, `EQUATION-ALGEBRAIC-NUMBERS1`, `EQUATION-REPRESENTATION1`, `EQUATION-POLYNOMIAL-DECISION1`, `EQUATION-GENERATORS1`, `EQUATION-CONSTRAINTS1`, `EQUATION-PERIODIC1`, `EQUATION-COMPOSITION1`, `EQUATION-PARAMETERS1`, `EQUATION-SYSTEMS1`, `EQUATION-PROOF-PERFORMANCE1`, `EQUATION-RESULT-CONTRACT1`, `EQUATION-PRESENTATION1`, `EQUATION-ADOPTION1` and `EQUATION-CERTIFIED-NUMERICS1` are complete. Each later gate needs its own approval, and gates may be split, merged or reordered when evidence requires; the reason must be recorded.
 
 Companion: [design](equation-reconstruction-design.md), [blueprint](equation-reconstruction-blueprint.md), [inventory and baseline](equation-reconstruction-inventory.md).
 
@@ -23,7 +23,7 @@ Part B:
 
 This completes stage 14.
 
-Now: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable) is verified: certified isolated real roots as a new schema-7 root binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B covers square systems by Krawczyk and is planned when PR A merges. Stage 16 `EQUATION-SEMIALGEBRAIC1` follows with its own approval.
+Done: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable, #25): certified isolated real roots as the schema-7 binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B (square systems): the schema-7 binder `isolated-real-point`, HC4 contraction, floating-point Newton guesses proven by the exact Krawczyk test, branch and prune with an independent exclusion cover, and a fix for systems eliminated to one numeric root. Next: stage 16 `EQUATION-SEMIALGEBRAIC1`, with its own approval.
 
 Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-INERT1`](tests-legacy-equation-inert1.md) and [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md):
 - rows read off the main thread;
@@ -50,7 +50,7 @@ Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-
 | 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 13b (verified) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 (verified) | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
-| 15 (PR A verified; PR B next) | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs. PR A: one variable (isolated real roots, range rows). PR B: square systems | N cases certified; numerical results typed as numerical |
+| 15 (verified) | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs. PR A: one variable (isolated real roots, range rows). PR B: square systems | N cases certified; numerical results typed as numerical |
 | 16 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
 | 17 | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Corpus parity, then retirement of the old Equation engine | Capability ledger; no regression versus the baseline table |
 
@@ -122,7 +122,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Nonlinear systems with parameters (comprehensive Gröbner systems) | `EQUATION-SYSTEMS1` | unassigned |
 | Kernels with parameters or extra conditions in a system; elimination that leaves several targets or interval answers | `EQUATION-SYSTEMS1` | unassigned |
 | Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition) | `EQUATION-SYSTEMS1` | unassigned |
-| Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` PR B (square systems, Krawczyk) |
+| ~~Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1)~~ (closed by `EQUATION-CERTIFIED-NUMERICS1` PR B: square systems, with range rows where unbounded) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` PR B |
 | Evidence cases still over 1 s to decide and verify (atan x + atan 2x = π/4 at 1.8 s; the depth-25 ln chain at 1.1 s); the user accepted them for now (2026-10-04) | `EQUATION-PROOF-PERFORMANCE1` | a later performance gate |
 | Radical simplification inside expressions with free symbols (√(−4(y² − 1)) is not shown as 2√(1 − y²)); rewrites are proven only on constant subexpressions | `EQUATION-PRESENTATION1` | unassigned |
 | Closed forms for pure binomial roots inside larger values (e^{r₁} with r₁ = ∛4 shows r₁ and its definition) | `EQUATION-PRESENTATION1` | unassigned |
@@ -143,12 +143,18 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | ~~A stray vertical scrollbar beside tall answer rows (fractions), from `overflow-x: auto` on the math row~~ (fixed 2026-10-07, `overflow-y: hidden`) | user test case, 2026-10-07 | `NEW-EQUATION-RESPONSIVE1` follow-up |
 | Over-determined non-polynomial systems (an extra equation cannot be certified exactly zero at a numeric point) | `EQUATION-CERTIFIED-NUMERICS1` (plan) | unassigned |
 | Under-determined non-polynomial systems (the answer is a curve; needs a representation gate) | `EQUATION-CERTIFIED-NUMERICS1` (plan) | unassigned |
-| Tangent or double non-polynomial roots (no sign change, so uniqueness cannot be proven; one variable and systems) | `EQUATION-CERTIFIED-NUMERICS1` | unassigned |
+| Tangent or double non-polynomial roots (no sign change, so uniqueness cannot be proven; one variable runs to the work limit, systems are refused when detected: eˣ + sin y = 1, eʸ + sin x = 1 at (0, 0)); needs deflation or topological degree | `EQUATION-CERTIFIED-NUMERICS1` | expansion roadmap |
 | Non-polynomial systems with inequalities | `EQUATION-CERTIFIED-NUMERICS1` (plan) | beside `EQUATION-SEMIALGEBRAIC1` |
 | tan inside mixed expressions (tan x = x) is still refused: the finder does not cut at the poles of tan | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
 | Definition rows show the normalized expression (10 − e^{x ln 3} − e^{x ln 2} = 0 for 2ˣ + 3ˣ = 10) rather than the typed one | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned (presentation) |
 | Numeric roots over ℂ (complex isolation of non-polynomial expressions) stay refused | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
 | The independent completeness cover applies to one equation plus constant range rows; inequalities and other shapes rely on each root's certificate plus re-derivation | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
+| Systems after exact elimination (and systems where it reduces to one numeric root) are proven by certificates, identity and re-derivation; the independent box cover runs only for systems decided wholly numerically | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
+| Range rows on exact polynomial systems (x² + y² = 5, xy = 2 with 0 ≤ x ≤ 3) are refused as inequalities in a system (user decision 2026-10-07) | `EQUATION-CERTIFIED-NUMERICS1` PR B | `EQUATION-SEMIALGEBRAIC1` |
+| Conditions and ≠ rows in systems with kernels; systems with kernels over ℂ | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
+| A numeric system solution exactly on a range-row boundary (not an exact rational point) is refused | `EQUATION-CERTIFIED-NUMERICS1` PR B | unassigned |
+| Solutions exact but not rational, such as (0, 0, ±√3), are shown as certified decimals (only wholly rational points are recognised exactly; PSLQ recognition is on the expansion roadmap) | `EQUATION-CERTIFIED-NUMERICS1` PR B | expansion roadmap |
+| ~~Systems reduced by elimination to one numeric root verified forever (y = sin x, x + eʸ = 2)~~ (fixed in PR B: zero by identity in the root's variable) | `EQUATION-CERTIFIED-NUMERICS1` PR A | `EQUATION-CERTIFIED-NUMERICS1` PR B |
 | An exact root where f′ = 0 (a closed-form double root next to numeric roots) skips the cover | `EQUATION-CERTIFIED-NUMERICS1` PR A | unassigned |
 
 ## Attribution

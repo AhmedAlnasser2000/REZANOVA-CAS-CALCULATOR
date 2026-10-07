@@ -929,6 +929,15 @@ const allGoldenCases: GoldenCase[] = [
     expected: { kind: 'success', title: 'Equation', presentedText: 'x ≈ 0.739085\n  the root of x - cos(x) = 0 between 1/2 and 3/4' },
   },
   {
+    // EQUATION-CERTIFIED-NUMERICS1 PR B: a square system with no exact route, one certified point in its box.
+    id: 'new-equation-certified-system',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\sin(x+y)=x', '\\cos(x-y)=y'],
+    targets: ['x', 'y'],
+    expected: { kind: 'success', title: 'Equation', presentedText: '(x, y) ≈ (0.935082, 0.998020)\n  the solution of y = cos(x - y), sin(y + x) = x with 5/6 ≤ x ≤ 1, 7/8 ≤ y ≤ 10/9' },
+  },
+  {
     id: 'new-integration-polynomial',
     lane: 'new-integration',
     mode: 'new-integration',
@@ -944,7 +953,7 @@ const allGoldenCases: GoldenCase[] = [
   },
 ];
 
-/** Every golden case (52): print hygiene scans them all. */
+/** Every golden case (53): print hygiene scans them all. */
 export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
 
 /**

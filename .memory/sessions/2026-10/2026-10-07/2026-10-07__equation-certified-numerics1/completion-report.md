@@ -47,3 +47,17 @@
 ## Remaining
 
 - PR B (square systems by Krawczyk) after PR A merges. Ledger rows added for tan in mixed expressions, definition-row layout, complex numerics, the cover's scope, the f′ = 0 exact-root cover skip, tangent roots and the systems classes PR B does not take.
+
+## PR B (square systems)
+
+- Decisions: one `isolated-real-point` binder per point; HC4 bounds, then a named refusal; tangent solutions refused; range rows on polynomial systems left to stage 16.
+- B0: systems eliminated to one numeric root verify by identity (they verified forever); elimination distributes after substituting.
+- B1: `rangeOverBox`/`rangeNodes`, HC4 contraction and the mean-value form (`numeric/contract.ts`), rational interval algebra (`numeric/interval.ts`).
+- B2: the `isolated-point` node, the Krawczyk test and refinement (`numeric/krawczyk.ts`), box order for certified tuples, the schema-7 binder with validation, projection and replay, one definition row per point, "✓ Certified".
+- B3: the solver (`numeric/systems.ts`), the independent cover (`numeric/cover-box.ts`), identity checks for points, range rows in systems with kernels, the numeric remainder after exact elimination.
+- B4: corpus (25-digit references polished at 60 digits), tamper tests, golden case `new-equation-certified-system` (print hygiene 53, additions only), probe cases, Playwright step, spec, roadmap, ledger, memory.
+
+### Verification (PR B)
+
+- Equation, service, contract, golden, display and New Equation unit tests pass; typecheck and lint clean; file sizes within caps.
+- 60 s probe: every case 3.3–6.5 s including about 3.4 s of process start.

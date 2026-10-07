@@ -91,6 +91,17 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   await solve(page);
   await expect(answer(page)).toContainText(/9\.424697/);
   await page.screenshot({ path: testInfo.outputPath('certified-range.png'), fullPage: true });
+  // Certified square systems (PR B): no exact route, one point proven alone in its box.
+  await row(page, 1, '\\sin(x+y)=x');
+  await row(page, 2, '\\cos(x-y)=y');
+  await solve(page);
+  await expect(answer(page)).toContainText(/0\.935082/);
+  await workspace.getByText('Certified').click();
+  await expect(workspace.getByText(/proven to be the only one in its box/)).toBeVisible();
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText))
+    .toBe('(x, y) ≈ (0.935082, 0.998020)\n  the solution of y = cos(x - y), sin(y + x) = x with 5/6 ≤ x ≤ 1, 7/8 ≤ y ≤ 10/9');
+  await page.screenshot({ path: testInfo.outputPath('certified-system.png'), fullPage: true });
   await row(page, 2, '');
 
   // Domain conditions the engine applies.

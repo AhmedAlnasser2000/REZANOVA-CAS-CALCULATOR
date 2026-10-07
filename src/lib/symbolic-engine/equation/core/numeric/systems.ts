@@ -24,7 +24,7 @@ import { bitsFor, boxMap, definedOn, krawczyk, squareSystem, type SquareSystem }
  *    mean-value) excludes 0;
  * 2. contracted by HC4 (an empty result proves no solution);
  * 3. tested by Krawczyk: none proves no solution, unique proves exactly one (the box becomes a root box);
- * 4. otherwise searched by floating-point Newton: a converged guess becomes a root box by ε-inflation and the
+ * 4. otherwise searched by floating-point Newton from its centre (within the search box): a converged guess becomes a root box by ε-inflation and the
  *    exact Krawczyk test (a simple rational point that satisfies every equation exactly is kept exact), the
  *    box grown while the test still holds;
  * 5. otherwise split across its widest side at a point slightly off the middle.
@@ -224,6 +224,7 @@ function solve(store: ExpressionStore, fs: readonly ExprId[], vars: readonly str
     const b = fromRange(contracted.get(v) as XRange) as Iv;
     return rCompare(ctx, b.lo, b.hi) < 0 ? b : { lo: rSubtract(ctx, b.lo, pad), hi: rAdd(ctx, b.hi, pad) };
   });
+  const margin = { lo: X0.map(b => toDouble(b.lo) - (toDouble(b.hi) - toDouble(b.lo)) / 16 - 1e-9), hi: X0.map(b => toDouble(b.hi) + (toDouble(b.hi) - toDouble(b.lo)) / 16 + 1e-9) };
   const limit = X0.reduce((m, b) => { const w = rSubtract(ctx, b.hi, b.lo); return rCompare(ctx, w, m) > 0 ? w : m; }, rational(ctx, 0n));
   // 2. Branch and prune.
   const roots: Root[] = [], work: Iv[][] = [X0];
@@ -242,7 +243,10 @@ function solve(store: ExpressionStore, fs: readonly ExprId[], vars: readonly str
     if (k.kind === 'unique') { addRoot(store, sys, roots, { box: niceBox(store, sys, X) }); continue; }
     // Every zero of X lies in K(X) ∩ X.
     if (k.box.every(b => rCompare(ctx, b.lo, b.hi) < 0)) X = [...k.box];
-    const guess = newtonGuess(store, fs, sys.jacobian, vars, X.map(b => toDouble(ivMid(ctx, b))), X.map(b => toDouble(b.lo)), X.map(b => toDouble(b.hi)));
+    // The guess may settle anywhere in (a margin around) the search box: the proof box is built around it, not
+    // inside this piece. Contraction can leave a piece too thin for its own test, and a solution can sit on the
+    // search box's face: x² + y² + z² = 3 squeezes z to a sliver near (0, 0, √3), where z = √3 is also extreme.
+    const guess = newtonGuess(store, fs, sys.jacobian, vars, X.map(b => toDouble(ivMid(ctx, b))), margin.lo, margin.hi);
     if (guess && !roots.some(r => r.box.every((b, i) => toDouble(b.lo) <= guess[i] && guess[i] <= toDouble(b.hi)))) {
       const root = rootAround(store, sys, guess, limit);
       if (root) { addRoot(store, sys, roots, root); work.push(X); continue; }

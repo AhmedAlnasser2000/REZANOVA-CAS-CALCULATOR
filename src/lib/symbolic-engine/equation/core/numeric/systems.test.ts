@@ -74,6 +74,15 @@ group('certified square systems against 30-digit references', () => {
     near(store, ps[1], ['0.2117331376431243728597517', '0.1376201480269751739867344', '1.713543046812898479458039']);
   }, 60_000);
 
+  it('finds solutions on the face of the contracted search box (x² + y² + z² = 3 at (0, 0, ±√3))', () => {
+    const { store, problem, outcome } = solve(['x^2+y^2+z^2=3', 'e^x-yz=1', '\\sin y+xz=0'], ['x', 'y', 'z']);
+    verifyEquationOutcome(problem, outcome);
+    const ps = solvedSet(store, outcome).points;
+    expect(ps).toHaveLength(2);
+    near(store, ps[0], ['0', '0', '-1.732050807568877293527446']);
+    near(store, ps[1], ['0', '0', '1.732050807568877293527446']);
+  }, 60_000);
+
   it('refuses honestly: unbounded unknowns (naming them) and a tangent solution', () => {
     const open = solve(['e^x+\\sin y=1', 'e^y+\\sin x=1'], ['x', 'y']).outcome;
     expect(open.kind).toBe('incomplete-implementation');

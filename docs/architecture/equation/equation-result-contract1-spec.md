@@ -47,6 +47,7 @@ V6 adds them before adoption, as V5 did before New Integration.
 - `complex-algebraic`: the same polynomial, with a rational disk (re, im, radius);
 - `indexed-real-root`: the index-th real root (1 = smallest) of a polynomial whose coefficients carry parameters, with optional rational bounds;
 - `isolated-real-root` (added by `EQUATION-CERTIFIED-NUMERICS1`, schema 7, real domain only): the unique zero of an expression in the binder's symbol with rational bounds lo < zero < hi. The expression is defined and strictly monotone on [lo, hi] and changes sign there. Readers re-check this certificate (`core/numeric/isolated.ts` `certifyIsolated`), as they re-check the isolation of algebraic binders.
+- `isolated-real-point` (added by `EQUATION-CERTIFIED-NUMERICS1` PR B, schema 7, real domain only): one binder per certified solution of a square system, `{ symbols, equations, box }`. It declares one fresh symbol per coordinate (answers reference these), the system written in them (as many equations as symbols, each symbol used) and a rational box (lo < hi per coordinate) in which every equation is defined and continuously differentiable and the Krawczyk test proves exactly one solution. Readers re-prove the Krawczyk test (`core/numeric/krawczyk.ts` `certifyPoint`).
 
 Either algebraic kind may carry a `form`, a closed form proven by the producer to equal the root.
 
