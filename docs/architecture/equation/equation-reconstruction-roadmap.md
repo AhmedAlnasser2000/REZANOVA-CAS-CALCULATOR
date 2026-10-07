@@ -23,6 +23,12 @@ Part B:
 
 This completes stage 14. The next gates (15 `EQUATION-SEMIALGEBRAIC1`, 16 `EQUATION-CERTIFIED-NUMERICS1`) each need their own approval.
 
+Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-INERT1`](tests-legacy-equation-inert1.md) and [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md):
+- rows read off the main thread;
+- the answer shown before it is checked;
+- finite systems verified in one number field;
+- the development-only 60-second slow-case probe.
+
 ## Implementation sequence
 
 | Stage | Milestone | Prerequisites and work | Exit evidence |
@@ -109,6 +115,10 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Nested absolute values (\|x − \|x − 1\|\| = 1) stop with an internal "division-by-zero: rational inverse" error instead of an answer | user test cases, 2026-10-05 | unassigned (constraints slice) |
 | Complex radicals shown as √(−3) and √(−16) instead of √3·i and 4i in roots of quadratics over ℂ | user test cases, 2026-10-05 | unassigned (presentation) |
 | Parametric system values laid out as −(z − 1)/2 and −(−1 − a)/2 instead of (1 − z)/2 and (a + 1)/2 | user test cases, 2026-10-05 | unassigned (presentation) |
+| ~~Finite system points checked by substituting separate algebraic coordinates (composed resultants: x³y² + x = 4y, x + y = 7 − x² took 11 s over ℝ and 66 s over ℂ to verify, then over a minute to lay out over ℂ)~~ (closed by `NEW-EQUATION-RESPONSIVE1`) | user test cases, 2026-10-07 | `NEW-EQUATION-RESPONSIVE1` |
+| Points whose coordinates are not exact algebraic numbers (closed forms with transcendental parts) still verify by exact substitution, which can be slow for high degrees | `NEW-EQUATION-RESPONSIVE1` | unassigned (systems) |
+| Non-real decimals and order fall back to exact real and imaginary parts (slow for high degrees) on a rounding tie, a real part that may be zero, or equal real parts of different numbers | `NEW-EQUATION-RESPONSIVE1` | unassigned (presentation) |
+| Positive-dimensional and parametric systems still verify by re-deriving at samples; their timing was not measured in this gate | `NEW-EQUATION-RESPONSIVE1` | unassigned (systems) |
 
 ## Attribution
 

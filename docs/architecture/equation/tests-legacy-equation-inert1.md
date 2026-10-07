@@ -1,7 +1,7 @@
 # TESTS-LEGACY-EQUATION-INERT1: Old Equation Engine Tests Made Inert
 
 Date: 2026-10-05
-Status: implemented and verified on 2026-10-05.
+Status: implemented and verified on 2026-10-05. Moved onto main's schema 7 (CANONICAL-RESULT-CONSOLIDATION) and verified again on 2026-10-07. It ships in one PR with [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md) and the Example-menu colour fix.
 
 ## User decisions (2026-10-05)
 
@@ -12,7 +12,7 @@ Status: implemented and verified on 2026-10-05.
 - **On demand**: manual scripts only, with no CI job.
 - **CI**: `test:equation-solve-result` is removed from `ci.yml` and `release-linux.yml`, and the old-Equation files are removed from `test:feature-probes`.
 - **Golden ratchet**: New Equation and New Integration get two golden cases each. This closes the "two cases per launcher workspace" gap that was already red on main for New Integration.
-- **Delivery**: a separate gate after `EQUATION-ADOPTION1`, in one PR.
+- **Delivery**: a separate gate after `EQUATION-ADOPTION1`. On 2026-10-07 the user grouped it with the New Equation responsiveness fixes in one PR, one commit per fix.
 
 ## Mechanism
 
