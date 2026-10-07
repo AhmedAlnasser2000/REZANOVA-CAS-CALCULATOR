@@ -57,7 +57,7 @@ export function normalizationLinearCodec(ctx: ExecutionContext): w.EvidenceCodec
     decode: v => codec.decode(v),
   };
 }
-export function normalizationPolynomialCodec(ctx: ExecutionContext, ring: MultivariateRing<E>, element: w.EvidenceCodec<E>): w.EvidenceCodec<P<E>> {
+export function normalizationPolynomialCodec<C>(ctx: ExecutionContext, ring: MultivariateRing<C>, element: w.EvidenceCodec<C>): w.EvidenceCodec<P<C>> {
   const integer = normalizationInteger(ctx);
   const power: w.EvidenceCodec<number> = {
     encode(n) { ctx.degree(n); return integer.encode(BigInt(n)); },
@@ -79,14 +79,14 @@ export function normalizationPolynomialCodec(ctx: ExecutionContext, ring: Multiv
     },
   };
 }
-export function normalizationGcdCodec(ctx: ExecutionContext, ring: MultivariateRing<E>, element: w.EvidenceCodec<E>): w.EvidenceCodec<MultivariateGcd<E>> {
+export function normalizationGcdCodec<C>(ctx: ExecutionContext, ring: MultivariateRing<C>, element: w.EvidenceCodec<C>): w.EvidenceCodec<MultivariateGcd<C>> {
   const p = normalizationPolynomialCodec(ctx, ring, element);
   const common = {gcd: p, left: p, right: p};
   const simple = w.structure(ctx, {...common, kind: w.literal(ctx, 'zero', 'scalar')});
-  let recursive: w.EvidenceCodec<Extract<MultivariateGcd<E>, {kind: 'recursive'}>> | undefined;
+  let recursive: w.EvidenceCodec<Extract<MultivariateGcd<C>, {kind: 'recursive'}>> | undefined;
   if (ring.lower) {
     const c = normalizationPolynomialCodec(ctx, ring.lower, element), child = normalizationGcdCodec(ctx, ring.lower, element);
-    const content: w.EvidenceCodec<MultivariateContent<E>> = w.structure(ctx, {content: c, primitive: p, chain: w.list(ctx, child)});
+    const content: w.EvidenceCodec<MultivariateContent<C>> = w.structure(ctx, {content: c, primitive: p, chain: w.list(ctx, child)});
     recursive = w.structure(ctx, {...common, kind: w.literal(ctx, 'recursive'), a: content, b: content, content: child,
       steps: w.list(ctx, w.structure(ctx, {division: w.structure(ctx, {quotient: p, remainder: p, multiplier: c}), content})),
       s: p, t: p, denominator: c});

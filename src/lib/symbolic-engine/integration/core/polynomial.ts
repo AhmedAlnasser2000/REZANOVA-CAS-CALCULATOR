@@ -6,6 +6,10 @@ export interface Polynomial<E, D extends ExactRing<E> = ExactField<E>> {
   readonly ring: PolynomialRing<E, D>;
   readonly coefficients: readonly E[];
 }
+const owners = new WeakSet<object>();
+export function assertPolynomialRingOwner(ctx: ExecutionContext, owner: unknown): asserts owner is PolynomialRing<unknown> {
+  ctx.tick(); demand(owner instanceof PolynomialRing && owners.has(owner), 'domain-mismatch', 'polynomial ring owner');
+}
 
 export class PolynomialRing<E, D extends ExactRing<E> = ExactField<E>> {
   readonly identity = Symbol('polynomial-ring');
@@ -17,7 +21,7 @@ export class PolynomialRing<E, D extends ExactRing<E> = ExactField<E>> {
     demand(domain.characteristic === 0, 'domain-mismatch', 'requires characteristic zero');
     demand(typeof variable === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(variable),
       'invalid-input', 'invalid indeterminate name');
-    this.domain = domain; this.variable = variable;
+    this.domain = domain; this.variable = variable; owners.add(this);
     Object.freeze(this);
   }
   assert(ctx: ExecutionContext, a: Polynomial<E, D>): void {

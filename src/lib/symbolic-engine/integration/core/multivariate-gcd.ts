@@ -139,3 +139,10 @@ export function multivariateGcd<E>(ctx: ExecutionContext, ring: MultivariateRing
 export function verifyMultivariateGcd<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>, b: P<E>, proof: MultivariateGcd<E>): void {
   ctx.operation(() => { assertMultivariateRing(ctx, ring); check(ctx, ring, a, b, proof); });
 }
+/** Checked coefficient content, shared by normalization and Gauss conversion. */
+export function multivariateContent<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>): MultivariateContent<E> {
+  const proof = content(ctx, ring, a); checkContent(ctx, ring, a, proof); return proof;
+}
+export function verifyMultivariateContent<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>, proof: MultivariateContent<E>): void {
+  checkContent(ctx, ring, a, proof);
+}

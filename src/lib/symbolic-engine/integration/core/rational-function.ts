@@ -2,7 +2,7 @@ import { demand, type ExecutionContext } from './execution';
 import { requireField, type ExactField } from './field';
 import type { Polynomial, PolynomialRing } from './polynomial';
 import { exactDivide, extendedGcd, polynomialGcd } from './polynomial-division';
-import { registerFractionCoefficient } from './fraction-coefficient';
+import { fractionCoefficient, registerFractionCoefficient } from './fraction-coefficient';
 
 export interface RationalFunction<E> {
   readonly field: RationalFunctionField<E>;
@@ -16,6 +16,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
   readonly characteristic = 0 as const;
   readonly ring: PolynomialRing<E>;
   #values = new WeakSet<object>();
+  #coefficientUnits = new WeakMap<object, {zero?: RationalFunction<E>; one?: RationalFunction<E>}>();
   constructor(ring: PolynomialRing<E>) {
     requireField(ring.domain); this.ring = ring;
     registerFractionCoefficient(this, { ring,
@@ -98,8 +99,25 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
     const value = Object.freeze({ field: this, numerator: n, denominator: d });
     this.#values.add(value); return value;
   }
-  fromInteger(ctx: ExecutionContext, n: bigint) { return this.fromCoefficient(ctx, this.ring.domain.fromInteger(ctx, n)); }
-  fromCoefficient(ctx: ExecutionContext, a: E) { return this.make(ctx, this.ring.constant(ctx, a), this.ring.one(ctx)); }
+  fromInteger(ctx: ExecutionContext, n: bigint): RationalFunction<E> { return this.fromCoefficient(ctx, this.ring.domain.fromInteger(ctx, n)); }
+  fromCoefficient(ctx: ExecutionContext, a: E): RationalFunction<E> {
+    this.ring.domain.assert(ctx, a);
+    // Only registered immutable rational towers qualify. The exact owner and
+    // fresh operation token bind these two checked native constants.
+    const token = ctx.operationToken, eligible = token !== undefined && fractionCoefficient(this) !== undefined;
+    let units = eligible ? this.#coefficientUnits.get(token) : undefined;
+    if (units?.zero && this.ring.domain.isZero(ctx, a)) { this.assert(ctx, units.zero); return units.zero; }
+    if (units?.one && this.ring.domain.equal(ctx, a, units.one.numerator.coefficients[0])) { this.assert(ctx, units.one); return units.one; }
+    const value = this.make(ctx, this.ring.constant(ctx, a), this.ring.one(ctx));
+    if (eligible) {
+      const zero = this.ring.isZero(ctx, value.numerator), one = this.ring.equal(ctx, value.numerator, value.denominator);
+      if (zero || one) {
+        if (!units) { ctx.allocate(4); units = {}; this.#coefficientUnits.set(token, units); ctx.onOperationEnd(() => this.#coefficientUnits.delete(token)); }
+        ctx.allocate(1); if (zero) units.zero = value; else units.one = value;
+      }
+    }
+    return value;
+  }
   equal(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) {
     this.assert(ctx, a); this.assert(ctx, b);
     return this.ring.equal(ctx, a.numerator, b.numerator) && this.ring.equal(ctx, a.denominator, b.denominator);
@@ -141,7 +159,13 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
       r.multiply(ctx, exactDivide(ctx, r, a.denominator, h), exactDivide(ctx, r, b.denominator, g)));
   }
   subtract(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) { return this.add(ctx, a, this.negate(ctx, b)); }
-  inverse(ctx: ExecutionContext, a: RationalFunction<E>) { this.assert(ctx, a); return this.make(ctx, a.denominator, a.numerator); }
+  inverse(ctx: ExecutionContext, a: RationalFunction<E>) {
+    this.assert(ctx, a);
+    // An owned normalized n/n is exactly one. Its reciprocal is the same
+    // native value; rebuilding it recursively repeats unit normalization.
+    if (fractionCoefficient(this) && this.ring.equal(ctx, a.numerator, a.denominator)) return a;
+    return this.make(ctx, a.denominator, a.numerator);
+  }
   exactDivide(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) {
     const q = this.multiply(ctx, a, this.inverse(ctx, b));
     demand(this.equal(ctx, this.multiply(ctx, q, b), a), 'verification-failed', 'fraction exact division');
