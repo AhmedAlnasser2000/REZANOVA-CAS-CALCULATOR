@@ -1,0 +1,24 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/result-contract/exponential-presentation.test.ts (8 tests) 6669ms
+   ✓ renders e^{-x} as superscript exponentials and self-contained expanded copy  384ms
+   ✓ renders e^{x+1} as superscript exponentials and self-contained expanded copy  346ms
+   ✓ renders \frac{e^x}{e^{2x}+1} as superscript exponentials and self-contained expanded copy  3069ms
+   ✓ renders \frac{1}{(1+e^x)^2} as superscript exponentials and self-contained expanded copy  1547ms
+   ✓ copies a proved negative conclusion for \frac{1}{e^x+x} rather than a primitive  514ms
+   ✓ abbreviates large constructions only in compact; expands lazily with explicit fallback notice  307ms
+ ✓ src/lib/display/printer/integration.test.ts (3 tests) 26ms
+ ✓ src/lib/result-contract/integration-presentation.test.ts (11 tests) 25739ms
+     ✓ expands all binding data, deduplicates conditions and preserves the original document/artifact  386ms
+     ✓ formats verified corpus without altering evidence: \int \frac{x}{x^4+x^3+x+1}\,dx  489ms
+     ✓ formats verified corpus without altering evidence: \int \frac{y}{1+\frac{y^4}{y+5}+y^3}\,dy  3148ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{y^5+\frac{y}{1+y^4}}-\frac{2y}{3+\frac{5}{2y+y^4}}\,dy  17957ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{x^5-x-1}\,dx  2372ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{(x^2+1)^2}\,dx  376ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{a^2+1}\,da  326ms
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  12:36:27
+   Duration  26.50s (transform 969ms, setup 0ms, import 1.52s, tests 32.43s, environment 0ms)

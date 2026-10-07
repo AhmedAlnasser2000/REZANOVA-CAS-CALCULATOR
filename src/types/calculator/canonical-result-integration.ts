@@ -16,12 +16,7 @@ export interface CanonicalRationalPrimitivePrimary {
   integrationConstant: string;
   rationalPart: CanonicalMathValue;
   terms: CanonicalRootLogTerm[];
-  conditions: {
-    sourceExclusions: CanonicalMathValue[];
-    inputDenominator: CanonicalMathValue;
-    rationalDenominator: CanonicalMathValue;
-    logNorms: CanonicalMathValue[];
-  };
+  restrictions: CanonicalIntegrationRestriction[];
 }
 
 /** A binding for exactly exp(argument), including the argument's additive constant. */

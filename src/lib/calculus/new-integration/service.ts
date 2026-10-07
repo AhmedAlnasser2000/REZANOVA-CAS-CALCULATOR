@@ -1,51 +1,62 @@
 import { ExecutionContext, AlgebraError, demand } from '../../symbolic-engine/integration/core/execution';
 import { integrateRational } from '../../symbolic-engine/integration/core/rational-decision';
-import { encodeRationalDecision, decodeRationalDecision } from '../../symbolic-engine/integration/core/rational-decision-wire';
+import { integrateExponentialRational } from '../../symbolic-engine/integration/core/exponential-rational-decision';
+import { normalizeExponentialExpression } from '../../symbolic-engine/integration/core/exponential-normalization';
 import { integrationError } from './error';
-import { lowerIntegral, UnsupportedIntegral } from './lowering';
+import { UnsupportedIntegral } from './lowering';
+import { lowerExponentialIntegral, INTEGRATION_BOUNDS } from './exponential-lowering';
+import { constructExecutionInput } from './execution-input';
+import { produceCorrespondence } from './correspondence';
+import { readEnvelope, replaySaved, exportSaved, type ExecutionDecision } from './artifact';
 import { rationalDecisionResult } from './result';
-import { MAX_INTEGRATION_ARTIFACT_BYTES, boundedSource, validIntegrationLimits, type IntegrationJob, type IntegrationResponse } from './types';
+import { exponentialDecisionResult } from './exponential-result';
+import { validIntegrationLimits, type IntegrationJob, type IntegrationResponse } from './types';
 
-/** Worker-owned entry. One cumulative context includes exact lowering, proof and projection. */
+/** Worker-owned entry. One cumulative context includes lowering, normalization, proof and projection. */
 export function executeIntegration(job: IntegrationJob): IntegrationResponse {
-  const started = performance.now();
-  let ctx: ExecutionContext | undefined;
+  const started = performance.now(); let ctx: ExecutionContext | undefined;
   try {
     demand(validIntegrationLimits(job.request.limits), 'invalid-input', 'invalid execution limits');
-    ctx = new ExecutionContext(job.request.limits);
-    const context = ctx;
+    ctx = new ExecutionContext(job.request.limits); const context = ctx;
     return context.operation(() => {
-      let saved: {source: string; decision: unknown} | undefined;
-      if (job.artifact !== undefined) {
-        demand(job.artifact.length <= MAX_INTEGRATION_ARTIFACT_BYTES && new TextEncoder().encode(job.artifact).length <= MAX_INTEGRATION_ARTIFACT_BYTES, 'resource-limit', 'artifact exceeds 16 MiB');
-        context.allocate(job.artifact.length * 3); context.tick(job.artifact.length);
-        const raw: unknown = JSON.parse(job.artifact);
-        demand(raw !== null && typeof raw === 'object' && !Array.isArray(raw), 'invalid-input', 'invalid artifact');
-        const a = raw as Record<string, unknown>;
-        demand(Object.keys(a).sort().join(',') === 'decision,kind,request,version' && a.kind === 'new-integration' && a.version === 1, 'invalid-input', 'invalid artifact envelope');
-        const req = a.request as Record<string, unknown>;
-        demand(req !== null && typeof req === 'object' && Object.keys(req).sort().join(',') === 'limits,source' && boundedSource(req.source) && validIntegrationLimits(req.limits), 'invalid-input', 'invalid saved request');
-        saved = {source: req.source, decision: a.decision};
-      }
-      const source = job.action === 'open' && saved ? saved.source : job.request.source;
-      const lowered = lowerIntegral(context, source);
-      let decision;
+      const saved = job.artifact === undefined ? undefined : readEnvelope(context, job.artifact);
+      const sourceText = job.action === 'open' && saved ? saved.request.source : job.request.source;
+      const lowered = lowerExponentialIntegral(context, sourceText);
+      let result: ExecutionDecision, normalization, retained;
       if (saved) {
-        const original = lowerIntegral(context, saved.source, lowered.owner);
-        demand(lowered.owner.fractions.equal(context, original.input, lowered.input), 'verification-failed', 'saved integrand differs from current problem');
-        decision = decodeRationalDecision(context, lowered.owner, original.input, saved.decision);
-      } else decision = integrateRational(context, lowered.owner, lowered.input);
-      const document = rationalDecisionResult(context, lowered.owner, lowered.input, decision, lowered.exclusions);
-      const request = {source, limits: {...job.request.limits}};
-      const wire = saved?.decision ?? encodeRationalDecision(context, lowered.owner, decision);
-      const artifact = JSON.stringify({kind: 'new-integration', version: 1, request, decision: wire});
-      context.allocate(artifact.length); demand(new TextEncoder().encode(artifact).length <= MAX_INTEGRATION_ARTIFACT_BYTES, 'resource-limit', 'derivation exceeds artifact size limit');
-      return {document, request, artifact, elapsedMs: performance.now() - started, usage: context.usage,
-        checks: ['Exact source lowering and exclusions', 'Hermite and LRT certificates', 'Complete derivative identity', 'Retained conditions', 'Exact result conversion and authority']};
+        const replay = replaySaved(context, saved, lowered.base);
+        if (job.action === 'open') {
+          normalization = replay.normalization;
+          retained = {decision: saved.raw.decision, correspondence: saved.raw.correspondence};
+        } else {
+          normalization = normalizeExponentialExpression(context, lowered.base, lowered.input, INTEGRATION_BOUNDS);
+          retained = {decision: saved.raw.decision, correspondence: produceCorrespondence(context, lowered.base, normalization.classification, replay.target)};
+        }
+        result = replay.result;
+      } else {
+        normalization = normalizeExponentialExpression(context, lowered.base, lowered.input, INTEGRATION_BOUNDS);
+        const execution = constructExecutionInput(context, lowered.base, lowered.native, normalization.classification);
+        result = execution.kind === 'rational'
+          ? {kind: 'rational', execution, decision: integrateRational(context, execution.owner, execution.input)}
+          : {kind: 'exponential', execution, decision: integrateExponentialRational(context, execution.owner, execution.input, INTEGRATION_BOUNDS)};
+      }
+      const source = {owner: lowered.base, input: lowered.input, normalization, bounds: INTEGRATION_BOUNDS, correspondence: retained?.correspondence};
+      const document = result.kind === 'rational'
+        ? rationalDecisionResult(context, result.execution.owner, result.execution.input, result.decision, [], source)
+        : exponentialDecisionResult(context, result.execution.owner, result.execution.input, result.decision, INTEGRATION_BOUNDS, source);
+      const request = {source: sourceText, limits: {...job.request.limits}};
+      const exported = exportSaved(context, request, source, result, retained);
+      return {document, request, ...exported, elapsedMs: performance.now() - started, usage: context.usage,
+        checks: ['Exact source lowering and exclusions', 'Checked exponential normalization and complete coverage',
+          result.kind === 'rational' ? 'Hermite and LRT certificates' : 'Certified exponential construction and complete reduction decision',
+          result.kind === 'exponential' && result.decision.kind === 'non-elementary' ? result.decision.obstruction === 'nonconstant-residue' ? 'Checked nonconstant normal residue obstruction' : 'Complete negative Laurent-component rational RDE certificate' : 'Complete derivative identity',
+          'Retained conditions', 'Exact result conversion and authority']};
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return {document: integrationError(message, e instanceof UnsupportedIntegral ? 'Unsupported structure' : e instanceof AlgebraError && e.code === 'resource-limit' ? 'Execution limit reached' : undefined),
-      request: job.request, elapsedMs: performance.now() - started, usage: ctx?.usage ?? {work: 0, allocation: 0}, checks: []};
+    const title = e instanceof UnsupportedIntegral ? 'Unsupported structure' : e instanceof AlgebraError
+      ? e.code === 'resource-limit' ? 'Execution limit reached' : e.code === 'verification-failed' ? 'Verification failed' : 'Invalid input' : undefined;
+    return {document: integrationError(message, title), request: job.request, elapsedMs: performance.now() - started,
+      usage: ctx?.usage ?? {work: 0, allocation: 0}, checks: []};
   }
 }

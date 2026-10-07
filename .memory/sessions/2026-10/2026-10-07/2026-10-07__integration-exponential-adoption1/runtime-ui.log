@@ -1,0 +1,9 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/app/runtime/useNewIntegrationRuntime.ui.test.tsx (4 tests) 20ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  12:31:22
+   Duration  834ms (transform 402ms, setup 67ms, import 478ms, tests 20ms, environment 203ms)

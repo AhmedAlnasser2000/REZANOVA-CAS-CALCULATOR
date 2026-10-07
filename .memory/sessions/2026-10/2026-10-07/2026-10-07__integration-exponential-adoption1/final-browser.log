@@ -1,0 +1,19 @@
+
+Running 10 tests using 1 worker
+
+(node:21365) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21365) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/new-integration-exponential.spec.ts:5:1 › New Integration exponential answers, all-roots views, restrictions and both negative decisions (11.2s)
+  ✓   2 [chromium] › e2e/new-integration-exponential.spec.ts:50:1 › New Integration exponential artifact correspondence, cancellation, saved tabs and source preservation (8.3s)
+  ✓   3 [chromium] › e2e/new-integration-exponential.spec.ts:85:1 › New Integration preserves verified output when only derivation export is unavailable (2.5s)
+  ✓   4 [chromium] › e2e/new-integration-exponential.spec.ts:112:1 › New Integration exports and replays a verified negative decision into a fresh saved tab (4.3s)
+  ✓   5 [chromium] › e2e/new-integration.spec.ts:5:1 › New Integration: exact answers, editable expressions, isolated tabs and saved derivations (10.7s)
+  ✓   6 [chromium] › e2e/new-integration.spec.ts:66:1 › New Integration: background completion, limits, close cancellation and quintic readability (7.3s)
+  ✓   7 [chromium] › e2e/new-integration.spec.ts:104:1 › New Integration fails clearly when workers are unavailable (1.9s)
+  ✓   8 [chromium] › e2e/new-integration.spec.ts:114:1 › New Integration opens without secure-context UUID or clipboard APIs (2.9s)
+  ✓   9 [chromium] › e2e/new-integration.spec.ts:128:1 › New Integration restores full-view preference without restoring a result (6.8s)
+  ✓  10 [chromium] › e2e/new-integration.spec.ts:141:1 › New Integration emphasizes continuation plus signs in a multi-term answer (4.7s)
+
+  10 passed (1.0m)

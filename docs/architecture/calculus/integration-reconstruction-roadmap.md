@@ -1,18 +1,20 @@
 # Elementary Integration Reconstruction Roadmap
 
-Current program (2026-10-06): user approved unified canonical-result consolidation,
-wire 7. The subsequent user-approved scope revision defers unfinished old-workspace
-migrations and global retirement. Current authority for New Equation, rational New
-Integration and Graphing analysis, shared consumers/actions and scoped persistence
-cleanup are now verified prerequisites for exponential result projection and adoption. See
-[consolidation specification](../result-contract/consolidation-spec.md).
-The pre-v0.5.0 compatibility requirement is removed; private mathematical verification
-and current artifact replay remain mandatory. The focused migration is verified;
-New Integration still executes rational inputs only. Sequencing remains provisional.
+Current program (2026-10-07): focused schema-7 consolidation is verified, with the
+user-deferred old-workspace migrations and global retirement still separate. Exact
+exponential projection and New Integration adoption are now verified after that
+prerequisite. General checked normalization removes canceled families before the
+established rational/one-exponential decision boundary. Elementary primitives and
+verified non-elementarity are visible with exact restrictions and fresh artifact replay.
+See the [consolidation specification](../result-contract/consolidation-spec.md),
+[exponential result contract](integration-exponential-result-contract1-spec.md) and
+[adoption specification](integration-exponential-adoption1-spec.md).
+Pre-v0.5.0 historical compatibility is not required; superseded envelope imports are
+explicitly unsupported. Broader families and sequencing remain provisional.
 
 Date: 2026-09-27
-Updated: 2026-10-06
-Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is committed in `1b7ab181`. The differential-field foundation is committed in `6cd21935`; the rational-RDE prerequisite is committed as `9f222979`. The single-product hyperexponential decision gate is committed as `b4517300`. Differential arithmetic performance is committed as `49848767` with both 5x targets exceeded. Finite one-family exponential sums are committed in `c5dce1e2`. The exponential-rational representation gate landed in `d2281e6e`; the complete one-generator rational decision gate is verified with replayable positive/negative evidence. Nested arithmetic performance now exceeds both 5x targets (10.25x/10.99x), resolves the selected quadratic/inverse input-growth failures and covers 481 core tests; no application adoption or push accompanies them. Later-stage details and sequencing remain provisional and subject to change when necessary.
+Updated: 2026-10-07
+Status: exact algebra, rational representation, automatic normalized-Q(x) integration and exact proof-performance targets are verified and adopted through New Integration; rational presentation refinement is committed in `1b7ab181`. The differential-field foundation is committed in `6cd21935`; the rational-RDE prerequisite is committed as `9f222979`. The single-product hyperexponential decision gate is committed as `b4517300`. Differential arithmetic performance is committed as `49848767` with both 5x targets exceeded. Finite one-family exponential sums are committed in `c5dce1e2`. The exponential-rational representation gate landed in `d2281e6e`; the complete one-generator rational decision gate is verified with replayable positive/negative evidence. Nested arithmetic performance now exceeds both 5x targets (10.25x/10.99x), resolves the selected quadratic/inverse input-growth failures and covers 481 core tests; the established one-generator class is now adopted through separately verified schema-7/UI gates; no push accompanies this implementation. Later-stage details and sequencing remain provisional and subject to change when necessary.
 
 Companion: [refined blueprint](integration-reconstruction-blueprint.md).
 
@@ -41,6 +43,18 @@ Decisions for the next implementation: TypeScript/native bigint, private integra
 
 **2026-10-05 user-directed stop:** complete normalization only, then discuss catching up with the cloud branch. Normalization was subsequently committed at `b80aef7e`; authorized synchronization incorporates cloud main through `7b85f646`, including Equation V6, presentation and New Equation adoption. The earlier Integration V6 designation is superseded. Result-contract and UI execution are on hold until repository/contract reconciliation; no automatic version renumbering.
 
+**2026-10-07 adoption closeout:** focused current authority/consumers/persistence passed before
+`INTEGRATION-EXPONENTIAL-RESULT-CONTRACT1` and `INTEGRATION-EXPONENTIAL-ADOPTION1`.
+Both ordered gates are verified with 521 core tests, 219 result-contract tests, affected
+application/runtime checks and ten serial real npm-dev browser tests. Schema 7 uses
+its existing answer kinds; no Integration V6/version widening. Exponential answers
+use superscript notation, shared source/primitive restriction provenance and current
+saved envelope 2. Byte-only export overflow preserves verified answers. The reported
+detached-Vite startup conflict was recovered and both web/desktop launch checked;
+owned verification processes were stopped. No staging, commit or push. Broader
+surviving families, nested towers, constant extensions and real-form presentation are
+subsequent reviewed work, not part of this completion.
+
 ## Updated implementation sequence
 
 The first three foundation gates and their proof-performance follow-up are concrete. Later gates require their own algorithm/prerequisite review before execution and may be revised. Gates are backend unless UI is explicitly listed; backend completion does not imply product adoption.
@@ -62,6 +76,9 @@ The first three foundation gates and their proof-performance follow-up are concr
 | 6 | `INTEGRATION-TRANSCENDENTAL-DECISION1` | Validated towers and required lower-field algorithms; recursive RDE bounds, limited integration, logarithmic derivatives and Liouville reductions. | Backend and UI on adoption: checked positive/negative certificates with explicit domain hypotheses. |
 | 6 full one-generator expansion | `INTEGRATION-EXPONENTIAL-RATIONAL-REPRESENTATION1` then `INTEGRATION-EXPONENTIAL-RATIONAL-DECISION1` | Owned certified Q(x)(t), exact F-valued root-log traces, normal/special Hermite reduction, constant-residue decision, complete Laurent/RDE reduction and full replay. | Both backend gates verified: 386 retained + 24 representation + 60 decision tests. [Representation](integration-exponential-rational-representation1-spec.md); [decision and proof](integration-exponential-rational-decision1-spec.md). UI/result authority and broader fields remain separate. |
 | 6 nested arithmetic follow-up (backend verified) | `INTEGRATION-NESTED-ARITHMETIC-PERFORMANCE1` | Checked normalized-coprimality evidence, owned fraction adapters and denominator-cleared primitive Euclid; preserve native arithmetic and existing proof/artifact contracts. | 10.25x complete shifted integration / 10.99x fresh verification; quadratic/inverse stress construction and replay complete; all 149 non-target comparisons pass; 481 core + 40 affected adoption tests covered. [Specification](integration-nested-arithmetic-performance1-spec.md). |
+| 6 normalization prerequisite (backend verified; adopted) | `INTEGRATION-EXPONENTIAL-NORMALIZATION1` | Exact exponent relations and recursive multivariate common-factor cancellation; preserve original divisors and classify surviving rational/one-family expressions. | Checked normalization, complete provenance and producer-disabled replay; canceled independent families do not block the established integration class. [Specification](integration-exponential-normalization1-spec.md). |
+| 6 current result prerequisite (backend verified) | `INTEGRATION-EXPONENTIAL-RESULT-CONTRACT1` | Schema 7 exact projection, shared restrictions, capture-free bindings, native proof and exact inverse conversion. | Ordered prerequisite: 89 focused tests and rational visual check; subsequent current/result checks pass. [Specification](integration-exponential-result-contract1-spec.md). |
+| 6 exponential adoption (ui verified) | `INTEGRATION-EXPONENTIAL-ADOPTION1` | Exact source lowering, existing normalization and rational/exponential decision procedures, owned worker, superscript compact/full presentation and envelope-2 correspondence replay. | 521 core tests, 219 result-contract tests, affected service/runtime checks and ten serial npm-dev Playwright tests; byte-only oversized-export success preservation. [Specification](integration-exponential-adoption1-spec.md). |
 | 7 | `INTEGRATION-ALGEBRAIC-FIELD1` | Generic arithmetic/derivations; irreducible defining relations, basis arithmetic, exact inversion/differentiation and root/embedding semantics. May precede Stage 6 as its prerequisites require. | Backend: arithmetic/differential laws beyond quadratic radical templates. |
 | 8 | `INTEGRATION-ALGEBRAIC-DECISION1` | Stage 7 and a reviewed algorithm dossier for integral bases, places, infinity, residues and the logarithmic/principal-divisor problem. | Backend and UI on adoption: exact reductions and justified decisions for the declared algebraic domain. |
 | 9 | `INTEGRATION-MIXED-DECISION1` | Algebraic/transcendental algorithms over compatible differential coefficient fields; review each recursive subsidiary problem. | Backend and UI on adoption: both extension orderings, mixed identities/obstructions, conditions and controlled unknowns. |
@@ -82,10 +99,12 @@ Parameters, branch interpretation, exact proof verification and mixed-field repr
 
 ## Decisions remaining before later gates
 
-- Adopted rational results now use the current schema-7 all-roots local-complex contract and source-exclusion lowering. Wider transcendental results, algebraic display rewrites and real forms still require their own representation/adoption decisions.
-- After Stage 5: broader simultaneous/mixed/nested admission, effective constant extensions and parameter domains; higher-field/parameterized RDE, limited-integration and logarithmic-derivative obligations. Rational-coefficient RDEs are now covered by [RATIONAL-RDE1](integration-rational-rde1-spec.md). The [single-product hyperexponential gate](integration-hyperexponential-decision1-spec.md) now verifies its Liouville reduction and constant-descent hypotheses. The [differential arithmetic performance gate](integration-differential-arithmetic-performance1-spec.md) now exceeds both inverse-generator 5x targets while retaining exact checks. Finite sums have completed those ownership, coverage and replay prerequisites. Full one-generator rational expressions are now covered by the two verified backend gates; their dossiers define the exact scope and resource limitations. Any exponential UI adoption first needs a reviewed result contract for exponential-field primitives and negative authority, plus exact input lowering and retained exclusions. The nested arithmetic performance follow-up now exceeds its targets and resolves the selected coefficient-growth exhaustion cases; review the exponential result contract next, followed by exact input lowering and New Integration adoption. The completed first-level sufficient certificates are not a general dependency algorithm. Review these prerequisites before committing to the scope of Stage 6.
+- Adopted rational and one-generator exponential results now use current schema-7 bound local-complex primitives/negative conclusions and exact source-exclusion lowering. Wider transcendental classes, algebraic display rewrites and real forms still require their own representation/adoption decisions.
+- After Stage 5: broader simultaneous/mixed/nested admission, effective constant extensions and parameter domains; higher-field/parameterized RDE, limited-integration and logarithmic-derivative obligations. Rational-coefficient RDEs are now covered by [RATIONAL-RDE1](integration-rational-rde1-spec.md). The [single-product hyperexponential gate](integration-hyperexponential-decision1-spec.md) now verifies its Liouville reduction and constant-descent hypotheses. The [differential arithmetic performance gate](integration-differential-arithmetic-performance1-spec.md) now exceeds both inverse-generator 5x targets while retaining exact checks. Finite sums have completed those ownership, coverage and replay prerequisites. Full one-generator rational expressions are now covered by the two verified backend gates; their dossiers define the exact scope and resource limitations. The established one-generator class is now adopted after exact schema-7 projection, raw lowering, retained exclusions and fresh envelope-2 replay passed. The nested arithmetic performance follow-up exceeds its targets and resolves the selected coefficient-growth exhaustion cases. Next review the wider differential-tower subsidiary algorithms and admission prerequisites before claiming broader families. The completed first-level sufficient certificates are not a general dependency algorithm. Review these prerequisites before committing to the scope of Stage 6.
 - Stage 7–9: concrete integral-basis/local/divisor implementations and their effective-field requirements. General algorithms must not be replaced by genus-specific templates while retaining a completeness claim.
 - Adoption/closeout: exceptional parameter partitions and bounded main-thread fallback behavior; decide exact runtime budgets using measured workloads.
+- Post-roadmap presentation polish (user requested 2026-10-07): short answers should use one horizontal row when they fit; retain aligned vertical addition for long formulas/narrow surfaces. This changes layout only, preserving mathematical authority, proofs and artifacts; responsive measurement/rendering cost belongs to that later review.
+- Post-roadmap proof presentation (user requested 2026-10-07): derive readable non-elementarity explanations and expandable proof steps from checked native certificates, especially Laurent/RDE completeness bounds and inconsistency witnesses. Preserve hypotheses/conditions and distinction from verification; no proof-view implementation in adoption.
 - Native/WASM acceleration: reconsider only when measurements justify a separate implementation boundary. No such dependency is selected now.
 
 These do not block the private foundations; they explicitly block the corresponding later guarantees. Update this roadmap and the design when those investigations settle them.
@@ -106,3 +125,5 @@ These do not block the private foundations; they explicitly block the correspond
 2026-09-29 closeout update: Claude commit `f1abd519` resolves the authority/display blockers; both checks pass. The missing New Integration worker-required runtime probe is implemented and passes. Final signoff is pending the Calculate V2 return-type compile error in that commit; see the dated dossier continuation. No integration commit or push.
 
 Final closeout (2026-09-29): all adoption blockers above are resolved; both gates complete with user-authorized commit and no push. Next roadmap design is differential fields; a bounded rational presentation/resource-profile follow-up may precede it based on real usage. No new implementation scope is authorized by this note.
+
+2026-10-07 adoption update: recorded/verified by codex / gpt-6 / sol (live). Preserve the original roadmap primary attribution above. Exact one-generator result projection and UI adoption are complete; broader sequencing remains subject to change. No commit/push.

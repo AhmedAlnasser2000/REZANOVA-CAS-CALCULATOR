@@ -1,0 +1,42 @@
+Display contract inversion ratchet v2
+Source files: 1792
+Producer boundaries: 448
+Consumer reads: 59
+Compatibility projections: 0
+Owner assemblies: 39
+Producer draft reads: 100
+Legacy reads: 0
+Native documents: 174
+
+Per-lane inventory:
+  anti-regression-evidence: 0 native, 0 compatibility, 0 owner assembly, 1 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  app-display: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 2 canonical reads
+  app-runtime: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 5 canonical reads
+  app-shell: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  app-state: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  calculate: 12 native, 0 compatibility, 0 owner assembly, 0 forwarders, 5 control, 0 legacy reads, 1 canonical reads
+  calculus: 7 native, 0 compatibility, 4 owner assembly, 2 forwarders, 6 control, 0 legacy reads, 2 canonical reads
+  display-read-model: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 4 canonical reads
+  engine-core: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  equation: 125 native, 0 compatibility, 25 owner assembly, 118 forwarders, 21 control, 0 legacy reads, 23 canonical reads
+  geometry: 3 native, 0 compatibility, 2 owner assembly, 17 forwarders, 31 control, 0 legacy reads, 0 canonical reads
+  golden-evidence: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 1 canonical reads
+  history: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 3 canonical reads
+  history-replay: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 2 canonical reads
+  kernel-runtime: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 1 control, 0 legacy reads, 0 canonical reads
+  linear-algebra-shared: 0 native, 0 compatibility, 1 owner assembly, 7 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  matrix: 3 native, 0 compatibility, 2 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  ooe-observability: 0 native, 0 compatibility, 0 owner assembly, 1 forwarders, 0 control, 0 legacy reads, 2 canonical reads
+  result-contract: 4 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 10 canonical reads
+  shared-algebra: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  shared-types: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  statistics: 3 native, 0 compatibility, 2 owner assembly, 13 forwarders, 2 control, 0 legacy reads, 0 canonical reads
+  surface-protocol: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 1 canonical reads
+  symbolic-core: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 1 canonical reads
+  symbolic-integration: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  symbolic-limits: 0 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  table: 5 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+  trigonometry: 8 native, 0 compatibility, 3 owner assembly, 9 forwarders, 1 control, 0 legacy reads, 2 canonical reads
+  vector: 4 native, 0 compatibility, 0 owner assembly, 0 forwarders, 0 control, 0 legacy reads, 0 canonical reads
+
+Baseline: pass

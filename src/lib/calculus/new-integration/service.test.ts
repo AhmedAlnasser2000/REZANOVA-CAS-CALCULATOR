@@ -1,4 +1,3 @@
-import oldDecision from '../../symbolic-engine/integration/core/__tests__/fixtures/rational-decision-v1-3a96622c.json';
 import { describe, it, expect } from 'vitest';
 import { executeIntegration } from './service';
 import { DEFAULT_INTEGRATION_LIMITS as limits } from './types';
@@ -31,18 +30,19 @@ describe('New Integration exact requests', () => {
   it('uses current source exclusions when verifying equivalent normalized inputs', () => {
     const saved = run('1');
     const current = executeIntegration({request: {source: '\\int x/x\\,dx', limits}, artifact: saved.artifact, action: 'verify'});
-    expect(current.document.outcomeKind).toBe('success'); expect(current.document.supplements?.length).toBe(3);
+    expect(current.document.outcomeKind).toBe('success'); expect(current.document.primary?.kind === 'rational-antiderivative' && current.document.primary.restrictions.filter(r => r.origins.some(o => o.category === 'source')).some(r => r.value.mathJson === 'x')).toBe(true);
     const bad = executeIntegration({request: {source: '\\int x\\,dx', limits}, artifact: saved.artifact, action: 'verify'});
     expect(bad.document.outcomeKind).toBe('error');
     const open = executeIntegration({request: {source: '', limits}, artifact: saved.artifact, action: 'open'});
     expect(open.request.source).toBe(saved.request.source);
   });
-  it('replays the unchanged baseline decision in a request envelope with fresh limits', () => {
-    const request = {source: '\\int \\frac{1}{x^5-x-1}\\,dx', limits};
-    const artifact = JSON.stringify({kind: 'new-integration', version: 1, request: {...request, limits: {...limits, work: 0}}, decision: oldDecision});
-    const replay = executeIntegration({request, artifact, action: 'verify'});
-    expect(replay.document.outcomeKind, JSON.stringify(replay.document)).toBe('success');
-    expect(executeIntegration({request: {...request, limits: {...limits, work: 100}}, artifact, action: 'verify'}).document.title).toBe('Execution limit reached');
+  it('rejects old envelopes explicitly and uses active limits for current artifacts', () => {
+    const saved = run('1'), raw = JSON.parse(saved.artifact!);
+    const old = executeIntegration({request: saved.request, artifact: JSON.stringify({...raw, version: 1}), action: 'verify'});
+    expect(old.document.error).toContain('version 2 only');
+    raw.request.limits.work = 0;
+    expect(executeIntegration({request: saved.request, artifact: JSON.stringify(raw), action: 'verify'}).document.outcomeKind).toBe('success');
+    expect(executeIntegration({request: {...saved.request, limits: {...limits, work: 100}}, artifact: saved.artifact, action: 'verify'}).document.title).toBe('Execution limit reached');
   });
   it('rejects oversized and malformed nested artifacts before returning success', () => {
     const request = {source: '\\int x\\,dx', limits};
@@ -51,7 +51,7 @@ describe('New Integration exact requests', () => {
     }
   });
   it('rejects tampered artifacts, limits and oversized requests', () => {
-    const saved = run('1'), raw = JSON.parse(saved.artifact!); raw.decision.conditions = {};
+    const saved = run('1'), raw = JSON.parse(saved.artifact!); raw.decision.evidence.conditions = {};
     expect(executeIntegration({request: saved.request, artifact: JSON.stringify(raw), action: 'verify'}).document.outcomeKind).toBe('error');
     expect(executeIntegration({request: {...saved.request, limits: {...limits, work: 5}}}).document.title).toBe('Execution limit reached');
     expect(executeIntegration({request: {source: 'x'.repeat(65537), limits}}).document.outcomeKind).toBe('error');

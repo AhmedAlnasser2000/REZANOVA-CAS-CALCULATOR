@@ -1,0 +1,9 @@
+
+> calcwiz-desktop@0.3.0 lint
+> eslint .
+
+
+/home/ahmed/Documents/Calculator/src/app/graphing/useGraphWorkspaceController.ts
+  735:25  warning  The ref value 'retiredResultsRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'retiredResultsRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+✖ 1 problem (0 errors, 1 warning)

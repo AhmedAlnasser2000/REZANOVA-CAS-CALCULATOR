@@ -51,7 +51,7 @@ describe('current contract runtime boundary', () => {
         rationalPart: m(0), terms: [{rootVariable: 'a',
           modulus: m(['Add', ['Rational', 1, 4], ['Power', 'a', 2]]), weight: m('a'),
           argument: m(['Add', 'x', ['Multiply', 2, 'a']]), norm}],
-        conditions: {sourceExclusions: [], inputDenominator: norm, rationalDenominator: m(1), logNorms: [norm]},
+        restrictions: [{kind: 'nonzero', value: norm, origins: [{category: 'log-norm', path: 'log.0'}]}],
       }});
     const result = structuredClone(createCanonicalRuntimeResult(value));
     expect(validateCanonicalRuntimeVersionedResultOutcome(result)).toMatchObject({ok: true});

@@ -9,6 +9,7 @@ export interface IntegrationResponse {
   document: CanonicalResultDocument;
   request: IntegrationRequest;
   artifact?: string;
+  exportUnavailable?: string;
   elapsedMs: number;
   usage: {work: number; allocation: number};
   checks: string[];

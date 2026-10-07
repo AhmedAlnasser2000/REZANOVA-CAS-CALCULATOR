@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "EQUATION-CERTIFIED-NUMERICS1: New Equation golden case for a certified numeric root (cos x = x)",
+  "acceptedReason": "INTEGRATION-EXPONENTIAL-ADOPTION1 merge: New Integration polynomial case now projects rationalPart and typed restrictions",
   "caseCount": 52,
   "workspaceCounts": {
     "calculate": 23,
@@ -1553,19 +1553,29 @@
       "title": "Verified antiderivative",
       "fragments": [
         {
-          "path": "canonicalResult.primary.value",
+          "path": "canonicalResult.primary.rationalPart",
           "kind": "typed-math-leaf",
-          "value": "\\left(x\\right)^{3}+C"
+          "value": "\\left(x\\right)^{3}"
         },
         {
-          "path": "canonicalResult.supplements[0].math",
+          "path": "canonicalResult.primary.restrictions[0].value",
           "kind": "typed-math-leaf",
-          "value": "1\\ne 0"
+          "value": "1"
         },
         {
-          "path": "canonicalResult.supplements[1].math",
+          "path": "canonicalResult.primary.restrictions[1].value",
           "kind": "typed-math-leaf",
-          "value": "1\\ne 0"
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[2].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[3].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
         }
       ]
     },
@@ -1601,22 +1611,37 @@
           "value": "1+\\left(x\\right)^{2}"
         },
         {
-          "path": "canonicalResult.primary.conditions.sourceExclusions[0]",
-          "kind": "typed-math-leaf",
-          "value": "1+\\left(x\\right)^{2}"
-        },
-        {
-          "path": "canonicalResult.primary.conditions.inputDenominator",
-          "kind": "typed-math-leaf",
-          "value": "1+\\left(x\\right)^{2}"
-        },
-        {
-          "path": "canonicalResult.primary.conditions.rationalDenominator",
+          "path": "canonicalResult.primary.restrictions[0].value",
           "kind": "typed-math-leaf",
           "value": "1"
         },
         {
-          "path": "canonicalResult.primary.conditions.logNorms[0]",
+          "path": "canonicalResult.primary.restrictions[1].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[2].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[3].value",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[4].value",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[5].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[6].value",
           "kind": "typed-math-leaf",
           "value": "1+\\left(x\\right)^{2}"
         }

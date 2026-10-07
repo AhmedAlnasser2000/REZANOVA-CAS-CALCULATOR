@@ -1,0 +1,14 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/symbolic-engine/integration/core/isolation.test.ts (1 test) 1217ms
+   ✓ keeps private kernel dependencies and production callers inside the reviewed Integration adapters  1216ms
+ ✓ src/lib/calculus/new-integration/exponential-result.test.ts (8 tests) 4153ms
+     ✓ projects primitives [ 1 ]/[ 1, 1 ]  575ms
+     ✓ projects primitives [ 1 ]/[ 1, 2, 1 ]  881ms
+     ✓ projects primitives [ +0, 1 ]/[ 1, +0, 1 ]  1985ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  12:46:12
+   Duration  4.89s (transform 543ms, setup 0ms, import 871ms, tests 5.37s, environment 0ms)

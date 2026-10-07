@@ -14,11 +14,11 @@ function arithmetic(v: unknown, scope: readonly string[], exponentialVariable?: 
   const [head, ...args] = v;
   if (head === 'Exp') return exponentialVariable !== undefined && args.length === 1
     && arithmetic(args[0], [exponentialVariable]);
-  if (head === 'Power') return args.length === 2 && arithmetic(args[0], scope, exponentialVariable) && integer(args[1]);
+  if (head === 'Power') return args.length === 2 && arithmetic(args[0], scope, exponentialVariable) && integer(args[1]) && !(zero(args[0]) && zero(args[1]));
   if (head === 'Rational') return args.length === 2 && args.every(integer) && !zero(args[1]);
   const arity = head === 'Negate' ? args.length === 1 : head === 'Divide' ? args.length === 2
     : head === 'Add' || head === 'Multiply' ? args.length >= 2 : false;
-  return arity && args.every(a => arithmetic(a, scope, exponentialVariable));
+  return arity && !(head === 'Divide' && zero(args[1])) && args.every(a => arithmetic(a, scope, exponentialVariable));
 }
 
 /** Derived exact serialization, never an input to mathematical checking. */
@@ -103,7 +103,8 @@ export function checkIntegrationRestrictions(v: unknown, variable: string, names
     const at = `${path}[${i}]`;
     if (!record(entry) || !keys(entry, ['kind', 'value', 'origins']) || entry.kind !== 'nonzero'
       || !Array.isArray(entry.origins) || !entry.origins.length) throw new InvalidResult('Invalid restriction provenance.', at);
-    math(entry.value, names, `${at}.value`, variable);
+    const value = math(entry.value, names, `${at}.value`, variable);
+    if (zero(value.mathJson)) throw new InvalidResult('A nonzero restriction cannot be the exact zero constant.', at);
     entry.origins.forEach(origin => {
       if (!record(origin) || !keys(origin, ['category', 'path']) || typeof origin.path !== 'string' || !origin.path.trim()
         || !['source', 'argument-denominator', 'input-denominator', 'primitive-denominator', 'coefficient-denominator', 'log-norm'].includes(String(origin.category))) {
@@ -127,18 +128,11 @@ export function checkIntegrationPrimary(p: Record<string, unknown>, outcome: unk
   const used = new Set([x]);
   if (typeof p.integrationConstant === 'string') used.add(p.integrationConstant);
   if (p.kind === 'rational-antiderivative') {
-    if (!keys(p, ['kind', 'semantics', 'variable', 'integrationConstant', 'rationalPart', 'terms', 'conditions'])) return bad('Invalid rational primitive keys.');
+    if (!keys(p, ['kind', 'semantics', 'variable', 'integrationConstant', 'rationalPart', 'terms', 'restrictions'])) return bad('Invalid rational primitive keys.');
     math(p.rationalPart, [x], `${path}.rationalPart`);
-    const norms = terms(p.terms, [x], used, `${path}.terms`, x), c = p.conditions;
-    if (!record(c) || !keys(c, ['sourceExclusions', 'inputDenominator', 'rationalDenominator', 'logNorms'])
-      || !Array.isArray(c.sourceExclusions) || !Array.isArray(c.logNorms) || c.logNorms.length !== norms.length) return bad('Invalid rational conditions.');
-    math(c.inputDenominator, [x], `${path}.conditions.inputDenominator`);
-    math(c.rationalDenominator, [x], `${path}.conditions.rationalDenominator`);
-    c.sourceExclusions.forEach((v, i) => math(v, [x], `${path}.conditions.sourceExclusions[${i}]`));
-    c.logNorms.forEach((v, i) => {
-      const n = math(v, [x], `${path}.conditions.logNorms[${i}]`);
-      if (JSON.stringify(n.mathJson) !== JSON.stringify(norms[i].mathJson)) bad('Log norm coverage differs.');
-    });
+    const norms = terms(p.terms, [x], used, `${path}.terms`, x);
+    checkIntegrationRestrictions(p.restrictions, x, [x], `${path}.restrictions`);
+    checkNormCoverage(norms, p.restrictions, bad);
     return;
   }
   const c = p.construction;
@@ -152,7 +146,14 @@ export function checkIntegrationPrimary(p: Record<string, unknown>, outcome: unk
   if (!keys(p, ['kind', 'semantics', 'variable', 'integrationConstant', 'construction', 'fieldPart', 'terms', 'restrictions'])) return bad('Invalid exponential primitive keys.');
   math(p.fieldPart, names, `${path}.fieldPart`);
   const norms = terms(p.terms, names, used, `${path}.terms`);
-  const restrictions = p.restrictions as Array<{ value: { mathJson: unknown }; origins: Array<{ category: string }> }>;
-  if (norms.some(n => !restrictions.some(r => r.origins.some(o => o.category === 'log-norm')
-    && JSON.stringify(r.value.mathJson) === JSON.stringify(n.mathJson)))) return bad('Missing logarithm norm restriction.');
+  checkNormCoverage(norms, p.restrictions, bad);
+}
+
+function checkNormCoverage(norms: Array<{mathJson: unknown}>, entries: unknown, bad: (message: string) => never) {
+  const restrictions = entries as Array<{value: {mathJson: unknown}; origins: Array<{category: string}>}>;
+  const expected = new Set(norms.map(n => JSON.stringify(n.mathJson))), supplied = new Set<string>();
+  for (const r of restrictions) if (r.origins.some(o => o.category === 'log-norm')) supplied.add(JSON.stringify(r.value.mathJson));
+  if ([...expected].some(key => !supplied.has(key)) || [...supplied].some(key => !expected.has(key))) {
+    bad('Logarithm norm restriction coverage differs.');
+  }
 }

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ExecutionContext } from './execution';
 import { rationalField } from './field';
-import { rational } from './rational';
+import { rational, type Rational } from './rational';
 import { PolynomialRing } from './polynomial';
-import { RationalFunctionField } from './rational-function';
+import { RationalFunctionField, type RationalFunction } from './rational-function';
+import type { DifferentialElement } from './differential-field';
 import { extendedGcd, verifyBezout, polynomialDivide } from './polynomial-division';
 import { setup } from './differential-test-support';
 import { fractionCoefficient } from './fraction-coefficient';
@@ -16,7 +17,7 @@ import { encodeExponentialRationalDecision, decodeExponentialRationalDecision } 
 
 describe('checked nested fraction arithmetic', () => {
   it('preserves the monic gcd and Bezout identity with rational-function coefficients', () => {
-    const { ctx } = setup(), x = new PolynomialRing(rationalField, 'x'), k = new RationalFunctionField(x), t = new PolynomialRing(k, 't');
+    const { ctx } = setup(), x = new PolynomialRing(rationalField, 'x'), k = new RationalFunctionField(x), t = new PolynomialRing<RationalFunction<Rational>>(k, 't');
     const p = (ns: number[]) => x.make(ctx, ns.map(n => rational(ctx, n)));
     const c = (ns: number[], ds = [1]) => k.make(ctx, p(ns), p(ds));
     const common = t.make(ctx, [c([0, 1]), c([1])]);
@@ -30,14 +31,14 @@ describe('checked nested fraction arithmetic', () => {
     expect(t.equal(ctx, extendedGcd(ctx, t, right, left).gcd, result.gcd)).toBe(true);
   });
   it('handles zero, constant, nonmonic and abnormal-degree inputs in differential wrappers', () => {
-    const { ctx, f, x } = setup(), t = new PolynomialRing(f, 't');
+    const { ctx, f, x } = setup(), t = new PolynomialRing<DifferentialElement>(f, 't');
     const one = f.fromInteger(ctx, 1n), two = f.fromInteger(ctx, 2n), zero = t.zero(ctx);
     const a = t.make(ctx, [x, one, one, one]), b = t.make(ctx, [two]);
     expect(t.equal(ctx, extendedGcd(ctx, t, a, b).gcd, t.one(ctx))).toBe(true);
     expect(t.equal(ctx, extendedGcd(ctx, t, a, zero).gcd, a)).toBe(true);
     expect(t.equal(ctx, extendedGcd(ctx, t, zero, a).gcd, a)).toBe(true);
     expect(t.isZero(ctx, extendedGcd(ctx, t, zero, zero).gcd)).toBe(true);
-    const sameName = new PolynomialRing(f, 't');
+    const sameName = new PolynomialRing<DifferentialElement>(f, 't');
     expect(() => extendedGcd(ctx, t, a, sameName.one(ctx))).toThrow('domain-mismatch');
     const limited = new ExecutionContext({ ...ctx.limits, work: 1 });
     expect(() => extendedGcd(limited, t, a, b)).toThrow('resource-limit');
@@ -50,7 +51,7 @@ describe('checked nested fraction arithmetic', () => {
     expect(fractionCoefficient(f)).toBeUndefined();
   });
   it('rechecks stricter bit, allocation and degree limits after successful native arithmetic', () => {
-    const { ctx, f, p } = setup(), t = new PolynomialRing(f, 't');
+    const { ctx, f, p } = setup(), t = new PolynomialRing<DifferentialElement>(f, 't');
     const a = t.make(ctx, [p([2n ** 70n]), p([1])]), b = t.make(ctx, [p([1]), p([1])]);
     const proof = extendedGcd(ctx, t, a, b);
     for (const change of [{ integerBits: 32 }, { allocation: 0 }, { degree: 0 }]) {
@@ -64,7 +65,7 @@ describe('checked nested fraction arithmetic', () => {
   });
   it('preserves exact values through a second nested fraction field', () => {
     const { ctx } = setup(), x = new PolynomialRing(rationalField, 'x'), k = new RationalFunctionField(x);
-    const t = new PolynomialRing(k, 't'), l = new RationalFunctionField(t), z = new PolynomialRing(l, 'z');
+    const t = new PolynomialRing<RationalFunction<Rational>>(k, 't'), l = new RationalFunctionField(t), z = new PolynomialRing<RationalFunction<RationalFunction<Rational>>>(l, 'z');
     const xv = k.make(ctx, x.make(ctx, [rational(ctx, 0), rational(ctx, 1)]), x.one(ctx));
     const tv = l.make(ctx, t.make(ctx, [xv, k.fromInteger(ctx, 1n)]), t.make(ctx, [k.fromInteger(ctx, 1n), xv]));
     const common = z.make(ctx, [tv, l.fromInteger(ctx, 1n)]);
@@ -78,7 +79,7 @@ describe('checked nested fraction arithmetic', () => {
       assert: f.assert.bind(f), fromInteger: f.fromInteger.bind(f), add: f.add.bind(f), subtract: f.subtract.bind(f),
       negate: f.negate.bind(f), multiply: f.multiply.bind(f), exactDivide: f.exactDivide.bind(f),
       inverse: f.inverse.bind(f), equal: f.equal.bind(f), isZero: f.isZero.bind(f) };
-    const fast = new PolynomialRing(f, 't'), slow = new PolynomialRing(generic, 't');
+    const fast = new PolynomialRing<DifferentialElement>(f, 't'), slow = new PolynomialRing(generic, 't');
     let seed = 783;
     for (let i = 0; i < 5; i++) {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;

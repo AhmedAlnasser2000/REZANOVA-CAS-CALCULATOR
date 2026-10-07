@@ -24,10 +24,10 @@ describe('New Integration exact result boundary', () => {
     expect(collectCanonicalResultMathValues(doc).every(v => v.value.mathJson !== undefined)).toBe(true);
     expect(resolveCanonicalResultForConsumer(doc, {math: a => a.value})).toMatchObject({ok: false, reason: 'unsupported-answer-kind'});
   });
-  it('uses ordinary math for rational primitives and retains huge integers', () => {
+  it('uses typed rational primitives and retains huge integers', () => {
     const f = fixture('x', [900719925474099312345n], [1n]);
     const doc = rationalDecisionResult(f.ctx, f.owner, f.input, f.decision);
-    expect(doc.primary?.kind).toBe('math'); expect(JSON.stringify(doc)).toContain('900719925474099312345');
+    expect(doc.primary?.kind).toBe('rational-antiderivative'); expect(JSON.stringify(doc)).toContain('900719925474099312345');
   });
   it('avoids capture by the variable or constant and rejects mutated binding/conditions', () => {
     const f = fixture('a'); const doc = requireCanonicalAnswer(rationalDecisionResult(f.ctx, f.owner, f.input, f.decision), 'rational-antiderivative');
@@ -35,7 +35,7 @@ describe('New Integration exact result boundary', () => {
     for (const change of [
       (v: typeof doc) => {v.primary.terms[0].rootVariable = 'a';},
       (v: typeof doc) => {v.primary.integrationConstant = 'a';},
-      (v: typeof doc) => {v.primary.conditions.logNorms = [];},
+      (v: typeof doc) => {v.primary.restrictions = v.primary.restrictions.filter(r => r.origins.every(o => o.category !== 'log-norm'));},
       (v: typeof doc) => {v.primary.terms[0].weight.mathJson = 'unbound';},
       (v: typeof doc) => {v.primary.rationalPart.canonicalLatex = '42';},
     ]) {const copy = structuredClone(doc); change(copy); expect(validateCanonicalResultDocument(copy).ok).toBe(false);}

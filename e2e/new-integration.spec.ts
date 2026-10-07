@@ -17,7 +17,7 @@ test('New Integration: exact answers, editable expressions, isolated tabs and sa
   await expect(workspace.getByRole('heading', {name: 'Verified antiderivative'})).toBeVisible({timeout: 30000});
   await workspace.getByText('Conditions', {exact: true}).click();
   await workspace.getByText('Verification details', {exact: true}).click();
-  await expect(workspace.getByText('Log norm', {exact: true}).first()).toBeVisible();
+  await expect(workspace.getByText(/^Log norm \(/).first()).toBeVisible();
   await page.screenshot({path: testInfo.outputPath('formal-answer.png'), fullPage: true});
   await workspace.getByRole('button', {name: 'Copy LaTeX', exact: true}).click();
   await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toContain('\\sum_');

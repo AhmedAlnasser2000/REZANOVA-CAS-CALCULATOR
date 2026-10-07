@@ -1,0 +1,122 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/symbolic-engine/integration/core/exponential-rational-decision.test.ts (20 tests) 20256ms
+     ✓ integrates 'inverse affine'  379ms
+     ✓ integrates 'repeated affine'  694ms
+     ✓ integrates 'quadratic residues'  1916ms
+     ✓ integrates 'mixed special normal'  904ms
+     ✓ differentiates x coefficients in the normal denominator  528ms
+     ✓ integrates constructed log and rational derivatives for [ +0, +0, 1 ]/[ 1 ]  693ms
+     ✓ integrates constructed log and rational derivatives for [ 1 ]/[ +0, 1 ]  685ms
+     ✓ integrates constructed log and rational derivatives for [ 1, 1 ]/[ 1 ]  608ms
+     ✓ keeps nontrivial algebraic residues and rational root-log additions  2170ms
+     ✓ handles repeated residues, multiple multiplicities and the highest boundary with nonzero B  1299ms
+     ✓ checks a derivative fixture with reducible all-root modulus  8300ms
+     ✓ supports nonmonic source fractions and coefficients above 2^53  344ms
+     ✓ checks seeded field-derivative fixtures and preserves operands  1055ms
+ ✓ src/lib/symbolic-engine/integration/core/nested-replay.test.ts (2 tests) 18352ms
+     ✓ replays the b452798e positive artifact without producers  18212ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-rational-wire.test.ts (8 tests) 8826ms
+     ✓ replays elementary with producers disabled  766ms
+     ✓ replays laurent with producers disabled  661ms
+     ✓ replays rational with producers disabled  1095ms
+     ✓ replays quadratic with producers disabled  3955ms
+     ✓ replays repeated with producers disabled  1323ms
+     ✓ rejects wrong input, same-derivative shifted construction, malformed records and missing conditions  605ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-rational-primitive.test.ts (24 tests) 8899ms
+     ✓ keeps all roots of modulus [ -1, +0, 1 ] without resolving them  729ms
+     ✓ keeps all roots of modulus [ 1, +0, 1 ] without resolving them  579ms
+     ✓ keeps all roots of modulus [ -1, -1, +0, +0, +0, 1 ] without resolving them  3912ms
+     ✓ embeds the rational root-log primitive preserving norms and exact coefficients  406ms
+     ✓ replays with producers disabled and rejects changed target, exponent, condition and trace  1199ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-rational-evidence.test.ts (30 tests) 6240ms
+     ✓ rejects missing final coefficient proof  325ms
+     ✓ rejects missing retained condition  323ms
+     ✓ rejects duplicated retained condition  318ms
+     ✓ has fresh proof state after a successful check on the same context  691ms
+     ✓ returns no decision when exhausted during final  336ms
+     ✓ checks decoding and standalone proof budgets  486ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-sum-wire.test.ts (41 tests) 5046ms
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > zero
+zero { work: 13941, allocation: 140243 } 2ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > constant
+constant { work: 27116, allocation: 306727 } 1ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > improper
+improper { work: 1017076, allocation: 12087750 } 27ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > repeated irreducible
+repeated irreducible { work: 3365799, allocation: 40985513 } 62ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > quadratic
+quadratic { work: 2740327, allocation: 33100509 } 51ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > repeated residue
+repeated residue { work: 1164410, allocation: 13944004 } 22ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > quartic
+quartic { work: 7157703, allocation: 88368147 } 126ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > quintic logarithmic
+quintic logarithmic { work: 3480911, allocation: 44001285 } 58ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > quintic
+quintic { work: 98176001, allocation: 5033320552 } 1979ms
+
+stdout | src/lib/symbolic-engine/integration/core/rational-decision.test.ts > automatic rational integration > degree loss
+degree loss { work: 5450203, allocation: 66554897 } 104ms
+
+ ✓ src/lib/symbolic-engine/integration/core/rational-decision.test.ts (10 tests) 2443ms
+     ✓ quintic  1979ms
+ ✓ src/lib/symbolic-engine/integration/core/rational-decision-evidence.test.ts (27 tests) 1775ms
+     ✓ repeated linear and irreducible factors with mixed multiplicities  366ms
+     ✓ round-trips zero, polynomial, repeated-pole, abnormal-drop and highest-selection decisions  427ms
+ ✓ src/lib/symbolic-engine/integration/core/rational-rde-wire.test.ts (34 tests) 1651ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-rational-selection.test.ts (2 tests) 1279ms
+   ✓ preserves abnormal PRS drops and highest-index boundary evidence  416ms
+   ✓ checks degree-loss partitions algebraically over Q(x), without mislabeling them admitted differential inputs  862ms
+ ✓ src/lib/symbolic-engine/integration/core/isolation.test.ts (1 test) 1186ms
+   ✓ keeps the private kernel disconnected from production consumers and dependencies  1186ms
+ ✓ src/lib/symbolic-engine/integration/core/hyperexponential-wire.test.ts (42 tests) 949ms
+ ✓ src/lib/symbolic-engine/integration/core/differential-field.test.ts (16 tests) 938ms
+     ✓ differentiates coefficients in a five-level tower and keeps additional constants unestablished  799ms
+ ✓ src/lib/symbolic-engine/integration/core/proof-performance.test.ts (9 tests) 864ms
+     ✓ replays an unchanged baseline version-1 quintic artifact without integration producers  680ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-sum-decision.test.ts (22 tests) 692ms
+     ✓ checks seeded rational primitive coefficients and preserves caller operands  307ms
+ ✓ src/lib/symbolic-engine/integration/core/hyperexponential-decision.test.ts (24 tests) 680ms
+     ✓ checks seeded derivative-constructed rational coefficients and operand immutability  323ms
+ ✓ src/lib/symbolic-engine/integration/core/rational-rde.test.ts (23 tests) 632ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-normalization-wire.test.ts (7 tests) 559ms
+ ✓ src/lib/symbolic-engine/integration/core/primitive-verification.test.ts (8 tests) 541ms
+ ✓ src/lib/symbolic-engine/integration/core/exponential-normalization.test.ts (15 tests) 540ms
+stdout | src/lib/symbolic-engine/integration/core/differential-wire.test.ts > differential field artifacts > records representative construction, differentiation and replay costs
+differential-field metrics {"constructionMs":8.106554999999958,"construction":{"work":385281,"allocation":3384474},"replayMs":4.9701160000000755,"replay":{"work":170715,"allocation":1443738}}
+
+ ✓ src/lib/symbolic-engine/integration/core/differential-wire.test.ts (24 tests) 439ms
+ ✓ src/lib/symbolic-engine/integration/core/differential-performance.test.ts (17 tests) 195ms
+ ✓ src/lib/symbolic-engine/integration/core/subresultant.test.ts (7 tests) 89ms
+ ✓ src/lib/symbolic-engine/integration/core/rde-integer-roots.test.ts (5 tests) 62ms
+ ✓ src/lib/symbolic-engine/integration/core/multivariate-gcd.test.ts (12 tests) 55ms
+ ✓ src/lib/symbolic-engine/integration/core/quotient-algebra.test.ts (4 tests) 48ms
+ ✓ src/lib/symbolic-engine/integration/core/primitive-wire.test.ts (5 tests) 44ms
+ ✓ src/lib/symbolic-engine/integration/core/execution-performance.test.ts (7 tests) 28ms
+ ✓ src/lib/symbolic-engine/integration/core/rational-function.test.ts (3 tests) 26ms
+ ✓ src/lib/symbolic-engine/integration/core/polynomial.test.ts (6 tests) 17ms
+ ✓ src/lib/symbolic-engine/integration/core/linear-system.test.ts (7 tests) 15ms
+ ✓ src/lib/symbolic-engine/integration/core/rational.test.ts (17 tests) 11ms
+ ✓ src/lib/symbolic-engine/integration/core/rational-oracle.test.ts (16 tests) 5ms
+ ✓ src/lib/symbolic-engine/integration/core/exact-wire.test.ts (11 tests) 4ms
+ ✓ src/lib/symbolic-engine/integration/core/artifact-export.test.ts (6 tests) 2ms
+ ✓ src/lib/symbolic-engine/integration/core/nested-arithmetic.test.ts (9 tests) 125504ms
+     ✓ agrees with ordinary field Euclid on seeded coefficients and checks a forged conversion  508ms
+     ✓ completes both input paths and the full 'shifted' stress decision within unchanged limits  25722ms
+     ✓ completes both input paths and the full 'quadratic' stress decision within unchanged limits  59750ms
+     ✓ completes both input paths and the full 'inverse' stress decision within unchanged limits  39229ms
+
+ Test Files  36 passed (36)
+      Tests  521 passed (521)
+   Start at  12:33:48
+   Duration  125.88s (transform 791ms, setup 0ms, import 1.66s, tests 208.90s, environment 2ms)

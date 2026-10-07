@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PolynomialRing } from './polynomial';
-import { RationalFunctionField } from './rational-function';
+import { RationalFunctionField, type RationalFunction } from './rational-function';
+import type { Rational } from './rational';
 import { exactDivide, extendedGcd, polynomialDivide } from './polynomial-division';
 import { squareFree } from './polynomial-square-free';
 import { context, poly, rationalRing } from './test-support';
@@ -22,7 +23,7 @@ describe('recursive Q(t) coefficients', () => {
     expect(Object.isFrozen(a)).toBe(true);
   });
   it('divides and computes gcd of x-polynomials over Q(t)', () => {
-    const c = context(), tRing = rationalRing('t'), f = new RationalFunctionField(tRing), x = new PolynomialRing(f, 'x');
+    const c = context(), tRing = rationalRing('t'), f = new RationalFunctionField(tRing), x = new PolynomialRing<RationalFunction<Rational>>(f, 'x');
     const t = f.make(c, poly(c, tRing, [0, 1]), tRing.one(c)), one = f.fromInteger(c, 1n);
     const minus = x.make(c, [f.negate(c, t), one]), plus = x.make(c, [t, one]);
     const product = x.multiply(c, minus, plus);

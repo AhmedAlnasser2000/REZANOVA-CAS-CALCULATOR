@@ -7,11 +7,11 @@ import { boundedSource } from './types';
 export class UnsupportedIntegral extends Error {}
 function unsupported(message: string): never {throw new UnsupportedIntegral(message);}
 const rec = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
-const fn = (v: unknown): unknown[] | undefined => Array.isArray(v) ? v : rec(v) && Array.isArray(v.fn) ? v.fn : undefined;
-const sym = (v: unknown): string | undefined => typeof v === 'string' ? v : rec(v) && typeof v.sym === 'string' ? v.sym : undefined;
-const num = (v: unknown): string | undefined => rec(v) && typeof v.num === 'string' ? v.num : undefined;
+export const fn = (v: unknown): unknown[] | undefined => Array.isArray(v) ? v : rec(v) && Array.isArray(v.fn) ? v.fn : undefined;
+export const sym = (v: unknown): string | undefined => typeof v === 'string' ? v : rec(v) && typeof v.sym === 'string' ? v.sym : undefined;
+export const num = (v: unknown): string | undefined => rec(v) && typeof v.num === 'string' ? v.num : undefined;
 
-export function lowerIntegral(ctx: ExecutionContext, source: string, suppliedOwner?: FormalPrimitiveDomain) {
+export function parseIntegralSource(ctx: ExecutionContext, source: string) {
   demand(boundedSource(source), 'resource-limit', 'source exceeds 64 KiB'); ctx.allocate(source.length * 4); ctx.tick(source.length);
   const ce = new ComputeEngine();
   const tree = ce.parse(source, {form: 'raw', parseNumbers: 'decimal'}).toMathJson({shorthands: [], fractionalDigits: 'max', prettify: false});
@@ -26,9 +26,12 @@ export function lowerIntegral(ctx: ExecutionContext, source: string, suppliedOwn
   if (integralCount !== 1 || top.length !== 3) unsupported('Only one explicit indefinite integral is executable here.');
   const variable = sym(top[2]);
   if (!variable || !/^[A-Za-z][A-Za-z0-9_]*$/.test(variable) || variable.length > 64 || ['Nothing', 'Pi', 'ExponentialE', 'ImaginaryUnit', 'Infinity', 'NaN'].includes(variable)) unsupported('Use an explicit differential, such as dx. Bounds, missing or ambiguous differentials are unsupported.');
-  const owner = suppliedOwner ?? new FormalPrimitiveDomain(variable, variable === 'z' ? 'r' : 'z');
-  demand(owner.x.variable === variable, 'domain-mismatch', 'integration variable mismatch');
-  const f = owner.fractions, exclusions: QPolynomial[] = [];
+  return {variable, integrand: top[1]};
+}
+
+export function lowerRationalNode(ctx: ExecutionContext, owner: FormalPrimitiveDomain, tree: unknown, exclusions: QPolynomial[] = []) {
+  const variable = owner.x.variable;
+  const f = owner.fractions;
   function exclude(v: QRationalFunction) {
     demand(!f.isZero(ctx, v), 'division-by-zero', 'identically zero source divisor');
     ctx.allocate(1); exclusions.push(v.numerator);
@@ -75,6 +78,14 @@ export function lowerIntegral(ctx: ExecutionContext, source: string, suppliedOwn
     }
     return unsupported('This workspace currently executes rational arithmetic and integer powers only.');
   }
-  const input = visit(top[1]);
+  return visit(tree);
+}
+
+export function lowerIntegral(ctx: ExecutionContext, source: string, suppliedOwner?: FormalPrimitiveDomain) {
+  const {variable, integrand} = parseIntegralSource(ctx, source);
+  const owner = suppliedOwner ?? new FormalPrimitiveDomain(variable, variable === 'z' ? 'r' : 'z');
+  demand(owner.x.variable === variable, 'domain-mismatch', 'integration variable mismatch');
+  const exclusions: QPolynomial[] = [];
+  const input = lowerRationalNode(ctx, owner, integrand, exclusions);
   return {owner, input, exclusions, variable};
 }

@@ -1,0 +1,25 @@
+
+> calcwiz-desktop@0.3.0 test:file-sizes
+> node --test tools/validate-file-sizes.test.mjs && node tools/validate-file-sizes.mjs
+
+▶ file-size ratchet validation
+  ✔ accepts the committed repo state against the committed baseline (43.484954ms)
+  ✔ accepts files at or under the default cap without a baseline entry (0.540252ms)
+  ✔ rejects a file over the default cap with no baseline entry (0.449616ms)
+  ✔ allows test files up to 1500 lines while retaining the production cap (1.383862ms)
+  ✔ accepts a large file within its baseline cap and rejects it over the cap (0.723375ms)
+  ✔ rejects stale baseline entries for deleted files (0.193699ms)
+  ✔ ignores golden corpus and generated catalog files (1.089198ms)
+  ✔ update lowers caps when files shrink and never raises them (0.563684ms)
+  ✔ update removes entries for deleted files and files back under the default cap (0.499685ms)
+  ✔ update removes a test baseline entry after it shrinks to the test-file cap (0.407033ms)
+✔ file-size ratchet validation (50.156816ms)
+ℹ tests 10
+ℹ suites 1
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.405555
+File sizes are within caps (2657 file(s), 5 baseline cap(s)).

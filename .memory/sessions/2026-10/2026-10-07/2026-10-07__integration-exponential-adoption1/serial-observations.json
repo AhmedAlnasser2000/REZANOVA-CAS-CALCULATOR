@@ -1,0 +1,156 @@
+{
+  "node": "v24.19.0",
+  "policy": "One serial representative run after a JIT warm-up; fresh context per operation; timings include optional export. Not a speed guarantee.",
+  "limits": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "observations": [
+    {
+      "source": "\\int e^x\\,dx",
+      "kind": "exponential-antiderivative",
+      "construction": {
+        "elapsedMs": 301.05946500000005,
+        "work": 7444217,
+        "allocation": 54873089
+      },
+      "replay": {
+        "elapsedMs": 302.02568599999995,
+        "work": 7017375,
+        "allocation": 46665511
+      },
+      "artifactBytes": 361118,
+      "processMemory": {
+        "rss": 511221760,
+        "heapTotal": 368902144,
+        "heapUsed": 242934240,
+        "external": 11963801,
+        "arrayBuffers": 344135
+      }
+    },
+    {
+      "source": "\\int \\frac{1}{(1+e^x)^2}\\,dx",
+      "kind": "exponential-antiderivative",
+      "construction": {
+        "elapsedMs": 1532.6117829999998,
+        "work": 46112772,
+        "allocation": 381186611
+      },
+      "replay": {
+        "elapsedMs": 1071.6004870000002,
+        "work": 28268159,
+        "allocation": 215364638
+      },
+      "artifactBytes": 789901,
+      "processMemory": {
+        "rss": 581185536,
+        "heapTotal": 386363392,
+        "heapUsed": 237841768,
+        "external": 11967827,
+        "arrayBuffers": 344180
+      }
+    },
+    {
+      "source": "\\int \\frac{e^x}{1+e^{2x}}\\,dx",
+      "kind": "exponential-antiderivative",
+      "construction": {
+        "elapsedMs": 3210.8455670000003,
+        "work": 107957146,
+        "allocation": 903679067
+      },
+      "replay": {
+        "elapsedMs": 1827.8329449999992,
+        "work": 53774499,
+        "allocation": 432416936
+      },
+      "artifactBytes": 764737,
+      "processMemory": {
+        "rss": 629075968,
+        "heapTotal": 475111424,
+        "heapUsed": 398918280,
+        "external": 11967497,
+        "arrayBuffers": 349886
+      }
+    },
+    {
+      "source": "\\int e^{x^2}\\,dx",
+      "kind": "non-elementary",
+      "construction": {
+        "elapsedMs": 264.29483400000026,
+        "work": 6250552,
+        "allocation": 45143960
+      },
+      "replay": {
+        "elapsedMs": 278.2564930000008,
+        "work": 6371559,
+        "allocation": 41689133
+      },
+      "artifactBytes": 352422,
+      "processMemory": {
+        "rss": 660701184,
+        "heapTotal": 506433536,
+        "heapUsed": 388675664,
+        "external": 11963289,
+        "arrayBuffers": 345678
+      }
+    },
+    {
+      "source": "\\int \\frac{1}{e^x+x}\\,dx",
+      "kind": "non-elementary",
+      "construction": {
+        "elapsedMs": 541.8441210000001,
+        "work": 13567471,
+        "allocation": 103897149
+      },
+      "replay": {
+        "elapsedMs": 508.53891900000053,
+        "work": 11000869,
+        "allocation": 73987775
+      },
+      "artifactBytes": 551390,
+      "processMemory": {
+        "rss": 728088576,
+        "heapTotal": 573341696,
+        "heapUsed": 438243248,
+        "external": 11964177,
+        "arrayBuffers": 344180
+      }
+    },
+    {
+      "source": "\\int \\frac{1}{x^5-x-1}\\,dx",
+      "kind": "rational-antiderivative",
+      "construction": {
+        "elapsedMs": 2686.188716999999,
+        "work": 110439070,
+        "allocation": 5186585768
+      },
+      "replay": {
+        "elapsedMs": 623.9629069999992,
+        "work": 18827638,
+        "allocation": 399983212
+      },
+      "artifactBytes": 191542,
+      "processMemory": {
+        "rss": 793935872,
+        "heapTotal": 635019264,
+        "heapUsed": 533504880,
+        "external": 11966900,
+        "arrayBuffers": 349289
+      }
+    }
+  ],
+  "attribution": {
+    "primary_agent": "codex",
+    "primary_agent_model": "gpt-6",
+    "primary_agent_family": "sol",
+    "recorded_by_agent": "codex",
+    "recorded_by_agent_model": "gpt-6",
+    "recorded_by_agent_family": "sol",
+    "verified_by_agent": "codex",
+    "verified_by_agent_model": "gpt-6",
+    "verified_by_agent_family": "sol",
+    "attribution_basis": "live"
+  }
+}

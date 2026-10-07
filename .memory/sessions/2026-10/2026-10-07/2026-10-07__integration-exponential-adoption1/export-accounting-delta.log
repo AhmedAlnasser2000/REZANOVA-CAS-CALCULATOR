@@ -1,0 +1,15 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/symbolic-engine/integration/core/artifact-export.test.ts (6 tests) 2ms
+ ✓ src/lib/calculus/new-integration/exponential-replay.test.ts (6 tests) 3454ms
+   ✓ opens current artifact for e^x with producers disabled  670ms
+   ✓ opens current artifact for e^{x^2} with producers disabled  523ms
+   ✓ opens current artifact for \frac{1}{e^x+x} with producers disabled  1008ms
+   ✓ opens current artifact for \frac{1}{x^2+1} with producers disabled  592ms
+   ✓ rejects changed source, normalization evidence, correspondence and decision conditions  532ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  12:49:55
+   Duration  4.21s (transform 507ms, setup 0ms, import 724ms, tests 3.46s, environment 0ms)

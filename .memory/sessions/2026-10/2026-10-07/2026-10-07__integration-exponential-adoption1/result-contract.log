@@ -1,0 +1,58 @@
+
+> calcwiz-desktop@0.3.0 test:result-contract
+> node tools/result-contract-runner.mjs --maxWorkers=2
+
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/result-contract/coverage.test.ts (2 tests) 10568ms
+     ✓ carries all 47 golden executions without compatibility result fields  3668ms
+     ✓ carries all 100 deterministic History replay executions without compatibility result fields  6899ms
+ ✓ src/lib/result-contract/integration-presentation.test.ts (11 tests) 26988ms
+     ✓ expands all binding data, deduplicates conditions and preserves the original document/artifact  404ms
+     ✓ formats verified corpus without altering evidence: \int \frac{x}{x^4+x^3+x+1}\,dx  513ms
+     ✓ formats verified corpus without altering evidence: \int \frac{y}{1+\frac{y^4}{y+5}+y^3}\,dy  3268ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{y^5+\frac{y}{1+y^4}}-\frac{2y}{3+\frac{5}{2y+y^4}}\,dy  18841ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{x^5-x-1}\,dx  2490ms
+     ✓ formats verified corpus without altering evidence: \int \frac{x}{x^2-1}\,dx  316ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{(x^2+1)^2}\,dx  393ms
+     ✓ formats verified corpus without altering evidence: \int \frac{1}{a^2+1}\,da  363ms
+ ✓ src/lib/result-contract/mathjson-coverage.test.ts (4 tests) 10129ms
+     ✓ executes all replay and golden native probes and reports classified coverage  10111ms
+ ✓ src/lib/result-contract/linear-algebra-authority.test.ts (5 tests) 4971ms
+     ✓ keeps all 62 Matrix selectors on the current canonical result  4256ms
+     ✓ keeps all 23 Vector selectors on the current contract including the typed gradian angle  528ms
+ ✓ src/lib/result-contract/exponential-presentation.test.ts (8 tests) 6903ms
+   ✓ renders e^{-x} as superscript exponentials and self-contained expanded copy  371ms
+   ✓ renders e^{x+1} as superscript exponentials and self-contained expanded copy  356ms
+   ✓ renders \frac{e^x}{e^{2x}+1} as superscript exponentials and self-contained expanded copy  3238ms
+   ✓ renders \frac{1}{(1+e^x)^2} as superscript exponentials and self-contained expanded copy  1542ms
+   ✓ copies a proved negative conclusion for \frac{1}{e^x+x} rather than a primitive  551ms
+   ✓ abbreviates large constructions only in compact; expands lazily with explicit fallback notice  329ms
+ ✓ src/lib/result-contract/proven-answer-mathjson.test.ts (23 tests) 1090ms
+     ✓ accepts exact producer serialization when nested-radical reparsing is weaker  555ms
+ ✓ src/lib/result-contract/supplement-table-v2.test.ts (11 tests) 2516ms
+     ✓ promotes log-combine through its explicit V2 selector without changing output  1153ms
+ ✓ src/lib/result-contract/linear-algebra-v2.test.ts (15 tests) 1017ms
+ ✓ src/lib/result-contract/v2-contract.test.ts (8 tests) 551ms
+ ✓ src/lib/result-contract/guided-producer.test.ts (4 tests) 769ms
+     ✓ re-owns Trigonometry equation truth after the Equation handoff boundary  636ms
+ ✓ src/lib/result-contract/linear-algebra-producer.test.ts (17 tests) 525ms
+ ✓ src/lib/result-contract/trigonometry-period-phase-v2.test.ts (4 tests) 517ms
+ ✓ src/lib/result-contract/v4-special-function-expression.test.ts (12 tests) 406ms
+ ✓ src/lib/result-contract/mathjson-proof-verification-session.test.ts (4 tests) 69ms
+ ✓ src/lib/result-contract/producer.test.ts (3 tests) 51ms
+ ✓ src/lib/result-contract/v3-contract.test.ts (5 tests) 82ms
+ ✓ src/lib/result-contract/consumer.test.ts (6 tests) 42ms
+ ✓ src/lib/result-contract/runtime-outcome.test.ts (7 tests) 28ms
+ ✓ src/lib/result-contract/current/contract.test.ts (27 tests) 19ms
+ ✓ src/lib/result-contract/validation.test.ts (15 tests) 17ms
+ ✓ src/lib/result-contract/producer-math-values.test.ts (2 tests) 23ms
+ ✓ src/lib/result-contract/current/runtime.test.ts (4 tests) 9ms
+ ✓ src/lib/result-contract/native-result.test.ts (2 tests) 3ms
+ ✓ src/lib/result-contract/v6-contract.test.ts (20 tests) 10ms
+
+ Test Files  24 passed (24)
+      Tests  219 passed (219)
+   Start at  12:41:00
+   Duration  47.72s (transform 4.60s, setup 0ms, import 25.13s, tests 67.30s, environment 2ms)

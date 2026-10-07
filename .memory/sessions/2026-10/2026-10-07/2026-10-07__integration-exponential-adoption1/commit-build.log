@@ -1,0 +1,263 @@
+
+> calcwiz-desktop@0.3.0 build
+> tsc -b && vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 4640 modules transformed.
+rendering chunks...
+[plugin vite:reporter]
+(!) /home/ahmed/Documents/Calculator/src/lib/graphing/sampling/complex-roots.ts is dynamically imported by /home/ahmed/Documents/Calculator/src/lib/graphing/sampling/complex-trace-loader.ts but also statically imported by /home/ahmed/Documents/Calculator/src/lib/graphing/analysis/analyze.ts, /home/ahmed/Documents/Calculator/src/lib/graphing/ptx/solver-port-current.ts, /home/ahmed/Documents/Calculator/src/lib/graphing/sampling/request.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter]
+(!) /home/ahmed/Documents/Calculator/src/lib/ooe/job-launch/active-job-registry.ts is dynamically imported by /home/ahmed/Documents/Calculator/src/app/runtime/useHistoryDisplayRuntime.ts but also statically imported by /home/ahmed/Documents/Calculator/src/app/logic/editorRuntimeControl.ts, /home/ahmed/Documents/Calculator/src/app/runtime/workspaceTabJobs.ts, /home/ahmed/Documents/Calculator/src/lib/calculus/new-integration/runtime.ts, /home/ahmed/Documents/Calculator/src/lib/new-equation/runtime.ts, /home/ahmed/Documents/Calculator/src/lib/ooe/diagnostics/panel-surface.ts, /home/ahmed/Documents/Calculator/src/lib/ooe/runtime-control/runtime-coordinator.ts, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                                                             1.08 kB │ gzip:   0.44 kB
+dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2                              4.93 kB
+dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2                              5.21 kB
+dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2                              5.47 kB
+dist/assets/ibm-plex-mono-vietnamese-400-normal-DDuiU_S-.woff               5.62 kB
+dist/assets/ibm-plex-mono-cyrillic-ext-400-normal-DMdlQ8Kv.woff             5.82 kB
+dist/assets/ibm-plex-mono-vietnamese-400-normal-BulugwFq.woff2              5.87 kB
+dist/assets/fira-sans-condensed-vietnamese-400-normal-LHPexPYe.woff         6.84 kB
+dist/assets/fira-sans-condensed-vietnamese-600-normal-Cp0kLsM5.woff         6.87 kB
+dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2                        6.91 kB
+dist/assets/ibm-plex-mono-cyrillic-ext-400-normal-xuaO2J-f.woff2            6.91 kB
+dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2                           6.91 kB
+dist/assets/fira-sans-condensed-greek-ext-600-normal-2rUif8UO.woff          7.19 kB
+dist/assets/ibm-plex-mono-cyrillic-400-normal-CEL4l2ZJ.woff                 7.20 kB
+dist/assets/fira-sans-condensed-greek-ext-400-normal-CCdyDB_u.woff          7.26 kB
+dist/assets/fira-sans-condensed-greek-ext-400-italic-DDQjyHwi.woff          7.46 kB
+dist/assets/fira-sans-condensed-greek-ext-600-italic-DMH_71ew.woff          7.48 kB
+dist/assets/fira-sans-condensed-vietnamese-400-italic-DTk28qML.woff         7.55 kB
+dist/assets/fira-sans-condensed-vietnamese-600-italic-AjXToI6c.woff         7.62 kB
+dist/assets/fira-sans-condensed-greek-ext-400-normal-DEwcosjT.woff2         8.22 kB
+dist/assets/fira-sans-condensed-greek-ext-400-italic-WRtE-2V2.woff2         8.34 kB
+dist/assets/fira-sans-condensed-greek-ext-600-italic-CaKP0yzY.woff2         8.35 kB
+dist/assets/ibm-plex-mono-cyrillic-400-normal-BSMlKf0J.woff2                8.36 kB
+dist/assets/fira-sans-condensed-vietnamese-400-normal-D_tg8Y-m.woff2        8.44 kB
+dist/assets/fira-sans-condensed-greek-ext-600-normal-Dk7ZUKMF.woff2         8.52 kB
+dist/assets/fira-sans-condensed-vietnamese-600-normal-C_Q9OTBL.woff2        8.92 kB
+dist/assets/fira-sans-condensed-cyrillic-400-normal-PSf1cj4F.woff           8.96 kB
+dist/assets/fira-sans-condensed-cyrillic-600-normal-DebqAd1_.woff           8.96 kB
+dist/assets/fira-sans-condensed-cyrillic-400-italic-Cey_dDaM.woff           9.62 kB
+dist/assets/fira-sans-condensed-cyrillic-600-italic-C-8fz-85.woff           9.64 kB
+dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2                             9.64 kB
+dist/assets/fira-sans-condensed-vietnamese-400-italic-__pEVYRT.woff2        9.68 kB
+dist/assets/fira-sans-condensed-vietnamese-600-italic-CTQgSe_G.woff2       10.22 kB
+dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2                         10.34 kB
+dist/assets/fira-sans-condensed-cyrillic-400-normal-Do_zqP0R.woff2         10.84 kB
+dist/assets/fira-sans-condensed-greek-600-normal-BPThZ61o.woff             11.04 kB
+dist/assets/fira-sans-condensed-greek-400-normal-J2nC2l6l.woff             11.06 kB
+dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2                           11.32 kB
+dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2                              11.35 kB
+dist/assets/fira-sans-condensed-greek-400-italic-LaxKEJ3B.woff             11.37 kB
+dist/assets/fira-sans-condensed-greek-600-italic-Cy7pwiPf.woff             11.50 kB
+dist/assets/fira-sans-condensed-cyrillic-600-normal-DJXvezZW.woff2         11.55 kB
+dist/assets/ibm-plex-mono-latin-ext-400-normal-D3D2R8hC.woff               11.77 kB
+dist/assets/fira-sans-condensed-cyrillic-400-italic-BFq0pPdY.woff2         11.81 kB
+dist/assets/fira-sans-condensed-cyrillic-600-italic-BZqn8GBB.woff2         12.00 kB
+dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2                          12.03 kB
+dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2                            12.22 kB
+dist/assets/fira-sans-condensed-greek-400-normal-C9FVAY8X.woff2            12.87 kB
+dist/assets/ibm-plex-mono-latin-400-normal-CvHOgSBP.woff                   13.14 kB
+dist/assets/fira-sans-condensed-greek-400-italic-CfDgs8R1.woff2            13.22 kB
+dist/assets/ibm-plex-mono-latin-ext-400-normal-BmRBH3aV.woff2              13.35 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2                        13.57 kB
+dist/assets/fira-sans-condensed-greek-600-normal-2tq2mucT.woff2            13.71 kB
+dist/assets/fira-sans-condensed-greek-600-italic-LZmIhfG7.woff2            13.77 kB
+dist/assets/ibm-plex-mono-latin-400-normal-DMJ8VG8y.woff2                  14.71 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-600-normal-DA4TLof5.woff      15.44 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-400-normal-CQX8rEZk.woff      15.51 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2                           16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2                               16.44 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2                           16.78 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-400-italic-U2EI5dqV.woff      16.88 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2                               16.99 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-600-italic-C9l0QfUs.woff      17.10 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-400-normal-BFYXjpeA.woff2     17.95 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-600-normal-YCOkt-Ji.woff2     19.42 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-400-italic-DnSqH-xY.woff2     19.74 kB
+dist/assets/fira-sans-condensed-cyrillic-ext-600-italic-BcEVgnev.woff2     20.34 kB
+dist/assets/fira-sans-condensed-latin-600-normal-BqwbndUu.woff             22.20 kB
+dist/assets/fira-sans-condensed-latin-400-normal-DUDySaEU.woff             22.24 kB
+dist/assets/fira-sans-condensed-latin-400-italic-BADzJqQw.woff             23.34 kB
+dist/assets/fira-sans-condensed-latin-600-italic-BLiA_nkY.woff             23.38 kB
+dist/assets/fira-sans-condensed-latin-400-normal-BmvZHCvU.woff2            24.03 kB
+dist/assets/fira-sans-condensed-latin-600-normal-CdJSnjCb.woff2            25.04 kB
+dist/assets/fira-sans-condensed-latin-400-italic-Dzr_6KAE.woff2            25.17 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2                                 25.32 kB
+dist/assets/fira-sans-condensed-latin-600-italic-BMUnQYSg.woff2            25.79 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2                              26.27 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2                               28.08 kB
+dist/assets/fira-sans-condensed-latin-ext-600-normal-DGXmRy1b.woff         42.20 kB
+dist/assets/fira-sans-condensed-latin-ext-400-normal-CCVfyRLD.woff         42.33 kB
+dist/assets/fira-sans-condensed-latin-ext-400-italic-CyzVRpMS.woff         44.04 kB
+dist/assets/fira-sans-condensed-latin-ext-600-italic-CmJiXG7K.woff         44.41 kB
+dist/assets/fira-sans-condensed-latin-ext-400-normal-BHj09Mzt.woff2        47.39 kB
+dist/assets/fira-sans-condensed-latin-ext-400-italic-DgCgndbR.woff2        48.19 kB
+dist/assets/fira-sans-condensed-latin-ext-600-normal-10nHsj_O.woff2        50.54 kB
+dist/assets/fira-sans-condensed-latin-ext-600-italic-DDsMAEY_.woff2        50.90 kB
+dist/.vite/manifest.json                                                  102.83 kB │ gzip:  10.56 kB
+dist/assets/geometry.worker-Bdy4OaRp.js                                 1,327.81 kB
+dist/assets/graph-sampling.worker-B1pNcRpT.js                           1,343.55 kB
+dist/assets/table.worker-D9EHEwqI.js                                    1,349.91 kB
+dist/assets/graph-analysis.worker-Dw8IXyB6.js                           1,376.56 kB
+dist/assets/vector.worker-Cb4Q2lVV.js                                   1,390.03 kB
+dist/assets/integration.worker-CVml6k_c.js                              1,421.23 kB
+dist/assets/statistics.worker-BpJEYC9x.js                               1,502.44 kB
+dist/assets/matrix.worker-DVDGqGhz.js                                   1,576.26 kB
+dist/assets/equation.worker-DypV5BN8.js                                 1,586.93 kB
+dist/assets/equation-direct-symbolic.worker-B2kdfJKL.js                 2,147.56 kB
+dist/assets/calculate.worker-B3tSLIOc.js                                2,182.32 kB
+dist/assets/calculus.worker-CM8pCySN.js                                 2,581.09 kB
+dist/assets/trigonometry.worker-CrmIhxXn.js                             2,581.87 kB
+dist/assets/equation.worker-DLl_rvC4.js                                 3,110.11 kB
+dist/assets/NewIntegrationPage-FI461ihL.css                                 1.57 kB │ gzip:   0.67 kB
+dist/assets/NewEquationPage-GLZ0ORpL.css                                    4.25 kB │ gzip:   1.40 kB
+dist/assets/vendor-mathlive-BuR0kYaa.css                                   26.23 kB │ gzip:   7.19 kB
+dist/assets/index-CCZ0LRLR.css                                            298.69 kB │ gzip:  51.20 kB
+dist/assets/runtime-config-CfE4_BlA.js                                      0.04 kB │ gzip:   0.06 kB
+dist/assets/chevron-down-CagJjXmH.js                                        0.12 kB │ gzip:   0.14 kB
+dist/assets/check-Cb2seSjz.js                                               0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-right-vYMV7fDd.js                                       0.13 kB │ gzip:   0.14 kB
+dist/assets/surface-contours-D6PUXnjt.js                                    0.16 kB │ gzip:   0.16 kB
+dist/assets/search-fRv0ZQiF.js                                              0.18 kB │ gzip:   0.17 kB
+dist/assets/play-CC5Iq_bk.js                                                0.19 kB │ gzip:   0.18 kB
+dist/assets/rotate-ccw-BJxAU5WP.js                                          0.20 kB │ gzip:   0.18 kB
+dist/assets/trash-2-CqBAH_W0.js                                             0.33 kB │ gzip:   0.22 kB
+dist/assets/keyboard-9JUTOdJD.js                                            0.45 kB │ gzip:   0.25 kB
+dist/assets/shield-DRmckd9K.js                                              0.47 kB │ gzip:   0.32 kB
+dist/assets/SettingsSwitch-DTpuVg1c.js                                      0.51 kB │ gzip:   0.32 kB
+dist/assets/native-result-hB3X7Wc9.js                                       0.51 kB │ gzip:   0.29 kB
+dist/assets/history-launch-rows-CtMmq795.js                                 0.55 kB │ gzip:   0.33 kB
+dist/assets/math-json-CwvMYTNC.js                                           0.66 kB │ gzip:   0.39 kB
+dist/assets/runtime-module-B_xgIyop.js                                      0.70 kB │ gzip:   0.43 kB
+dist/assets/producer-profile-fuZk4rNn.js                                    0.76 kB │ gzip:   0.36 kB
+dist/assets/partials-Zcf9ZBKB.js                                            0.88 kB │ gzip:   0.51 kB
+dist/assets/editorRuntimeControl-Dmoa1WNZ.js                                0.92 kB │ gzip:   0.51 kB
+dist/assets/useLightDismiss-CZH-8nBI.js                                     0.98 kB │ gzip:   0.51 kB
+dist/assets/scalar-operands-Cuxqj_Aj.js                                     0.99 kB │ gzip:   0.43 kB
+dist/assets/runtime-envelope-5Y0wnKk-.js                                    1.09 kB │ gzip:   0.46 kB
+dist/assets/complex-trace-CODvBFqL.js                                       1.37 kB │ gzip:   0.76 kB
+dist/assets/linearAlgebraMatrixActionRequest-DmSp7DO-.js                    1.40 kB │ gzip:   0.69 kB
+dist/assets/linearAlgebraVectorActionRequest-BaIyAyBa.js                    1.42 kB │ gzip:   0.70 kB
+dist/assets/printer-C4jM_dn4.js                                             1.81 kB │ gzip:   0.77 kB
+dist/assets/undo-2-Czd31ssC.js                                              1.91 kB │ gzip:   0.80 kB
+dist/assets/formula-viewer-artifacts-BWMMLOCj.js                            1.92 kB │ gzip:   0.94 kB
+dist/assets/readback-DvCUazUa.js                                            2.07 kB │ gzip:   0.97 kB
+dist/assets/numeric-scalar-projection-BhYhrv7b.js                           2.10 kB │ gzip:   0.84 kB
+dist/assets/simplification-ifdoLWyN.js                                      2.42 kB │ gzip:   1.04 kB
+dist/assets/exact-vector-core-B4eMLmnr.js                                   2.52 kB │ gzip:   1.02 kB
+dist/assets/substitution-9IMhPIB3.js                                        2.64 kB │ gzip:   1.02 kB
+dist/assets/VariablesPanel-DQRu_Ogg.js                                      2.80 kB │ gzip:   0.96 kB
+dist/assets/graph-workspace-session-validation-CLPtsCgQ.js                  2.92 kB │ gzip:   0.76 kB
+dist/assets/math-analysis-B_68Da9V.js                                       3.09 kB │ gzip:   1.35 kB
+dist/assets/runtime-request-CcRSs7Ro.js                                     3.09 kB │ gzip:   1.04 kB
+dist/assets/canonical-evidence-7_NVwOsL.js                                  3.21 kB │ gzip:   1.30 kB
+dist/assets/analysis-C0FTdnLR.js                                            3.25 kB │ gzip:   1.35 kB
+dist/assets/GuidePage-CaDswDwI.js                                           3.47 kB │ gzip:   1.32 kB
+dist/assets/LinearAlgebraScalarCell-ntYpQEVN.js                             3.82 kB │ gzip:   1.58 kB
+dist/assets/normalize-B-zgjz-p.js                                           3.97 kB │ gzip:   1.55 kB
+dist/assets/equation-direct-symbolic-worker-client-BAAMmyLu.js              4.18 kB │ gzip:   1.80 kB
+dist/assets/polynomial-boundary-BZUaGfSp.js                                 4.25 kB │ gzip:   1.75 kB
+dist/assets/equation-worker-client-DppyqjlF.js                              4.39 kB │ gzip:   1.86 kB
+dist/assets/transforms-D85fS2vk.js                                          4.40 kB │ gzip:   1.71 kB
+dist/assets/exact-Cao_cp6t.js                                               4.60 kB │ gzip:   1.60 kB
+dist/assets/stored-values-D1AWyreS.js                                       4.71 kB │ gzip:   1.94 kB
+dist/assets/limit-piecewise-row-editor-DhgS4PEH.js                          4.75 kB │ gzip:   1.91 kB
+dist/assets/matrix-exact-ops-B2BXvUgs.js                                    4.77 kB │ gzip:   1.65 kB
+dist/assets/HistoryPanel-L-Uzv33M.js                                        5.03 kB │ gzip:   1.53 kB
+dist/assets/exact-matrix-core-D28UYuGy.js                                   5.32 kB │ gzip:   1.96 kB
+dist/assets/vector-core-BmbqMZjw.js                                         5.44 kB │ gzip:   1.69 kB
+dist/assets/seed-grid-newton-DjEPy75M.js                                    5.47 kB │ gzip:   2.04 kB
+dist/assets/real-numeric-eval-B92HP9js.js                                   6.08 kB │ gzip:   1.89 kB
+dist/assets/producer-v2-sT_XMKob.js                                         6.17 kB │ gzip:   1.86 kB
+dist/assets/producer-draft-B0UeocHY.js                                      6.36 kB │ gzip:   1.91 kB
+dist/assets/real-program-BvHiGrma.js                                        6.56 kB │ gzip:   2.30 kB
+dist/assets/angles-BN2D5E4Y.js                                              6.80 kB │ gzip:   2.26 kB
+dist/assets/locus-policy-zuQO3jfh.js                                        7.30 kB │ gzip:   2.66 kB
+dist/assets/producer-version-registry-CvTypjDA.js                           7.40 kB │ gzip:   1.64 kB
+dist/assets/scalar-wire-Dgvi4YbF.js                                         7.45 kB │ gzip:   2.65 kB
+dist/assets/CalculusLimitPiecewiseSurface-DG3TWb9i.js                       7.63 kB │ gzip:   2.79 kB
+dist/assets/producer-DY2xViMK.js                                            7.93 kB │ gzip:   2.55 kB
+dist/assets/outcome-DjdFe4qZ.js                                             8.03 kB │ gzip:   2.82 kB
+dist/assets/differentiation-BslnlpTe.js                                     8.38 kB │ gzip:   2.22 kB
+dist/assets/equation-BAjaMmhb.js                                            8.47 kB │ gzip:   3.22 kB
+dist/assets/linear-algebra-worker-client-core-DdFGlHrL.js                   8.94 kB │ gzip:   3.28 kB
+dist/assets/LabsPanel-RjwZIyUB.js                                           9.05 kB │ gzip:   2.58 kB
+dist/assets/algebra-transform-DqYVkM3-.js                                   9.12 kB │ gzip:   2.24 kB
+dist/assets/solve-CX-vsw0m.js                                               9.47 kB │ gzip:   3.46 kB
+dist/assets/api-R8Wh4FCC.js                                                 9.48 kB │ gzip:   2.79 kB
+dist/assets/runtime-finite-root-producer-CTUJVko_.js                       10.62 kB │ gzip:   3.23 kB
+dist/assets/registry-DHv4FVA-.js                                           10.86 kB │ gzip:   3.68 kB
+dist/assets/GuideWorkspace-DAiG8rZP.js                                     10.91 kB │ gzip:   2.78 kB
+dist/assets/FormulaViewerPage-sm26piQ8.js                                  10.95 kB │ gzip:   3.64 kB
+dist/assets/NewEquationPage-BfgWAYwI.js                                    11.32 kB │ gzip:   4.24 kB
+dist/assets/symbolic-vector-CyLd8yzi.js                                    11.35 kB │ gzip:   3.94 kB
+dist/assets/symbolic-display-DN78N13j.js                                   11.42 kB │ gzip:   3.45 kB
+dist/assets/standard-DCwoY4ne.js                                           11.46 kB │ gzip:   4.16 kB
+dist/assets/symbolic-elimination-CjjPZIFU.js                               12.20 kB │ gzip:   4.13 kB
+dist/assets/equation-solve-result-bWqIuzyV.js                              12.51 kB │ gzip:   4.16 kB
+dist/assets/SettingsPanel-B7_2d-uJ.js                                      12.58 kB │ gzip:   2.61 kB
+dist/assets/EquationWorkspace-b3SFACQC.js                                  12.97 kB │ gzip:   3.31 kB
+dist/assets/calculate-D9TTirGn.js                                          13.18 kB │ gzip:   4.61 kB
+dist/assets/validation-Z6lvCmgq.js                                         14.04 kB │ gzip:   4.62 kB
+dist/assets/TrigonometryWorkspace-BUztiV04.js                              14.16 kB │ gzip:   3.18 kB
+dist/assets/proven-answer-mathjson-CWN0651e.js                             14.38 kB │ gzip:   4.62 kB
+dist/assets/branch-cut-policy-BOIH7hsA.js                                  14.52 kB │ gzip:   4.57 kB
+dist/assets/candidate-validated-readback-D_99lK29.js                       17.02 kB │ gzip:   4.80 kB
+dist/assets/NewIntegrationPage-Cr9G-Gs7.js                                 17.10 kB │ gzip:   6.34 kB
+dist/assets/HistoryPage-NIIe3Iwk.js                                        17.33 kB │ gzip:   5.13 kB
+dist/assets/NotebookWebExportDialog-CuKeBG6z.js                            17.40 kB │ gzip:   6.78 kB
+dist/assets/StatisticsVisualizationDock-BtxQgn-Y.js                        18.00 kB │ gzip:   5.67 kB
+dist/assets/CalculusWorkspace-DlZYXStW.js                                  18.06 kB │ gzip:   3.60 kB
+dist/assets/vendor-tauri-BnGfWl6r.js                                       18.21 kB │ gzip:   4.23 kB
+dist/assets/api-CjoOca8x.js                                                18.25 kB │ gzip:   5.67 kB
+dist/assets/outcomes-c0_sspZy.js                                           18.34 kB │ gzip:   6.17 kB
+dist/assets/finite-root-set-Id9WHHKu.js                                    19.47 kB │ gzip:   6.09 kB
+dist/assets/LinearAlgebraTableWorkspaceHost-C3BdB_2z.js                    19.60 kB │ gzip:   4.57 kB
+dist/assets/GeometryWorkspace-BCdLfvev.js                                  20.09 kB │ gzip:   2.98 kB
+dist/assets/NotebookDocxExportDialog-DbStjumb.js                           20.15 kB │ gzip:   7.65 kB
+dist/assets/OoeDiagnosticsPanel-Bl7uF5oW.js                                21.34 kB │ gzip:   5.13 kB
+dist/assets/table-BWE2jNAe.js                                              22.43 kB │ gzip:   7.52 kB
+dist/assets/editor-parser-CTaWmeFN.js                                      23.80 kB │ gzip:   7.00 kB
+dist/assets/StatisticsWorkspace-BwrFaiLP.js                                24.71 kB │ gzip:   5.11 kB
+dist/assets/typed-expression-pWqlDAML.js                                   29.73 kB │ gzip:   8.99 kB
+dist/assets/tauri-5XR32vJD.js                                              29.77 kB │ gzip:   8.79 kB
+dist/assets/validation-BjipjHdL.js                                         31.51 kB │ gzip:   9.26 kB
+dist/assets/SettingsPage-Dm_uEV6g.js                                       33.78 kB │ gzip:   8.89 kB
+dist/assets/index-D3Sz_oac.js                                              33.80 kB │ gzip:  11.70 kB
+dist/assets/vector-BRW2t5jW.js                                             34.25 kB │ gzip:   9.94 kB
+dist/assets/gpu-loader-CrKXDE75.js                                         39.52 kB │ gzip:  12.75 kB
+dist/assets/editor-dispatch-BEp86pjJ.js                                    43.70 kB │ gzip:   9.63 kB
+dist/assets/geometry-D-0w4joU.js                                           43.76 kB │ gzip:  11.12 kB
+dist/assets/trigonometry-bBn4zCXd.js                                       44.64 kB │ gzip:  13.40 kB
+dist/assets/domain-guards-DPUVSS6y.js                                      51.22 kB │ gzip:  19.62 kB
+dist/assets/api-Csv0J-3s.js                                                51.29 kB │ gzip:  14.45 kB
+dist/assets/statistics-4njtdY36.js                                         53.14 kB │ gzip:  15.36 kB
+dist/assets/piecewise-limits-BqxoN7_Z.js                                   61.36 kB │ gzip:  16.90 kB
+dist/assets/vendor-linear-algebra-6GAiG7wi.js                              69.87 kB │ gzip:  17.56 kB
+dist/assets/vendor-zod-CY7D7icU.js                                         71.94 kB │ gzip:  19.32 kB
+dist/assets/selected-target-Co4onL3r.js                                    73.97 kB │ gzip:  18.07 kB
+dist/assets/calculus-Ceab46RV.js                                           89.46 kB │ gzip:  25.02 kB
+dist/assets/feature-guide-content-DsifYirl.js                              91.86 kB │ gzip:  23.47 kB
+dist/assets/matrix-qPbmmJjY.js                                            116.71 kB │ gzip:  29.20 kB
+dist/assets/vendor-statistics-math-B_Xakv_D.js                            178.55 kB │ gzip:  70.55 kB
+dist/assets/api-BIQ_dfY1.js                                               182.59 kB │ gzip:  46.23 kB
+dist/assets/vendor-react-bp6Dyl9X.js                                      192.65 kB │ gzip:  60.43 kB
+dist/assets/core-CToNLxAq.js                                              206.90 kB │ gzip:  53.35 kB
+dist/assets/shared-solve-CCsUv7uq.js                                      208.00 kB │ gzip:  55.32 kB
+dist/assets/NotebookPage-DOBal9r8.js                                      288.83 kB │ gzip:  84.42 kB
+dist/assets/run-ClYYJZTp.js                                               300.12 kB │ gzip:  75.17 kB
+dist/assets/math-json-BAVqbNdy.js                                         422.89 kB │ gzip: 106.55 kB
+dist/assets/vendor-notebook-editor-WdznQP2Y.js                            425.97 kB │ gzip: 134.33 kB
+dist/assets/GraphWorkspacePageHost-Bgagj6eU.js                            448.38 kB │ gzip: 140.44 kB
+dist/assets/vendor-document-export-C7c3-_jC.js                            465.45 kB │ gzip: 134.82 kB
+dist/assets/index-D3wrj7px.js                                             565.95 kB │ gzip: 144.23 kB
+dist/assets/vendor-statistics-charts-CLP9L_HL.js                          577.41 kB │ gzip: 197.49 kB
+dist/assets/vendor-mathlive-BVRwrryx.js                                   813.66 kB │ gzip: 224.92 kB
+dist/assets/index-8NYz6spX.js                                             942.35 kB │ gzip: 243.58 kB
+dist/assets/vendor-compute-engine-BbB7Lp2O.js                           1,064.40 kB │ gzip: 290.68 kB
+✓ built in 40.20s
