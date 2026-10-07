@@ -459,6 +459,19 @@ class Layout {
   }
 }
 
+/**
+ * One core per (document, context): the three answer styles of a run read the same binders, so their certified
+ * values (and refinements) are built once.
+ */
+const CORES = new WeakMap<object, { ctx: ExecutionContext; core: Core }>();
+function sharedCore(input: unknown, doc: CanonicalEquationDocument, ctx: ExecutionContext): Core {
+  const key = typeof input === 'object' && input !== null ? input : undefined, known = key ? CORES.get(key) : undefined;
+  if (known && known.ctx === ctx) return known.core;
+  const core = coreFor(doc, ctx);
+  if (key) CORES.set(key, { ctx, core });
+  return core;
+}
+
 function coreFor(doc: CanonicalEquationDocument, ctx: ExecutionContext): Core {
   const store = new ExpressionStore(ctx), binders = readRootBinders(store, doc);
   const values = new Map<string, ExprId>(), forms = new Map<string, ExprId>();
@@ -506,7 +519,7 @@ export function presentEquation(input: unknown, settings: EquationPresentationSe
   if (!checked.ok) throw new Error(`Not a valid typed Equation document: ${checked.failure.message}`);
   const doc = checked.validated.value;
   try {
-    return present(doc, settings, coreFor(doc, ctx));
+    return present(doc, settings, sharedCore(input, doc, ctx));
   } catch (e) {
     if (e instanceof EquationAlgebraError && e.code === 'resource') return present(doc, settings, undefined);
     throw e;

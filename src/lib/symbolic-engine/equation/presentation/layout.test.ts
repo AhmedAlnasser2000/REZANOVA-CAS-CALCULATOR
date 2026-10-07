@@ -67,7 +67,7 @@ group('presentation goldens', () => {
   });
 
   it('non-answers carry a message and the owner', () => {
-    const p = presentEquation(documentOf(eq(['Cos', 'x'], 'x')), { outputStyle: 'both', approxDigits: 6 }, context());
+    const p = presentEquation(documentOf(eq(['Add', ['Exp', 'x'], ['Sin', 'x']], 0)), { outputStyle: 'both', approxDigits: 6 }, context());
     expect(p.outcome).toBe('incomplete');
     expect(p.owner).toBe('EQUATION-CERTIFIED-NUMERICS1');
     expect(p.rows[0].role).toBe('message');

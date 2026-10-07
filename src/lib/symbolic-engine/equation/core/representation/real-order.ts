@@ -72,6 +72,13 @@ function computeSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
   const ctx = store.ctx;
   const isolatedExact = isolatedSign(store, id);
   if (isolatedExact !== undefined) return isolatedExact;
+  // A cheap certified enclosure first: when it excludes 0 the sign is settled without exact evaluation, which
+  // for values such as 2^(9/8) + 3^(9/8) means algebraic arithmetic of high degree (a sign is a fact either way).
+  if (store.freeSymbols(id).length === 0) {
+    const quick = enclose(store, id, START_BITS * 2);
+    if (quick.kind === 'bounds' && quick.lo.numerator > 0n) return 1;
+    if (quick.kind === 'bounds' && quick.hi.numerator < 0n) return -1;
+  }
   const e = evaluateExact(store, id, 'real');
   if (e.kind === 'exact') return exactSign(ctx, e.value);
   demand(e.kind === 'not-exact' && e.reason !== 'free-symbol', 'invalid-input', `sign of an undefined or symbolic value: ${'detail' in e ? e.detail : ''}`);

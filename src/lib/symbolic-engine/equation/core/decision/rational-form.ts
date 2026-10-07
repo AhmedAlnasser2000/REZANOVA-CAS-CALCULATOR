@@ -27,7 +27,8 @@ export const OWNERS = Object.freeze({
   systems: 'EQUATION-SYSTEMS1',
 });
 
-export interface Refusal { readonly owner: string; readonly detail: string }
+/** `specific`: more precise than a caller's own refusal for the same problem, so callers pass it on. */
+export interface Refusal { readonly owner: string; readonly detail: string; readonly specific?: true }
 
 /** Ascending coefficients: rationals, or number-only expression ids. */
 export type CPoly = { readonly kind: 'q'; readonly c: readonly Rational[] } | { readonly kind: 'e'; readonly c: readonly ExprId[] };

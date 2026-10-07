@@ -10,6 +10,7 @@ import {
   assertOutcome, compareEndpoints, floorExact, normalizeSet, setKey, type Endpoint, type EquationOutcome, type Interval, type PointValue, type SolutionSet, valueExpression,
 } from '../representation/solution-set';
 import { verifyProofLog } from '../representation/transform';
+import { verifyNumericAnswer } from '../numeric/cover';
 import { allHold, closedAtoms, decideClosedForm, holds } from './closed-form-set';
 import { simplestBetween } from './samples';
 import { FINAL_FORM_RULES, GENERATOR_RULES } from './solve';
@@ -78,6 +79,9 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
         if (!holds(r.op, exactSign(ctx, e.value))) fail(`${label} does not satisfy a relation exactly`);
         continue;
       }
+      // A certified numeric root is proven by its certificate and the exclusion cover (verifyNumericAnswer):
+      // a residual enclosure would add only weak evidence at a high precision cost.
+      if (store.postorder([point]).some(n => store.node(n).kind === 'isolated')) continue;
       const residual = enclose(store, d, RESIDUAL_BITS);
       if (residual.kind !== 'bounds') continue;
       if (r.op === 'eq' && (residual.lo.numerator > 0n || residual.hi.numerator < 0n)) fail(`${label} does not satisfy an equation (residual excludes 0)`);
@@ -178,6 +182,8 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
     }
   };
   evidence(claimed);
+  // Certified numeric roots: their certificates, and an exclusion cover of the rest of the line or range.
+  verifyNumericAnswer(problem, claimed);
 
   const decision = decideClosedForm(leaf);
   if (decision.kind === 'refused') fail('leaf is not decidable by this slice');

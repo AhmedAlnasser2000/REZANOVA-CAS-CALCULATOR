@@ -25,9 +25,10 @@ type Piece = { readonly lo: Rational; readonly hi: Rational };
 const box = (p: Piece): XRange => ({ lo: p.lo, hi: p.hi, loOpen: false, hiOpen: false });
 
 /** Kernel conditions of f in x: the argument and the open set it must stay in on the interval. */
-type Need = { readonly arg: ExprId; readonly test: (r: XRange) => boolean | undefined; readonly at: (s: -1 | 0 | 1, v: ExprId) => boolean };
+export type Need = { readonly arg: ExprId; readonly test: (r: XRange) => boolean | undefined; readonly at: (s: -1 | 0 | 1, v: ExprId) => boolean };
 
-function needs(store: ExpressionStore, f: ExprId, x: string): Need[] {
+/** The domain conditions of f's kernels in x (see the module comment). */
+export function domainNeeds(store: ExpressionStore, f: ExprId, x: string): Need[] {
   const ctx = store.ctx, out: Need[] = [];
   const positive = (r: XRange) => (r.lo !== undefined && (r.lo.numerator > 0n || (r.lo.numerator === 0n && r.loOpen)) ? true : r.hi !== undefined && r.hi.numerator <= 0n ? false : undefined);
   const nonzero = (r: XRange) => (excludesZero(r) ? true : undefined);
@@ -74,7 +75,7 @@ export function certifyIsolated(store: ExpressionStore, f: ExprId, x: string, lo
   const ctx = store.ctx;
   if (rCompare(ctx, lo, hi) >= 0) fail('an isolating interval needs lo < hi');
   if (store.freeSymbols(f).some(s => s !== x)) fail('an isolated zero has one variable');
-  const conditions = needs(store, f, x), df = derivative(store, f, x);
+  const conditions = domainNeeds(store, f, x), df = derivative(store, f, x);
   if (df === undefined) return fail('the expression has no derivative here');
   const holdsAt = (p: Rational) => conditions.every(c => { const v = at(store, c.arg, x, p); return c.at(realSign(store, v), v); });
   if (!holdsAt(lo) || !holdsAt(hi)) fail('the expression is not defined at an end of the interval');
@@ -133,4 +134,17 @@ export function isolateZero(store: ExpressionStore, f: ExprId, x: string, a: Exp
     if (s === sa) left = p; else right = p;
   }
   return store.isolated(f, x, left, right, sa);
+}
+
+/**
+ * A range row: an order relation d < 0 or d ≤ 0 with d = a·x + b (a a nonzero number, b constant) bounds x on
+ * one side: x < −b/a when a > 0, x > −b/a when a < 0. Undefined for any other relation.
+ */
+export function rangeBound(store: ExpressionStore, lhs: ExprId, rhs: ExprId, op: string, x: string): { side: -1 | 1; at: ExprId } | undefined {
+  if (op !== 'lt' && op !== 'le') return undefined;
+  const d = store.sub(lhs, rhs), dd = derivative(store, d, x), a = dd === undefined ? undefined : store.numberValue(dd);
+  if (!a || a.numerator === 0n) return undefined;
+  const b = store.sub(d, store.mul(store.number(a), store.symbol(x)));
+  if (store.freeSymbols(b).length) return undefined;
+  return { side: a.numerator > 0n ? 1 : -1, at: store.div(store.neg(b), store.number(a)) };
 }

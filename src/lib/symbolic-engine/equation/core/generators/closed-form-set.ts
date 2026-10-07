@@ -5,6 +5,7 @@ import type { AtomOperator } from '../decision/univariate';
 import { evaluateExact } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import { realCompare, realSign } from '../representation/real-order';
+import { rangeBound } from '../numeric/isolated';
 import type { Condition, RelationProblem } from '../representation/relation';
 import type { PointValue, SolutionSet } from '../representation/solution-set';
 import { decidePeriodic } from '../periodic/decide';
@@ -65,9 +66,17 @@ export function closedAtoms(problem: RelationProblem): { atoms: ClosedAtom[] } |
     .map(c => ({ f: 'other' in c ? s.sub(c.expr, c.other) : c.expr, op: CONDITION_OPERATOR[c.kind] }))
     .sort((a, b) => s.height(a.f) - s.height(b.f));
   raw.push(...conditions, ...problem.relations.map(r => ({ f: s.sub(r.lhs, r.rhs), op: r.op })));
+  // Range rows (x ≤ c, c < x with constant c) bound the search for roots without closed forms; the answer is
+  // intersected with them anyway, so roots outside never matter.
+  const search: { lo?: ExprId; hi?: ExprId } = {};
+  for (const r of problem.relations) {
+    const b = rangeBound(s, r.lhs, r.rhs, r.op, x);
+    if (b?.side === 1 && (search.hi === undefined || realCompare(s, b.at, search.hi) < 0)) search.hi = b.at;
+    if (b?.side === -1 && (search.lo === undefined || realCompare(s, b.at, search.lo) > 0)) search.lo = b.at;
+  }
   const atoms: ClosedAtom[] = [];
   for (const a of raw) {
-    const z = zerosOf(s, a.f, x);
+    const z = zerosOf(s, a.f, x, undefined, search);
     if (z.kind === 'refused') return { refusal: z.refusal };
     if (z.kind === 'all') { atoms.push({ f: a.f, op: a.op, zeros: 'all', intervals: [], periodic: [], families: [] }); continue; }
     const intervals = z.intervals ?? [], zeros = new Set(z.values);

@@ -120,12 +120,12 @@ group('inequalities and conjunctions', () => {
 
 group('routing to the gates that own a problem', () => {
   it.each([
-    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 6), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: independent exponential generators'],
-    [eq(['Add', exp('x'), ln('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
+    [eq(['Add', ['Power', 2, 'x'], ['Power', 3, 'x']], 6), '{["IsolatedRoot",["Multiply",-1,["Add",-6,["Exp",["Multiply","ξ",["Ln",3]]],["Exp",["Multiply","ξ",["Ln",2]]]]],["Rational",9,8],["Rational",5,4]]}'],
+    [eq(['Add', exp('x'), ln('x')], 1), '{["IsolatedRoot",["Add",1,["Multiply",-1,["Add",["Ln","ξ"],["Exp","ξ"]]]],["Rational",65,128],["Rational",33,64]]}'],
     [eq(['Add', exp(times(2, 'x')), exp('x')], 'ExponentialE'), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-2 equation with transcendental coefficients'],
     [eq(ln(['Add', ['Power', 'x', 3], 'x']), 1), 'incomplete-implementation: EQUATION-PARAMETERS1: degree-3 equation with transcendental coefficients'],
-    [eq(['Add', ['Sqrt', 'x'], exp('x')], 3), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    [eq(['Add', exp('x'), ['Sin', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
+    [eq(['Add', ['Sqrt', 'x'], exp('x')], 3), '{["IsolatedRoot",["Multiply",-1,["Add",-3,["Power","ξ",["Rational",1,2]],["Exp","ξ"]]],["Rational",3,4],["Rational",7,8]]}'],
+    [eq(['Add', exp('x'), ['Sin', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
     // a·eˣ = 1 is decided by the parameters gate; a kernel next to the target with a parameter stays refused.
     [eq(['Add', exp('x'), times('a', 'x')], 1), 'incomplete-implementation: EQUATION-PARAMETERS1: the target outside its kernel with parameters (mixed kernels, follow-up ledger)'],
   ])('%j', (json, expected) => {

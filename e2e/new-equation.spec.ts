@@ -77,6 +77,22 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toBe('x ≈ 1.167304\n  the real root of x^5 - x - 1 = 0');
 
+  // Certified numerics: a root without a closed form, and every root in a range.
+  await row(page, 1, '\\cos x=x');
+  await solve(page);
+  await workspace.getByRole('button', { name: 'Decimal', exact: true }).click();
+  await workspace.getByText('Certified').click();
+  await expect(workspace.getByText(/proven to be the only one in its interval/)).toBeVisible();
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toBe('x ≈ 0.739085\n  the root of x - cos(x) = 0 between 1/2 and 3/4');
+  await page.screenshot({ path: testInfo.outputPath('certified.png'), fullPage: true });
+  await row(page, 1, 'e^x+\\sin x=0');
+  await row(page, 2, '-10\\le x\\le0');
+  await solve(page);
+  await expect(answer(page)).toContainText(/9\.424697/);
+  await page.screenshot({ path: testInfo.outputPath('certified-range.png'), fullPage: true });
+  await row(page, 2, '');
+
   // Domain conditions the engine applies.
   await row(page, 1, '\\ln(x-1)+\\sqrt{x}=\\sqrt{2}');
   await solve(page);
@@ -86,7 +102,7 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
 
 test('New Equation: plain non-answers, ℂ refusals, keys, Stop, tabs, drafts and narrow screens', async ({ page }, testInfo) => {
   const workspace = await open(page);
-  await row(page, 1, '\\cos x=x');
+  await row(page, 1, 'e^x+\\sin x=0');
   await solve(page);
   await expect(answer(page)).toContainText('Not solved yet:');
   await expect(workspace.getByTestId('new-equation-verified')).toHaveCount(0);
