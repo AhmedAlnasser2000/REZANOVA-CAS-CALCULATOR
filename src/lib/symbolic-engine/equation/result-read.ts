@@ -149,6 +149,7 @@ export function readEquationOutcome(store: ExpressionStore, input: unknown): Rea
       };
       case 'unconfirmed': return { kind: 'unconfirmed', variables: s.variables, candidates: s.candidates.map(c => ({ point: point(c.point), derivations: c.derivations })) };
       case 'cylindrical': return { kind: 'cylindrical', variables: s.variables, cells: s.cells.map(c => cell(c, 1)) };
+      case 'truth': return { kind: 'truth', value: s.value };
     }
   };
   const o = p.outcome;

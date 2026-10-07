@@ -57,3 +57,22 @@ Specification: `docs/architecture/equation/equation-semialgebraic1-spec.md`.
 
 - Inequality-only rows choose one unknown automatically. Should regions default to every name as an unknown? This is ledgered.
 - PR B: quantifiers and parameters through the decomposition.
+
+## PR B (local branch gate7, pushed after #27 merges)
+
+- **Commits:**
+  - B0 automatic unknowns (316fca9);
+  - B1 quantifiers and statements (53ca218);
+  - B2 parameters through the decomposition (3ecd7d8);
+  - B3 evidence, Guide, README and docs (this commit).
+- **User decisions (2026-10-07):**
+  - free names of quantified rows are unknowns;
+  - rows whose every name is quantified answer True/False;
+  - with no equation row, every free name is an unknown;
+  - parameter cases are Reduce-style cells.
+- **Verification:**
+  - TypeScript clean; lint clean on changed areas;
+  - equation, contract, golden and display tests: 1,304 passed;
+  - New Equation UI tests: 13/13;
+  - probe: 3.5–3.8 s per PR B case;
+  - Playwright: in the B3 commit.

@@ -203,6 +203,7 @@ class Projector {
       };
       case 'unconfirmed': return { kind: 'unconfirmed', variables: vars(s.variables), candidates: s.candidates.map(c => ({ point: c.point.map(v => this.value(v)), derivations: [...c.derivations] })) };
       case 'cylindrical': return { kind: 'cylindrical', variables: vars(s.variables), cells: s.cells.map(c => this.cell(c)) };
+      case 'truth': return { kind: 'truth', value: s.value };
     }
   }
 

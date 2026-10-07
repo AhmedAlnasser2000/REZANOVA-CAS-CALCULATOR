@@ -152,7 +152,9 @@ export type CanonicalEquationSet =
    * A region of ℝⁿ as nested cells (EQUATION-SEMIALGEBRAIC1): the first variable in one of `cells`, the next in one
    * of that cell's children, and so on. Cells of one list are disjoint and ascending.
    */
-  | { kind: 'cylindrical'; variables: string[]; cells: CanonicalEquationRegionCell[] };
+  | { kind: 'cylindrical'; variables: string[]; cells: CanonicalEquationRegionCell[] }
+  /** A decided statement (EQUATION-SEMIALGEBRAIC1 PR B): every name is quantified; only with no targets. */
+  | { kind: 'truth'; value: boolean };
 
 export type CanonicalEquationOutcome =
   | { kind: 'solved'; set: CanonicalEquationSet }

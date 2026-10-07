@@ -30,7 +30,7 @@ describe('New Equation worker shell', () => {
 
   it('refuses invalid requests before starting a worker', async () => {
     let created = false;
-    const r = await runEquationJob({ ...request, targets: [] }, workspace, 1, () => 1, () => true, new AbortController().signal, () => { created = true; return new FakeWorker() as unknown as Worker; });
+    const r = await runEquationJob({ ...request, targets: ['1x'] }, workspace, 1, () => 1, () => true, new AbortController().signal, () => { created = true; return new FakeWorker() as unknown as Worker; });
     expect(created).toBe(false);
     expect(r?.document.outcomeKind).toBe('error');
   });

@@ -1,6 +1,6 @@
 import { demand, type ExecutionContext } from '../execution';
 import {
-  canonical, content, coprimeBasis, degree, discriminant, gcd, isZero, key, lc, primitive, resultant, tc, trueLevel, type RPoly,
+  canonical, content, coprimeBasis, degree, discriminant, gcd, isZero, key, lc, primitive, resultant, tc, trueLevel, variable, type RPoly,
 } from './recursive';
 
 /**
@@ -50,7 +50,14 @@ export function project(ctx: ExecutionContext, inputs: readonly { poly: RPoly; l
     const prims: RPoly[] = [];
     for (const f of pending[k - 1]) {
       if (k > 1) below.push({ poly: content(ctx, f, k), level: k - 1 });
-      const pp = primitive(ctx, f, k);
+      let pp = primitive(ctx, f, k);
+      // A power of xₖ splits off (x³ + cyx² − ayx is x·(x² + cyx − ay)): its roots then get closed forms.
+      if (degree(pp) > 0 && isZero((pp as readonly RPoly[])[0])) {
+        let shift = 0;
+        while (isZero((pp as readonly RPoly[])[shift])) shift++;
+        prims.push(variable(k, k));
+        pp = Object.freeze((pp as readonly RPoly[]).slice(shift));
+      }
       if (degree(pp) > 0) prims.push(pp);
     }
     const B = coprimeBasis(ctx, prims, k);

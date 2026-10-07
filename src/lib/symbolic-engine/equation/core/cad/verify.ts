@@ -2,7 +2,7 @@ import { demand } from '../execution';
 import { rational } from '../algebra/rational';
 import { evaluateExact, type ExactValue } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
-import type { Formula, Relation, RelationProblem } from '../representation/relation';
+import { relationProblem, type Condition, type Formula, type Relation, type RelationProblem } from '../representation/relation';
 import {
   assertOutcome, compareValues, finiteSet, normalizeSet, type Endpoint, type EquationOutcome, type PointValue, type RegionCell, type SolutionSet,
 } from '../representation/solution-set';
@@ -10,6 +10,8 @@ import { exactSign } from '../representation/real-order';
 import { instantiate } from '../parameters/specialize';
 import { cadProblem } from './atoms';
 import { decompose, sectorSample, type CadCell } from './decompose';
+import { locate } from './locate';
+import { hasQuantifier } from '../representation/formula';
 import { fiberRoots } from './fiber';
 import { fromMPoly } from './recursive';
 import { fractionOf } from '../parameters/mpoly';
@@ -65,18 +67,22 @@ export function rowsHold(problem: RelationProblem, point: readonly ExactValue[])
 }
 
 /** A cell end at a point of the outer variables, exactly. */
-function endAt(problem: RelationProblem, e: Endpoint, outer: readonly ExactValue[]): Endpoint {
+/**
+ * A cell end (or point coordinate) at a point: `names` is the order of the point's coordinates, `outer` the values of
+ * the names before this one. Closed forms are evaluated by substitution, roots by the decomposition's fibres.
+ */
+function endAt(problem: RelationProblem, e: Endpoint, outer: readonly ExactValue[], names: readonly string[] = problem.targets): Endpoint {
   if (e.kind === 'infinity' || e.kind === 'rational' || e.kind === 'algebraic') return e;
   const store = problem.store;
   if (e.kind === 'root') {
     // The index-th root of the cell's polynomial at the outer point, by the decomposition's fibres (norms by resultants).
-    const k = problem.targets.indexOf(e.variable) + 1, f = fractionOf(store, e.poly, problem.targets.slice(0, k));
+    const k = names.indexOf(e.variable) + 1, f = fractionOf(store, e.poly, names.slice(0, k));
     if (k !== outer.length + 1 || !f) return fail('a cell end is not a root in its cell\'s variable');
-    const roots = fiberRoots(store, fromMPoly(store.ctx, f.num, problem.targets.slice(0, k).map((_, i) => i + 1), k), k, outer);
+    const roots = fiberRoots(store, fromMPoly(store.ctx, f.num, names.slice(0, k).map((_, i) => i + 1), k), k, outer);
     return roots !== 'nullified' && e.index <= roots.length ? roots[e.index - 1] : fail('a cell end is not defined over its cell');
   }
-  const values = new Map(outer.map((v, i) => [problem.targets[i], valueExpression(store, v)] as const));
-  const set = instantiate(store, finiteSet([problem.targets[outer.length]], [[e as PointValue]]), values, 'real');
+  const values = new Map(outer.map((v, i) => [names[i], valueExpression(store, v)] as const));
+  const set = instantiate(store, finiteSet([names[outer.length]], [[e as PointValue]]), values, 'real');
   if (!set || set.kind !== 'finite' || set.points.length !== 1) return fail('a cell end is not defined over its cell');
   return set.points[0][0];
 }
@@ -87,17 +93,41 @@ function inside(store: ExpressionStore, lo: Endpoint, hi: Endpoint, loClosed: bo
   return (a < 0 || (a === 0 && loClosed)) && (b > 0 || (b === 0 && hiClosed));
 }
 
-/** Whether the claimed answer contains a point. */
-export function contains(problem: RelationProblem, set: SolutionSet, point: readonly ExactValue[]): boolean {
+/** Whether a parameter case's conditions hold at the parameters' values (exactly). */
+function conditionsHold(problem: RelationProblem, conditions: readonly Condition[], env: ReadonlyMap<string, ExprId>): boolean {
   const store = problem.store;
-  if (set.kind === 'finite') return set.points.some(p => p.every((v, i) => compareValues(store, v, point[i]) === 0));
-  if (set.kind !== 'cylindrical') return fail(`a decomposition answer is never ${set.kind}`);
-  let cells: readonly RegionCell[] | undefined = set.cells;
-  for (let d = 0; d < point.length; d++) {
+  return conditions.every(c => {
+    const s = signAt(store, 'other' in c ? store.sub(c.expr, c.other) : c.expr, env);
+    if (s === undefined) return false;
+    return c.kind === 'equal' ? s === 0 : c.kind === 'positive' ? s > 0 : c.kind === 'nonnegative' ? s >= 0 : c.kind === 'in-domain' ? true : s !== 0;
+  });
+}
+
+/**
+ * Whether the claimed answer contains a point whose coordinates follow `names` (the parameters, then the unknowns);
+ * `start` is the first coordinate the set describes. A case tree must have exactly one case holding there.
+ */
+export function contains(problem: RelationProblem, set: SolutionSet, point: readonly ExactValue[], names: readonly string[] = problem.targets, start = 0): boolean {
+  const store = problem.store;
+  if (set.kind === 'case-tree') {
+    const env = new Map(names.slice(0, problem.parameters.length).map((n, i) => [n, valueExpression(store, point[i])] as const));
+    const holding = set.cases.filter(c => conditionsHold(problem, c.conditions, env));
+    if (holding.length !== 1) return fail(holding.length ? 'cases overlap' : 'no case covers a parameter value');
+    return contains(problem, holding[0].set, point, names, problem.parameters.length);
+  }
+  if (set.kind === 'finite') {
+    return set.points.some(p => p.every((v, i) => {
+      const at = endAt(problem, v, point.slice(0, start + i), names);
+      return at.kind !== 'infinity' && compareValues(store, at, point[start + i]) === 0;
+    }));
+  }
+  if (set.kind !== 'cylindrical' && set.kind !== 'intervals') return fail(`a decomposition answer is never ${set.kind}`);
+  let cells: readonly RegionCell[] | undefined = set.kind === 'cylindrical' ? set.cells : set.intervals;
+  for (let d = start; d < point.length; d++) {
     store.ctx.tick();
     if (!cells) return true;
     const outer = point.slice(0, d), v = point[d];
-    const cell: RegionCell | undefined = cells.find(c => inside(store, endAt(problem, c.lo, outer), endAt(problem, c.hi, outer), c.loClosed, c.hiClosed, v));
+    const cell: RegionCell | undefined = cells.find(c => inside(store, endAt(problem, c.lo, outer, names), endAt(problem, c.hi, outer, names), c.loClosed, c.hiClosed, v));
     if (!cell) return false;
     cells = cell.children;
   }
@@ -124,28 +154,63 @@ function claimedSamples(problem: RelationProblem, set: SolutionSet): ExactValue[
       else out.push([...point, ...Array.from({ length: n - point.length }, (): ExactValue => ({ kind: 'rational', value: rational(ctx, 0n) }))]);
     }
   };
-  walk((set as Extract<SolutionSet, { kind: 'cylindrical' }>).cells, []);
+  walk(set.kind === 'intervals' ? set.intervals : (set as Extract<SolutionSet, { kind: 'cylindrical' }>).cells, []);
   return out;
 }
 
 function leaves(c: CadCell): CadCell[] { return c.children ? c.children.flatMap(leaves) : [c]; }
 
+/** The problem with its unknowns fixed at rational values: only quantified names remain (a decided statement). */
+function atRationalPoint(problem: RelationProblem, point: readonly ExactValue[]): RelationProblem {
+  const s = problem.store, env = new Map(problem.targets.map((t, i) => [t, valueExpression(s, point[i])] as const));
+  const sub = (e: ExprId) => s.substitute(e, env);
+  const formula = (f: Formula): Formula => {
+    if (f.kind === 'rel') return { kind: 'rel', rel: { ...f.rel, lhs: sub(f.rel.lhs), rhs: sub(f.rel.rhs) } };
+    if (f.kind === 'and' || f.kind === 'or') return { kind: f.kind, args: f.args.map(formula) };
+    return { ...f, body: formula(f.body) };
+  };
+  return relationProblem(s, {
+    domain: 'real', targets: [], relations: problem.relations.map(r => ({ op: r.op, lhs: sub(r.lhs), rhs: sub(r.rhs) })),
+    conditions: problem.conditions.map(c => ('other' in c ? { ...c, expr: sub(c.expr), other: sub(c.other) } : { ...c, expr: sub(c.expr) })),
+    formulas: problem.formulas.map(formula),
+  });
+}
+
 export function verifyCadOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
   assertOutcome(outcome);
   if (outcome.kind !== 'solved' && outcome.kind !== 'empty') return;
   if (outcome.proof.root !== problem.hash) fail('proof does not start from the problem');
-  const store = problem.store, ctx = store.ctx, n = problem.targets.length;
-  const claimed = outcome.kind === 'solved' ? normalizeSet(store, outcome.set, 'real') : finiteSet(problem.targets, []);
-  // 1. Each claimed cell holds at a sample of it.
-  for (const p of claimedSamples(problem, claimed)) if (!rowsHold(problem, p)) fail('a claimed cell does not satisfy the rows at its sample');
-  // 2. A decomposition in the reversed variable order agrees at every one of its cells.
-  const order = [...problem.targets].reverse(), p = cadProblem(problem, order);
+  const store = problem.store, ctx = store.ctx, n = problem.targets.length, quantified = problem.formulas.some(hasQuantifier);
+  const claimed = outcome.kind === 'solved' ? normalizeSet(store, outcome.set, 'real') : n ? finiteSet(problem.targets, []) : fail('a statement is true or false');
+  // Coordinates: the parameters, then the unknowns.
+  const names = [...problem.parameters, ...problem.targets];
+  // A decomposition in the reversed variable order (with quantifiers: lifted in full, every cell, no early truth).
+  const order = [...names].reverse(), p = cadProblem(problem, order);
   if (!p) return fail('the problem is not polynomial');
-  const zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
-  for (const leaf of leaves(decompose(store, p).root)) {
+  const second = decompose(store, p, { full: quantified });
+  if (claimed.kind === 'truth') {
+    if (n !== 0 || second.free !== 0 || claimed.value !== (second.root.truth === true)) fail('the statement\'s truth differs from a second decomposition');
+    return;
+  }
+  const reorder = (sample: readonly ExactValue[]) => names.map(t => sample[order.indexOf(t)]);
+  // 1. Each claimed cell holds at a sample of it: the rows themselves, exactly; quantified rows by deciding the
+  //    statement at a rational sample (a smaller decomposition), or by the second decomposition's cell there.
+  //    Answers with parameters are checked by step 2 alone (case trees: the cases disjoint and covering).
+  for (const pt of problem.parameters.length ? [] : claimedSamples(problem, claimed)) {
     ctx.tick();
-    const reversed = [...leaf.sample, ...Array.from({ length: n - leaf.level }, () => zero)];
-    const point = problem.targets.map(t => reversed[order.indexOf(t)]);
-    if (contains(problem, claimed, point) !== (leaf.truth === true)) fail('the answer differs from a decomposition in another variable order');
+    let holds: boolean;
+    if (!quantified) holds = rowsHold(problem, pt);
+    else if (pt.every(v => v.kind === 'rational')) {
+      const q = cadProblem(atRationalPoint(problem, pt), []);
+      holds = q ? decompose(store, q).root.truth === true : fail('a sample statement is not polynomial');
+    } else holds = locate(store, second, order.map(t => pt[problem.targets.indexOf(t)])).truth;
+    if (!holds) fail('a claimed cell does not satisfy the rows at its sample');
+  }
+  // 2. The second decomposition agrees at every one of its cells.
+  const zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
+  for (const leaf of leaves(second.root)) {
+    ctx.tick();
+    const point = reorder([...leaf.sample, ...Array.from({ length: second.free - leaf.level }, () => zero)]);
+    if (contains(problem, claimed, point, names, claimed.kind === 'case-tree' ? 0 : problem.parameters.length) !== (leaf.truth === true)) fail('the answer differs from a decomposition in another variable order');
   }
 }

@@ -12,7 +12,7 @@ import { ProofLogBuilder } from '../representation/transform';
  * its disjunctive form: each conjunction, together with the problem's plain rows, is an ordinary problem decided
  * by its own slice, and the answer is the union of their sets (normalized: intervals joined, points merged).
  * Nothing partial: any disjunct that is not decided (a refusal or a typed stop) is the whole problem's outcome.
- * Quantifiers go to cylindrical algebraic decomposition.
+ * Quantified rows go to cylindrical algebraic decomposition (cad/solve.ts) when they are real and polynomial.
  */
 type Decide = (p: RelationProblem) => EquationOutcome;
 type Verify = (p: RelationProblem, o: EquationOutcome) => void;
@@ -26,7 +26,7 @@ export function disjunctProblems(problem: RelationProblem): RelationProblem[] {
 
 export function decideFormulas(problem: RelationProblem, decide: Decide): EquationOutcome {
   if (problem.formulas.some(hasQuantifier)) {
-    return { kind: 'incomplete-implementation', reason: `${SEMIALGEBRAIC}: quantifiers (∀, ∃) are decided by the stage's second part` };
+    return { kind: 'incomplete-implementation', reason: `${SEMIALGEBRAIC}: quantifiers (∀, ∃) are decided over the reals for polynomial rows without parameters` };
   }
   const sets: SolutionSet[] = [];
   for (const sub of disjunctProblems(problem)) {

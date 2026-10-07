@@ -24,7 +24,8 @@ function setup(rows: string[]) {
 it('adds a Logic keyboard page whose ∧ ∨ ¬ keys carry tooltips, after the Equation pages', () => {
   const layouts = newEquationKeyboardLayouts(), logic = layouts[layouts.length - 1] as { rows: { label?: string; tooltip?: string }[][] };
   expect(layouts.length).toBeGreaterThan(1);
-  expect(logic.rows[0].map(k => k.label)).toEqual(['∧', '∨', '¬']);
+  expect(logic.rows[0].map(k => k.label)).toEqual(['∧', '∨', '¬', '∀', '∃']);
+  expect(symbolTooltip('\\forall')).toMatch(/for all/);
   expect(logic.rows[0].every(k => k.tooltip && k.tooltip.length > 10)).toBe(true);
   expect(symbolTooltip('\\vee')).toBe(LOGIC_SYMBOLS[1].tooltip);
   expect(symbolTooltip('x')).toBeUndefined();

@@ -36,6 +36,9 @@ group('New Equation rows', () => {
     expect(autoTargets(['x^2+y^2=5', 'xy=2', 'x\\ne-1'].map(parseRow))).toEqual(['x', 'y']);
     expect(autoTargets(['a+b=1'].map(parseRow))).toEqual(['a']);
     expect(autoTargets(['x>1'].map(parseRow))).toEqual(['x']);
+    // No equation: every free name (a region in x and y; x and a for x² < a).
+    expect(autoTargets(['x^2+y^2<1', 'y>x'].map(parseRow))).toEqual(['x', 'y']);
+    expect(autoTargets(['x^2<a'].map(parseRow))).toEqual(['x', 'a']);
   });
 
   it('checks before solving: inequalities over ℂ, stray assumptions, missing unknowns', () => {

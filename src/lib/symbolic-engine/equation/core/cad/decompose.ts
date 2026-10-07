@@ -32,7 +32,15 @@ export interface CadProblem {
   readonly formula: CadFormula;
   /** An atom (op 'eq') that is a conjunct of the whole formula: an equational constraint candidate. */
   readonly constraints?: readonly number[];
+  /**
+   * Quantifier elimination (PR B): the last quantifiers.length levels are bound, outermost first, ∀ or ∃ each; the
+   * first n − quantifiers.length levels are free. The formula is the prenex matrix.
+   */
+  readonly quantifiers?: readonly ('forall' | 'exists')[];
 }
+
+/** Options: `full` lifts every cell to full dimension, without early truth or an equational constraint (a second derivation). */
+export interface DecomposeOptions { readonly full?: boolean }
 
 /** A section's defining polynomial (level k) and the index (1-based) of its root among the fibre's distinct real roots. */
 export interface Section {
@@ -51,7 +59,8 @@ export interface CadCell {
   /** The stack over the cell, ascending in x_{level+1}: sector, section, sector, …, sector. */
   readonly children?: readonly CadCell[];
 }
-export interface Decomposition { readonly n: number; readonly projection: Projection; readonly root: CadCell }
+/** `free`: the number of free levels; cells of that level carry the truth of the quantified formula. */
+export interface Decomposition { readonly n: number; readonly free: number; readonly projection: Projection; readonly root: CadCell }
 
 class ConstraintNullified extends Error {}
 
@@ -95,6 +104,8 @@ interface Lifter {
   readonly problem: CadProblem;
   readonly projection: Projection;
   readonly levels: readonly { level: number; poly: RPoly }[];
+  readonly free: number;
+  readonly full: boolean;
 }
 
 /** The signs of the atoms of exactly this level at a sample (others copied from the parent). */
@@ -105,7 +116,7 @@ function signsAt(l: Lifter, level: number, sample: readonly ExactValue[], parent
 function liftCell(l: Lifter, level: number, sample: readonly ExactValue[], sections: readonly Section[], signs: readonly (number | undefined)[]): CadCell {
   const ctx = l.store.ctx, { problem, projection } = l;
   ctx.tick();
-  const truth = evaluate(problem.formula, problem.atoms, signs);
+  const truth = l.full && level < problem.n ? undefined : evaluate(problem.formula, problem.atoms, signs);
   if (truth !== undefined) return Object.freeze({ level, sample, sections, truth });
   const k = level + 1;
   demand(k <= problem.n, 'verification-failed', 'a formula undecided at full dimension');
@@ -136,12 +147,21 @@ function liftCell(l: Lifter, level: number, sample: readonly ExactValue[], secti
     if (constrained) return Object.freeze({ level: k, sample: point, sections: [], truth: false });
     return liftCell(l, k, point, [], signsAt(l, k, point, signs));
   };
-  roots.forEach((r, i) => {
-    children.push(sector(roots[i - 1]?.value, r.value));
+  const section = (r: { value: ExactValue; sections: Section[] }) => {
     const point = [...sample, r.value];
-    children.push(liftCell(l, k, point, Object.freeze(r.sections), signsAt(l, k, point, signs)));
-  });
-  children.push(sector(roots[roots.length - 1]?.value, undefined));
+    return liftCell(l, k, point, Object.freeze(r.sections), signsAt(l, k, point, signs));
+  };
+  const lifts = [...roots.flatMap((r, i) => [() => sector(roots[i - 1]?.value, r.value), () => section(r)]), () => sector(roots[roots.length - 1]?.value, undefined)];
+  if (k > l.free) {
+    // A bound level: the cell's truth is ∀ (every cell of the stack) or ∃ (some cell), stopping once it is decided.
+    const q = (problem.quantifiers as readonly ('forall' | 'exists')[])[k - l.free - 1], stop = q === 'exists';
+    let value = !stop;
+    for (const lift of lifts) {
+      if ((lift().truth as boolean) === stop) { value = stop; if (!l.full) break; }
+    }
+    return Object.freeze({ level, sample, sections, truth: value });
+  }
+  for (const lift of lifts) children.push(lift());
   return Object.freeze({ level, sample, sections, children: Object.freeze(children) });
 }
 
@@ -158,19 +178,23 @@ function chooseConstraint(ctx: ExecutionContext, problem: CadProblem): RPoly | u
   return best;
 }
 
-/** The cylindrical decomposition of ℝⁿ for a quantifier-free formula, partial where the truth is fixed early. */
-export function decompose(store: ExpressionStore, problem: CadProblem): Decomposition {
-  const ctx = store.ctx, n = problem.n;
-  demand(n >= 1, 'invalid-input', 'a decomposition needs a variable');
+/**
+ * The cylindrical decomposition of ℝⁿ, partial where the truth is fixed early. With quantifiers, the cells of the free
+ * levels carry the quantified formula's truth (quantifier elimination: bound levels are decided over their stacks).
+ */
+export function decompose(store: ExpressionStore, problem: CadProblem, options: DecomposeOptions = {}): Decomposition {
+  const ctx = store.ctx, n = problem.n, free = n - (problem.quantifiers?.length ?? 0), full = options.full === true;
+  demand(n >= 1 && free >= 0, 'invalid-input', 'a decomposition needs a variable');
   const levels = problem.atoms.map(a => trueLevel(a.poly, n));
   const inputs = problem.atoms.map(a => ({ poly: a.poly, level: n }));
   const attempt = (constraint: RPoly | undefined): Decomposition => {
     const projection = project(ctx, inputs, n, constraint);
-    const l: Lifter = { store, problem, projection, levels };
+    const l: Lifter = { store, problem, projection, levels, free, full };
     const signs = levels.map(t => (t.level === 0 ? Number(t.poly as bigint > 0n) - Number(t.poly as bigint < 0n) : undefined));
-    return Object.freeze({ n, projection, root: liftCell(l, 0, [], [], signs) });
+    return Object.freeze({ n, free, projection, root: liftCell(l, 0, [], [], signs) });
   };
-  const constraint = n >= 2 ? chooseConstraint(ctx, problem) : undefined;
+  // The equational-constraint reduction is for quantifier-free problems (a bound level needs every cell's truth).
+  const constraint = n >= 2 && free === n && !full ? chooseConstraint(ctx, problem) : undefined;
   if (!constraint) return attempt(undefined);
   try {
     return attempt(constraint);
