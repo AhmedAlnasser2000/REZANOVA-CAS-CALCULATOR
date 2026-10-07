@@ -559,8 +559,8 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.graph-trace-callout')).toBeHidden();
     await page.getByRole('button', { name: 'Expand piecewise branches' }).click();
-    await expect(page.getByText('Piecewise branches', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: '+ Add branch' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Piecewise branches' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '+ Branch' })).toBeVisible();
     await expect(page.locator('.graph-status')).toContainText('Ready');
     await page.screenshot({
       path: testInfo.outputPath('graphing-piecewise-1440x940.png'),
@@ -693,7 +693,8 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await setField(values.nth(1), '-x');
     await setField(conditions.nth(1), 'x>0');
     await expect(page.getByTestId('graph-piecewise-authoring-draft')).toHaveCount(0);
-    await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
+    // The gap note says where nothing is drawn (GRAPHING-PIECEWISE2).
+    await expect(page.getByTestId('graph-piecewise-gap-note')).toContainText('Nothing is drawn for x = 0.');
     await expect(page.getByTestId('graph-scene-paths').locator('path')).toHaveCount(2);
     // Both branches exclude x = 0 and meet there: one open circle marks the missing point.
     await expect(page.getByTestId('graph-scene-points').locator('circle')).toHaveCount(1);
@@ -710,7 +711,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
     await expand.click();
-    await expect(page.getByText('Piecewise branches', { exact: true })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Piecewise branches' })).toBeVisible();
     await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'expanded');
     await expect.poll(() => piecewiseSummary.locator('math-field').evaluate(
       (element) => Boolean((element as HTMLElement & { readOnly?: boolean }).readOnly),
@@ -720,7 +721,7 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
       fullPage: true,
     });
     await page.getByRole('button', { name: 'Collapse piecewise branches' }).click();
-    await expect(page.getByText('Piecewise branches', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'Piecewise branches' })).toHaveCount(0);
     await expect(piecewiseRow).toHaveAttribute('data-piecewise-state', 'summary');
   });
 
@@ -752,7 +753,8 @@ test.describe('GRAPHING-MINIMUM-VISIBLE1', () => {
     await expect(page.getByRole('button', { name: 'Expand piecewise branches' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Hide graph' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Delete expression' })).toBeVisible();
-    await expect(page.getByText('Piecewise branches leave gaps in the current view; gaps are allowed.')).toBeVisible();
+    // The gap note says where nothing is drawn (GRAPHING-PIECEWISE2).
+    await expect(page.getByTestId('graph-piecewise-gap-note')).toContainText('Nothing is drawn for x = 0.');
     expect((await row.boundingBox())?.height).toBeLessThan(190);
     await page.screenshot({
       path: testInfo.outputPath('graphing-move21-piecewise-reference-2020x1077.png'),

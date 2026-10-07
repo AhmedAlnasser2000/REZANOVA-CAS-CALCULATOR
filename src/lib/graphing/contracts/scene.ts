@@ -420,6 +420,12 @@ function validPiecewiseConditionEvidence(input: unknown) {
     && Array.isArray(evidence.boundaries)
     && evidence.uncoveredGaps.every((gap) => Number.isFinite(gap.minimum)
       && Number.isFinite(gap.maximum) && gap.minimum <= gap.maximum)
+    && (evidence.exactValues === undefined || (Array.isArray(evidence.exactValues)
+      && evidence.exactValues.every((entry) => Number.isFinite(entry.value) && typeof entry.label === 'string' && entry.label.length <= 80)))
+    && (evidence.drawnIntervals === undefined || (Array.isArray(evidence.drawnIntervals)
+      && evidence.drawnIntervals.every((entry) => typeof entry.branchId === 'string' && Array.isArray(entry.intervals)
+        && entry.intervals.every((interval) => Number.isFinite(interval.minimum) && Number.isFinite(interval.maximum)
+          && interval.minimum <= interval.maximum))))
     && evidence.boundaries.every((boundary) => Number.isFinite(boundary.value)
       && Array.isArray(boundary.includedBranchIds) && Array.isArray(boundary.excludedBranchIds));
 }

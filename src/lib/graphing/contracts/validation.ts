@@ -290,6 +290,7 @@ const itemSchema = z.discriminatedUnion('kind', [
     version: z.literal(1), kind: z.literal('piecewise'), itemId: idSchema,
     source: sourceSchema, piecewise: piecewiseSchema, visible: z.boolean(),
     presentation: presentationSchema,
+    branchPresentation: z.record(idSchema, presentationV2Schema).optional(),
   }),
   z.strictObject({
     version: z.literal(1), kind: z.literal('parameter'), itemId: idSchema,

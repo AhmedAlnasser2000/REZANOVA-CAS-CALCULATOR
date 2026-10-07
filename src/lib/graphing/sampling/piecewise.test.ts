@@ -19,8 +19,8 @@ function sample(latex: string, viewport = { xMin: -4, xMax: 4, yMin: -4, yMax: 4
   });
 }
 
-const markers = (result: ReturnType<typeof sample>, marker: 'open' | 'filled') => [...(result.endpointBatches
-  .find((batch) => batch.marker === marker)?.coordinates ?? [])].map((value) => Number(value.toFixed(12)) + 0);
+const markers = (result: ReturnType<typeof sample>, marker: 'open' | 'filled') => result.endpointBatches
+  .filter((batch) => batch.marker === marker).flatMap((batch) => [...batch.coordinates]).map((value) => Number(value.toFixed(12)) + 0);
 
 describe('Piecewise sampling', () => {
   it('puts endpoint circles exactly on the branches and ends each path exactly there', () => {

@@ -12,7 +12,11 @@ export type PtxFinderOptions = {
   onEvaluation?: () => void;
 };
 
-export type PtxFoundRoot = { x: number; level: PtxLevel; errorBound: number; residual: number; label: string | null };
+export type PtxFoundRoot = {
+  x: number; level: PtxLevel; errorBound: number; residual: number; label: string | null;
+  /** Closed form of an exact root (LaTeX and MathJSON). */
+  form?: { latex: string; mathJson: number | unknown[] };
+};
 export type PtxFoundExtremum = { x: number; y: number; kind: 'minimum' | 'maximum'; level: PtxLevel; errorBound: number };
 
 const GOLDEN = (Math.sqrt(5) - 1) / 2;
@@ -61,6 +65,7 @@ export function ptxRealRoots(f: PtxRealFunction, minimum: number, maximum: numbe
       .sort((first, second) => first.value - second.value).map((root) => ({
       x: root.value, level: root.exact ? 'exact-proved' as const : 'numeric-validated' as const,
       errorBound: root.exact ? 0 : 1e-12 * (1 + Math.abs(root.value)), residual: 0, label: root.label,
+      ...(root.exact && root.form ? { form: root.form } : {}),
     }));
   }
   const run = sampler(f, options);
@@ -69,7 +74,10 @@ export function ptxRealRoots(f: PtxRealFunction, minimum: number, maximum: numbe
   for (let index = 0; index < xs.length; index += 1) {
     if (options.isCancelled?.()) break;
     const value = values[index];
-    if (value === 0) roots.push({ x: xs[index]!, level: 'numeric-validated', errorBound: 0, residual: 0, label: null });
+    // A zero next to another zero sample is part of a stretch where f is 0 throughout (ptxRealZeroStretches), not a root.
+    if (value === 0 && values[index - 1] !== 0 && values[index + 1] !== 0) {
+      roots.push({ x: xs[index]!, level: 'numeric-validated', errorBound: 0, residual: 0, label: null });
+    }
     const next = values[index + 1];
     if (value !== undefined && next !== undefined && value * next < 0) {
       let a = xs[index]!; let b = xs[index + 1]!; let fa = value; let fb = next;
@@ -139,19 +147,28 @@ export function ptxRealExtrema(f: PtxRealFunction, minimum: number, maximum: num
   const found: PtxFoundExtremum[] = [];
   for (let index = 1; index + 1 < xs.length; index += 1) {
     if (options.isCancelled?.()) break;
-    const previous = values[index - 1]; const value = values[index]; const next = values[index + 1];
-    if (previous === undefined || value === undefined || next === undefined) continue;
-    const kind = value < previous && value <= next ? 'minimum' : value > previous && value >= next ? 'maximum' : null;
+    const previous = values[index - 1]; const value = values[index];
+    if (previous === undefined || value === undefined) continue;
+    // Equal samples: two can straddle a true extremum between them; three or more are a flat stretch (a constant
+    // piece, or the axis stretch of 0 otherwise), where no point is a strict extremum — not even its corner.
+    let last = index;
+    while (last + 1 < xs.length && values[last + 1] === value) last += 1;
+    const next = values[last + 1];
+    if (last - index >= 2) { index = last - 1; continue; }
+    if (next === undefined) continue;
+    const kind = value < previous && value < next ? 'minimum' : value > previous && value > next ? 'maximum' : null;
     if (!kind) continue;
     const sign = kind === 'minimum' ? 1 : -1;
-    const x = goldenMinimum((t) => { const v = run(t); return v === undefined ? undefined : sign * v; }, xs[index - 1]!, xs[index + 1]!);
+    const x = goldenMinimum((t) => { const v = run(t); return v === undefined ? undefined : sign * v; }, xs[index - 1]!, xs[last + 1]!);
     const y = x === null ? undefined : run(x);
     if (x === null || y === undefined) continue;
+    // Between two equal samples the extremum must really be beyond them; otherwise it is a short flat piece.
+    if (last > index && sign * y >= sign * value) continue;
     // A pole between samples looks like a maximum of huge height; a real extremum stays near its neighbours.
     if (Math.abs(y) > 1e3 * Math.max(1, Math.abs(previous), Math.abs(next))) continue;
     if (isJumpAt(run, x, y, (maximum - minimum) * 1e-6)) continue;
     // With an exact derivative, x is where f' changes sign: bisected to the last bit (PTX-ENGINE1).
-    const exact = f.derivative ? bisectSlope(f.derivative, xs[index - 1]!, xs[index + 1]!, kind) : null;
+    const exact = f.derivative ? bisectSlope(f.derivative, xs[index - 1]!, xs[last + 1]!, kind) : null;
     if (exact) {
       const atExact = run(exact.x);
       if (atExact !== undefined) { found.push({ x: exact.x, y: atExact, kind, level: 'numeric-validated', errorBound: exact.errorBound }); continue; }
@@ -168,12 +185,61 @@ export function ptxRealExtrema(f: PtxRealFunction, minimum: number, maximum: num
 }
 
 /** Where y = f(x) and y = g(x) meet, including tangential meetings. */
+/** f − g, read as exactly 0 where the two agree to rounding (so curves that coincide are not a cloud of crossings). */
+function ptxDifferenceOf(f: PtxRealFunction, g: PtxRealFunction): PtxRealFunction {
+  return (x) => {
+    const a = f(x); const b = g(x);
+    if (a === undefined || b === undefined) return undefined;
+    const difference = a - b;
+    return Math.abs(difference) <= 4 * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b)) ? 0 : difference;
+  };
+}
+
+export type PtxZeroStretch = { minimum: number; maximum: number; minimumInclusive: boolean; maximumInclusive: boolean };
+
+/**
+ * Stretches of [minimum, maximum] on which f is 0 throughout (a piecewise
+ * branch 0 "otherwise", |x| − x for x ≥ 0, ⌊x⌋ on [0, 1)): runs of samples at
+ * exactly 0, each end narrowed by bisection to where f stops being 0. Their
+ * points are infinitely many roots, so they are reported as stretches, never
+ * as one root per sample.
+ */
+export function ptxRealZeroStretches(f: PtxRealFunction, minimum: number, maximum: number, options: PtxFinderOptions = {}): PtxZeroStretch[] {
+  const run = sampler(f, options);
+  const { xs, values } = grid(run, minimum, maximum, options.steps ?? 400);
+  const isZero = (x: number) => run(x) === 0;
+  // The edge between a zero sample and its non-zero neighbour, to the last bits, then to 12 digits (⌊x⌋ steps at 1, not 1 − ε).
+  const edge = (inside: number, outside: number) => {
+    let a = inside; let b = outside;
+    for (let pass = 0; pass < 80 && Math.abs(b - a) > 2 * Number.EPSILON * (1 + Math.abs(a)); pass += 1) {
+      const middle = (a + b) / 2;
+      if (isZero(middle)) a = middle; else b = middle;
+    }
+    const at = Math.abs(a) < 1e-12 * (maximum - minimum) ? 0 : Number(a.toPrecision(12));
+    return isZero(at) ? { at, inclusive: true } : { at: Number(b.toPrecision(12)), inclusive: false };
+  };
+  const stretches: PtxZeroStretch[] = [];
+  for (let start = 0; start < xs.length; start += 1) {
+    if (options.isCancelled?.()) break;
+    if (values[start] !== 0 || values[start + 1] !== 0) continue;
+    let end = start + 1;
+    while (end + 1 < xs.length && values[end + 1] === 0) end += 1;
+    const low = start === 0 ? { at: minimum, inclusive: true } : edge(xs[start]!, xs[start - 1]!);
+    const high = end === xs.length - 1 ? { at: maximum, inclusive: true } : edge(xs[end]!, xs[end + 1]!);
+    stretches.push({ minimum: low.at, maximum: high.at, minimumInclusive: low.inclusive, maximumInclusive: high.inclusive });
+    start = end;
+  }
+  return stretches;
+}
+
+/** Stretches where two curves y = f(x) and y = g(x) lie on top of each other. */
+export function ptxRealCoincidences(f: PtxRealFunction, g: PtxRealFunction, minimum: number, maximum: number, options: PtxFinderOptions = {}) {
+  return ptxRealZeroStretches(ptxDifferenceOf(f, g), minimum, maximum, options);
+}
+
 export function ptxRealIntersections(f: PtxRealFunction, g: PtxRealFunction, minimum: number, maximum: number,
   options: PtxFinderOptions = {}, polynomialRoots: PtxPolynomialRoot[] | null = null) {
-  const difference: PtxRealFunction = (x) => {
-    const a = f(x); const b = g(x);
-    return a === undefined || b === undefined ? undefined : a - b;
-  };
+  const difference = ptxDifferenceOf(f, g);
   return ptxRealRoots(difference, minimum, maximum, options, polynomialRoots).flatMap((root) => {
     const y = f(root.x);
     return y === undefined ? [] : [{ ...root, y }];

@@ -55,6 +55,16 @@ function limitInlineShortcuts() {
   };
 }
 
+/** Graphing: `cases` (or `piecewise`) starts a two-row piecewise brace; `otherwise` writes the otherwise condition. */
+function graphingInlineShortcuts() {
+  const cases = '\\begin{cases}#? & #? \\\\ #? & #?\\end{cases}';
+  return {
+    cases,
+    piecewise: cases,
+    otherwise: '\\text{otherwise}',
+  };
+}
+
 export function buildInlineShortcutOverrides(
   existing: InlineShortcutDefinitions | undefined,
   context?: InlineShortcutContext,
@@ -84,6 +94,7 @@ export function buildInlineShortcutOverrides(
     sqrt: '\\sqrt{#?}',
     abs: '\\left|#?\\right|',
     pi: '\\pi',
+    ...(context?.profile === 'graphing' ? graphingInlineShortcuts() : {}),
     ...(limitContext ? limitInlineShortcuts() : {}),
     ...(isDerivativeShortcutContext(context) ? derivativeInlineShortcuts() : {}),
   };

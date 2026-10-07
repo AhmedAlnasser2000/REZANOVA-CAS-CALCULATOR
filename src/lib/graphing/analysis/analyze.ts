@@ -20,8 +20,8 @@ import type {
 } from '../contracts';
 import { graphComplexBranchGeometry } from '../sampling/complex-branch-geometry';
 import { solveGraphComplexRoots } from '../sampling/complex-roots';
-import { buildGraphAnalysisCanonicalResult, graphAnalysisExactValue } from './result-document';
-import { defaultPtxSolverPort, ptxCountZerosAndPoles, ptxProveComplexZero, ptxReciprocalExpression, ptxAsymptotes, ptxCurveIntersections, ptxDifference, ptxPlaneIntersections, ptxProveRealExtremum, ptxProveRealZero, ptxRealDiscontinuities, ptxRealExtrema, ptxRealIntersections, ptxRealRoots, type PtxCurve } from '../ptx';
+import { buildGraphAnalysisCanonicalResult, graphAnalysisExactForm, graphAnalysisExactValue, graphStretchEvidence } from './result-document';
+import { defaultPtxSolverPort, ptxCountZerosAndPoles, ptxProveComplexZero, ptxReciprocalExpression, ptxAsymptotes, ptxCurveCoincidence, ptxCurveIntersections, ptxDifference, ptxOnSharedStretch, ptxPlaneIntersections, ptxProveRealExtremum, ptxProveRealZero, ptxRealDiscontinuities, ptxRealCoincidences, ptxRealExtrema, ptxRealIntersections, ptxRealRoots, ptxRealZeroStretches, type PtxCurve } from '../ptx';
 import { analyzeGraphCurve } from './curve-analysis';
 import type { PtxPlaneFunction } from '../ptx';
 import { analyzeGraphPiecewise } from './piecewise-analysis';
@@ -241,11 +241,21 @@ function polynomialRoots([c, b, a]: Polynomial) {
   return [(-b - root) / (2 * a), (-b + root) / (2 * a)];
 }
 
+/** A shared part of two curves: its points (rounded, at most 160), no coordinates, so never a dot or a trace snap. */
+function sharedEvidence(coincidence: { points: Array<{ x: number; y: number }> }): Partial<GraphAnalysisEvidenceV1> {
+  const stride = Math.max(1, Math.ceil(coincidence.points.length / 160));
+  const round = (value: number) => Number(value.toPrecision(10));
+  return {
+    detail: { shared: coincidence.points.filter((_, index) => index % stride === 0).map((point) => ({ x: round(point.x), y: round(point.y) })) },
+    basis: { source: 'numeric-validator', validator: 'the curves agree at every sampled point of the shared part' },
+  };
+}
+
 function approximate(value: number, errorBound?: number): GraphFeatureValueV1 {
   return { kind: 'approximate', value, ...(errorBound === undefined ? {} : { errorBound }) };
 }
-function exact(value: number): GraphFeatureValueV1 {
-  return { kind: 'exact', value: graphAnalysisExactValue(value) };
+function exact(value: number, form?: { latex: string; mathJson: unknown }): GraphFeatureValueV1 {
+  return { kind: 'exact', value: form ? graphAnalysisExactForm(value, form) : graphAnalysisExactValue(value) };
 }
 
 function evidence(
@@ -513,7 +523,7 @@ export async function runGraphAnalysisRequest(
         const proof = found.level !== 'exact-proved' && provable ? ptxProveRealZero(provable, found.x, found.errorBound) : null;
         const root = proof ? { ...found, x: (proof.lo + proof.hi) / 2, errorBound: (proof.hi - proof.lo) / 2 + Number.EPSILON, level: 'interval-proved' as const } : found;
         const proved = root.level === 'exact-proved';
-        const x = proved ? exact(root.x) : approximate(root.x, root.errorBound);
+        const x = proved ? exact(root.x, root.form) : approximate(root.x, root.errorBound);
         for (const feature of ['root', 'x-intercept'] as const) if (requestedHere.has(feature)) {
           findings.push(evidence(request, feature, [snapshot.itemId], root.level, serial++, {
             coordinates: { x, y: proved ? exact(0) : approximate(0, root.residual || 1e-9) },
@@ -523,6 +533,13 @@ export async function runGraphAnalysisRequest(
               : { source: 'numeric-validator', validator: root.level === 'interval-proved' ? (proof?.unique ? 'Krawczyk test: exactly one root in the bound' : 'guaranteed sign change on a continuous interval')
                 : root.level === 'numeric-validated' ? 'bracketed bisection' : 'touching root: minimum of |f| at zero', residualBound: Math.max(root.residual, 1e-12) },
           }));
+        }
+      }
+      // Where the curve lies on the axis: one finding per stretch, not one root per sample.
+      if (requestedHere.has('root')) {
+        for (const stretch of ptxRealZeroStretches(run, window.xMin, window.xMax, finder)) {
+          findings.push(evidence(request, 'root', [snapshot.itemId], 'numeric-validated', serial++,
+            graphStretchEvidence(stretch, window, 'zero at every sample of the stretch; its ends located by bisection')));
         }
       }
     }
@@ -611,6 +628,11 @@ export async function runGraphAnalysisRequest(
             : { source: 'numeric-validator', validator: 'bracketed or touching root of the difference', residualBound: Math.max(point.residual, 1e-12) },
         }));
       }
+      // Where the two curves lie on top of each other: one finding per stretch.
+      for (const stretch of ptxRealCoincidences(a.run, b.run, window.xMin, window.xMax, finder)) {
+        findings.push(evidence(request, 'intersection', [a.item.itemId, b.item.itemId], 'numeric-validated', serial++,
+          graphStretchEvidence(stretch, window, 'the curves agree at every sample of the stretch; its ends located by bisection')));
+      }
     }
     // Any other pair of real curves: each reduced to the smallest problem (PTX3).
     const everyCurve = [
@@ -620,7 +642,10 @@ export async function runGraphAnalysisRequest(
     for (let first = 0; first < everyCurve.length; first += 1) for (let second = first + 1; second < everyCurve.length; second += 1) {
       const a = everyCurve[first]!; const b = everyCurve[second]!;
       if ((a.graph && b.graph) || a.itemId === b.itemId || unfocusedPair(a.itemId, b.itemId) || control.isCancelled?.()) continue;
-      for (const point of ptxCurveIntersections(a.curve, b.curve, window, finder)) {
+      // Where the two lie on top of each other: one finding for the shared part, and no crossings inside it.
+      const coincidence = ptxCurveCoincidence(a.curve, b.curve, window, finder);
+      if (coincidence) findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], 'numeric-validated', serial++, sharedEvidence(coincidence)));
+      for (const point of ptxCurveIntersections(a.curve, b.curve, window, finder, coincidence)) {
         findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
           coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },
           basis: { source: 'numeric-validator', validator: 'where the two curves meet: root along one curve of the other\'s equation, or Newton in the plane' },
@@ -631,7 +656,10 @@ export async function runGraphAnalysisRequest(
     for (let first = 0; first < locusItems.length; first += 1) for (let second = first + 1; second < locusItems.length; second += 1) {
       const a = locusItems[first]!; const b = locusItems[second]!;
       if (unfocusedPair(a.itemId, b.itemId)) continue;
+      const coincidence = ptxCurveCoincidence({ kind: 'implicit', F: a.curve }, { kind: 'implicit', F: b.curve }, window, finder);
+      if (coincidence) findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], 'numeric-validated', serial++, sharedEvidence(coincidence)));
       for (const point of ptxPlaneIntersections(a.curve, b.curve, window, ptx)) {
+        if (ptxOnSharedStretch(point, coincidence, window)) continue;
         findings.push(evidence(request, 'intersection', [a.itemId, b.itemId], point.level, serial++, {
           coordinates: { x: approximate(point.x, point.errorBound), y: approximate(point.y, point.errorBound) },
           basis: { source: 'numeric-validator', validator: 'common zero of both loci, seeded Newton in the plane', residualBound: 1e-9 },

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   buildGraphAnalyzeInputRevisionId,
   GraphAnalysisApplicationHost,
+  graphExactMathJsonNumber,
   runGraphAnalyzeWithOoe,
   type GraphAnalysisEvidenceV1,
   type GraphFeatureValueV1,
@@ -10,6 +11,9 @@ import {
 import type { WorkspaceInstanceRuntimeContext } from '../../../types/calculator/workspace-instance-types';
 import { classifiedGraphItems, graphParameterEnvironment } from '../graph-controller-support';
 import type { GraphWorkspaceSessionStateV7 } from '../graph-workspace-session';
+import { ptxStretchesFromEvidence, type PtxStretch } from './ptx-stretch-layer';
+
+const NO_STRETCHES: PtxStretch[] = [];
 
 /** A point of interest drawn as a dot: a root, extremum, intersection or y-intercept of the selected item. */
 export type PtxDot = {
@@ -52,7 +56,8 @@ const pointsHost = new GraphAnalysisApplicationHost();
 function numberOf(value: GraphFeatureValueV1 | undefined) {
   if (!value) return null;
   if (value.kind === 'approximate') return { value: value.value, errorBound: value.errorBound ?? 0 };
-  return typeof value.value.mathJson === 'number' ? { value: value.value.mathJson, errorBound: 0 } : null;
+  const exact = graphExactMathJsonNumber(value.value.mathJson);
+  return exact === undefined ? null : { value: exact, errorBound: 0 };
 }
 
 /** Evidence to dots: only the selected item's findings with both coordinates and a usable level. */
@@ -106,6 +111,7 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
 }) {
   const [dots, setDots] = useState<PtxDot[]>([]);
   const [asymptotes, setAsymptotes] = useState<PtxAsymptoteLine[]>([]);
+  const [stretches, setStretches] = useState<PtxStretch[]>([]);
   const sessionRef = useRef(session);
   const contextRef = useRef(workspaceContext);
   const sequence = useRef(0);
@@ -130,7 +136,7 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
         return mode === 'always' || (mode === 'auto' && item.itemId === selectedItemId) ? [item.itemId] : [];
       }));
       const selectable = selected && (selected.kind === 'relation' || selected.kind === 'piecewise');
-      if (!selectable && showing.size === 0) { if (live) { setDots([]); setAsymptotes([]); } return; }
+      if (!selectable && showing.size === 0) { if (live) { setDots([]); setStretches([]); setAsymptotes([]); } return; }
       const plane = selected?.kind === 'relation' && (selected.relation.kind === 'complex-locus' || selected.relation.kind === 'complex-mapping'
         || selected.relation.kind === 'complex-roots') ? 'complex' : 'real';
       const request = {
@@ -157,12 +163,13 @@ export function usePtxPointsOfInterest({ session, workspaceContext }: {
       }).then((envelope) => {
         if (!live || envelope.ooe.commitAssessment.commitDecision !== 'committed') return;
         setDots(selectable && selectedItemId ? ptxDotsFromEvidence(envelope.payload.evidence, selectedItemId, plane) : []);
+        setStretches(selectable && plane === 'real' ? ptxStretchesFromEvidence(envelope.payload.evidence, selectedItemId) : []);
         setAsymptotes(ptxAsymptotesFromEvidence(envelope.payload.evidence, showing));
-      }).catch(() => { if (live) { setDots([]); setAsymptotes([]); } });
+      }).catch(() => { if (live) { setDots([]); setStretches([]); setAsymptotes([]); } });
     }, 260);
     return () => { live = false; window.clearTimeout(timer); pointsHost.cancelActive('Points of interest input changed.'); };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- showingKey carries the presentation modes.
   }, [selectedItemId, session.document.mathematicsRevision, session.surface.parameterRevision,
     session.surface.viewportRevision, showingKey, workspaceContext.workspaceInstanceId]);
-  return { dots: selectedItemId ? dots : [], asymptotes };
+  return { dots: selectedItemId ? dots : [], stretches: selectedItemId ? stretches : NO_STRETCHES, asymptotes };
 }

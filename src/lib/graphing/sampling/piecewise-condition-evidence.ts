@@ -105,6 +105,15 @@ export function buildGraphPiecewiseConditionPartition(input: {
       branchApplicability: solved.map((branch) => ({ branchId: branch.branchId, status: applicability(branch) })),
       overlapBranchPairs,
       uncoveredGaps: otherwiseIntervals.map((interval) => ({ ...interval })),
+      ...(() => {
+        const exact = new Map(solved.flatMap((branch) => branch.exactValues ?? [])
+          .filter((entry) => entry.value > input.minimum && entry.value < input.maximum).map((entry) => [entry.value, entry.label]));
+        return exact.size ? { exactValues: [...exact].map(([value, label]) => ({ value, label })) } : {};
+      })(),
+      drawnIntervals: solved.map((branch) => ({
+        branchId: branch.branchId,
+        intervals: (branchIntervals.get(branch.branchId) ?? []).map((interval) => ({ ...interval })),
+      })),
       boundaries: [...boundariesByValue.entries()].sort(([a], [b]) => a - b).map(([value, bucket]) => ({
         value, includedBranchIds: [...bucket.included].sort(), excludedBranchIds: [...bucket.excluded].sort(),
       })),

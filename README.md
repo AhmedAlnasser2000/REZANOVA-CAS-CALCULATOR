@@ -72,7 +72,7 @@ Graphing is a full workspace opened through **New Graph**: type relations in the
 - explicit `y = f(x)` and `x = g(y)`; implicit equalities such as `x² + y² = 9` or `sin(x − y) = 6x`
 - inequality regions (dashed edge when strict, solid when inclusive) and chained conditions such as `x < y ≤ 2`
 - parametric curves `(cos t, sin t)` and polar curves `r = 2cos 2θ`, with optional `{0 ≤ t ≤ π}` restrictions
-- piecewise functions, typed with `cases` or built branch by branch from **Add item**: the first matching branch is drawn, conditions accept `or` and `≠`, and jumps get open and filled end circles
+- piecewise functions, typed with `cases` or built in a brace editor laid out as the function is written (value, *if*, condition, an optional *otherwise*): each branch is drawn in its own colour (change any of them), branches are reordered by dragging since the first matching one is drawn, a strip shows where each branch applies and where nothing is drawn, conditions accept `or` and `≠`, and jumps get open and filled end circles
 - point sets, notes, and sliders created from any unknown symbol
 - real surfaces `z = f(x, y)` in an interactive 3D view (orbit, pan, zoom; Top/Front/Right/Iso; perspective or orthographic; fly-through)
 - complex mappings `f(z)` as continuous domain colouring or four synchronised Re / Im / |f| / arg panels; complex loci (`|z − 1| = 2`, `Arg z = π/4`, rays, discs) on an Argand plane; complex roots of polynomials; and an optional ℂ overlay that shows the real and imaginary parts of `y = f(x)` where it turns complex
@@ -89,13 +89,16 @@ Graphing is a full workspace opened through **New Graph**: type relations in the
 
 - Click to trace, move to sweep along the curve, or trace from the keyboard. Every readout carries a badge: **exact** (symbolic), **proved** (an interval-arithmetic Krawczyk proof with outward rounding), **verified**, or **numeric**.
 - The selected curve shows its points of interest as dots that the trace snaps to: roots, intercepts, extrema, turning points of parametric, polar and implicit curves, curve ends and origin passes, intersections between any two kinds of curve, and region corners.
+- Piecewise condition boundaries are found by interval arithmetic for any condition (not only polynomials), so close or touching boundaries are not missed, and are written exactly where they can be (`√2` rather than 1.414…).
 - Holes and jumps are drawn as open or filled circles; asymptotes — vertical, horizontal and oblique, including `tan`/`sec`/`cot` poles named as multiples of π — are drawn per curve with an Auto / Always / Off setting.
+- Where a curve lies on the x-axis over a whole stretch (or two curves lie on top of each other), that stretch is shown once as a labelled band ("Zero for x ≤ −2", "Same curve for x ≥ 0") instead of a root at every point, and tracing along it stays free.
 - Regions can be traced along their edge (inside or outside) or anywhere inside.
 - Complex traces read out exact `z(t)` positions; Analyze counts zeros and poles of a complex map exactly by the argument principle ("exactly 2 zeros and 1 pole") and proves their locations; double-double arithmetic keeps readouts accurate where ordinary floating point cancels, such as `(eˣ − 1)/x` near 0.
 
 **Analyze**
 
 - a floating Analyze panel lists roots, intercepts, extrema, intersections, domain features and asymptotes with the evidence behind each finding, and can recentre on or pin any of them
+- every piecewise boundary is reported as continuous, a jump (with its size), a hole or a vertical asymptote, with both one-sided limits
 - graph-local assumptions, principal branch and cut evidence, and bounded exact or validated complex zero/pole evidence with explicit non-completeness
 
 **The workspace**
@@ -104,6 +107,7 @@ Graphing is a full workspace opened through **New Graph**: type relations in the
 - menus close on an outside click, <kbd>Esc</kbd> or <kbd>Tab</kbd>, and a click on the graph that only closes a menu never also traces
 - four themes (Technical, Paper, Aurora, Luminous), accessible colours, per-curve colour and line style, equal axes (1:1), Cartesian or polar grids with an optional unit circle, undo and redo
 - the list width and view splits are remembered with each graph
+- an **Examples** gallery (curves and piecewise, implicit curves and regions, complex, 3D and sliders) loads an example into an empty graph, or adds it to yours or opens it in a new graph tab
 
 Still to come in the Graphing program: tracing on 3D surfaces, Riemann sheets and surfaces, export and presentation, durable graph projects, and "Open in Graph" from other workspaces.
 
@@ -178,9 +182,9 @@ Still to come in the Graphing program: tracing on 3D surfaces, Riemann sheets an
       <sub><b>Piecewise jumps.</b> At a jump, open and filled circles show which branch owns the point; tracing the open end reports the one-sided limit (<code>limit 25</code>).</sub>
     </td>
     <td width="50%">
-      <img src="docs/assets/screenshots/graphing-piecewise-branch-editor.png" alt="Piecewise branch editor listing branches and conditions with Add branch and Apply branch changes" />
+      <img src="docs/assets/screenshots/graphing-piecewise-brace-editor.png" alt="Piecewise brace editor with three branches in blue, green and purple, an otherwise row, a coverage strip and a note saying nothing is drawn for 2 ≤ x ≤ 3" />
       <br />
-      <sub><b>Piecewise branch editor.</b> Branches and their conditions are edited row by row and applied together; an open circle marks the end the next branch does not own.</sub>
+      <sub><b>Piecewise brace editor.</b> Each branch has its own colour, a drag handle and a menu; the strip under the brace shows where each branch is drawn, and the note says where nothing is (with <b>Add otherwise</b>).</sub>
     </td>
   </tr>
   <tr>

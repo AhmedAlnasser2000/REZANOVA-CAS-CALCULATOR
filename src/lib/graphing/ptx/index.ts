@@ -4,6 +4,7 @@ export * from './certify';
 export * from './curve-features';
 export * from './curves';
 export * from './features';
+export * from './isolate';
 export * from './prove';
 export * from './refine';
 export * from './solver-port';

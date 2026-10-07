@@ -21,6 +21,7 @@ import type {
 import { validateGraphRendererFieldFrame } from '../../contracts';
 import {
   defaultGraphItemPresentation,
+  graphSceneBranchKey,
   normalizeGraphItemPresentation,
   resolveGraphPresentationColor,
 } from '../../presentation';
@@ -92,6 +93,8 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
   );
   private pivotTimer: ReturnType<typeof setTimeout> | null = null;
   private presentation = new Map<string, GraphItemPresentation>();
+  /** Piecewise branch styles, keyed `<item>\u0000<branch>`. */
+  private branchPresentation = new Map<string, GraphItemPresentation>();
   private raycaster = new THREE.Raycaster();
   private renderer: THREE.WebGLRenderer | null = null;
   private scene = new THREE.Scene();
@@ -243,6 +246,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
         if (path.strokeRole === 'strict-boundary' || path.strokeRole === 'complex-imaginary') material.dashed = true;
         const line = new Line2(geometry, material);
         line.computeLineDistances();
+        line.userData.branchKey = graphSceneBranchKey(path.itemId, path.pathId);
         this.registerItem(path.itemId, line);
       }
     }
@@ -254,6 +258,7 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
       }
       const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       const points = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 7, sizeAttenuation: false }));
+      points.userData.branchKey = graphSceneBranchKey(batch.itemId, batch.pointBatchId);
       this.registerItem(batch.itemId, points);
     }
     this.surfaceRanges.clear();
@@ -292,6 +297,8 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
 
   setPresentation(frame: GraphRendererPresentationFrame) {
     this.presentation = new Map(frame.items.map((entry) => [entry.itemId, entry.presentation]));
+    this.branchPresentation = new Map(frame.items.flatMap((entry) => ('branches' in entry && entry.branches
+      ? Object.entries(entry.branches).map(([key, style]) => [`${entry.itemId}\u0000${key}`, style] as const) : [])));
     this.theme = frame.version === 2 ? frame.theme : 'technical';
     this.colorVisionMode = frame.version === 2 ? frame.colorVisionMode : 'standard';
     this.renderer?.setClearColor(themeBackground(this.theme), 1);
@@ -477,12 +484,15 @@ export class GraphThreeRenderer implements InteractiveGraph3dRenderer, Interacti
           * (this.renderer?.getPixelRatio() ?? 1) });
     }
     for (const [itemId, objects] of this.itemObjects) {
-      const style = normalizeGraphItemPresentation(
+      const itemStyle = normalizeGraphItemPresentation(
         this.presentation.get(itemId) ?? defaultGraphItemPresentation(0),
       );
-      const color = new THREE.Color(resolveGraphPresentationColor(style, this.colorVisionMode));
       const selected = this.cameraFrame?.selectedItemId === itemId;
       for (const object of objects) {
+        // A piecewise branch takes its own style.
+        const branch = typeof object.userData.branchKey === 'string' ? this.branchPresentation.get(`${itemId}\u0000${object.userData.branchKey}`) : undefined;
+        const style = branch ? normalizeGraphItemPresentation(branch) : itemStyle;
+        const color = new THREE.Color(resolveGraphPresentationColor(style, this.colorVisionMode));
         const material = (object as THREE.Mesh).material;
         if (material instanceof LineMaterial) {
           material.color.copy(color);

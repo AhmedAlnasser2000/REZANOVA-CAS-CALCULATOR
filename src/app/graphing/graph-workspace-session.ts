@@ -25,6 +25,8 @@ export type GraphPiecewiseAuthoringDraftV1 = {
     valueLatex: string;
     conditionLatex: string;
   }>;
+  /** The otherwise value; absent (or blank) means no otherwise branch. */
+  otherwiseLatex?: string;
 };
 
 export type GraphWorkspaceAuthoringStateV1 = {

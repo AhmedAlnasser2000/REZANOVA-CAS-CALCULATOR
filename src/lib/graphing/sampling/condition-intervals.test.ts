@@ -21,6 +21,30 @@ const shape = (intervals: ReturnType<typeof solve>['intervals']) => intervals.ma
 ]);
 
 describe('Solved piecewise conditions', () => {
+  it('finds two boundaries far closer together than any sampling grid (GRAPHING-PIECEWISE2)', () => {
+    const result = solve(String.raw`\sin(x)>0.99999`);
+    // Near each peak of sin the condition holds for a sliver about 0.009 wide; every sliver in view is found.
+    expect(result.intervals).toHaveLength(3);
+    expect(result.unresolved).toBe(0);
+    for (const interval of result.intervals) {
+      expect(interval.maximum - interval.minimum).toBeGreaterThan(0.008);
+      expect(interval.maximum - interval.minimum).toBeLessThan(0.0095);
+    }
+  });
+
+  it('puts the edges of a step-function condition exactly on the steps', () => {
+    expect(shape(solve(String.raw`\lfloor x\rfloor>1`, {}, -0.5, 4.5).intervals)).toEqual([[2, 4.5, true, true]]);
+    expect(shape(solve(String.raw`\lfloor x\rfloor=1`, {}, -0.5, 4.5).intervals)).toEqual([[1, 2, true, false]]);
+  });
+
+  it('keeps a touching boundary: (x − 1)² > 0 holds everywhere but x = 1', () => {
+    expect(shape(solve('(x-1)^2>0').intervals)).toEqual([[-10, 1, true, false], [1, 10, false, true]]);
+  });
+
+  it('records closed forms of polynomial boundaries', () => {
+    expect(solve('x^2<2').exactValues?.map((entry) => entry.label).sort()).toEqual(['−√2', '√2']);
+  });
+
   it('takes boundary inclusion from the operator on curved boundaries', () => {
     const strict = solve('x^2<2'); const loose = solve('x^2\\le 2');
     const root = Number(Math.SQRT2.toFixed(12));

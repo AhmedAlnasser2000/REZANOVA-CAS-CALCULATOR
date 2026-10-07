@@ -30,6 +30,60 @@ export function graphAnalysisExactValue(value: number) {
   });
 }
 
+/**
+ * An exact value in closed form (√2, −1/2 + √13/2) when the producer has one;
+ * the plain number otherwise, or if the closed form is not accepted.
+ */
+export function graphAnalysisExactForm(value: number, form?: { latex: string; mathJson: unknown }) {
+  if (form) {
+    try {
+      return requireProvenCanonicalMathValueV2({
+        canonicalLatex: form.latex, mathJson: form.mathJson, owner: 'graphing', routeId: 'graphing.analysis',
+        source: 'Graph analysis exact closed-form producer',
+      });
+    } catch {
+      // Fall through to the number, which is always accepted.
+    }
+  }
+  return graphAnalysisExactValue(value);
+}
+
+/**
+ * Evidence for a stretch (a root or intersection on a whole interval): no
+ * coordinates, so it is never a dot or a trace snap, only its interval, with
+ * ends at the window's edge marked open-ended.
+ */
+export function graphStretchEvidence(
+  stretch: { minimum: number; maximum: number; minimumInclusive: boolean; maximumInclusive: boolean },
+  window: { xMin: number; xMax: number },
+  validator: string,
+) {
+  const edge = (window.xMax - window.xMin) * 1e-9;
+  return {
+    detail: { interval: { ...stretch,
+      minimumOpenEnded: stretch.minimum <= window.xMin + edge, maximumOpenEnded: stretch.maximum >= window.xMax - edge } },
+    basis: { source: 'numeric-validator' as const, validator },
+  };
+}
+
+/** The number an exact value's MathJSON stands for (numbers, rationals, roots, sums and products). */
+export function graphExactMathJsonNumber(node: unknown): number | undefined {
+  if (typeof node === 'number') return node;
+  if (!Array.isArray(node) || typeof node[0] !== 'string') return undefined;
+  const args = node.slice(1).map(graphExactMathJsonNumber);
+  if (args.some((value) => value === undefined)) return undefined;
+  const values = args as number[];
+  switch (node[0]) {
+    case 'Rational': case 'Divide': return values.length === 2 && values[1] !== 0 ? values[0]! / values[1]! : undefined;
+    case 'Sqrt': return values.length === 1 && values[0]! >= 0 ? Math.sqrt(values[0]!) : undefined;
+    case 'Negate': return values.length === 1 ? -values[0]! : undefined;
+    case 'Add': return values.reduce((sum, value) => sum + value, 0);
+    case 'Multiply': return values.reduce((product, value) => product * value, 1);
+    case 'Power': return values.length === 2 ? values[0]! ** values[1]! : undefined;
+    default: return undefined;
+  }
+}
+
 export function buildGraphAnalysisCanonicalResult(
   request: GraphAnalysisRequestV1,
   evidence: GraphAnalysisEvidenceV1[],

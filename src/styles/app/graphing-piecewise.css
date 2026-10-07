@@ -1,0 +1,349 @@
+/*
+ * The piecewise branch editor (GRAPHING-PIECEWISE2): one brace over the
+ * branches, as the function is written by hand: value, a faint "if", the
+ * condition; an otherwise row; the coverage strip below.
+ */
+
+.graph-piecewise-expanded-editor {
+  grid-column: 2 / -1;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.graph-piecewise-editor {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 8px 8px 6px;
+  border: 1px solid var(--graph-line);
+  border-radius: 8px;
+  background: #0a1719;
+}
+
+.graph-piecewise-expanded-editor > .graph-piecewise-editor { grid-column: auto; }
+
+.graph-piecewise-cases {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+}
+
+.graph-piecewise-lhs {
+  color: #d9e9df;
+  font-family: 'STIX Two Math', serif;
+  font-size: 1.02rem;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* The brace: a rounded bracket on the left of the rows with a point at its middle. */
+.graph-piecewise-rows {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 2px 0 2px 14px;
+}
+
+.graph-piecewise-rows::before,
+.graph-piecewise-rows::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  width: 7px;
+  border-left: 1.6px solid #9fb8ad;
+  pointer-events: none;
+}
+
+.graph-piecewise-rows::before {
+  top: 2px;
+  height: calc(50% - 2px);
+  border-top: 1.6px solid #9fb8ad;
+  border-top-left-radius: 7px;
+  border-bottom-right-radius: 6px;
+}
+
+.graph-piecewise-rows::after {
+  bottom: 2px;
+  height: calc(50% - 2px);
+  border-bottom: 1.6px solid #9fb8ad;
+  border-bottom-left-radius: 7px;
+  border-top-right-radius: 6px;
+}
+
+.graph-piecewise-branch {
+  display: grid;
+  grid-template-columns: 14px 12px minmax(0, 1fr) auto minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  border-radius: 6px;
+}
+
+.graph-piecewise-branch.is-dragged { opacity: 0.55; }
+
+.graph-piecewise-branch.is-drop-target { box-shadow: 0 -2px 0 0 var(--graph-branch-color, #5598ff); }
+
+.graph-piecewise-handle {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6f877c;
+  cursor: grab;
+  touch-action: none;
+}
+
+.graph-piecewise-editor.is-dragging .graph-piecewise-handle { cursor: grabbing; }
+
+.graph-piecewise-handle:hover,
+.graph-piecewise-handle:focus-visible { color: #cfe3d7; }
+
+.graph-piecewise-handle-space { width: 14px; }
+
+.graph-piecewise-swatch {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--graph-branch-color, #5598ff);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+button.graph-piecewise-swatch { cursor: pointer; }
+
+button.graph-piecewise-swatch:hover,
+button.graph-piecewise-swatch:focus-visible { box-shadow: 0 0 0 2px #071214, 0 0 0 3.5px var(--graph-branch-color, #5598ff); }
+
+.graph-piecewise-swatch.is-pending { opacity: 0.7; }
+
+.graph-piecewise-field {
+  min-width: 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  border: 1px solid transparent;
+  border-bottom-color: var(--graph-line);
+  border-radius: 4px;
+  background: transparent;
+  color: #edf7ef;
+  font-size: calc(0.86rem * var(--math-scale, 1));
+}
+
+.graph-piecewise-field:hover { border-bottom-color: var(--graph-line-strong); }
+
+.graph-piecewise-field:focus-within {
+  border-color: color-mix(in srgb, var(--graph-branch-color, #5598ff) 60%, transparent);
+  background: #071214;
+}
+
+.graph-piecewise-field::part(virtual-keyboard-toggle),
+.graph-piecewise-field::part(menu-toggle) { display: none; }
+
+.graph-piecewise-if {
+  color: #7d968a;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.graph-piecewise-branch.is-otherwise.is-empty .graph-piecewise-field,
+.graph-piecewise-branch.is-otherwise.is-empty .graph-piecewise-if,
+.graph-piecewise-branch.is-otherwise.is-empty .graph-piecewise-swatch { opacity: 0.55; }
+
+.graph-piecewise-branch.is-otherwise .graph-piecewise-if { grid-column: 4 / 6; }
+
+.graph-piecewise-branch-feedback {
+  grid-column: 3 / -1;
+  margin: 0 0 2px;
+  color: #e6ad5f;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+/* Small menus (a branch's options, Examples). */
+.graph-piecewise-menu-host { position: relative; }
+
+.graph-piecewise-menu-button {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #9fb8ad;
+}
+
+.graph-piecewise-menu-button:hover,
+.graph-piecewise-menu-button[aria-expanded='true'] { background: rgba(255, 255, 255, 0.06); color: #e6f2ea; }
+
+.graph-piecewise-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  min-width: 150px;
+  padding: 4px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 7px;
+  background: #0c1b1e;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+.graph-piecewise-menu button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #d6e6dc;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.graph-piecewise-menu button:hover:not(:disabled),
+.graph-piecewise-menu button:focus-visible { background: rgba(85, 152, 255, 0.16); }
+
+.graph-piecewise-menu button:disabled { color: #5f7569; }
+
+.graph-piecewise-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding-left: 2px;
+}
+
+.graph-piecewise-toolbar-space { flex: 1 1 0; }
+
+.graph-piecewise-add,
+.graph-piecewise-cancel {
+  min-height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--graph-line);
+  border-radius: 6px;
+  background: transparent;
+  color: #b8ccc0;
+  font-size: 0.76rem;
+}
+
+.graph-piecewise-apply {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(98, 230, 144, 0.45);
+  border-radius: 6px;
+  background: rgba(98, 230, 144, 0.14);
+  color: #c7f0d3;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.graph-piecewise-apply:disabled {
+  border-color: var(--graph-line);
+  background: transparent;
+  color: #5f7569;
+}
+
+.graph-piecewise-draft-note {
+  margin: 0;
+  padding-left: 4px;
+  color: #7d968a;
+  font-size: 0.7rem;
+}
+
+/* Coverage strip: where each branch is drawn along the variable. */
+.graph-piecewise-coverage {
+  display: grid;
+  gap: 2px;
+  padding: 4px 10px 0;
+}
+
+.graph-piecewise-coverage-track {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.graph-piecewise-coverage-segment {
+  position: absolute;
+  top: 3px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--graph-branch-color, #5598ff);
+}
+
+button.graph-piecewise-coverage-segment { cursor: pointer; }
+
+button.graph-piecewise-coverage-segment:hover,
+button.graph-piecewise-coverage-segment:focus-visible { top: 2px; height: 8px; }
+
+.graph-piecewise-coverage-segment.is-gap {
+  background: repeating-linear-gradient(135deg, rgba(242, 183, 111, 0.55) 0 3px, transparent 3px 6px);
+}
+
+.graph-piecewise-coverage-segment.is-point { width: 0; }
+
+.graph-piecewise-coverage-end {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--graph-branch-color, #f2b76f);
+  border-radius: 50%;
+  background: #0a1719;
+  transform: translate(-50%, -50%);
+}
+
+.graph-piecewise-coverage-end.is-start { left: 0; }
+
+.graph-piecewise-coverage-end.is-end { left: 100%; }
+
+.graph-piecewise-coverage-end.is-filled { background: var(--graph-branch-color, #f2b76f); }
+
+.graph-piecewise-coverage-labels {
+  position: relative;
+  height: 14px;
+  color: #7d968a;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.64rem;
+}
+
+.graph-piecewise-coverage-labels > span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.graph-piecewise-coverage-labels > .graph-piecewise-coverage-symbol {
+  right: 0;
+  left: auto;
+  font-style: italic;
+  transform: none;
+}
+
+/* A narrow list puts each condition under its value. */
+.graph-workbench.is-rail-narrow .graph-piecewise-branch {
+  grid-template-columns: 16px 12px auto minmax(0, 1fr) 26px;
+}
+
+.graph-workbench.is-rail-narrow .graph-piecewise-branch > .graph-piecewise-field:not(.is-condition) { grid-column: 3 / 6; }
+
+.graph-workbench.is-rail-narrow .graph-piecewise-branch > .graph-piecewise-if { grid-column: 3; }
+
+@media (forced-colors: active) {
+  .graph-piecewise-swatch,
+  .graph-piecewise-coverage-segment { forced-color-adjust: none; }
+}

@@ -357,26 +357,27 @@ describe('GraphWorkspacePage', () => {
     expect(summaryEditor).toHaveAttribute('tabindex', '0');
     expect(screen.queryByRole('button', { name: /Reorder item/u })).not.toBeInTheDocument();
     fireEvent.click(expand);
-    expect(screen.getByText('Piecewise branches')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Piecewise branches' })).toBeInTheDocument();
     expect(row).toHaveAttribute('data-piecewise-state', 'expanded');
     expect(screen.getByRole('button', { name: 'Collapse piecewise branches' }))
       .toHaveAttribute('aria-expanded', 'true');
     expect(summaryEditor).toHaveAttribute('tabindex', '-1');
     fireEvent.click(screen.getByRole('button', { name: 'Collapse piecewise branches' }));
-    expect(screen.queryByText('Piecewise branches')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Piecewise branches' })).not.toBeInTheDocument();
     expect(row).toHaveAttribute('data-piecewise-state', 'summary');
     expect(summaryEditor).toHaveAttribute('tabindex', '0');
     fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
-    expect(screen.queryByRole('button', { name: /Move branch/u })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Remove branch/u })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '+ Add branch' }));
-    expect(screen.queryByRole('button', { name: /Move branch/u })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Remove branch/u })).toHaveLength(3);
-    fireEvent.click(screen.getByRole('button', { name: 'Remove branch 3' }));
+    // Brace layout: a drag handle and an options menu per branch, Apply off until something changes.
+    expect(screen.getAllByRole('button', { name: /^Move branch \d/u })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '+ Branch' }));
+    expect(screen.getAllByRole('button', { name: /^Branch \d options$/u })).toHaveLength(3);
+    fireEvent.click(screen.getByRole('button', { name: 'Branch 3 options' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remove branch 3' }));
     const firstValue = screen.getByTestId(/graph-piecewise-draft-value-.*branch\.1/u);
     setMathFieldValue(firstValue, 'x^3');
-    fireEvent.click(screen.getByRole('button', { name: 'Apply branch changes' }));
-    await waitFor(() => expect(screen.queryByText('Piecewise branches')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(screen.queryByRole('group', { name: 'Piecewise branches' })).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Undo graph edit' }));
     expect(screen.getByTestId('graph-expression-editor-graphing.2.item.1')).toHaveAttribute(
       'data-value', expect.stringContaining('x^2'),
@@ -468,11 +469,12 @@ describe('GraphWorkspacePage', () => {
     );
     await waitFor(() => expect(screen.getByTestId('graph-scene-paths').querySelectorAll('path')).toHaveLength(1));
     fireEvent.click(screen.getByRole('button', { name: 'Expand piecewise branches' }));
-    fireEvent.click(screen.getByRole('button', { name: '+ Add branch' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Branch' }));
     await waitFor(() => expect(screen.getByText('Complete piecewise branches')).toBeVisible(), { timeout: 1_000 });
     expect(screen.getByTestId('graph-scene-paths').querySelectorAll('path')).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Remove branch 3' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Apply branch changes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Branch 3 options' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remove branch 3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     await waitFor(() => expect(screen.queryByText('Complete piecewise branches')).not.toBeInTheDocument());
     expect(screen.getByTestId('graph-scene-paths').querySelectorAll('path')).toHaveLength(1);
   });

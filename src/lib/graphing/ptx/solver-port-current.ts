@@ -194,7 +194,7 @@ export const currentPtxSolverPort: PtxSolverPort = {
     });
     return edges.every((edge) => edge !== null) ? edges as Array<NonNullable<(typeof edges)[number]>> : null;
   },
-  piecewiseFunction(piecewise, variable, parameters) {
+  piecewiseFunction(piecewise, variable, parameters, options = {}) {
     const cache = new GraphExpressionPlanCache(4 * piecewise.branches.length + 4);
     const valueOf = (relation: (typeof piecewise.branches)[number]['relation']) => (
       relation.kind === 'explicit-y' || relation.kind === 'explicit-x' ? relation.rhs : relation.kind === 'polar-radius' ? relation.radius : null);
@@ -217,6 +217,36 @@ export const currentPtxSolverPort: PtxSolverPort = {
     };
     const f: PtxRealFunction = (value) => active(value)?.(value);
     f.derivative = (value) => active(value)?.derivative?.(value);
+    f.precise = (value) => active(value)?.precise?.(value);
+    const boundaries = options.boundaries ? [...options.boundaries].sort((a, b) => a - b) : null;
+    if (boundaries) {
+      // Between two boundaries one branch decides every value, so its own enclosure holds; across one the
+      // function may jump, so the pieces' ranges are joined and it is not called continuous.
+      const NOWHERE = { lo: 0, hi: 0, defined: 0 as const, continuous: true, smooth: true };
+      const pieceEnclosure = (lo: number, hi: number, tight?: boolean) => {
+        const branch = active((lo + hi) / 2);
+        return branch?.enclose ? branch.enclose(lo, hi, tight) : { value: NOWHERE, slope: NOWHERE };
+      };
+      f.enclose = (lo, hi, tight) => {
+        const inside = boundaries.filter((at) => at >= lo && at <= hi);
+        if (lo === hi) {
+          const branch = active(lo);
+          return branch?.enclose ? branch.enclose(lo, lo, tight) : { value: NOWHERE, slope: NOWHERE };
+        }
+        if (inside.length === 0) return pieceEnclosure(lo, hi, tight);
+        const cuts = [lo, ...inside.filter((at) => at > lo && at < hi), hi];
+        const parts = [...cuts.slice(1).map((at, index) => pieceEnclosure(cuts[index]!, at, tight)),
+          ...inside.map((at) => pieceEnclosure(at, at, tight))];
+        const values = parts.map((part) => part.value).filter((value) => value.defined > 0);
+        if (values.length === 0) return { value: NOWHERE, slope: NOWHERE };
+        const joined = {
+          lo: Math.min(...values.map((value) => value.lo)), hi: Math.max(...values.map((value) => value.hi)),
+          defined: (values.length === parts.length && values.every((value) => value.defined === 2) ? 2 : 1) as 1 | 2,
+          continuous: false, smooth: false,
+        };
+        return { value: joined, slope: { ...joined, lo: -Infinity, hi: Infinity } };
+      };
+    }
     return f;
   },
   planeFunction(left, right, parameters) {
@@ -275,7 +305,7 @@ export const currentPtxSolverPort: PtxSolverPort = {
     return solution.roots
       .filter((root) => Math.abs(root.im) <= (root.exact ? 1e-12 : 1e-9) * Math.max(1, Math.abs(root.re)))
       .map((root) => ({ value: root.exact ? rationalLabelValue(root.label) ?? root.re : root.re, exact: root.exact,
-        label: root.exact ? root.label : null, multiplicity: root.multiplicity }));
+        label: root.exact ? root.label : null, multiplicity: root.multiplicity, ...(root.exact && root.form ? { form: root.form } : {}) }));
   },
   complexRoots: (input) => solveGraphComplexRoots(input),
   planeSystemRoots(first, second, window) {

@@ -1,12 +1,16 @@
-import { useCallback, type MutableRefObject } from 'react';
-import type { GraphDocumentV4 } from '../../lib/graphing';
-import { setGraphComplexValues } from './graph-document';
+import { useCallback, type RefObject } from 'react';
+import type { GraphDocumentV4, GraphItemPresentationV2 } from '../../lib/graphing';
+import {
+  replaceGraphDocumentPresentation,
+  replaceGraphPiecewiseBranchPresentation,
+  setGraphComplexValues,
+} from './graph-document';
 import type { GraphWorkspaceSessionStateV7 } from './graph-workspace-session';
 
 interface UseGraphSessionActionsInput {
   commitSession: (next: GraphWorkspaceSessionStateV7, immediate?: boolean) => void;
   pushHistory: (document: GraphDocumentV4, typingItemId: string | null) => void;
-  sessionRef: MutableRefObject<GraphWorkspaceSessionStateV7>;
+  sessionRef: RefObject<GraphWorkspaceSessionStateV7>;
   workspaceInstanceId: string;
 }
 
@@ -130,8 +134,30 @@ export function useGraphSessionActions({
     commitSession({ ...current, document }, true);
   }, [commitSession, pushHistory, sessionRef]);
 
+  /** An item's style; undoable, never resamples. */
+  const updatePresentation = useCallback((itemId: string, presentation: GraphItemPresentationV2) => {
+    const current = sessionRef.current;
+    const document = replaceGraphDocumentPresentation({ document: current.document, itemId, presentation });
+    if (!document) return false;
+    pushHistory(current.document, null);
+    commitSession({ ...current, document }, true);
+    return true;
+  }, [commitSession, pushHistory, sessionRef]);
+
+  /** One piecewise branch's style (`null` back to its default); undoable, never resamples. */
+  const updateBranchPresentation = useCallback((itemId: string, branchKey: string, presentation: GraphItemPresentationV2 | null) => {
+    const current = sessionRef.current;
+    const document = replaceGraphPiecewiseBranchPresentation({ document: current.document, itemId, branchKey, presentation });
+    if (!document) return false;
+    pushHistory(current.document, null);
+    commitSession({ ...current, document }, true);
+    return true;
+  }, [commitSession, pushHistory, sessionRef]);
+
   return {
     addAssumption,
+    updateBranchPresentation,
+    updatePresentation,
     setComplexValues,
     removeAssumption,
     toggleRail,

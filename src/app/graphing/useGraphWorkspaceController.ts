@@ -11,27 +11,22 @@ import {
   releaseGraphSampleResultBuffers,
   runGraphSampleWithOoe,
   type GraphDocumentV4,
-  type GraphItemPresentationV2,
   type GraphItemSpecV1,
   type GraphSampleRequestV6,
   type GraphSampleResultV6,
   type GraphViewportV1,
 } from '../../lib/graphing';
 import type {
-  GraphPiecewiseAuthoringDraftV1,
   GraphWorkspaceSessionStateV7,
 } from './graph-workspace-session';
 import {
-  buildGraphPiecewiseItemFromAuthoringDraft,
   buildVisibleGraphItem,
   createGraphNoteItem,
   createGraphParameterItem,
-  graphConditionLatex,
+  refreshedGraphPiecewiseDrafts,
   graphItemSource,
   graphItemSourceLatex,
-  graphPiecewiseBranchValueLatex,
   removeGraphDocumentItem,
-  replaceGraphDocumentPresentation,
   reorderGraphDocumentItem,
   replaceGraphDocumentItem,
   replaceGraphDocumentNote,
@@ -41,6 +36,7 @@ import {
 } from './graph-document';
 import {
   classifiedGraphItems,
+  graphFirstFreeItemNumber,
   graphItemFreeSymbols,
   graphParameterEnvironment,
   graphParameterEnvironmentChanged,
@@ -54,6 +50,8 @@ import type {
   UseGraphWorkspaceControllerInput,
 } from './graph-workspace-controller-types';
 import { graphAutoFitViewport } from './graph-auto-fit';
+import { graphSessionWithExample, type GraphExample } from './graph-examples';
+import { useGraphPiecewiseDrafts } from './useGraphPiecewiseDrafts';
 import { useGraphSessionActions } from './useGraphSessionActions';
 import { useGraphViewAutoSwitch } from './graph-view-auto-switch';
 import { usePiecewiseSuppression } from './usePiecewiseSuppression';
@@ -77,7 +75,9 @@ export function useGraphWorkspaceController({
   const [sampleResult, setSampleResult] = useState<GraphSampleResultV6 | null>(null);
   const [status, setStatus] = useState<GraphControllerStatus>({ kind: 'ready', label: 'Ready' });
   const [visibleDraftErrors, setVisibleDraftErrors] = useState<ReadonlySet<string>>(new Set());
-  const [blankItemId, setBlankItemId] = useState(() => `${workspaceContext.workspaceInstanceId}.item.1`);
+  // New item IDs continue after the highest one the session already holds (restored or loaded from an example).
+  const [firstFreeItem] = useState(() => graphFirstFreeItemNumber(initialSession, workspaceContext.workspaceInstanceId));
+  const [blankItemId, setBlankItemId] = useState(() => `${workspaceContext.workspaceInstanceId}.item.${firstFreeItem}`);
   const [historyAvailability, setHistoryAvailability] = useState({ canRedo: false, canUndo: false });
   const sessionRef = useRef(session);
   const { applyAutoView, autoViewNotice, dismissAutoView, markManualView } = useGraphViewAutoSwitch();
@@ -104,7 +104,7 @@ export function useGraphWorkspaceController({
     quality: 'preview' | 'settled' | 'polish',
     snapshot: GraphWorkspaceSessionStateV7,
   ) => Promise<void>>(async () => undefined);
-  const itemSequenceRef = useRef(2);
+  const itemSequenceRef = useRef(firstFreeItem + 1);
   const historyRef = useRef<GraphHistory>({ undo: [], redo: [], typingItemId: null });
   const scheduledRevisionsRef = useRef({
     mathematics: initialSession.document.mathematicsRevision,
@@ -298,172 +298,26 @@ export function useGraphWorkspaceController({
     commitSession({ ...current, document: nextDocument }, true);
   }, [commitSession, pushHistory]);
 
-  const createPiecewiseDraft = useCallback(() => {
-    const current = sessionRef.current;
-    const itemId = blankItemId;
-    const draft: GraphPiecewiseAuthoringDraftV1 = {
-      version: 1,
-      draftId: `${itemId}.piecewise-draft`,
-      itemId,
-      mode: 'create',
-      target: 'y',
-      branches: [0, 1].map((index) => ({
-        branchId: `${itemId}.branch.${index + 1}`,
-        valueLatex: '',
-        conditionLatex: '',
-      })),
-    };
-    commitSession({
-      ...current,
-      authoring: { piecewiseDrafts: [...(current.authoring?.piecewiseDrafts ?? []), draft] },
-    }, true);
-    setBlankItemId(nextItemId());
-    return itemId;
-  }, [blankItemId, commitSession, nextItemId]);
+  const {
+    beginPiecewiseDraft,
+    commitPiecewiseDraft,
+    createPiecewiseDraft,
+    mutatePiecewiseDraft,
+    removePiecewiseDraft,
+    updatePiecewiseDraft,
+  } = useGraphPiecewiseDrafts({
+    activeInputRevisionRef, activeSamplingItemIdRef, blankItemId, commitSession, nextItemId, pushHistory,
+    releasePiecewiseSuppression, sessionRef, setBlankItemId, suppressPiecewiseAfterGrace,
+  });
 
-  const beginPiecewiseDraft = useCallback((itemId: string) => {
+  /** A gallery example: `replace` swaps it in with its view; `add` appends its items. One undo step either way. */
+  const loadExample = useCallback((example: GraphExample, mode: 'replace' | 'add') => {
     const current = sessionRef.current;
-    const existing = current.authoring?.piecewiseDrafts.find((draft) => draft.itemId === itemId);
-    if (existing) return existing.itemId;
-    const item = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
-      candidate.itemId === itemId && candidate.kind === 'piecewise'
-    ));
-    if (!item) return null;
-    const draft: GraphPiecewiseAuthoringDraftV1 = {
-      version: 1,
-      draftId: `${itemId}.piecewise-draft`,
-      itemId,
-      mode: 'replace',
-      target: item.piecewise.branches[0]?.relation.kind === 'explicit-x' ? 'x' : 'y',
-      branches: item.piecewise.branches.map((branch) => ({
-        branchId: branch.branchId,
-        valueLatex: graphPiecewiseBranchValueLatex(branch),
-        conditionLatex: graphConditionLatex(branch.condition),
-      })),
-    };
-    commitSession({
-      ...current,
-      authoring: { piecewiseDrafts: [...(current.authoring?.piecewiseDrafts ?? []), draft] },
-    }, true);
-    return itemId;
-  }, [commitSession]);
-
-  const updatePiecewiseDraft = useCallback((input: {
-    itemId: string;
-    branchId: string;
-    field: 'valueLatex' | 'conditionLatex';
-    value: string;
-  }) => {
-    const current = sessionRef.current;
-    const drafts = current.authoring?.piecewiseDrafts ?? [];
-    const draft = drafts.find((candidate) => candidate.itemId === input.itemId);
-    if (!draft) return false;
-    const nextDraft = {
-      ...draft,
-      branches: draft.branches.map((branch) => branch.branchId === input.branchId
-        ? { ...branch, [input.field]: input.value }
-        : branch),
-    };
-    const promoted = buildGraphPiecewiseItemFromAuthoringDraft({
-      itemId: draft.itemId,
-      sourceRevision: 1,
-      index: current.document.items.length,
-      target: draft.target,
-      branches: nextDraft.branches,
-    });
-    if (promoted && nextDraft.mode === 'create') {
-      pushHistory(current.document, null);
-      activeInputRevisionRef.current = null;
-      commitSession({
-        ...current,
-        document: replaceGraphDocumentItem(current.document, promoted),
-        authoring: { piecewiseDrafts: drafts.filter((candidate) => candidate.itemId !== input.itemId) },
-      }, true);
-      return true;
-    }
-    // Branches that are valid again bring the item back at once; invalid ones hide it after a short grace.
-    releasePiecewiseSuppression(input.itemId);
-    if (!promoted && nextDraft.mode === 'replace') suppressPiecewiseAfterGrace(input.itemId);
-    commitSession({
-      ...current,
-      authoring: { piecewiseDrafts: drafts.map((candidate) => candidate.itemId === input.itemId ? nextDraft : candidate) },
-    });
-    return false;
-  }, [commitSession, pushHistory, releasePiecewiseSuppression, suppressPiecewiseAfterGrace]);
-
-  const commitPiecewiseDraft = useCallback((itemId: string) => {
-    activeSamplingItemIdRef.current = itemId;
-    const current = sessionRef.current;
-    const drafts = current.authoring?.piecewiseDrafts ?? [];
-    const draft = drafts.find((candidate) => candidate.itemId === itemId);
-    if (!draft) return false;
-    const previous = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
-      candidate.itemId === itemId && candidate.kind === 'piecewise'
-    ));
-    const promoted = buildGraphPiecewiseItemFromAuthoringDraft({
-      itemId,
-      sourceRevision: (previous?.source.sourceRevision ?? 0) + 1,
-      index: Math.max(0, current.document.items.findIndex((item) => item.itemId === itemId)),
-      target: draft.target,
-      branches: draft.branches,
-      ...(previous ? { previous } : {}),
-    });
-    if (!promoted) return false;
-    if (previous) pushHistory(current.document, null);
+    pushHistory(current.document, null);
     activeInputRevisionRef.current = null;
-    releasePiecewiseSuppression(itemId);
-    commitSession({
-      ...current,
-      document: replaceGraphDocumentItem(current.document, promoted),
-      authoring: { piecewiseDrafts: drafts.filter((candidate) => candidate.itemId !== itemId) },
-    }, true);
-    return true;
-  }, [commitSession, pushHistory, releasePiecewiseSuppression]);
-
-  const removePiecewiseDraft = useCallback((itemId: string) => {
-    const current = sessionRef.current;
-    commitSession({ ...current, authoring: {
-      piecewiseDrafts: (current.authoring?.piecewiseDrafts ?? []).filter((draft) => draft.itemId !== itemId),
-    } }, true);
-    releasePiecewiseSuppression(itemId);
-  }, [commitSession, releasePiecewiseSuppression]);
-
-  const mutatePiecewiseDraft = useCallback((input: {
-    itemId: string;
-    action: 'add' | 'remove' | 'up' | 'down';
-    branchId?: string;
-  }) => {
-    const current = sessionRef.current;
-    const drafts = current.authoring?.piecewiseDrafts ?? [];
-    const draft = drafts.find((candidate) => candidate.itemId === input.itemId);
-    if (!draft) return;
-    const branches = [...draft.branches];
-    const index = input.branchId ? branches.findIndex((branch) => branch.branchId === input.branchId) : -1;
-    if (input.action === 'add') branches.push({
-      branchId: `${draft.itemId}.branch.${branches.length + 1}.${Date.now()}`,
-      valueLatex: '', conditionLatex: '',
-    });
-    else if (input.action === 'remove' && index >= 0 && branches.length > 2) branches.splice(index, 1);
-    else if (input.action === 'up' && index > 0) [branches[index - 1], branches[index]] = [branches[index], branches[index - 1]];
-    else if (input.action === 'down' && index >= 0 && index < branches.length - 1) [branches[index], branches[index + 1]] = [branches[index + 1], branches[index]];
-    else return;
-    const previous = current.document.items.find((candidate): candidate is Extract<GraphItemSpecV1, { kind: 'piecewise' }> => (
-      candidate.itemId === input.itemId && candidate.kind === 'piecewise'
-    ));
-    const remainsValid = buildGraphPiecewiseItemFromAuthoringDraft({
-      itemId: input.itemId,
-      sourceRevision: (previous?.source.sourceRevision ?? 0) + 1,
-      index: Math.max(0, current.document.items.findIndex((item) => item.itemId === input.itemId)),
-      target: draft.target,
-      branches,
-      ...(previous ? { previous } : {}),
-    }) !== null;
-    releasePiecewiseSuppression(input.itemId);
-    if (draft.mode === 'replace' && !remainsValid) suppressPiecewiseAfterGrace(input.itemId);
-    commitSession({ ...current, authoring: { piecewiseDrafts: drafts.map((candidate) => (
-      candidate.itemId === input.itemId ? { ...candidate, branches } : candidate
-    )) } });
-  }, [commitSession, releasePiecewiseSuppression, suppressPiecewiseAfterGrace]);
+    if (mode === 'replace') markManualView();
+    commitSession(graphSessionWithExample(current, example, mode, nextItemId), true);
+  }, [commitSession, markManualView, nextItemId, pushHistory]);
 
   const toggleItem = useCallback((itemId: string) => {
     const current = sessionRef.current;
@@ -538,9 +392,11 @@ export function useGraphWorkspaceController({
     history.redo = [...history.redo, { document: current.document, appearance: current.surface.appearance }];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
+    const restored = restoredGraphDocument(current.document, snapshot.document);
     commitSession(applyAutoView(current, {
       ...current,
-      document: restoredGraphDocument(current.document, snapshot.document),
+      document: restored,
+      ...(current.authoring ? { authoring: { piecewiseDrafts: refreshedGraphPiecewiseDrafts(current.authoring.piecewiseDrafts, restored) } } : {}),
       surface: {
         ...current.surface,
         appearance: snapshot.appearance,
@@ -561,9 +417,11 @@ export function useGraphWorkspaceController({
     history.undo = [...history.undo, { document: current.document, appearance: current.surface.appearance }];
     history.typingItemId = null;
     activeInputRevisionRef.current = null;
+    const restored = restoredGraphDocument(current.document, snapshot.document);
     commitSession(applyAutoView(current, {
       ...current,
-      document: restoredGraphDocument(current.document, snapshot.document),
+      document: restored,
+      ...(current.authoring ? { authoring: { piecewiseDrafts: refreshedGraphPiecewiseDrafts(current.authoring.piecewiseDrafts, restored) } } : {}),
       surface: {
         ...current.surface,
         appearance: snapshot.appearance,
@@ -595,7 +453,7 @@ export function useGraphWorkspaceController({
     setComplexValues,
     toggleRail, updateLayout,
     updateAnalyze,
-    updateAppearance,
+    updateAppearance, updateBranchPresentation, updatePresentation,
     updateComplexView,
     updateGrid,
     updatePaneView,
@@ -609,15 +467,6 @@ export function useGraphWorkspaceController({
   const updateViewPolicy = useCallback((mode: 'real' | 'complex' | 'both') => {
     markManualView(); commitViewPolicy(mode);
   }, [commitViewPolicy, markManualView]);
-
-  const updatePresentation = useCallback((itemId: string, presentation: GraphItemPresentationV2) => {
-    const current = sessionRef.current;
-    const document = replaceGraphDocumentPresentation({ document: current.document, itemId, presentation });
-    if (!document) return false;
-    pushHistory(current.document, null);
-    commitSession({ ...current, document }, true);
-    return true;
-  }, [commitSession, pushHistory]);
 
   const autoFit = useCallback(() => {
     setViewport(graphAutoFitViewport(resultRef.current?.scene.planarScene ?? null));
@@ -898,7 +747,7 @@ export function useGraphWorkspaceController({
     addNote,
     addAssumption,
     addPointSet,
-    createPiecewiseDraft,
+    createPiecewiseDraft, loadExample,
     beginPiecewiseDraft,
     commitPiecewiseDraft,
     autoFit,
@@ -938,7 +787,7 @@ export function useGraphWorkspaceController({
     updateNote,
     updateParameter,
     updatePaneView,
-    updatePresentation,
+    updateBranchPresentation, updatePresentation,
     updateSurfaceBounds,
     updateViewPolicy,
     updatePiecewiseDraft,
@@ -947,7 +796,7 @@ export function useGraphWorkspaceController({
     addNote,
     addAssumption,
     addPointSet,
-    createPiecewiseDraft,
+    createPiecewiseDraft, loadExample,
     beginPiecewiseDraft,
     commitPiecewiseDraft,
     autoFit,
@@ -985,7 +834,7 @@ export function useGraphWorkspaceController({
     updateNote,
     updateParameter,
     updatePaneView,
-    updatePresentation,
+    updateBranchPresentation, updatePresentation,
     updateSurfaceBounds,
     updateViewPolicy,
     updatePiecewiseDraft,

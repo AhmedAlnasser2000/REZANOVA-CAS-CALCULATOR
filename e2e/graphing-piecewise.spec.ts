@@ -42,19 +42,20 @@ test.describe('Piecewise graphing', () => {
     await expect(markers).toHaveCount(2);
     const start = await realPoint(page, -2, -2);
     await page.mouse.click(start.x, start.y);
-    await expect(callout(page)).toHaveText('(-2, -2)');
+    // The callout names the piecewise branch it is on (GRAPHING-PIECEWISE2).
+    await expect(callout(page)).toHaveText('(-2, -2) · branch 1');
     await expect(callout(page)).toHaveAttribute('data-ptx-badge', 'verified');
     // Sweeping right past x = 1 moves onto the second branch.
     const right = await realPoint(page, 2, 4);
     await page.mouse.move(right.x, right.y, { steps: 8 });
-    await expect(callout(page)).toHaveText(/^\(2(?:\.\d+)?, 4(?:\.\d+)?\)$/u);
+    await expect(callout(page)).toHaveText(/^\(2(?:\.\d+)?, 4(?:\.\d+)?\) · branch 2$/u);
     // Arriving at the open circle reads the limit, not a value.
     const hole = await realPoint(page, 1, 1);
     await page.mouse.move(hole.x - 2, hole.y + 2, { steps: 6 });
-    await expect(callout(page)).toHaveText('(1, undefined) · limit 1');
+    await expect(callout(page)).toHaveText('(1, undefined) · limit 1 · branch 1');
     const filled = await realPoint(page, 1, 3);
     await page.mouse.move(filled.x + 1, filled.y, { steps: 4 });
-    await expect(callout(page)).toHaveText('Endpoint (1, 3)');
+    await expect(callout(page)).toHaveText('Endpoint (1, 3) · branch 2');
     await page.screenshot({ path: testInfo.outputPath('piecewise-jump.png') });
   });
 
@@ -90,6 +91,6 @@ test.describe('Piecewise graphing', () => {
     await expect(page.getByTestId('graph-ptx-dot')).not.toHaveCount(0, { timeout: 8_000 });
     const root = await realPoint(page, -2, 0);
     await page.mouse.move(root.x, root.y, { steps: 6 });
-    await expect(callout(page)).toHaveText('Root (-2, 0)');
+    await expect(callout(page)).toHaveText('Root (-2, 0) · branch 1');
   });
 });

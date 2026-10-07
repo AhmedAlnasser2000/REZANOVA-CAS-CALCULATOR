@@ -80,7 +80,8 @@ export function sampleGraphPiecewise(input: {
   const startedAt = now();
   const stopReasons: GraphStopReason[] = [];
   const paths: GraphSampledPathSceneInput[] = [];
-  const filled = new Map<string, Point>(); const open = new Map<string, Point>();
+  // Endpoint circles per branch (each is drawn in its branch's colour), keyed by position.
+  const markers = new Map<string, { filled: Map<string, Point>; open: Map<string, Point> }>();
   let status: PiecewiseSample['status'] = 'complete';
   let evaluatedSamples = 0; let emittedVertices = 0;
   const form = graphPiecewiseForm(input.piecewise) ?? 'explicit-y';
@@ -110,9 +111,11 @@ export function sampleGraphPiecewise(input: {
     ...input.piecewise.branches.map((branch) => ({ branchId: branch.branchId, relation: branch.relation, intervals: partition.branchIntervals.get(branch.branchId) ?? [] })),
     ...(input.piecewise.otherwise ? [{ branchId: 'otherwise', relation: input.piecewise.otherwise, intervals: partition.otherwiseIntervals }] : []),
   ];
-  const addMarker = (point: Point | null, included: boolean) => {
+  const addMarker = (branchId: string, point: Point | null, included: boolean) => {
     if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
-    (included ? filled : open).set(markerKey(point), point);
+    const own = markers.get(branchId) ?? { filled: new Map<string, Point>(), open: new Map<string, Point>() };
+    markers.set(branchId, own);
+    (included ? own.filled : own.open).set(markerKey(point), point);
   };
 
   for (const branch of branches) {
@@ -154,7 +157,7 @@ export function sampleGraphPiecewise(input: {
       ] as const) {
         if (at <= minimum || at >= maximum) continue;
         const value = valueOrLimit(evaluate, at, inside);
-        if (value) addMarker(pointAt(at, value.value), included && value.defined);
+        if (value) addMarker(branch.branchId, pointAt(at, value.value), included && value.defined);
       }
     }
     if (sampleStopReason) stopReasons.push(sampleStopReason);
@@ -172,14 +175,21 @@ export function sampleGraphPiecewise(input: {
     }
   }
   // A boundary one branch includes and another excludes at the same point is drawn filled.
-  for (const key of filled.keys()) open.delete(key);
+  // Where branches meet at a point none of them includes, one ring (the first branch's) stands for all.
+  const filledKeys = new Set([...markers.values()].flatMap((own) => [...own.filled.keys()]));
+  const ringed = new Set<string>();
   const endpointBatches: GraphPointBatchSceneInput[] = [];
-  for (const [marker, points] of [['open', open], ['filled', filled]] as const) {
-    if (points.size === 0) continue;
-    endpointBatches.push({
-      pointBatchId: `${input.itemId}:endpoint:${marker}`, itemId: input.itemId, marker,
-      coordinates: new Float64Array([...points.values()].flatMap((point) => [point.x, point.y])),
-    });
+  for (const [branchId, own] of markers) {
+    for (const key of [...own.open.keys()]) {
+      if (filledKeys.has(key) || ringed.has(key)) own.open.delete(key); else ringed.add(key);
+    }
+    for (const [marker, points] of [['open', own.open], ['filled', own.filled]] as const) {
+      if (points.size === 0) continue;
+      endpointBatches.push({
+        pointBatchId: `${input.itemId}:endpoint:${branchId}:${marker}`, itemId: input.itemId, marker,
+        coordinates: new Float64Array([...points.values()].flatMap((point) => [point.x, point.y])),
+      });
+    }
   }
   return {
     status, paths, endpointBatches, stopReasons, conditionEvidence: partition.evidence,

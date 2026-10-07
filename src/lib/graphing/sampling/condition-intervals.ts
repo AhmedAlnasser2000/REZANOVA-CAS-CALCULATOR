@@ -1,13 +1,15 @@
 import type { GraphConditionIR, GraphExpressionIR } from '../contracts';
-import { defaultPtxSolverPort, ptxRealRoots } from '../ptx';
+import { defaultPtxSolverPort, ptxIsolateRealZeros, ptxRealRoots } from '../ptx';
 
 // Where a piecewise condition holds along the independent variable, solved
 // rather than probed: every comparison becomes g = left − right, its critical
-// points are the roots of g (exact for polynomials, through PTX) and the points
-// where g jumps or stops being defined, the sign of each piece between them
-// comes from its midpoint, and whether a boundary belongs to the set comes from
-// the operator (x² < 2 excludes ±√2, x² ≤ 2 includes them), never from testing
-// a point beside it.
+// points are the roots of g (exact for polynomials, through PTX; otherwise
+// isolated with interval arithmetic, so none is missed) and the points where g
+// jumps or stops being defined, the sign of each piece between them comes from
+// its midpoint, and whether a boundary belongs to the set comes from the
+// operator (x² < 2 excludes ±√2, x² ≤ 2 includes them), never from testing a
+// point beside it. A sampling scan is only the fallback where no interval
+// enclosure exists, and anything the isolation leaves undecided is reported.
 
 export type GraphConditionInterval = {
   minimum: number;
@@ -20,8 +22,10 @@ export type GraphSolvedCondition = {
   intervals: GraphConditionInterval[];
   /** Every boundary is an exact root (polynomial conditions) with no jumps or domain edges. */
   exact: boolean;
-  /** Comparisons that could not be compiled or evaluated. */
+  /** Comparisons that could not be compiled or evaluated, or whose boundaries could not all be isolated. */
   unresolved: number;
+  /** Boundaries known in closed form (√2, −1/2 + √13/2), by value. */
+  exactValues?: Array<{ value: number; label: string }>;
 };
 
 type Predicate = (g: number) => boolean;
@@ -144,22 +148,39 @@ function solveComparison(left: GraphExpressionIR, operator: string, right: Graph
     return { intervals: predicate(value) ? all : [], exact: true, unresolved: 0 };
   }
   const polynomial = port.realPolynomialRoots(expression.mathJson, context.symbol, context.environment);
-  const roots = ptxRealRoots(g, context.minimum, context.maximum, { steps: context.steps }, polynomial).map((root) => root.x);
-  const critical: Critical[] = roots.map((at) => ({ at, root: true }));
-  // Domain edges (g stops being defined) and jumps (a sign change with no root: poles, steps).
+  const critical: Critical[] = [];
+  const exactValues: Array<{ value: number; label: string }> = [];
   let nonRootCritical = false;
-  const step = (context.maximum - context.minimum) / context.steps;
-  let previousX = context.minimum; let previous = g(previousX);
-  for (let index = 1; index <= context.steps; index += 1) {
-    const x = index === context.steps ? context.maximum : context.minimum + index * step;
-    const value = g(x);
-    if ((previous === undefined) !== (value === undefined)) {
-      critical.push({ at: snapEdge(bisect((t) => g(t) === undefined, previousX, x), context.maximum - context.minimum), root: false }); nonRootCritical = true;
-    } else if (previous !== undefined && value !== undefined && previous * value < 0
-      && !roots.some((root) => root >= previousX && root <= x)) {
-      critical.push({ at: snapEdge(bisect((t) => (g(t) ?? 0) < 0, previousX, x), context.maximum - context.minimum), root: false }); nonRootCritical = true;
+  let unresolved = 0;
+  // Not a polynomial: interval isolation finds every zero, jump and domain edge (or says what it could not decide).
+  const isolation = polynomial ? null : ptxIsolateRealZeros(g, context.minimum, context.maximum);
+  if (isolation) {
+    critical.push(...isolation.zeros.map((zero) => ({ at: zero.x, root: true })));
+    critical.push(...isolation.discontinuities.map((at) => ({ at, root: false })));
+    critical.push(...isolation.zeroRanges.flatMap((range) => [range.lo, range.hi].map((at) => ({ at: snapEdge(at, context.maximum - context.minimum), root: false }))));
+    nonRootCritical = isolation.discontinuities.length > 0 || isolation.zeroRanges.length > 0;
+    if (isolation.undecided > 0) unresolved = 1;
+  }
+  if (!isolation || isolation.undecided > 0) {
+    const roots = ptxRealRoots(g, context.minimum, context.maximum, { steps: context.steps }, polynomial);
+    for (const root of roots) {
+      critical.push({ at: root.x, root: true });
+      if (root.label && root.level === 'exact-proved') exactValues.push({ value: root.x, label: root.label });
     }
-    previousX = x; previous = value;
+    // Domain edges (g stops being defined) and jumps (a sign change with no root: poles, steps).
+    const step = (context.maximum - context.minimum) / context.steps;
+    let previousX = context.minimum; let previous = g(previousX);
+    for (let index = 1; index <= context.steps; index += 1) {
+      const x = index === context.steps ? context.maximum : context.minimum + index * step;
+      const value = g(x);
+      if ((previous === undefined) !== (value === undefined)) {
+        critical.push({ at: snapEdge(bisect((t) => g(t) === undefined, previousX, x), context.maximum - context.minimum), root: false }); nonRootCritical = true;
+      } else if (previous !== undefined && value !== undefined && previous * value < 0
+        && !roots.some((root) => root.x >= previousX && root.x <= x)) {
+        critical.push({ at: snapEdge(bisect((t) => (g(t) ?? 0) < 0, previousX, x), context.maximum - context.minimum), root: false }); nonRootCritical = true;
+      }
+      previousX = x; previous = value;
+    }
   }
   const points = critical.filter((point) => point.at > context.minimum && point.at < context.maximum)
     .sort((a, b) => a.at - b.at)
@@ -185,7 +206,10 @@ function solveComparison(left: GraphExpressionIR, operator: string, right: Graph
   for (const point of points) {
     if (includes(point)) intervals.push({ minimum: point.at, maximum: point.at, minimumInclusive: true, maximumInclusive: true });
   }
-  return { intervals: normalizeGraphConditionIntervals(intervals), exact: polynomial !== null && !nonRootCritical, unresolved: 0 };
+  return {
+    intervals: normalizeGraphConditionIntervals(intervals), exact: polynomial !== null && !nonRootCritical, unresolved,
+    ...(exactValues.length ? { exactValues } : {}),
+  };
 }
 
 function combine(parts: GraphSolvedCondition[], join: 'and' | 'or', context: Context): GraphSolvedCondition {
@@ -194,7 +218,11 @@ function combine(parts: GraphSolvedCondition[], join: 'and' | 'or', context: Con
   for (const part of parts) {
     intervals = join === 'and' ? intersectGraphConditionIntervals(intervals, part.intervals) : unionGraphConditionIntervals(intervals, part.intervals);
   }
-  return { intervals, exact: parts.every((part) => part.exact), unresolved: parts.reduce((sum, part) => sum + part.unresolved, 0) };
+  const exactValues = parts.flatMap((part) => part.exactValues ?? []);
+  return {
+    intervals, exact: parts.every((part) => part.exact), unresolved: parts.reduce((sum, part) => sum + part.unresolved, 0),
+    ...(exactValues.length ? { exactValues } : {}),
+  };
 }
 
 /**

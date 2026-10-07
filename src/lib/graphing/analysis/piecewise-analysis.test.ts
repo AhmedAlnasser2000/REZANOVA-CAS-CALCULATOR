@@ -29,9 +29,64 @@ describe('Piecewise analysis', () => {
     const continuous = await analyze([item('a', String.raw`\begin{cases}x^2&x<1\\2x-1&x\ge1\end{cases}`)], ['piecewise-continuity']);
     expect(validators(continuous, 'piecewise-continuity')).toEqual(['one-sided limits: continuous at the boundary']);
     const jump = await analyze([item('b', String.raw`\begin{cases}x&x<0\\x+1&x\ge0\end{cases}`)], ['piecewise-continuity']);
-    expect(validators(jump, 'piecewise-continuity')).toEqual(['one-sided limits: jump discontinuity: from the left 0, from the right 1']);
+    expect(validators(jump, 'piecewise-continuity')).toEqual(['one-sided limits: jump of 1: from the left 0, from the right 1']);
+    expect(jump.evidence.find((entry) => entry.feature === 'piecewise-continuity')?.detail?.boundary)
+      .toMatchObject({ kind: 'jump', left: expect.closeTo(0, 9), right: expect.closeTo(1, 9), value: 1, jump: expect.closeTo(1, 9) });
     const hole = await analyze([item('c', String.raw`x^2\{x\ne1\}`)], ['piecewise-continuity']);
     expect(validators(hole, 'piecewise-continuity')).toEqual(['one-sided limits: removable discontinuity: both sides approach 1']);
+    // A pole at a boundary is a vertical asymptote, not "defined on one side".
+    const pole = await analyze([item('d', String.raw`\begin{cases}\frac{1}{x}&x>0\\0&x\le0\end{cases}`)], ['piecewise-continuity']);
+    expect(pole.evidence.find((entry) => entry.feature === 'piecewise-continuity')?.detail?.boundary?.kind).toBe('vertical-asymptote');
+  });
+
+  it('reports a pole inside a branch, and proves a non-polynomial root (GRAPHING-PIECEWISE2)', async () => {
+    const result = await analyze([item('q', String.raw`\begin{cases}\frac{1}{x}&x<3\\\cos(x)&x\ge3\end{cases}`)],
+      ['vertical-asymptote', 'root']);
+    expect(result.evidence.filter((entry) => entry.feature === 'vertical-asymptote').map((entry) => entry.coordinates?.x))
+      .toEqual([{ kind: 'exact', value: expect.objectContaining({ mathJson: 0 }) }]);
+    // cos x = 0 at 3π/2 ≈ 4.712 (inside x ≥ 3): proved by the interval test, not just bracketed.
+    expect(result.evidence.filter((entry) => entry.feature === 'root').map((entry) => entry.level)).toEqual(['interval-proved']);
+  });
+
+  it('finds no root where a branch only approaches 0 at an end it excludes', async () => {
+    const result = await analyze([item('j', String.raw`\begin{cases}x&x<0\\x+1&x\ge0\end{cases}`)], ['root']);
+    expect(result.evidence.filter((entry) => entry.feature === 'root')).toEqual([]);
+    const touching = await analyze([item('t', String.raw`\begin{cases}x&x\le0\\x+1&x>0\end{cases}`)], ['root']);
+    expect(touching.evidence.filter((entry) => entry.feature === 'root').map((entry) => entry.level)).toEqual(['exact-proved']);
+  });
+
+  it('reports a branch lying on the axis as stretches, never a root per sample', async () => {
+    const triangle = String.raw`y=\begin{cases}x+2&-2\le x<0\\2-x&0\le x\le2\\0&\text{otherwise}\end{cases}`;
+    const result = await analyze([item('t', triangle)], ['root', 'x-intercept']);
+    expect(result.evidence.filter((entry) => !entry.detail?.interval).map((entry) => entry.feature)).toEqual([]);
+    expect(result.evidence.map((entry) => entry.detail?.interval)).toEqual([
+      { minimum: -5, maximum: -2, minimumInclusive: true, maximumInclusive: true, minimumOpenEnded: true, maximumOpenEnded: false },
+      { minimum: 2, maximum: 5, minimumInclusive: true, maximumInclusive: true, minimumOpenEnded: false, maximumOpenEnded: true },
+    ]);
+  });
+
+  it('lists only strict extrema: the triangle\'s peak, not the corners where it goes flat', async () => {
+    const triangle = String.raw`y=\begin{cases}x+2&-2\le x<0\\2-x&0\le x\le2\\0&\text{otherwise}\end{cases}`;
+    const extrema = (await analyze([item('t', triangle)], ['extremum'])).evidence.filter((entry) => entry.feature === 'extremum');
+    expect(extrema).toHaveLength(1);
+    expect(extrema[0]!.coordinates?.y).toMatchObject({ value: expect.closeTo(2, 12) });
+    // A peak exactly between two samples (equal values either side) is still found.
+    const between = (await analyze([item('m', '-(x-0.0125)^2')], ['extremum'])).evidence.filter((entry) => entry.feature === 'extremum');
+    expect(between.map((entry) => Number((entry.coordinates?.x as { value: number }).value.toFixed(6)))).toEqual([0.0125]);
+  });
+
+  it('reports zero stretches and coinciding curves of plain functions once each', async () => {
+    const stretches = async (latexes: string[]) => (await analyze(latexes.map((latex, index) => item(`i${index}`, latex)), ['root', 'intersection']))
+      .evidence.map((entry) => entry.detail?.interval ? `${entry.feature} ${entry.detail.interval.minimum}..${entry.detail.interval.maximum}` : entry.feature);
+    expect(await stretches(['|x|-x'])).toEqual(['root 0..5']);
+    expect(await stretches([String.raw`\lfloor x\rfloor`])).toEqual(['root 0..1']);
+    expect(await stretches(['|x|', 'x'])).toEqual(['root', 'root', 'intersection 0..5']);
+  });
+
+  it('gives exact roots in closed form', async () => {
+    const result = await analyze([item('s', String.raw`\begin{cases}x^2-2&x>0\\-1&x\le0\end{cases}`)], ['root']);
+    expect(result.evidence.filter((entry) => entry.feature === 'root').map((entry) => entry.coordinates?.x))
+      .toEqual([{ kind: 'exact', value: expect.objectContaining({ canonicalLatex: String.raw`\sqrt{2}` }) }]);
   });
 
   it('finds exact roots of the branch drawn there and no fake extrema at a step', async () => {

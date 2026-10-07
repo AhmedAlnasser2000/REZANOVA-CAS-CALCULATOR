@@ -62,13 +62,18 @@ function hasLowContrast(color: string, theme: GraphAppearanceThemeV1) {
 export function GraphStylePopover({
   colorVisionMode,
   onClose,
+  onReset,
   onUpdate,
   presentation,
   theme,
+  title = 'Curve style',
   triggerRef,
 }: {
   colorVisionMode: 'standard' | 'color-vision-friendly';
   onClose: () => void;
+  /** A piecewise branch's style can return to its default colour. */
+  onReset?: () => void;
+  title?: string;
   /** The row's colour swatch: pressing it toggles the popover, and focus returns to it on Escape or Close. */
   triggerRef: RefObject<HTMLButtonElement | null>;
   onUpdate: (presentation: GraphItemPresentationV2) => void;
@@ -84,9 +89,10 @@ export function GraphStylePopover({
     panelRef.current?.focus({ preventScroll: true });
   }, []);
   const patch = (next: Partial<GraphItemPresentationV2>) => onUpdate({ ...value, ...next });
-  return <div aria-label="Curve style" className="graph-style-popover" ref={panelRef} role="dialog" tabIndex={-1}>
-    <div className="graph-style-heading"><strong>Curve style</strong>
-      <button aria-label="Close curve style" onClick={() => { onClose(); triggerRef.current?.focus(); }} type="button">Close</button></div>
+  return <div aria-label={title} className="graph-style-popover" ref={panelRef} role="dialog" tabIndex={-1}>
+    <div className="graph-style-heading"><strong>{title}</strong>
+      {onReset ? <button onClick={onReset} type="button">Default</button> : null}
+      <button aria-label={`Close ${title.toLowerCase()}`} onClick={() => { onClose(); triggerRef.current?.focus(); }} type="button">Close</button></div>
     <div aria-label="Curve palette" className="graph-style-palette" role="group">
       {GRAPH_COLOR_TOKENS.map((token) => {
         const candidate: GraphItemPresentationV2 = { ...value, color: { kind: 'token', token } };

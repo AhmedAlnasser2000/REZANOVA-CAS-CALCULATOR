@@ -233,6 +233,12 @@ export type GraphItemSpecV1 =
       piecewise: GraphPiecewiseSpecV1;
       visible: boolean;
       presentation: GraphItemPresentation;
+      /**
+       * Per-branch style overrides keyed by branch ID (`otherwise` for the
+       * otherwise branch). Kept beside the mathematics so a recolour never
+       * resamples; a branch without an entry gets its own palette colour.
+       */
+      branchPresentation?: Record<string, GraphItemPresentationV2>;
     }
   | {
       version: 1;
@@ -644,7 +650,8 @@ export type GraphRendererPresentationFrameV2 = {
   contentRevision: number;
   theme: GraphAppearanceThemeV1;
   colorVisionMode: 'standard' | 'color-vision-friendly';
-  items: Array<{ itemId: string; presentation: GraphItemPresentation }>;
+  /** `branches` holds each piecewise branch's resolved style, keyed by branch ID. */
+  items: Array<{ itemId: string; presentation: GraphItemPresentation; branches?: Record<string, GraphItemPresentation> }>;
 };
 
 export type GraphRendererPresentationFrame =
@@ -727,6 +734,13 @@ export type GraphPiecewiseConditionEvidenceV1 = {
     minimumInclusive: boolean;
     maximumInclusive: boolean;
   }>;
+  /** Boundaries known in closed form, by value (`√2` for 1.414…), for wording intervals exactly. */
+  exactValues?: Array<{ value: number; label: string }>;
+  /** Where each branch is drawn in view after first-match-wins (the otherwise branch is drawn on `uncoveredGaps`). */
+  drawnIntervals?: Array<{
+    branchId: string;
+    intervals: Array<{ minimum: number; maximum: number; minimumInclusive: boolean; maximumInclusive: boolean }>;
+  }>;
   boundaries: Array<{
     value: number;
     includedBranchIds: string[];
@@ -754,7 +768,7 @@ export type GraphSamplingItemEvidenceV1 = {
 
 export type GraphClassifiedItemSnapshotV2 = {
   [Kind in Extract<GraphItemSpecV1['kind'], 'relation' | 'piecewise' | 'point-set'>]:
-    Omit<Extract<GraphItemSpecV1, { kind: Kind }>, 'presentation'>
+    Omit<Extract<GraphItemSpecV1, { kind: Kind }>, 'presentation' | 'branchPresentation'>
 }[Extract<GraphItemSpecV1['kind'], 'relation' | 'piecewise' | 'point-set'>];
 
 export type GraphSampleRequestV4 = {
@@ -858,6 +872,31 @@ export type GraphAnalysisEvidenceV1 = {
     kind?: 'highest' | 'lowest' | 'leftmost' | 'rightmost' | 'start' | 'end';
     included?: boolean;
     parameter?: { symbol: string; value: number };
+    /**
+     * A stretch rather than a point: a root found on a whole interval (the
+     * curve lies on the x-axis there) or an intersection where two curves lie
+     * on top of each other. Ends at the edge of the analysed window are
+     * open-ended (the stretch may go on beyond it).
+     */
+    interval?: {
+      minimum: number;
+      maximum: number;
+      minimumInclusive: boolean;
+      maximumInclusive: boolean;
+      minimumOpenEnded: boolean;
+      maximumOpenEnded: boolean;
+    };
+    /** Points along the part two curves share (any kinds: implicit, parametric, polar), where an x-interval cannot describe it. */
+    shared?: Array<{ x: number; y: number }>;
+    /** A piecewise boundary: how the function behaves there, with its one-sided limits and value where they exist. */
+    boundary?: {
+      kind: 'continuous' | 'jump' | 'removable' | 'vertical-asymptote' | 'one-sided';
+      left?: number;
+      right?: number;
+      value?: number;
+      /** right − left at a jump. */
+      jump?: number;
+    };
   };
   conditions: CanonicalMathValue[];
   basis: {

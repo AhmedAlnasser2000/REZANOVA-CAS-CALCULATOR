@@ -110,6 +110,19 @@ export function useWorkspaceInstancesRuntime(
     return ids;
   }, [factoryOptions]);
 
+  const graphTabSequence = useRef(0);
+  /** A new Graph tab whose session `build` makes from the tab's ID and title (a gallery example opened in its own tab). */
+  const openGraphTab = useCallback((build: (instanceId: WorkspaceInstanceId, title: string) => WorkspaceInstanceStateSlot) => {
+    const id = `workspace.graphing.${Date.now().toString(36)}.${++graphTabSequence.current}`;
+    setState((previous) => {
+      const options = { ...factoryOptions(), idFactory: () => id };
+      const next = createBlankWorkspaceInstance(previous, GRAPHING_PAGE_WORKSPACE_KIND, options);
+      const instance = next.instances.find((candidate) => candidate.id === id);
+      return instance ? updateWorkspaceInstanceSurfaceState(next, id, build(id, instance.title), options) : next;
+    });
+    return id;
+  }, [factoryOptions]);
+
   const renameInstance = useCallback((instanceId: WorkspaceInstanceId, title: string) => {
     setState((currentState) =>
       renameWorkspaceInstance(currentState, instanceId, title, factoryOptions()));
@@ -219,7 +232,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     openFormulaViewerInstance,
-    openAppPageInstance,
+    openAppPageInstance, openGraphTab,
     renameInstance,
     retargetActiveWorkspaceKind,
     syncSingletonMode,
@@ -241,7 +254,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     openFormulaViewerInstance,
-    openAppPageInstance,
+    openAppPageInstance, openGraphTab,
     renameInstance,
     retargetActiveWorkspaceKind,
     state.activeInstanceId,

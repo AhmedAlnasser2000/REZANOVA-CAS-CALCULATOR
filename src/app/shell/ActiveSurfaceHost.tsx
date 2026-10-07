@@ -80,6 +80,8 @@ type ActiveSurfaceHostProps = {
   onResetHistory: () => void;
   onStopPendingHistoryTicket?: (ticket: PendingHistoryTicket) => void;
   onUpdateGraphSurfaceState: (instanceId: string, state: GraphWorkspaceSessionStateV7) => void;
+  /** Opens a new Graph tab with the session `build` makes for it (gallery examples). */
+  onOpenGraphTab?: (build: (instanceId: string, title: string) => GraphWorkspaceSessionStateV7) => void;
   onUpdateNotebookSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   pendingHistory: PendingHistoryTicket[];
   renderCalculatorSurface: () => ReactNode;
@@ -107,6 +109,7 @@ export function ActiveSurfaceHost({
   onResetHistory,
   onStopPendingHistoryTicket,
   onUpdateGraphSurfaceState,
+  onOpenGraphTab,
   onUpdateNotebookSurfaceState,
   pendingHistory,
   renderCalculatorSurface,
@@ -259,6 +262,7 @@ export function ActiveSurfaceHost({
             key={activeInstance.id}
             gpuRendering={settings.graphGpuRendering}
             onUpdateSession={(state) => onUpdateGraphSurfaceState(activeInstance.id, state)}
+            {...(onOpenGraphTab ? { onOpenGraphTab } : {})}
             session={activeInstance.surfaceState}
             workspaceContext={workspaceContext}
           />

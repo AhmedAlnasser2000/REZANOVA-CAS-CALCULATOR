@@ -47,7 +47,11 @@ export type PtxComplexRootsSolution = {
   degree: number | null;
 };
 
-export type PtxPolynomialRoot = { value: number; exact: boolean; label: string | null; multiplicity: number };
+export type PtxPolynomialRoot = {
+  value: number; exact: boolean; label: string | null; multiplicity: number;
+  /** The exact root as LaTeX and MathJSON, when it has a closed form (rational or quadratic surd). */
+  form?: { latex: string; mathJson: number | unknown[] };
+};
 
 export type PtxSolverPort = {
   readonly id: string;
@@ -73,7 +77,13 @@ export type PtxSolverPort = {
   regionEdges(relation: GraphRelationIR, parameters: Readonly<Record<string, number>>):
     Array<{ index: number; F: PtxPlaneFunction; operator: GraphInequalityComparator }> | null;
   /** A piecewise curve as one function: the first branch whose condition holds (or `otherwise`); undefined where none does. */
-  piecewiseFunction(piecewise: GraphPiecewiseSpecV1, variable: string, parameters: Readonly<Record<string, number>>): PtxRealFunction | null;
+  /**
+   * The first-match piecewise function. Given every condition boundary in the
+   * range of interest (a complete, solved partition), it also encloses ranges
+   * of the function, so interval proofs work on it.
+   */
+  piecewiseFunction(piecewise: GraphPiecewiseSpecV1, variable: string, parameters: Readonly<Record<string, number>>,
+    options?: { boundaries?: readonly number[] }): PtxRealFunction | null;
   /** F(x, y) = left − right for a real relation in x and y. */
   planeFunction(left: GraphExpressionIR, right: GraphExpressionIR, parameters: Readonly<Record<string, number>>): PtxPlaneFunction | null;
   /**

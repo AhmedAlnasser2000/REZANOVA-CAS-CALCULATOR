@@ -4,18 +4,23 @@ import {
   createGraphExpressionEvaluator,
   defaultGraphItemPresentation,
   adaptGraphExpressionMathJson,
+  GRAPH_PIECEWISE_OTHERWISE_KEY,
+  graphPiecewiseBranchKeys,
   parseGraphConditionMathJson,
   parseGraphLatexToStructuralMathJson,
   serializeGraphMathJsonToLatex,
   type GraphConditionIR,
   type GraphDocumentV4,
+  type GraphExpressionIR,
   type GraphItemPresentationV2,
   type GraphItemSpecV1,
   type GraphItemSpecV2,
   type GraphNoteItemV1,
+  type GraphRelationIR,
   type GraphSourceV1,
   type GraphStopReason,
 } from '../../lib/graphing';
+import type { GraphPiecewiseAuthoringDraftV1 } from './graph-workspace-session';
 
 export function graphItemSource(item: GraphItemSpecV2) {
   return 'source' in item
@@ -38,6 +43,11 @@ export function graphPiecewiseUsesBranchEditor(item: GraphItemSpecV2 | null | un
       .every((relation) => relation.kind === 'explicit-y' || relation.kind === 'explicit-x');
 }
 
+/** A real curve y = f(x) with its opt-in complex values shown. */
+export function complexValuesOn(item: GraphItemSpecV1) {
+  return item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues === true;
+}
+
 export function graphItemSourceLatex(item: GraphItemSpecV2) {
   return graphItemSource(item)?.sourceLatex ?? '';
 }
@@ -46,14 +56,18 @@ function expressionLatex(expression: { mathJson: Parameters<typeof serializeGrap
   return serializeGraphMathJsonToLatex(expression.mathJson);
 }
 
+/** Comparison operators as they are written (≤ rather than <=). */
+const COMPARATOR_LATEX: Record<string, string> = { '<=': '\\le ', '>=': '\\ge ', '!=': '\\ne ' };
+const comparatorLatex = (operator: string) => COMPARATOR_LATEX[operator] ?? operator;
+
 export function graphConditionLatex(condition: GraphConditionIR): string {
   if (condition.kind === 'constant') return condition.value ? '\\mathrm{true}' : '\\mathrm{false}';
   if (condition.kind === 'comparison') {
-    return `${expressionLatex(condition.left)}${condition.operator}${expressionLatex(condition.right)}`;
+    return `${expressionLatex(condition.left)}${comparatorLatex(condition.operator)}${expressionLatex(condition.right)}`;
   }
   if (condition.kind === 'chain') {
     return condition.operands.map((operand, index) => (
-      `${index ? condition.operators[index - 1] : ''}${expressionLatex(operand)}`
+      `${index ? comparatorLatex(condition.operators[index - 1]!) : ''}${expressionLatex(operand)}`
     )).join('');
   }
   if (condition.kind === 'and') return condition.clauses.map(graphConditionLatex).join('\\land ');
@@ -132,15 +146,47 @@ export function graphPiecewiseDraftBranchFeedback(input: {
   return feedback;
 }
 
+/** The branch editor's draft of an existing piecewise item, otherwise included. */
+export function graphPiecewiseDraftFromItem(item: Extract<GraphItemSpecV1, { kind: 'piecewise' }>): GraphPiecewiseAuthoringDraftV1 {
+  const otherwise = item.piecewise.otherwise;
+  return {
+    version: 1,
+    draftId: `${item.itemId}.piecewise-draft`,
+    itemId: item.itemId,
+    mode: 'replace',
+    target: item.piecewise.branches[0]?.relation.kind === 'explicit-x' ? 'x' : 'y',
+    branches: item.piecewise.branches.map((branch) => ({
+      branchId: branch.branchId,
+      valueLatex: graphPiecewiseBranchValueLatex(branch),
+      conditionLatex: graphConditionLatex(branch.condition),
+    })),
+    ...(otherwise && (otherwise.kind === 'explicit-y' || otherwise.kind === 'explicit-x')
+      ? { otherwiseLatex: expressionLatex(otherwise.rhs) } : {}),
+  };
+}
+
+/** Open replace drafts re-read from a restored (undone or redone) document, so the editor never shows stale branches. */
+export function refreshedGraphPiecewiseDrafts(drafts: GraphPiecewiseAuthoringDraftV1[], document: GraphDocumentV4) {
+  return drafts.flatMap((draft) => {
+    if (draft.mode !== 'replace') return [draft];
+    const item = document.items.find((candidate) => candidate.itemId === draft.itemId);
+    return item?.kind === 'piecewise' ? [graphPiecewiseDraftFromItem(item)] : [];
+  });
+}
+
 export function buildGraphPiecewiseItemFromAuthoringDraft(input: {
   itemId: string;
   sourceRevision: number;
   index: number;
   target: 'y' | 'x';
   branches: Array<{ branchId: string; valueLatex: string; conditionLatex: string }>;
+  otherwiseLatex?: string;
   previous?: Extract<GraphItemSpecV1, { kind: 'piecewise' }>;
 }): Extract<GraphItemSpecV1, { kind: 'piecewise' }> | null {
   const branches: Extract<GraphItemSpecV1, { kind: 'piecewise' }>['piecewise']['branches'] = [];
+  const relationOf = (expression: GraphExpressionIR): GraphRelationIR => input.target === 'x'
+    ? { kind: 'explicit-x', rhs: expression }
+    : { kind: 'explicit-y', origin: 'authored-relation', rhs: expression };
   for (const branch of input.branches) {
     if (!branch.valueLatex.trim() || !branch.conditionLatex.trim()) return null;
     const parsedValue = parseGraphLatexToStructuralMathJson(branch.valueLatex);
@@ -151,21 +197,32 @@ export function buildGraphPiecewiseItemFromAuthoringDraft(input: {
     if (!value.ok || !condition.ok) return null;
     branches.push({
       branchId: branch.branchId,
-      relation: input.target === 'x'
-        ? { kind: 'explicit-x', rhs: value.expression }
-        : { kind: 'explicit-y', origin: 'authored-relation', rhs: value.expression },
+      relation: relationOf(value.expression),
       condition: condition.condition,
     });
   }
-  if (branches.length < 2) return null;
+  let otherwise: GraphRelationIR | undefined;
+  if (input.otherwiseLatex?.trim()) {
+    const parsed = parseGraphLatexToStructuralMathJson(input.otherwiseLatex);
+    if (!parsed.ok) return null;
+    const value = adaptGraphExpressionMathJson(parsed.mathJson, '$.guided.otherwise');
+    if (!value.ok) return null;
+    otherwise = relationOf(value.expression);
+  }
+  // At least one condition, and two pieces in all (a lone branch is a restriction, typed as f(x){x>0}).
+  if (branches.length < 1 || branches.length + (otherwise ? 1 : 0) < 2) return null;
+  const keys = new Set([...branches.map((branch) => branch.branchId), ...(otherwise ? [GRAPH_PIECEWISE_OTHERWISE_KEY] : [])]);
+  const branchPresentation = Object.fromEntries(Object.entries(input.previous?.branchPresentation ?? {})
+    .filter(([key]) => keys.has(key)));
   const item: Extract<GraphItemSpecV1, { kind: 'piecewise' }> = {
     version: 1,
     kind: 'piecewise',
     itemId: input.itemId,
     source: { sourceKind: 'mathlive-latex', sourceLatex: '', sourceRevision: input.sourceRevision },
-    piecewise: { version: 1, branches },
+    piecewise: { version: 1, branches, ...(otherwise ? { otherwise } : {}) },
     visible: input.previous?.visible ?? true,
     presentation: input.previous?.presentation ?? defaultGraphItemPresentation(input.index),
+    ...(Object.keys(branchPresentation).length ? { branchPresentation } : {}),
   };
   item.source.sourceLatex = presentationPiecewiseLatex(item);
   return item;
@@ -176,6 +233,10 @@ function presentationPiecewiseLatex(item: Extract<GraphItemSpecV1, { kind: 'piec
   const rows = item.piecewise.branches.map((branch) => (
     `${graphPiecewiseBranchValueLatex(branch)}&${graphConditionLatex(branch.condition)}`
   ));
+  const otherwise = item.piecewise.otherwise;
+  if (otherwise && (otherwise.kind === 'explicit-y' || otherwise.kind === 'explicit-x')) {
+    rows.push(`${expressionLatex(otherwise.rhs)}&\\text{otherwise}`);
+  }
   return `${target}=\\begin{cases}${rows.join('\\\\')}\\end{cases}`;
 }
 
@@ -328,6 +389,12 @@ export function buildVisibleGraphItem(input: {
       piecewise: classified.piecewise,
       visible,
       presentation: previousPresentation,
+      // Re-typing keeps branch colours whose branch still exists (typed branches are numbered by position).
+      ...(input.previous?.kind === 'piecewise' && input.previous.branchPresentation ? (() => {
+        const keys = new Set(graphPiecewiseBranchKeys(classified.piecewise));
+        const kept = Object.entries(input.previous.branchPresentation).filter(([key]) => keys.has(key));
+        return kept.length ? { branchPresentation: Object.fromEntries(kept) } : {};
+      })() : {}),
     };
   }
 
@@ -507,6 +574,27 @@ export function replaceGraphDocumentPresentation(input: {
     items: input.document.items.map((candidate) => candidate.itemId === input.itemId
       ? { ...candidate, presentation: input.presentation }
       : candidate),
+  } satisfies GraphDocumentV4;
+}
+
+/** One piecewise branch's style override; `null` returns the branch to its default colour. */
+export function replaceGraphPiecewiseBranchPresentation(input: {
+  document: GraphDocumentV4;
+  itemId: string;
+  branchKey: string;
+  presentation: GraphItemPresentationV2 | null;
+}) {
+  const item = input.document.items.find((candidate) => candidate.itemId === input.itemId);
+  if (!item || item.kind !== 'piecewise') return null;
+  const { [input.branchKey]: _previous, ...others } = item.branchPresentation ?? {};
+  void _previous;
+  const branchPresentation = input.presentation ? { ...others, [input.branchKey]: input.presentation } : others;
+  const next = { ...item, branchPresentation };
+  if (Object.keys(branchPresentation).length === 0) delete (next as Partial<typeof next>).branchPresentation;
+  return {
+    ...input.document,
+    contentRevision: input.document.contentRevision + 1,
+    items: input.document.items.map((candidate) => candidate.itemId === input.itemId ? next : candidate),
   } satisfies GraphDocumentV4;
 }
 

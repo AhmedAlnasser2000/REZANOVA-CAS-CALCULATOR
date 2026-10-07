@@ -1,19 +1,14 @@
-import type {
-  GraphAnalysisEvidenceV1,
-  GraphFeatureValueV1,
-  GraphPinnedAnnotationV2,
+import {
+  graphExactMathJsonNumber,
+  type GraphAnalysisEvidenceV1,
+  type GraphFeatureValueV1,
+  type GraphPinnedAnnotationV2,
 } from '../../lib/graphing';
 
 export function graphFeatureNumber(value: GraphFeatureValueV1 | undefined) {
   if (!value) return undefined;
   if (value.kind === 'approximate') return value.value;
-  if (typeof value.value.mathJson === 'number') return value.value.mathJson;
-  const node = value.value.mathJson;
-  if (Array.isArray(node) && node[0] === 'Rational'
-    && typeof node[1] === 'number' && typeof node[2] === 'number' && node[2] !== 0) {
-    return node[1] / node[2];
-  }
-  return undefined;
+  return graphExactMathJsonNumber(value.value.mathJson);
 }
 
 export function graphAnalysisAnnotationId(entry: GraphAnalysisEvidenceV1) {

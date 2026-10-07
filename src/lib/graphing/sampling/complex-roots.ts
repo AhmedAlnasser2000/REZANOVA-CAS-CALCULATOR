@@ -26,7 +26,11 @@ export type GraphComplexRoot = {
   exact: boolean;
   label: string | null;
   multiplicity: number;
+  /** A real exact root in closed form (rational or a quadratic surd), for exact answers. */
+  form?: GraphExactRealForm;
 };
+
+export type GraphExactRealForm = { latex: string; mathJson: number | unknown[] };
 
 export type GraphComplexRootsSolution = {
   roots: GraphComplexRoot[];
@@ -57,9 +61,33 @@ function formatGaussian(value: GraphGaussian) {
   return `${formatRational(value.re)} ${imaginary.startsWith(MINUS) ? MINUS : '+'} ${imaginary.replace(MINUS, '')}`;
 }
 
+const safe = (value: bigint) => value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= -BigInt(Number.MAX_SAFE_INTEGER);
+
+/** A rational as MathJSON and LaTeX (null when too large to write as safe integers). */
+function rationalForm(value: GraphRational): GraphExactRealForm | null {
+  if (!safe(value.n) || !safe(value.d)) return null;
+  const n = Number(value.n); const d = Number(value.d);
+  if (d === 1) return { latex: String(n), mathJson: n };
+  return { latex: `${n < 0 ? '-' : ''}\\frac{${Math.abs(n)}}{${d}}`, mathJson: ['Rational', n, d] };
+}
+
 function exactRoot(value: GraphGaussian, label = formatGaussian(value)): GraphComplexRoot {
   const point = gToComplex(value);
-  return { re: point.re, im: point.im, exact: true, label, multiplicity: 1 };
+  const form = qIsZero(value.im) ? rationalForm(value.re) : null;
+  return { re: point.re, im: point.im, exact: true, label, multiplicity: 1, ...(form ? { form } : {}) };
+}
+
+/** center ± scale·√m as MathJSON and LaTeX. */
+function surdForm(center: GraphRational, scale: GraphRational, m: bigint, sign: 1 | -1): GraphExactRealForm | null {
+  const c = rationalForm(center); const k = rationalForm(scale);
+  if (!c || !k || !safe(m)) return null;
+  const radical = ['Sqrt', Number(m)];
+  const term: unknown[] = k.mathJson === 1 ? radical : ['Multiply', k.mathJson, radical];
+  const signed = sign > 0 ? term : ['Negate', term];
+  const n = scale.n < 0n ? -scale.n : scale.n;
+  const termLatex = scale.d === 1n ? `${n === 1n ? '' : n}\\sqrt{${m}}` : `\\frac{${n === 1n ? '' : n}\\sqrt{${m}}}{${scale.d}}`;
+  if (qIsZero(center)) return { latex: `${sign > 0 ? '' : '-'}${termLatex}`, mathJson: signed };
+  return { latex: `${c.latex}${sign > 0 ? '+' : '-'}${termLatex}`, mathJson: ['Add', c.mathJson, signed] };
 }
 
 /** k and m with n = k^2 m, m squarefree; null when n is too large to factor quickly. */
@@ -160,13 +188,17 @@ function quadraticRoots(poly: GraphExactPolynomial): GraphComplexRoot[] | null {
   const offsetValue = qToNumber(absScale) * Math.sqrt(Number(split.m));
   const centerText = qIsZero(center) ? '' : formatRational(center);
   const term = negative ? `${surd.includes('/') ? `(${surd})` : surd}i` : surd;
-  return [1, -1].map((sign) => ({
-    re: qToNumber(center) + (negative ? 0 : sign * offsetValue),
-    im: negative ? sign * offsetValue : 0,
-    exact: true,
-    label: centerText ? `${centerText} ${sign > 0 ? '+' : MINUS} ${term}` : `${sign > 0 ? '' : MINUS}${term}`,
-    multiplicity: 1,
-  }));
+  return ([1, -1] as const).map((sign) => {
+    const form = negative ? null : surdForm(center, absScale, split.m, sign);
+    return {
+      re: qToNumber(center) + (negative ? 0 : sign * offsetValue),
+      im: negative ? sign * offsetValue : 0,
+      exact: true,
+      label: centerText ? `${centerText} ${sign > 0 ? '+' : MINUS} ${term}` : `${sign > 0 ? '' : MINUS}${term}`,
+      multiplicity: 1,
+      ...(form ? { form } : {}),
+    };
+  });
 }
 
 function evaluatePolynomial(coefficients: ComplexValue[], z: ComplexValue) {
@@ -219,6 +251,8 @@ function mergeMultiplicities(roots: GraphComplexRoot[]) {
 function binomialOf(poly: GraphExactPolynomial) {
   const degree = poly.length - 1;
   if (degree < 2 || !poly.slice(1, -1).every(gIsZero)) return null;
+  // z² = c with c real reads better as a surd (√2, i√3/2) than in polar form.
+  if (degree === 2) { const quadratic = quadraticRoots(poly); if (quadratic) return quadratic; }
   return binomialRoots(degree, gDiv(gNeg(poly[0]!), poly[degree]!));
 }
 

@@ -5,6 +5,8 @@ import {
 } from 'react';
 import {
   buildGraphGridScene,
+  graphPiecewiseBranchLabel,
+  graphSceneBranchKey,
   GraphSvgReferenceRenderer,
   loadGraphComplexTraceEvaluator,
   ptxNumber,
@@ -33,6 +35,7 @@ import { useGraphRealFieldGpu } from './useGraphRealFieldGpu';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 import type { PtxAsymptoteLine, PtxDot } from './ptx/usePtxPointsOfInterest';
 import { placeAsymptotes } from './ptx/ptx-asymptote-layer';
+import { placeStretches, type PtxStretch } from './ptx/ptx-stretch-layer';
 import { ptxEndpointDots, ptxNextDot, ptxRealRefiners, ptxRealTraceBadge, ptxRealTraceText, ptxRefineRealTrace } from './ptx/ptx-real-trace';
 import { PTX_SNAP_RADIUS_PIXELS } from './ptx/ptx-snap';
 import { ptxRegionAt, ptxRegions } from './ptx/ptx-region-trace';
@@ -55,6 +58,8 @@ type Props = {
   ptxAsymptotes?: readonly PtxAsymptoteLine[];
   /** Points of interest of the selected item. */
   ptxDots?: readonly PtxDot[];
+  /** Stretches of the selected item: where it lies on the x-axis or on another curve. */
+  ptxStretches?: readonly PtxStretch[];
   /** A point traced in the Complex pane, marked here at (Re z, Im z). */
   ptxMirror?: PtxTracedPoint;
   scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV2 | null;
@@ -83,6 +88,7 @@ function asSpatialScene(scene: GraphSpatialSceneRuntimeV2 | SampledSceneRuntimeV
 
 const NO_DOTS: readonly PtxDot[] = [];
 const NO_LINES: readonly PtxAsymptoteLine[] = [];
+const NO_STRETCHES: readonly PtxStretch[] = [];
 
 /** How far around a sampled parameter to search: a few sample steps of the path. */
 function parameterSearchSpan(values: Float64Array | undefined) {
@@ -177,13 +183,15 @@ function surfaceTargetAtScreen(
 export function GraphSvgViewport({
   grid = { kind: 'cartesian', major: true, minor: true, axisNumbers: true, angleLabels: false, unitCircle: false },
   document = null, gestureLane = null, gpuRendering = 'auto', itemRoutes, onSizeChange, onTraceItemChange, onViewportChange, pending,
-  presentation = { version: 1, contentRevision: 0, items: [] }, ptxAsymptotes = NO_LINES, ptxDots = NO_DOTS, ptxMirror = null, scene, viewport, sceneViewport = viewport,
+  presentation = { version: 1, contentRevision: 0, items: [] }, ptxAsymptotes = NO_LINES, ptxDots = NO_DOTS, ptxStretches = NO_STRETCHES, ptxMirror = null, scene, viewport, sceneViewport = viewport,
 }: Props) {
   const mirrorRef = useRef<HTMLDivElement | null>(null);
   const mirrorPointRef = useRef(ptxMirror);
   const dotsLayerRef = useRef<HTMLDivElement | null>(null);
   const asymptoteLayerRef = useRef<SVGSVGElement | null>(null);
   const asymptotesRef = useRef({ lines: ptxAsymptotes, presentation });
+  const stretchLayerRef = useRef<SVGSVGElement | null>(null);
+  const stretchesRef = useRef({ stretches: ptxStretches, presentation });
   const dotsRef = useRef(ptxDots);
   // What a trace can snap to: the drawn dots plus piecewise end circles already in the scene.
   const snapDotsRef = useRef<readonly PtxDot[]>(ptxDots);
@@ -204,6 +212,7 @@ export function GraphSvgViewport({
   const traceFrameRef = useRef<number | null>(null);
   const viewFrameRef = useRef<number | null>(null);
   const sceneRef = useRef(spatialScene); const routesRef = useRef(itemRoutes);
+  const documentRef = useRef(document);
   const pendingRef = useRef(pending); const viewportRef = useRef(viewport);
   const liveViewportRef = useRef(viewport); const gridRef = useRef(grid);
   const sizeRef = useRef<Size>({ width: 960, height: 600 });
@@ -244,6 +253,8 @@ export function GraphSvgViewport({
     placeMirror(mirrorRef.current, mirrorPointRef.current, liveViewport, sizeRef.current);
     placeDots(dotsLayerRef.current, dotsRef.current, liveViewport, sizeRef.current);
     placeAsymptotes(asymptoteLayerRef.current, asymptotesRef.current.lines, asymptotesRef.current.presentation, liveViewport, sizeRef.current);
+    placeStretches(stretchLayerRef.current, stretchesRef.current.stretches, stretchesRef.current.presentation, liveViewport, sizeRef.current,
+      sceneRef.current?.planarScene.paths ?? []);
     if (hostRef.current) hostRef.current.dataset.viewport = `${liveViewport.xMin},${liveViewport.xMax},${liveViewport.yMin},${liveViewport.yMax}`;
     const gridScene = buildGraphGridScene({ viewport: liveViewport, cssSize: sizeRef.current,
       policy: gridRef.current, previousHysteresisKey: gridHysteresisRef.current });
@@ -316,6 +327,11 @@ export function GraphSvgViewport({
     asymptotesRef.current = { lines: ptxAsymptotes, presentation };
     placeAsymptotes(asymptoteLayerRef.current, ptxAsymptotes, presentation, liveViewportRef.current, sizeRef.current);
   }, [presentation, ptxAsymptotes]);
+
+  useLayoutEffect(() => {
+    stretchesRef.current = { stretches: ptxStretches, presentation };
+    placeStretches(stretchLayerRef.current, ptxStretches, presentation, liveViewportRef.current, sizeRef.current, spatialScene?.planarScene.paths ?? []);
+  }, [presentation, ptxStretches, spatialScene]);
 
   useLayoutEffect(() => {
     dotsRef.current = ptxDots;
@@ -398,13 +414,27 @@ export function GraphSvgViewport({
       return;
     }
     label.classList.remove('is-complex-part');
+    // A piecewise branch is named, and the marker and callout take its colour.
+    const piecewise = documentRef.current?.items.find((item) => item.itemId === target?.itemId);
+    const branchKey = target.pathId ? graphSceneBranchKey(target.itemId, target.pathId) : undefined;
+    // Only an item of several pieces names them; a restriction such as x²{x > 0} has one.
+    const branchName = branchKey && piecewise?.kind === 'piecewise'
+      && piecewise.piecewise.branches.length + (piecewise.piecewise.otherwise ? 1 : 0) > 1
+      ? graphPiecewiseBranchLabel(piecewise.piecewise, branchKey) : null;
+    const stroke = target.pathId
+      ? hostRef.current?.querySelector(`[data-path-id="${CSS.escape(target.pathId)}"]`)?.getAttribute('stroke') : null;
+    for (const node of [marker, label]) {
+      if (branchName && stroke) node.style.setProperty('--graph-trace-accent', stroke);
+      else node.style.removeProperty('--graph-trace-accent');
+    }
     const badge = certified ? ptxRealTraceBadge(certified) : null;
     if (badge) { label.dataset.ptxBadge = badge.badge; label.title = badge.detail; } else { delete label.dataset.ptxBadge; label.removeAttribute('title'); }
     const text = certified ? ptxRealTraceText(certified)
       : `(${formatTraceNumber(target.world.x)}, ${formatTraceNumber(target.world.y)}${target.world.z === undefined ? '' : `, ${formatTraceNumber(target.world.z)}`})`;
     const route = routesRef.current[target.itemId];
     label.textContent = text + (!certified?.parameter && !certified?.dot && target.parameterValue !== undefined && typeof route === 'object'
-      ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '');
+      ? ` · ${route.parameterSymbol}=${formatTraceNumber(target.parameterValue)}` : '')
+      + (branchName ? ` · ${branchName.toLowerCase()}` : '');
     if (announce) label.setAttribute('aria-label', `Trace point ${text}`); else label.removeAttribute('aria-label');
   }, [hideTrace, onTraceItemChange]);
 
@@ -426,6 +456,7 @@ export function GraphSvgViewport({
     });
     return () => { live = false; };
   }, [document]);
+  useEffect(() => { documentRef.current = document; }, [document]);
 
   useEffect(() => {
     sceneRef.current = spatialScene; routesRef.current = itemRoutes; pendingRef.current = pending;
@@ -664,6 +695,7 @@ export function GraphSvgViewport({
     <div className="graph-svg-renderer-host" ref={rendererHostRef} />
     <div className="graph-trace-marker" hidden ref={traceMarkerRef} />
     <svg aria-hidden="true" className="graph-ptx-asymptotes" data-testid="graph-ptx-asymptotes" ref={asymptoteLayerRef} />
+    <svg aria-hidden="true" className="graph-ptx-stretches" data-testid="graph-ptx-stretches" ref={stretchLayerRef} />
     <div className="graph-ptx-dots" ref={dotsLayerRef} />
     <div className="graph-ptx-mirror" data-testid="graph-ptx-mirror" hidden ref={mirrorRef} />
     <div aria-live="polite" className="graph-trace-callout" hidden ref={traceLabelRef} role="status" />

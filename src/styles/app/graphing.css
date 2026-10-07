@@ -1,4 +1,6 @@
 @import './graphing-appearance.css';
+@import './graphing-piecewise.css';
+@import './graphing-examples.css';
 @import './graphing-three.css';
 @import './graphing-analyze.css';
 
@@ -640,97 +642,34 @@
   margin-top: 1px;
 }
 
-.graph-piecewise-editor {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--graph-line);
-  border-radius: 8px;
-  background: #0a1719;
-}
-
-.graph-piecewise-expanded-editor {
+/* An information note (a piecewise gap): calm, with an optional action. */
+.graph-expression-note {
   grid-column: 2 / -1;
-  min-width: 0;
-  margin-top: 2px;
-}
-
-.graph-piecewise-expanded-editor > .graph-piecewise-editor {
-  grid-column: auto;
-}
-
-.graph-piecewise-editor > strong {
-  color: #c9d9cf;
-  font-size: 0.78rem;
-}
-
-.graph-piecewise-draft-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  color: #d7e7dc;
+  gap: 6px 8px;
+  margin: -2px 0 0;
+  color: #9fb8ad;
+  font-size: 0.76rem;
+  line-height: 1.35;
 }
 
-.graph-piecewise-draft-note {
-  margin: 0;
-  color: #82998e;
-  font-size: 0.72rem;
-}
+.graph-expression-note svg { flex: 0 0 auto; color: #7fb0d8; }
 
-.graph-piecewise-branch {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  gap: 5px;
-}
-
-.graph-piecewise-branch-index { grid-column: 1; grid-row: 1; }
-.graph-piecewise-branch > .graph-piecewise-field:first-of-type { grid-column: 2; grid-row: 1; }
-.graph-piecewise-if { grid-column: 1; grid-row: 2; }
-.graph-piecewise-branch > .graph-piecewise-field:last-of-type { grid-column: 2; grid-row: 2; }
-.graph-piecewise-branch-actions { grid-column: 3; grid-row: 1 / 3; }
-
-.graph-piecewise-branch-index,
-.graph-piecewise-if {
-  color: #82998e;
-  font-size: 0.7rem;
-}
-
-.graph-piecewise-field {
-  min-width: 0;
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  border: 1px solid var(--graph-line);
+.graph-expression-note button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--graph-line-strong);
   border-radius: 5px;
-  background: #071214;
-  color: #edf7ef;
-  font-size: calc(0.82rem * var(--math-scale, 1));
-}
-
-.graph-piecewise-field::part(virtual-keyboard-toggle),
-.graph-piecewise-field::part(menu-toggle) { display: none; }
-
-.graph-piecewise-branch-actions { display: flex; gap: 3px; }
-.graph-piecewise-branch-feedback {
-  grid-column: 2 / -1;
-  margin: 0;
-  color: #e6ad5f;
+  background: transparent;
+  color: #cfe3d7;
   font-size: 0.72rem;
-  line-height: 1.3;
 }
-.graph-mini-button { width: 24px; height: 24px; padding: 0; }
-.graph-piecewise-invalid { grid-column: 2 / -1; color: #f2b76f; font-size: 0.68rem; }
-.graph-piecewise-add { min-height: 30px; border: 1px dashed var(--graph-line-strong); background: transparent; color: #b8ccc0; }
-.graph-piecewise-apply {
-  min-height: 32px;
-  border: 1px solid rgba(98, 230, 144, 0.38);
-  border-radius: 6px;
-  background: rgba(98, 230, 144, 0.1);
-  color: #bcebc9;
+
+/* A piecewise item's swatch shows every branch colour. */
+.graph-expression-row.is-piecewise[style*='--graph-item-swatch'] > .graph-expression-color {
+  background: var(--graph-item-swatch);
 }
 
 .graph-parameter-symbol {
@@ -1035,14 +974,14 @@
   height: 12px;
   border: 2px solid #f4fbf6;
   border-radius: 50%;
-  background: #5598ff;
-  box-shadow: 0 0 0 3px rgba(85, 152, 255, 0.24);
+  background: var(--graph-trace-accent, #5598ff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--graph-trace-accent, #5598ff) 24%, transparent);
 }
 
 .graph-trace-callout {
   min-width: 112px;
   padding: 6px 9px;
-  border: 1px solid rgba(85, 152, 255, 0.7);
+  border: 1px solid color-mix(in srgb, var(--graph-trace-accent, #5598ff) 70%, transparent);
   border-radius: 7px;
   background: rgba(8, 20, 22, 0.94);
   color: #eef7f1;
@@ -1375,6 +1314,35 @@
 }
 
 .graph-ptx-asymptotes text {
+  fill: var(--graph-text, #eef7f1);
+  font: 600 11px ui-monospace, monospace;
+  paint-order: stroke;
+  stroke: #081114;
+  stroke-width: 3px;
+}
+
+/* Stretches: where the selected curve lies on the x-axis or on another curve (a band, never dots). */
+.graph-ptx-stretches {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.graph-ptx-stretches polyline {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+}
+
+.graph-ptx-stretches circle { stroke-width: 2; }
+
+.graph-ptx-stretches text {
   fill: var(--graph-text, #eef7f1);
   font: 600 11px ui-monospace, monospace;
   paint-order: stroke;

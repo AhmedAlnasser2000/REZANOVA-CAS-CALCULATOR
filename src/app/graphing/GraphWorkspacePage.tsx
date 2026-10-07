@@ -1,66 +1,42 @@
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  ArrowDown,
-  ArrowUp,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Trash2,
-} from 'lucide-react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, GripVertical, Trash2 } from 'lucide-react';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
-import { MathEditor } from '../../components/MathEditor';
 import {
-  normalizeGraphItemPresentation,
-  resolveGraphPresentationColor,
-  type GraphAppearanceThemeV1,
-  type GraphItemPresentationV2,
+  graphPiecewiseBranchLabel,
+  graphPresentationFrameItems,
   type GraphItemSpecV1,
   type GraphNoteItemV1,
-  type GraphViewportV1,
 } from '../../lib/graphing';
-import type {
-  GraphPiecewiseAuthoringDraftV1,
-  GraphWorkspaceSessionStateV7,
+import {
+  createGraphWorkspaceSessionState,
+  type GraphPiecewiseAuthoringDraftV1,
+  type GraphWorkspaceSessionStateV7,
 } from './graph-workspace-session';
 import graphBrandIcon from '../../../src-tauri/icons/32x32.png';
-import {
-  graphDraftMessage,
-  graphItemSourceLatex,
-  graphPiecewiseDraftBranchFeedback,
-  graphPiecewiseUsesBranchEditor,
-} from './graph-document';
 import { GraphViewportHost } from './GraphViewportHost';
-import { GraphStylePopover } from './GraphAppearanceControls';
 import { GraphToolbar } from './GraphToolbar';
 import { useGraphWorkbenchLayout } from './useGraphWorkbenchLayout';
 import { useLightDismiss } from '../../components/useLightDismiss';
 import { useGraphWorkspaceController } from './useGraphWorkspaceController';
 import { GraphAnalyzeIntegration } from './GraphAnalyzeIntegration';
-import { GraphSurfaceBoundsEditor } from './GraphSurfaceBoundsEditor';
-import { GraphItemDetails } from './GraphItemDetails';
-import { GraphParameterControls } from './GraphParameterControls';
 import { GraphComplexViewport } from './GraphComplexViewport';
+import { GraphExpressionRow } from './GraphExpressionRow';
+import { complexValuesOn } from './graph-document';
+import { GraphPiecewiseEditor } from './GraphPiecewiseEditor';
+import { GraphExamplesGallery } from './GraphExamplesGallery';
+import { graphDocumentIsEmpty, graphSessionWithExample, type GraphExample } from './graph-examples';
 import { useGraphGestureSampling } from './useGraphGestureSampling';
 import { useGraphEqualAxes } from './useGraphEqualAxes';
 import { useGraphComplexPlaneItems } from './useGraphComplexPlaneItems';
-import { graphItemDisplayOptions, graphItemTraceRoutes } from './graph-item-routes';
+import { graphItemTraceRoutes } from './graph-item-routes';
 import { graphMenuKeyDown } from './graph-menu-keys';
 import { usePtxPointsOfInterest } from './ptx/usePtxPointsOfInterest';
 import type { PtxTracedPoint } from './ptx/usePtxComplexTrace';
 
 type GraphWorkspacePageProps = {
   gpuRendering?: 'auto' | 'off';
+  /** Opens a new Graph tab holding the session `build` makes for it (a gallery example). */
+  onOpenGraphTab?: (build: (instanceId: string, title: string) => GraphWorkspaceSessionStateV7) => void;
   session: GraphWorkspaceSessionStateV7;
   workspaceContext: WorkspaceInstanceRuntimeContext;
   onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
@@ -70,303 +46,6 @@ type GraphRailEntry =
   | { kind: 'expression'; item: GraphItemSpecV1 | null; itemId: string }
   | { kind: 'note'; item: GraphNoteItemV1 }
   | { kind: 'piecewise-draft'; draft: GraphPiecewiseAuthoringDraftV1 };
-
-type GraphExpressionRowProps = {
-  item: GraphItemSpecV1 | null;
-  itemId: string;
-  errorVisible: boolean;
-  onBlur: () => void;
-  onChange: (latex: string) => void;
-  onDelete?: () => void;
-  runtimeWarning?: string;
-  onSubmit: () => void;
-  onToggle?: () => void;
-  onToggleComplexValues?: () => void;
-  onUpdatePresentation?: (presentation: GraphItemPresentationV2) => void;
-  viewport: GraphViewportV1;
-  onUpdateSurfaceBounds?: (bounds?: { xMin: number; xMax: number; yMin: number; yMax: number }) => boolean;
-  appearance: {
-    theme: GraphAppearanceThemeV1;
-    colorVisionMode: 'standard' | 'color-vision-friendly';
-  };
-  onUpdateParameter?: (values: Partial<Pick<
-    Extract<GraphItemSpecV1, { kind: 'parameter' }>['parameter'],
-    'value' | 'minimum' | 'maximum' | 'step' | 'animation'
-  >>) => boolean;
-  onSettleParameter?: () => void;
-  samplingBusy?: boolean;
-  piecewiseDraft?: GraphPiecewiseAuthoringDraftV1;
-  onBeginPiecewiseDraft?: () => void;
-  onCommitPiecewiseDraft?: () => boolean;
-  onCancelPiecewiseDraft?: () => void;
-  onChangePiecewiseDraft?: (branchId: string, field: 'valueLatex' | 'conditionLatex', value: string) => void;
-  onMutatePiecewiseDraft?: (action: 'add' | 'remove' | 'up' | 'down', branchId?: string) => void;
-};
-
-function GraphPiecewiseDraftRow({
-  draft,
-  onChange,
-  onCommit,
-  onDelete,
-  onMutate,
-  embedded = false,
-}: {
-  draft: GraphPiecewiseAuthoringDraftV1;
-  onChange: (branchId: string, field: 'valueLatex' | 'conditionLatex', value: string) => void;
-  onCommit: () => boolean;
-  onDelete: () => void;
-  onMutate: (action: 'add' | 'remove' | 'up' | 'down', branchId?: string) => void;
-  embedded?: boolean;
-}) {
-  const [feedback, setFeedback] = useState<Record<string, { value?: string; condition?: string }>>({});
-  useEffect(() => {
-    const timer = setTimeout(() => setFeedback(Object.fromEntries(draft.branches.map((branch) => [
-      branch.branchId,
-      graphPiecewiseDraftBranchFeedback({
-        target: draft.target,
-        valueLatex: branch.valueLatex,
-        conditionLatex: branch.conditionLatex,
-      }),
-    ]))), 200);
-    return () => clearTimeout(timer);
-  }, [draft.branches, draft.target]);
-  const editor = <div className="graph-piecewise-editor">
-      <div className="graph-piecewise-draft-heading"><strong>{draft.mode === 'replace' ? 'Piecewise branches' : 'Piecewise Function'}</strong>
-        <button aria-label={draft.mode === 'replace' ? 'Cancel branch changes' : 'Delete piecewise draft'}
-          className="graph-icon-button" onClick={onDelete} type="button"><Trash2 aria-hidden="true" size={16} /></button>
-      </div>
-      {draft.branches.map((branch, index) => <div className="graph-piecewise-branch" key={branch.branchId}>
-        <span className="graph-piecewise-branch-index">{index + 1}</span>
-        <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-value-${branch.branchId}`}
-          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'valueLatex', value)} onSubmit={onCommit} placeholder="value"
-          shortcutProfile="graphing" value={branch.valueLatex} />
-        <span className="graph-piecewise-if">if</span>
-        <MathEditor className="graph-piecewise-field" dataTestId={`graph-piecewise-draft-condition-${branch.branchId}`}
-          onBlur={onCommit} onChange={(value) => onChange(branch.branchId, 'conditionLatex', value)} onSubmit={onCommit} placeholderLatex={index === 0 ? 'x < 0' : String.raw`x\geq 0`}
-          shortcutProfile="graphing" value={branch.conditionLatex} />
-        {draft.branches.length > 2 ? <div className="graph-piecewise-branch-actions">
-          <button aria-label={`Remove branch ${index + 1}`} onClick={() => onMutate('remove', branch.branchId)} type="button"><Trash2 size={13} /></button>
-        </div> : null}
-        {feedback[branch.branchId]?.value || feedback[branch.branchId]?.condition ? (
-          <p className="graph-piecewise-branch-feedback" role="status">
-            {feedback[branch.branchId]?.value ?? feedback[branch.branchId]?.condition}
-          </p>
-        ) : null}
-      </div>)}
-      <button className="graph-piecewise-add" onClick={() => onMutate('add')} type="button">+ Add branch</button>
-      {draft.mode === 'replace' ? <button className="graph-piecewise-apply" onClick={onCommit} type="button">Apply branch changes</button> : null}
-      <p className="graph-piecewise-draft-note">{draft.mode === 'replace'
-        ? 'Valid branch changes apply atomically.'
-        : 'Complete both values and conditions to create the graph.'}</p>
-    </div>;
-  if (embedded) return editor;
-  return <div className="graph-expression-row graph-piecewise-draft" data-graph-item-id={draft.itemId}
-    data-testid="graph-piecewise-authoring-draft"><span className="graph-expression-color" aria-hidden="true" />{editor}</div>;
-}
-
-function complexValuesOn(item: GraphItemSpecV1) {
-  return item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues === true;
-}
-
-function GraphExpressionRow({
-  errorVisible,
-  item,
-  itemId,
-  onBlur,
-  onChange,
-  onDelete,
-  onBeginPiecewiseDraft,
-  onCancelPiecewiseDraft,
-  onChangePiecewiseDraft,
-  onCommitPiecewiseDraft,
-  onMutatePiecewiseDraft,
-  onSettleParameter,
-  onSubmit,
-  onToggle,
-  onToggleComplexValues,
-  onUpdatePresentation,
-  onUpdateParameter,
-  runtimeWarning,
-  piecewiseDraft,
-  samplingBusy = false,
-  appearance,
-  viewport,
-  onUpdateSurfaceBounds,
-}: GraphExpressionRowProps) {
-  const [piecewiseCollapsed, setPiecewiseCollapsed] = useState(false);
-  const [styleOpen, setStyleOpen] = useState(false);
-  const styleButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [surfaceExpanded, setSurfaceExpanded] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editorOverflowing, setEditorOverflowing] = useState(false);
-  const editorScrollRef = useRef<HTMLDivElement | null>(null);
-  const measureEditorOverflow = useCallback(() => {
-    const container = editorScrollRef.current;
-    if (!container) return;
-    const overflowing = container.scrollWidth > container.clientWidth + 1;
-    setEditorOverflowing((current) => current === overflowing ? current : overflowing);
-  }, []);
-  useLayoutEffect(() => {
-    const container = editorScrollRef.current;
-    if (!container) return undefined;
-    const field = container.querySelector('math-field');
-    const frame = requestAnimationFrame(measureEditorOverflow);
-    if (typeof ResizeObserver === 'undefined') {
-      return () => cancelAnimationFrame(frame);
-    }
-    const observer = new ResizeObserver(measureEditorOverflow);
-    observer.observe(container);
-    if (field) observer.observe(field);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [itemId, measureEditorOverflow]);
-  const draftMessage = item?.kind === 'invalid-relation-draft'
-    ? graphDraftMessage(item.parseStop)
-    : '';
-  const color = item?.kind === 'parameter'
-    ? '#ae68f5'
-    : item && 'presentation' in item
-      ? resolveGraphPresentationColor(item.presentation, appearance.colorVisionMode)
-      : '#5598ff';
-  const presentationColor = item && 'presentation' in item
-    ? normalizeGraphItemPresentation(item.presentation).color
-    : null;
-  const colorToken = presentationColor?.kind === 'token'
-    ? presentationColor.token
-    : item?.kind === 'parameter' ? 'graph-violet' : item ? undefined : 'graph-blue';
-  const hidden = item ? !item.visible : false;
-  const branchEditable = graphPiecewiseUsesBranchEditor(item);
-  const displayOptions = graphItemDisplayOptions(item);
-  const details = item && 'presentation' in item && (displayOptions.asymptotes || displayOptions.complexValues) ? <GraphItemDetails
-    complexValues={item.kind === 'relation' && item.relation.kind === 'explicit-y' && item.relation.complexValues === true}
-    onToggleComplexValues={onToggleComplexValues} onUpdatePresentation={onUpdatePresentation} options={displayOptions}
-    presentation={normalizeGraphItemPresentation(item.presentation)} /> : null;
-  const piecewiseEditorOpen = branchEditable
-    && Boolean(piecewiseDraft)
-    && !piecewiseCollapsed;
-
-  return (
-    <div
-      className={`graph-expression-row${item ? '' : ' is-blank'}${hidden ? ' is-hidden' : ''}${branchEditable ? ' is-piecewise' : ''}`}
-      style={{ '--graph-item-color': color } as CSSProperties}
-      data-color-token={colorToken}
-      data-graph-item-id={itemId}
-      data-piecewise-state={branchEditable ? (piecewiseEditorOpen ? 'expanded' : 'summary') : undefined}
-      data-testid={item ? 'graph-expression-row' : 'graph-expression-blank-row'}
-    >
-      {item && 'presentation' in item ? <button aria-expanded={styleOpen}
-        aria-label="Style graph item" className="graph-expression-color" onClick={() => setStyleOpen((open) => !open)}
-        ref={styleButtonRef} type="button" /> : <span className="graph-expression-color" aria-hidden="true" />}
-      {styleOpen && item && 'presentation' in item && onUpdatePresentation ? <GraphStylePopover
-        colorVisionMode={appearance.colorVisionMode} onClose={() => setStyleOpen(false)}
-        onUpdate={onUpdatePresentation} presentation={normalizeGraphItemPresentation(item.presentation)}
-        theme={appearance.theme} triggerRef={styleButtonRef} /> : null}
-      {item?.kind === 'parameter' && item.parameter.origin === 'slider-created' ? (
-        <strong className="graph-parameter-symbol" aria-label={`Parameter ${item.parameter.symbol}`}>
-          {item.parameter.symbol}
-        </strong>
-      ) : (
-        <div
-          className={`graph-expression-editor-scroll${branchEditable ? ' graph-piecewise-summary' : ''}${editorOverflowing ? ' is-overflowing' : ''}`}
-          data-overflowing={editorOverflowing ? 'true' : 'false'}
-          data-testid={branchEditable ? 'graph-piecewise-summary' : undefined}
-          ref={editorScrollRef}
-        >
-          <MathEditor
-            className={`graph-expression-editor${branchEditable ? ' graph-piecewise-summary-editor' : ''}`}
-            dataTestId={`graph-expression-editor-${itemId}`}
-            // Show the start of a long formula once editing ends.
-            onBlur={() => { if (editorScrollRef.current) editorScrollRef.current.scrollLeft = 0; onBlur(); }}
-            onChange={(latex) => {
-              onChange(latex);
-              requestAnimationFrame(measureEditorOverflow);
-            }}
-            onSubmit={onSubmit}
-            placeholder={item ? '' : 'Enter an expression…'}
-            readOnly={piecewiseEditorOpen}
-            shortcutProfile="graphing"
-            value={item ? graphItemSourceLatex(item) : ''}
-          />
-        </div>
-      )}
-      {item ? (
-        <div className="graph-expression-actions">
-          {branchEditable ? (
-            <button
-              aria-controls={piecewiseEditorOpen ? `graph-piecewise-editor-${itemId}` : undefined}
-              aria-expanded={piecewiseEditorOpen}
-              aria-label={piecewiseEditorOpen ? 'Collapse piecewise branches' : 'Expand piecewise branches'}
-              className="graph-icon-button"
-              onClick={() => {
-                if (piecewiseDraft) setPiecewiseCollapsed((collapsed) => !collapsed);
-                else { onBeginPiecewiseDraft?.(); setPiecewiseCollapsed(false); }
-              }}
-              type="button"
-            >
-              {piecewiseEditorOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-          ) : null}
-          {item.kind === 'relation' && item.relation.kind === 'real-surface' ? <button
-            aria-expanded={surfaceExpanded} aria-label={surfaceExpanded ? 'Collapse surface bounds' : 'Expand surface bounds'}
-            className="graph-icon-button" onClick={() => setSurfaceExpanded((open) => !open)} type="button">
-            {surfaceExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button> : null}
-          {/* Display choices (asymptotes, ℂ) live behind this expander; piecewise and surface rows use theirs. */}
-          {details ? <button aria-expanded={detailsOpen}
-            aria-label={detailsOpen ? 'Hide item options' : 'Show item options'} className="graph-icon-button"
-            onClick={() => setDetailsOpen((open) => !open)} type="button">
-            {detailsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button> : null}
-          <button
-            aria-label={hidden ? 'Show graph' : 'Hide graph'}
-            className="graph-icon-button"
-            onClick={onToggle}
-            type="button"
-          >
-            {hidden ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
-          </button>
-          <button
-            aria-label="Delete expression"
-            className="graph-icon-button"
-            onClick={onDelete}
-            type="button"
-          >
-            <Trash2 aria-hidden="true" size={16} />
-          </button>
-        </div>
-      ) : null}
-      {(errorVisible && draftMessage) || runtimeWarning ? (
-        <p className="graph-expression-error" role="status">
-          <AlertTriangle aria-hidden="true" size={14} />
-          <span>{runtimeWarning ?? draftMessage}</span>
-        </p>
-      ) : null}
-      {branchEditable && item?.kind === 'piecewise' && piecewiseDraft && !piecewiseCollapsed && onChangePiecewiseDraft
-        && onCommitPiecewiseDraft && onMutatePiecewiseDraft ? (
-          <div className="graph-piecewise-expanded-editor" id={`graph-piecewise-editor-${itemId}`}>
-            <GraphPiecewiseDraftRow draft={piecewiseDraft} embedded onChange={onChangePiecewiseDraft}
-              onCommit={onCommitPiecewiseDraft} onDelete={() => {
-                onCancelPiecewiseDraft?.();
-                setPiecewiseCollapsed(true);
-              }} onMutate={onMutatePiecewiseDraft} />
-          </div>
-        ) : null}
-      {detailsOpen ? details : null}
-      {item?.kind === 'parameter' && onUpdateParameter && onSettleParameter ? (
-        <GraphParameterControls
-          item={item}
-          onSettle={onSettleParameter}
-          onUpdate={onUpdateParameter}
-          samplingBusy={samplingBusy}
-        />
-      ) : null}
-      {item?.kind === 'relation' && item.relation.kind === 'real-surface' && surfaceExpanded && onUpdateSurfaceBounds
-        ? <GraphSurfaceBoundsEditor bounds={item.relation.bounds} onChange={onUpdateSurfaceBounds} viewport={viewport} /> : null}
-    </div>
-  );
-}
 
 function GraphNoteRow({
   item,
@@ -464,6 +143,7 @@ function GraphRowOrderControls({
 
 export default function GraphWorkspacePage({
   gpuRendering = 'auto',
+  onOpenGraphTab,
   onUpdateSession,
   session: initialSession,
   workspaceContext,
@@ -475,6 +155,9 @@ export default function GraphWorkspacePage({
   const addItemMenuRef = useRef<HTMLDivElement>(null);
   const addItemTriggers = useMemo(() => [addItemButtonRef], []);
   useLightDismiss({ open: addItemOpen, onClose: () => setAddItemOpen(false), layerRef: addItemMenuRef, triggerRefs: addItemTriggers });
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const examplesTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const examplesTriggers = useMemo(() => [examplesTriggerRef, addItemButtonRef], []);
   const promotedItemIdRef = useRef<string | null>(null);
   const piecewiseFocusItemIdRef = useRef<string | null>(null);
   const controller = useGraphWorkspaceController({
@@ -531,14 +214,15 @@ export default function GraphWorkspacePage({
     contentRevision: controller.session.document.contentRevision,
     theme: controller.session.surface.appearance.theme,
     colorVisionMode: controller.session.surface.appearance.colorVisionMode,
-    items: controller.session.document.items.flatMap((item) => (
-      'presentation' in item ? [{ itemId: item.itemId, presentation: item.presentation }] : []
-    )),
+    items: graphPresentationFrameItems(controller.session.document.items),
   }), [
     controller.session.document.contentRevision,
     controller.session.document.items,
     controller.session.surface.appearance,
   ]);
+  const piecewiseEvidenceByItem = useMemo(() => new Map((controller.sampleResult?.itemEvidence ?? [])
+    .flatMap((evidence) => evidence.piecewiseCondition ? [[evidence.itemId, evidence.piecewiseCondition] as const] : [])),
+  [controller.sampleResult]);
   const runtimeWarnings = useMemo(() => {
     const warnings = new Map<string, string>();
     for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
@@ -558,22 +242,17 @@ export default function GraphWorkspacePage({
       } else if (reason.code === 'sampling-budget-exceeded') {
         if (!warnings.has(reason.path)) warnings.set(reason.path, 'Reduced detail at this zoom.');
       } else if (reason.detailCode?.startsWith('piecewise-shadowed:')) {
-        const [earlier, later] = (reason.detailCode.split(':')[2] ?? '').split(',').map((id) => id.replace('branch.', ''));
-        warnings.set(reason.path, `Branch ${later} is partly covered by branch ${earlier}; the first matching branch is drawn.`);
+        // Branches are named by position ("Branch 2"), whatever their internal IDs.
+        const item = controller.session.document.items.find((candidate) => candidate.itemId === reason.path);
+        const [earlier, later] = (reason.detailCode.split(':')[2] ?? '').split(',').map((id) => (
+          item?.kind === 'piecewise' ? graphPiecewiseBranchLabel(item.piecewise, id) ?? 'A branch' : 'A branch'));
+        warnings.set(reason.path, `${later} is partly covered by ${earlier?.toLowerCase()}; the first matching branch is drawn.`);
       } else if (reason.detailCode?.startsWith('piecewise-impossible:')) {
         const scope = reason.detailCode.includes('impossible-global') ? 'for every input' : 'in the current view';
         warnings.set(reason.path, `One piecewise branch cannot apply ${scope}.`);
       } else if (reason.detailCode?.startsWith('piecewise-unresolved:')
         || reason.detailCode === 'piecewise-boundary-unresolved') {
         warnings.set(reason.path, 'A piecewise condition boundary could not be resolved in this view.');
-      }
-    }
-    // Gaps are only worth a note for multi-branch cases; a restriction such as x^2{x>0} has them by design.
-    for (const evidence of controller.sampleResult?.itemEvidence ?? []) {
-      const item = controller.session.document.items.find((candidate) => candidate.itemId === evidence.itemId);
-      if (!warnings.has(evidence.itemId) && evidence.piecewiseCondition?.uncoveredGaps.length
-        && item?.kind === 'piecewise' && !item.piecewise.otherwise && item.piecewise.branches.length > 1) {
-        warnings.set(evidence.itemId, 'Piecewise branches leave gaps in the current view; gaps are allowed.');
       }
     }
     return warnings;
@@ -584,7 +263,7 @@ export default function GraphWorkspacePage({
   ));
   const gestureLane = useGraphGestureSampling({ cssSize: viewportSize, document: controller.session.document, workspaceContext });
   const complexPlaneItems = useGraphComplexPlaneItems(controller.session.document, scene, controller.session.surface.appearance.colorVisionMode);
-  const { dots: ptxDots, asymptotes: ptxAsymptotes } = usePtxPointsOfInterest({ session: controller.session, workspaceContext });
+  const { dots: ptxDots, asymptotes: ptxAsymptotes, stretches: ptxStretches } = usePtxPointsOfInterest({ session: controller.session, workspaceContext });
   const [complexTraced, setComplexTraced] = useState<PtxTracedPoint>(null);
   const activeComplexTile = scene?.complexTiles.find((tile) => tile.itemId === controller.session.surface.selectedItemId)
     ?? scene?.complexTiles[0] ?? null;
@@ -643,7 +322,8 @@ export default function GraphWorkspacePage({
             {railEntries.map((entry) => {
               if (entry.kind === 'piecewise-draft') {
                 const { draft } = entry;
-                return <GraphPiecewiseDraftRow
+                return <GraphPiecewiseEditor
+                  appearance={controller.session.surface.appearance}
                   draft={draft}
                   key={draft.draftId}
                   onChange={(branchId, field, value) => controller.updatePiecewiseDraft({
@@ -651,7 +331,7 @@ export default function GraphWorkspacePage({
                   })}
                   onDelete={() => controller.removePiecewiseDraft(draft.itemId)}
                   onCommit={() => controller.commitPiecewiseDraft(draft.itemId)}
-                  onMutate={(action, branchId) => controller.mutatePiecewiseDraft({ itemId: draft.itemId, action, branchId })}
+                  onMutate={(edit) => controller.mutatePiecewiseDraft({ itemId: draft.itemId, ...edit })}
                 />;
               }
               if (entry.kind === 'note') {
@@ -702,8 +382,12 @@ export default function GraphWorkspacePage({
                     ? () => controller.commitPiecewiseDraft(itemId)
                     : undefined}
                   onMutatePiecewiseDraft={item?.kind === 'piecewise'
-                    ? (action, branchId) => controller.mutatePiecewiseDraft({ itemId, action, branchId })
+                    ? (edit) => controller.mutatePiecewiseDraft({ itemId, ...edit })
                     : undefined}
+                  onUpdateBranchPresentation={item?.kind === 'piecewise'
+                    ? (branchKey, presentation) => { controller.updateBranchPresentation(itemId, branchKey, presentation); }
+                    : undefined}
+                  piecewiseEvidence={item?.kind === 'piecewise' ? piecewiseEvidenceByItem.get(itemId) ?? null : null}
                   onSettleParameter={item?.kind === 'parameter'
                     ? () => {
                         controller.endTypingTransaction();
@@ -785,9 +469,20 @@ export default function GraphWorkspacePage({
                     `[data-graph-item-id="${itemId}"] math-field`,
                   )?.focus({ preventScroll: true }));
                 }} role="menuitem" type="button">Point Set</button>
+                <button onClick={() => { setAddItemOpen(false); setExamplesOpen(true); }} role="menuitem" type="button">Examples…</button>
               </div> : null}
             </div>
-            <span>Bare x-based expressions plot directly. You do not need to type y =.</span>
+            {graphDocumentIsEmpty(controller.session.document) ? <button className="graph-examples-open" onClick={() => setExamplesOpen((open) => !open)}
+              ref={examplesTriggerRef} type="button">Browse examples</button>
+              : <span>Bare x-based expressions plot directly. You do not need to type y =.</span>}
+            {examplesOpen ? <GraphExamplesGallery graphEmpty={graphDocumentIsEmpty(controller.session.document)}
+              onAdd={(example) => controller.loadExample(example, 'add')} onClose={() => setExamplesOpen(false)}
+              onLoad={(example) => controller.loadExample(example, 'replace')}
+              {...(onOpenGraphTab ? { onOpenInNewTab: (example: GraphExample) => onOpenGraphTab((instanceId, title) => {
+                let next = 0;
+                return graphSessionWithExample(createGraphWorkspaceSessionState(instanceId, title), example, 'replace', () => `${instanceId}.item.${next += 1}`);
+              }) } : {})}
+              triggerRefs={examplesTriggers} /> : null}
           </div>
         </aside>
 
@@ -798,7 +493,7 @@ export default function GraphWorkspacePage({
             grid={controller.session.surface.grid}
             onPaneViewChange={(values) => controller.updatePaneView('real', values)}
             onSelectItem={controller.selectItem}
-            onSizeChange={handleRealPaneSize} ptxAsymptotes={ptxAsymptotes} ptxDots={ptxDots}
+            onSizeChange={handleRealPaneSize} ptxAsymptotes={ptxAsymptotes} ptxDots={ptxDots} ptxStretches={ptxStretches}
             ptxMirror={controller.session.surface.viewPolicy.mode === 'both' ? complexTraced : null}
             onViewportChange={controller.setViewport}
             itemRoutes={itemRoutes}

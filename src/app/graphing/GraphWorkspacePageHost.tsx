@@ -5,11 +5,13 @@ import { migrateGraphWorkspaceSessionState } from './graph-workspace-session-val
 
 export default function GraphWorkspacePageHost({
   gpuRendering,
+  onOpenGraphTab,
   onUpdateSession,
   session: rawSession,
   workspaceContext,
 }: {
   gpuRendering: 'auto' | 'off';
+  onOpenGraphTab?: (build: (instanceId: string, title: string) => GraphWorkspaceSessionStateV7) => void;
   onUpdateSession: (session: GraphWorkspaceSessionStateV7) => void;
   session: unknown;
   workspaceContext: WorkspaceInstanceRuntimeContext;
@@ -25,6 +27,7 @@ export default function GraphWorkspacePageHost({
   return (
     <GraphWorkspacePage
       gpuRendering={gpuRendering}
+      {...(onOpenGraphTab ? { onOpenGraphTab } : {})}
       onUpdateSession={onUpdateSession}
       session={session}
       workspaceContext={workspaceContext}

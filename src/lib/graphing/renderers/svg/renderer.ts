@@ -14,6 +14,7 @@ import type {
 } from '../../contracts';
 import {
   defaultGraphItemPresentation,
+  graphSceneBranchKey,
   normalizeGraphItemPresentation,
   resolveGraphPresentationColor,
 } from '../../presentation';
@@ -24,6 +25,11 @@ export type GraphRendererScreenPoint = { x: number; y: number };
 
 function svgElement<K extends keyof SVGElementTagNameMap>(name: K) {
   return document.createElementNS(SVG_NAMESPACE, name);
+}
+
+function setBranch(node: SVGElement, branchKey: string | undefined) {
+  if (branchKey) node.dataset.branchId = branchKey;
+  else delete node.dataset.branchId;
 }
 
 function setAttribute(node: Element, name: string, value: string) {
@@ -136,6 +142,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
   private scene: GraphRendererSceneFrame | null = null;
   private surfaces: SVGGElement | null = null;
   private presentation = new Map<string, GraphItemPresentation>();
+  private branchPresentation = new Map<string, GraphItemPresentation>();
   private theme: GraphAppearanceThemeV1 = 'technical';
   private colorVisionMode: 'standard' | 'color-vision-friendly' = 'standard';
   private sceneProjectionSize: Size = { width: 1, height: 1 };
@@ -263,7 +270,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     } })), 'path');
     syncKeyed<SVGPathElement>(this.paths, scene.paths.map((path) => ({ id: path.pathId, update: (node) => {
       node.dataset.pathId = path.pathId; node.setAttribute('d', pathData(path, sourceViewport, this.size));
-      node.dataset.itemId = path.itemId;
+      node.dataset.itemId = path.itemId; setBranch(node, graphSceneBranchKey(path.itemId, path.pathId));
       node.dataset.strokeRole = path.strokeRole ?? 'default';
       node.setAttribute('fill', 'none');
       node.setAttribute('vector-effect', 'non-scaling-stroke');
@@ -273,7 +280,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       update: (node: SVGCircleElement) => {
         const point = project(batch.coordinates[index * 2]!, batch.coordinates[index * 2 + 1]!, sourceViewport, this.size);
         node.dataset.pointBatchId = batch.pointBatchId; node.dataset.pointIndex = String(index);
-        node.dataset.itemId = batch.itemId;
+        node.dataset.itemId = batch.itemId; setBranch(node, graphSceneBranchKey(batch.itemId, batch.pointBatchId));
         node.setAttribute('cx', String(point.x)); node.setAttribute('cy', String(point.y)); node.setAttribute('r', '5');
         node.dataset.marker = batch.marker ?? 'filled';
       },
@@ -286,6 +293,9 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
 
   setPresentation(frame: GraphRendererPresentationFrame) {
     this.presentation = new Map(frame.items.map((item) => [item.itemId, item.presentation]));
+    this.branchPresentation = new Map(frame.items.flatMap((item) => (
+      'branches' in item && item.branches ? Object.entries(item.branches).map(([key, style]) => [`${item.itemId}\u0000${key}`, style] as const) : []
+    )));
     this.theme = frame.version === 2 ? frame.theme : 'technical';
     this.colorVisionMode = frame.version === 2 ? frame.colorVisionMode : 'standard';
     this.geometrySvg?.setAttribute('data-content-revision', String(frame.contentRevision));
@@ -293,7 +303,9 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.applyPresentation();
   }
 
-  private itemPresentation(itemId: string) {
+  private itemPresentation(itemId: string, branchKey?: string) {
+    const branch = branchKey ? this.branchPresentation.get(`${itemId}\u0000${branchKey}`) : undefined;
+    if (branch) return normalizeGraphItemPresentation(branch);
     const fallback = defaultGraphItemPresentation(itemId === 'graph.overlay.unit-circle' ? 2 : 0);
     return normalizeGraphItemPresentation(this.presentation.get(itemId) ?? fallback);
   }
@@ -330,6 +342,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       itemIds: new Set(frame.paths.map((path) => path.itemId)) };
     syncKeyed<SVGPathElement>(this.gesturePaths, frame.paths.map((path) => ({ id: path.pathId, update: (node) => {
       node.dataset.pathId = path.pathId; node.dataset.itemId = path.itemId;
+      setBranch(node, graphSceneBranchKey(path.itemId, path.pathId));
       node.dataset.strokeRole = path.strokeRole ?? 'default';
       node.setAttribute('d', pathData(path, frame.sourceViewport, this.size));
       node.setAttribute('fill', 'none'); node.setAttribute('vector-effect', 'non-scaling-stroke');
@@ -348,7 +361,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
     this.surfaces?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => suppressed(node, false));
     this.regions?.querySelectorAll<SVGPathElement>('[data-item-id]').forEach((node) => {
       suppressed(node);
-      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      const style = this.itemPresentation(node.dataset.itemId ?? '', node.dataset.branchId);
       setAttribute(node, 'fill', resolveGraphPresentationColor(style, this.colorVisionMode));
       setAttribute(node, 'fill-opacity', String(style.regionOpacity));
     });
@@ -360,7 +373,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       // A touching curve ((x − y)² = 0) has no sign change, so the GPU field cannot draw it: its CPU path always shows.
       if (node.dataset.pathId?.includes(':touching:') && this.suppressedItems.has(node.dataset.itemId ?? '')) node.style.display = '';
       else suppressed(node, node.parentNode === this.paths);
-      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      const style = this.itemPresentation(node.dataset.itemId ?? '', node.dataset.branchId);
       const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'stroke', color);
       node.style.color = color;
@@ -377,7 +390,7 @@ export class GraphSvgReferenceRenderer implements InteractiveGraphRenderer {
       node.dataset.halo = this.theme === 'luminous' && style.halo === 'soft' ? 'soft' : 'none';
     });
     this.points?.querySelectorAll<SVGCircleElement>('[data-item-id]').forEach((node) => {
-      const style = this.itemPresentation(node.dataset.itemId ?? '');
+      const style = this.itemPresentation(node.dataset.itemId ?? '', node.dataset.branchId);
       const color = resolveGraphPresentationColor(style, this.colorVisionMode);
       setAttribute(node, 'fill', node.dataset.marker === 'open' ? '#071517' : color);
       setAttribute(node, 'stroke', color); setAttribute(node, 'stroke-width', '2');

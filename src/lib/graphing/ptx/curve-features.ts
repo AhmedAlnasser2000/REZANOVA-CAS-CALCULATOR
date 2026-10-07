@@ -1,5 +1,5 @@
 import type { PtxCurve } from './curves';
-import { ptxRealExtrema, ptxRealRoots, type PtxFinderOptions } from './features';
+import { ptxRealExtrema, ptxRealRoots, ptxRealZeroStretches, type PtxFinderOptions } from './features';
 import { ptxEnclosureProduct, ptxEnclosureSum, ptxExactEnclosure, ptxProvePlaneZero, ptxProveRealExtremum, ptxProveRealZero } from './prove';
 import type { PtxEnclosure, PtxPlaneFunction, PtxRealFunction } from './solver-port';
 import type { PtxLevel, PtxWindow } from './types';
@@ -221,12 +221,131 @@ export function ptxPolarOriginCrossings(curve: PtxCurve, window: PtxWindow, opti
 }
 
 /** Where two curves of any kinds meet inside the window. */
-export function ptxCurveIntersections(a: PtxCurve, b: PtxCurve, window: PtxWindow, options: PtxFinderOptions = {}): PtxCurvePoint2[] {
+/** How far (x, y) is from the curve G = 0, to first order: |G| / |∇G|. */
+function distanceTo(G: PtxPlaneFunction, x: number, y: number, h: number) {
+  const value = G(x, y);
+  if (value === undefined) return undefined;
+  if (value === 0) return 0;
+  let gradient = G.gradient?.(x, y);
+  if (!gradient) {
+    const e = G(x + h, y); const w = G(x - h, y); const n = G(x, y + h); const so = G(x, y - h);
+    if (e === undefined || w === undefined || n === undefined || so === undefined) return undefined;
+    gradient = { fx: (e - w) / (2 * h), fy: (n - so) / (2 * h) };
+  }
+  const size = Math.hypot(gradient.fx, gradient.fy);
+  return size > 0 ? Math.abs(value) / size : undefined;
+}
+
+/** G along a path, read as exactly 0 wherever the path point lies on G = 0 to rounding (so a shared stretch is not a cloud of roots). */
+function snappedAlong(path: Path, G: PtxPlaneFunction, tolerance: number, h: number): PtxRealFunction {
+  return (s) => {
+    const point = path.at(s); if (!point) return undefined;
+    const value = G(point.x, point.y); if (value === undefined) return undefined;
+    const distance = distanceTo(G, point.x, point.y, h);
+    return distance !== undefined && distance <= tolerance ? 0 : value;
+  };
+}
+
+/** Points on F = 0 in the window: where F changes sign along the rows and columns of a grid, bisected. */
+function pointsOnEquation(F: PtxPlaneFunction, window: PtxWindow, grid: number, options: PtxFinderOptions) {
+  const points: Array<{ x: number; y: number }> = [];
+  const scan = (line: (u: number) => { x: number; y: number }) => {
+    let previousU = 0; let previous = F(line(0).x, line(0).y);
+    for (let index = 1; index <= grid * 4; index += 1) {
+      const u = index / (grid * 4); const at = line(u); const value = F(at.x, at.y);
+      if (previous !== undefined && value !== undefined && (value === 0 || previous * value < 0)) {
+        let a = previousU; let b = u; let fa = previous;
+        for (let pass = 0; pass < 60; pass += 1) {
+          const middle = (a + b) / 2; const m = line(middle); const fm = F(m.x, m.y);
+          if (fm === undefined) break;
+          if (fm === 0 || Math.sign(fm) !== Math.sign(fa)) b = middle; else { a = middle; fa = fm; }
+        }
+        points.push(line((a + b) / 2));
+      }
+      previousU = u; previous = value;
+    }
+  };
+  for (let index = 0; index <= grid && !options.isCancelled?.(); index += 1) {
+    const y = window.yMin + (window.yMax - window.yMin) * index / grid;
+    const x = window.xMin + (window.xMax - window.xMin) * index / grid;
+    scan((u) => ({ x: window.xMin + u * (window.xMax - window.xMin), y }));
+    scan((u) => ({ x, y: window.yMin + u * (window.yMax - window.yMin) }));
+  }
+  return points;
+}
+
+export type PtxCurveCoincidence = {
+  /** Points along the part the two curves share, in order along it where one of them is a path. */
+  points: Array<{ x: number; y: number }>;
+};
+
+/**
+ * Where two curves of any kind lie on top of each other in the window — the
+ * circle written as x² + y² = 4 and as (2 cos t, 2 sin t), or the same curve
+ * twice. Every point there is a common point, so it is one finding, not a
+ * crossing per sample: a path's parameter stretches on the other curve's
+ * equation; for two equations, the first curve's points that lie on the
+ * second; for two parametric curves, the first's samples on the second's
+ * finely sampled polyline.
+ */
+export function ptxCurveCoincidence(a: PtxCurve, b: PtxCurve, window: PtxWindow, options: PtxFinderOptions = {}): PtxCurveCoincidence | null {
+  const tolerance = 1e-7 * span(window); const h = 1e-7 * span(window);
+  const [pathCurve, equationCurve] = equationOf(b) && pathOf(a, window) ? [a, b] : equationOf(a) && pathOf(b, window) ? [b, a] : [null, null];
+  if (pathCurve && equationCurve) {
+    const path = pathOf(pathCurve, window)!; const G = equationOf(equationCurve)!;
+    const points: Array<{ x: number; y: number }> = [];
+    for (const stretch of ptxRealZeroStretches(snappedAlong(path, G, tolerance, h), path.low, path.high, steps(pathCurve, options))) {
+      for (let index = 0; index <= 64; index += 1) {
+        const point = path.at(stretch.minimum + (stretch.maximum - stretch.minimum) * index / 64);
+        if (point && inside(point, window)) points.push(point);
+      }
+    }
+    return points.length >= 3 ? { points } : null;
+  }
+  if (a.kind === 'param' && b.kind === 'param') {
+    // No equation on either side: A's samples that lie on B's finely sampled polyline, in runs along A.
+    const pathA = pathOf(a, window)!; const pathB = pathOf(b, window)!;
+    const polyline: Array<{ x: number; y: number } | undefined> = [];
+    for (let index = 0; index <= 4000; index += 1) polyline.push(pathB.at(pathB.low + (pathB.high - pathB.low) * index / 4000));
+    const reach = 1e-5 * span(window);
+    const nearB = (point: { x: number; y: number }) => polyline.some((start, index) => {
+      const end = polyline[index + 1];
+      if (!start || !end) return false;
+      const dx = end.x - start.x; const dy = end.y - start.y; const length = dx * dx + dy * dy;
+      const t = length > 0 ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / length)) : 0;
+      return Math.hypot(point.x - start.x - t * dx, point.y - start.y - t * dy) <= reach;
+    });
+    const points: Array<{ x: number; y: number }> = []; let run: Array<{ x: number; y: number }> = [];
+    for (let index = 0; index <= 400 && !options.isCancelled?.(); index += 1) {
+      const point = pathA.at(pathA.low + (pathA.high - pathA.low) * index / 400);
+      if (point && inside(point, window) && nearB(point)) run.push(point);
+      else { if (run.length >= 3) points.push(...run); run = []; }
+    }
+    if (run.length >= 3) points.push(...run);
+    return points.length >= 3 ? { points } : null;
+  }
+  if (a.kind === 'implicit' && b.kind === 'implicit') {
+    const onA = pointsOnEquation(a.F, window, 40, options);
+    const shared = onA.filter((point) => { const distance = distanceTo(b.F, point.x, point.y, h); return distance !== undefined && distance <= tolerance; });
+    return shared.length >= 3 ? { points: shared } : null;
+  }
+  return null;
+}
+
+/** Is a found crossing on a shared stretch (where every point is common)? Within a few grid spacings of its samples. */
+export function ptxOnSharedStretch(point: { x: number; y: number }, coincidence: PtxCurveCoincidence | null, window: PtxWindow) {
+  const reach = span(window) / 40;
+  return Boolean(coincidence?.points.some((shared) => Math.hypot(shared.x - point.x, shared.y - point.y) <= reach));
+}
+
+export function ptxCurveIntersections(a: PtxCurve, b: PtxCurve, window: PtxWindow, options: PtxFinderOptions = {},
+  coincidence: PtxCurveCoincidence | null = null): PtxCurvePoint2[] {
   const found: PtxCurvePoint2[] = [];
   // A path against an equation: roots of G(P(s)) in the path's own parameter.
   const [pathCurve, equationCurve] = equationOf(b) && pathOf(a, window) ? [a, b] : equationOf(a) && pathOf(b, window) ? [b, a] : [null, null];
   if (pathCurve && equationCurve) {
     const path = pathOf(pathCurve, window)!; const G = equationOf(equationCurve)!;
+    // Roots of the exact function (a shared stretch's crossings are dropped below, by `coincidence`).
     const along = alongPath(path, G);
     for (const root of ptxRealRoots(along, path.low, path.high, steps(pathCurve, options))) {
       const point = path.at(root.x);
@@ -249,7 +368,7 @@ export function ptxCurveIntersections(a: PtxCurve, b: PtxCurve, window: PtxWindo
       if (point) found.push({ ...point, level: 'sampled-estimate', errorBound: 1e-9 * (1 + Math.hypot(point.x, point.y)) });
     }
   }
-  return distinct(found.filter((point) => inside(point, window)), window);
+  return distinct(found.filter((point) => inside(point, window) && !ptxOnSharedStretch(point, coincidence, window)), window);
 }
 
 /** f − g, with its slope and guaranteed ranges when both have them: where y = f(x) and y = g(x) meet, it is 0. */

@@ -5,15 +5,33 @@ import type {
   GraphViewportV1,
 } from '../../lib/graphing';
 
+/** An item without its styling (item and per-branch), which never affects sampling. */
+function graphItemMathematics<Item extends Extract<GraphItemSpecV1, { presentation: unknown }>>(item: Item) {
+  const { presentation: _presentation, branchPresentation: _branches, ...mathematics } = item as Item & { branchPresentation?: unknown };
+  void _presentation;
+  void _branches;
+  return mathematics as Omit<Item, 'presentation' | 'branchPresentation'>;
+}
+
 export function classifiedGraphItems(document: GraphDocumentV4): GraphClassifiedItemSnapshotV2[] {
   const items: GraphClassifiedItemSnapshotV2[] = [];
   document.items.forEach((item) => {
     if (item.kind !== 'relation' && item.kind !== 'piecewise' && item.kind !== 'point-set') return;
-    const { presentation: _presentation, ...mathematics } = item;
-    void _presentation;
-    items.push(mathematics);
+    items.push(graphItemMathematics(item) as GraphClassifiedItemSnapshotV2);
   });
   return items;
+}
+
+/** The first item number after every `<workspace>.item.N` the session uses (items and drafts). */
+export function graphFirstFreeItemNumber(
+  session: { document: GraphDocumentV4; authoring?: { piecewiseDrafts: Array<{ itemId: string }> } },
+  workspaceInstanceId: string,
+) {
+  const prefix = `${workspaceInstanceId}.item.`;
+  const used = [...session.document.items, ...(session.authoring?.piecewiseDrafts ?? [])]
+    .map((entry) => entry.itemId.startsWith(prefix) ? Number(entry.itemId.slice(prefix.length)) : NaN)
+    .filter((value) => Number.isSafeInteger(value) && value > 0);
+  return used.length ? Math.max(...used) + 1 : 1;
 }
 
 export function graphParameterEnvironment(document: GraphDocumentV4) {
@@ -75,12 +93,7 @@ export function unresolvedGraphSymbols(document: GraphDocumentV4) {
 function graphMathematicsProjection(document: GraphDocumentV4) {
   return document.items.flatMap((item): unknown[] => {
     if (item.kind === 'note') return [];
-    if ('presentation' in item) {
-      const { presentation: _presentation, ...mathematics } = item;
-      void _presentation;
-      return [mathematics];
-    }
-    return [item];
+    return 'presentation' in item ? [graphItemMathematics(item)] : [item];
   });
 }
 

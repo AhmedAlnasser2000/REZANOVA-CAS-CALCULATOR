@@ -10,9 +10,34 @@ import type {
 } from '../../lib/graphing';
 import { graphAnalysisAnnotationId, graphFeatureNumber } from './graph-analysis-overlay-support';
 import { asymptoteLabelNumber } from './ptx/ptx-asymptote-layer';
+import { graphIntervalWords } from './graph-piecewise-coverage';
+/** Exact values as read: \frac{1}{2} → 1/2, \sqrt{13} → √13 (roots first, so \frac{\sqrt{13}}{2} → √13/2). */
+function latexText(latex: string) {
+  return latex.replace(/\\sqrt\{([^{}]*)\}/gu, '√$1').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/gu, '$1/$2')
+    .replace(/\\(?:left|right)/gu, '');
+}
 function featureText(value: GraphFeatureValueV1 | undefined) {
   if (!value) return '—';
-  return value.kind === 'exact' ? value.value.canonicalLatex : `≈ ${Number(value.value.toPrecision(7))}`;
+  return value.kind === 'exact' ? latexText(value.value.canonicalLatex) : `≈ ${Number(value.value.toPrecision(7))}`;
+}
+const short = (value: number) => String(Number(value.toPrecision(6))).replace('-', '−');
+/** A stretch card: "Zero for x ≤ −2" (the curve lies on the axis) or "Same curve for x ≥ 0" (two curves coincide). */
+function stretchText(entry: GraphAnalysisEvidenceV1) {
+  const interval = entry.detail?.interval;
+  if (entry.detail?.shared && !interval) return 'Same curve';
+  return interval ? `${entry.feature === 'root' ? 'Zero' : 'Same curve'} for ${graphIntervalWords(interval)}` : null;
+}
+/** A piecewise boundary card: "Jump of 1 at x = 0" with "left 0 · right 1" beneath. */
+function boundaryText(entry: GraphAnalysisEvidenceV1) {
+  const boundary = entry.detail?.boundary; const x = graphFeatureNumber(entry.coordinates?.x);
+  if (!boundary || x === undefined) return null;
+  const at = `at x = ${short(x)}`;
+  const title = boundary.kind === 'jump' && boundary.jump !== undefined ? `Jump of ${short(boundary.jump)} ${at}`
+    : boundary.kind === 'removable' ? `Hole ${at}` : boundary.kind === 'vertical-asymptote' ? `Vertical asymptote ${at}`
+      : boundary.kind === 'one-sided' ? `One-sided ${at}` : `Continuous ${at}`;
+  const sides = [boundary.left !== undefined ? `left ${short(boundary.left)}` : null, boundary.right !== undefined ? `right ${short(boundary.right)}` : null,
+    boundary.value !== undefined ? `value ${short(boundary.value)}` : null].filter(Boolean).join(' · ');
+  return { title, sides };
 }
 function label(feature: string) { return feature.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' '); }
 
@@ -124,8 +149,11 @@ export function GraphAnalyzeOverlay({
             return <article className="graph-feature-card" key={entry.evidenceId} onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget)) onPreview(null);
             }} onFocus={() => onPreview(entry)} onMouseEnter={() => onPreview(entry)} onMouseLeave={() => onPreview(null)} tabIndex={0}>
-              <div><strong>{asymptoteEquation(entry) ?? complexCoordinate ?? (entry.coordinates?.x ? `x ${featureText(entry.coordinates.x)}` : label(entry.feature))}</strong>
-                {!asymptoteEquation(entry) && !complexCoordinate && entry.coordinates?.y ? <span>y {featureText(entry.coordinates.y)}</span> : null}</div>
+              {entry.detail?.interval || entry.detail?.shared ? <div><strong>{stretchText(entry)}</strong><span>{entry.feature === 'root'
+                ? 'every point here is a root' : 'every point here is on both curves'}</span></div>
+                : boundaryText(entry) ? <div><strong>{boundaryText(entry)!.title}</strong><span>{boundaryText(entry)!.sides}</span></div>
+                : <div><strong>{asymptoteEquation(entry) ?? complexCoordinate ?? (entry.coordinates?.x ? `x ${featureText(entry.coordinates.x)}` : label(entry.feature))}</strong>
+                  {!asymptoteEquation(entry) && !complexCoordinate && entry.coordinates?.y ? <span>y {featureText(entry.coordinates.y)}</span> : null}</div>}
               {entry.coordinates?.z ? <span className="graph-feature-z">z {featureText(entry.coordinates.z)}</span> : null}
               <span className={`graph-evidence-badge is-${entry.level}`}>{entry.level.replaceAll('-', ' ')}</span>
               <div className="graph-feature-actions">

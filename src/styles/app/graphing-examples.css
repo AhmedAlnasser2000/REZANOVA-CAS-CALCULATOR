@@ -1,0 +1,146 @@
+/* The Graph examples gallery (GRAPHING-PIECEWISE2): a panel over the page, by category. */
+
+.graph-examples-open {
+  justify-self: start;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: #cfe3d7;
+  font-size: 0.76rem;
+}
+
+.graph-examples {
+  position: fixed;
+  z-index: 40;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 10px;
+  width: min(780px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 32px));
+  padding: 14px 16px 16px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 12px;
+  background: #0b181b;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  color: #e6f2ea;
+  transform: translate(-50%, -50%);
+}
+
+.graph-examples-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.graph-examples-heading > strong { font-size: 1rem; }
+
+.graph-examples-heading > span { color: #8fa79b; font-size: 0.78rem; }
+
+.graph-examples-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.graph-examples-tabs > button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--graph-line);
+  border-radius: 999px;
+  background: transparent;
+  color: #b8ccc0;
+  font-size: 0.78rem;
+}
+
+.graph-examples-tabs > button[aria-selected='true'] {
+  border-color: rgba(98, 230, 144, 0.5);
+  background: rgba(98, 230, 144, 0.12);
+  color: #d8f5e1;
+}
+
+.graph-examples-description { margin: 0; color: #8fa79b; font-size: 0.76rem; }
+
+.graph-examples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.graph-example-card {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--graph-line);
+  border-radius: 9px;
+  background: #0e1f22;
+  color: #e6f2ea;
+  text-align: left;
+}
+
+.graph-example-card:hover,
+.graph-example-card:focus-visible { border-color: rgba(85, 152, 255, 0.55); background: #11252a; }
+
+.graph-example-card > strong { font-size: 0.86rem; }
+
+.graph-example-card > span { color: #93ab9f; font-size: 0.74rem; line-height: 1.35; }
+
+.graph-example-formula {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.graph-example-formula *,
+.graph-example-math { pointer-events: none; }
+
+.graph-example-math {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #dbe9e0;
+  font-size: 0.9rem;
+}
+
+.graph-example-math::part(virtual-keyboard-toggle),
+.graph-example-math::part(menu-toggle) { display: none; }
+
+.graph-examples-choice {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--graph-line);
+  border-radius: 9px;
+  background: #0e1f22;
+}
+
+.graph-examples-choice p { margin: 0; font-size: 0.84rem; }
+
+.graph-examples-choice div { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.graph-examples-choice button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--graph-line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: #cfe3d7;
+  font-size: 0.78rem;
+}
+
+.graph-examples-choice button.is-primary {
+  border-color: rgba(98, 230, 144, 0.5);
+  background: rgba(98, 230, 144, 0.14);
+  color: #d8f5e1;
+}
