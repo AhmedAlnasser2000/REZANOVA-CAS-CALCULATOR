@@ -947,6 +947,15 @@ const allGoldenCases: GoldenCase[] = [
     expected: { kind: 'success', title: 'Equation', presentedText: '-1 < x ≤ -√2/2 and -√(1 - x^2) < y < √(1 - x^2)\nor -√2/2 < x < √2/2 and x < y < √(1 - x^2)' },
   },
   {
+    // EQUATION-SEMIALGEBRAIC1 PR B: quantifier elimination into a range of the free name.
+    id: 'new-equation-forall',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\forall x: x^2+ax+1>0'],
+    targets: ['a'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'a ∈ (-2, 2)' },
+  },
+  {
     id: 'new-integration-polynomial',
     lane: 'new-integration',
     mode: 'new-integration',
@@ -962,7 +971,7 @@ const allGoldenCases: GoldenCase[] = [
   },
 ];
 
-/** Every golden case (54): print hygiene scans them all. */
+/** Every golden case (55): print hygiene scans them all. */
 export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
 
 /**

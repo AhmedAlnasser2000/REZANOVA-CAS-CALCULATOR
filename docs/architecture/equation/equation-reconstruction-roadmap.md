@@ -23,7 +23,7 @@ Part B:
 
 This completes stage 14.
 
-Done: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable, #25): certified isolated real roots as the schema-7 binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B (square systems): the schema-7 binder `isolated-real-point`, HC4 contraction, floating-point Newton guesses proven by the exact Krawczyk test, branch and prune with an independent exclusion cover, and a fix for systems eliminated to one numeric root. In progress: stage 16 `EQUATION-SEMIALGEBRAIC1` ([specification](equation-semialgebraic1-spec.md)). PR A (rows with ∧, ∨ and ¬; cylindrical algebraic decomposition with Lazard's projection, equational constraints and partial lifting; Reduce-style regions as the schema-7 set kind `cylindrical`; a verifier by samples and a reversed variable order; Logic keyboard keys and symbol tooltips) is pushed; PR B (∀, ∃ and parameters through the decomposition) follows.
+Done: stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table; [specification](equation-certified-numerics1-spec.md)). PR A (one variable, #25): certified isolated real roots as the schema-7 binder `isolated-real-root`, range rows, an independent exclusion verifier and the "Certified" line. PR B (square systems): the schema-7 binder `isolated-real-point`, HC4 contraction, floating-point Newton guesses proven by the exact Krawczyk test, branch and prune with an independent exclusion cover, and a fix for systems eliminated to one numeric root. Done: stage 16 `EQUATION-SEMIALGEBRAIC1` ([specification](equation-semialgebraic1-spec.md)). PR A (#27): rows with ∧, ∨ and ¬; cylindrical algebraic decomposition (Lazard's projection, equational constraints, partial lifting); Reduce-style regions as the schema-7 set kind `cylindrical`; a verifier by samples and a reversed variable order; Logic keys and symbol tooltips. PR B: every free name an unknown when no row is an equation; ∀ and ∃ by quantifier elimination with True/False statements (schema-7 `truth`); parameters through the decomposition as Reduce-style cases; coupled assumptions decided exactly. Next: stage 17 `EQUATION-RECONSTRUCTION-CLOSEOUT1`, with its own approval.
 
 Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-INERT1`](tests-legacy-equation-inert1.md) and [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md):
 - rows read off the main thread;
@@ -51,12 +51,16 @@ Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-
 | 13b (verified) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 (verified) | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
 | 15 (verified) | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs. PR A: one variable (isolated real roots, range rows). PR B: square systems | N cases certified; numerical results typed as numerical |
-| 16 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
+| 16 (verified) | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities; rows with ∧ ∨ ¬; ∀ ∃ by quantifier elimination; parameters through the decomposition | Feasibility and decision cases |
 | 17 | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Corpus parity, then retirement of the old Equation engine | Capability ledger; no regression versus the baseline table |
 
 **Order change (user decision, 2026-10-07):** certified numerics now comes before the semialgebraic gate, and the stage numbers were swapped (15 ↔ 16); the gate names and slice numbers are unchanged. Numerics serves common single equations that end in "Not solved yet" today (cos x = x, eˣ + x³ = 5), while CAD mostly serves inequality systems and several-parameter problems; neither blocks the other.
 
 Stages 15 and 16 may move before adoption if the user wants them in the first product release. Adoption can also happen earlier with fewer slices, because V6 is designed to grow by kinds.
+
+## Native core (user decision, 2026-10-07)
+
+The Equation core is to be rewritten in Rust: a native desktop build (Tauri) and a WebAssembly build for the web from the same code, desktop-first, giving identical answers everywhere; matching desktop speed on the web for demanding cases is not a priority. This is far off: it is not the step after this roadmap, but comes after the other workspace reconstructions (Integration first). Differential equations are a separate future roadmap as well.
 
 ## After this roadmap: certified-numerics expansion (user decision, 2026-10-07)
 
@@ -109,7 +113,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | ~~Non-closed-form boundaries and isolated numeric roots (eˣ + sin x > 0)~~ (closed by `EQUATION-CERTIFIED-NUMERICS1` PR A, with a range row when there are infinitely many) | `EQUATION-COMPOSITION1` | `EQUATION-CERTIFIED-NUMERICS1` |
 | ~~Depth-25 periodic chains cost about 100 s with verification~~ (closed: about 0.6 s, `EQUATION-PROOF-PERFORMANCE1` part A) | `EQUATION-COMPOSITION1` | `EQUATION-PROOF-PERFORMANCE1` |
 | Recursive walks of nested solution sets (normalization, keys, wire). The parameters gate builds flat case trees (one level), so the walks stay shallow; nested case trees would need explicit stacks | `EQUATION-REPRESENTATION1` | the gate that first nests case trees |
-| Conjunctions of several relations in the target with several parameters; real roots of degree ≥ 3 with several parameters; deciding whether a several-parameter case is empty | `EQUATION-PARAMETERS1` | `EQUATION-SEMIALGEBRAIC1` |
+| ~~Conjunctions of several relations in the target with several parameters; real roots of degree ≥ 3 with several parameters; deciding whether a several-parameter case is empty~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B, over ℝ for polynomial rows) | `EQUATION-PARAMETERS1` | `EQUATION-SEMIALGEBRAIC1` |
 | Excluding the roots of a parametric polynomial of degree ≥ 3 over ℂ | `EQUATION-PARAMETERS1` | unassigned |
 | Mixed kernels with parameters (eˣ + a·sin x, eˣ + a·x, √x + √(x+a)) | `EQUATION-PARAMETERS1` | unassigned |
 | Kernel levels of degree ≥ 2 in the kernel with parameters (e^{2x} + a·eˣ = 1), nested kernels, non-affine kernel arguments, the target in an exponent, tan/arcs/Lambert W with parameters, non-unit rational powers | `EQUATION-PARAMETERS1` | unassigned |
@@ -129,7 +133,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | The detailed verification report (one entry per check behind "Verified exactly") | `EQUATION-ADOPTION1` (user decision) | `EQUATION-VERIFICATION-REPORT1` |
 | Global History for New Equation; export, open and verify of saved problems | `EQUATION-ADOPTION1` (user decision) | unassigned |
 | Step-by-step explanations, by an agent through MCP in Notebook | `EQUATION-ADOPTION1` (user decision) | unassigned |
-| Assumptions coupling several parameters beyond monomials (cases kept as they are, with a note) | `EQUATION-ADOPTION1` | `EQUATION-SEMIALGEBRAIC1` |
+| ~~Assumptions coupling several parameters beyond monomials (cases kept as they are, with a note)~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B for polynomial conditions over ℝ: decided by a partial decomposition) | `EQUATION-ADOPTION1` | `EQUATION-SEMIALGEBRAIC1` |
 | Nested absolute values (\|x − \|x − 1\|\| = 1) stop with an internal "division-by-zero: rational inverse" error instead of an answer | user test cases, 2026-10-05 | unassigned (constraints slice) |
 | Complex radicals shown as √(−3) and √(−16) instead of √3·i and 4i in roots of quadratics over ℂ | user test cases, 2026-10-05 | unassigned (presentation) |
 | Parametric system values laid out as −(z − 1)/2 and −(−1 − a)/2 instead of (1 − z)/2 and (a + 1)/2 | user test cases, 2026-10-05 | unassigned (presentation) |
@@ -139,7 +143,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Positive-dimensional and parametric systems still verify by re-deriving at samples; their timing was not measured in this gate | `NEW-EQUATION-RESPONSIVE1` | unassigned (systems) |
 | MathLive keeps a phantom open fence after an unbalanced `\left(` is set programmatically: every later `setValue` (even `''`) ends in `\left(\right.`. Typing is unaffected (typing `(` inserts a balanced pair); select-all and delete clears it. Reproduced on a bare `math-field` outside the app | post-merge Playwright check, 2026-10-07 | unassigned (shared editor) |
 | Case conditions are not simplified: x²yc + x³ = axy shows "If ax − cx² = 0 and x³ = 0" where x = 0 says the same, and ax − cx² is not shown factored as x(a − cx) | user test case, 2026-10-07 | unassigned (presentation) |
-| "Some cases could not be checked against the assumptions" appears whenever case conditions couple several parameters, even when every kept case is in fact possible under the assumptions (x²yc + x³ = axy with a ≠ 0, a < 0 or a > 0). The answer is correct; the pruning just cannot decide coupled conditions yet | user test case, 2026-10-07 | `EQUATION-SEMIALGEBRAIC1` |
+| ~~"Some cases could not be checked against the assumptions" appears whenever case conditions couple several parameters (x²yc + x³ = axy with a ≠ 0, a < 0 or a > 0)~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B) | user test case, 2026-10-07 | `EQUATION-SEMIALGEBRAIC1` |
 | ~~A stray vertical scrollbar beside tall answer rows (fractions), from `overflow-x: auto` on the math row~~ (fixed 2026-10-07, `overflow-y: hidden`) | user test case, 2026-10-07 | `NEW-EQUATION-RESPONSIVE1` follow-up |
 | Over-determined non-polynomial systems (an extra equation cannot be certified exactly zero at a numeric point) | `EQUATION-CERTIFIED-NUMERICS1` (plan) | unassigned |
 | Under-determined non-polynomial systems (the answer is a curve; needs a representation gate) | `EQUATION-CERTIFIED-NUMERICS1` (plan) | unassigned |
@@ -162,7 +166,11 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | ~~Rows with only inequalities choose one unknown automatically (one per equation row)~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B, user decision 2026-10-07: with no equation, every free name is an unknown) | `EQUATION-SEMIALGEBRAIC1` PR A | `EQUATION-SEMIALGEBRAIC1` PR B |
 | Cell merging is decided at one sample of the section between them; descriptions in three or more unknowns that differ only symbolically (equal after simplification) stay separate cells | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
 | Decimal style shows integer cell ends as 1.000000 (as interval answers do) | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
-| Quantifiers on non-polynomial rows, and over ℂ | `EQUATION-SEMIALGEBRAIC1` (plan) | unassigned |
+| Quantifiers on non-polynomial rows, over ℂ, and with a denominator in a quantified variable | `EQUATION-SEMIALGEBRAIC1` | unassigned |
+| Parameter cases bounded by a root of degree ≥ 3 in the other parameters have no condition form and are refused | `EQUATION-SEMIALGEBRAIC1` PR B | unassigned (needs a root value inside conditions) |
+| No multivariate factorization: only powers of the unknown split off, so a polynomial with other factors keeps "k-th root" bounds where a factored form would give closed forms | `EQUATION-SEMIALGEBRAIC1` PR B | expansion roadmap |
+| Quotients with free symbols are not cancelled in closed forms (2ac/c² is not shown as 2a/c), and products of radicals are not joined (√a·√2/2) | `EQUATION-SEMIALGEBRAIC1` PR B | unassigned (presentation) |
+| Answers with parameters through the decomposition are checked at every cell of a reversed-order decomposition (cases disjoint and covering), not also at samples of each claimed case | `EQUATION-SEMIALGEBRAIC1` PR B | unassigned |
 
 ## Attribution
 

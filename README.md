@@ -49,7 +49,7 @@ REZANOVA is not intended to be a thin interface over one expression engine. Its 
 
 - **Exact-first, guarded mathematics** — symbolic routes are preferred where appropriate, while numerical work is explicit and labelled.
 - **Visible mathematical boundaries** — conditions, exclusions, branch restrictions, residual checks, uncertainty, and controlled unsupported cases are surfaced rather than hidden.
-- **Target-aware equation solving** — the selected unknown is distinguished from symbolic parameters and stored numeric values.
+- **Verified equation solving** — New Equation decides equations, inequalities, systems, regions and quantified statements exactly, splits answers into cases over parameters, and verifies every answer independently before showing it.
 - **First-class complex mathematics** — bounded exact and numeric complex solving, branch-aware evidence, complex graph mappings, Argand trajectories, domain colouring, and component views are real parts of the current project.
 - **Serious symbolic integration work** — direct and rule-based integration is supplemented by bounded Risch–Norman work, Lazard–Rioboo–Trager/Rothstein–Trager-family rational-integration routes, algebraic-function reductions, elliptic/special-function output, and proof-backed non-elementary certificates.
 - **Relation-first Graphing** — Graphing is not limited to `y=f(x)` and is not a detached static plot window: implicit curves, regions, parametric, polar, piecewise and complex graphs are first-class, drawn on the GPU, and traced with proved or verified readouts.
@@ -203,25 +203,49 @@ Still to come in the Graphing program: tracing on 3D surfaces, Riemann sheets an
 
 ### Equation solving
 
-Equation is target-aware and preserves non-target symbols as parameters instead of silently consuming them as stored values.
+Equation solving is being rebuilt on a new private core, `src/lib/symbolic-engine/equation/`, and is used through the **New Equation** workspace (Menu → Core → New Equation). The original Equation workspace (`src/lib/equation/`) remains available until New Equation reaches parity with it. At that point it is retired: stage 17 of the [reconstruction roadmap](docs/architecture/equation/equation-reconstruction-roadmap.md).
 
-Current Equation work includes:
+**New Equation**
 
-- explicit selected targets, including case-sensitive symbols and named targets through forms such as `@mass` or `var(mass)`
-- affine, linear, quadratic, rational, factorable-polynomial, exponential, logarithmic, trigonometric, composition, carrier, wrapper, and mixed-algebraic families
-- guarded direct Cardano and Ferrari routes for cubic and quartic equations
-- bounded higher-degree symbolic polynomial handling
-- periodic trigonometric families and compact preimage readback
-- real inequalities and bounded periodic-inequality routes
-- 2×2 and 3×3 systems plus broader structured system/readback work
-- candidate validation and extraneous-root rejection
-- visible exclusions, conditions, domain facts, and branch facts
-- explicit real interval solving when symbolic routes stop
-- exact Complex families, including bounded complex wrappers and polynomial routes
-- bounded complex-region numeric solving with residual, contour, root-count, cluster, derivative, pole-aware, and local-box evidence
-- branch-safe complex pullbacks that fail closed when principal-branch safety cannot be established
+- **Rows**:
+  - one relation per row (=, ≠, <, ≤, >, ≥), or relations joined with ∧, ∨ and ¬, and ∀ / ∃ prefixes;
+  - all rows hold together;
+  - <kbd>Enter</kbd> solves; <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a row.
+- **Unknowns**:
+  - picked automatically (x, y, z, t, then the rest): one per equation row, or every free letter when no row is an equation;
+  - editable as chips;
+  - every other letter is a parameter, and answers split into exact cases over the parameters;
+  - rows on parameters only are assumptions ("Assuming a > 0").
+- **Exact algebra underneath**:
+  - polynomial arithmetic and factorization over ℚ;
+  - real and complex root isolation with exact `RootOf` numbers;
+  - radical forms where they are proven equal.
+- **What it decides**:
+  - polynomial and rational equations and inequalities, of any degree, over ℝ and ℂ;
+  - exponentials, logarithms and Lambert W;
+  - absolute values and radicals;
+  - trigonometric equations and inequalities as exact periodic families;
+  - deep compositions;
+  - parametric problems as case trees;
+  - linear and nonlinear polynomial systems (Gröbner bases, exact points in one number field, positive-dimensional families);
+  - certified numeric roots and certified solutions of square systems, proven by the Krawczyk test, when no closed form exists;
+  - real polynomial problems in several unknowns with inequalities, ∨ and ¬, by cylindrical algebraic decomposition. Answers are regions written like Mathematica's `Reduce`, for example −1 < x < 1 and −√(1 − x²) < y < √(1 − x²);
+  - ∀ and ∃ by quantifier elimination: ∀x: x² + ax + 1 > 0 gives −2 < a < 2, and a row whose every letter is quantified answers True or False.
+- **Every answer is verified independently before it is shown**:
+  - substitution, number-field checks, certificates, or a second decomposition in another variable order;
+  - then replayed through the typed schema-7 Equation contract.
+- **Non-answers are honest**:
+  - nothing partial is shown;
+  - a problem that cannot be decided yet names the gate that will decide it;
+  - long runs end only at typed work, memory or Stop limits.
+- **Presentation**:
+  - Exact, Decimal (certified digits) or Both;
+  - definitions for roots without a closed form;
+  - "Conditions used";
+  - copy as text or LaTeX;
+  - a Logic keyboard page (∧ ∨ ¬ ∀ ∃) whose symbols explain themselves on hover.
 
-Complex support is powerful but not unrestricted: global completeness, broad complex locus/set output, universal `RootOf`-style readback, and formal root certification remain outside the current claim.
+The bounds still matter. The decomposition is doubly exponential in the number of variables, so four or more unknowns may end at the work limit. Quantifiers are decided for real polynomial rows only. The open items are listed in the roadmap's follow-up ledger.
 
 ### Calculus
 
@@ -447,7 +471,8 @@ Architecture at a glance:
 - `src/app/*` — app pages, workspace views, shell surfaces, routing, and presentation
 - `src/lib/graphing/*` — graph contracts, parser, evaluator, sampling, analysis, scenes, OOE, and renderer boundaries
 - `src/lib/notebook/*` — Notebook documents, media, persistence, publication, templates, and compatibility
-- `src/lib/equation/*` — guarded real/complex equation solving and evidence
+- `src/lib/symbolic-engine/equation/*` — the new Equation core (exact algebra, algebraic numbers, decision slices, cylindrical decomposition, certified numerics, verifiers) and its typed adapter for New Equation
+- `src/lib/equation/*` — the original Equation engine, kept until New Equation reaches parity
 - `src/lib/calculus/*` and `src/lib/symbolic-engine/integration/*` — calculus workflows and symbolic integration routes
 - `src/lib/linear-algebra/*` — Matrix/Vector exact, symbolic, complex, and numerical cores
 - `src/lib/statistics/*` — statistics parsing, calculations, readback, inference, distributions, and visualization contracts

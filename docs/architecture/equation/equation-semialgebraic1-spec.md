@@ -109,8 +109,62 @@ This is re-derivation-strength evidence, not a certificate (ledger).
   - the ∨ tooltip shown by hovering the symbol in a real MathLive row;
   - a ∨ region.
 
-## PR B (next)
+## PR B: quantifiers, statements and parameters
 
-- **Quantifiers** by quantifier elimination: free variables projected outermost.
-- **Parameters through the decomposition:** the several-parameter refusals and coupled-assumption pruning.
-- **Docs:** the Guide article, examples, and recording the native-core decision.
+### User decisions (2026-10-07)
+
+- The free names of a quantified row are unknowns by default: ∀x: x² + ax + 1 > 0 gives −2 < a < 2.
+- A row whose every name is quantified is a statement, and its answer reads True or False. This affects only such rows.
+- Rows with no equation (only inequalities, ∨ ∧ ¬ or quantifiers) make every free name an unknown. Rows with equations keep one unknown per equation row.
+- Parameter cases read as Reduce-style cells: "If a > 0 and −√a < b ≤ √a:".
+
+### B0. Automatic unknowns (`src/lib/new-equation/parse.ts` `autoTargets`)
+
+With no equation row, every free name is an unknown, so x² + y² < 1, y > x is a region in x and y.
+
+### B1. Quantifiers (`cad/atoms.ts`, `cad/decompose.ts`, `cad/solve.ts`, `cad/verify.ts`)
+
+- **Prenex form.** Each ∀ or ∃ is pulled out in order of appearance, with its variable renamed apart. This is sound because a bound name occurs nowhere else. A denominator in a bound variable is refused, since its domain would sit under the quantifier.
+- **Variable order.** The free names are the outer levels and the bound ones the inner levels, outermost quantifier first.
+- **Lifting.** Each bound level is decided over its stack: ∀ needs every cell, ∃ some cell, stopping once decided. The free-level cells carry the truth, and the region builder reads them as usual. No equational constraint is used.
+- **Statements.** With no free names the answer is the new schema-7 set kind `truth { value }` (no targets), shown as True or False. The validator allows empty targets only with a truth answer or a non-answer, and the request and row checks accept closed rows.
+- **Verifier:**
+  - rational samples of claimed cells are decided by a smaller decomposition of the statement at that point;
+  - algebraic samples are located in a second decomposition, lifted in full (no early truth) with the free names reversed;
+  - every cell of that second decomposition must agree with the claimed answer;
+  - statements must equal the second decomposition's truth.
+- **Keys.** The Logic page gains ∀ and ∃ keys (∀ inserts `\forall □:`), with tooltips on the keys and on hover.
+
+### B2. Parameters through the decomposition (`cad/cases.ts`, `cad/feasible.ts`)
+
+- **What is routed here.** Problems that the parameters and systems slices refused:
+  - several relations in one unknown with several parameters;
+  - real roots of degree ≥ 3 with several parameters;
+  - orders or ∨ in systems with parameters;
+  - quantified rows with parameters.
+- **Order.** The parameters are the outer levels and the unknowns the inner ones.
+- **Cases.** The description reads as a case tree over parameter cells:
+  - conditions are the cell ends: p = v, or p ≷ its ends;
+  - each case's set is the unknowns' description (points, intervals or `cylindrical`, with bounds in the parameters);
+  - parameter cells with no solution stay as "No solution" cases;
+  - cases that differ only in E > 0 against −E > 0 with one answer join as E ≠ 0.
+- **Simplification:**
+  - section values (constants or closed forms) are substituted into deeper bounds;
+  - powers of the main variable split off in the projection, so x³ + cyx² − ayx gives 0 and the closed forms of the quadratic;
+  - case conditions print with a parameter alone on one side where it stands alone in the sum (`isolate` in the Equation printer), so paired bounds chain: −√a < b ≤ √a.
+- **Verifier.** Every cell of a decomposition with all coordinates reversed is checked against the claimed answer, and exactly one case must hold at each parameter value.
+- **Assumption pruning** (`parameters/assume.ts`). Conditions coupling several parameters are decided by a partial decomposition (`conditionsSatisfiable`):
+  - a case is dropped when its conditions cannot hold with the assumptions;
+  - a condition is removed when its negation cannot hold with the rest.
+  - So "Some cases could not be checked against the assumptions" no longer appears for polynomial conditions over ℝ.
+
+### B3. Evidence and docs
+
+- **Tests:**
+  - `cad/quantifiers.test.ts`: regions of free names, a region in two names, True/False statements, a rejected wrong region and truth;
+  - `cad/parameters.test.ts`: case trees for root order, a depressed cubic, a parametric region, a plain parametric set, c ≠ 0 joining with complete assumption pruning, coupled feasibility.
+- **60 s probe:** 3.5–3.8 s per case including process start: ∀x: x² + ax + 1 > 0, ∃y: x² + y² < 1, ∀x: x² + 1 > 0, ∀x ∃y: y² = x + a, ∃z: x² + y² + z² < 1, ∀x: x⁴ + ax² + b ≥ 0, x² < a ∧ x > b, x³ + ax + b = 0, x² + y² < a ∧ y > x, x²yc + x³ = axy with a < 0, and ∃x: x³ + px + q = 0.
+- **Golden case** `new-equation-forall`.
+- **Playwright steps** with screenshots `forall.png`, `statement.png` and `parameter-cases.png`.
+- **Guide and menu:** the Guide article explains ∧ ∨ ¬ ∀ ∃, regions and statements; the Example menu adds "For all (∀)" and "Statement".
+- **Native core:** recorded in the roadmap. Rust, with a native desktop build and WebAssembly for the web, desktop-first and identical answers everywhere. It is far off: after the other workspace reconstructions (Integration first).

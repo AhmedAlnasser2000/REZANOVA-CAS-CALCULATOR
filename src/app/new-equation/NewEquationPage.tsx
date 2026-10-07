@@ -18,6 +18,8 @@ const EXAMPLES: readonly { label: string; rows: string[] }[] = [
   { label: 'Trigonometric', rows: ['\\sin x=\\frac{1}{2}'] },
   { label: 'With an assumption', rows: ['x^2=a', 'a>0'] },
   { label: 'Region', rows: ['x^2+y^2<1', 'y>x'] },
+  { label: 'For all (∀)', rows: ['\\forall x: x^2+ax+1>0'] },
+  { label: 'Statement', rows: ['\\forall x,\\exists y: y>x^2'] },
 ];
 const LIMIT_LABELS: Readonly<Record<keyof EquationLimits, string>> = { work: 'Work', allocation: 'Memory (allocation units)' };
 
