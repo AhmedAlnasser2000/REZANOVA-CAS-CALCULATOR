@@ -69,8 +69,8 @@ const baseline: CorpusCase[] = ([
   ['C6', eq(nest('Ln', 3, 'x'), 1), 'solved'],
   ['C7', eq(nest('Ln', 4, 'x')), 'solved'],
   ['M1', eq(add(['Sqrt', 'x'], ['Root', 'x', 3], ['Root', 'x', 4]), 3), 'solved'],
-  ['N1', eq(cos('x'), 'x'), 'incomplete-implementation'],
-  ['N2', eq(sin('x'), pow('x', 2)), 'incomplete-implementation'],
+  ['N1', eq(cos('x'), 'x'), 'solved'],
+  ['N2', eq(sin('x'), pow('x', 2)), 'solved'],
 ] as const).map(([id, json, expect]) => ({ id, json, expect, baseline: true }));
 
 const evidence: CorpusCase[] = [

@@ -3,7 +3,7 @@ import { bitLength, imul, iroot, ipow } from '../algebra/integer';
 import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { refineReal } from '../algebraic/root-of';
-import type { ExprId, ExpressionStore } from './expression';
+import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from './expression';
 
 /**
  * Certified enclosures of real number-only expressions: exact rational
@@ -480,6 +480,7 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
         box = { lo: t.lo, hi: t.hi };
         break;
       }
+      case 'isolated': box = isolatedBox(store, n, bits); break;
       case 'add': {
         const parts = node.args.map(get);
         box = { lo: down(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.lo), zero(ctx)), bits), hi: up(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.hi), zero(ctx)), bits) };
@@ -494,6 +495,83 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
   }
   const b = boxes.get(id) as Box;
   return { kind: 'bounds', lo: b.lo, hi: b.hi };
+}
+
+/** Best isolating interval found so far per isolated zero (refinement is monotone, so keep the narrowest). */
+const ISOLATED = new WeakMap<ExpressionStore, Map<ExprId, Bounds>>();
+
+/**
+ * An isolated zero refined until its interval is at most 2^-bits wide. Each step guesses the zero by the secant
+ * through f's (enclosed) values at the ends and tests two dyadic points just around the guess; f is strictly
+ * monotone on the interval, so a point's exact sign tells which side of the zero it lies on, and two points with
+ * opposite signs bracket it. A good guess shrinks the interval to the points' gap, which then shrinks
+ * geometrically faster (quadratic convergence for a simple zero); a poor guess still moves an end. When neither
+ * test point decides first, the other is taken; a point equal to the zero never decides, so points are refined
+ * alternately and at least one of two distinct points always does.
+ */
+function isolatedBox(store: ExpressionStore, id: ExprId, bits: number): Box | Exclude<Enclosed, { kind: 'bounds' }> {
+  const ctx = store.ctx, node = store.node(id) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated' }>;
+  let cache = ISOLATED.get(store);
+  if (!cache) { cache = new Map(); ISOLATED.set(store, cache); }
+  let { lo, hi } = cache.get(id) ?? { lo: node.lo, hi: node.hi };
+  const target = rational(ctx, 1n, 1n << BigInt(bits)), two = rational(ctx, 2n);
+  const at = (p: Rational) => store.substitute(node.expr, new Map([[ISOLATED_VARIABLE, store.number(p)]]));
+  const wider = (a: Rational, b: Rational) => a.numerator * b.denominator > b.numerator * a.denominator;
+  const bitsOf = (w: Rational) => Math.max(32, Number(bitLength(w.denominator) - bitLength(w.numerator)) + 24);
+  // The first of `points` whose exact sign is decided (alternating refinement).
+  const decide = (points: readonly Rational[]): { p: Rational; sign: 1 | -1 } | Exclude<Enclosed, { kind: 'bounds' }> => {
+    const fs = points.map(at);
+    for (let b = 32; ; b *= 2) {
+      ctx.tick();
+      for (let i = 0; i < points.length; i++) {
+        const e = enclose(store, fs[i], b);
+        if (e.kind === 'undefined' || e.kind === 'unsupported') return e;
+        if (e.kind === 'bounds' && (e.lo.numerator > 0n || e.hi.numerator < 0n)) return { p: points[i], sign: e.lo.numerator > 0n ? 1 : -1 };
+      }
+    }
+  };
+  const move = (r: { p: Rational; sign: 1 | -1 }) => { if (r.sign === node.loSign) lo = r.p; else hi = r.p; };
+  let step = 8;
+  while (wider(rSubtract(ctx, hi, lo), target)) {
+    ctx.tick();
+    const w = rSubtract(ctx, hi, lo), precision = bitsOf(w);
+    // No finer than needed: the test points' gap stays above a quarter of the requested width.
+    step = Math.max(2, Math.min(step, bits + 2 - (precision - 24)));
+    const grid = (x: Rational) => down(ctx, x, precision + step + 8);
+    // Secant guess from f at both ends (approximate values suffice: the guess is only a proposal).
+    const fl = enclose(store, at(lo), precision), fh = enclose(store, at(hi), precision);
+    const mid = (e: Enclosed) => (e.kind === 'bounds' ? rDivide(ctx, rAdd(ctx, e.lo, e.hi), two) : undefined);
+    const vl = mid(fl), vh = mid(fh);
+    let guess = rAdd(ctx, lo, rDivide(ctx, w, two));
+    if (vl !== undefined && vh !== undefined && rSubtract(ctx, vl, vh).numerator !== 0n) {
+      const t = rDivide(ctx, vl, rSubtract(ctx, vl, vh));
+      if (t.numerator > 0n && t.numerator < t.denominator) guess = rAdd(ctx, lo, rMultiply(ctx, w, t));
+    }
+    const eps = rDivide(ctx, w, rational(ctx, 1n << BigInt(step)));
+    const a = grid(rSubtract(ctx, guess, eps)), b = grid(rAdd(ctx, guess, eps));
+    const inside = (x: Rational) => wider(rSubtract(ctx, x, lo), rational(ctx, 0n)) && wider(rSubtract(ctx, hi, x), rational(ctx, 0n));
+    if (!inside(a) || !inside(b) || !wider(rSubtract(ctx, b, a), rational(ctx, 0n))) {
+      // Degenerate guess: plain trisection.
+      const third = rDivide(ctx, w, rational(ctx, 3n));
+      const r = decide([grid(rAdd(ctx, lo, third)), grid(rSubtract(ctx, hi, third))]);
+      if (!('p' in r)) return r;
+      move(r); step = 8; continue;
+    }
+    const first = decide([a, b]);
+    if (!('p' in first)) return first;
+    move(first);
+    // The other test point (or the middle of what is left, whichever decides first) completes the bracket.
+    const other = first.p === a ? b : a;
+    if (inside(other)) {
+      const second = decide([other, grid(rDivide(ctx, rAdd(ctx, lo, hi), two))]);
+      if (!('p' in second)) return second;
+      move(second);
+    }
+    const shrunk = wider(rMultiply(ctx, rSubtract(ctx, hi, lo), rational(ctx, 1n << BigInt(Math.min(step, 60)))), w) === false;
+    step = shrunk ? Math.min(step * 2, 4096) : 8;
+  }
+  cache.set(id, { lo, hi });
+  return { lo, hi };
 }
 
 function powerBox(store: ExpressionStore, base: Box, exponentId: ExprId, exponent: Box, bits: number): Box | Exclude<Enclosed, { kind: 'bounds' }> {

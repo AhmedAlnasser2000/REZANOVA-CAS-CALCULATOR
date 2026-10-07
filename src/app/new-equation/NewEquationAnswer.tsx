@@ -10,7 +10,7 @@ import { verificationSummary } from '../../lib/new-equation/verification';
 const STYLES: readonly [OutputStyle, string][] = [['exact', 'Exact'], ['decimal', 'Decimal'], ['both', 'Both']];
 /** Plain words for the gate that will decide an unsolved problem (from the typed `incomplete.owner`). */
 const LATER: Readonly<Record<string, string>> = {
-  'EQUATION-CERTIFIED-NUMERICS1': 'Not solved yet: this equation needs certified numerical methods, which are coming in a later update.',
+  'EQUATION-CERTIFIED-NUMERICS1': 'Not solved yet: no certified method covers this equation yet. If it has infinitely many solutions, add a row such as −10 ≤ x ≤ 0 to search a range.',
   'EQUATION-SEMIALGEBRAIC1': 'Not solved yet: inequalities inside a system are coming in a later update.',
 };
 

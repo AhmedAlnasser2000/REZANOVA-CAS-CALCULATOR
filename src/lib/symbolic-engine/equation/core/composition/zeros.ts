@@ -9,6 +9,7 @@ import { sortedDistinct } from '../periodic/families';
 import { derivative } from './derivative';
 import { excludesZero, rangeOf, type XRange } from './range';
 import { limit } from './limits';
+import { isolateZero } from '../numeric/isolated';
 
 /**
  * Exact zeros of a real expression in one variable whose kernels the closed
@@ -88,7 +89,10 @@ function specialValues(store: ExpressionStore, fn: string): ExprId[] {
   }
 }
 
-export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: ZeroFinder): { values: ExprId[] } | { refusal: Refusal } {
+/** Constant bounds on the variable from range rows (EQUATION-CERTIFIED-NUMERICS1): the search stays inside. */
+export interface SearchBox { readonly lo?: ExprId; readonly hi?: ExprId }
+
+export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: ZeroFinder, search: SearchBox = {}): { values: ExprId[] } | { refusal: Refusal } {
   try {
     if (store.freeSymbols(f).some(s => s !== x)) return { refusal: { owner: 'EQUATION-PARAMETERS1', detail: 'symbols besides the variable' } };
     const ctx = store.ctx, depends = (id: ExprId) => store.freeSymbols(id).includes(x);
@@ -122,7 +126,10 @@ export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: 
     }
     const df = derivative(store, f, x);
     const found = new Map<ExprId, true>();
-    const breakpoints = sortedDistinct(store, cuts);
+    // Range rows bound the search: their constants are breakpoints, and pieces outside them are skipped.
+    const breakpoints = sortedDistinct(store, [...cuts, ...[search.lo, search.hi].filter((b): b is ExprId => b !== undefined)]);
+    const outside = (lo: End, hi: End) => (search.hi !== undefined && (lo.kind === 'inf' ? lo.side > 0 : realCompare(store, lo.id, search.hi) >= 0))
+      || (search.lo !== undefined && (hi.kind === 'inf' ? hi.side < 0 : realCompare(store, hi.id, search.lo) <= 0));
     const ends: End[] = breakpoints.map(p => ({ kind: 'pt', id: p, sign: signOf(store, at(f, p)) }));
     for (const e of ends) if (e.kind === 'pt' && e.sign === 0) found.set(e.id, true);
     // Candidates (exact points), filtered per sub-interval.
@@ -181,10 +188,30 @@ export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: 
     const bounds: End[] = [{ kind: 'inf', side: -1 }, ...ends, { kind: 'inf', side: 1 }];
     // Bounded sub-intervals are processed before tails (tails sit at the bottom of the stack), so a tail is cut
     // outward only when everything bounded is decided.
-    const work: [End, End][] = [];
-    const push = (lo: End, hi: End) => { if (lo.kind === 'inf' || hi.kind === 'inf') work.unshift([lo, hi]); else work.push([lo, hi]); };
+    // Each piece remembers the tail it was cut from (−1, +1), or 0: numeric roots are kept only away from a tail
+    // whose limit does not exist (an oscillating tail has infinitely many roots; a range row bounds it instead).
+    const work: [End, End, -1 | 0 | 1][] = [];
+    const push = (lo: End, hi: End, from: -1 | 0 | 1 = 0) => {
+      if (outside(lo, hi)) return;
+      const tail = lo.kind === 'inf' ? -1 : hi.kind === 'inf' ? 1 : from;
+      if (lo.kind === 'inf' || hi.kind === 'inf') work.unshift([lo, hi, tail]); else work.push([lo, hi, tail]);
+    };
+    const limits = new Map<number, boolean>();
+    const settles = (side: -1 | 1) => {
+      if (!limits.has(side)) {
+        // Oscillation needs a sin/cos whose argument is unbounded toward that side (the only periodic kernels here).
+        // A far tail whose range excludes 0 holds no root, so roots cannot repeat forever toward that side.
+        const far = (r: bigint): XRange => (side < 0 ? { hi: rational(ctx, -r), loOpen: true, hiOpen: false } : { lo: rational(ctx, r), loOpen: false, hiOpen: true });
+        const oscillating = kernels.some(k => TRIG.has(k.fn) && (() => { const u = rangeOf(store, k.u, x, far(1000n), 64); return u.lo === undefined || u.hi === undefined; })());
+        limits.set(side, !oscillating || [1000n, 1_000_000n].some(r => excludesZero(rangeOf(store, f, x, far(r), 64)))
+          || limit(store, f, x, { inf: side }, store.integer(side * 1000)) !== undefined);
+      }
+      return limits.get(side) as boolean;
+    };
     for (let i = 0; i + 1 < bounds.length; i++) {
-      const lo = bounds[i], hi = bounds[i + 1], m = point(middle(lo, hi));
+      const lo = bounds[i], hi = bounds[i + 1];
+      if (outside(lo, hi)) continue;
+      const m = point(middle(lo, hi));
       if (m.kind === 'pt' && m.sign === undefined) continue; // undefined on the whole piece
       // Not identically zero on the piece (then its zeros are isolated): a second sample when the first is a zero.
       if (m.kind === 'pt' && m.sign === 0) {
@@ -195,7 +222,7 @@ export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: 
     }
     while (work.length) {
       ctx.tick();
-      const [lo, hi] = work.pop() as [End, End];
+      const [lo, hi, from] = work.pop() as [End, End, -1 | 0 | 1];
       const box = boxOf(lo, hi), r = rangeOf(store, f, x, box, 64);
       if (excludesZero(r)) continue;
       // A trig kernel whose argument is unbounded on a bounded sub-interval oscillates infinitely often there.
@@ -223,9 +250,16 @@ export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: 
         const sl = lo.sign, sh = hi.sign;
         if ((dir > 0 && ((sl !== undefined && sl >= 0) || (sh !== undefined && sh <= 0))) || (dir < 0 && ((sl !== undefined && sl <= 0) || (sh !== undefined && sh >= 0)))) continue;
         if (sl !== undefined && sh !== undefined) {
-          // Opposite signs: exactly one zero inside, accepted only as an exact candidate.
-          const root = candidates(lo, hi, box).find(c => signOf(store, at(f, c)) === 0);
-          if (root === undefined) refuse('a root that is not a closed form');
+          // Opposite signs: exactly one zero inside. An exact candidate wins; otherwise the zero is kept as a
+          // certified isolated zero (EQUATION-CERTIFIED-NUMERICS1) on rational ends inside the sub-interval.
+          let root = candidates(lo, hi, box).find(c => signOf(store, at(f, c)) === 0);
+          if (root === undefined) {
+            if (from !== 0 && !settles(from)) {
+              throw new Refused({ owner: CERTIFIED_NUMERICS, specific: true,
+                detail: `infinitely many roots without a closed form as x → ${from < 0 ? '−' : '+'}∞; add a range row such as ${from < 0 ? '−10 ≤ x ≤ 0' : '0 ≤ x ≤ 10'}` });
+            }
+            root = isolateZero(store, f, x, lo.id, hi.id, sl as 1 | -1);
+          }
           found.set(root as ExprId, true);
           continue;
         }
@@ -233,7 +267,7 @@ export function rangeZeros(store: ExpressionStore, f: ExprId, x: string, zeros: 
       const m = point(middle(lo, hi));
       // Exact zeros at both ends and in the middle: the expression may vanish on an interval (not decided here).
       if (lo.kind === 'pt' && hi.kind === 'pt' && lo.sign === 0 && hi.sign === 0 && m.kind === 'pt' && m.sign === 0) refuse('an expression that may vanish on an interval');
-      push(lo, m); push(m, hi);
+      push(lo, m, from); push(m, hi, from);
     }
     return { values: sortedDistinct(store, [...found.keys()]) };
   } catch (e) {

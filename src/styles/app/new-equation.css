@@ -50,7 +50,8 @@
 .ne-out {min-width: 0;}
 .ne-out-assumption {opacity: .8; font-style: italic;}
 .ne-out-definition {opacity: .85; font-size: .95em;}
-.ne-math {max-width: 100%; overflow-x: auto; padding: 4px 0; font-size: 1.3rem;}
+/* overflow-x: auto makes overflow-y auto too; tall fractions then got a stray vertical scrollbar. */
+.ne-math {max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 6px 0; font-size: 1.3rem;}
 .ne-conditions .ne-math {font-size: 1.1rem;}
 .ne-answer details {border-top: 1px solid #64748b44; padding: 10px 0;}
 .ne-verified summary {color: #15803d;}

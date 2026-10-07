@@ -77,7 +77,7 @@ group('Equation adapter: kinds, outcomes and replay', () => {
   });
 
   it('types the non-answers: incomplete with its owner, and typed stops', () => {
-    const n1 = setup(eq(['Cos', 'x'], 'x'));
+    const n1 = setup(eq(['Add', ['Exp', 'x'], ['Sin', 'x']], 0));
     const d = projectEquationOutcome(n1.problem, n1.outcome).canonicalResult;
     expect(d.primary.outcome).toMatchObject({ kind: 'incomplete', owner: 'EQUATION-CERTIFIED-NUMERICS1' });
     expect(d.primary.provenance).toEqual({ verification: 'not-applicable', rules: [] });

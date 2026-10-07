@@ -98,10 +98,10 @@ group('interval families through a monotone common argument', () => {
 
 group('routing', () => {
   it.each([
-    ['eˣ + sin x > 0 (its boundary is not a closed form)', ['Greater', ['Add', exp('x'), sin('x')], 0], 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
-    ['x + sin x = 1', eq(['Add', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
-    ['cos x = x', eq(cos('x'), 'x'), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
-    ['x·sin x = 1', eq(['Multiply', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
+    ['eˣ + sin x > 0 (infinitely many boundary roots toward −∞)', ['Greater', ['Add', exp('x'), sin('x')], 0], 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
+    ['x + sin x = 1 (a certified numeric root)', eq(['Add', 'x', sin('x')], 1), '{["IsolatedRoot",["Multiply",-1,["Add",-1,"ξ",["Sin","ξ"]]],["Rational",1,2],["Rational",3,4]]}'],
+    ['cos x = x (a certified numeric root)', eq(cos('x'), 'x'), '{["IsolatedRoot",["Multiply",-1,["Add",["Cos","ξ"],["Multiply",-1,"ξ"]]],["Rational",1,2],["Rational",3,4]]}'],
+    ['x·sin x = 1', eq(['Multiply', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
     ['dependent radicals stay with slice 3', eq(['Sqrt', ['Add', ['Power', 'x', 2], ['Multiply', 2, 'x'], 1]], ['Add', 'x', 1]),
       'incomplete-implementation: EQUATION-CONSTRAINTS1: dependent radicals (the elimination norm vanishes identically)'],
   ])('%s', (_, json, expected) => {

@@ -40,6 +40,17 @@ export type CanonicalEquationRootBinder =
       /** Optional rational isolating bounds (constant, possibly transcendental, coefficients). */
       lo?: CanonicalEquationMath;
       hi?: CanonicalEquationMath;
+    }
+  | {
+      kind: 'isolated-real-root';
+      symbol: string;
+      /**
+       * The unique real zero of `expression` (in the binder's own symbol) with lo < zero < hi, where the expression is
+       * defined and strictly monotone on [lo, hi] and changes sign there (EQUATION-CERTIFIED-NUMERICS1).
+       */
+      expression: CanonicalEquationMath;
+      lo: CanonicalEquationMath;
+      hi: CanonicalEquationMath;
     };
 
 export type CanonicalEquationCondition =
