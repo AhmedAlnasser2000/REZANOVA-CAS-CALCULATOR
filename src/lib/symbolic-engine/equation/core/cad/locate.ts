@@ -15,7 +15,7 @@ import { compareReal, type RealRootOf } from '../algebraic/root-of';
 const compare = (store: ExpressionStore, a: ExactValue, b: ExactValue) => compareReal(store.ctx, asRoot(store.ctx, a) as RealRootOf, asRoot(store.ctx, b) as RealRootOf);
 
 export function locate(store: ExpressionStore, d: Decomposition, point: readonly ExactValue[]): { readonly cell: CadCell; readonly truth: boolean } {
-  demand(point.length === d.n, 'invalid-input', 'a point of the wrong dimension');
+  demand(point.length === d.free, 'invalid-input', 'a point of the wrong dimension');
   let cell = d.root;
   for (;;) {
     store.ctx.tick();

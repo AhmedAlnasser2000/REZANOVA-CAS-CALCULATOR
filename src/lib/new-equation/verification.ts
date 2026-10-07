@@ -23,6 +23,7 @@ const SENTENCES: Readonly<Record<Kind, string>> = {
   'reduced-form': 'Each rewriting step was checked exactly to keep the same solutions.',
   unconfirmed: 'The candidates were checked exactly; they are shown as candidates.',
   cylindrical: 'Every cell was checked exactly at a sample point, and a second decomposition in another variable order agrees.',
+  truth: 'The statement was decided by an exact decomposition, and a second, independent decomposition agrees.',
 };
 
 function kinds(s: CanonicalEquationSet, out: Set<Kind>): Set<Kind> {

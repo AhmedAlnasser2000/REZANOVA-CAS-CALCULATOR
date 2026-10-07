@@ -240,13 +240,13 @@ function hasNoTruth(cell: CadCell): boolean {
 
 /** The decomposition's true region as a solution set over `variables` (x₁ … xₙ); undefined when it is empty. */
 export function regionSet(store: ExpressionStore, d: Decomposition, variables: readonly string[]): SolutionSet | undefined {
-  demand(variables.length === d.n, 'invalid-input', 'one variable per level');
+  demand(variables.length === d.free, 'invalid-input', 'one variable per level');
   const found: ExactValue[][] = [];
-  if (points(d.root, d.n, found)) return found.length ? normalizeSet(store, finiteSet(variables, found.map(p => p.map(v => exactValue(store, v)))), 'real') : undefined;
+  if (points(d.root, d.free, found)) return found.length ? normalizeSet(store, finiteSet(variables, found.map(p => p.map(v => exactValue(store, v)))), 'real') : undefined;
   const desc = describe({ store, d, names: variables }, d.root, new Map());
   if (desc === 'none') return undefined;
   const all: RegionCell[] = [{ lo: { kind: 'infinity', sign: -1 }, hi: { kind: 'infinity', sign: 1 }, loClosed: false, hiClosed: false }];
   const list = desc === 'all' ? all : cells(desc);
-  if (d.n === 1) return normalizeSet(store, { kind: 'intervals', variables, intervals: list.map((c): Interval => ({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed })) }, 'real');
+  if (d.free === 1) return normalizeSet(store, { kind: 'intervals', variables, intervals: list.map((c): Interval => ({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed })) }, 'real');
   return normalizeSet(store, { kind: 'cylindrical', variables, cells: list }, 'real');
 }

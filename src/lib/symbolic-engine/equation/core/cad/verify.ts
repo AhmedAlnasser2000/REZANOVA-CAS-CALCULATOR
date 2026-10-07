@@ -2,7 +2,7 @@ import { demand } from '../execution';
 import { rational } from '../algebra/rational';
 import { evaluateExact, type ExactValue } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
-import type { Formula, Relation, RelationProblem } from '../representation/relation';
+import { relationProblem, type Formula, type Relation, type RelationProblem } from '../representation/relation';
 import {
   assertOutcome, compareValues, finiteSet, normalizeSet, type Endpoint, type EquationOutcome, type PointValue, type RegionCell, type SolutionSet,
 } from '../representation/solution-set';
@@ -10,6 +10,8 @@ import { exactSign } from '../representation/real-order';
 import { instantiate } from '../parameters/specialize';
 import { cadProblem } from './atoms';
 import { decompose, sectorSample, type CadCell } from './decompose';
+import { locate } from './locate';
+import { hasQuantifier } from '../representation/formula';
 import { fiberRoots } from './fiber';
 import { fromMPoly } from './recursive';
 import { fractionOf } from '../parameters/mpoly';
@@ -91,8 +93,8 @@ function inside(store: ExpressionStore, lo: Endpoint, hi: Endpoint, loClosed: bo
 export function contains(problem: RelationProblem, set: SolutionSet, point: readonly ExactValue[]): boolean {
   const store = problem.store;
   if (set.kind === 'finite') return set.points.some(p => p.every((v, i) => compareValues(store, v, point[i]) === 0));
-  if (set.kind !== 'cylindrical') return fail(`a decomposition answer is never ${set.kind}`);
-  let cells: readonly RegionCell[] | undefined = set.cells;
+  if (set.kind !== 'cylindrical' && set.kind !== 'intervals') return fail(`a decomposition answer is never ${set.kind}`);
+  let cells: readonly RegionCell[] | undefined = set.kind === 'cylindrical' ? set.cells : set.intervals;
   for (let d = 0; d < point.length; d++) {
     store.ctx.tick();
     if (!cells) return true;
@@ -124,28 +126,60 @@ function claimedSamples(problem: RelationProblem, set: SolutionSet): ExactValue[
       else out.push([...point, ...Array.from({ length: n - point.length }, (): ExactValue => ({ kind: 'rational', value: rational(ctx, 0n) }))]);
     }
   };
-  walk((set as Extract<SolutionSet, { kind: 'cylindrical' }>).cells, []);
+  walk(set.kind === 'intervals' ? set.intervals : (set as Extract<SolutionSet, { kind: 'cylindrical' }>).cells, []);
   return out;
 }
 
 function leaves(c: CadCell): CadCell[] { return c.children ? c.children.flatMap(leaves) : [c]; }
 
+/** The problem with its unknowns fixed at rational values: only quantified names remain (a decided statement). */
+function atRationalPoint(problem: RelationProblem, point: readonly ExactValue[]): RelationProblem {
+  const s = problem.store, env = new Map(problem.targets.map((t, i) => [t, valueExpression(s, point[i])] as const));
+  const sub = (e: ExprId) => s.substitute(e, env);
+  const formula = (f: Formula): Formula => {
+    if (f.kind === 'rel') return { kind: 'rel', rel: { ...f.rel, lhs: sub(f.rel.lhs), rhs: sub(f.rel.rhs) } };
+    if (f.kind === 'and' || f.kind === 'or') return { kind: f.kind, args: f.args.map(formula) };
+    return { ...f, body: formula(f.body) };
+  };
+  return relationProblem(s, {
+    domain: 'real', targets: [], relations: problem.relations.map(r => ({ op: r.op, lhs: sub(r.lhs), rhs: sub(r.rhs) })),
+    conditions: problem.conditions.map(c => ('other' in c ? { ...c, expr: sub(c.expr), other: sub(c.other) } : { ...c, expr: sub(c.expr) })),
+    formulas: problem.formulas.map(formula),
+  });
+}
+
 export function verifyCadOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
   assertOutcome(outcome);
   if (outcome.kind !== 'solved' && outcome.kind !== 'empty') return;
   if (outcome.proof.root !== problem.hash) fail('proof does not start from the problem');
-  const store = problem.store, ctx = store.ctx, n = problem.targets.length;
-  const claimed = outcome.kind === 'solved' ? normalizeSet(store, outcome.set, 'real') : finiteSet(problem.targets, []);
-  // 1. Each claimed cell holds at a sample of it.
-  for (const p of claimedSamples(problem, claimed)) if (!rowsHold(problem, p)) fail('a claimed cell does not satisfy the rows at its sample');
-  // 2. A decomposition in the reversed variable order agrees at every one of its cells.
+  const store = problem.store, ctx = store.ctx, n = problem.targets.length, quantified = problem.formulas.some(hasQuantifier);
+  const claimed = outcome.kind === 'solved' ? normalizeSet(store, outcome.set, 'real') : n ? finiteSet(problem.targets, []) : fail('a statement is true or false');
+  // A decomposition in the reversed variable order (with quantifiers: lifted in full, every cell, no early truth).
   const order = [...problem.targets].reverse(), p = cadProblem(problem, order);
   if (!p) return fail('the problem is not polynomial');
-  const zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
-  for (const leaf of leaves(decompose(store, p).root)) {
+  const second = decompose(store, p, { full: quantified });
+  if (claimed.kind === 'truth') {
+    if (n !== 0 || second.free !== 0 || claimed.value !== (second.root.truth === true)) fail('the statement\'s truth differs from a second decomposition');
+    return;
+  }
+  const reorder = (sample: readonly ExactValue[]) => problem.targets.map(t => sample[order.indexOf(t)]);
+  // 1. Each claimed cell holds at a sample of it: the rows themselves, exactly; quantified rows by deciding the
+  //    statement at a rational sample (a smaller decomposition), or by the second decomposition's cell there.
+  for (const pt of claimedSamples(problem, claimed)) {
     ctx.tick();
-    const reversed = [...leaf.sample, ...Array.from({ length: n - leaf.level }, () => zero)];
-    const point = problem.targets.map(t => reversed[order.indexOf(t)]);
+    let holds: boolean;
+    if (!quantified) holds = rowsHold(problem, pt);
+    else if (pt.every(v => v.kind === 'rational')) {
+      const q = cadProblem(atRationalPoint(problem, pt), []);
+      holds = q ? decompose(store, q).root.truth === true : fail('a sample statement is not polynomial');
+    } else holds = locate(store, second, order.map(t => pt[problem.targets.indexOf(t)])).truth;
+    if (!holds) fail('a claimed cell does not satisfy the rows at its sample');
+  }
+  // 2. The second decomposition agrees at every one of its cells.
+  const zero: ExactValue = { kind: 'rational', value: rational(ctx, 0n) };
+  for (const leaf of leaves(second.root)) {
+    ctx.tick();
+    const point = reorder([...leaf.sample, ...Array.from({ length: second.free - leaf.level }, () => zero)]);
     if (contains(problem, claimed, point) !== (leaf.truth === true)) fail('the answer differs from a decomposition in another variable order');
   }
 }

@@ -66,7 +66,10 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
   const bad = (message: string, path: string): never => { throw new InvalidEquationPrimary(message, path); };
   if (!record(p) || !keys(p, ['kind', 'domain', 'targets', 'parameters', 'roots', 'outcome', 'provenance'], ['assumptions']) || p.kind !== 'equation-outcome'
     || (p.domain !== 'real' && p.domain !== 'complex')) return bad('Invalid Equation primary.', '$.primary');
-  if (!names(p.targets) || p.targets.length === 0 || !names(p.parameters) || p.parameters.some(n => (p.targets as string[]).includes(n))) return bad('Targets and parameters must be distinct symbols.', '$.primary.targets');
+  if (!names(p.targets) || !names(p.parameters) || p.parameters.some(n => (p.targets as string[]).includes(n))) return bad('Targets and parameters must be distinct symbols.', '$.primary.targets');
+  // No targets only for a decided statement (every name quantified): its answer is a truth value, or a non-answer.
+  const truthSet = record(p.outcome) && p.outcome.kind === 'solved' && record(p.outcome.set) && p.outcome.set.kind === 'truth';
+  if ((p.targets.length === 0) !== truthSet && !(p.targets.length === 0 && record(p.outcome) && p.outcome.kind !== 'solved' && p.outcome.kind !== 'empty')) return bad('A truth answer has no targets; every other answer has targets.', '$.primary.targets');
   const targets = p.targets, parameters = p.parameters, domain = p.domain;
   const taken = new Set([...targets, ...parameters]);
   const math = (v: unknown, scope: ReadonlySet<string>, path: string): void => {
@@ -265,6 +268,9 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
         };
         return cells(s.cells, 1, `${path}.cells`);
       }
+      case 'truth':
+        if (!keys(s, ['kind', 'value']) || typeof s.value !== 'boolean' || targets.length !== 0 || path !== '$.primary.outcome.set') break;
+        return;
       case 'unconfirmed':
         if (!keys(s, ['kind', 'variables', 'candidates']) || !Array.isArray(s.candidates) || s.candidates.length === 0) break;
         variables(s.variables, path);

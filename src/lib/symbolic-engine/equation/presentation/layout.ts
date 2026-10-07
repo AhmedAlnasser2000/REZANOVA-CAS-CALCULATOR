@@ -424,6 +424,7 @@ class Layout {
         for (const c of s.candidates) this.solutionRow(depth, c.point, { latex: '\\ \\text{(candidate, not confirmed)}', text: ' (candidate, not confirmed)' });
         return;
       case 'cylindrical': this.region(s.cells, depth); return;
+      case 'truth': this.push('solution', depth, s.value ? { latex: '\\text{True}', text: 'True' } : { latex: '\\text{False}', text: 'False' }); return;
     }
   }
 

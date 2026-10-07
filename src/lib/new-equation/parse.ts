@@ -181,6 +181,8 @@ export function checkRows(rows: readonly ParsedRow[], targets: readonly string[]
     return missing.length ? { kind: 'error', message: `${missing.join(', ')} ${missing.length > 1 ? 'do' : 'does'} not appear in the other rows.` } : { kind: 'assumption' };
   });
   const missingTargets = targets.filter(t => !used.has(t));
-  const ready = out.some(r => r.kind === 'relation') && out.every(r => r.kind !== 'error') && targets.length > 0 && missingTargets.length === 0;
+  // No unknowns only for a decided statement: every row's names are quantified (∀x: x² + 1 > 0).
+  const closed = targets.length === 0 && rows.some(r => r.kind === 'relation' && (r.bound?.length ?? 0) > 0) && rows.every(r => r.kind !== 'relation' || r.symbols.length === 0);
+  const ready = out.some(r => r.kind === 'relation') && out.every(r => r.kind !== 'error') && (targets.length > 0 || closed) && missingTargets.length === 0;
   return { rows: out, ready, orderOverComplex, missingTargets };
 }
