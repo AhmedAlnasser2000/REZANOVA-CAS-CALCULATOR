@@ -31,7 +31,7 @@ it('marks an outdated answer and offers Solve again', () => {
 });
 
 it('words an unsolved problem plainly, with no verified line and no copy', () => {
-  render(<NewEquationAnswer response={solve(['\\cos x=x'])} style="exact" outdated={false} onStyle={vi.fn()} onSolve={vi.fn()} />);
+  render(<NewEquationAnswer response={solve(['e^x+\\sin x=0'])} style="exact" outdated={false} onStyle={vi.fn()} onSolve={vi.fn()} />);
   expect(screen.getByRole('heading', { name: 'No answer' })).toBeTruthy();
   expect(screen.getByText(/^Not solved yet:/)).toBeTruthy();
   expect(screen.queryByTestId('new-equation-verified')).toBeNull();

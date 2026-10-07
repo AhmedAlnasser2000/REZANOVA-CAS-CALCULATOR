@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "TESTS-LEGACY-EQUATION-INERT1: New Equation and New Integration golden cases added, read through their own schema-7 typed answer kinds",
-  "caseCount": 51,
+  "acceptedReason": "INTEGRATION-EXPONENTIAL-ADOPTION1 merge: New Integration polynomial case now projects rationalPart and typed restrictions",
+  "caseCount": 52,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -13,7 +13,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 2,
+    "new-equation": 3,
     "new-integration": 2
   },
   "successfulWorkspaceCounts": {
@@ -27,7 +27,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 2,
+    "new-equation": 3,
     "new-integration": 2
   },
   "entries": [
@@ -1519,25 +1519,63 @@
       ]
     },
     {
+      "id": "new-equation-certified-root",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.roots[0].expression",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(-1\\right)\\left(r_{1}\\right)+\\cos\\left(r_{1}\\right)\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].lo",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{1}{2}"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].hi",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{3}{4}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[0][0]",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        }
+      ]
+    },
+    {
       "id": "new-integration-polynomial",
       "workspace": "new-integration",
       "outcomeKind": "success",
       "title": "Verified antiderivative",
       "fragments": [
         {
-          "path": "canonicalResult.primary.value",
+          "path": "canonicalResult.primary.rationalPart",
           "kind": "typed-math-leaf",
-          "value": "\\left(x\\right)^{3}+C"
+          "value": "\\left(x\\right)^{3}"
         },
         {
-          "path": "canonicalResult.supplements[0].math",
+          "path": "canonicalResult.primary.restrictions[0].value",
           "kind": "typed-math-leaf",
-          "value": "1\\ne 0"
+          "value": "1"
         },
         {
-          "path": "canonicalResult.supplements[1].math",
+          "path": "canonicalResult.primary.restrictions[1].value",
           "kind": "typed-math-leaf",
-          "value": "1\\ne 0"
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[2].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[3].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
         }
       ]
     },
@@ -1573,22 +1611,37 @@
           "value": "1+\\left(x\\right)^{2}"
         },
         {
-          "path": "canonicalResult.primary.conditions.sourceExclusions[0]",
-          "kind": "typed-math-leaf",
-          "value": "1+\\left(x\\right)^{2}"
-        },
-        {
-          "path": "canonicalResult.primary.conditions.inputDenominator",
-          "kind": "typed-math-leaf",
-          "value": "1+\\left(x\\right)^{2}"
-        },
-        {
-          "path": "canonicalResult.primary.conditions.rationalDenominator",
+          "path": "canonicalResult.primary.restrictions[0].value",
           "kind": "typed-math-leaf",
           "value": "1"
         },
         {
-          "path": "canonicalResult.primary.conditions.logNorms[0]",
+          "path": "canonicalResult.primary.restrictions[1].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[2].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[3].value",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[4].value",
+          "kind": "typed-math-leaf",
+          "value": "1+\\left(x\\right)^{2}"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[5].value",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.restrictions[6].value",
           "kind": "typed-math-leaf",
           "value": "1+\\left(x\\right)^{2}"
         }

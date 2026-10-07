@@ -6,7 +6,7 @@ import { enclose, minusInverseE } from './enclosure';
 import { angleLinearIsZero } from './angles';
 import { algebraicLogIsZero } from './log-zero';
 import { asRoot, evaluateExact, type ExactValue } from './evaluate';
-import type { ExprId, ExpressionStore } from './expression';
+import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from './expression';
 
 /**
  * Exact signs and order of real number-only expressions.
@@ -39,8 +39,46 @@ export function realSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
   return s;
 }
 
+/**
+ * The sign of c·z + t where z is an isolated zero (certified numerics) and t a number-only value without
+ * isolated zeros, decided exactly: compare −t/c with the isolating interval, and inside it the sign of f(−t/c)
+ * against f's sign at the low end (f is strictly monotone there). Undefined when `id` is not of that form.
+ */
+function isolatedSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 | undefined {
+  const isolated = (e: ExprId) => store.postorder([e]).some(n => store.node(n).kind === 'isolated');
+  if (!isolated(id)) return undefined;
+  const node = store.node(id), terms = node.kind === 'add' ? node.args : [id];
+  const holders = terms.filter(isolated);
+  if (holders.length !== 1) return undefined;
+  const h = store.node(holders[0]);
+  const [c, z] = h.kind === 'isolated' ? [store.integer(1), holders[0]]
+    : h.kind === 'mul' && h.args.length === 2 && store.numberValue(h.args[0]) && store.node(h.args[1]).kind === 'isolated' ? [h.args[0], h.args[1]] : [undefined, undefined];
+  if (c === undefined || z === undefined) return undefined;
+  const iso = store.node(z) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated' }>;
+  const cs = Math.sign(Number((store.numberValue(c) as { numerator: bigint }).numerator)) as -1 | 1;
+  const point = store.div(store.neg(store.add(...terms.filter(t => t !== holders[0]))), c);
+  // z vs the point p: z > p ⇔ c·z + t has the sign of c.
+  let zVsP: -1 | 0 | 1;
+  if (realSign(store, store.sub(store.number(iso.lo), point)) >= 0) zVsP = 1;
+  else if (realSign(store, store.sub(store.number(iso.hi), point)) <= 0) zVsP = -1;
+  else {
+    const s = realSign(store, store.substitute(iso.expr, new Map([[ISOLATED_VARIABLE, point]])));
+    zVsP = s === 0 ? 0 : s === iso.loSign ? 1 : -1;
+  }
+  return (zVsP * cs) as -1 | 0 | 1;
+}
+
 function computeSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
   const ctx = store.ctx;
+  const isolatedExact = isolatedSign(store, id);
+  if (isolatedExact !== undefined) return isolatedExact;
+  // A cheap certified enclosure first: when it excludes 0 the sign is settled without exact evaluation, which
+  // for values such as 2^(9/8) + 3^(9/8) means algebraic arithmetic of high degree (a sign is a fact either way).
+  if (store.freeSymbols(id).length === 0) {
+    const quick = enclose(store, id, START_BITS * 2);
+    if (quick.kind === 'bounds' && quick.lo.numerator > 0n) return 1;
+    if (quick.kind === 'bounds' && quick.hi.numerator < 0n) return -1;
+  }
   const e = evaluateExact(store, id, 'real');
   if (e.kind === 'exact') return exactSign(ctx, e.value);
   demand(e.kind === 'not-exact' && e.reason !== 'free-symbol', 'invalid-input', `sign of an undefined or symbolic value: ${'detail' in e ? e.detail : ''}`);

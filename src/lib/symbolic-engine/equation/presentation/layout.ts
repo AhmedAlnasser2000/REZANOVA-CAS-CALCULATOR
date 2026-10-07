@@ -382,8 +382,14 @@ class Layout {
   /** Which root a binder is, in words, with its polynomial in `variable`. */
   describe(b: CanonicalEquationRootBinder, variable: string): P {
     const rename = (j: SerializableMathJson): SerializableMathJson => (j === b.symbol ? variable : Array.isArray(j) ? (j.map(x => rename(x as SerializableMathJson)) as unknown as SerializableMathJson) : j);
-    const poly = printEquationMath(rename(b.polynomial.mathJson), { descendingIn: variable }) ?? { latex: b.polynomial.canonicalLatex, text: b.polynomial.canonicalLatex };
+    const main = b.kind === 'isolated-real-root' ? b.expression : b.polynomial;
+    const poly = printEquationMath(rename(main.mathJson), { descendingIn: variable }) ?? { latex: main.canonicalLatex, text: main.canonicalLatex };
     const eq = { latex: `${poly.latex} = 0`, text: `${poly.text} = 0` };
+    if (b.kind === 'isolated-real-root') {
+      // Certified numerics: the unique zero on its isolating interval (the copy and the screen say the same).
+      const lo = this.exact(b.lo), hi = this.exact(b.hi);
+      return { latex: `\\text{the root of } ${eq.latex}\\text{ between } ${lo.latex}\\text{ and } ${hi.latex}`, text: `the root of ${eq.text} between ${lo.text} and ${hi.text}` };
+    }
     if (b.kind === 'indexed-real-root') {
       const which = b.index === 1 ? 'smallest' : `${ORDINAL(b.index)} smallest`;
       return { latex: `\\text{the ${which} real root of } ${eq.latex}`, text: `the ${which} real root of ${eq.text}` };
@@ -453,6 +459,19 @@ class Layout {
   }
 }
 
+/**
+ * One core per (document, context): the three answer styles of a run read the same binders, so their certified
+ * values (and refinements) are built once.
+ */
+const CORES = new WeakMap<object, { ctx: ExecutionContext; core: Core }>();
+function sharedCore(input: unknown, doc: CanonicalEquationDocument, ctx: ExecutionContext): Core {
+  const key = typeof input === 'object' && input !== null ? input : undefined, known = key ? CORES.get(key) : undefined;
+  if (known && known.ctx === ctx) return known.core;
+  const core = coreFor(doc, ctx);
+  if (key) CORES.set(key, { ctx, core });
+  return core;
+}
+
 function coreFor(doc: CanonicalEquationDocument, ctx: ExecutionContext): Core {
   const store = new ExpressionStore(ctx), binders = readRootBinders(store, doc);
   const values = new Map<string, ExprId>(), forms = new Map<string, ExprId>();
@@ -500,7 +519,7 @@ export function presentEquation(input: unknown, settings: EquationPresentationSe
   if (!checked.ok) throw new Error(`Not a valid typed Equation document: ${checked.failure.message}`);
   const doc = checked.validated.value;
   try {
-    return present(doc, settings, coreFor(doc, ctx));
+    return present(doc, settings, sharedCore(input, doc, ctx));
   } catch (e) {
     if (e instanceof EquationAlgebraError && e.code === 'resource') return present(doc, settings, undefined);
     throw e;

@@ -246,6 +246,11 @@ export function writeExpression(store: ExpressionStore, id: ExprId): unknown {
       case 'symbol': json = node.name; break;
       case 'constant': json = node.name === 'pi' ? 'Pi' : 'ImaginaryUnit'; break;
       case 'algebraic': json = ['RootOf', ['List', ...node.poly.coefficients.map(integerJson)], node.index]; break;
+      case 'isolated': {
+        const q = (r: { numerator: bigint; denominator: bigint }) => (r.denominator === 1n ? integerJson(r.numerator) : ['Rational', integerJson(r.numerator), integerJson(r.denominator)]);
+        json = ['IsolatedRoot', writeExpression(store, node.expr), q(node.lo), q(node.hi)];
+        break;
+      }
       case 'add': json = ['Add', ...node.args.map(get)]; break;
       case 'mul': json = ['Multiply', ...node.args.map(get)]; break;
       case 'pow': json = ['Power', get(node.base), get(node.exponent)]; break;

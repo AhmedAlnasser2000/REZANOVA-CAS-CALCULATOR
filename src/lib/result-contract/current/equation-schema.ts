@@ -40,6 +40,28 @@ function rationalConstant(v: unknown): boolean {
   return Array.isArray(v) && ((v[0] === 'Rational' && v.length === 3) || (v[0] === 'Negate' && v.length === 2 && rationalConstant(v[1])));
 }
 
+/** Whether a MathJSON tree mentions symbol `s`. */
+function mentions(v: unknown, s: string): boolean {
+  const pending = [v];
+  while (pending.length) {
+    const t = pending.pop();
+    if (t === s) return true;
+    if (Array.isArray(t)) pending.push(...t.slice(1));
+  }
+  return false;
+}
+/** A rational constant's value as [numerator, positive denominator]. */
+function rationalValue(v: unknown): [bigint, bigint] | undefined {
+  const int = (x: unknown) => (typeof x === 'number' && Number.isSafeInteger(x) ? BigInt(x) : record(x) && typeof x.num === 'string' && INTEGER.test(x.num) ? BigInt(x.num) : undefined);
+  if (Array.isArray(v) && v[0] === 'Negate' && v.length === 2) { const r = rationalValue(v[1]); return r && [-r[0], r[1]]; }
+  if (Array.isArray(v) && v[0] === 'Rational' && v.length === 3) {
+    const n = int(v[1]), d = int(v[2]);
+    return n === undefined || d === undefined || d === 0n ? undefined : d < 0n ? [-n, -d] : [n, d];
+  }
+  const n = int(v);
+  return n === undefined ? undefined : [n, 1n];
+}
+
 export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: () => void): void {
   const bad = (message: string, path: string): never => { throw new InvalidEquationPrimary(message, path); };
   if (!record(p) || !keys(p, ['kind', 'domain', 'targets', 'parameters', 'roots', 'outcome', 'provenance'], ['assumptions']) || p.kind !== 'equation-outcome'
@@ -73,6 +95,14 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
       if (!Number.isSafeInteger(b.index) || (b.index as number) < 1) bad('A root index is a positive integer.', `${path}.index`);
       math(b.polynomial, new Set([b.symbol, ...parameters]), `${path}.polynomial`);
       if (b.lo !== undefined) { bound(b.lo, 'lo'); bound(b.hi, 'hi'); }
+    } else if (b.kind === 'isolated-real-root') {
+      if (!keys(b, ['kind', 'symbol', 'expression', 'lo', 'hi'])) return bad('Invalid isolated root keys.', path);
+      if (domain !== 'real') bad('Isolated roots are real; the domain must be real.', path);
+      math(b.expression, own, `${path}.expression`);
+      if (!mentions((b.expression as CanonicalMathValue).mathJson, b.symbol)) bad('An isolated root expression must use its symbol.', `${path}.expression`);
+      bound(b.lo, 'lo'); bound(b.hi, 'hi');
+      const lo = rationalValue((b.lo as CanonicalMathValue).mathJson), hi = rationalValue((b.hi as CanonicalMathValue).mathJson);
+      if (!lo || !hi || lo[0] * hi[1] >= hi[0] * lo[1]) bad('An isolating interval needs lo < hi.', path);
     } else bad('Unknown root binder kind.', path);
   });
   const outer = new Set([...parameters, ...roots]);

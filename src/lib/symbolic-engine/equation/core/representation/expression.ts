@@ -54,7 +54,16 @@ export type ExpressionNode =
   | { readonly kind: 'add'; readonly args: readonly ExprId[] }
   | { readonly kind: 'mul'; readonly args: readonly ExprId[] }
   | { readonly kind: 'pow'; readonly base: ExprId; readonly exponent: ExprId }
-  | { readonly kind: 'apply'; readonly fn: FunctionName; readonly arg: ExprId };
+  | { readonly kind: 'apply'; readonly fn: FunctionName; readonly arg: ExprId }
+  /**
+   * The unique real zero of `expr` (written in the bound variable ISOLATED_VARIABLE) with lo < zero < hi, where
+   * `expr` is defined and strictly monotone on [lo, hi] and has sign `loSign` just above lo
+   * (EQUATION-CERTIFIED-NUMERICS1). A leaf: its bound variable is not a free symbol.
+   */
+  | { readonly kind: 'isolated'; readonly expr: ExprId; readonly lo: Rational; readonly hi: Rational; readonly loSign: 1 | -1 };
+
+/** The bound variable of isolated zeros (users cannot name it: rows accept Latin letters only). */
+export const ISOLATED_VARIABLE = 'ξ';
 
 interface Entry {
   readonly node: ExpressionNode;
@@ -140,6 +149,7 @@ export class ExpressionStore {
       case 'symbol': return false;
       case 'constant': return node.name === 'pi';
       case 'algebraic': return node.root.kind === 'real';
+      case 'isolated': return true;
       case 'add': case 'mul': return node.args.every(real);
       case 'pow': {
         const e = this.#entries[node.exponent].node;
@@ -243,6 +253,26 @@ export class ExpressionStore {
     if (c.length === 2) return this.number(rational(this.ctx, -c[0], c[1]));
     return this.#make(`r:${canonical.key}`, { kind: 'algebraic', root: canonical.root, poly: canonical.poly, index: canonical.index },
       `r|${canonical.key}`, [], canonical.root.kind === 'real');
+  }
+
+  /**
+   * An isolated real zero of `f` in `variable` (see the node). The certificate is checked by its producers and
+   * verifiers, not here; the same zero from any variable name is one node.
+   */
+  isolated(f: ExprId, variable: string, lo: Rational, hi: Rational, loSign: 1 | -1): ExprId {
+    assertRational(this.ctx, lo); assertRational(this.ctx, hi);
+    demand(lo.numerator * hi.denominator < hi.numerator * lo.denominator, 'invalid-input', 'an isolating interval needs lo < hi');
+    const expr = variable === ISOLATED_VARIABLE ? f : this.substitute(f, new Map([[variable, this.symbol(ISOLATED_VARIABLE)]]));
+    demand(this.freeSymbols(expr).every(s => s === ISOLATED_VARIABLE), 'invalid-input', 'an isolated zero has one variable');
+    const text = `${this.digest(expr)}|${lo.numerator}/${lo.denominator}|${hi.numerator}/${hi.denominator}|${loSign}`;
+    return this.#make(`i:${text}`, { kind: 'isolated', expr, lo, hi, loSign }, `i|${text}`, [], true);
+  }
+
+  /** The function of an isolated zero, in `variable`. */
+  isolatedIn(id: ExprId, variable: string): ExprId {
+    const n = this.node(id);
+    demand(n.kind === 'isolated', 'invalid-input', 'not an isolated zero');
+    return this.substitute((n as { expr: ExprId }).expr, new Map([[ISOLATED_VARIABLE, this.symbol(variable)]]));
   }
 
   // ---- sums ----

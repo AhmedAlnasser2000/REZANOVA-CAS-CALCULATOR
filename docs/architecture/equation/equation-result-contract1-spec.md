@@ -45,7 +45,8 @@ V6 adds them before adoption, as V5 did before New Integration.
 **Root binders**: an algebraic number is never a custom `RootOf` head inside a math leaf. It is declared once and referenced by its symbol:
 - `real-algebraic`: an integer polynomial in the binder's symbol, with rational bounds lo < root < hi (or lo = hi);
 - `complex-algebraic`: the same polynomial, with a rational disk (re, im, radius);
-- `indexed-real-root`: the index-th real root (1 = smallest) of a polynomial whose coefficients carry parameters, with optional rational bounds.
+- `indexed-real-root`: the index-th real root (1 = smallest) of a polynomial whose coefficients carry parameters, with optional rational bounds;
+- `isolated-real-root` (added by `EQUATION-CERTIFIED-NUMERICS1`, schema 7, real domain only): the unique zero of an expression in the binder's symbol with rational bounds lo < zero < hi. The expression is defined and strictly monotone on [lo, hi] and changes sign there. Readers re-check this certificate (`core/numeric/isolated.ts` `certifyIsolated`), as they re-check the isolation of algebraic binders.
 
 Either algebraic kind may carry a `form`, a closed form proven by the producer to equal the root.
 

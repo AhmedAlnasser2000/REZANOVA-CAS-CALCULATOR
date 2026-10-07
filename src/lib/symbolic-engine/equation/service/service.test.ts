@@ -84,7 +84,7 @@ group('New Equation service', () => {
   });
 
   it('reports non-answers and row errors plainly', () => {
-    expect(v6(solve(['\\cos x=x'])).primary.outcome.kind).toMatch(/incomplete|undecided/);
+    expect(v6(solve(['e^x+\\sin x=0'])).primary.outcome.kind).toMatch(/incomplete|undecided/);
     const bad = solve(['x^2=1', 'x=']);
     expect(bad.document.outcomeKind).toBe('error');
     expect(bad.rowNotes[1]).toEqual({ kind: 'error', message: 'This row is incomplete.' });
@@ -107,8 +107,20 @@ group('New Equation service', () => {
     expect(verificationSummary(v6(solve(['x^2=-1'])))?.detail).toMatch(/no value satisfies every row/);
     expect(verificationSummary(v6(solve(['x^2=a', 'a>-1'])))?.detail).toMatch(/Each case .* ruled out by the assumptions/);
     expect(verificationSummary(v6(solve(['x^2<1'])))?.detail).toMatch(/endpoint/);
-    expect(verificationSummary(v6(solve(['\\cos x=x'])))).toBeUndefined();
+    expect(verificationSummary(v6(solve(['e^x+\\sin x=0'])))).toBeUndefined();
   });
+
+  it('gives certified numeric roots (cos x = x, a range row) and refuses infinitely many of them', () => {
+    const cos = solve(['\\cos x=x']);
+    expect(shown(cos, 'decimal')).toBe('x ≈ 0.739085\n  the root of x - cos(x) = 0 between 1/2 and 3/4');
+    expect(verificationSummary(v6(cos))?.headline).toBe('Certified');
+    expect(v6(cos).primary.roots.map(b => b.kind)).toEqual(['isolated-real-root']);
+    const ranged = solve(['e^x+\\sin x=0', '-10\\le x\\le0']);
+    expect(shown(ranged, 'decimal')?.split('\n').filter(l => l.startsWith('x ≈'))).toEqual(['x ≈ -9.424697', 'x ≈ -6.285049', 'x ≈ -3.096364', 'x ≈ -0.588533']);
+    const open = v6(solve(['e^x+\\sin x=0'])).primary.outcome;
+    expect(open).toMatchObject({ kind: 'incomplete', owner: 'EQUATION-CERTIFIED-NUMERICS1' });
+    expect(open.kind === 'incomplete' && open.reason).toMatch(/infinitely many roots.*range row/);
+  }, 60_000);
 
   it('hands over the decided answer before verification, laid out as the verified one', () => {
     const order: string[] = [];
@@ -122,7 +134,7 @@ group('New Equation service', () => {
     expect(preview?.rowNotes).toEqual(r.rowNotes);
     // Non-answers have nothing to preview.
     const none: EquationPreview[] = [];
-    executeEquation(request(['\\cos x=x'], ['x']), p => none.push(p));
+    executeEquation(request(['e^x+\\sin x=0'], ['x']), p => none.push(p));
     executeEquation(request(['x='], ['x']), p => none.push(p));
     expect(none).toEqual([]);
   });

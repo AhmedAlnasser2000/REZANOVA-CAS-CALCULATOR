@@ -18,7 +18,7 @@ import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } fr
 import { mergeAffineFamilies, type FamilyZeros, type Param, type PeriodicZeros } from '../periodic/families';
 import { ARCS, arcSum, halfAngle, invertArc, invertTrig, parametricStep, TRIG, type Sink } from '../periodic/inversion';
 import { cancelInjective } from '../composition/injective';
-import { rangeZeros } from '../composition/zeros';
+import { rangeZeros, type SearchBox } from '../composition/zeros';
 
 /**
  * Complete real zero sets of target-dependent expressions built from
@@ -174,7 +174,8 @@ function freshNames(): (prefix: string) => string {
   return prefix => `${prefix}${++counter}`;
 }
 
-export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = freshNames()): ZeroResult {
+/** `search`: constant bounds on x from range rows; certified numerics only looks for roots inside them. */
+export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = freshNames(), search: SearchBox = {}): ZeroResult {
   try {
     const values = new Map<ExprId, true>(), intervals: ZeroInterval[] = [], periodic: PeriodicZeros[] = [], families: FamilyZeros[] = [];
     const stack: Goal[] = [{ h: f, level: store.integer(0), variable: x, back: store.symbol(x), top: true, params: [] }];
@@ -283,8 +284,9 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
       } catch (e) {
         // Composition (slice 5): the complete zero set by certified ranges, monotonicity and exact candidates.
         if (!(e instanceof Refused) || e.refusal.owner === OWNERS.parameters || e.refusal.owner === OWNERS.systems) throw e;
-        const r = rangeZeros(store, store.sub(g.h, g.level), g.variable, h => zerosOf(store, h, g.variable, fresh));
-        if ('refusal' in r) throw e;
+        const direct = g.variable === x && g.back === store.symbol(x);
+        const r = rangeZeros(store, store.sub(g.h, g.level), g.variable, h => zerosOf(store, h, g.variable, fresh), direct ? search : {});
+        if ('refusal' in r) throw r.refusal.specific ? new Refused(r.refusal) : e;
         r.values.forEach(emit);
       }
     }

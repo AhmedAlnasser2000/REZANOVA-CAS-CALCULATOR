@@ -111,10 +111,10 @@ group('inverse trig, factor splitting, shifts and frequencies', () => {
 
 group('routing to the gates that own a problem', () => {
   it.each([
-    [eq(cos('x'), 'x'), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
-    [eq(['Multiply', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the variable outside trig kernels'],
-    [eq(['Add', sin('x'), sin(['Multiply', ['Sqrt', 2], 'x'])]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: incommensurable trig frequencies'],
-    [eq(['Add', sin('x'), ['Exp', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: mixed transcendental kernels'],
+    [eq(cos('x'), 'x'), '{["IsolatedRoot",["Multiply",-1,["Add",["Cos","ξ"],["Multiply",-1,"ξ"]]],["Rational",1,2],["Rational",3,4]]}'],
+    [eq(['Multiply', 'x', sin('x')], 1), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
+    [eq(['Add', sin('x'), sin(['Multiply', ['Sqrt', 2], 'x'])]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
+    [eq(['Add', sin('x'), ['Exp', 'x']]), 'incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: infinitely many roots without a closed form as x → −∞; add a range row such as −10 ≤ x ≤ 0'],
     // sin(a·x) = 1/2 is decided by the parameters gate; sin/cos inequalities with parameters stay refused.
     [['Greater', sin('x'), 'a'], 'incomplete-implementation: EQUATION-PARAMETERS1: sin/cos inequalities with parameters (follow-up ledger)'],
   ])('%j', (json, expected) => {
