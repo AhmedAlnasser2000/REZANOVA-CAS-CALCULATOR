@@ -99,6 +99,18 @@ class Projector {
     return symbol;
   }
 
+  /** An isolated real zero (certified numerics) as a binder: its expression in the binder's own symbol. */
+  isolated(id: ExprId): string {
+    const key = `n:${this.store.digest(id)}`, known = this.#byKey.get(key);
+    if (known) return known;
+    const n = this.store.node(id) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated' }>;
+    const symbol = this.#fresh();
+    this.binders.push({ kind: 'isolated-real-root', symbol, expression: math(this.expr(this.store.isolatedIn(id, symbol))),
+      lo: math(rationalJson(n.lo)), hi: math(rationalJson(n.hi)) });
+    this.#byKey.set(key, symbol);
+    return symbol;
+  }
+
   /** An expression as restricted standard MathJSON (post-order over the shared graph). */
   expr(id: ExprId): SerializableMathJson {
     const out = new Map<ExprId, SerializableMathJson>();
@@ -110,6 +122,7 @@ class Projector {
         case 'symbol': json = node.name; break;
         case 'constant': json = node.name === 'pi' ? 'Pi' : 'ImaginaryUnit'; break;
         case 'algebraic': json = this.algebraic(node.root); break;
+        case 'isolated': json = this.isolated(n); break;
         case 'add': json = node.args.length === 1 ? get(node.args[0]) : ['Add', ...node.args.map(get)]; break;
         case 'mul': json = node.args.length === 1 ? get(node.args[0]) : ['Multiply', ...node.args.map(get)]; break;
         case 'pow': json = ['Power', get(node.base), get(node.exponent)]; break;

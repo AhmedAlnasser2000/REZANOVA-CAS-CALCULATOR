@@ -3,7 +3,7 @@ import { bitLength, imul, iroot, ipow } from '../algebra/integer';
 import { rAbs, rAdd, rational, rDivide, rDyadic, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { refineReal } from '../algebraic/root-of';
-import type { ExprId, ExpressionStore } from './expression';
+import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from './expression';
 
 /**
  * Certified enclosures of real number-only expressions: exact rational
@@ -480,6 +480,7 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
         box = { lo: t.lo, hi: t.hi };
         break;
       }
+      case 'isolated': box = isolatedBox(store, n, bits); break;
       case 'add': {
         const parts = node.args.map(get);
         box = { lo: down(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.lo), zero(ctx)), bits), hi: up(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.hi), zero(ctx)), bits) };
@@ -494,6 +495,42 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
   }
   const b = boxes.get(id) as Box;
   return { kind: 'bounds', lo: b.lo, hi: b.hi };
+}
+
+/** Best isolating interval found so far per isolated zero (refinement is monotone, so keep the narrowest). */
+const ISOLATED = new WeakMap<ExpressionStore, Map<ExprId, Bounds>>();
+
+/**
+ * An isolated zero refined until its interval is at most 2^-bits wide, by trisection: f is strictly monotone on
+ * the interval, so f vanishes at most at one of the two inner points and the other one's sign is decided by
+ * refining its enclosure; the zero lies on the side where f's sign differs from `loSign`.
+ */
+function isolatedBox(store: ExpressionStore, id: ExprId, bits: number): Box | Exclude<Enclosed, { kind: 'bounds' }> {
+  const ctx = store.ctx, node = store.node(id) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated' }>;
+  let cache = ISOLATED.get(store);
+  if (!cache) { cache = new Map(); ISOLATED.set(store, cache); }
+  let { lo, hi } = cache.get(id) ?? { lo: node.lo, hi: node.hi };
+  const width = rational(ctx, 1n, 1n << BigInt(bits)), three = rational(ctx, 3n);
+  const at = (p: Rational) => store.substitute(node.expr, new Map([[ISOLATED_VARIABLE, store.number(p)]]));
+  // Inner points rounded to dyadics a little finer than the target width: small exact arguments for f.
+  const dyadic = (x: Rational) => down(ctx, x, bits + 4);
+  while (rSubtract(ctx, hi, lo).numerator * width.denominator > width.numerator * rSubtract(ctx, hi, lo).denominator) {
+    ctx.tick();
+    const third = rDivide(ctx, rSubtract(ctx, hi, lo), three);
+    const points = [dyadic(rAdd(ctx, lo, third)), dyadic(rSubtract(ctx, hi, third))].map(p => ({ p, f: at(p) }));
+    let decided: { p: Rational; sign: 1 | -1 } | undefined;
+    for (let b = 32; !decided; b *= 2) {
+      ctx.tick();
+      for (const { p, f } of points) {
+        const e = enclose(store, f, b);
+        if (e.kind === 'undefined' || e.kind === 'unsupported') return e;
+        if (e.kind === 'bounds' && (e.lo.numerator > 0n || e.hi.numerator < 0n)) { decided = { p, sign: e.lo.numerator > 0n ? 1 : -1 }; break; }
+      }
+    }
+    if (decided.sign === node.loSign) lo = decided.p; else hi = decided.p;
+  }
+  cache.set(id, { lo, hi });
+  return { lo, hi };
 }
 
 function powerBox(store: ExpressionStore, base: Box, exponentId: ExprId, exponent: Box, bits: number): Box | Exclude<Enclosed, { kind: 'bounds' }> {

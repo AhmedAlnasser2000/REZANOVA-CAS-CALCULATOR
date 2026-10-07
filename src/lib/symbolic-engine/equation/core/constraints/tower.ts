@@ -154,6 +154,7 @@ export function towerForm(store: ExpressionStore, f: ExprId, x: string): TowerFo
           forms.set(n, { num: variable(ctx, 0), den: one() });
           break;
         case 'constant': refuse(CERTIFIED_NUMERICS, `radical elimination with the transcendental constant ${node.name}`); break;
+        case 'isolated': refuse(CERTIFIED_NUMERICS, 'radical elimination with a numeric root'); break;
         case 'algebraic': {
           if (node.root.kind !== 'real') refuse(OWNERS.constraints, 'a non-real algebraic constant');
           const c = node.poly.coefficients, d = c.length - 1, index = tower.length + 1, lead = c[d];

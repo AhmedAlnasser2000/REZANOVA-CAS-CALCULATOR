@@ -6,6 +6,7 @@ import { demand } from './core/execution';
 import type { Rational } from './core/algebra/rational';
 import { compareReal, type RealRootOf, type RootOf } from './core/algebraic/root-of';
 import { rationalForm } from './core/decision/rational-form';
+import { certifyIsolated } from './core/numeric/isolated';
 import { sameSet } from './core/parameters/verify';
 import { asRoot } from './core/representation/evaluate';
 import type { ExprId, ExpressionStore } from './core/representation/expression';
@@ -39,6 +40,8 @@ function rationalOf(store: ExpressionStore, v: CanonicalMathValue): Rational {
 export interface RootBinders {
   readonly algebraic: ReadonlyMap<string, Extract<PointValue, { kind: 'algebraic' }>>;
   readonly indexed: ReadonlyMap<string, PointValue>;
+  /** Isolated real zeros (certified numerics), as core nodes; their certificates are re-checked on reading. */
+  readonly isolated: ReadonlyMap<string, ExprId>;
   /** A math leaf as a core expression, with algebraic binders inlined (indexed roots are refused inside expressions). */
   readonly read: (v: CanonicalMathValue) => ExprId;
 }
@@ -47,15 +50,24 @@ export function readRootBinders(store: ExpressionStore, doc: CanonicalEquationDo
   const p = doc.primary, ctx = store.ctx;
   const algebraic = new Map<string, Extract<PointValue, { kind: 'algebraic' }>>();
   const indexed = new Map<string, PointValue>();
+  const isolated = new Map<string, ExprId>();
   const read = (v: CanonicalMathValue): ExprId => {
     const r = readExpression(store, v.mathJson);
     if (r.kind !== 'ok') return fail('a math value is not readable by the core');
     const free = store.freeSymbols(r.value);
     if (free.some(s => indexed.has(s))) return fail('an indexed root occurs inside an expression');
-    const env = new Map(free.filter(s => algebraic.has(s)).map(s => [s, store.algebraic((algebraic.get(s) as { root: RootOf }).root)] as const));
+    const env = new Map([
+      ...free.filter(s => algebraic.has(s)).map(s => [s, store.algebraic((algebraic.get(s) as { root: RootOf }).root)] as const),
+      ...free.filter(s => isolated.has(s)).map(s => [s, isolated.get(s) as ExprId] as const),
+    ]);
     return env.size ? store.substitute(r.value, env) : r.value;
   };
   for (const b of p.roots) {
+    if (b.kind === 'isolated-real-root') {
+      const f = read(b.expression), lo = rationalOf(store, b.lo), hi = rationalOf(store, b.hi);
+      isolated.set(b.symbol, store.isolated(f, b.symbol, lo, hi, certifyIsolated(store, f, b.symbol, lo, hi)));
+      continue;
+    }
     if (b.kind === 'indexed-real-root') {
       if (p.targets.length !== 1) fail('indexed roots need a single target');
       const x = p.targets[0], poly = store.substitute(read(b.polynomial), new Map([[b.symbol, store.symbol(x)]]));
@@ -83,7 +95,7 @@ export function readRootBinders(store: ExpressionStore, doc: CanonicalEquationDo
     if (matches.length !== 1) fail('a root binder does not isolate exactly one root');
     algebraic.set(b.symbol, Object.freeze(b.form === undefined ? { kind: 'algebraic', root: matches[0] } : { kind: 'algebraic', root: matches[0], form: read(b.form) }));
   }
-  return { algebraic, indexed, read };
+  return { algebraic, indexed, isolated, read };
 }
 
 export function readEquationOutcome(store: ExpressionStore, input: unknown): ReadEquationOutcome {

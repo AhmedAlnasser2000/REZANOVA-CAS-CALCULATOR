@@ -1,7 +1,7 @@
 import { demand, EQUATION_STOPS, type EquationStop, type ExecutionContext } from '../execution';
 import { decodeRational, encodeRational } from '../algebra/wire';
 import {
-  CONSTANT_NAMES, ExpressionStore, FUNCTION_NAMES, type ExprId, type ExpressionNode, type FunctionName,
+  CONSTANT_NAMES, ExpressionStore, FUNCTION_NAMES, ISOLATED_VARIABLE, type ExprId, type ExpressionNode, type FunctionName,
 } from './expression';
 import {
   CONDITION_KINDS, RELATION_OPERATORS, relationProblem, type Condition, type ConditionKind, type RelationOperator, type RelationProblem,
@@ -54,6 +54,9 @@ export class GraphEncoder {
     if (known !== undefined) return known;
     for (const n of this.store.postorder([id])) {
       if (this.#index.has(n)) continue;
+      // An isolated zero's function is a separate graph (its bound variable is not a child): encode it first.
+      const node = this.store.node(n);
+      if (node.kind === 'isolated') this.ref(node.expr);
       this.#index.set(n, this.nodes.length);
       this.nodes.push(this.#encode(this.store.node(n)));
     }
@@ -67,6 +70,7 @@ export class GraphEncoder {
       case 'symbol': return ['s', node.name];
       case 'constant': return ['c', node.name];
       case 'algebraic': return ['r', node.poly.coefficients.map(c => c.toString()), node.index];
+      case 'isolated': return ['i', r(node.expr), encodeRational(ctx, node.lo), encodeRational(ctx, node.hi), node.loSign];
       case 'add': return ['+', node.args.map(r)];
       case 'mul': return ['*', node.args.map(r)];
       case 'pow': return ['^', r(node.base), r(node.exponent)];
@@ -113,6 +117,13 @@ export class GraphDecoder {
         id = s.algebraic(roots[k as number]);
         break;
       }
+      case 'i': {
+        // Transport only: the certificate is re-checked wherever the value is trusted (verifier, replay).
+        arity(5);
+        if (e[4] !== 1 && e[4] !== -1) fail('isolated zero sign');
+        id = s.isolated(this.id(e[1]), ISOLATED_VARIABLE, decodeRational(ctx, e[2]), decodeRational(ctx, e[3]), e[4] as 1 | -1);
+        break;
+      }
       case '+': arity(2); id = s.add(...list(e[1]).map(i => this.id(i))); break;
       case '*': arity(2); id = s.mul(...list(e[1]).map(i => this.id(i))); break;
       case '^': arity(3); id = s.pow(this.id(e[1]), this.id(e[2])); break;
@@ -132,6 +143,7 @@ export class GraphDecoder {
       case 'symbol': return ['s', node.name];
       case 'constant': return ['c', node.name];
       case 'algebraic': return ['r', node.poly.coefficients.map(c => c.toString()), node.index];
+      case 'isolated': return ['i', r(node.expr), encodeRational(this.store.ctx, node.lo), encodeRational(this.store.ctx, node.hi), node.loSign];
       case 'add': return ['+', node.args.map(r)];
       case 'mul': return ['*', node.args.map(r)];
       case 'pow': return ['^', r(node.base), r(node.exponent)];
