@@ -159,7 +159,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Decomposition answers are verified at re-derivation strength (exact checks at each claimed cell's sample and a decomposition in the reversed variable order), not by a certificate | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
 | Cylindrical algebraic coverings (fast feasibility for conjunctions) and single-cell or NLSAT-style search | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
 | Four or more unknowns often end in a work stop (the decomposition is doubly exponential in the number of variables, by nature) | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
-| Rows with only inequalities choose one unknown automatically (one per equation row), so x² + y² < 1, y > x is decided in x with y as a parameter unless y is chosen too; the Region example chooses both | `EQUATION-SEMIALGEBRAIC1` PR A | user decision pending |
+| ~~Rows with only inequalities choose one unknown automatically (one per equation row)~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B, user decision 2026-10-07: with no equation, every free name is an unknown) | `EQUATION-SEMIALGEBRAIC1` PR A | `EQUATION-SEMIALGEBRAIC1` PR B |
 | Cell merging is decided at one sample of the section between them; descriptions in three or more unknowns that differ only symbolically (equal after simplification) stay separate cells | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
 | Decimal style shows integer cell ends as 1.000000 (as interval answers do) | `EQUATION-SEMIALGEBRAIC1` PR A | unassigned (presentation) |
 | Quantifiers on non-polynomial rows, and over ℂ | `EQUATION-SEMIALGEBRAIC1` (plan) | unassigned |

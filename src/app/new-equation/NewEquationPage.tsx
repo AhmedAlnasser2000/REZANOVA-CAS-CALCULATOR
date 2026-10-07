@@ -11,13 +11,13 @@ import { useRowReadings } from './useRowReadings';
 import { newEquationKeyboardLayouts, symbolTooltip } from './symbols';
 import '../../styles/app/new-equation.css';
 
-const EXAMPLES: readonly { label: string; rows: string[]; targets?: string[] }[] = [
+const EXAMPLES: readonly { label: string; rows: string[] }[] = [
   { label: 'Quadratic', rows: ['x^2-5x+6=0'] },
   { label: 'System', rows: ['x^2+y^2=5', 'xy=2'] },
   { label: 'Inequality', rows: ['x^2-4\\le0'] },
   { label: 'Trigonometric', rows: ['\\sin x=\\frac{1}{2}'] },
   { label: 'With an assumption', rows: ['x^2=a', 'a>0'] },
-  { label: 'Region', rows: ['x^2+y^2<1', 'y>x'], targets: ['x', 'y'] },
+  { label: 'Region', rows: ['x^2+y^2<1', 'y>x'] },
 ];
 const LIMIT_LABELS: Readonly<Record<keyof EquationLimits, string>> = { work: 'Work', allocation: 'Memory (allocation units)' };
 
@@ -103,7 +103,7 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
         <button onClick={() => addRow(draft.rows.length - 1)}>+ Add row</button>
         <details className="ne-examples" open={examplesOpen} onToggle={e => setExamplesOpen(e.currentTarget.open)}>
           <summary ref={examplesSummary}>Example ▾</summary>
-          <div role="menu" ref={examplesMenu}>{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={() => { update({ rows: [...x.rows], targets: x.targets ? [...x.targets] : null }); setExamplesOpen(false); }}>{x.label}</button>)}</div>
+          <div role="menu" ref={examplesMenu}>{EXAMPLES.map(x => <button role="menuitem" key={x.label} onClick={() => { update({ rows: [...x.rows], targets: null }); setExamplesOpen(false); }}>{x.label}</button>)}</div>
         </details>
       </div>
       <p className="ne-tip">Enter to solve · Shift+Enter for a new row</p>

@@ -107,8 +107,8 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   // Regions (EQUATION-SEMIALGEBRAIC1): cylindrical decomposition, cells written like Mathematica's Reduce.
   await row(page, 1, 'x^2+y^2<1');
   await row(page, 2, 'y>x');
-  // Rows without an equation pick one unknown automatically: both are chosen here.
-  await workspace.getByRole('combobox', { name: 'Add an unknown' }).selectOption('y');
+  // Rows without an equation make every name an unknown: x and y.
+  await expect(workspace.getByRole('group', { name: 'Solve for' })).toContainText('y');
   await solve(page);
   await workspace.getByRole('button', { name: 'Exact', exact: true }).click();
   await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
@@ -133,7 +133,6 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   await solve(page);
   await expect(answer(page)).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('region-or.png'), fullPage: true });
-  await workspace.getByRole('button', { name: 'Automatic' }).click();
 
   // Domain conditions the engine applies.
   await row(page, 1, '\\ln(x-1)+\\sqrt{x}=\\sqrt{2}');
