@@ -58,6 +58,20 @@ Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-
 
 Stages 15 and 16 may move before adoption if the user wants them in the first product release. Adoption can also happen earlier with fewer slices, because V6 is designed to grow by kinds.
 
+## After this roadmap: certified-numerics expansion (user decision, 2026-10-07)
+
+This roadmap rebuilds Equation and retires the old engine. Certified numerics keeps only what PR B needs; the rest waits for the expansion roadmap that follows.
+
+**In PR B (stage 15)**: the Krawczyk uniqueness test; a floating-point Newton guess inflated into a box and proven once exactly (ε-inflation; the floats only guess); HC4 contraction (shrinking boxes by the equations before splitting); mean-value ranges on small boxes.
+
+**Later (expansion roadmap)**, roughly by value:
+1. Speed substrate: dyadic ball arithmetic (midpoint and radius with outward rounding) instead of growing rational endpoints.
+2. Fewer refusals: bounds proven automatically (fewer "add a range row"), Descartes/Rolle root counting for exponential sums, the Hansen–Sengupta contractor.
+3. Numbers back to exact: PSLQ/LLL recognition of a closed form from certified digits, then an exact proof.
+4. Hard cases, each needing a policy decision first: exp-log root isolation conditional on Schanuel's conjecture (tangent roots, over-determined systems), deflation and topological degree for multiple roots.
+5. New answer kinds: certified curves (under-determined systems) and pavings (non-polynomial inequality systems).
+6. Heavy tools when needed: Taylor models, homotopy continuation with certified path tracking.
+
 ## Migration and verification rules
 
 - The old engine is untouched until stage 17. New Equation and old Equation coexist after adoption.

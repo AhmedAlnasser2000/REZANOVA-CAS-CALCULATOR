@@ -3,7 +3,7 @@
 Date: 2026-10-07
 Status:
 - **PR A (one variable)**: implemented and verified on 2026-10-07 (unit, contract, golden, UI and Playwright evidence; 60-second probe clean).
-- **PR B (square systems by Krawczyk)**: planned when PR A merges.
+- **PR B (square systems by Krawczyk)**: planned when PR A merges; scope agreed on 2026-10-07: Krawczyk, a floating-point Newton guess with ε-inflation proven once exactly, HC4 contraction and mean-value ranges. Further techniques are listed in the roadmap's "After this roadmap" section.
 
 Stage 15 of the [roadmap](equation-reconstruction-roadmap.md); renumbered from 16 by user decision on 2026-10-07 (the roadmap records the order change). **No code from the old Equation engine is used**, and New Integration is not touched.
 

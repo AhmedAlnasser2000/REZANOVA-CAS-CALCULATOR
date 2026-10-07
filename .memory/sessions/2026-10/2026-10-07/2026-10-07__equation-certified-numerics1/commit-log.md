@@ -19,4 +19,6 @@
 - 671aac2 A2: isolated real zeros in the core and the isolated-real-root binder.
 - a85b946 A3: certified numeric roots in one variable.
 - A4 (this commit): corpus, golden, probe, Playwright step, spec, roadmap, ledger and memory.
-- No PR opened; the user opens it when ready.
+- 65c0312 A4 pushed; the user opened PR #25.
+- a2be7a4: merge of main 674184e (memory conflicts kept both sides; print-hygiene baseline regenerated for two New Integration cases that main changed).
+- Next commit: roadmap "After this roadmap" section, PR B scope, memory.
