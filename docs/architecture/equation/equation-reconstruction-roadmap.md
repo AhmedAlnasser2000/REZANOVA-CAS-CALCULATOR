@@ -21,7 +21,9 @@ Part B:
 - the Guide article;
 - Playwright evidence on the real app.
 
-This completes stage 14. The next gates (15 `EQUATION-SEMIALGEBRAIC1`, 16 `EQUATION-CERTIFIED-NUMERICS1`) each need their own approval.
+This completes stage 14.
+
+Next (approved 2026-10-07): stage 15 `EQUATION-CERTIFIED-NUMERICS1`, renumbered from 16 (see the order change below the stage table). PR A covers one variable: certified isolated real roots as a new schema-7 root binder, range rows, an independent exclusion verifier and the "Certified" line. PR B covers square systems by Krawczyk and is planned when PR A merges. Stage 16 `EQUATION-SEMIALGEBRAIC1` follows with its own approval.
 
 Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-INERT1`](tests-legacy-equation-inert1.md) and [`NEW-EQUATION-RESPONSIVE1`](new-equation-responsive1.md):
 - rows read off the main thread;
@@ -48,9 +50,11 @@ Before the roadmap resumes, one PR (2026-10-07) carries [`TESTS-LEGACY-EQUATION-
 | 13 (verified) | `EQUATION-RESULT-CONTRACT1` | Canonical-result V6 for solution sets and outcomes | Authority, bounds, conversions, compatibility |
 | 13b (verified) | `EQUATION-PRESENTATION1` | Display normalization of V6 answers (radical simplification, numeric order of complex roots, distribution, residue normalization), as integration's contract → presentation → adoption | Presentation tests on the corpus; no change to canonical V6 |
 | 14 (verified) | `EQUATION-ADOPTION1` (ui) | New Equation workspace, worker host, capability ID, OOE shell, drafts and replay | Playwright evidence on answers, conditions, statuses and overflow |
-| 15 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
-| 16 | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs | N cases certified; numerical results typed as numerical |
+| 15 (in progress) | `EQUATION-CERTIFIED-NUMERICS1` (slice 8) | Interval Newton and Krawczyk on bounded intervals, exclusion proofs. PR A: one variable (isolated real roots, range rows). PR B: square systems | N cases certified; numerical results typed as numerical |
+| 16 | `EQUATION-SEMIALGEBRAIC1` (slice 7) | CAD for real systems with inequalities | Feasibility and decision cases |
 | 17 | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Corpus parity, then retirement of the old Equation engine | Capability ledger; no regression versus the baseline table |
+
+**Order change (user decision, 2026-10-07):** certified numerics now comes before the semialgebraic gate, and the stage numbers were swapped (15 ↔ 16); the gate names and slice numbers are unchanged. Numerics serves common single equations that end in "Not solved yet" today (cos x = x, eˣ + x³ = 5), while CAD mostly serves inequality systems and several-parameter problems; neither blocks the other.
 
 Stages 15 and 16 may move before adoption if the user wants them in the first product release. Adoption can also happen earlier with fewer slices, because V6 is designed to grow by kinds.
 
