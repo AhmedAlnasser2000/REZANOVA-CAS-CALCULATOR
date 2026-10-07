@@ -17,6 +17,8 @@
 .ne-row .ne-remove {margin-top: 9px; padding: 4px 10px;}
 .ne-row-note {margin: 4px 0 0; color: #c2410c; font-size: .92rem;}
 .ne-row-hint {margin: 4px 0 0; font-size: .88rem; opacity: .7;}
+.ne-row-reading {margin: 4px 0 0; font-size: .88rem; opacity: 0; animation: ne-reading-in .2s ease .6s forwards;}
+@keyframes ne-reading-in {to {opacity: .7;}}
 .ne-actions {display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0;}
 .ne-examples {position: relative;}
 .ne-examples summary {list-style: none; padding: 7px 13px; border: 1px solid #64748b66; border-radius: 7px; cursor: pointer;}

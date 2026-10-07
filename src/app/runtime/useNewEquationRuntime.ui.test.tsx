@@ -5,6 +5,7 @@ import { answerOutdated, resolvedTargets, useNewEquationRuntime } from './useNew
 import { blankEquationDraft, readEquationDraft } from './new-equation-drafts';
 import { equationFailure, runEquationJob } from '../../lib/new-equation/runtime';
 import type { EquationResponse } from '../../lib/new-equation/types';
+import { parseRow } from '../../lib/new-equation/parse';
 
 vi.mock('../../lib/new-equation/runtime', async importOriginal => ({ ...await importOriginal<object>(), runEquationJob: vi.fn() }));
 beforeEach(() => { localStorage.clear(); vi.mocked(runEquationJob).mockReset(); });
@@ -55,25 +56,27 @@ it('keeps the previous answer after an edit (outdated), aborts a running job on 
   const id = h.result.current.workspaces.activeInstanceId;
   const draft = { ...blankEquationDraft(), rows: ['x^2=4', ''] };
   act(() => h.result.current.equation.change(id, draft));
-  act(() => { void h.result.current.equation.run(id); });
+  await act(async () => { void h.result.current.equation.run(id); });
   const answer = equationFailure({ rows: draft.rows, targets: ['x'], domain: 'real', limits: draft.limits, digits: 8 }, 'Fixture');
   await act(async () => pending[0].resolve(answer));
   expect(h.result.current.equation.views[id].response).toBe(answer);
-  expect(answerOutdated(draft, answer)).toBe(false);
-  expect(answerOutdated({ ...draft, style: 'decimal' }, answer)).toBe(false);
-  expect(answerOutdated({ ...draft, rows: ['x^2=4', '', ''] }, answer)).toBe(false);
+  expect(answerOutdated(draft, answer, ['x'])).toBe(false);
+  expect(answerOutdated({ ...draft, style: 'decimal' }, answer, ['x'])).toBe(false);
+  expect(answerOutdated({ ...draft, rows: ['x^2=4', '', ''] }, answer, ['x'])).toBe(false);
+  expect(answerOutdated(draft, answer, ['y'])).toBe(true);
   const edited = { ...draft, rows: ['x^2=9', ''] };
-  expect(answerOutdated(edited, answer)).toBe(true);
-  act(() => { void h.result.current.equation.run(id); });
+  expect(answerOutdated(edited, answer, ['x'])).toBe(true);
+  await act(async () => { void h.result.current.equation.run(id); });
   act(() => h.result.current.equation.change(id, edited));
   expect(pending[1].signal.aborted).toBe(true);
   expect(h.result.current.equation.views[id].response).toBe(answer);
-  act(() => { void h.result.current.equation.run(id); });
+  await act(async () => { void h.result.current.equation.run(id); });
   act(() => h.result.current.workspaces.closeInstance(id));
   await waitFor(() => expect(pending[2].signal.aborted).toBe(true));
 });
 
 it('resolves unknowns automatically or from the chips', () => {
-  expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'] })).toEqual(['x']);
-  expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'], targets: ['a'] })).toEqual(['a']);
+  const rows = [parseRow('ax+b=0')];
+  expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'] }, rows)).toEqual(['x']);
+  expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'], targets: ['a'] }, rows)).toEqual(['a']);
 });
