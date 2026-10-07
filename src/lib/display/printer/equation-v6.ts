@@ -17,6 +17,11 @@ export interface EquationPrintOptions {
   readonly descendingIn?: string;
   /** Symbols that stand for numbers (root binders), for relation layout. */
   readonly constants?: ReadonlySet<string>;
+  /**
+   * Relation layout: a sum against 0 with one of these symbols as a lone term (and nowhere else) reads as that symbol
+   * against the rest (√a + b > 0 reads b > −√a); the last listed symbol is preferred.
+   */
+  readonly isolate?: readonly string[];
 }
 export interface PrintedEquationMath { readonly latex: string; readonly text: string }
 export interface PrintedRelation extends PrintedEquationMath {
@@ -293,7 +298,18 @@ export function printRelation(expr: Json, op: RelationOperator, other: Json = 0,
     const pr = new Printer(options), zero = (v: Json) => integerOf(v) === 0n;
     let lhs = expr, rhs = other, o = op;
     if (zero(lhs) && !zero(rhs)) { [lhs, rhs] = [rhs, lhs]; o = FLIP[o]; }
-    if (zero(rhs)) {
+    const occurs = (v: Json, x: string): boolean => v === x || (Array.isArray(v) && v.some(w => occurs(w as Json, x)));
+    const lone = zero(rhs) && options.isolate ? [...options.isolate].reverse().map(x => {
+      const ts = pr.terms(lhs), i = ts.findIndex(t => t.body === x);
+      return i >= 0 && ts.length > 1 && ts.every((t, j) => j === i || !occurs(t.body, x)) ? { x, ts, i } : undefined;
+    }).find(c => c !== undefined) : undefined;
+    if (lone) {
+      // σ·x + rest op 0  ⇔  x op −rest (σ = +)  or  x flip(op) rest (σ = −).
+      const rest = lone.ts.filter((_, j) => j !== lone.i).map(t => (t.negative ? ['Negate', t.body] : t.body) as Json);
+      const sum: Json = rest.length === 1 ? rest[0] : ['Add', ...rest];
+      lhs = lone.x;
+      if (lone.ts[lone.i].negative) { o = FLIP[o]; rhs = sum; } else rhs = ['Negate', sum];
+    } else if (zero(rhs)) {
       const ts = pr.terms(lhs);
       if (ts.length === 1 && ts[0].negative) { lhs = ts[0].body; o = FLIP[o]; }
       else if (ts.length === 2 && ts.filter(t => pr.constant(t.body)).length === 1) {

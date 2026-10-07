@@ -466,10 +466,12 @@ function normalizeRegion(store: ExpressionStore, set: Extract<SolutionSet, { kin
   if (vars.length < 2) fail('a cylindrical region has several variables');
   const cell = (c: RegionCell, depth: number): RegionCell => {
     store.ctx.tick();
-    const end = (e: Endpoint) => (e.kind === 'infinity' || depth === 1 || !parametricValue(store, e) ? normalizeEndpoint(store, e) : normalizeValue(store, e, 'real'));
+    const end = (e: Endpoint) => (e.kind === 'infinity' || !parametricValue(store, e) ? normalizeEndpoint(store, e) : normalizeValue(store, e, 'real'));
     const lo = end(c.lo), hi = end(c.hi), loClosed = c.loClosed === true, hiClosed = c.hiClosed === true;
     if ((lo.kind === 'infinity' && (lo.sign !== -1 || loClosed)) || (hi.kind === 'infinity' && (hi.sign !== 1 || hiClosed))) fail('infinite cell ends are open and outward');
-    if (depth === 1) {
+    // First-level ends without parameters are ordered exactly; ends in parameters keep the decomposition's order.
+    const symbolic = (e: Endpoint) => e.kind !== 'infinity' && parametricValue(store, e);
+    if (depth === 1 && !symbolic(lo) && !symbolic(hi)) {
       const order = compareEndpoints(store, lo, hi);
       if (order > 0 || (order === 0 && !(loClosed && hiClosed))) fail('empty or reversed cell');
     }
@@ -480,6 +482,7 @@ function normalizeRegion(store: ExpressionStore, set: Extract<SolutionSet, { kin
   if (set.cells.length === 0) fail('an empty cylindrical region');
   const cells = set.cells.map(c => cell(c, 1));
   for (let i = 1; i < cells.length; i++) {
+    if ([cells[i - 1].hi, cells[i].lo].some(e => e.kind !== 'infinity' && parametricValue(store, e))) continue;
     const c = compareEndpoints(store, cells[i - 1].hi, cells[i].lo);
     if (c > 0 || (c === 0 && cells[i - 1].hiClosed && cells[i].loClosed)) fail('overlapping cells');
   }

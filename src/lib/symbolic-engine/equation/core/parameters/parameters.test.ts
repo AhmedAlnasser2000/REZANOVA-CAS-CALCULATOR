@@ -132,9 +132,12 @@ group('several parameters: sign-condition trees', () => {
     expect(r.at({ a: 0, b: 1 })).toBe('{}');
   });
 
-  it('refuses what needs root order across polynomials or real roots of degree ≥ 3', () => {
-    expect(describe(new ExpressionStore(context()), setup(['And', ['Less', pow('x', 2), 'a'], ['Greater', 'x', 'b']]).outcome)).toMatch(/incomplete-implementation: EQUATION-SEMIALGEBRAIC1/);
-    expect(describe(new ExpressionStore(context()), setup(['Equal', add(pow('x', 3), mul('a', 'x'), 'b'), 0]).outcome)).toMatch(/incomplete-implementation: EQUATION-SEMIALGEBRAIC1/);
+  it('decides root order across polynomials and real roots of degree ≥ 3 by cylindrical decomposition (EQUATION-SEMIALGEBRAIC1 PR B)', () => {
+    for (const json of [['And', ['Less', pow('x', 2), 'a'], ['Greater', 'x', 'b']], ['Equal', add(pow('x', 3), mul('a', 'x'), 'b'), 0]] as const) {
+      const r = setup(json as never);
+      expect(r.outcome.kind === 'solved' && r.outcome.set.kind).toBe('case-tree');
+      verifyEquationOutcome(r.problem, r.outcome);
+    }
   });
 });
 

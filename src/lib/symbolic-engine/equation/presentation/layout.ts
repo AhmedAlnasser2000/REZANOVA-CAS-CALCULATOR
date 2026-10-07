@@ -185,7 +185,8 @@ class Layout {
     }
     const op: Record<string, RelationOperator> = { nonzero: 'ne', positive: 'gt', nonnegative: 'ge', equal: 'eq', 'not-equal': 'ne' };
     const other = 'other' in c ? this.exactJson(c.other) : 0;
-    const printed = printRelation(this.exactJson(c.expr), op[c.kind], other, { constants: this.#constants });
+    // Case conditions read with a parameter alone on one side where it stands alone in the sum (b > −√a).
+    const printed = printRelation(this.exactJson(c.expr), op[c.kind], other, { constants: this.#constants, isolate: this.#doc.primary.parameters });
     if (!printed) return { printed: { latex: c.expr.canonicalLatex, text: c.expr.canonicalLatex }, key: JSON.stringify(c.expr.mathJson) };
     // Reading order from structure: the left side, then the relation, then the right side.
     const rank: Record<RelationOperator, number> = { eq: 0, ne: 1, lt: 2, le: 3, gt: 4, ge: 5 };
