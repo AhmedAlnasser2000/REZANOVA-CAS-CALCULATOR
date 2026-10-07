@@ -10,6 +10,7 @@ import { coefficient, constant, degree, divide, multiply, negate, scale, subtrac
 import { igcd, isqrt } from '../algebra/integer';
 import { rational, rMultiply, type Rational } from '../algebra/rational';
 import { signAtPoint } from './sign';
+import { attachForm } from '../decision/radical-forms';
 
 /**
  * The answer of a decomposition (EQUATION-SEMIALGEBRAIC1): ∅, finitely many points, intervals of one variable, or a
@@ -43,7 +44,8 @@ type Desc = 'all' | 'none' | readonly Piece[];
 
 interface Builder { readonly store: ExpressionStore; readonly d: Decomposition; readonly names: readonly string[] }
 
-const exactValue = (v: ExactValue): PointValue => v;
+/** A constant end or coordinate, with its radical form when one is proven (quadratics, binomials). */
+const exactValue = (store: ExpressionStore, v: ExactValue): PointValue => (v.kind === 'algebraic' ? attachForm(store, v) : v);
 
 /** The section's end: constant over fixed outer coordinates, else a closed form or an indexed root. */
 function sectionBound(b: Builder, parent: CadCell, cell: CadCell, fixed: ReadonlyMap<string, ExprId>): Bound {
@@ -51,7 +53,7 @@ function sectionBound(b: Builder, parent: CadCell, cell: CadCell, fixed: Readonl
   const def = [...cell.sections].sort((x, y) => degree(x.poly) - degree(y.poly))[0] as Section;
   const lazard = def.lazard ? { lazard: true as const } : {};
   const base = { level: k, poly: def.poly, index: def.index, ...lazard };
-  if (fixed.size === k - 1) return { value: exactValue(cell.sample[k - 1]), ...base };
+  if (fixed.size === k - 1) return { value: exactValue(store, cell.sample[k - 1]), ...base };
   // The effective degree over the parent cell: the top coefficient that does not vanish there.
   const c = Array.from({ length: degree(def.poly) + 1 }, (_, i) => coefficient(def.poly, i, k));
   let top = c.length - 1;
@@ -240,7 +242,7 @@ function hasNoTruth(cell: CadCell): boolean {
 export function regionSet(store: ExpressionStore, d: Decomposition, variables: readonly string[]): SolutionSet | undefined {
   demand(variables.length === d.n, 'invalid-input', 'one variable per level');
   const found: ExactValue[][] = [];
-  if (points(d.root, d.n, found)) return found.length ? normalizeSet(store, finiteSet(variables, found), 'real') : undefined;
+  if (points(d.root, d.n, found)) return found.length ? normalizeSet(store, finiteSet(variables, found.map(p => p.map(v => exactValue(store, v)))), 'real') : undefined;
   const desc = describe({ store, d, names: variables }, d.root, new Map());
   if (desc === 'none') return undefined;
   const all: RegionCell[] = [{ lo: { kind: 'infinity', sign: -1 }, hi: { kind: 'infinity', sign: 1 }, loClosed: false, hiClosed: false }];

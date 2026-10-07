@@ -1,5 +1,5 @@
 import type { OutputStyle, SerializableMathJson } from '../../../../types/calculator';
-import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRegionCell, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../../types/calculator/canonical-result-equation';
 import type { CanonicalEquationDocument } from '../../../../types/calculator/canonical-result-current';
 import type { CanonicalMathValue } from '../../../../types/calculator/canonical-result-common';
 import { chainRelations, printEquationMath, printRelation, printSigned, type PrintedRelation, type RelationOperator } from '../../../display/printer/equation-v6';
@@ -56,6 +56,8 @@ class Layout {
   readonly used = new Set<string>();
   readonly #binder = new Map<string, CanonicalEquationRootBinder>();
   readonly #pointsDefined = new Set<PointBinder>();
+  /** Indexed roots bounding a region's cells: the variable each is a root in. */
+  readonly #cellVariable = new Map<string, string>();
   readonly #domain: 'real' | 'complex';
   readonly #targets: string[];
   readonly #taken: Set<string>;
@@ -421,7 +423,56 @@ class Layout {
       case 'unconfirmed':
         for (const c of s.candidates) this.solutionRow(depth, c.point, { latex: '\\ \\text{(candidate, not confirmed)}', text: ' (candidate, not confirmed)' });
         return;
+      case 'cylindrical': this.region(s.cells, depth); return;
     }
+  }
+
+  // ---- regions ----
+
+  /** One cell's condition on its variable: x = a, a < x ≤ b, x > a, or nothing for the whole line. */
+  cellCondition(c: CanonicalEquationRegionCell, depth: number): P | undefined {
+    const x = this.#targets[depth], v = printEquationMath(x) ?? { latex: x, text: x };
+    for (const e of [c.lo, c.hi]) {
+      if (e.kind === 'value' && typeof e.value.mathJson === 'string' && this.#binder.get(e.value.mathJson)?.kind === 'indexed-real-root') this.#cellVariable.set(e.value.mathJson, x);
+    }
+    if (c.lo.kind === 'value' && c.hi.kind === 'value' && c.loClosed && c.hiClosed && JSON.stringify(c.lo.value.mathJson) === JSON.stringify(c.hi.value.mathJson)) {
+      const a = this.plain(c.lo.value);
+      return { latex: `${v.latex} = ${a.latex}`, text: `${v.text} = ${a.text}` };
+    }
+    const lo = c.lo.kind === 'value' ? this.plain(c.lo.value) : undefined, hi = c.hi.kind === 'value' ? this.plain(c.hi.value) : undefined;
+    const lop = c.loClosed ? ['\\le', '≤'] : ['<', '<'], hip = c.hiClosed ? ['\\le', '≤'] : ['<', '<'];
+    if (lo && hi) return { latex: `${lo.latex} ${lop[0]} ${v.latex} ${hip[0]} ${hi.latex}`, text: `${lo.text} ${lop[1]} ${v.text} ${hip[1]} ${hi.text}` };
+    if (lo) return { latex: `${v.latex} ${c.loClosed ? '\\ge' : '>'} ${lo.latex}`, text: `${v.text} ${c.loClosed ? '≥' : '>'} ${lo.text}` };
+    if (hi) return { latex: `${v.latex} ${hip[0]} ${hi.latex}`, text: `${v.text} ${hip[1]} ${hi.text}` };
+    return undefined;
+  }
+
+  /**
+   * A cylindrical region (EQUATION-SEMIALGEBRAIC1), in the form of Mathematica's Reduce: one row per alternative,
+   * the cells' conditions joined by "and" from the first variable on; where a cell branches, its condition heads the
+   * rows of its alternatives. Alternatives after the first read "or".
+   */
+  region(cells: readonly CanonicalEquationRegionCell[], depth: number, level = 0, prefix: P[] = []): void {
+    cells.forEach((c, i) => {
+      const own = this.cellCondition(c, level), parts = own ? [...prefix, own] : prefix;
+      const or = i > 0 ? { latex: '\\text{or }', text: 'or ' } : { latex: '', text: '' };
+      const join = (ps: P[]) => (ps.length ? { latex: ps.map(p => p.latex).join('\\text{ and }'), text: ps.map(p => p.text).join(' and ') } : undefined);
+      // A chain of single children reads as one row.
+      let chain = parts, cur = c, l = level;
+      while (cur.children && cur.children.length === 1) {
+        cur = cur.children[0]; l++;
+        const k = this.cellCondition(cur, l);
+        if (k) chain = [...chain, k];
+      }
+      if (!cur.children) {
+        const all = join(chain) ?? { latex: `\\text{All } ${this.lhs().latex}`, text: `All ${this.lhs().text}` };
+        this.push('solution', depth, { latex: `${or.latex}${all.latex}`, text: `${or.text}${all.text}` });
+        return;
+      }
+      const head = join(chain);
+      if (head) this.push('case', depth, { latex: `${or.latex}${head.latex}\\text{ and:}`, text: `${or.text}${head.text} and:` });
+      this.region(cur.children, head ? depth + 1 : depth, l + 1, []);
+    });
   }
 
   order(points: readonly CanonicalMathValue[][]): CanonicalMathValue[][] {
@@ -505,7 +556,12 @@ class Layout {
     const name = printEquationMath(b.symbol) ?? { latex: b.symbol, text: b.symbol };
     const d = this.#copy ? undefined : this.#decimal({ mathJson: b.symbol, canonicalLatex: '' });
     const approx = d ? (() => { const t = this.decimalText(d); return { latex: ` \\approx ${t.latex}`, text: ` ≈ ${t.text}` }; })() : { latex: '', text: '' };
-    const what = this.describe(b, b.symbol);
+    // A root bounding a region's cells is a function of the outer variables: written in its own cell's variable.
+    const variable = this.#cellVariable.get(b.symbol);
+    const what = variable === undefined ? this.describe(b, b.symbol) : (() => {
+      const w = this.describe(b, variable), x = printEquationMath(variable) ?? { latex: variable, text: variable };
+      return { latex: `${w.latex}\\text{ in } ${x.latex}`, text: `${w.text} in ${x.text}` };
+    })();
     this.push('definition', 1, { latex: `${name.latex}${approx.latex}:\\ ${what.latex}`, text: `${name.text}${approx.text}: ${what.text}` });
   }
 
