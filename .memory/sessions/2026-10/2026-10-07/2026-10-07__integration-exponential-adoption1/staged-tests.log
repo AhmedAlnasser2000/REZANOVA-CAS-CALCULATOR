@@ -1,0 +1,43 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator/.task_tmp/exponential-adoption/staged-check
+
+ ✓ src/lib/calculus/new-integration/exponential-result.test.ts (8 tests) 4886ms
+     ✓ projects primitives [ 1 ]/[ 1, 1 ]  629ms
+     ✓ projects primitives [ 1 ]/[ 1, 2, 1 ]  1011ms
+     ✓ projects primitives [ +0, 1 ]/[ 1, +0, 1 ]  2454ms
+ ✓ src/lib/calculus/new-integration/exponential-replay.test.ts (6 tests) 3633ms
+   ✓ opens current artifact for e^x with producers disabled  708ms
+   ✓ opens current artifact for e^{x^2} with producers disabled  556ms
+   ✓ opens current artifact for \frac{1}{e^x+x} with producers disabled  1049ms
+   ✓ opens current artifact for \frac{1}{x^2+1} with producers disabled  627ms
+   ✓ rejects changed source, normalization evidence, correspondence and decision conditions  553ms
+ ✓ src/lib/symbolic-engine/integration/core/isolation.test.ts (1 test) 1180ms
+   ✓ keeps private kernel dependencies and production callers inside the reviewed Integration adapters  1179ms
+ ✓ src/lib/calculus/new-integration/exponential-service.test.ts (30 tests) 29986ms
+     ✓ decides and replays e^x  854ms
+     ✓ decides and replays e^{-x}  810ms
+     ✓ decides and replays \exp(x)  782ms
+     ✓ decides and replays \frac{1}{1+e^x}  2063ms
+     ✓ decides and replays \frac{1}{(1+e^x)^2}  3192ms
+     ✓ decides and replays \frac{e^x}{1+e^{2x}}  5592ms
+     ✓ decides and replays 2xe^{x^2}  942ms
+     ✓ decides and replays \frac{-e^{1/x}}{x^2}  1090ms
+     ✓ decides and replays e^{x+1}  796ms
+     ✓ decides and replays (e^{x/2})^2  890ms
+     ✓ proves non-elementarity of e^{x^2}  548ms
+     ✓ proves non-elementarity of \frac{e^x}{x}  694ms
+     ✓ proves non-elementarity of \frac{1}{e^x+x}  1060ms
+     ✓ compares complete arguments through a common exponential family  2244ms
+     ✓ cancels hidden independent-family factors, preserving their restrictions  688ms
+     ✓ treats differential e as a variable  339ms
+   ✓ preserves exact mixed/canceled source \frac{1}{x^2+1}+e^x  2484ms
+   ✓ preserves exact mixed/canceled source e^{x+1}+e^{2x+2}  972ms
+   ✓ preserves exact mixed/canceled source 900719925474099312345e^x  747ms
+   ✓ preserves exact mixed/canceled source e^{0.100000000000000005x}  689ms
+   ✓ preserves exact mixed/canceled source 0e^{1/x}  331ms
+   ✓ preserves exact mixed/canceled source \frac{e^x+e^{2x}+e^{x^2}+e^{x+x^2}+e^{x^3}+e^{x+x^3}}{e^x+e^{x^2}+e^{x^3}}  1890ms
+
+ Test Files  4 passed (4)
+      Tests  45 passed (45)
+   Start at  13:16:42
+   Duration  30.59s (transform 717ms, setup 0ms, import 1.44s, tests 39.68s, environment 0ms)

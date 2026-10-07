@@ -9,8 +9,8 @@ describe('New Integration presentation preserves verified authority', () => {
     expect(response.document.primary?.kind).toBe('rational-antiderivative');
     const p = readIntegrationPresentation(response.document)!;
     expect(p.compact).toBe('L_{1}+C'); expect(p.terms[0].argument).not.toContain('0');
-    expect(p.conditions).toHaveLength(1); expect(p.conditions[0].origins).toEqual(['Source exclusion', 'Input denominator', 'Log norm']);
-    expect(p.originals).toHaveLength(4); expect(p.originals.some(c => c.latex === '1\\ne0')).toBe(true);
+    expect(p.conditions).toHaveLength(1); expect(p.conditions[0].origins.map(o => o.split(' (')[0])).toEqual(['Source exclusion', 'Input denominator', 'Log norm']);
+    expect(p.originals).toHaveLength(7); expect(p.originals.some(c => c.latex === '1\\ne0')).toBe(true);
     expect(p.expanded()).toContain('\\sum_'); expect(p.expanded()).not.toMatch(/[LqG]_\{/);
     expect(p.copy()).toContain('x^{2}+1\\ne0'); expect(p.copy()).toContain('\\begin{aligned}');
     expect(JSON.stringify(response)).toBe(before);
@@ -19,10 +19,10 @@ describe('New Integration presentation preserves verified authority', () => {
     expect(JSON.stringify(response)).toBe(before);
   });
   it.each([String.raw`\int \frac{x}{x}\,dx`, String.raw`\int \frac{0}{x-1}\,dx`])('keeps source exclusions in ordinary results: %s', source => {
-    const response = run(source); expect(response.document.primary?.kind).toBe('math');
+    const response = run(source); expect(response.document.primary?.kind).toBe('rational-antiderivative');
     const p = readIntegrationPresentation(response.document)!;
     expect(p.terms).toHaveLength(0); expect(p.conditions).toHaveLength(1);
-    expect(p.copy()).toContain('\\ne0'); expect(p.originals).toHaveLength(3);
+    expect(p.copy()).toContain('\\ne0'); expect(p.originals.filter(c => c.origins.some(o => o.startsWith('Source exclusion'))).some(c => c.latex === (source.includes('{0}') ? 'x-1\\ne0' : 'x\\ne0'))).toBe(true);
     if (source.includes('{0}')) {expect(p.compact).toBe('C'); expect(p.conditions[0].latex).toBe('x-1\\ne0');}
   });
   it.each([

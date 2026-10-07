@@ -1,0 +1,10 @@
+
+Running 1 test using 1 worker
+
+(node:26445) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26445) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/new-integration-exponential.spec.ts:5:1 › New Integration exponential answers, all-roots views, restrictions and both negative decisions (10.9s)
+
+  1 passed (11.5s)

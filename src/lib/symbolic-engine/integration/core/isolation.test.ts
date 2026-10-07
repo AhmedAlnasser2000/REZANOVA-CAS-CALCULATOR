@@ -3,9 +3,9 @@ import { dirname, join, resolve, sep } from 'node:path';
 import ts from 'typescript';
 import { expect, it } from 'vitest';
 
-it('keeps the private kernel disconnected from production consumers and dependencies', () => {
+it('keeps private kernel dependencies and production callers inside the reviewed Integration adapters', () => {
   const src = resolve('src'), core = resolve('src/lib/symbolic-engine/integration/core');
-  const adapters = new Set(['exact-math.ts', 'result.ts', 'lowering.ts', 'service.ts'].map(p => resolve('src/lib/calculus/new-integration', p)));
+  const adapters = new Set(['exact-math.ts', 'result.ts', 'lowering.ts', 'service.ts', 'exponential-math.ts', 'exponential-result.ts', 'normalization-result.ts', 'exponential-lowering.ts', 'execution-input.ts', 'artifact.ts', 'correspondence.ts', 'source-target.ts'].map(p => resolve('src/lib/calculus/new-integration', p)));
   const violations: string[] = [];
   const options: ts.CompilerOptions = { moduleResolution: ts.ModuleResolutionKind.Bundler, module: ts.ModuleKind.ESNext };
   const cache = ts.createModuleResolutionCache(process.cwd(), x => x, options);

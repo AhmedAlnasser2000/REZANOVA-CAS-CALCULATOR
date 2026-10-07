@@ -20,7 +20,7 @@ const grouped = (s: string) => {
   return chunks.join('\\,');
 };
 
-export function presentIntegrationMath(value: SerializableMathJson, variables: readonly string[] = [], limits: MathJsonValidationLimits = {}): IntegrationMathPresentation {
+export function presentIntegrationMath(value: SerializableMathJson, variables: readonly string[] = [], limits: MathJsonValidationLimits = {}, bindings: ReadonlyMap<string, SerializableMathJson> = new Map()): IntegrationMathPresentation {
   const bounds = {maxNodes: Math.min(limits.maxNodes ?? CANONICAL_RESULT_MAX_NODES, CANONICAL_RESULT_MAX_NODES),
     maxDepth: Math.min(limits.maxDepth ?? CANONICAL_RESULT_MAX_DEPTH, CANONICAL_RESULT_MAX_DEPTH),
     maxBytes: Math.min(limits.maxBytes ?? CANONICAL_RESULT_MAX_BYTES, CANONICAL_RESULT_MAX_BYTES)};
@@ -38,9 +38,21 @@ export function presentIntegrationMath(value: SerializableMathJson, variables: r
     return p;
   };
   const wrap = (p: Part, min: number) => p.precedence < min ? `\\left(${p.body}\\right)` : p.body;
+  let visited = 0, depth = 0;
+  const boundParts = new Map<string, Part>();
   const walk = (v: SerializableMathJson): Part => {
+    if (++visited > bounds.maxNodes || ++depth > bounds.maxDepth) throw Error('Expanded presentation traversal limit');
+    try { return read(v); } finally { depth--; }
+  };
+  const read = (v: SerializableMathJson): Part => {
     if (typeof v === 'number') {if (!Number.isSafeInteger(v)) throw Error('Unsafe presentation number'); return constant(String(v));}
     if (typeof v === 'string') {
+      const binding = bindings.get(v);
+      if (binding !== undefined) {
+        let p = boundParts.get(v);
+        if (!p) {p = walk(['Exp', binding]); boundParts.set(v, p);}
+        return p;
+      }
       const index = variables.indexOf(v);
       return {tree: v, body: exactSymbolLatex(v), negative: false, precedence: 4, zero: false, one: false,
         nonzeroConstant: false, degrees: index < 0 ? null : variables.map((_, i) => i === index ? 1 : 0)};
@@ -51,6 +63,8 @@ export function presentIntegrationMath(value: SerializableMathJson, variables: r
     }
     const [head, ...args] = v;
     const a = args.map(walk);
+    if (head === 'Exp' && a.length === 1) return finish({tree: ['Exp', signedTree(a[0])], body: `e^{${signedText(a[0])}}`,
+      negative: false, precedence: 3, zero: false, one: false, nonzeroConstant: false, degrees: null});
     if (head === 'Negate' && a.length === 1) {
       const p = a[0];
       // Keep a negated sum grouped when it is subsequently joined to another sum.

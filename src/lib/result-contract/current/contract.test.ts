@@ -131,13 +131,13 @@ describe('current canonical result foundation', () => {
     const term = { rootVariable: 'a_1', modulus: m(['Add', ['Rational', 1, 4], ['Power', 'a_1', 2]]),
       weight: m('a_1'), argument: m(['Add', 'x', ['Multiply', 2, 'a_1']]), norm: m(['Add', 1, ['Power', 'x', 2]]) };
     const p = { kind: 'rational-antiderivative' as const, semantics: 'formal-local-complex' as const, variable: 'x', integrationConstant: 'C_1',
-      rationalPart: m(0), terms: [term], conditions: { sourceExclusions: [m('x')], inputDenominator: term.norm, rationalDenominator: m(1), logNorms: [term.norm] } };
+      rationalPart: m(0), terms: [term], restrictions: [restriction('x'), {...restriction(term.norm.mathJson), origins: [{category: 'log-norm' as const, path: 'log.0'}]}] };
     const d = buildCanonicalResultDocument(draft(p));
-    expect(collectCanonicalResultMathValues(d)).toHaveLength(9);
+    expect(collectCanonicalResultMathValues(d)).toHaveLength(7);
     for (const argument of [m(['Divide', 1, 'a_1']), m(['Power', 'a_1', 2]), m(['Divide', 'a_1', 'x'])]) {
       expect(validateCanonicalResultDocument({ ...d, primary: { ...p, terms: [{ ...term, argument }] } }).ok).toBe(false);
     }
-    expect(validateCanonicalResultDocument({ ...d, primary: { ...p, conditions: { ...p.conditions, logNorms: [m(1)] } } }).ok).toBe(false);
+    expect(validateCanonicalResultDocument({ ...d, primary: { ...p, restrictions: [{...restriction(1), origins: [{category: 'log-norm', path: 'log.0'}]}] } }).ok).toBe(false);
     expect(validateCanonicalResultDocument({ ...d, primary: { ...p, terms: [term, term] } }).ok).toBe(false);
   });
 

@@ -1,0 +1,11 @@
+
+ RUN  v4.0.18 /home/ahmed/Documents/Calculator
+
+ ✓ src/lib/symbolic-engine/integration/core/rational-function.test.ts (3 tests) 33ms
+ ✓ src/lib/symbolic-engine/integration/core/nested-arithmetic.test.ts (9 tests | 3 skipped) 782ms
+     ✓ agrees with ordinary field Euclid on seeded coefficients and checks a forged conversion  494ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed | 3 skipped (12)
+   Start at  13:14:47
+   Duration  1.13s (transform 305ms, setup 0ms, import 377ms, tests 816ms, environment 0ms)

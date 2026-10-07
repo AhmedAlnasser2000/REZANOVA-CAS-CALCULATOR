@@ -57,3 +57,18 @@ it('persists per-tab formula view without changing a running request or its revi
   expect(tabs.map(t => (t.surfaceState as {formulaView: string}).formulaView)).toEqual(['full', 'compact']);
   expect(restored.result.current.integration.views).toEqual({});
 });
+it('failed artifact verification preserves the current draft and prior result', async () => {
+  const h = hook(); act(() => h.result.current.integration.open()); const id = h.result.current.workspaces.activeInstanceId;
+  const draft = {...readIntegrationDraft(null), source: '\\int e^x\\,dx'};
+  act(() => h.result.current.integration.change(id, draft));
+  const prior: IntegrationResponse = {document: integrationError('Prior fixture'), request: draft, elapsedMs: 1, usage: {work: 1, allocation: 1}, checks: []};
+  vi.mocked(runIntegrationJob).mockResolvedValueOnce(prior);
+  await act(async () => h.result.current.integration.run(id));
+  const failed = {...prior, document: integrationError('saved integrand differs from current problem')};
+  vi.mocked(runIntegrationJob).mockResolvedValueOnce(failed);
+  await act(async () => h.result.current.integration.run(id, '{}', 'verify'));
+  expect(h.result.current.integration.views[id].response).toBe(prior);
+  expect(h.result.current.integration.views[id].notice).toContain('saved integrand differs');
+  expect(readIntegrationDraft(h.result.current.workspaces.activeInstance?.surfaceState)).toEqual(draft);
+  expect(h.result.current.workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-integration')).toHaveLength(1);
+});

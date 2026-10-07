@@ -26,6 +26,10 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
       field.insert(`\\int ${field.getValue(field.selection, 'latex')}\\,d\\placeholder{}`); changeSource(field.getValue('latex')); field.focus();
     } else {changeSource(`\\int ${draft.source || '\\placeholder{}'}\\,d\\placeholder{}`); field?.focus();}
   }
+  function copyAnswer() {
+    try {if (presentation) void writeTextClipboard(presentation.copy()).then(ok => setNotice(ok ? presentation.negative ? 'Conclusion copied.' : 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}
+    catch (e) {setNotice(e instanceof Error ? e.message : 'Copy is unavailable.');}
+  }
   function exportArtifact() {
     if (!result?.artifact) return;
     const url = URL.createObjectURL(new Blob([result.artifact], {type: 'application/json'}));
@@ -39,7 +43,7 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
   }
   const beginImport = (action: 'open' | 'verify') => {importAction.current = action; setNotice(''); file.current?.click();};
   return <main className="new-integration-page" data-testid="new-integration-page">
-    <header><div><h1>New Integration</h1><p>Exact rational integration · editable mathematical expressions</p></div><button onClick={runtime.open}>New tab</button></header>
+    <header><div><h1>New Integration</h1><p>Exact rational and exponential integration · editable mathematical expressions</p></div><button onClick={runtime.open}>New tab</button></header>
     <section className="ni-editor" aria-label="Integral expression">
       <MathEditor ref={editor} value={draft.source} onChange={changeSource} onSubmit={() => void runtime.run(instance.id)}
         onPasteCanonicalize={text => text} placeholder="Enter an integral with its differential" dataTestId="new-integration-editor" />
@@ -47,7 +51,7 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
         <button onClick={() => changeSource('\\int \\frac{1}{x^2+1}\\,dx')}>Example</button>
         <button className="ni-primary" onClick={() => void runtime.run(instance.id)}>{view.running ? 'Restart' : 'Integrate'}</button>
         <button disabled={!view.running} onClick={() => runtime.stop(instance.id)}>Stop</button></div>
-      <p>Currently executes one indefinite integral with rational coefficients. The differential selects the variable.</p>
+      <p>Executes one indefinite integral of a rational expression in the variable and one exponential family. The differential selects the variable.</p>
     </section>
     <details className="ni-panel"><summary>Advanced execution limits</summary><p>Work and cumulative allocation count execution activity; they do not measure free RAM. Limits must be finite integers.</p>
       <div className="ni-limits">{(['work', 'allocation', 'integerBits', 'degree'] as const).map(key => <label key={key}>{({work: 'Work', allocation: 'Cumulative allocation', integerBits: 'Integer bits', degree: 'Polynomial degree'} satisfies Record<keyof IntegrationLimits, string>)[key]}
@@ -63,22 +67,25 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
       {result?.request.source !== draft.source && <p>Result for an earlier expression:</p>}
       {result?.request.source !== draft.source && <MathStatic className="ni-math" latex={result?.request.source} block normalizeDisplay={false} />}
       {doc.outcomeKind === 'error' ? <p role="alert">{doc.error}</p> : <>
-        <p>Verified · formal local complex primitive. Logarithm choices differ locally by constants.</p>
+        {presentation?.negative ? <p>{presentation.explanation}</p> : <p>Verified · formal local complex primitive. Logarithm choices differ locally by constants.</p>}
         {presentation && <div className="ni-formal-answer">
           <MathStatic className="ni-math" block normalizeDisplay={false} latex={latex} />
-          {presentation.terms.length > 0 && <>
+          {(presentation.terms.length > 0 || presentation.generatorDefinition) && <>
             <button aria-pressed={formulaView === 'full'} onClick={() => runtime.setFormulaView(instance.id, formulaView === 'full' ? 'compact' : 'full')}>
               {formulaView === 'full' ? 'Show compact formula' : 'Show full formula'}</button>
-            {formulaView === 'compact' && presentation.terms.map((t, i) => <div className="ni-term" key={i}>
+            {formulaView === 'compact' && presentation.generatorDefinition && <MathStatic className="ni-math" block normalizeDisplay={false} latex={presentation.generatorDefinition} />}
+            {(formulaView === 'compact' || presentation.expansionUnavailable()) && presentation.terms.map((t, i) => <div className="ni-term" key={i}>
               <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.definition} />
               <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.modulus} />
               <MathStatic className="ni-math" block normalizeDisplay={false} latex={t.argument} />
             </div>)}
-            <p>Every distinct root is included once. No root ordering or principal logarithm is selected.</p>
+            {presentation.terms.length > 0 && <p>Every distinct root is included once. No root ordering or principal logarithm is selected.</p>}
           </>}
+          {presentation.expansionUnavailable() && <><p role="status">{presentation.expansionUnavailable()}</p><MathStatic className="ni-math" block normalizeDisplay={false} latex={presentation.fallbackDefinition} /></>}
         </div>}
-        <div className="ni-actions"><button onClick={() => {if (presentation) void writeTextClipboard(presentation.copy()).then(ok => setNotice(ok ? 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}}>Copy LaTeX</button>
+        <div className="ni-actions"><button onClick={copyAnswer}>{presentation?.negative ? 'Copy conclusion' : 'Copy LaTeX'}</button>
           <button disabled={!result?.artifact} onClick={exportArtifact}>Export derivation</button></div>
+        {result?.exportUnavailable && <p role="status">{result.exportUnavailable}</p>}
         <details><summary>Conditions</summary>
           {presentation?.conditions.length === 0 && <p>No nontrivial restrictions.</p>}
           {presentation?.conditions.map((c, i) => <div className="ni-condition" key={i}><span>{c.origins.map((origin, j) => <Fragment key={origin}>{j > 0 && ' · '}<span>{origin}</span></Fragment>)}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}

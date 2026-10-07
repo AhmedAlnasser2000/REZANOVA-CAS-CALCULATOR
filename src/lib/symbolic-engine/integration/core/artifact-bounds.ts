@@ -11,11 +11,23 @@ export function checkArtifactBounds(ctx: ExecutionContext, bounds: ExactArtifact
   }
 }
 
+/** Export size is optional transport availability, never arithmetic exhaustion. */
+export class ArtifactExportTooLarge extends Error {}
+const exportScopes = new WeakSet<ExecutionContext>();
+export function optionalArtifactExport<T>(ctx: ExecutionContext, run: () => T): T {
+  demand(!exportScopes.has(ctx), 'invalid-input', 'nested optional artifact export');
+  ctx.allocate(2); exportScopes.add(ctx);
+  try { return run(); } finally { exportScopes.delete(ctx); }
+}
+
 /** Strict, bounded data traversal before reading any untrusted properties. */
 export function inspectExactArtifact(ctx: ExecutionContext, bounds: ExactArtifactBounds, value: unknown): number {
   let nodes = 0, bytes = 0;
   const active = new Set<object>();
-  const charge = (n: number) => { bytes += n; if (bytes > bounds.artifactBytes) ctx.exhaust('differential-artifact-bytes'); };
+  const charge = (n: number) => { bytes += n; if (bytes > bounds.artifactBytes) {
+    if (exportScopes.has(ctx)) throw new ArtifactExportTooLarge('Derivation export exceeds 16 MiB. The verified answer remains available.');
+    ctx.exhaust('differential-artifact-bytes');
+  } };
   const string = (s: string) => {
     charge(2);
     for (let i = 0; i < s.length; i++) {

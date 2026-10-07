@@ -44,7 +44,7 @@ export async function runIntegrationJob(suppliedJob: IntegrationJob, workspace: 
           const response = event.data;
           const validation = validateCanonicalResultDocument(response.document);
           if (!validation.ok) finish(undefined, new Error(validation.failure.message));
-          else if (validation.validated.value.primary && !['math', 'rational-antiderivative'].includes(validation.validated.value.primary.kind)) finish(undefined, new Error('Unsupported Integration answer kind.'));
+          else if (validation.validated.value.primary && !['rational-antiderivative', 'exponential-antiderivative', 'non-elementary'].includes(validation.validated.value.primary.kind)) finish(undefined, new Error('Unsupported Integration answer kind.'));
           else finish({...response, document: validation.validated.value});
           } catch {finish(undefined, new Error('Invalid integration worker response.'));}
         };

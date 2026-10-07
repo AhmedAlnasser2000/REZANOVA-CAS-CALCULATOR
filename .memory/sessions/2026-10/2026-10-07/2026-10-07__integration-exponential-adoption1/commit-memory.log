@@ -1,0 +1,37 @@
+
+> calcwiz-desktop@0.3.0 test:memory-protocol
+> node --test tools/validate-memory-protocol.test.mjs && node tools/validate-memory-protocol.mjs
+
+✔ validator passes on a minimal compliant repo (10.173452ms)
+✔ validator passes when prospective artifacts include valid agent families (8.250335ms)
+✔ validator fails when a prospective session omits a required family field (6.049845ms)
+✔ validator accepts user-approved Astra attribution across prospective artifacts (2.017389ms)
+✔ validator accepts user-approved Opus 5.5 attribution across prospective artifacts (2.467778ms)
+✔ validator accepts user-approved Sonnet 5.5 attribution across prospective artifacts (2.463863ms)
+✔ validator fails when a prospective current state omits a required family field (2.094165ms)
+✔ validator fails when a prospective journal prefix omits agent family (2.409821ms)
+✔ validator rejects unknown prospective family values (2.210333ms)
+✔ validator fails when current-state.md exceeds the snapshot line cap (5.163196ms)
+✔ validator fails when current-state.md lacks a Last updated date (1.947608ms)
+✔ validator fails when current-state.md has a non-real Last updated date (5.523878ms)
+✔ validator fails when current-state.md is older than newest durable memory day (6.56929ms)
+✔ validator fails when current-state.md contains a milestone-id heading (1.5967ms)
+✔ validator fails when a session attribution field is missing (3.622837ms)
+✔ validator fails on a malformed historical journal header (1.74773ms)
+✔ validator fails on a deprecated flat session layout (1.309367ms)
+✔ validator fails on a deprecated flat journal layout (2.044902ms)
+✔ validator fails when a journal month has no session dossiers (1.492241ms)
+✔ validator fails on a root-level research artifact (3.32039ms)
+✔ validator fails on an unknown research category (4.468214ms)
+✔ validator fails on a flat research checklist (2.261475ms)
+✔ validator fails on a month-level research checklist (1.386902ms)
+✔ validator fails when compatibility stubs do not defer to AGENTS (1.964528ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 118.384099
+memory protocol validation passed
