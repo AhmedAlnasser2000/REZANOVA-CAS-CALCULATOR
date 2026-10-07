@@ -212,8 +212,18 @@ function apply(ctx: ExecutionContext, fn: string, a: XRange, bits: number): XRan
  * interval (open ends where the interval excludes them).
  */
 export function rangeOf(store: ExpressionStore, f: ExprId, x: string, box: XRange, bits: number): XRange {
+  return rangeOverBox(store, f, new Map([[x, box]]), bits);
+}
+
+/** The range of `f` with every variable in its own interval of `box` (a variable outside `box` gives the whole line). */
+export function rangeOverBox(store: ExpressionStore, f: ExprId, box: ReadonlyMap<string, XRange>, bits: number): XRange {
+  return rangeNodes(store, [f], box, bits).get(f) as XRange;
+}
+
+/** The ranges of every node below `roots` over `box` (the forward pass of contraction reuses them). */
+export function rangeNodes(store: ExpressionStore, roots: readonly ExprId[], box: ReadonlyMap<string, XRange>, bits: number): Map<ExprId, XRange> {
   const ctx = store.ctx, done = new Map<ExprId, XRange>();
-  for (const n of store.postorder([f])) {
+  for (const n of store.postorder([...roots])) {
     ctx.tick();
     const node = store.node(n), get = (c: ExprId) => done.get(c) as XRange;
     const free = store.freeSymbols(n);
@@ -224,9 +234,9 @@ export function rangeOf(store: ExpressionStore, f: ExprId, x: string, box: XRang
       done.set(n, out);
       continue;
     }
-    if (free.some(s => s !== x)) { done.set(n, WHOLE); continue; }
+    if (free.some(s => !box.has(s))) { done.set(n, WHOLE); continue; }
     switch (node.kind) {
-      case 'symbol': out = box; break;
+      case 'symbol': out = box.get(node.name) as XRange; break;
       case 'add': out = node.args.map(get).reduce((a, b) => add(ctx, a, b, bits)); break;
       case 'mul': out = node.args.map(get).reduce((a, b) => mul(ctx, a, b, bits)); break;
       case 'pow': {
@@ -242,5 +252,8 @@ export function rangeOf(store: ExpressionStore, f: ExprId, x: string, box: XRang
     }
     done.set(n, out);
   }
-  return done.get(f) as XRange;
+  return done;
 }
+
+/** Interval operations on extended ranges, outward at `bits` (for contraction and the systems solver). */
+export const rangeOps = { add, mul, negate, inverse, powInt, root, apply, roundDown: down, roundUp: up };
