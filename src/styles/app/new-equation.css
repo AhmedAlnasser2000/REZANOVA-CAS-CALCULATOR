@@ -62,3 +62,5 @@
   .new-equation-page header {align-items: flex-start;}
   .ne-row {grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 6px;}
 }
+.ne-badge {display: inline-block; margin-inline-start: 8px; padding: 2px 9px; border: 1px solid #d9770699; border-radius: 999px; color: #f59e0b; font-size: .8rem; font-weight: 600; vertical-align: middle;}
+.ne-checking {margin: 8px 0 0; font-size: .92rem; opacity: .8;}

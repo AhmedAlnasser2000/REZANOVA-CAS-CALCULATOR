@@ -36,8 +36,9 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
   const check = checkRows(parsed, targets, draft.domain);
   const names = pickOrder(parsed.flatMap(r => (r.kind === 'relation' ? r.symbols : [])));
   const response = view.response;
-  const outdated = answerOutdated(draft, response, targets);
-  const notes = response && !outdated ? response.rowNotes : undefined;
+  const shownRun = view.preview ?? response;
+  const outdated = answerOutdated(draft, shownRun, targets);
+  const notes = shownRun && !outdated ? shownRun.rowNotes : undefined;
   const update = (patch: Partial<EquationDraft>) => runtime.change(instance.id, { ...draft, ...patch });
   const solve = () => void runtime.run(instance.id);
 
@@ -112,11 +113,12 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
     <div className="ne-actions ne-run">
       <button className="ne-primary" onClick={solve} disabled={!check.ready && !readings.reading}>{view.running ? 'Restart' : 'Solve'}</button>
       <button disabled={!view.running} onClick={() => runtime.stop(instance.id)}>Stop</button>
-      {view.running && <span role="status">Solving and verifying…</span>}
+      {view.running && !view.preview && <span role="status">Solving…</span>}
       {view.notice && <span role="status">{view.notice}</span>}
     </div>
 
-    {response && <NewEquationAnswer response={response} style={draft.style} outdated={outdated} onStyle={style => update({ style })} onSolve={solve} />}
+    {shownRun && <NewEquationAnswer response={response} preview={view.preview} unchecked={view.unchecked} withdrawn={view.withdrawn}
+      style={draft.style} outdated={outdated} onStyle={style => update({ style })} onSolve={solve} />}
 
     <details className="ne-panel ne-limits-panel">
       <summary>Advanced limits</summary>

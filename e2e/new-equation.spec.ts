@@ -12,10 +12,12 @@ const open = async (page: Page) => {
 };
 const row = (page: Page, i: number, latex: string) => setMathFieldLatex(page, latex, `new-equation-row-${i}`);
 const answer = (page: Page) => page.getByTestId('new-equation-answer');
+// A run is over once its answer is current and Stop is off again (the answer shows before it is checked).
 async function solve(page: Page) {
-  await page.getByTestId('new-equation-page').getByRole('button', { name: 'Solve', exact: true }).click();
+  const workspace = page.getByTestId('new-equation-page');
+  await workspace.getByRole('button', { name: 'Solve', exact: true }).click();
   await expect(answer(page)).toHaveAttribute('data-outdated', 'false', { timeout: 60000 });
-  await expect(page.getByText('Solving and verifying…')).toBeHidden({ timeout: 60000 });
+  await expect(workspace.getByRole('button', { name: 'Stop', exact: true })).toBeDisabled({ timeout: 60000 });
 }
 
 test('New Equation: answers, systems, assumptions, families, roots and styles', async ({ page }, testInfo) => {

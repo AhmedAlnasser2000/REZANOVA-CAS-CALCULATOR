@@ -4,7 +4,8 @@ import { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import { answerOutdated, resolvedTargets, useNewEquationRuntime } from './useNewEquationRuntime';
 import { blankEquationDraft, readEquationDraft } from './new-equation-drafts';
 import { equationFailure, runEquationJob } from '../../lib/new-equation/runtime';
-import type { EquationResponse } from '../../lib/new-equation/types';
+import type { EquationPreview, EquationResponse } from '../../lib/new-equation/types';
+import { executeEquation } from '../../lib/symbolic-engine/equation/service/service';
 import { parseRow } from '../../lib/new-equation/parse';
 
 vi.mock('../../lib/new-equation/runtime', async importOriginal => ({ ...await importOriginal<object>(), runEquationJob: vi.fn() }));
@@ -79,4 +80,30 @@ it('resolves unknowns automatically or from the chips', () => {
   const rows = [parseRow('ax+b=0')];
   expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'] }, rows)).toEqual(['x']);
   expect(resolvedTargets({ ...blankEquationDraft(), rows: ['ax+b=0'], targets: ['a'] }, rows)).toEqual(['a']);
+});
+
+it('shows the preview while checking, then the verified answer; withdraws a failed one; keeps a stopped one unchecked', async () => {
+  const request = { rows: ['x^2=4'], targets: ['x'], domain: 'real' as const, limits: blankEquationDraft().limits, digits: 8 };
+  const verified = executeEquation(request);
+  const snapshot = verified.presentations!.exact!;
+  const preview: EquationPreview = { request, presentations: { exact: snapshot, decimal: snapshot, both: snapshot }, rowNotes: verified.rowNotes, assumptionsComplete: true };
+  let deliver: (v: EquationResponse) => void = () => {}, signal: AbortSignal | undefined;
+  vi.mocked(runEquationJob).mockImplementation((_r, _w, _rev, _c, _o, s, _f, onPreview) => new Promise(resolve => { signal = s; deliver = resolve; onPreview?.(preview); }));
+  const h = hook();
+  act(() => h.result.current.equation.open());
+  const id = h.result.current.workspaces.activeInstanceId;
+  act(() => h.result.current.equation.change(id, { ...blankEquationDraft(), rows: ['x^2=4'] }));
+  const view = () => h.result.current.equation.views[id];
+  for (const ending of ['verified', 'failed', 'stopped'] as const) {
+    await act(async () => { void h.result.current.equation.run(id); });
+    expect(view()).toMatchObject({ preview, running: true, withdrawn: false });
+    if (ending === 'stopped') {
+      act(() => h.result.current.equation.stop(id));
+      expect(signal?.aborted).toBe(true);
+      expect(view()).toMatchObject({ preview, unchecked: 'cancelled', running: false });
+      continue;
+    }
+    await act(async () => deliver(ending === 'verified' ? verified : equationFailure(request, 'Verification rejected the answer.')));
+    expect(view()).toMatchObject({ response: ending === 'verified' ? verified : { document: { error: 'Verification rejected the answer.' } }, preview: undefined, withdrawn: ending === 'failed' });
+  }
 });
