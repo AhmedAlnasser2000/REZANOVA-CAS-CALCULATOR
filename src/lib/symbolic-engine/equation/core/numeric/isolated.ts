@@ -27,16 +27,16 @@ const box = (p: Piece): XRange => ({ lo: p.lo, hi: p.hi, loOpen: false, hiOpen: 
 /** Kernel conditions of f in x: the argument and the open set it must stay in on the interval. */
 export type Need = { readonly arg: ExprId; readonly test: (r: XRange) => boolean | undefined; readonly at: (s: -1 | 0 | 1, v: ExprId) => boolean };
 
-/** The domain conditions of f's kernels in x (see the module comment). */
-export function domainNeeds(store: ExpressionStore, f: ExprId, x: string): Need[] {
-  const ctx = store.ctx, out: Need[] = [];
+/** The domain conditions of f's kernels in x, or in any of several variables (see the module comment). */
+export function domainNeeds(store: ExpressionStore, f: ExprId, x: string | readonly string[]): Need[] {
+  const ctx = store.ctx, out: Need[] = [], xs = typeof x === 'string' ? [x] : x;
   const positive = (r: XRange) => (r.lo !== undefined && (r.lo.numerator > 0n || (r.lo.numerator === 0n && r.loOpen)) ? true : r.hi !== undefined && r.hi.numerator <= 0n ? false : undefined);
   const nonzero = (r: XRange) => (excludesZero(r) ? true : undefined);
   const inside = (lo: Rational, hi: Rational) => (r: XRange) => (r.lo !== undefined && r.hi !== undefined && rCompare(ctx, r.lo, lo) > 0 && rCompare(ctx, r.hi, hi) < 0 ? true
     : (r.hi !== undefined && rCompare(ctx, r.hi, lo) <= 0) || (r.lo !== undefined && rCompare(ctx, r.lo, hi) >= 0) ? false : undefined);
   const e = minusInverseE(ctx, BITS);
   for (const n of store.postorder([f])) {
-    if (!store.freeSymbols(n).includes(x)) continue;
+    if (!store.freeSymbols(n).some(s => xs.includes(s))) continue;
     const node = store.node(n);
     if (node.kind === 'pow') {
       const q = store.numberValue(node.exponent);

@@ -9,11 +9,13 @@ import { decideLinear, isLinear } from './linear';
 import { decideEquation } from '../decide';
 import { decideByElimination } from './eliminate';
 import { decidePolynomialSystem } from './polynomial';
+import { systemRanges } from '../numeric/systems';
 
 /**
  * Decide a system: several target variables, over ℝ or ℂ, possibly with
  * parameters. Equations and ≠ conditions only (orders inside a system are
- * semialgebraic). Linear systems are decided by fraction-free Gauss–Jordan
+ * semialgebraic), except range rows on single targets in systems with kernels,
+ * which bound the certified numeric search (EQUATION-CERTIFIED-NUMERICS1 PR B). Linear systems are decided by fraction-free Gauss–Jordan
  * elimination with case splits on parameter pivots; the answer is a point, a
  * parametric set in the free targets, or ∅, per case.
  */
@@ -21,15 +23,20 @@ export function decideSystem(problem: RelationProblem): EquationOutcome {
   try {
     if (problem.targets.length < 2) return { kind: 'unsupported', reason: 'a system needs several targets' };
     if (problem.generators.length || problem.constraints.length) return { kind: 'incomplete-implementation', reason: 'generator and constraint tables belong to other slices' };
+    if (targetsInKernel(problem) && !problem.parameters.length) {
+      // Range rows (constant bounds on one target) bound a system with kernels; other inequalities are semialgebraic.
+      const { ranges, rows, other } = systemRanges(problem.store, problem.relations, problem.targets);
+      if (other.some(r => r.op !== 'ne') || problem.conditions.some(c => c.kind === 'positive' || c.kind === 'nonnegative')) {
+        return { kind: 'incomplete-implementation', reason: `${SEMIALGEBRAIC}: inequalities in a system` };
+      }
+      if (problem.conditions.length || other.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: conditions in a system with kernels (follow-up ledger)` };
+      const r = decideByElimination(problem, one => decideEquation(one), ranges, rows);
+      return r.kind === 'refused' ? { kind: 'incomplete-implementation', reason: r.reason } : caseOutcome(problem, r.cases);
+    }
     if (problem.relations.some(r => r.op !== 'eq' && r.op !== 'ne') || problem.conditions.some(c => c.kind === 'positive' || c.kind === 'nonnegative')) {
       return { kind: 'incomplete-implementation', reason: `${SEMIALGEBRAIC}: inequalities in a system` };
     }
-    if (targetsInKernel(problem)) {
-      if (problem.parameters.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: kernels of the targets with parameters in a system (follow-up ledger)` };
-      if (problem.conditions.length) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: conditions in a system with kernels (follow-up ledger)` };
-      const r = decideByElimination(problem, one => decideEquation(one));
-      return r.kind === 'refused' ? { kind: 'incomplete-implementation', reason: r.reason } : caseOutcome(problem, r.cases);
-    }
+    if (targetsInKernel(problem)) return { kind: 'incomplete-implementation', reason: `${OWNERS.systems}: kernels of the targets with parameters in a system (follow-up ledger)` };
     const atoms = parametricAtoms(problem);
     if ('owner' in atoms) return { kind: 'incomplete-implementation', reason: `${atoms.owner}: ${atoms.detail}` };
     const n = problem.targets.length;

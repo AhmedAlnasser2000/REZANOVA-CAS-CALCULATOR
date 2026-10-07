@@ -79,6 +79,30 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
   const roots: string[] = [];
   p.roots.forEach((b, i) => {
     const path = `$.primary.roots[${i}]`;
+    if (record(b) && b.kind === 'isolated-real-point') {
+      // A certified solution of a square system: one fresh symbol per coordinate, the system in them, a rational box.
+      if (!keys(b, ['kind', 'symbols', 'equations', 'box'])) return bad('Invalid isolated point keys.', path);
+      if (!names(b.symbols) || b.symbols.length < 2 || b.symbols.some(n => taken.has(n))) return bad('An isolated point needs fresh symbols, at least two.', `${path}.symbols`);
+      if (domain !== 'real') bad('Isolated points are real; the domain must be real.', path);
+      const own = new Set(b.symbols), n = b.symbols.length;
+      if (!Array.isArray(b.equations) || b.equations.length !== n) return bad('An isolated point needs as many equations as symbols.', `${path}.equations`);
+      b.equations.forEach((e, k) => math(e, own, `${path}.equations[${k}]`));
+      if (!b.symbols.every(s => (b.equations as CanonicalMathValue[]).some(e => mentions(e.mathJson, s)))) bad('Every symbol of an isolated point appears in its equations.', `${path}.equations`);
+      if (!Array.isArray(b.box) || b.box.length !== n) return bad('An isolated point needs one interval per symbol.', `${path}.box`);
+      const none = new Set<string>();
+      b.box.forEach((iv, k) => {
+        const at = `${path}.box[${k}]`;
+        if (!record(iv) || !keys(iv, ['lo', 'hi'])) return bad('Invalid box interval keys.', at);
+        for (const side of ['lo', 'hi']) {
+          math(iv[side], none, `${at}.${side}`);
+          if (!rationalConstant((iv[side] as CanonicalMathValue).mathJson)) bad('Box bounds must be rational constants.', `${at}.${side}`);
+        }
+        const lo = rationalValue((iv.lo as CanonicalMathValue).mathJson), hi = rationalValue((iv.hi as CanonicalMathValue).mathJson);
+        if (!lo || !hi || lo[0] * hi[1] >= hi[0] * lo[1]) bad('A box interval needs lo < hi.', at);
+      });
+      for (const s of b.symbols) { taken.add(s); roots.push(s); }
+      return;
+    }
     if (!record(b) || !symbol(b.symbol) || taken.has(b.symbol)) return bad('A root binder needs a fresh symbol.', path);
     taken.add(b.symbol);
     roots.push(b.symbol);

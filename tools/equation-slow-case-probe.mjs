@@ -31,6 +31,15 @@ export const DEFAULT_CASES = [
   { rows: ['e^x+\\sin x=0', '-10\\le x\\le0'], domain: 'real' },
   { rows: ['e^x+\\sin x>0', 'x\\ge-10'], domain: 'real' },
   { rows: ['e^x+\\sin x=0'], domain: 'real' },
+  // Systems eliminated to one certified root (PR B, B0: verification used to refine forever).
+  { rows: ['y=\\sin x', 'x+e^y=2'], domain: 'real' },
+  // Certified square systems (PR B): range rows, none needed, three unknowns, unbounded, a tangent solution.
+  { rows: ['e^x+\\sin y=1', 'e^y-\\sin x=1', '-5\\le x\\le1', '-5\\le y\\le1'], domain: 'real' },
+  { rows: ['\\sin(x+y)=x', '\\cos(x-y)=y'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2=3', 'e^x-yz=1', '\\sin y+xz=\\frac{1}{2}'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2=3', 'e^x-yz=1', '\\sin y+xz=0'], domain: 'real' },
+  { rows: ['e^x+\\sin y=1', 'e^y+\\sin x=1'], domain: 'real' },
+  { rows: ['e^x+\\sin y=1', 'e^y+\\sin x=1', '-1\\le x\\le1', '-1\\le y\\le1'], domain: 'real' },
 ];
 
 /** Run one case; resolves with its phases, and `killed` naming the phase that was running at 60 s. */

@@ -37,6 +37,10 @@ export interface EquationPresentation {
 interface P { latex: string; text: string }
 const ORDINAL = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 const escapeText = (s: string) => s.replace(/[\\{}$&#^_%~]/g, c => `\\${c === '\\' ? 'textbackslash' : c}${c === '\\' ? '{}' : ''}`);
+type PointBinder = Extract<CanonicalEquationRootBinder, { kind: 'isolated-real-point' }>;
+type SingleBinder = Exclude<CanonicalEquationRootBinder, { kind: 'isolated-real-point' }>;
+/** The symbols a binder declares: one per coordinate for a certified system solution. */
+const binderSymbols = (b: CanonicalEquationRootBinder): string[] => (b.kind === 'isolated-real-point' ? b.symbols : [b.symbol]);
 const textRow = (role: PresentationRole, depth: number, text: string): PresentationRow => ({ role, depth, latex: `\\text{${escapeText(text)}}`, text });
 const RELATION_LATEX: Readonly<Record<'eq' | 'ne' | 'lt' | 'le', string>> = { eq: '=', ne: '\\ne', lt: '<', le: '\\le' };
 const STOPS: Readonly<Record<string, string>> = {
@@ -51,6 +55,7 @@ class Layout {
   readonly rows: PresentationRow[] = [];
   readonly used = new Set<string>();
   readonly #binder = new Map<string, CanonicalEquationRootBinder>();
+  readonly #pointsDefined = new Set<PointBinder>();
   readonly #domain: 'real' | 'complex';
   readonly #targets: string[];
   readonly #taken: Set<string>;
@@ -65,8 +70,8 @@ class Layout {
     this.#digits = settings.approxDigits;
     this.#domain = doc.primary.domain;
     this.#targets = doc.primary.targets;
-    this.#taken = new Set([...doc.primary.targets, ...doc.primary.parameters, ...doc.primary.roots.map(b => b.symbol)]);
-    for (const b of doc.primary.roots) this.#binder.set(b.symbol, b);
+    this.#taken = new Set([...doc.primary.targets, ...doc.primary.parameters, ...doc.primary.roots.flatMap(binderSymbols)]);
+    for (const b of doc.primary.roots) for (const s of binderSymbols(b)) this.#binder.set(s, b);
   }
 
   // ---- values ----
@@ -248,12 +253,71 @@ class Layout {
     const approx = this.#style === 'decimal' || values.some(v => this.bareRoot(v) && !this.#copy);
     this.push('solution', depth, { latex: `${lhs.latex} ${approx ? '\\approx' : '='} \\left(${parts.map(p => p.latex).join(', ')}\\right)${suffix.latex}`,
       text: `${lhs.text} ${approx ? '≈' : '='} (${parts.map(p => p.text).join(', ')})${suffix.text}` });
-    if (!this.#copy) values.forEach((v, i) => { if (this.bareRoot(v) && this.#decimal(v)) this.inlineDefinition(depth + 1, v.mathJson as string, this.#targets[i], true); });
+    if (this.#copy) return;
+    const points = new Set<PointBinder>();
+    values.forEach((v, i) => {
+      if (!this.bareRoot(v) || !this.#decimal(v)) return;
+      const b = this.#binder.get(v.mathJson as string) as CanonicalEquationRootBinder;
+      if (b.kind !== 'isolated-real-point') { this.inlineDefinition(depth + 1, v.mathJson as string, this.#targets[i], true); return; }
+      if (points.has(b)) return;
+      // One row for a certified system solution, its symbols named by the targets they stand for here.
+      points.add(b);
+      const names = new Map(values.flatMap((w, k) => (typeof w.mathJson === 'string' && b.symbols.includes(w.mathJson) ? [[w.mathJson, this.#targets[k]] as const] : [])));
+      this.push('definition', depth + 1, this.describePoint(b, names));
+      if (names.size === b.symbols.length) this.#pointsDefined.add(b);
+    });
+  }
+
+  /** "the solution of eˣ + sin y − 1 = 0, … with a ≤ x ≤ b, …": a certified system solution, its symbols renamed. */
+  describePoint(b: PointBinder, names: ReadonlyMap<string, string>): P {
+    const rename = (j: SerializableMathJson): SerializableMathJson => (typeof j === 'string' && names.has(j) ? names.get(j) as string : Array.isArray(j) ? (j.map(x => rename(x as SerializableMathJson)) as unknown as SerializableMathJson) : j);
+    const eqs = b.equations.map(e => this.#equation(rename(e.mathJson)) ?? { latex: `${e.canonicalLatex} = 0`, text: `${e.canonicalLatex} = 0` });
+    const bounds = b.box.map((iv, i) => {
+      const name = names.get(b.symbols[i]) ?? b.symbols[i], v = printEquationMath(name) ?? { latex: name, text: name };
+      const lo = this.exact(iv.lo), hi = this.exact(iv.hi);
+      return { latex: `${lo.latex} \\le ${v.latex} \\le ${hi.latex}`, text: `${lo.text} ≤ ${v.text} ≤ ${hi.text}` };
+    });
+    return {
+      latex: `\\text{the solution of } ${eqs.map(e => e.latex).join(',\\ ')}\\text{ with } ${bounds.map(x => x.latex).join(',\\ ')}`,
+      text: `the solution of ${eqs.map(e => e.text).join(', ')} with ${bounds.map(x => x.text).join(', ')}`,
+    };
+  }
+
+  /**
+   * E = 0 read as a relation: E in the core's canonical term order (the same for every binder, whatever its
+   * symbols), its constant term moved right, and the side with fewer negative terms kept, a positive constant on a tie
+   * (1 − eʸ + sin x = 0 reads eʸ − sin x = 1); without a constant, negative terms move right. Ring identities only.
+   */
+  #equation(json: SerializableMathJson): P | undefined {
+    const store = this.#core?.store;
+    if (!store) return undefined;
+    const r = readExpression(store, json);
+    if (r.kind !== 'ok') return undefined;
+    const e = r.value, node = store.node(e);
+    const constant = node.kind === 'add' ? node.args.find(a => store.numberValue(a)) : undefined;
+    let lhs = constant === undefined ? e : store.sub(e, constant), rhs = constant === undefined ? store.integer(0) : store.neg(constant);
+    const terms = (() => { const n = store.node(lhs); return n.kind === 'add' ? n.args : [lhs]; })();
+    const isNegative = (t: ExprId) => { const n = store.node(t); return n.kind === 'mul' && (store.numberValue(n.args[0])?.numerator ?? 1n) < 0n; };
+    const negatives = terms.filter(isNegative), positives = terms.filter(t => !isNegative(t));
+    if (constant === undefined && negatives.length && positives.length) {
+      // No constant: the negative terms move right (y − cos(x − y) = 0 reads y = cos(x − y)).
+      lhs = store.add(...positives); rhs = store.neg(store.add(...negatives));
+    } else if (2 * negatives.length > terms.length || (2 * negatives.length === terms.length && (store.numberValue(rhs)?.numerator ?? 0n) < 0n)) {
+      lhs = store.neg(lhs); rhs = store.neg(rhs);
+    }
+    const l = printEquationMath(writeExpression(store, lhs) as SerializableMathJson), g = printEquationMath(writeExpression(store, rhs) as SerializableMathJson);
+    return l && g ? { latex: `${l.latex} = ${g.latex}`, text: `${l.text} = ${g.text}` } : undefined;
   }
 
   /** "the 2nd smallest real root of x⁷ − 3x + 1 = 0" under a row that shows the root's decimal. */
   inlineDefinition(depth: number, symbol: string, variable: string, named: boolean): void {
-    const what = this.describe(this.#binder.get(symbol) as CanonicalEquationRootBinder, variable);
+    const b = this.#binder.get(symbol) as CanonicalEquationRootBinder;
+    if (b.kind === 'isolated-real-point') {
+      // One coordinate shown alone (a single target): the whole solution, this coordinate named by the target.
+      this.push('definition', depth, this.describePoint(b, new Map([[symbol, variable]])));
+      return;
+    }
+    const what = this.describe(b, variable);
     const name = printEquationMath(variable) ?? { latex: variable, text: variable };
     this.push('definition', depth, named ? { latex: `${name.latex}:\\ ${what.latex}`, text: `${name.text}: ${what.text}` } : what);
   }
@@ -380,7 +444,7 @@ class Layout {
   }
 
   /** Which root a binder is, in words, with its polynomial in `variable`. */
-  describe(b: CanonicalEquationRootBinder, variable: string): P {
+  describe(b: SingleBinder, variable: string): P {
     const rename = (j: SerializableMathJson): SerializableMathJson => (j === b.symbol ? variable : Array.isArray(j) ? (j.map(x => rename(x as SerializableMathJson)) as unknown as SerializableMathJson) : j);
     const main = b.kind === 'isolated-real-root' ? b.expression : b.polynomial;
     const poly = printEquationMath(rename(main.mathJson), { descendingIn: variable }) ?? { latex: main.canonicalLatex, text: main.canonicalLatex };
@@ -423,6 +487,17 @@ class Layout {
   }
 
   definition(b: CanonicalEquationRootBinder): void {
+    if (b.kind === 'isolated-real-point') {
+      // A certified system solution used inside other values: its symbols with decimals, then the definition.
+      if (this.#pointsDefined.has(b)) return;
+      this.#pointsDefined.add(b);
+      const names = b.symbols.map(s => printEquationMath(s) ?? { latex: s, text: s });
+      const ds = this.#copy ? [] : b.symbols.map(s => this.#decimal({ mathJson: s, canonicalLatex: '' }));
+      const approx = ds.length && ds.every(d => d) ? (() => { const t = ds.map(d => this.decimalText(d as Decimal)); return { latex: ` \\approx \\left(${t.map(x => x.latex).join(', ')}\\right)`, text: ` ≈ (${t.map(x => x.text).join(', ')})` }; })() : { latex: '', text: '' };
+      const what = this.describePoint(b, new Map());
+      this.push('definition', 1, { latex: `\\left(${names.map(x => x.latex).join(', ')}\\right)${approx.latex}:\\ ${what.latex}`, text: `(${names.map(x => x.text).join(', ')})${approx.text}: ${what.text}` });
+      return;
+    }
     const name = printEquationMath(b.symbol) ?? { latex: b.symbol, text: b.symbol };
     const d = this.#copy ? undefined : this.#decimal({ mathJson: b.symbol, canonicalLatex: '' });
     const approx = d ? (() => { const t = this.decimalText(d); return { latex: ` \\approx ${t.latex}`, text: ` ≈ ${t.text}` }; })() : { latex: '', text: '' };

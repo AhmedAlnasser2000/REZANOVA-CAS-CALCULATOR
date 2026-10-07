@@ -21,4 +21,12 @@
 - A4 (this commit): corpus, golden, probe, Playwright step, spec, roadmap, ledger and memory.
 - 65c0312 A4 pushed; the user opened PR #25.
 - a2be7a4: merge of main 674184e (memory conflicts kept both sides; print-hygiene baseline regenerated for two New Integration cases that main changed).
-- Next commit: roadmap "After this roadmap" section, PR B scope, memory.
+- 0a9b733: roadmap "After this roadmap" section, PR B scope, memory; PR #25 squash-merged as 3364e6b (identical tree).
+
+## PR B commits on `claude/confident-goodall-fbqe99` (restarted from main 327e221, force-with-lease)
+
+- fe9f409 B0: systems eliminated to one numeric root verify by identity.
+- 2b86cfc B1: ranges over boxes, HC4 contraction, interval algebra.
+- 414d97c B2: isolated points and the isolated-real-point binder.
+- 7edffff B3: certified square systems: solver, verifier, routing.
+- B4 (this commit): face-of-box fix, corpus, golden, probe, Playwright, spec, roadmap, ledger and memory. No PR opened yet.
