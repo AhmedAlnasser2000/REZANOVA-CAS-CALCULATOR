@@ -15,6 +15,7 @@ import { checkCofactors, groebner, isGroebner, reduce } from './groebner';
 import { systemPolys } from './polynomial';
 import { hermite, multiplication, quotient, rankSignature } from './zero-dim';
 import { verifyPointsInNumberField } from './verify-zero-dim';
+import { isolatedLeaves, quickNonzero, vanishesByIdentity } from '../numeric/identity';
 
 /**
  * Evidence for nonlinear systems and systems with kernels.
@@ -64,6 +65,11 @@ export function holdsAt(problem: RelationProblem, point: readonly ExprId[]): boo
     const id = store.substitute(e, env), v = evaluateExact(store, id, problem.domain);
     if (v.kind === 'exact') return v.value.kind === 'rational' && v.value.value.numerator === 0n;
     if (v.kind === 'undefined') return undefined;
+    // A value built from a certified isolated zero: zero only by identity in its variable, never by refinement.
+    if (isolatedLeaves(store, id).length) {
+      if (vanishesByIdentity(store, id)) return true;
+      return quickNonzero(store, id) ? false : fail('a value with a certified numeric root is not decided exactly');
+    }
     if (problem.domain === 'real') return realSign(store, id) === 0;
     const z = complexIsZero(store, id);
     return z === true ? true : z === false ? false : fail('a value has no zero test');

@@ -5,6 +5,7 @@ import { realSign } from '../representation/real-order';
 import { relationProblem, type RelationProblem } from '../representation/relation';
 import { finiteSet, normalizeSet, valueExpression, valueKey, type EquationOutcome, type Point, type PointValue, type SolutionSet } from '../representation/solution-set';
 import type { SystemResult } from './polynomial';
+import { distribute } from '../numeric/identity';
 
 /**
  * Systems with exp, log, trig or radicals of the targets, by elimination: an
@@ -34,7 +35,8 @@ export function decideByElimination(problem: RelationProblem, decideOne: (p: Rel
     if (!choice) return { kind: 'refused', reason: `${CERTIFIED_NUMERICS}: no target can be isolated exactly in a system with kernels` };
     const { index, v, value } = choice;
     eliminated.push({ v, value });
-    equations = equations.filter((_, i) => i !== index).map(e => store.substitute(e, new Map([[v, value]])));
+    // Numeric multiples are distributed after substituting, so −(y − z) leaves z isolable as a term of its own.
+    equations = equations.filter((_, i) => i !== index).map(e => distribute(store, store.substitute(e, new Map([[v, value]]))));
     for (const e of eliminated) if (e !== eliminated[eliminated.length - 1]) e.value = store.substitute(e.value, new Map([[v, value]]));
     targets = targets.filter(t => t !== v);
     equations = equations.filter(e => store.numberValue(e)?.numerator !== 0n);

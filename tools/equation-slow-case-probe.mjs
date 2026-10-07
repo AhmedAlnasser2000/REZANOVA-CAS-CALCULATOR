@@ -31,6 +31,8 @@ export const DEFAULT_CASES = [
   { rows: ['e^x+\\sin x=0', '-10\\le x\\le0'], domain: 'real' },
   { rows: ['e^x+\\sin x>0', 'x\\ge-10'], domain: 'real' },
   { rows: ['e^x+\\sin x=0'], domain: 'real' },
+  // Systems eliminated to one certified root (PR B, B0: verification used to refine forever).
+  { rows: ['y=\\sin x', 'x+e^y=2'], domain: 'real' },
 ];
 
 /** Run one case; resolves with its phases, and `killed` naming the phase that was running at 60 s. */
