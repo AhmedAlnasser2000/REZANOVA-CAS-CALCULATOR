@@ -119,6 +119,10 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Points whose coordinates are not exact algebraic numbers (closed forms with transcendental parts) still verify by exact substitution, which can be slow for high degrees | `NEW-EQUATION-RESPONSIVE1` | unassigned (systems) |
 | Non-real decimals and order fall back to exact real and imaginary parts (slow for high degrees) on a rounding tie, a real part that may be zero, or equal real parts of different numbers | `NEW-EQUATION-RESPONSIVE1` | unassigned (presentation) |
 | Positive-dimensional and parametric systems still verify by re-deriving at samples; their timing was not measured in this gate | `NEW-EQUATION-RESPONSIVE1` | unassigned (systems) |
+| MathLive keeps a phantom open fence after an unbalanced `\left(` is set programmatically: every later `setValue` (even `''`) ends in `\left(\right.`. Typing is unaffected (typing `(` inserts a balanced pair); select-all and delete clears it. Reproduced on a bare `math-field` outside the app | post-merge Playwright check, 2026-10-07 | unassigned (shared editor) |
+| Case conditions are not simplified: x²yc + x³ = axy shows "If ax − cx² = 0 and x³ = 0" where x = 0 says the same, and ax − cx² is not shown factored as x(a − cx) | user test case, 2026-10-07 | unassigned (presentation) |
+| "Some cases could not be checked against the assumptions" appears whenever case conditions couple several parameters, even when every kept case is in fact possible under the assumptions (x²yc + x³ = axy with a ≠ 0, a < 0 or a > 0). The answer is correct; the pruning just cannot decide coupled conditions yet | user test case, 2026-10-07 | `EQUATION-SEMIALGEBRAIC1` |
+| ~~A stray vertical scrollbar beside tall answer rows (fractions), from `overflow-x: auto` on the math row~~ (fixed 2026-10-07, `overflow-y: hidden`) | user test case, 2026-10-07 | `NEW-EQUATION-RESPONSIVE1` follow-up |
 
 ## Attribution
 
