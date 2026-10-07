@@ -1,6 +1,6 @@
 import { rational, rDivide, type Rational } from '../algebra/rational';
 import { enclose } from '../representation/enclosure';
-import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from '../representation/expression';
+import { ISOLATED_VARIABLE, pointVariable, type ExprId, type ExpressionStore } from '../representation/expression';
 import { replaceSubexpressions } from '../generators/lattice';
 
 /**
@@ -39,9 +39,9 @@ export function distribute(store: ExpressionStore, id: ExprId): ExprId {
   return out.get(id) as ExprId;
 }
 
-/** The isolated zeros inside an expression. */
+/** The isolated zeros and isolated-point coordinates inside an expression. */
 export function isolatedLeaves(store: ExpressionStore, id: ExprId): ExprId[] {
-  return store.postorder([id]).filter(n => store.node(n).kind === 'isolated');
+  return store.postorder([id]).filter(n => { const k = store.node(n).kind; return k === 'isolated' || k === 'isolated-point'; });
 }
 
 /** A sum's terms as (coefficient, rest) pairs. */
@@ -53,28 +53,51 @@ function terms(store: ExpressionStore, id: ExprId): { c: Rational; rest: ExprId 
   });
 }
 
-/** Whether a value containing exactly one isolated zero is exactly 0 by identity; undefined when no identity holds. */
-export function vanishesByIdentity(store: ExpressionStore, id: ExprId): true | undefined {
-  const leaves = isolatedLeaves(store, id);
-  if (leaves.length !== 1) return undefined;
-  const z = leaves[0], node = store.node(z) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated' }>;
-  const h = distribute(store, replaceSubexpressions(store, id, new Map([[z, store.symbol(ISOLATED_VARIABLE)]])));
-  if (store.numberValue(h)?.numerator === 0n) return true;
-  const f = distribute(store, node.expr), hs = terms(store, h);
+/** Whether h ≡ c·f for some nonzero number c (both already distributed). */
+function multipleOf(store: ExpressionStore, h: ExprId, f: ExprId): boolean {
+  const hs = terms(store, h);
   for (const t of terms(store, f)) {
     const match = hs.find(u => u.rest === t.rest);
     if (!match) continue;
     const c = store.number(rDivide(store.ctx, match.c, t.c));
-    return store.numberValue(distribute(store, store.sub(h, store.mul(c, f))))?.numerator === 0n ? true : undefined;
-  }
-  return undefined;
-}
-
-/** Whether a certified enclosure (at 64, then 256 bits) proves the value nonzero. */
-export function quickNonzero(store: ExpressionStore, id: ExprId): boolean {
-  for (const bits of [64, 256]) {
-    const b = enclose(store, id, bits);
-    if (b.kind === 'bounds' && (b.lo.numerator > 0n || b.hi.numerator < 0n)) return true;
+    return store.numberValue(distribute(store, store.sub(h, store.mul(c, f))))?.numerator === 0n;
   }
   return false;
+}
+
+/**
+ * Whether a value built from one isolated zero, or from the coordinates of one isolated point, is exactly 0 by
+ * identity: with the leaves replaced by their bound variables, it is identically 0 or a nonzero numeric multiple
+ * of the zero's expression (of one of the point's equations). Undefined when no identity holds.
+ */
+export function vanishesByIdentity(store: ExpressionStore, id: ExprId): true | undefined {
+  const leaves = isolatedLeaves(store, id);
+  if (leaves.length === 0) return undefined;
+  const first = store.node(leaves[0]);
+  let replaced: ExprId, defining: readonly ExprId[];
+  if (first.kind === 'isolated') {
+    if (leaves.length !== 1) return undefined;
+    replaced = replaceSubexpressions(store, id, new Map([[leaves[0], store.symbol(ISOLATED_VARIABLE)]]));
+    defining = [first.expr];
+  } else if (first.kind === 'isolated-point') {
+    // Every leaf a coordinate of the same point (same system and box).
+    const key = (m: Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated-point' }>) => `${m.system.join(',')}|${m.box.map(b => `${b.lo.numerator}/${b.lo.denominator}:${b.hi.numerator}/${b.hi.denominator}`).join(',')}`;
+    const same = (n: ExprId) => { const m = store.node(n); return m.kind === 'isolated-point' && key(m) === key(first); };
+    if (!leaves.every(same)) return undefined;
+    replaced = replaceSubexpressions(store, id, new Map(leaves.map(n => [n, store.symbol(pointVariable((store.node(n) as { index: number }).index))] as const)));
+    defining = first.system;
+  } else return undefined;
+  const h = distribute(store, replaced);
+  if (store.numberValue(h)?.numerator === 0n) return true;
+  return defining.some(f => multipleOf(store, h, distribute(store, f))) ? true : undefined;
+}
+
+/** The sign of a value proven by a certified enclosure (at 64, then 256 bits); undefined when neither excludes 0. */
+export function quickSign(store: ExpressionStore, id: ExprId): -1 | 1 | undefined {
+  for (const bits of [64, 256]) {
+    const b = enclose(store, id, bits);
+    if (b.kind === 'bounds' && b.lo.numerator > 0n) return 1;
+    if (b.kind === 'bounds' && b.hi.numerator < 0n) return -1;
+  }
+  return undefined;
 }
