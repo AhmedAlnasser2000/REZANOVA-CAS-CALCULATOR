@@ -251,6 +251,11 @@ export function writeExpression(store: ExpressionStore, id: ExprId): unknown {
         json = ['IsolatedRoot', writeExpression(store, node.expr), q(node.lo), q(node.hi)];
         break;
       }
+      case 'isolated-point': {
+        const q = (r: { numerator: bigint; denominator: bigint }) => (r.denominator === 1n ? integerJson(r.numerator) : ['Rational', integerJson(r.numerator), integerJson(r.denominator)]);
+        json = ['IsolatedPoint', ['List', ...node.system.map(e => writeExpression(store, e))], ['List', ...node.box.map(b => ['List', q(b.lo), q(b.hi)])], node.index];
+        break;
+      }
       case 'add': json = ['Add', ...node.args.map(get)]; break;
       case 'mul': json = ['Multiply', ...node.args.map(get)]; break;
       case 'pow': json = ['Power', get(node.base), get(node.exponent)]; break;

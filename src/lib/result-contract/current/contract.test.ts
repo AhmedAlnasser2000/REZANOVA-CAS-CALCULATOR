@@ -96,7 +96,8 @@ describe('current canonical result foundation', () => {
 
   it('preserves Equation failure distinctions and binding checks', () => {
     const d = structuredClone(equationFixtures.finite);
-    if (d.primary.roots[0]) d.primary.roots[0].symbol = 'x';
+    const first = d.primary.roots[0];
+    if (first && first.kind !== 'isolated-real-point') first.symbol = 'x';
     expect(validateCanonicalResultDocument(d).ok).toBe(false);
     for (const outcome of [{ kind: 'empty' }, { kind: 'undecided', reason: 'unknown' },
       { kind: 'incomplete', owner: 'unassigned', reason: 'pending' }, { kind: 'unsupported', reason: 'outside class' }, { kind: 'stopped', stop: 'work' }] as const) {

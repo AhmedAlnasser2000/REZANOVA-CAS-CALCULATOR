@@ -211,7 +211,43 @@ function normalizeValue(store: ExpressionStore, v: PointValue, domain: Evaluatio
 
 function pointKey(store: ExpressionStore, p: Point): string { return p.map(v => valueKey(store, v)).join(';'); }
 
+/**
+ * The box of the certified isolated point a tuple's coordinates come from (EQUATION-CERTIFIED-NUMERICS1 PR B), or
+ * undefined for a tuple without one. Its coordinates may coincide with another solution's (two solutions can share
+ * an x), which refinement could never order, so such tuples are ordered by their boxes instead: disjoint boxes,
+ * compared corner by corner, give a total order.
+ */
+function pointSource(store: ExpressionStore, p: Point): readonly { lo: Rational; hi: Rational }[] | undefined {
+  for (const v of p) {
+    if (v.kind !== 'expression') continue;
+    const leaf = store.postorder([v.id]).find(n => store.node(n).kind === 'isolated-point');
+    if (leaf !== undefined) return (store.node(leaf) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated-point' }>).box;
+  }
+  return undefined;
+}
+
+function compareBoxes(store: ExpressionStore, a: readonly { lo: Rational; hi: Rational }[], b: readonly { lo: Rational; hi: Rational }[]): number {
+  for (let i = 0; i < a.length; i++) {
+    const c = rCompare(store.ctx, a[i].lo, b[i].lo) || rCompare(store.ctx, a[i].hi, b[i].hi);
+    if (c !== 0) return c;
+  }
+  return 0;
+}
+
+/** The order of tuples when either comes from a certified isolated point: exact ones first, then by box. */
+export function compareCertifiedPoints(store: ExpressionStore, a: Point, b: Point): number | undefined {
+  const sa = pointSource(store, a), sb = pointSource(store, b);
+  if (!sa && !sb) return undefined;
+  if (!sa || !sb) return sa ? 1 : -1;
+  const c = compareBoxes(store, sa, sb);
+  if (c !== 0) return c;
+  const ka = pointKey(store, a), kb = pointKey(store, b);
+  return ka < kb ? -1 : ka > kb ? 1 : 0;
+}
+
 function comparePoints(store: ExpressionStore, a: Point, b: Point): number {
+  const certified = compareCertifiedPoints(store, a, b);
+  if (certified !== undefined) return certified;
   for (let i = 0; i < a.length; i++) {
     const c = compareValues(store, a[i], b[i]);
     if (c !== 0) return c;

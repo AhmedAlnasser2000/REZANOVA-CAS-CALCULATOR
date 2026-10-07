@@ -45,6 +45,7 @@ const math = (mathJson: SerializableMathJson): CanonicalMathValue => ({ mathJson
 class Projector {
   readonly binders: CanonicalEquationRootBinder[] = [];
   readonly #byKey = new Map<string, string>();
+  readonly #points = new Map<string, string[]>();
   readonly #taken: Set<string>;
   readonly store: ExpressionStore;
   readonly problem: RelationProblem;
@@ -111,6 +112,23 @@ class Projector {
     return symbol;
   }
 
+  /**
+   * A coordinate of an isolated point (certified system solution) as the symbol of that coordinate in one
+   * binder per point: the system in the binder's own symbols and the rational box.
+   */
+  point(id: ExprId): string {
+    const n = this.store.node(id) as Extract<ReturnType<ExpressionStore['node']>, { kind: 'isolated-point' }>;
+    const key = `p:${n.system.map(e => this.store.digest(e)).join(',')}|${n.box.map(b => `${b.lo.numerator}/${b.lo.denominator}:${b.hi.numerator}/${b.hi.denominator}`).join(',')}`;
+    let symbols = this.#points.get(key);
+    if (!symbols) {
+      symbols = n.system.map(() => this.#fresh());
+      this.binders.push({ kind: 'isolated-real-point', symbols, equations: this.store.isolatedPointSystem(id, symbols).map(e => math(this.expr(e))),
+        box: n.box.map(b => ({ lo: math(rationalJson(b.lo)), hi: math(rationalJson(b.hi)) })) });
+      this.#points.set(key, symbols);
+    }
+    return symbols[n.index];
+  }
+
   /** An expression as restricted standard MathJSON (post-order over the shared graph). */
   expr(id: ExprId): SerializableMathJson {
     const out = new Map<ExprId, SerializableMathJson>();
@@ -123,6 +141,7 @@ class Projector {
         case 'constant': json = node.name === 'pi' ? 'Pi' : 'ImaginaryUnit'; break;
         case 'algebraic': json = this.algebraic(node.root); break;
         case 'isolated': json = this.isolated(n); break;
+        case 'isolated-point': json = this.point(n); break;
         case 'add': json = node.args.length === 1 ? get(node.args[0]) : ['Add', ...node.args.map(get)]; break;
         case 'mul': json = node.args.length === 1 ? get(node.args[0]) : ['Multiply', ...node.args.map(get)]; break;
         case 'pow': json = ['Power', get(node.base), get(node.exponent)]; break;

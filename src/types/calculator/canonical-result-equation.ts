@@ -51,6 +51,18 @@ export type CanonicalEquationRootBinder =
       expression: CanonicalEquationMath;
       lo: CanonicalEquationMath;
       hi: CanonicalEquationMath;
+    }
+  | {
+      kind: 'isolated-real-point';
+      /** One fresh symbol per coordinate, in the problem's target order; answers reference these. */
+      symbols: string[];
+      /**
+       * The unique real solution of the square system `equations` (each = 0, written in `symbols`) in `box`, where
+       * every equation is defined and continuously differentiable and the Krawczyk test proves exactly one
+       * solution (EQUATION-CERTIFIED-NUMERICS1 PR B).
+       */
+      equations: CanonicalEquationMath[];
+      box: Array<{ lo: CanonicalEquationMath; hi: CanonicalEquationMath }>;
     };
 
 export type CanonicalEquationCondition =

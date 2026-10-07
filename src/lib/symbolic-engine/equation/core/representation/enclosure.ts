@@ -481,6 +481,7 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
         break;
       }
       case 'isolated': box = isolatedBox(store, n, bits); break;
+      case 'isolated-point': box = refinePoint ? refinePoint(store, n, bits) : node.box[node.index]; break;
       case 'add': {
         const parts = node.args.map(get);
         box = { lo: down(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.lo), zero(ctx)), bits), hi: up(ctx, parts.reduce((s, p) => rAdd(ctx, s, p.hi), zero(ctx)), bits) };
@@ -496,6 +497,15 @@ export function enclose(store: ExpressionStore, id: ExprId, bits: number): Enclo
   const b = boxes.get(id) as Box;
   return { kind: 'bounds', lo: b.lo, hi: b.hi };
 }
+
+/**
+ * Refines a coordinate of an isolated point to width about 2^−bits. The Krawczyk operator needs derivative
+ * ranges (composition), so the systems solver installs it here rather than this layer importing it; points
+ * are only built by modules that import the solver (the solver itself, its verifier and result replay).
+ */
+export type PointRefiner = (store: ExpressionStore, id: ExprId, bits: number) => Bounds;
+let refinePoint: PointRefiner | undefined;
+export function setPointRefiner(refiner: PointRefiner): void { refinePoint = refiner; }
 
 /** Best isolating interval found so far per isolated zero (refinement is monotone, so keep the narrowest). */
 const ISOLATED = new WeakMap<ExpressionStore, Map<ExprId, Bounds>>();

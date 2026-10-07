@@ -460,6 +460,7 @@ export function evaluateExact(store: ExpressionStore, id: ExprId, domain: Evalua
             v = domain === 'real' && node.root.kind !== 'real' ? undefinedValue('non-real algebraic number') : normalizeValue(node.root);
             break;
           case 'isolated': v = notExact('transcendental', 'an isolated real zero'); break;
+          case 'isolated-point': v = notExact('transcendental', 'a coordinate of an isolated point'); break;
           case 'add': v = node.args.map(get).reduce((acc, x) => addValues(ctx, acc, x)); break;
           case 'mul': v = node.args.map(get).reduce((acc, x) => multiplyValues(ctx, acc, x)); break;
           case 'pow': v = power(ctx, get(node.base), get(node.exponent), domain); break;

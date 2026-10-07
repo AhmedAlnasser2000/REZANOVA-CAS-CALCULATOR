@@ -7,6 +7,7 @@ import type { Rational } from './core/algebra/rational';
 import { compareReal, type RealRootOf, type RootOf } from './core/algebraic/root-of';
 import { rationalForm } from './core/decision/rational-form';
 import { certifyIsolated } from './core/numeric/isolated';
+import { certifyPoint } from './core/numeric/krawczyk';
 import { sameSet } from './core/parameters/verify';
 import { asRoot } from './core/representation/evaluate';
 import type { ExprId, ExpressionStore } from './core/representation/expression';
@@ -40,7 +41,7 @@ function rationalOf(store: ExpressionStore, v: CanonicalMathValue): Rational {
 export interface RootBinders {
   readonly algebraic: ReadonlyMap<string, Extract<PointValue, { kind: 'algebraic' }>>;
   readonly indexed: ReadonlyMap<string, PointValue>;
-  /** Isolated real zeros (certified numerics), as core nodes; their certificates are re-checked on reading. */
+  /** Isolated real zeros and coordinates of isolated points (certified numerics), as core nodes; their certificates are re-checked on reading. */
   readonly isolated: ReadonlyMap<string, ExprId>;
   /** A math leaf as a core expression, with algebraic binders inlined (indexed roots are refused inside expressions). */
   readonly read: (v: CanonicalMathValue) => ExprId;
@@ -63,6 +64,13 @@ export function readRootBinders(store: ExpressionStore, doc: CanonicalEquationDo
     return env.size ? store.substitute(r.value, env) : r.value;
   };
   for (const b of p.roots) {
+    if (b.kind === 'isolated-real-point') {
+      // Certified system solutions: the Krawczyk certificate is re-proven before the coordinates are trusted.
+      const system = b.equations.map(read), box = b.box.map(iv => ({ lo: rationalOf(store, iv.lo), hi: rationalOf(store, iv.hi) }));
+      certifyPoint(store, system, b.symbols, box);
+      b.symbols.forEach((s, i) => isolated.set(s, store.isolatedPoint(system, b.symbols, box, i)));
+      continue;
+    }
     if (b.kind === 'isolated-real-root') {
       const f = read(b.expression), lo = rationalOf(store, b.lo), hi = rationalOf(store, b.hi);
       isolated.set(b.symbol, store.isolated(f, b.symbol, lo, hi, certifyIsolated(store, f, b.symbol, lo, hi)));
