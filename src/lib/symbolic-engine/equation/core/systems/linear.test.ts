@@ -91,7 +91,8 @@ group('routing', () => {
   it('names the owners of what this part does not decide', () => {
     const s = new ExpressionStore(context());
     expect(describe(s, setup(['And', eq(['Power', 'x', 2], 'a'), eq('x', 'y')]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: a nonlinear system with parameters/);
-    expect(describe(s, setup(['And', ['Less', 'x', 'y'], eq('x', 1)]).outcome)).toMatch(/incomplete-implementation: EQUATION-SEMIALGEBRAIC1/);
+    // Orders in a system without parameters are decided by cylindrical decomposition (EQUATION-SEMIALGEBRAIC1).
+    expect(describe(s, setup(['And', ['Less', 'x', 'y'], eq('x', 1)]).outcome)).toBe('x = 1 ∧ y ∈ (1, +inf)');
     expect(describe(s, setup(['And', eq(['Exp', 'x'], 'y'), eq('y', 'a')]).outcome)).toMatch(/incomplete-implementation: EQUATION-SYSTEMS1: kernels of the targets with parameters/);
   });
 });

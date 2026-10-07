@@ -8,7 +8,7 @@ import {
 } from './relation';
 import { minimalPolynomial } from './root-identity';
 import {
-  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type SolutionSet,
+  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type RegionCell, type SolutionSet,
 } from './solution-set';
 import { EQUIVALENCE_KINDS, OBLIGATIONS, type EquivalenceKind, type Obligation, type ProofLog, type TransformRecord } from './transform';
 
@@ -394,6 +394,14 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
     case 'unconfirmed': return { kind: 'unconfirmed', variables: [...set.variables], candidates: set.candidates.map(c => ({ point: point(c.point), derivations: [...c.derivations] })) };
+    case 'cylindrical': {
+      // A cell is [lo, hi, loClosed, hiClosed] or, with the next variable's cells, [lo, hi, loClosed, hiClosed, cells].
+      const cell = (c: RegionCell): Json => {
+        const head: Json[] = [encodeEndpoint(enc, c.lo), encodeEndpoint(enc, c.hi), c.loClosed, c.hiClosed];
+        return c.children ? [...head, c.children.map(cell)] : head;
+      };
+      return { kind: 'cylindrical', variables: [...set.variables], cells: set.cells.map(cell) };
+    }
   }
 }
 
@@ -443,6 +451,17 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
     }
     case 'root-set': { const r = record(value, ['kind', 'variables', 'poly']); return Object.freeze({ kind, variables: names(r.variables), poly: dec.id(r.poly) }); }
     case 'reduced-form': { const r = record(value, ['kind', 'problem']); return Object.freeze({ kind, problem: decodeProblemBody(dec, r.problem) }); }
+    case 'cylindrical': {
+      const r = record(value, ['kind', 'variables', 'cells']), variables = names(r.variables);
+      const cell = (x: Json, depth: number): RegionCell => {
+        const e = list(x);
+        if (e.length !== 4 && e.length !== 5) fail('cell arity');
+        if (e.length === 5 && depth >= variables.length) fail('cell depth');
+        const head = { lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) };
+        return Object.freeze(e.length === 5 ? { ...head, children: Object.freeze(list(e[4]).map(c => cell(c, depth + 1))) } : head);
+      };
+      return Object.freeze({ kind, variables, cells: Object.freeze(list(r.cells).map(c => cell(c, 1))) });
+    }
     case 'unconfirmed': {
       const r = record(value, ['kind', 'variables', 'candidates']);
       return Object.freeze({ kind, variables: names(r.variables), candidates: Object.freeze(list(r.candidates).map(c => { const o = record(c, ['point', 'derivations']); return Object.freeze({ point: point(o.point), derivations: names(o.derivations) }); })) });

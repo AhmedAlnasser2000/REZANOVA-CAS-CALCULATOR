@@ -83,9 +83,22 @@ export type SolutionSet =
   /** A proven-equivalent relation problem left unsolved. */
   | { readonly kind: 'reduced-form'; readonly problem: RelationProblem }
   /** Candidates whose verification could not be decided, each with the derivations that produced it. */
-  | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] };
+  | { readonly kind: 'unconfirmed'; readonly variables: readonly string[]; readonly candidates: readonly Candidate[] }
+  /**
+   * A region of ℝⁿ as nested cells (EQUATION-SEMIALGEBRAIC1), in the form of Mathematica's Reduce: the points whose
+   * first variable lies in one of `cells`, the second in one of that cell's children (whose ends are values in the
+   * first variable), and so on; a cell without children leaves the remaining variables free.
+   */
+  | { readonly kind: 'cylindrical'; readonly variables: readonly string[]; readonly cells: readonly RegionCell[] };
 
-export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'root-set', 'periodic', 'parametric', 'reduced-form', 'unconfirmed'] as const;
+/**
+ * A cell of a cylindrical region: an interval of its level's variable (a section is [v, v]) whose ends are values in
+ * the outer variables, and the cells of the next variable over it. Cells of one list are disjoint, ascending and
+ * non-empty over the whole parent cell.
+ */
+export interface RegionCell extends Interval { readonly children?: readonly RegionCell[] }
+
+export const SOLUTION_SET_KINDS = ['finite', 'intervals', 'cofinite', 'union', 'case-tree', 'periodic-set', 'interval-family', 'root-set', 'periodic', 'parametric', 'reduced-form', 'unconfirmed', 'cylindrical'] as const;
 
 const fail = (reason: string): never => demand(false, 'invalid-input', reason) as never;
 
@@ -385,6 +398,7 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
     }
     case 'reduced-form':
       return set;
+    case 'cylindrical': return normalizeRegion(store, set);
     case 'unconfirmed': {
       const merged = new Map<string, { point: Point; derivations: Set<string> }>();
       for (const c of set.candidates) {
@@ -429,8 +443,45 @@ export function setKey(store: ExpressionStore, set: SolutionSet): string {
     case 'parametric': return `parametric(${set.variables.join(',')};${set.freeParameters.join(',')}){${set.values.map(v => store.digest(v)).join('|')}}[${conds(set.constraints)}]`;
     case 'reduced-form': return `reduced{${set.problem.hash}}`;
     case 'unconfirmed': return `unconfirmed(${set.variables.join(',')}){${set.candidates.map(c => `${pointKey(store, c.point)}<${c.derivations.join(',')}>`).join('|')}}`;
+    case 'cylindrical': return `cylindrical(${set.variables.join(',')}){${regionKey(store, set.cells)}}`;
   }
 }
+
+/** Canonical text of a list of region cells. */
+export function regionKey(store: ExpressionStore, cells: readonly RegionCell[]): string {
+  return cells.map(c => `${c.loClosed ? '[' : '('}${endpointKey(store, c.lo)},${endpointKey(store, c.hi)}${c.hiClosed ? ']' : ')'}${c.children ? `{${regionKey(store, c.children)}}` : ''}`).join('|');
+}
+
+/**
+ * Validate a cylindrical region: at most one level per variable, non-empty cell lists, outward open infinite ends,
+ * constant first-level ends in ascending order. Ends in the outer variables keep the order the decomposition gave.
+ */
+function normalizeRegion(store: ExpressionStore, set: Extract<SolutionSet, { kind: 'cylindrical' }>): SolutionSet {
+  const vars = checkVariables(set.variables);
+  if (vars.length < 2) fail('a cylindrical region has several variables');
+  const cell = (c: RegionCell, depth: number): RegionCell => {
+    store.ctx.tick();
+    const end = (e: Endpoint) => (e.kind === 'infinity' || depth === 1 || !parametricValue(store, e) ? normalizeEndpoint(store, e) : normalizeValue(store, e, 'real'));
+    const lo = end(c.lo), hi = end(c.hi), loClosed = c.loClosed === true, hiClosed = c.hiClosed === true;
+    if ((lo.kind === 'infinity' && (lo.sign !== -1 || loClosed)) || (hi.kind === 'infinity' && (hi.sign !== 1 || hiClosed))) fail('infinite cell ends are open and outward');
+    if (depth === 1) {
+      const order = compareEndpoints(store, lo, hi);
+      if (order > 0 || (order === 0 && !(loClosed && hiClosed))) fail('empty or reversed cell');
+    }
+    if (c.children !== undefined && (depth >= vars.length || c.children.length === 0)) fail('cell children');
+    const children = c.children && Object.freeze(c.children.map(k => cell(k, depth + 1)));
+    return Object.freeze(children ? { lo, hi, loClosed, hiClosed, children } : { lo, hi, loClosed, hiClosed });
+  };
+  if (set.cells.length === 0) fail('an empty cylindrical region');
+  const cells = set.cells.map(c => cell(c, 1));
+  for (let i = 1; i < cells.length; i++) {
+    const c = compareEndpoints(store, cells[i - 1].hi, cells[i].lo);
+    if (c > 0 || (c === 0 && cells[i - 1].hiClosed && cells[i].loClosed)) fail('overlapping cells');
+  }
+  return Object.freeze({ kind: 'cylindrical', variables: vars, cells: Object.freeze(cells) });
+}
+
+const parametricValue = (store: ExpressionStore, v: PointValue) => v.kind === 'root' || (v.kind === 'expression' && store.freeSymbols(v.id).length > 0);
 
 // ---- intervals ----
 

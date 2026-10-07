@@ -22,6 +22,7 @@ const SENTENCES: Readonly<Record<Kind, string>> = {
   parametric: 'The parametrised solutions were substituted back into the original rows exactly.',
   'reduced-form': 'Each rewriting step was checked exactly to keep the same solutions.',
   unconfirmed: 'The candidates were checked exactly; they are shown as candidates.',
+  cylindrical: 'Every cell was checked exactly at a sample point, and a second decomposition in another variable order agrees.',
 };
 
 function kinds(s: CanonicalEquationSet, out: Set<Kind>): Set<Kind> {

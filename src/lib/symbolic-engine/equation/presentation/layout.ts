@@ -121,7 +121,11 @@ class Layout {
     if (!core) return undefined;
     const j = v.mathJson;
     if (typeof j === 'string' && core.binders.algebraic.has(j)) return core.binders.algebraic.get(j);
-    if (typeof j === 'string' && core.binders.indexed.has(j)) return core.binders.indexed.get(j);
+    if (typeof j === 'string' && core.binders.indexed.has(j)) {
+      // A root in a cylindrical cell's variable has no value of its own (it depends on the outer variables).
+      const targets = this.#doc.primary.targets;
+      return targets.length === 1 ? core.binders.indexed.get(j)?.(targets[0]) : undefined;
+    }
     try {
       const id = core.binders.read(v), n = core.store.node(id);
       return n.kind === 'number' ? { kind: 'rational', value: n.value } : { kind: 'expression', id };
