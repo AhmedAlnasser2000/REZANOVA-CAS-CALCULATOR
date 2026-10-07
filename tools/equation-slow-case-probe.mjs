@@ -24,6 +24,13 @@ export const DEFAULT_CASES = [
   { rows: ['x^5-x-1=0'], domain: 'complex' },
   { rows: ['\\sin x=\\frac{1}{2}'], domain: 'real' },
   { rows: ['x^2=a', 'a>0'], domain: 'real' },
+  // Certified numerics (EQUATION-CERTIFIED-NUMERICS1).
+  { rows: ['\\cos x=x'], domain: 'real' },
+  { rows: ['2^x+3^x=6'], domain: 'real' },
+  { rows: ['e^x+x^3=5'], domain: 'real' },
+  { rows: ['e^x+\\sin x=0', '-10\\le x\\le0'], domain: 'real' },
+  { rows: ['e^x+\\sin x>0', 'x\\ge-10'], domain: 'real' },
+  { rows: ['e^x+\\sin x=0'], domain: 'real' },
 ];
 
 /** Run one case; resolves with its phases, and `killed` naming the phase that was running at 60 s. */

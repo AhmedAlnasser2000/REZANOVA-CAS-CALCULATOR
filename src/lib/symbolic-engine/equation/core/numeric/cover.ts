@@ -122,8 +122,15 @@ function exclude(store: ExpressionStore, f: ExprId, x: string, a: End, b: End): 
     const l = valueAt(p.a, bits, -1), h = valueAt(p.b, bits, 1);
     if (l !== undefined && h !== undefined && rCompare(ctx, l, h) > 0) continue;
     const box: XRange = { ...(l !== undefined ? { lo: l } : {}), ...(h !== undefined ? { hi: h } : {}), loOpen: l === undefined, hiOpen: h === undefined };
-    if (needs.some(n => n.test(rangeOf(store, n.arg, x, box, bits)) === false)) continue; // undefined throughout
+    const defined = needs.map(n => n.test(rangeOf(store, n.arg, x, box, bits)));
+    if (defined.some(t => t === false)) continue; // undefined throughout
     if (excludesZero(rangeOf(store, f, x, box, bits))) continue;
+    // Continuous on the piece (every kernel inside its domain) with opposite exact signs at rational ends: a zero.
+    if (defined.every(t => t === true) && p.a.kind === 'q' && p.b.kind === 'q') {
+      const sa = realSign(store, store.substitute(f, new Map([[x, store.number(p.a.q)]])));
+      const sb = realSign(store, store.substitute(f, new Map([[x, store.number(p.b.q)]])));
+      if (sa !== 0 && sb !== 0 && sa !== sb) fail('an unclaimed zero');
+    }
     // Split: at the middle of a bounded piece, or outward on a tail.
     const one = rational(ctx, 1n);
     const m = l !== undefined && h !== undefined ? rDivide(ctx, rAdd(ctx, l, h), rational(ctx, 2n))

@@ -33,3 +33,17 @@
 ## Delivered
 
 - A1: the roadmap swap and memory.
+- A2: the `isolated` expression node (enclosure, exact order, wire, MathJSON) and the schema-7 `isolated-real-root` binder with validation, projection and replay.
+- A3: the finder returns certified isolated zeros, range rows bound the search, unsettled tails are refused naming the range row, the independent verifier (`core/numeric/cover.ts`), the definition row and "✓ Certified".
+- A4: 30-digit reference corpus and tamper tests, golden case `new-equation-certified-root`, print-hygiene baseline (52 cases, additions only), probe cases, Playwright (cos x = x; eˣ + sin x = 0 on −10 ≤ x ≤ 0), the spec `docs/architecture/equation/equation-certified-numerics1-spec.md`, roadmap and ledger.
+
+## Verification
+
+- Equation core, service, contract, golden and display tests pass; numeric corpus 14/14; New Equation UI tests and lint clean; typecheck clean.
+- Repository gates pass except printer-migration, which fails identically on main a36c555 (pre-existing).
+- Playwright `e2e/new-equation.spec.ts` on a preview build: 2 passed; screenshots sent to the user.
+- 60 s probe: every case 3.4–5.6 s including about 3.4 s of process start.
+
+## Remaining
+
+- PR B (square systems by Krawczyk) after PR A merges. Ledger rows added for tan in mixed expressions, definition-row layout, complex numerics, the cover's scope, the f′ = 0 exact-root cover skip, tangent roots and the systems classes PR B does not take.

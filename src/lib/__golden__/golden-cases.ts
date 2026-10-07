@@ -920,6 +920,15 @@ const allGoldenCases: GoldenCase[] = [
     expected: { kind: 'success', title: 'Equation', presentedText: 'Assuming a > 0\nx = √a\nx = -√a' },
   },
   {
+    // EQUATION-CERTIFIED-NUMERICS1: a root without a closed form, certified on its isolating interval.
+    id: 'new-equation-certified-root',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\cos x=x'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x ≈ 0.739085\n  the root of x - cos(x) = 0 between 1/2 and 3/4' },
+  },
+  {
     id: 'new-integration-polynomial',
     lane: 'new-integration',
     mode: 'new-integration',
@@ -935,7 +944,7 @@ const allGoldenCases: GoldenCase[] = [
   },
 ];
 
-/** Every golden case (51): print hygiene scans them all. */
+/** Every golden case (52): print hygiene scans them all. */
 export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
 
 /**
