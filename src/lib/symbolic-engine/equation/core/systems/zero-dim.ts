@@ -28,7 +28,7 @@ import { reduce, type Order, type Tracked } from './groebner';
  * - Each root τ of f is one solution; each coordinate is the unique root of
  *   the eliminant χ_{xᵥ} whose certified disk contains gᵥ(τ)/g₁(τ).
  */
-type Matrix = Rational[][];
+export type Matrix = Rational[][];
 
 export interface Quotient {
   readonly basis: readonly (readonly number[])[];
@@ -151,14 +151,14 @@ export function hermite(ctx: ExecutionContext, q: Quotient, vars: readonly Matri
   return mono.map(a => mono.map(b => traceProduct(ctx, a, b)));
 }
 
-function squareFreePart(ctx: ExecutionContext, f: Polynomial<Rational>): Polynomial<Rational> {
+export function squareFreePart(ctx: ExecutionContext, f: Polynomial<Rational>): Polynomial<Rational> {
   const g = gcdQ(ctx, QX, f, QX.derivative(ctx, f));
   const s = exactQuotient(ctx, QX, f, g);
   return QX.divideScalar(ctx, s, QX.leading(ctx, s));
 }
 
 /** All distinct roots (real only over ℝ) of a nonzero polynomial over ℚ. */
-function rootsOf(store: ExpressionStore, f: Polynomial<Rational>, domain: EvaluationDomain): ExactValue[] {
+export function rootsOf(store: ExpressionStore, f: Polynomial<Rational>, domain: EvaluationDomain): ExactValue[] {
   const out: ExactValue[] = [];
   if (QX.degree(store.ctx, f) <= 0) return out;
   for (const { factor } of factorQ(store.ctx, QX, f, ALGEBRAIC_RING).factors) {
@@ -176,14 +176,47 @@ function diskInverse(ctx: ExecutionContext, d: Disk): Disk | undefined {
   const n2 = rAdd(ctx, rMultiply(ctx, d.re, d.re), rMultiply(ctx, d.im, d.im));
   return { re: rDivide(ctx, d.re, n2), im: rDivide(ctx, rNegate(ctx, d.im), n2), r: rDivide(ctx, d.r, rMultiply(ctx, low, rSubtract(ctx, low, d.r))) };
 }
-function diskPoly(ctx: ExecutionContext, f: Polynomial<Rational>, z: Disk): Disk {
+export function diskPoly(ctx: ExecutionContext, f: Polynomial<Rational>, z: Disk): Disk {
   const c = f.coefficients, zero = rational(ctx, 0n);
   let acc: Disk = { re: c.length ? c[c.length - 1] : zero, im: zero, r: zero };
   for (let i = c.length - 2; i >= 0; i--) acc = diskAdd(ctx, diskMultiply(ctx, acc, z), { re: c[i], im: zero, r: zero });
   return acc;
 }
-function meets(ctx: ExecutionContext, a: Disk, b: Disk): boolean {
+export function meets(ctx: ExecutionContext, a: Disk, b: Disk): boolean {
   return !(rCompare(ctx, rAbs(ctx, rSubtract(ctx, a.re, b.re)), rAdd(ctx, a.r, b.r)) > 0 || rCompare(ctx, rAbs(ctx, rSubtract(ctx, a.im, b.im)), rAdd(ctx, a.r, b.r)) > 0);
+}
+
+/**
+ * The rational univariate representation for `rank` distinct solutions: a separating element t = Σ cᵥ·xᵥ (the
+ * first of cᵥ = aᵛ, a = 0, 1, … whose square-free characteristic polynomial f has degree `rank`), f, and
+ * g(q) = g_q, so that each coordinate is xᵥ = g(Mᵥ)(t)/g(undefined)(t) at the roots of f.
+ */
+export interface Univariate {
+  readonly f: Polynomial<Rational>;
+  readonly cs: readonly Rational[];
+  readonly g: (q: Matrix | undefined) => Polynomial<Rational>;
+}
+
+export function univariate(ctx: ExecutionContext, vars: readonly Matrix[], rank: number): Univariate {
+  let Mt: Matrix | undefined, f: Polynomial<Rational> | undefined, chosen: Rational[] = [];
+  for (let a = 0; !Mt; a++) {
+    ctx.tick();
+    const cs = vars.map((_, v) => rational(ctx, BigInt(a) ** BigInt(v)));
+    const M = linear(ctx, vars, cs), sf = squareFreePart(ctx, charpoly(ctx, M));
+    if (QX.degree(ctx, sf) === rank) { Mt = M; f = sf; chosen = cs; }
+  }
+  const Ft = f as Polynomial<Rational>, M = Mt as Matrix, N = rank;
+  // Traces Tr(q·tⁱ) for i < N via powers of M_t.
+  const powers: Matrix[] = [vars[0].map((row, i) => row.map((_, j) => rational(ctx, i === j ? 1n : 0n)))];
+  for (let i = 1; i < N; i++) powers.push(matMul(ctx, powers[i - 1], M));
+  const a = Ft.coefficients;
+  const g = (qm: Matrix | undefined): Polynomial<Rational> => {
+    const tr = powers.map(P => (qm ? traceProduct(ctx, qm, P) : trace(ctx, P)));
+    const out = Array.from({ length: N }, () => rational(ctx, 0n));
+    for (let i = 0; i < N; i++) for (let j = 0; j + i + 1 <= N; j++) out[j] = rAdd(ctx, out[j], rMultiply(ctx, tr[i], a[i + j + 1]));
+    return QX.make(ctx, out);
+  };
+  return { f: Ft, cs: chosen, g };
 }
 
 export interface ZeroDimResult { readonly points: readonly Point[]; readonly complexCount: number; readonly realCount: number }
@@ -198,25 +231,7 @@ export function zeroDimensionalPoints(store: ExpressionStore, q: Quotient, domai
   const { rank, positive, negative } = rankSignature(ctx, hermite(ctx, q, vars));
   const realCount = positive - negative;
   if (rank === 0 || (domain === 'real' && realCount === 0)) return { points: [], complexCount: rank, realCount };
-  // A separating element t = Σ c_v·x_v.
-  let Mt: Matrix | undefined, f: Polynomial<Rational> | undefined;
-  for (let a = 0; !Mt; a++) {
-    ctx.tick();
-    const cs = vars.map((_, v) => rational(ctx, BigInt(a) ** BigInt(v)));
-    const M = linear(ctx, vars, cs), g = squareFreePart(ctx, charpoly(ctx, M));
-    if (QX.degree(ctx, g) === rank) { Mt = M; f = g; }
-  }
-  const Ft = f as Polynomial<Rational>, M = Mt as Matrix, N = rank;
-  // Traces Tr(q·tⁱ) for i < N via powers of M_t.
-  const powers: Matrix[] = [vars[0].map((row, i) => row.map((_, j) => rational(ctx, i === j ? 1n : 0n)))];
-  for (let i = 1; i < N; i++) powers.push(matMul(ctx, powers[i - 1], M));
-  const a = Ft.coefficients;
-  const g = (qm: Matrix | undefined): Polynomial<Rational> => {
-    const tr = powers.map(P => (qm ? traceProduct(ctx, qm, P) : trace(ctx, P)));
-    const out = Array.from({ length: N }, () => rational(ctx, 0n));
-    for (let i = 0; i < N; i++) for (let j = 0; j + i + 1 <= N; j++) out[j] = rAdd(ctx, out[j], rMultiply(ctx, tr[i], a[i + j + 1]));
-    return QX.make(ctx, out);
-  };
+  const { f: Ft, g } = univariate(ctx, vars, rank);
   const g1 = g(undefined), gv = vars.slice(0, keep).map(m => g(m));
   const candidates = vars.slice(0, keep).map(m => rootsOf(store, squareFreePart(ctx, charpoly(ctx, m)), 'complex'));
   const points: Point[] = [];

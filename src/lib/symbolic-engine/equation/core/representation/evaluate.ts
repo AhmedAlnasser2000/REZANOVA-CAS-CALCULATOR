@@ -226,7 +226,8 @@ function power(ctx: ExecutionContext, b: ExactValue, e: ExactValue, domain: Eval
 
 // ---- angles: e^{iθ} exactly, for θ = Σ nⱼ·arcⱼ(cⱼ) + q·π with real algebraic cⱼ ----
 
-function conjugate(ctx: ExecutionContext, v: ExactValue): ExactValue {
+/** The complex conjugate (the conjugate root of the same polynomial). */
+export function conjugate(ctx: ExecutionContext, v: ExactValue): ExactValue {
   return v.kind === 'algebraic' && v.root.kind === 'complex' ? normalizeValue(Object.freeze({ ...v.root, im: rNegate(ctx, v.root.im) })) : v;
 }
 

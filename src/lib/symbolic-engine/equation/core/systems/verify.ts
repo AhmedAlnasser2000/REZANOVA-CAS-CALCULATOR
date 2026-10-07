@@ -48,11 +48,13 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
   if (!atoms.atoms.filter(a => a.op === 'eq').every(a => isLinear(a, n))) {
     const s = outcome.kind === 'solved' ? outcome.set : finiteSet(problem.targets, []);
     if (s.kind === 'finite') {
-      for (const p of s.points) if (!holdsAt(problem, p.map(v => valueExpression(store, v)))) fail('a point does not satisfy the system');
       s.points.forEach((p, i) => { for (const q of s.points.slice(0, i)) if (p.every((v, j) => compareValues(store, v, q[j]) === 0)) fail('a point is claimed twice'); });
       // Complete without re-derivation: distinct claimed solutions, as many as the Hermite count of the
-      // (certified) basis's solutions, are all of them.
-      return verifyPolynomialCertificate(problem, atoms.atoms, s);
+      // (certified) basis's solutions, are all of them. The points themselves are proven in one number field
+      // when their coordinates are algebraic numbers, otherwise by exact substitution.
+      if (verifyPolynomialCertificate(problem, atoms.atoms, s)) return;
+      for (const p of s.points) if (!holdsAt(problem, p.map(v => valueExpression(store, v)))) fail('a point does not satisfy the system');
+      return;
     }
     verifyInfiniteSamples(problem, s, p => (p.targets.length > 1 ? decideSystem(p) : decideEquation(p)));
     return rederive(problem, outcome);
