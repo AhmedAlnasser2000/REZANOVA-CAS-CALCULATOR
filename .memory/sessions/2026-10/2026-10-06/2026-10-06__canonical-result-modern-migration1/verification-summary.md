@@ -60,3 +60,8 @@
 - Prior real npm-dev Playwright evidence is retained. Final newline cleanup affects only six owned new files; it changes no mathematical behavior or artifact format.
 - Commit metadata is recorded in `commit-log.md`; the enclosing commit identifies this checkpoint. Do not start exponential projection/adoption during the requested stop.
 - Final selected-snapshot repository lint and build pass (39.58 s), with one pre-existing Graphing hooks warning. Selected source is independent of unfinished concurrent Graphing changes; final staged diff/memory/file-size checks pass.
+
+## Adoption planning clarification — 2026-10-06
+
+- User requested superscript e^{r(x)} rendering rather than exp(r); structured MathJSON and producer authority remain unchanged. Specification, decisions, journal and current state record this preference and the already approved export-only size exception.
+- Read-only source grounding confirms checked normalization precedes single-family classification; no production changes or adoption gate activation. This note does not claim visual verification of future exponential output.

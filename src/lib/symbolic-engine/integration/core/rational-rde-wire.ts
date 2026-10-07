@@ -4,7 +4,7 @@ import type { DifferentialField, DifferentialElement as E } from './differential
 import { decodeRational, encodeRational } from './exact-wire';
 import * as w from './decision-wire-algebra';
 import type { EvidenceCodec } from './decision-wire-algebra';
-import type { LinearSolution, RowOperation } from './linear-system';
+import { linearEvidenceCodec } from './linear-wire';
 import { rdeDomain, type RdeDomain } from './rde-algebra';
 import { verifyRationalRde, type RationalRdeDecision } from './rational-rde';
 
@@ -17,11 +17,6 @@ function bigint(ctx: ExecutionContext): EvidenceCodec<bigint> {
       const n = BigInt(v); ctx.integer(n); return n;
     },
   };
-}
-function kind(value: unknown): unknown {
-  demand(value !== null && typeof value === 'object', 'invalid-input', 'RDE evidence record');
-  const d = Object.getOwnPropertyDescriptor(value, 'kind');
-  demand(d !== undefined && 'value' in d, 'invalid-input', 'RDE evidence discriminator'); return d.value;
 }
 function codec(ctx: ExecutionContext, d: RdeDomain): EvidenceCodec<Omit<RationalRdeDecision, 'domain'>> {
   const q = d.owner.parent!;
@@ -45,24 +40,7 @@ function codec(ctx: ExecutionContext, d: RdeDomain): EvidenceCodec<Omit<Rational
   const resonance = w.structure(ctx, { leadingUnit: bezout, resultant: w.prsEvidence(ctx, mx, m), integers: rootEvidence, splits: w.list(ctx, bezout) });
   const derivative = w.structure(ctx, { input: element, derivative: element });
   const solution = w.structure(ctx, { particular: element, homogeneous: w.list(ctx, element), derivatives: w.list(ctx, derivative) });
-  const swap = w.structure(ctx, { kind: w.literal(ctx, 'swap'), target: w.integer(ctx), source: w.integer(ctx) });
-  const scale = w.structure(ctx, { kind: w.literal(ctx, 'scale'), target: w.integer(ctx), factor: scalar });
-  const add = w.structure(ctx, { kind: w.literal(ctx, 'add'), target: w.integer(ctx), source: w.integer(ctx), factor: scalar });
-  const operation: EvidenceCodec<RowOperation<E>> = {
-    encode(op) { return op.kind === 'swap' ? swap.encode(op) : op.kind === 'scale' ? scale.encode(op) : add.encode(op); },
-    decode(v) {
-      const k = kind(v); if (k === 'swap') return swap.decode(v); if (k === 'scale') return scale.decode(v);
-      demand(k === 'add', 'invalid-input', 'RDE row operation'); return add.decode(v);
-    },
-  };
-  const common = { operations: w.list(ctx, operation), reduced: w.list(ctx, w.list(ctx, scalar)), rank: w.integer(ctx), pivots: w.list(ctx, w.integer(ctx)) };
-  const consistent = w.structure(ctx, { ...common, kind: w.literal(ctx, 'consistent'), particular: w.list(ctx, scalar), nullspace: w.list(ctx, w.list(ctx, scalar)) });
-  const inconsistent = w.structure(ctx, { ...common, kind: w.literal(ctx, 'inconsistent'), witness: w.list(ctx, scalar) });
-  const linear: EvidenceCodec<LinearSolution<E>> = {
-    encode(v) { return v.kind === 'consistent' ? consistent.encode(v) : inconsistent.encode(v); },
-    decode(v) { const k = kind(v); if (k === 'consistent') return consistent.decode(v);
-      demand(k === 'inconsistent', 'invalid-input', 'RDE linear outcome'); return inconsistent.decode(v); },
-  };
+  const linear = linearEvidenceCodec(ctx, scalar);
   return w.structure(ctx, {
     kind: w.literal(ctx, 'solutions', 'no-rational-solution'), a: element, b: element,
     clearing: w.structure(ctx, { gcd: bezout, lcm: p, quotientA: p, quotientB: p, primitive: triple }),

@@ -104,8 +104,11 @@ extensions, nested exponentials, log input and symbolic parameters stay unsuppor
 
 One cumulative context covers lowering through exact projection. Preserve Stop,
 supersession, edit invalidation, stale replies, independent tabs, drafts and limits.
-Keep compact/full root-log views, direct exponential presentation, self-contained copy,
-conditions/provenance and verified-negative details. Current saved problems contain
+Keep compact/full root-log views, self-contained copy, conditions/provenance and
+verified-negative details. Render exponentials as superscript e^{r(x)} on screen and
+in copied LaTeX, not function-call exp(r) notation. Standard MathJSON Exp remains
+the structured mathematical representation; the integration printer derives this
+notation. Large expressions may use an explicit definition t = e^{r(x)}. Current saved problems contain
 request, normalization certificate and tagged decision; replay never regenerates the
 decision. Current-input comparison uses checked generator correspondence, including
 full exponents, and current source exclusions.

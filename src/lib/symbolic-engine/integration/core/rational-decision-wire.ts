@@ -3,11 +3,11 @@ import type { FormalPrimitive, FormalPrimitiveDomain, QRationalFunction } from '
 import { encodePrimitive, decodePrimitiveInDomain } from './primitive-wire';
 import { PolynomialRing } from './polynomial';
 import { SquareFreeQuotientAlgebra } from './quotient-algebra';
-import type { HermiteCertificate } from './hermite-reduction';
+import { hermiteEvidenceCodec } from './hermite-wire';
 import type { LrtCertificate, LrtComponent, LrtGroup, ResiduePartitionNode } from './lrt-reduction';
 import type { PrimitiveDerivativeCertificate } from './primitive-verification';
 import { verifyRationalDecisionWithin, type DecisionConditions, type RationalDecision } from './rational-decision-internal';
-import { array, record, structure, list, integer, optional, scalar, polynomial, fraction, division, bezout, squareFreeEvidence,
+import { array, record, structure, list, integer, optional, scalar, polynomial, fraction, division, squareFreeEvidence,
   prsEvidence, quotientElement, unitEvidence, type EvidenceCodec } from './decision-wire-algebra';
 
 export interface RationalDecisionWire {
@@ -22,12 +22,7 @@ function codecs(ctx: ExecutionContext, owner: FormalPrimitiveDomain) {
   const norm = prsEvidence(ctx, polynomial(ctx, owner.elimination, x), x);
   const conditions = structure(ctx, { rationalDenominator: x, logNorms: list(ctx, x) });
   const decisionConditions: EvidenceCodec<DecisionConditions> = structure(ctx, { inputDenominator: x, rationalDenominator: x, logNorms: list(ctx, x) });
-  const hermite: EvidenceCodec<HermiteCertificate> = structure(ctx, {
-    division: division(ctx, x), polynomialPrimitive: x, decomposition: squareFreeEvidence(ctx, x, q),
-    blocks: list(ctx, structure(ctx, { separation: bezout(ctx, x), numeratorDivision: division(ctx, x), derivativeBezout: bezout(ctx, x),
-      steps: list(ctx, structure(ctx, { exponent: integer(ctx, 2), primitiveNumerator: x, nextNumerator: x })) })),
-    rationalPart: f, residual: f,
-  });
+  const hermite = hermiteEvidenceCodec(ctx, owner);
   return { q, x, z, f, argumentsCodec, norm, conditions, decisionConditions, hermite };
 }
 function lrtCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain, primitive: FormalPrimitive): EvidenceCodec<LrtCertificate> {
