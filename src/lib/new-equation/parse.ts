@@ -1,7 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 
 /**
- * New Equation rows: one relation per row, read from the editor's LaTeX by Compute Engine in raw form (numbers
+ * New Equation rows: one relation per row (or relations combined with ∧, ∨, ¬, ∀ and ∃), read from the editor's LaTeX by Compute Engine in raw form (numbers
  * kept as exact decimal text). The MathJSON is then put in the shape the Equation core reads:
  * - implicit products become Multiply (2x, xy);
  * - e and i are the constants e and i (as on a calculator keypad);
@@ -12,7 +12,52 @@ export type RelationSign = 'eq' | 'ne' | 'order';
 export type ParsedRow =
   | { readonly kind: 'empty' }
   | { readonly kind: 'error'; readonly message: string }
-  | { readonly kind: 'relation'; readonly json: unknown; readonly symbols: readonly string[]; readonly signs: readonly RelationSign[] };
+  | {
+      readonly kind: 'relation'; readonly json: unknown; readonly symbols: readonly string[]; readonly signs: readonly RelationSign[];
+      /** The row combines relations with ∨, ¬, ∀ or ∃ (EQUATION-SEMIALGEBRAIC1); `symbols` are then its free names. */
+      readonly logic?: true;
+      /** Names bound by ∀ or ∃ in the row. */
+      readonly bound?: readonly string[];
+    };
+
+const LOGIC = new Set(['And', 'Or', 'Not', 'ForAll', 'Exists', 'Delimiter']);
+const NOT_HERE = new Set(['Or', 'Not', 'ForAll', 'Exists']);
+
+/**
+ * The relations of a row read as a formula: relations (and chains) under And, Or, Not, ForAll, Exists and
+ * parentheses. Returns the relation leaves and the bound names, or a row error when a logical symbol stands
+ * inside an expression (¬x < 1 reads as (¬x) < 1: ¬ needs a parenthesized relation).
+ */
+function logicLeaves(json: unknown): { leaves: unknown[]; bound: string[]; logic: boolean } {
+  const leaves: unknown[] = [], bound: string[] = [], pending: unknown[] = [json];
+  let logic = false;
+  while (pending.length) {
+    const v = pending.pop();
+    if (!Array.isArray(v) || typeof v[0] !== 'string') { leaves.push(v); continue; }
+    if (!LOGIC.has(v[0])) {
+      const inner: unknown[] = v.slice(1);
+      while (inner.length) {
+        const w = inner.pop();
+        if (Array.isArray(w)) {
+          if (typeof w[0] === 'string' && NOT_HERE.has(w[0])) throw new RowError('Put ¬ before a parenthesized relation, such as ¬(x < 1).');
+          inner.push(...w.slice(1));
+        }
+      }
+      leaves.push(v);
+      continue;
+    }
+    if (v[0] !== 'And' && v[0] !== 'Delimiter') logic = true;
+    if (v[0] === 'ForAll' || v[0] === 'Exists') {
+      const name = Array.isArray(v[1]) && v[1][0] === 'Element' ? v[1][1] : v[1];
+      if (typeof name !== 'string' || !SYMBOL.test(name)) throw new RowError('Write a quantifier as ∀x: … or ∃x: … with a variable name.');
+      bound.push(name);
+      pending.push(v[2]);
+      continue;
+    }
+    pending.push(...v.slice(1));
+  }
+  return { leaves, bound: [...new Set(bound)].sort(), logic };
+}
 
 const RELATIONS: Readonly<Record<string, RelationSign>> = {
   Equal: 'eq', NotEqual: 'ne', Less: 'order', LessEqual: 'order', Greater: 'order', GreaterEqual: 'order',
@@ -75,10 +120,11 @@ export function parseRow(latex: string): ParsedRow {
     const raw = ce().parse(latex, { form: 'raw', parseNumbers: 'decimal' }).toMathJson({ shorthands: [], fractionalDigits: 'max', prettify: false });
     const symbols = new Set<string>();
     const json = shape(raw, symbols);
-    const parts = Array.isArray(json) && json[0] === 'And' ? json.slice(1) : [json];
-    const signs = parts.map(p => (Array.isArray(p) && typeof p[0] === 'string' ? RELATIONS[p[0]] : undefined));
+    const { leaves, bound, logic } = logicLeaves(json);
+    const signs = leaves.map(p => (Array.isArray(p) && typeof p[0] === 'string' ? RELATIONS[p[0]] : undefined));
     if (signs.some(s => s === undefined)) return { kind: 'error', message: 'Add a relation sign: =, ≠, <, ≤, > or ≥.' };
-    return { kind: 'relation', json, symbols: [...symbols].sort(), signs: signs as RelationSign[] };
+    const free = [...symbols].filter(v => !bound.includes(v)).sort();
+    return logic ? { kind: 'relation', json, symbols: free, signs: signs as RelationSign[], logic: true, bound } : { kind: 'relation', json, symbols: free, signs: signs as RelationSign[] };
   } catch (e) {
     if (e instanceof RowError) return { kind: 'error', message: e.message };
     if (e instanceof RangeError) return { kind: 'error', message: 'This row is nested too deeply to read.' };
@@ -103,7 +149,7 @@ export function autoTargets(rows: readonly ParsedRow[]): string[] {
 
 /** A relation row whose names are all parameters (none of the unknowns) is an assumption. */
 export function isAssumption(row: ParsedRow, targets: readonly string[]): boolean {
-  return row.kind === 'relation' && row.symbols.length > 0 && row.symbols.every(s => !targets.includes(s));
+  return row.kind === 'relation' && !row.logic && row.symbols.length > 0 && row.symbols.every(s => !targets.includes(s));
 }
 
 export type RowCheck = { readonly kind: 'empty' | 'relation' | 'assumption' } | { readonly kind: 'error'; readonly message: string };
@@ -115,9 +161,17 @@ export type RowCheck = { readonly kind: 'empty' | 'relation' | 'assumption' } | 
 export function checkRows(rows: readonly ParsedRow[], targets: readonly string[], domain: 'real' | 'complex'): { rows: RowCheck[]; ready: boolean; orderOverComplex: boolean; missingTargets: string[] } {
   const used = new Set(rows.flatMap(r => (r.kind === 'relation' && !isAssumption(r, targets) ? r.symbols : [])));
   let orderOverComplex = false;
-  const out: RowCheck[] = rows.map(r => {
+  // A name quantified in one row is bound there: it cannot be an unknown, nor be used freely in another row.
+  const boundIn = new Map<string, number>();
+  rows.forEach((r, i) => { if (r.kind === 'relation') for (const b of r.bound ?? []) if (!boundIn.has(b)) boundIn.set(b, i); });
+  const out: RowCheck[] = rows.map((r, i) => {
     if (r.kind !== 'relation') return r;
     if (domain === 'complex' && r.signs.includes('order')) { orderOverComplex = true; return { kind: 'error', message: 'Inequalities need real numbers.' }; }
+    if (domain === 'complex' && r.bound?.length) return { kind: 'error', message: '∀ and ∃ need real numbers.' };
+    const asTarget = (r.bound ?? []).find(b => targets.includes(b));
+    if (asTarget) return { kind: 'error', message: `${asTarget} is quantified here, so it cannot be an unknown.` };
+    const clash = r.symbols.find(s => boundIn.has(s) && boundIn.get(s) !== i);
+    if (clash) return { kind: 'error', message: `${clash} is quantified in row ${(boundIn.get(clash) as number) + 1}; use another name here.` };
     if (!isAssumption(r, targets)) return { kind: 'relation' };
     const missing = r.symbols.filter(s => !used.has(s));
     return missing.length ? { kind: 'error', message: `${missing.join(', ')} ${missing.length > 1 ? 'do' : 'does'} not appear in the other rows.` } : { kind: 'assumption' };

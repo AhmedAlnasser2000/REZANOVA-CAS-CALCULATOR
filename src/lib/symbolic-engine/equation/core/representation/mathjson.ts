@@ -3,6 +3,7 @@ import { ipow } from '../algebra/integer';
 import { rational, rMultiply, type Rational } from '../algebra/rational';
 import { isSymbolName, safeCount, type ExprId, type ExpressionStore, type FunctionName } from './expression';
 import type { Relation, RelationInput, RelationOperator } from './relation';
+import type { FormulaInput } from './formula';
 import { minimalPolynomial } from './root-identity';
 
 /**
@@ -223,6 +224,45 @@ export function readRelations(store: ExpressionStore, json: unknown): ReadResult
       for (let i = 0; i + 1 < sides.length; i++) out.push(Object.freeze({ op, lhs: sides[i], rhs: sides[i + 1] }));
     }
     return Object.freeze(out);
+  });
+}
+
+/**
+ * A row's formula (EQUATION-SEMIALGEBRAIC1): relations and chains under ["And", …], ["Or", …], ["Not", f],
+ * ["ForAll", x, f] and ["Exists", x, f], parentheses (["Delimiter", f]) dropped. A quantified variable may be
+ * written x or ["Element", x, "RealNumbers"]. ¬ applies to a formula, never to an expression.
+ */
+export function readFormula(store: ExpressionStore, json: unknown): ReadResult<FormulaInput> {
+  return guarded(() => {
+    const read = (item: unknown): FormulaInput => {
+      store.ctx.tick();
+      const list = plainObject(item) && Array.isArray(item.fn) ? item.fn : item;
+      if (!Array.isArray(list) || typeof list[0] !== 'string') return invalid('expected a relation');
+      const head = list[0], args = list.slice(1);
+      switch (head) {
+        case 'Delimiter': return args.length === 1 ? read(args[0]) : invalid('a parenthesized list');
+        case 'And': case 'Or': return args.length ? { kind: head === 'And' ? 'and' : 'or', args: args.map(read) } : invalid(`${head} needs arguments`);
+        case 'Not': return args.length === 1 ? { kind: 'not', arg: read(args[0]) } : invalid('Not takes one formula');
+        case 'ForAll': case 'Exists': {
+          if (args.length !== 2) return invalid(`${head} needs a variable and a formula`);
+          const v = plainObject(args[0]) && Array.isArray(args[0].fn) ? args[0].fn : args[0];
+          const name = typeof v === 'string' ? v : plainObject(v) && typeof v.sym === 'string' ? v.sym
+            : Array.isArray(v) && v[0] === 'Element' && v.length === 3 && (v[2] === 'RealNumbers' || (plainObject(v[2]) && v[2].sym === 'RealNumbers')) ? (typeof v[1] === 'string' ? v[1] : plainObject(v[1]) && typeof v[1].sym === 'string' ? v[1].sym : undefined) : undefined;
+          if (typeof name !== 'string' || !isSymbolName(name)) return invalid(`${head} needs a variable name`);
+          return { kind: head === 'ForAll' ? 'forall' : 'exists', variable: name, body: read(args[1]) };
+        }
+        default: {
+          const op = RELATION_HEADS[head];
+          if (op === undefined) return head in ARITY || head in FUNCTION_HEADS ? invalid('expected a relation, got an expression') : unsupported(head, `relation ${head} is not supported`);
+          if (args.length < 2) return invalid(`${head} needs at least two sides`);
+          const sides = args.map(x => readTree(store, x));
+          const rels: FormulaInput[] = [];
+          for (let i = 0; i + 1 < sides.length; i++) rels.push({ kind: 'rel', rel: { op, lhs: sides[i], rhs: sides[i + 1] } });
+          return rels.length === 1 ? rels[0] : { kind: 'and', args: rels };
+        }
+      }
+    };
+    return read(json);
   });
 }
 

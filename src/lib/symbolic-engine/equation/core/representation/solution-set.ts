@@ -339,9 +339,20 @@ export function normalizeSet(store: ExpressionStore, set: SolutionSet, domain: E
       const mergedPeriodic = mergePeriodicSets(store, flat.filter(s => s.kind === 'periodic-set') as PeriodicSet[], domain);
       const periodicSets = mergedPeriodic.filter(s => s.kind === 'periodic-set') as PeriodicSet[];
       const finite = [...flat, ...mergedPeriodic].filter(s => s.kind === 'finite') as Extract<SolutionSet, { kind: 'finite' }>[];
-      const others = [...flat.filter(s => s.kind !== 'finite' && s.kind !== 'periodic-set'), ...mergedPeriodic.filter(s => s.kind !== 'finite')];
+      let others = [...flat.filter(s => s.kind !== 'finite' && s.kind !== 'periodic-set'), ...mergedPeriodic.filter(s => s.kind !== 'finite')];
       // Points that a periodic set already contains are absorbed by it.
-      const loose = finite.flatMap(s => s.points).filter(p => p.length !== 1 || !periodicSets.some(ps => periodicContains(store, ps, p[0])));
+      let loose = finite.flatMap(s => s.points).filter(p => p.length !== 1 || !periodicSets.some(ps => periodicContains(store, ps, p[0])));
+      // Intervals of one real variable are joined (x < 0 ∨ x < 1 is x < 1), with the points they contain; a point
+      // touching an open end closes it.
+      const joinable = others.filter(s => s.kind === 'intervals' && !parametric(store, s)) as Extract<SolutionSet, { kind: 'intervals' }>[];
+      if (domain === 'real' && joinable.length && joinable.length + loose.length > 1) {
+        const all: Interval[] = [...joinable.flatMap(s => s.intervals), ...loose.map(p => ({ lo: p[0] as Endpoint, hi: p[0] as Endpoint, loClosed: true, hiClosed: true }))];
+        const joined = normalizeIntervals(store, { kind: 'intervals', variables: joinable[0].variables, intervals: all }, domain) as Extract<SolutionSet, { kind: 'intervals' }>;
+        const point = (i: Interval) => compareEndpoints(store, i.lo, i.hi) === 0;
+        loose = joined.intervals.filter(point).map(i => Object.freeze([i.lo as PointValue]));
+        const proper = joined.intervals.filter(i => !point(i));
+        others = [...others.filter(s => !joinable.includes(s as Extract<SolutionSet, { kind: 'intervals' }>)), ...(proper.length ? [Object.freeze({ ...joined, intervals: Object.freeze(proper) })] : [])];
+      }
       const merged = normalizeSet(store, finiteSet(setVariables(set), loose), domain);
       const parts = (merged.kind === 'finite' && merged.points.length === 0 ? [] : [merged]).concat(others);
       const byKey = new Map(parts.map(s => [setKey(store, s), s] as const));

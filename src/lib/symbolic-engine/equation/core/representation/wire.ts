@@ -4,7 +4,7 @@ import {
   CONSTANT_NAMES, ExpressionStore, FUNCTION_NAMES, ISOLATED_VARIABLE, pointVariable, type ExprId, type ExpressionNode, type FunctionName,
 } from './expression';
 import {
-  CONDITION_KINDS, RELATION_OPERATORS, relationProblem, type Condition, type ConditionKind, type RelationOperator, type RelationProblem,
+  CONDITION_KINDS, RELATION_OPERATORS, relationProblem, type Condition, type ConditionKind, type Formula, type RelationOperator, type RelationProblem,
 } from './relation';
 import { minimalPolynomial } from './root-identity';
 import {
@@ -200,12 +200,36 @@ function encodeProblemBody(enc: GraphEncoder, p: RelationProblem): Json {
     conditions: p.conditions.map(c => encodeCondition(enc, c)),
     generators: p.generators.map(g => [g.symbol, enc.ref(g.definition)]),
     constraints: p.constraints.map(c => encodeCondition(enc, c)),
+    ...(p.formulas.length ? { formulas: p.formulas.map(f => encodeFormula(enc, f)) } : {}),
     hash: p.hash,
   };
 }
 
+function encodeFormula(enc: GraphEncoder, f: Formula): Json {
+  switch (f.kind) {
+    case 'rel': return ['r', f.rel.op, enc.ref(f.rel.lhs), enc.ref(f.rel.rhs)];
+    case 'and': case 'or': return [f.kind, f.args.map(a => encodeFormula(enc, a))];
+    case 'forall': case 'exists': return [f.kind, f.variable, encodeFormula(enc, f.body)];
+  }
+}
+
+function decodeFormula(dec: GraphDecoder, value: Json): Formula {
+  const e = list(value), tag = e[0];
+  switch (tag) {
+    case 'r': {
+      if (e.length !== 4) fail('formula relation arity');
+      const op = oneOf(e[1], ['eq', 'ne', 'lt', 'le'] as const);
+      return { kind: 'rel', rel: { op, lhs: dec.id(e[2]), rhs: dec.id(e[3]) } };
+    }
+    case 'and': case 'or': if (e.length !== 2) fail('formula junction arity'); return { kind: tag, args: list(e[1]).map(a => decodeFormula(dec, a)) };
+    case 'forall': case 'exists': if (e.length !== 3) fail('formula quantifier arity'); return { kind: tag, variable: text(e[1]), body: decodeFormula(dec, e[2]) };
+    default: return fail('formula tag');
+  }
+}
+
 function decodeProblemBody(dec: GraphDecoder, value: Json): RelationProblem {
-  const r = record(value, ['domain', 'targets', 'relations', 'conditions', 'generators', 'constraints', 'hash']);
+  const withFormulas = typeof value === 'object' && value !== null && !Array.isArray(value) && 'formulas' in value;
+  const r = record(value, ['domain', 'targets', 'relations', 'conditions', 'generators', 'constraints', ...(withFormulas ? ['formulas'] : []), 'hash']);
   const p = relationProblem(dec.store, {
     domain: oneOf(r.domain, ['real', 'complex'] as const),
     targets: list(r.targets).map(text),
@@ -217,6 +241,7 @@ function decodeProblemBody(dec: GraphDecoder, value: Json): RelationProblem {
     conditions: list(r.conditions).map(c => decodeCondition(dec, c)),
     generators: list(r.generators).map(x => { const e = list(x); if (e.length !== 2) fail('generator arity'); return { symbol: text(e[0]), definition: dec.id(e[1]) }; }),
     constraints: list(r.constraints).map(c => decodeCondition(dec, c)),
+    ...(withFormulas ? { formulas: list(r.formulas).map(f => decodeFormula(dec, f)) } : {}),
   });
   if (p.hash !== r.hash) fail('relation problem hash mismatch');
   return p;
