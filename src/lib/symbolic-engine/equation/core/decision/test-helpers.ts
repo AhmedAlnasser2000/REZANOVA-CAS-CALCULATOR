@@ -3,7 +3,7 @@ import { complexDecimal, realDecimal } from '../algebraic/root-of';
 import type { ExpressionStore } from '../representation/expression';
 import { readRelations, writeExpression } from '../representation/mathjson';
 import { relationProblem, type ProblemDomain } from '../representation/relation';
-import type { Endpoint, EquationOutcome, Interval, PointValue, SolutionSet } from '../representation/solution-set';
+import type { Endpoint, EquationOutcome, Interval, PointValue, RegionCell, SolutionSet } from '../representation/solution-set';
 import { decidePolynomialProblem } from './solve';
 import { verifyOutcome } from './verify';
 
@@ -63,6 +63,14 @@ export function describeSet(store: ExpressionStore, set: SolutionSet): string {
     case 'periodic': return `{${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')} : ${set.integerParameters.join(', ')} ∈ ℤ${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
     case 'union': return set.sets.map(x => describeSet(store, x)).join(' ∪ ');
     case 'parametric': return `{(${set.values.map(v => JSON.stringify(writeExpression(store, v))).join(', ')}) : ${set.freeParameters.join(', ')} free${set.constraints.map(c => `, ${c.kind} ${JSON.stringify(writeExpression(store, c.expr))}${'other' in c ? ` ${JSON.stringify(writeExpression(store, c.other))}` : ''}`).join('')}}`;
+    case 'cylindrical': {
+      const cells = (list: readonly RegionCell[], depth: number): string => list.map(c => {
+        const x = set.variables[depth], point = c.loClosed && c.hiClosed && show(store, c.lo) === show(store, c.hi);
+        const head = point ? `${x} = ${show(store, c.lo)}` : `${x} ∈ ${interval(store, c)}`;
+        return c.children ? `${head} ∧ ${c.children.length > 1 ? `(${cells(c.children, depth + 1)})` : cells(c.children, depth + 1)}` : head;
+      }).join(' ∨ ');
+      return cells(set.cells, 0);
+    }
     default: return set.kind;
   }
 }

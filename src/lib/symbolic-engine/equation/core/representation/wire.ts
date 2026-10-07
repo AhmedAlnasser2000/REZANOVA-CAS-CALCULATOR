@@ -4,11 +4,11 @@ import {
   CONSTANT_NAMES, ExpressionStore, FUNCTION_NAMES, ISOLATED_VARIABLE, pointVariable, type ExprId, type ExpressionNode, type FunctionName,
 } from './expression';
 import {
-  CONDITION_KINDS, RELATION_OPERATORS, relationProblem, type Condition, type ConditionKind, type RelationOperator, type RelationProblem,
+  CONDITION_KINDS, RELATION_OPERATORS, relationProblem, type Condition, type ConditionKind, type Formula, type RelationOperator, type RelationProblem,
 } from './relation';
 import { minimalPolynomial } from './root-identity';
 import {
-  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type SolutionSet,
+  OUTCOME_KINDS, SOLUTION_SET_KINDS, assertOutcome, type Endpoint, type EquationOutcome, type Interval, type Point, type PointValue, type RegionCell, type SolutionSet,
 } from './solution-set';
 import { EQUIVALENCE_KINDS, OBLIGATIONS, type EquivalenceKind, type Obligation, type ProofLog, type TransformRecord } from './transform';
 
@@ -200,12 +200,36 @@ function encodeProblemBody(enc: GraphEncoder, p: RelationProblem): Json {
     conditions: p.conditions.map(c => encodeCondition(enc, c)),
     generators: p.generators.map(g => [g.symbol, enc.ref(g.definition)]),
     constraints: p.constraints.map(c => encodeCondition(enc, c)),
+    ...(p.formulas.length ? { formulas: p.formulas.map(f => encodeFormula(enc, f)) } : {}),
     hash: p.hash,
   };
 }
 
+function encodeFormula(enc: GraphEncoder, f: Formula): Json {
+  switch (f.kind) {
+    case 'rel': return ['r', f.rel.op, enc.ref(f.rel.lhs), enc.ref(f.rel.rhs)];
+    case 'and': case 'or': return [f.kind, f.args.map(a => encodeFormula(enc, a))];
+    case 'forall': case 'exists': return [f.kind, f.variable, encodeFormula(enc, f.body)];
+  }
+}
+
+function decodeFormula(dec: GraphDecoder, value: Json): Formula {
+  const e = list(value), tag = e[0];
+  switch (tag) {
+    case 'r': {
+      if (e.length !== 4) fail('formula relation arity');
+      const op = oneOf(e[1], ['eq', 'ne', 'lt', 'le'] as const);
+      return { kind: 'rel', rel: { op, lhs: dec.id(e[2]), rhs: dec.id(e[3]) } };
+    }
+    case 'and': case 'or': if (e.length !== 2) fail('formula junction arity'); return { kind: tag, args: list(e[1]).map(a => decodeFormula(dec, a)) };
+    case 'forall': case 'exists': if (e.length !== 3) fail('formula quantifier arity'); return { kind: tag, variable: text(e[1]), body: decodeFormula(dec, e[2]) };
+    default: return fail('formula tag');
+  }
+}
+
 function decodeProblemBody(dec: GraphDecoder, value: Json): RelationProblem {
-  const r = record(value, ['domain', 'targets', 'relations', 'conditions', 'generators', 'constraints', 'hash']);
+  const withFormulas = typeof value === 'object' && value !== null && !Array.isArray(value) && 'formulas' in value;
+  const r = record(value, ['domain', 'targets', 'relations', 'conditions', 'generators', 'constraints', ...(withFormulas ? ['formulas'] : []), 'hash']);
   const p = relationProblem(dec.store, {
     domain: oneOf(r.domain, ['real', 'complex'] as const),
     targets: list(r.targets).map(text),
@@ -217,6 +241,7 @@ function decodeProblemBody(dec: GraphDecoder, value: Json): RelationProblem {
     conditions: list(r.conditions).map(c => decodeCondition(dec, c)),
     generators: list(r.generators).map(x => { const e = list(x); if (e.length !== 2) fail('generator arity'); return { symbol: text(e[0]), definition: dec.id(e[1]) }; }),
     constraints: list(r.constraints).map(c => decodeCondition(dec, c)),
+    ...(withFormulas ? { formulas: list(r.formulas).map(f => decodeFormula(dec, f)) } : {}),
   });
   if (p.hash !== r.hash) fail('relation problem hash mismatch');
   return p;
@@ -369,6 +394,14 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
     case 'parametric': return { kind: 'parametric', variables: [...set.variables], values: set.values.map(v => enc.ref(v)), freeParameters: [...set.freeParameters], constraints: conds(set.constraints) };
     case 'reduced-form': return { kind: 'reduced-form', problem: encodeProblemBody(enc, set.problem) };
     case 'unconfirmed': return { kind: 'unconfirmed', variables: [...set.variables], candidates: set.candidates.map(c => ({ point: point(c.point), derivations: [...c.derivations] })) };
+    case 'cylindrical': {
+      // A cell is [lo, hi, loClosed, hiClosed] or, with the next variable's cells, [lo, hi, loClosed, hiClosed, cells].
+      const cell = (c: RegionCell): Json => {
+        const head: Json[] = [encodeEndpoint(enc, c.lo), encodeEndpoint(enc, c.hi), c.loClosed, c.hiClosed];
+        return c.children ? [...head, c.children.map(cell)] : head;
+      };
+      return { kind: 'cylindrical', variables: [...set.variables], cells: set.cells.map(cell) };
+    }
   }
 }
 
@@ -418,6 +451,17 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
     }
     case 'root-set': { const r = record(value, ['kind', 'variables', 'poly']); return Object.freeze({ kind, variables: names(r.variables), poly: dec.id(r.poly) }); }
     case 'reduced-form': { const r = record(value, ['kind', 'problem']); return Object.freeze({ kind, problem: decodeProblemBody(dec, r.problem) }); }
+    case 'cylindrical': {
+      const r = record(value, ['kind', 'variables', 'cells']), variables = names(r.variables);
+      const cell = (x: Json, depth: number): RegionCell => {
+        const e = list(x);
+        if (e.length !== 4 && e.length !== 5) fail('cell arity');
+        if (e.length === 5 && depth >= variables.length) fail('cell depth');
+        const head = { lo: decodeEndpoint(dec, e[0]), hi: decodeEndpoint(dec, e[1]), loClosed: flag(e[2]), hiClosed: flag(e[3]) };
+        return Object.freeze(e.length === 5 ? { ...head, children: Object.freeze(list(e[4]).map(c => cell(c, depth + 1))) } : head);
+      };
+      return Object.freeze({ kind, variables, cells: Object.freeze(list(r.cells).map(c => cell(c, 1))) });
+    }
     case 'unconfirmed': {
       const r = record(value, ['kind', 'variables', 'candidates']);
       return Object.freeze({ kind, variables: names(r.variables), candidates: Object.freeze(list(r.candidates).map(c => { const o = record(c, ['point', 'derivations']); return Object.freeze({ point: point(o.point), derivations: names(o.derivations) }); })) });

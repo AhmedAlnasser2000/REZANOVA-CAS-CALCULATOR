@@ -34,7 +34,10 @@ export type CanonicalEquationRootBinder =
   | {
       kind: 'indexed-real-root';
       symbol: string;
-      /** The index-th real root (1 = smallest) of `polynomial`, whose coefficients may carry parameters. */
+      /**
+       * The index-th real root (1 = smallest) of `polynomial`, whose coefficients may carry parameters, and inside a
+       * cylindrical region the outer variables of the cell it bounds.
+       */
       polynomial: CanonicalEquationMath;
       index: number;
       /** Optional rational isolating bounds (constant, possibly transcendental, coefficients). */
@@ -78,6 +81,14 @@ export interface CanonicalEquationInterval {
   hi: CanonicalEquationEndpoint;
   loClosed: boolean;
   hiClosed: boolean;
+}
+
+/**
+ * A cell of a cylindrical region: an interval of its level's variable (a section is [v, v]), with ends in the outer
+ * variables, and the cells of the next variable over it (absent: the remaining variables are free).
+ */
+export interface CanonicalEquationRegionCell extends CanonicalEquationInterval {
+  children?: CanonicalEquationRegionCell[];
 }
 
 export interface CanonicalEquationRelation {
@@ -136,7 +147,12 @@ export type CanonicalEquationSet =
       kind: 'unconfirmed';
       variables: string[];
       candidates: Array<{ point: CanonicalEquationMath[]; derivations: string[] }>;
-    };
+    }
+  /**
+   * A region of ℝⁿ as nested cells (EQUATION-SEMIALGEBRAIC1): the first variable in one of `cells`, the next in one
+   * of that cell's children, and so on. Cells of one list are disjoint and ascending.
+   */
+  | { kind: 'cylindrical'; variables: string[]; cells: CanonicalEquationRegionCell[] };
 
 export type CanonicalEquationOutcome =
   | { kind: 'solved'; set: CanonicalEquationSet }

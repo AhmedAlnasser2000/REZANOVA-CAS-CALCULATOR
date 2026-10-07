@@ -1,5 +1,5 @@
 import type { SerializableMathJson } from '../../../types/calculator';
-import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationRelation, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../types/calculator/canonical-result-equation';
+import type { CanonicalEquationCondition, CanonicalEquationEndpoint, CanonicalEquationRelation, CanonicalEquationInterval, CanonicalEquationOutcome, CanonicalEquationRegionCell, CanonicalEquationRootBinder, CanonicalEquationSet } from '../../../types/calculator/canonical-result-equation';
 import type { CanonicalEquationDocument } from '../../../types/calculator/canonical-result-current';
 import type { CanonicalMathValue } from '../../../types/calculator/canonical-result-common';
 import { equationMathLatex } from '../../result-contract/equation-math-latex';
@@ -13,7 +13,7 @@ import type { RootOf } from './core/algebraic/root-of';
 import type { ExprId, ExpressionStore, FunctionName } from './core/representation/expression';
 import type { Condition, Relation, RelationProblem } from './core/representation/relation';
 import { verifyAssumedOutcome } from './core/parameters/assume';
-import type { Endpoint, EquationOutcome, Interval, PointValue, RootValue, SolutionSet } from './core/representation/solution-set';
+import type { Endpoint, EquationOutcome, Interval, PointValue, RegionCell, RootValue, SolutionSet } from './core/representation/solution-set';
 import { replayEquationDocument } from './result-read';
 
 /**
@@ -202,7 +202,12 @@ class Projector {
         conditions: s.problem.conditions.map(c => this.condition(c)),
       };
       case 'unconfirmed': return { kind: 'unconfirmed', variables: vars(s.variables), candidates: s.candidates.map(c => ({ point: c.point.map(v => this.value(v)), derivations: [...c.derivations] })) };
+      case 'cylindrical': return { kind: 'cylindrical', variables: vars(s.variables), cells: s.cells.map(c => this.cell(c)) };
     }
+  }
+
+  cell(c: RegionCell): CanonicalEquationRegionCell {
+    return c.children ? { ...this.interval(c), children: c.children.map(k => this.cell(k)) } : this.interval(c);
   }
 }
 

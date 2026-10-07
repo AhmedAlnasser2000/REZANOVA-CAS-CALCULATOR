@@ -2,8 +2,9 @@ import type { EquationRequest, EquationRowNote } from '../../../new-equation/typ
 import { checkRows, isAssumption, parseRow } from '../../../new-equation/parse';
 import { assumptionsSatisfiable } from '../core/parameters/assume';
 import type { ExprId, ExpressionStore } from '../core/representation/expression';
-import { readRelations } from '../core/representation/mathjson';
-import { canonicalRelation, relationProblem, type Condition, type Relation, type RelationInput, type RelationProblem } from '../core/representation/relation';
+import { canonicalFormula, formulaRelations, hasQuantifier } from '../core/representation/formula';
+import { readFormula, readRelations } from '../core/representation/mathjson';
+import { canonicalRelation, relationProblem, type Condition, type Formula, type Relation, type RelationInput, type RelationProblem } from '../core/representation/relation';
 
 /**
  * New Equation lowering: the page's rows become one relation problem in the core's store, plus assumptions
@@ -26,9 +27,17 @@ export function lowerEquation(store: ExpressionStore, request: EquationRequest):
   const parsed = request.rows.map(parseRow);
   const checked = checkRows(parsed, request.targets, request.domain);
   const notes: EquationRowNote[] = checked.rows.map(r => (r.kind === 'error' ? { kind: 'error', message: r.message } : { kind: r.kind }));
-  const relations: RelationInput[] = [], assumptions: RelationInput[] = [];
+  const relations: RelationInput[] = [], assumptions: RelationInput[] = [], formulas: Formula[] = [];
   parsed.forEach((row, i) => {
     if (row.kind !== 'relation' || notes[i].kind === 'error') return;
+    if (row.logic) {
+      // ∧, ∨, ¬, ∀, ∃ (EQUATION-SEMIALGEBRAIC1): a formula in negation normal form; never an assumption.
+      const f = readFormula(store, row.json);
+      if (f.kind === 'unsupported') notes[i] = { kind: 'error', message: `${f.head} is not supported here.` };
+      else if (f.kind === 'invalid') notes[i] = { kind: 'error', message: `This row could not be read (${f.reason}).` };
+      else formulas.push(canonicalFormula(store, f.value));
+      return;
+    }
     const read = readRelations(store, row.json);
     if (read.kind === 'unsupported') notes[i] = { kind: 'error', message: `${read.head} is not supported here.` };
     else if (read.kind === 'invalid') notes[i] = { kind: 'error', message: `This row could not be read (${read.reason}).` };
@@ -37,8 +46,8 @@ export function lowerEquation(store: ExpressionStore, request: EquationRequest):
   const firstError = notes.find(n => n.kind === 'error');
   if (firstError) throw new EquationInputError((firstError as { message: string }).message, notes);
   if (checked.missingTargets.length) throw new EquationInputError(`${checked.missingTargets.join(', ')} ${checked.missingTargets.length > 1 ? 'do' : 'does'} not appear in an equation row.`, notes);
-  if (!relations.length) throw new EquationInputError('Enter an equation or inequality with an unknown.', notes);
-  const problem = relationProblem(store, { domain: request.domain, targets: request.targets, relations });
+  if (!relations.length && !formulas.length) throw new EquationInputError('Enter an equation or inequality with an unknown.', notes);
+  const problem = relationProblem(store, { domain: request.domain, targets: request.targets, relations, formulas });
   const assumed = assumptions.map(r => canonicalRelation(store, r));
   if (!assumptionsSatisfiable(problem, assumed)) {
     throw new EquationInputError('These assumptions cannot all hold.', notes.map(n => (n.kind === 'assumption' ? { kind: 'error', message: 'These assumptions cannot all hold.' } : n)));
@@ -53,7 +62,9 @@ export function lowerEquation(store: ExpressionStore, request: EquationRequest):
  */
 export function domainConditions(problem: RelationProblem): Condition[] {
   const s: ExpressionStore = problem.store, real = problem.domain === 'real', out: Condition[] = [];
-  const roots = problem.relations.flatMap(r => [r.lhs, r.rhs]);
+  // Rows with quantifiers name bound variables, which no condition on the answer can mention.
+  const open = problem.formulas.filter(f => !hasQuantifier(f)).flatMap(formulaRelations);
+  const roots = [...problem.relations, ...open].flatMap(r => [r.lhs, r.rhs]);
   const named = (id: ExprId) => s.freeSymbols(id).length > 0;
   for (const n of s.postorder(roots)) {
     s.ctx.tick();

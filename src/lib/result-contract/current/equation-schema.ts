@@ -77,6 +77,8 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
   // Root binders: fresh symbols, independent of each other.
   if (!Array.isArray(p.roots)) return bad('Roots must be a list.', '$.primary.roots');
   const roots: string[] = [];
+  // Root binders in the targets: the deepest target each one uses (index into targets).
+  const regional = new Map<string, number>();
   p.roots.forEach((b, i) => {
     const path = `$.primary.roots[${i}]`;
     if (record(b) && b.kind === 'isolated-real-point') {
@@ -117,7 +119,10 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
     } else if (b.kind === 'indexed-real-root') {
       if (!keys(b, ['kind', 'symbol', 'polynomial', 'index'], ['lo', 'hi']) || (b.lo === undefined) !== (b.hi === undefined)) return bad('Invalid indexed root keys.', path);
       if (!Number.isSafeInteger(b.index) || (b.index as number) < 1) bad('A root index is a positive integer.', `${path}.index`);
-      math(b.polynomial, new Set([b.symbol, ...parameters]), `${path}.polynomial`);
+      // Inside a cylindrical region a root may depend on the outer variables of its cell (checked where it is used).
+      math(b.polynomial, new Set([b.symbol, ...parameters, ...targets]), `${path}.polynomial`);
+      const uses = targets.filter(t => mentions((b.polynomial as CanonicalMathValue).mathJson, t));
+      if (uses.length) regional.set(b.symbol, Math.max(...uses.map(t => targets.indexOf(t))));
       if (b.lo !== undefined) { bound(b.lo, 'lo'); bound(b.hi, 'hi'); }
     } else if (b.kind === 'isolated-real-root') {
       if (!keys(b, ['kind', 'symbol', 'expression', 'lo', 'hi'])) return bad('Invalid isolated root keys.', path);
@@ -129,7 +134,7 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
       if (!lo || !hi || lo[0] * hi[1] >= hi[0] * lo[1]) bad('An isolating interval needs lo < hi.', path);
     } else bad('Unknown root binder kind.', path);
   });
-  const outer = new Set([...parameters, ...roots]);
+  const outer = new Set([...parameters, ...roots.filter(r => !regional.has(r))]);
   // Assumptions: relations on the declared parameters only (no root binders), orders over ℝ only.
   if (p.assumptions !== undefined) {
     if (!Array.isArray(p.assumptions) || p.assumptions.length === 0 || parameters.length === 0) return bad('Assumptions are a non-empty list on parameters.', '$.primary.assumptions');
@@ -240,6 +245,25 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
           math(r.lhs, inner, `${path}.relations[${i}].lhs`); math(r.rhs, inner, `${path}.relations[${i}].rhs`);
         });
         return s.conditions.forEach((c, i) => condition(c, inner, `${path}.conditions[${i}]`));
+      }
+      case 'cylindrical': {
+        if (!keys(s, ['kind', 'variables', 'cells']) || targets.length < 2) break;
+        realOnly(path); variables(s.variables, path);
+        // A level-d cell's ends may use the first d − 1 targets and the root binders that use only those.
+        const cells = (list: unknown, depth: number, at: string): void => {
+          if (!Array.isArray(list) || list.length === 0) return bad('A cell list is non-empty.', at);
+          const inner = new Set([...scope, ...targets.slice(0, depth - 1), ...[...regional].filter(([, d]) => d < depth - 1).map(([r]) => r)]);
+          list.forEach((c, i) => {
+            const cp = `${at}[${i}]`;
+            if (!record(c) || !keys(c, ['lo', 'hi', 'loClosed', 'hiClosed'], ['children'])) return bad('Invalid cell.', cp);
+            interval({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed }, inner, cp);
+            if (c.children !== undefined) {
+              if (depth >= targets.length) return bad('The last variable has no children.', `${cp}.children`);
+              cells(c.children, depth + 1, `${cp}.children`);
+            }
+          });
+        };
+        return cells(s.cells, 1, `${path}.cells`);
       }
       case 'unconfirmed':
         if (!keys(s, ['kind', 'variables', 'candidates']) || !Array.isArray(s.candidates) || s.candidates.length === 0) break;

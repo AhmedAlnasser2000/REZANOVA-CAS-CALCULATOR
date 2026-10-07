@@ -938,6 +938,15 @@ const allGoldenCases: GoldenCase[] = [
     expected: { kind: 'success', title: 'Equation', presentedText: '(x, y) ≈ (0.935082, 0.998020)\n  the solution of y = cos(x - y), sin(y + x) = x with 5/6 ≤ x ≤ 1, 7/8 ≤ y ≤ 10/9' },
   },
   {
+    // EQUATION-SEMIALGEBRAIC1 PR A: a region in two unknowns, Reduce-style cells with closed-form bounds.
+    id: 'new-equation-region',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['x^2+y^2<1', 'y>x'],
+    targets: ['x', 'y'],
+    expected: { kind: 'success', title: 'Equation', presentedText: '-1 < x ≤ -√2/2 and -√(1 - x^2) < y < √(1 - x^2)\nor -√2/2 < x < √2/2 and x < y < √(1 - x^2)' },
+  },
+  {
     id: 'new-integration-polynomial',
     lane: 'new-integration',
     mode: 'new-integration',
@@ -953,7 +962,7 @@ const allGoldenCases: GoldenCase[] = [
   },
 ];
 
-/** Every golden case (53): print hygiene scans them all. */
+/** Every golden case (54): print hygiene scans them all. */
 export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
 
 /**

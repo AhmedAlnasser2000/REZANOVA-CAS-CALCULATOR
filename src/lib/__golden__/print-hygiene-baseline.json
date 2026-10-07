@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "EQUATION-CERTIFIED-NUMERICS1 PR B: New Equation golden case for a certified system solution",
-  "caseCount": 53,
+  "acceptedReason": "EQUATION-SEMIALGEBRAIC1: region golden case",
+  "caseCount": 54,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -13,7 +13,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 4,
+    "new-equation": 5,
     "new-integration": 2
   },
   "successfulWorkspaceCounts": {
@@ -27,7 +27,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 4,
+    "new-equation": 5,
     "new-integration": 2
   },
   "entries": [
@@ -1591,6 +1591,94 @@
           "path": "canonicalResult.primary.outcome.set.points[0][1]",
           "kind": "typed-math-leaf",
           "value": "r_{2}"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-region",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.roots[0].polynomial",
+          "kind": "typed-math-leaf",
+          "value": "-1+\\left(2\\right)\\left(\\left(r_{1}\\right)^{2}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].lo",
+          "kind": "typed-math-leaf",
+          "value": "-2"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].hi",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].form",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(\\frac{1}{2}\\right)^{\\frac{1}{2}}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].polynomial",
+          "kind": "typed-math-leaf",
+          "value": "-1+\\left(2\\right)\\left(\\left(r_{2}\\right)^{2}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].lo",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].hi",
+          "kind": "typed-math-leaf",
+          "value": "2"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].form",
+          "kind": "typed-math-leaf",
+          "value": "\\left(\\frac{1}{2}\\right)^{\\frac{1}{2}}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "-1"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].children[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].children[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{2}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].children[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "x"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].children[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}"
         }
       ]
     },
