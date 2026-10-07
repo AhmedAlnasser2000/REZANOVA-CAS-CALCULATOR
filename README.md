@@ -585,6 +585,14 @@ npm run test:surface-protocol
 npm run test:ci-gate-alignment
 ```
 
+Tests of the old Equation engine are inert in these runs while the new Equation core replaces it; they still run on demand:
+
+```bash
+npm run test:legacy-equation
+npm run test:legacy-equation:ui
+npm run test:legacy-equation:e2e
+```
+
 The repo also carries source-backed mathematical corpora, workspace freshness checks, file-size ratchets, printer/result-contract checks, and browser canaries.
 
 ## Contributing

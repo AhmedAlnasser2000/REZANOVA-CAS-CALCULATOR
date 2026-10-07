@@ -21,8 +21,9 @@
 .ne-examples {position: relative;}
 .ne-examples summary {list-style: none; padding: 7px 13px; border: 1px solid #64748b66; border-radius: 7px; cursor: pointer;}
 .ne-examples summary::-webkit-details-marker {display: none;}
-.ne-examples [role='menu'] {position: absolute; z-index: 5; margin-top: 6px; display: flex; flex-direction: column; min-width: 190px; padding: 6px; border: 1px solid #64748b55; border-radius: 9px; background: var(--surface-elevated, var(--app-background, #fff));}
+.ne-examples [role='menu'] {position: absolute; z-index: 5; margin-top: 6px; display: flex; flex-direction: column; min-width: 190px; padding: 6px; border: 1px solid #64748b55; border-radius: 9px; background: var(--page-bg-raised, #152223); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);}
 .ne-examples [role='menu'] button {border: 0; text-align: start;}
+.ne-examples [role='menu'] button:hover, .ne-examples [role='menu'] button:focus-visible {background: #275dad33;}
 .ne-tip {margin: 4px 0 0; font-size: .88rem; opacity: .65;}
 .ne-setup {display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;}
 .ne-solve-for {display: flex; flex-wrap: wrap; align-items: center; gap: 8px;}

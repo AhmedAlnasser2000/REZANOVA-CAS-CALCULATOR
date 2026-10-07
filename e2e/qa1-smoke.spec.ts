@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { legacyEquationTest } from './legacy-equation';
 import {
   fillNumericIntervalInput,
   getMathFieldLatex,
@@ -70,7 +71,7 @@ test('Calculate smoke applies the selected angle unit to plain numeric direct tr
   await expect(page.getByTestId('display-outcome-approx')).toContainText('0.987688');
 });
 
-test('Equation numeric interval smoke respects the selected angle unit', async ({ page }) => {
+legacyEquationTest('Equation numeric interval smoke respects the selected angle unit', async ({ page }) => {
   await openEquationNumericIntervalPanel(page, '\\sin\\left(x\\right)=\\frac{1}{2}');
 
   await fillNumericIntervalInput(page, 'Start', '20');
@@ -137,7 +138,7 @@ test('PRL2 Calculate smoke keeps simplify from leaking raw NaN on invalid logs',
   await expect(page.getByText(/^NaN$/)).toHaveCount(0);
 });
 
-test('NP1 settings smoke updates numeric preview and approximate equation output live', async ({ page }) => {
+legacyEquationTest('NP1 settings smoke updates numeric preview and approximate equation output live', async ({ page }) => {
   await openSettingsPanel(page);
 
   const digitsInput = page.getByTestId('settings-approx-digits-input');
@@ -159,7 +160,7 @@ test('NP1 settings smoke updates numeric preview and approximate equation output
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Numeric Interval' })).toBeVisible();
 });
 
-test('Equation smoke renders solved condition line', async ({ page }) => {
+legacyEquationTest('Equation smoke renders solved condition line', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\frac{1}{\\sqrt{x}}=1');
   await page.getByTestId('soft-action-solve').click();
@@ -171,7 +172,7 @@ test('Equation smoke renders solved condition line', async ({ page }) => {
   await expect(page.getByTestId('display-outcome-action-send-equation')).toHaveCount(0);
 });
 
-test('Equation smoke uses preserved-domain wording on rejected same-base log candidates', async ({ page }) => {
+legacyEquationTest('Equation smoke uses preserved-domain wording on rejected same-base log candidates', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\ln(4x+2)=\\ln(5x+6)');
   await page.getByTestId('soft-action-solve').click();
@@ -180,7 +181,7 @@ test('Equation smoke uses preserved-domain wording on rejected same-base log can
   await expect(page.getByTestId('display-outcome-error')).toContainText(/undefined in the real domain/i);
 });
 
-test('Equation smoke exposes transform-only algebra controls', async ({ page }) => {
+legacyEquationTest('Equation smoke exposes transform-only algebra controls', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\frac{1}{x}+\\frac{1}{x+1}=1');
   await page.getByTestId('soft-action-algebra').click();
@@ -191,7 +192,7 @@ test('Equation smoke exposes transform-only algebra controls', async ({ page }) 
   await expect(page.getByText(/Cleared the equation/i)).toBeVisible();
 });
 
-test('Equation smoke covers LCD-cleared rational solving', async ({ page }) => {
+legacyEquationTest('Equation smoke covers LCD-cleared rational solving', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\frac{1}{x}+\\frac{1}{x+1}=1');
   await page.getByTestId('soft-action-solve').click();
@@ -201,7 +202,7 @@ test('Equation smoke covers LCD-cleared rational solving', async ({ page }) => {
   await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('x');
 });
 
-test('Equation smoke covers bounded conjugate solving', async ({ page }) => {
+legacyEquationTest('Equation smoke covers bounded conjugate solving', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\frac{1}{\\sqrt{x}+1}=\\frac{1}{2}');
   await page.getByTestId('soft-action-solve').click();
@@ -211,7 +212,7 @@ test('Equation smoke covers bounded conjugate solving', async ({ page }) => {
   await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('x');
 });
 
-test('RAD2 smoke solves bounded sequential radical families', async ({ page }) => {
+legacyEquationTest('RAD2 smoke solves bounded sequential radical families', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\sqrt{x+1}=\\sqrt{2x-1}+1');
   await page.getByTestId('soft-action-solve').click();
@@ -226,7 +227,7 @@ test('RAD2 smoke solves bounded sequential radical families', async ({ page }) =
   ).toBeVisible();
 });
 
-test('POLY2 smoke renders guided quartic exact roots through the bounded factor-first path', async ({ page }) => {
+legacyEquationTest('POLY2 smoke renders guided quartic exact roots through the bounded factor-first path', async ({ page }) => {
   await openLauncherApp(page, 'Core', 'Equation');
   await page.getByRole('button', { name: /polynomial/i }).click();
   await page.getByRole('button', { name: /quartic/i }).click();
@@ -248,7 +249,7 @@ test('POLY2 smoke renders bounded cubic factorization through Calculate > Factor
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x^2-5x+6"]')).toBeVisible();
 });
 
-test('POLY-RAD1 smoke renders algebraic biquadratic roots after a bounded radical follow-on', async ({ page }) => {
+legacyEquationTest('POLY-RAD1 smoke renders algebraic biquadratic roots after a bounded radical follow-on', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\sqrt{\\left(x^4-5x^2+4\\right)}=1');
   await page.getByTestId('soft-action-solve').click();
@@ -500,7 +501,7 @@ test('PRL3 smoke exposes Calculate change-base transforms', async ({ page }) => 
   ).toBeVisible();
 });
 
-test('PRL3 smoke lets Equation solve preprocessed fractional-power notation through existing carriers', async ({ page }) => {
+legacyEquationTest('PRL3 smoke lets Equation solve preprocessed fractional-power notation through existing carriers', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, 'x^{\\frac{1}{2}}=3');
   await page.getByTestId('soft-action-solve').click();
@@ -509,7 +510,7 @@ test('PRL3 smoke lets Equation solve preprocessed fractional-power notation thro
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=9"]')).toBeVisible();
 });
 
-test('PRL4 smoke solves same-base logarithmic equalities with condition lines', async ({ page }) => {
+legacyEquationTest('PRL4 smoke solves same-base logarithmic equalities with condition lines', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\ln(x+1)=\\ln(2x-3)');
   await page.getByTestId('soft-action-solve').click();
@@ -522,7 +523,7 @@ test('PRL4 smoke solves same-base logarithmic equalities with condition lines', 
   ).toBeVisible();
 });
 
-test('PRL4 smoke solves bounded mixed-base log equations exactly', async ({ page }) => {
+legacyEquationTest('PRL4 smoke solves bounded mixed-base log equations exactly', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\log_{2}(x)+\\log_{4}(x)=3');
   await page.getByTestId('soft-action-solve').click();
@@ -532,7 +533,7 @@ test('PRL4 smoke solves bounded mixed-base log equations exactly', async ({ page
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=4"]')).toBeVisible();
 });
 
-test('PRL4 smoke keeps recognized unresolved mixed-base families on explicit numeric guidance', async ({ page }) => {
+legacyEquationTest('PRL4 smoke keeps recognized unresolved mixed-base families on explicit numeric guidance', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\log_{2}(x)+\\log_{3}(x)=2');
   await page.getByTestId('soft-action-solve').click();
@@ -541,7 +542,7 @@ test('PRL4 smoke keeps recognized unresolved mixed-base families on explicit num
   await expect(page.getByText(/recognized mixed-base log family/i)).toBeVisible();
 });
 
-test('PRL4 smoke solves bounded rational-power equations with power-lift provenance', async ({ page }) => {
+legacyEquationTest('PRL4 smoke solves bounded rational-power equations with power-lift provenance', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, 'x^{\\frac{3}{2}}=8');
   await page.getByTestId('soft-action-solve').click();
@@ -553,7 +554,7 @@ test('PRL4 smoke solves bounded rational-power equations with power-lift provena
   await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 4');
 });
 
-test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ page }) => {
+legacyEquationTest('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\ln\\left(x^2+1\\right)=3');
   await page.getByTestId('soft-action-solve').click();
@@ -563,7 +564,7 @@ test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ pa
   await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
 });
 
-test('COMP2 smoke solves two-step bounded non-periodic chains', async ({ page }) => {
+legacyEquationTest('COMP2 smoke solves two-step bounded non-periodic chains', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -579,7 +580,7 @@ test('COMP2 smoke solves two-step bounded non-periodic chains', async ({ page })
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/10/);
 });
 
-test('COMP2 smoke hands bounded inversions into the trig backend when the downstream branch set is finite', async ({ page }) => {
+legacyEquationTest('COMP2 smoke hands bounded inversions into the trig backend when the downstream branch set is finite', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -596,7 +597,7 @@ test('COMP2 smoke hands bounded inversions into the trig backend when the downst
   await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/k = 0/);
 });
 
-test('COMP2 smoke hands bounded inversions into PRL/algebra solve families', async ({ page }) => {
+legacyEquationTest('COMP2 smoke hands bounded inversions into PRL/algebra solve families', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -613,7 +614,7 @@ test('COMP2 smoke hands bounded inversions into PRL/algebra solve families', asy
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/28/);
 });
 
-test('COMP1 smoke proves impossible nested trig compositions from the bounded inner image', async ({ page }) => {
+legacyEquationTest('COMP1 smoke proves impossible nested trig compositions from the bounded inner image', async ({ page }) => {
   await openEquationSymbolic(page);
   await setMathFieldLatex(page, '\\sin\\left(\\cos\\left(x\\right)\\right)=1');
   await page.getByTestId('soft-action-solve').click();
@@ -623,7 +624,7 @@ test('COMP1 smoke proves impossible nested trig compositions from the bounded in
   await expect(page.getByTestId('display-outcome-error')).toContainText(/inner image/i);
 });
 
-test('COMP3 smoke renders finite nested trig compositions as symbolic periodic families', async ({ page }) => {
+legacyEquationTest('COMP3 smoke renders finite nested trig compositions as symbolic periodic families', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -639,7 +640,7 @@ test('COMP3 smoke renders finite nested trig compositions as symbolic periodic f
   await expect(page.getByTestId('display-outcome-periodic-intervals')).toContainText(/near x/i);
 });
 
-test('COMP4 smoke solves nonlinear-in-k periodic carriers symbolically', async ({ page }) => {
+legacyEquationTest('COMP4 smoke solves nonlinear-in-k periodic carriers symbolically', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -656,7 +657,7 @@ test('COMP4 smoke solves nonlinear-in-k periodic carriers symbolically', async (
   await expect(page.getByTestId('display-outcome-periodic-intervals')).toContainText(/near x/i);
 });
 
-test('COMP10 smoke solves quadratic periodic carriers symbolically', async ({ page }) => {
+legacyEquationTest('COMP10 smoke solves quadratic periodic carriers symbolically', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -671,7 +672,7 @@ test('COMP10 smoke solves quadratic periodic carriers symbolically', async ({ pa
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/√/);
 });
 
-test('COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers', async ({ page }) => {
+legacyEquationTest('COMP11 smoke returns reduced-carrier exact periodic families for broader mixed polynomial carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -686,7 +687,7 @@ test('COMP11 smoke returns reduced-carrier exact periodic families for broader m
   await expect(page.getByTestId('display-outcome-periodic-family').locator('[aria-label*="x^3+x"]')).toBeVisible();
 });
 
-test('COMP3 smoke solves tan-log compositions as periodic families', async ({ page }) => {
+legacyEquationTest('COMP3 smoke solves tan-log compositions as periodic families', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -702,7 +703,7 @@ test('COMP3 smoke solves tan-log compositions as periodic families', async ({ pa
   await expect(page.getByTestId('display-outcome-periodic-intervals')).toContainText(/1\.19328/);
 });
 
-test('COMP3 smoke formats periodic families in degree mode with numeric-angle branches', async ({ page }) => {
+legacyEquationTest('COMP3 smoke formats periodic families in degree mode with numeric-angle branches', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -717,7 +718,7 @@ test('COMP3 smoke formats periodic families in degree mode with numeric-angle br
   await expect(page.getByTestId('display-outcome-periodic-representatives')).toContainText(/x=90/);
 });
 
-test('COMP4 smoke solves bounded inverse-trig handoff through one supported follow-on step', async ({ page }) => {
+legacyEquationTest('COMP4 smoke solves bounded inverse-trig handoff through one supported follow-on step', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -732,7 +733,7 @@ test('COMP4 smoke solves bounded inverse-trig handoff through one supported foll
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/e/);
 });
 
-test('COMP5 smoke shows unit-aware inverse-trig nested periodic guidance in degree mode', async ({ page }) => {
+legacyEquationTest('COMP5 smoke shows unit-aware inverse-trig nested periodic guidance in degree mode', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -760,7 +761,7 @@ test('COMP5 smoke shows unit-aware inverse-trig nested periodic guidance in degr
   }
 });
 
-test('COMP5 smoke keeps deep nested periodic carriers on structured multi-parameter guidance', async ({ page }) => {
+legacyEquationTest('COMP5 smoke keeps deep nested periodic carriers on structured multi-parameter guidance', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -777,7 +778,7 @@ test('COMP5 smoke keeps deep nested periodic carriers on structured multi-parame
   await expect(details).toContainText('Periodic Structure');
 });
 
-test('COMP6 smoke renders principal-range reductions with piecewise details in degree mode', async ({ page }) => {
+legacyEquationTest('COMP6 smoke renders principal-range reductions with piecewise details in degree mode', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -792,7 +793,7 @@ test('COMP6 smoke renders principal-range reductions with piecewise details in d
   await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arctan/);
 });
 
-test('COMP8 smoke renders affine sawtooth closure with exact families in degree mode', async ({ page }) => {
+legacyEquationTest('COMP8 smoke renders affine sawtooth closure with exact families in degree mode', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -808,7 +809,7 @@ test('COMP8 smoke renders affine sawtooth closure with exact families in degree 
   await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arcsin/);
 });
 
-test('COMP9 smoke renders mixed-carrier sawtooth closure for power-form carriers', async ({ page }) => {
+legacyEquationTest('COMP9 smoke renders mixed-carrier sawtooth closure for power-form carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -824,7 +825,7 @@ test('COMP9 smoke renders mixed-carrier sawtooth closure for power-form carriers
   await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arcsin/);
 });
 
-test('COMP10 smoke renders quadratic sawtooth closure for mixed polynomial carriers', async ({ page }) => {
+legacyEquationTest('COMP10 smoke renders quadratic sawtooth closure for mixed polynomial carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -840,7 +841,7 @@ test('COMP10 smoke renders quadratic sawtooth closure for mixed polynomial carri
   await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arcsin/);
 });
 
-test('COMP10 smoke renders shifted-power sawtooth closure', async ({ page }) => {
+legacyEquationTest('COMP10 smoke renders shifted-power sawtooth closure', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -855,7 +856,7 @@ test('COMP10 smoke renders shifted-power sawtooth closure', async ({ page }) => 
   await expect(page.getByTestId('display-outcome-exact')).toContainText(/180k\+27/);
 });
 
-test('COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers', async ({ page }) => {
+legacyEquationTest('COMP11 smoke returns reduced-carrier exact sawtooth families for broader polynomial carriers', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -870,7 +871,7 @@ test('COMP11 smoke returns reduced-carrier exact sawtooth families for broader p
   await expect(page.getByTestId('display-outcome-periodic-piecewise')).toContainText(/arcsin/);
 });
 
-test('Equation numeric interval smoke can follow up unresolved composition guidance with a valid interval', async ({ page }) => {
+legacyEquationTest('Equation numeric interval smoke can follow up unresolved composition guidance with a valid interval', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-rad').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();
@@ -886,7 +887,7 @@ test('Equation numeric interval smoke can follow up unresolved composition guida
   await expect(page.getByText(/Numeric method: Bracket-first adaptive ITP/i).first()).toBeVisible();
 });
 
-test('Equation numeric interval smoke shows unit-aware branch guidance for missed trig-composition intervals', async ({ page }) => {
+legacyEquationTest('Equation numeric interval smoke shows unit-aware branch guidance for missed trig-composition intervals', async ({ page }) => {
   await openSettingsPanel(page);
   await page.getByTestId('settings-angle-unit-deg').click();
   await page.getByTestId('side-surface-overlay-backdrop').click();

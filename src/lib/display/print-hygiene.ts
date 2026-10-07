@@ -2,6 +2,7 @@ import type {
   CanonicalRuntimeOutcome,
   TableResponse,
 } from '../../types/calculator';
+import { collectCanonicalResultMathValues, type CanonicalResultDocument } from '../result-contract/current';
 import {
   resolveCanonicalResultForConsumer,
   type CanonicalResultPresentation,
@@ -35,7 +36,8 @@ export type MathematicalFragmentKind =
   | 'substitution-value'
   | 'table-x'
   | 'table-primary'
-  | 'table-secondary';
+  | 'table-secondary'
+  | 'typed-math-leaf';
 
 export type MathematicalFragment = {
   path: string;
@@ -225,6 +227,12 @@ export function collectCanonicalRuntimeMathFragments(
     presentation.requestLatex,
   );
   return fragments;
+}
+
+/** Every canonical math leaf of a typed schema-7 document (its answer kinds have their own read models). */
+export function collectTypedDocumentMathFragments(document: CanonicalResultDocument): MathematicalFragment[] {
+  return collectCanonicalResultMathValues(document).map(leaf =>
+    ({ path: `canonicalResult.${leaf.path.replace(/^\$\./, '')}`, kind: 'typed-math-leaf' as const, value: leaf.value.canonicalLatex }));
 }
 
 export function collectTableResponseMathFragments(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { goldenCases } from '../__golden__/golden-cases';
+import { CONTRACT_GOLDEN_CASES as goldenCases } from '../__golden__/golden-cases';
 import { runGoldenCase, type GoldenExecution } from '../__golden__/golden-execution';
 import {
   collectCanonicalRuntimeMathFragments,

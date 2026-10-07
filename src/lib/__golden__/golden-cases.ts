@@ -77,7 +77,22 @@ export type GoldenGraphingCase = GoldenBase & {
   request: GraphAnalysisRequestV1;
 };
 
+/** New Equation (EQUATION-ADOPTION1): rows through its worker service; checked through its presentation. */
+export type GoldenNewEquationCase = GoldenBase & {
+  mode: 'new-equation';
+  rows: string[];
+  targets: string[];
+};
+
+/** New Integration: one integral through its worker service; checked through its presentation read model. */
+export type GoldenNewIntegrationCase = GoldenBase & {
+  mode: 'new-integration';
+  source: string;
+};
+
 export type GoldenCase =
+  | GoldenNewEquationCase
+  | GoldenNewIntegrationCase
   | GoldenCalculateCase
   | GoldenEquationCase
   | GoldenCalculusCase
@@ -91,6 +106,8 @@ export type GoldenCase =
 
 export type GoldenExpectation = {
   kind: 'success' | 'error' | 'prompt';
+  /** New Equation: the exact presentation as plain text, one row per line. */
+  presentedText?: string;
   title?: string;
   exactEquals?: string;
   exactIncludes?: string[];
@@ -145,7 +162,13 @@ const CALCULUS_REQUEST: RunCalculusModeRequest = {
   ansLatex: '0',
 };
 
-export const goldenCases: GoldenCase[] = [
+/**
+ * Old Equation engine cases are inert unless CALCWIZ_LEGACY_EQUATION=1 (TESTS-LEGACY-EQUATION-INERT1,
+ * tools/legacy-equation-tests.mjs).
+ */
+export const LEGACY_EQUATION_GOLDEN_ENABLED = process.env.CALCWIZ_LEGACY_EQUATION === '1';
+
+const allGoldenCases: GoldenCase[] = [
   {
     id: 'calculate-arithmetic-basic',
     lane: 'calculate',
@@ -880,4 +903,49 @@ export const goldenCases: GoldenCase[] = [
       detailTitlesInclude: ['Evidence'],
     },
   },
+  {
+    id: 'new-equation-quadratic',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['x^2-5x+6=0'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = 2\nx = 3' },
+  },
+  {
+    id: 'new-equation-assumption',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['x^2=a', 'a>0'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'Assuming a > 0\nx = √a\nx = -√a' },
+  },
+  {
+    id: 'new-integration-polynomial',
+    lane: 'new-integration',
+    mode: 'new-integration',
+    source: '\\int 3x^2\\,dx',
+    expected: { kind: 'success', title: 'Verified antiderivative', exactIncludes: ['x^{3}'] },
+  },
+  {
+    id: 'new-integration-arctangent',
+    lane: 'new-integration',
+    mode: 'new-integration',
+    source: '\\int \\frac{1}{x^2+1}\\,dx',
+    expected: { kind: 'success', title: 'Verified antiderivative' },
+  },
 ];
+
+/** Every golden case (51): print hygiene scans them all. */
+export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
+
+/**
+ * The behaviour corpus run by the golden runner: old Equation engine cases are inert unless the legacy flag is set.
+ */
+export const goldenCases: GoldenCase[] = allGoldenCases.filter(goldenCase => goldenCase.mode !== 'equation' || LEGACY_EQUATION_GOLDEN_ENABLED);
+
+/**
+ * Cases on the generic canonical-result contract (47): the coverage, MathJSON coverage and result-intent ratchets
+ * keep all of them, old Equation included, so no ratchet loses evidence. New Equation and New Integration
+ * (schema-7 typed kinds) use their own read models and are checked by the golden runner and print hygiene instead.
+ */
+export const CONTRACT_GOLDEN_CASES: GoldenCase[] = allGoldenCases.filter(goldenCase => goldenCase.mode !== 'new-equation' && goldenCase.mode !== 'new-integration');

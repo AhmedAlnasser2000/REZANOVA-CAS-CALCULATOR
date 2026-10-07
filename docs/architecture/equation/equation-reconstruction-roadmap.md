@@ -106,6 +106,9 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Global History for New Equation; export, open and verify of saved problems | `EQUATION-ADOPTION1` (user decision) | unassigned |
 | Step-by-step explanations, by an agent through MCP in Notebook | `EQUATION-ADOPTION1` (user decision) | unassigned |
 | Assumptions coupling several parameters beyond monomials (cases kept as they are, with a note) | `EQUATION-ADOPTION1` | `EQUATION-SEMIALGEBRAIC1` |
+| Nested absolute values (\|x − \|x − 1\|\| = 1) stop with an internal "division-by-zero: rational inverse" error instead of an answer | user test cases, 2026-10-05 | unassigned (constraints slice) |
+| Complex radicals shown as √(−3) and √(−16) instead of √3·i and 4i in roots of quadratics over ℂ | user test cases, 2026-10-05 | unassigned (presentation) |
+| Parametric system values laid out as −(z − 1)/2 and −(−1 − a)/2 instead of (1 − z)/2 and (a + 1)/2 | user test cases, 2026-10-05 | unassigned (presentation) |
 
 ## Attribution
 

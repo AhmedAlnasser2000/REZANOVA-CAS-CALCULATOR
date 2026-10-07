@@ -136,10 +136,10 @@ describe('print hygiene fragment collection', () => {
 });
 
 describe('print hygiene baseline', () => {
-  it('matches all 47 golden executions and keeps two successful cases per workspace', async () => {
+  it('matches all 51 golden executions and keeps two successful cases per workspace', async () => {
     const generated = await buildPrintHygieneBaseline(baseline.acceptedReason);
     expect(generated).toEqual(baseline);
-    expect(generated.caseCount).toBe(47);
+    expect(generated.caseCount).toBe(51);
     const establishedWorkspaceCounts = Object.entries(generated.successfulWorkspaceCounts)
       .filter(([workspace]) => workspace !== 'graphing')
       .map(([, count]) => count);
