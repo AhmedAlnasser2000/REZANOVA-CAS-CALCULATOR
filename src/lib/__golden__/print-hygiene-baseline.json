@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "EQUATION-SEMIALGEBRAIC1: region golden case",
-  "caseCount": 54,
+  "acceptedReason": "EQUATION-SEMIALGEBRAIC1 PR B: quantifier golden case and region wording",
+  "caseCount": 55,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -13,7 +13,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 5,
+    "new-equation": 6,
     "new-integration": 2
   },
   "successfulWorkspaceCounts": {
@@ -27,7 +27,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 5,
+    "new-equation": 6,
     "new-integration": 2
   },
   "entries": [
@@ -1679,6 +1679,24 @@
           "path": "canonicalResult.primary.outcome.set.cells[1].children[0].hi.value",
           "kind": "typed-math-leaf",
           "value": "\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-forall",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.outcome.set.intervals[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "-2"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.intervals[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "2"
         }
       ]
     },

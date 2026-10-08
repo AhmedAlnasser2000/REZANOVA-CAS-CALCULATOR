@@ -61,9 +61,9 @@ group('logic rows: deciding by disjuncts', () => {
     expect(c.text).toMatch(/2/);
   });
 
-  it('is empty when every disjunct is, and refuses quantifiers until the second part', () => {
+  it('is empty when every disjunct is, and refuses quantifiers off the polynomial reals', () => {
     expect(solve(['x^2<0\\lor x^2=-1']).outcome.kind).toBe('empty');
-    const q = solve(['\\forall y: y^2+x>0'], ['x']).outcome;
+    const q = solve(['\\forall y: e^y+x>0'], ['x']).outcome;
     expect(q.kind === 'incomplete-implementation' && q.reason).toMatch(/EQUATION-SEMIALGEBRAIC1: quantifiers/);
   });
 

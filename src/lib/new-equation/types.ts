@@ -90,7 +90,7 @@ export function validEquationRequest(v: unknown): v is EquationRequest {
   const r = v as Record<string, unknown>;
   return Object.keys(r).length === 5 && Array.isArray(r.rows) && r.rows.every(x => typeof x === 'string') && r.rows.length > 0
     && r.rows.reduce<number>((n, x) => n + (x as string).length, 0) <= MAX_EQUATION_SOURCE_BYTES && sourceBytes(r.rows as string[]) <= MAX_EQUATION_SOURCE_BYTES
-    && Array.isArray(r.targets) && r.targets.length > 0 && r.targets.every(t => typeof t === 'string' && SYMBOL.test(t)) && new Set(r.targets).size === r.targets.length
+    && Array.isArray(r.targets) && r.targets.every(t => typeof t === 'string' && SYMBOL.test(t)) && new Set(r.targets).size === r.targets.length
     && (r.domain === 'real' || r.domain === 'complex') && validEquationLimits(r.limits)
     && typeof r.digits === 'number' && Number.isSafeInteger(r.digits) && r.digits >= 1 && r.digits <= 50;
 }

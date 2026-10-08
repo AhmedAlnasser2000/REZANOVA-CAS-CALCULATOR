@@ -28,7 +28,7 @@ import { attachForm } from '../decision/radical-forms';
  * leading coefficients and discriminants — projection polynomials, sign-invariant on the section — allow), which are
  * delineable over the section, so both descriptions select the same sections of its stack at every point of it.
  */
-interface Bound {
+export interface Bound {
   readonly value: PointValue;
   readonly level: number;
   /** The section's polynomial and root index (for exact evaluation at other points); absent for a constant. */
@@ -39,21 +39,25 @@ interface Bound {
   /** From a Lazard evaluation over a nullified cell: not delineable over neighbouring cells, so never merged. */
   readonly lazard?: true;
 }
-interface Piece { readonly level: number; readonly lo?: Bound; readonly hi?: Bound; readonly loClosed: boolean; readonly hiClosed: boolean; readonly desc: Desc }
-type Desc = 'all' | 'none' | readonly Piece[];
+export interface Piece { readonly level: number; readonly lo?: Bound; readonly hi?: Bound; readonly loClosed: boolean; readonly hiClosed: boolean; readonly desc: Desc }
+export type Desc = 'all' | 'none' | readonly Piece[];
 
-interface Builder { readonly store: ExpressionStore; readonly d: Decomposition; readonly names: readonly string[] }
+interface Builder {
+  readonly store: ExpressionStore; readonly d: Decomposition; readonly names: readonly string[];
+  /** Levels up to this one keep their empty cells (parameter cases with no solution are cases too). */
+  readonly keepEmpty?: number;
+}
 
 /** A constant end or coordinate, with its radical form when one is proven (quadratics, binomials). */
 const exactValue = (store: ExpressionStore, v: ExactValue): PointValue => (v.kind === 'algebraic' ? attachForm(store, v) : v);
 
 /** The section's end: constant over fixed outer coordinates, else a closed form or an indexed root. */
-function sectionBound(b: Builder, parent: CadCell, cell: CadCell, fixed: ReadonlyMap<string, ExprId>): Bound {
+function sectionBound(b: Builder, parent: CadCell, cell: CadCell, fixed: ReadonlyMap<string, ExprId>, numeric: number): Bound {
   const store = b.store, ctx = store.ctx, k = cell.level;
   const def = [...cell.sections].sort((x, y) => degree(x.poly) - degree(y.poly))[0] as Section;
   const lazard = def.lazard ? { lazard: true as const } : {};
   const base = { level: k, poly: def.poly, index: def.index, ...lazard };
-  if (fixed.size === k - 1) return { value: exactValue(store, cell.sample[k - 1]), ...base };
+  if (numeric === k - 1) return { value: exactValue(store, cell.sample[k - 1]), ...base };
   // The effective degree over the parent cell: the top coefficient that does not vanish there.
   const c = Array.from({ length: degree(def.poly) + 1 }, (_, i) => coefficient(def.poly, i, k));
   let top = c.length - 1;
@@ -111,19 +115,25 @@ function squarePart(ctx: ExpressionStore['ctx'], g: bigint): bigint {
 }
 
 /** The description of the formula over a cell: all, none, or the cells of the next variable. */
-function describe(b: Builder, cell: CadCell, fixed: ReadonlyMap<string, ExprId>): Desc {
+/**
+ * `fixed` maps outer variables fixed by a section to their value (a constant, or a closed form in the variables
+ * before them), substituted into deeper bounds; `numeric` counts the leading outer variables fixed to constants.
+ */
+function describe(b: Builder, cell: CadCell, fixed: ReadonlyMap<string, ExprId>, numeric = 0): Desc {
   const store = b.store;
   store.ctx.tick();
   if (cell.truth !== undefined) return cell.truth ? 'all' : 'none';
   const stack = cell.children as readonly CadCell[];
-  const bounds = stack.map((c, i) => (i % 2 === 1 ? sectionBound(b, cell, c, fixed) : undefined));
+  const bounds = stack.map((c, i) => (i % 2 === 1 ? sectionBound(b, cell, c, fixed, numeric) : undefined));
   const pieces: Piece[] = stack.map((c, i) => {
     if (i % 2 === 1) {
       const v = bounds[i] as Bound, x = b.names[c.level - 1];
-      const inner = fixed.size === c.level - 1 && v.value.kind !== 'expression' && v.value.kind !== 'root' ? new Map([...fixed, [x, valueExpression(store, v.value)]]) : fixed;
-      return { level: c.level, lo: v, hi: v, loClosed: true, hiClosed: true, desc: describe(b, c, inner) };
+      const constant = numeric === c.level - 1 && v.value.kind !== 'expression' && v.value.kind !== 'root';
+      const at = constant ? valueExpression(store, v.value as ExactValue) : v.value.kind === 'expression' && !v.lazard ? v.value.id : undefined;
+      const inner = at === undefined ? fixed : new Map([...fixed, [x, at]]);
+      return { level: c.level, lo: v, hi: v, loClosed: true, hiClosed: true, desc: describe(b, c, inner, constant ? numeric + 1 : numeric) };
     }
-    return { level: c.level, lo: bounds[i - 1], hi: bounds[i + 1], loClosed: false, hiClosed: false, desc: describe(b, c, fixed) };
+    return { level: c.level, lo: bounds[i - 1], hi: bounds[i + 1], loClosed: false, hiClosed: false, desc: describe(b, c, fixed, numeric) };
   });
   return merge(b, stack, pieces);
 }
@@ -187,8 +197,8 @@ function merge(b: Builder, stack: readonly CadCell[], pieces: readonly Piece[]):
   const groups: { from: number; to: number; desc: Desc }[] = [];
   const holdsAt = (desc: Desc, section: number) => {
     // A section without points stays a boundary: merging it would only widen the written interval.
-    const point = stack[section].sample, own = descAt(b, pieces[section].desc, point);
-    return own !== undefined && own !== 'none' && descAt(b, desc, point) === own;
+    const point = stack[section].sample, own = descAt(b, pieces[section].desc, point), keep = pieces[section].level <= (b.keepEmpty ?? 0);
+    return own !== undefined && (own !== 'none' || keep) && descAt(b, desc, point) === own;
   };
   const same = (x: Desc, y: Desc) => (typeof x === 'string' || typeof y === 'string' ? x === y : regionKeyOf(b, x) === regionKeyOf(b, y));
   groups.push({ from: 0, to: 0, desc: pieces[0].desc });
@@ -200,12 +210,12 @@ function merge(b: Builder, stack: readonly CadCell[], pieces: readonly Piece[]):
     if (right) { groups.push({ from: i, to: i + 1, desc: next }); continue; }
     groups.push({ from: i, to: i, desc: section }, { from: i + 1, to: i + 1, desc: next });
   }
-  const kept = groups.filter(g => g.desc !== 'none');
+  const kept = pieces[0].level <= (b.keepEmpty ?? 0) ? groups : groups.filter(g => g.desc !== 'none');
   if (kept.length === 0) return 'none';
   const out = kept.map(g => ({
     level: pieces[g.from].level, lo: pieces[g.from].lo, hi: pieces[g.to].hi, loClosed: pieces[g.from].loClosed, hiClosed: pieces[g.to].hiClosed, desc: g.desc,
   }));
-  if (out.length === 1 && !out[0].lo && !out[0].hi && out[0].desc === 'all') return 'all';
+  if (out.length === 1 && !out[0].lo && !out[0].hi && (out[0].desc === 'all' || out[0].desc === 'none')) return out[0].desc;
   return out;
 }
 
@@ -238,15 +248,21 @@ function hasNoTruth(cell: CadCell): boolean {
   return cell.truth !== undefined ? !cell.truth : (cell.children as readonly CadCell[]).every(hasNoTruth);
 }
 
+/** The description of the whole decomposition over `names` (one per free level), for case trees over parameters. */
+export function describeDecomposition(store: ExpressionStore, d: Decomposition, names: readonly string[], keepEmpty = 0): Desc {
+  demand(names.length === d.free, 'invalid-input', 'one variable per level');
+  return describe({ store, d, names, keepEmpty }, d.root, new Map());
+}
+
 /** The decomposition's true region as a solution set over `variables` (x₁ … xₙ); undefined when it is empty. */
 export function regionSet(store: ExpressionStore, d: Decomposition, variables: readonly string[]): SolutionSet | undefined {
-  demand(variables.length === d.n, 'invalid-input', 'one variable per level');
+  demand(variables.length === d.free, 'invalid-input', 'one variable per level');
   const found: ExactValue[][] = [];
-  if (points(d.root, d.n, found)) return found.length ? normalizeSet(store, finiteSet(variables, found.map(p => p.map(v => exactValue(store, v)))), 'real') : undefined;
+  if (points(d.root, d.free, found)) return found.length ? normalizeSet(store, finiteSet(variables, found.map(p => p.map(v => exactValue(store, v)))), 'real') : undefined;
   const desc = describe({ store, d, names: variables }, d.root, new Map());
   if (desc === 'none') return undefined;
   const all: RegionCell[] = [{ lo: { kind: 'infinity', sign: -1 }, hi: { kind: 'infinity', sign: 1 }, loClosed: false, hiClosed: false }];
   const list = desc === 'all' ? all : cells(desc);
-  if (d.n === 1) return normalizeSet(store, { kind: 'intervals', variables, intervals: list.map((c): Interval => ({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed })) }, 'real');
+  if (d.free === 1) return normalizeSet(store, { kind: 'intervals', variables, intervals: list.map((c): Interval => ({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed })) }, 'real');
   return normalizeSet(store, { kind: 'cylindrical', variables, cells: list }, 'real');
 }

@@ -10,6 +10,7 @@ import {
   compareValues, finiteSet, normalizeSet, setKey, valueExpression, valueKey, type Case, type EquationOutcome, type SolutionSet,
 } from '../representation/solution-set';
 import { conditionHolds } from './verify';
+import { conditionsSatisfiable } from '../cad/feasible';
 
 /**
  * Assumptions: relations on the parameters only, entered beside a problem (a > 0 beside x² = a).
@@ -20,6 +21,8 @@ import { conditionHolds } from './verify';
  *   numerator or denominator, and a rational in every gap and beyond (over ℂ: every zero and one generic rational);
  *   all signs are constant between samples, so a conjunction holds somewhere iff it holds at a sample;
  * - a condition on several parameters whose expression is c·∏ pᵢ^eᵢ is decided from the signs each pᵢ can take.
+ * - conditions coupling several parameters (over ℝ, polynomial) by a partial cylindrical decomposition
+ *   (EQUATION-SEMIALGEBRAIC1 PR B).
  * Anything else is kept as it is (still true, possibly vacuous), and the result is marked incomplete.
  */
 export interface AssumedOutcome { readonly outcome: EquationOutcome; readonly complete: boolean }
@@ -73,10 +76,13 @@ export function parameterSamples(store: ExpressionStore, conditions: readonly Co
   return [...[...distinct.values()].map(v => valueExpression(store, v)), store.number(t)];
 }
 
-/** Whether the conditions on one parameter (or none) can hold together; undefined when not decidable here. */
+/**
+ * Whether the conditions can hold together; undefined when not decidable here. One parameter (or none) by cells;
+ * several over ℝ by a partial cylindrical decomposition (EQUATION-SEMIALGEBRAIC1 PR B).
+ */
 function satisfiable(store: ExpressionStore, conditions: readonly Condition[], domain: ProblemDomain): boolean | undefined {
   const params = store.freeSymbols(...conditions.map(c => exprOf(store, c)));
-  if (params.length > 1) return undefined;
+  if (params.length > 1) return domain === 'real' ? conditionsSatisfiable(store, conditions) : undefined;
   const p = params[0] ?? '_';
   const samples = parameterSamples(store, conditions, p, domain);
   if (!samples) return undefined;
@@ -157,7 +163,15 @@ function prune(store: ExpressionStore, conditions: readonly Condition[], assumpt
       const possible = ([-1, 0, 1] as const).filter(s => satisfiable(store, [...own, s === 0 ? { kind: 'equal', expr: x, other: zero } : { kind: 'positive', expr: s > 0 ? x : store.neg(x) }], domain) !== false);
       signs.set(p, new Set(possible));
     }
-    const t = domain === 'real' ? monomialTruth(store, c, signs) : undefined;
+    let t = domain === 'real' ? monomialTruth(store, c, signs) : undefined;
+    if (t === undefined && domain === 'real') {
+      // Coupled conditions: decided by the decomposition — implied when its negation cannot hold with the rest,
+      // impossible when it cannot hold with them.
+      const not = negation(store, c), relevant = rest.filter(k => store.freeSymbols(exprOf(store, k)).length > 0);
+      if (not && satisfiable(store, [...relevant, not], domain) === false) t = true;
+      else if (satisfiable(store, [...relevant, c], domain) === false) t = false;
+      else if (not && satisfiable(store, [...relevant, not], domain) === true) { continue; }
+    }
     if (t === false) return undefined;
     if (t === true) kept = kept.filter(k => k !== c);
     else complete = false;

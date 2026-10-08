@@ -139,12 +139,16 @@ export function pickOrder(symbols: Iterable<string>): string[] {
   return [...new Set(symbols)].sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0));
 }
 
-/** The automatic unknowns: as many as there are rows with an equation (at least one), in pick order. */
+/**
+ * The automatic unknowns, in pick order: as many as there are rows with an equation; with no equation at all
+ * (inequalities, ∨ ∧ ¬, quantified rows), every free name, so x² + y² < 1, y > x is a region in x and y
+ * (EQUATION-SEMIALGEBRAIC1, user decision 2026-10-07).
+ */
 export function autoTargets(rows: readonly ParsedRow[]): string[] {
   const relations = rows.filter((r): r is Extract<ParsedRow, { kind: 'relation' }> => r.kind === 'relation');
   const order = pickOrder(relations.flatMap(r => r.symbols));
   const equations = relations.filter(r => r.signs.includes('eq')).length;
-  return order.slice(0, Math.max(1, equations));
+  return equations === 0 ? order : order.slice(0, equations);
 }
 
 /** A relation row whose names are all parameters (none of the unknowns) is an assumption. */
@@ -177,6 +181,8 @@ export function checkRows(rows: readonly ParsedRow[], targets: readonly string[]
     return missing.length ? { kind: 'error', message: `${missing.join(', ')} ${missing.length > 1 ? 'do' : 'does'} not appear in the other rows.` } : { kind: 'assumption' };
   });
   const missingTargets = targets.filter(t => !used.has(t));
-  const ready = out.some(r => r.kind === 'relation') && out.every(r => r.kind !== 'error') && targets.length > 0 && missingTargets.length === 0;
+  // No unknowns only for a decided statement: every row's names are quantified (∀x: x² + 1 > 0).
+  const closed = targets.length === 0 && rows.some(r => r.kind === 'relation' && (r.bound?.length ?? 0) > 0) && rows.every(r => r.kind !== 'relation' || r.symbols.length === 0);
+  const ready = out.some(r => r.kind === 'relation') && out.every(r => r.kind !== 'error') && (targets.length > 0 || closed) && missingTargets.length === 0;
   return { rows: out, ready, orderOverComplex, missingTargets };
 }

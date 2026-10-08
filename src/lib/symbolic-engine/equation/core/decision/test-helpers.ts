@@ -71,6 +71,7 @@ export function describeSet(store: ExpressionStore, set: SolutionSet): string {
       }).join(' ∨ ');
       return cells(set.cells, 0);
     }
+    case 'truth': return set.value ? 'True' : 'False';
     default: return set.kind;
   }
 }

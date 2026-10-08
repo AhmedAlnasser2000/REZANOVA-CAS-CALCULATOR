@@ -402,6 +402,7 @@ function encodeSet(enc: GraphEncoder, set: SolutionSet): Json {
       };
       return { kind: 'cylindrical', variables: [...set.variables], cells: set.cells.map(cell) };
     }
+    case 'truth': return { kind: 'truth', value: set.value };
   }
 }
 
@@ -462,6 +463,7 @@ function decodeSet(dec: GraphDecoder, value: Json): SolutionSet {
       };
       return Object.freeze({ kind, variables, cells: Object.freeze(list(r.cells).map(c => cell(c, 1))) });
     }
+    case 'truth': { const r = record(value, ['kind', 'value']); return Object.freeze({ kind, value: flag(r.value) }); }
     case 'unconfirmed': {
       const r = record(value, ['kind', 'variables', 'candidates']);
       return Object.freeze({ kind, variables: names(r.variables), candidates: Object.freeze(list(r.candidates).map(c => { const o = record(c, ['point', 'derivations']); return Object.freeze({ point: point(o.point), derivations: names(o.derivations) }); })) });
