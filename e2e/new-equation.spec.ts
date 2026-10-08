@@ -91,6 +91,67 @@ test('New Equation: answers, systems, assumptions, families, roots and styles', 
   await solve(page);
   await expect(answer(page)).toContainText(/9\.424697/);
   await page.screenshot({ path: testInfo.outputPath('certified-range.png'), fullPage: true });
+  // Certified square systems (PR B): no exact route, one point proven alone in its box.
+  await row(page, 1, '\\sin(x+y)=x');
+  await row(page, 2, '\\cos(x-y)=y');
+  await solve(page);
+  await expect(answer(page)).toContainText(/0\.935082/);
+  await workspace.getByText('Certified').click();
+  await expect(workspace.getByText(/proven to be the only one in its box/)).toBeVisible();
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText))
+    .toBe('(x, y) ≈ (0.935082, 0.998020)\n  the solution of y = cos(x - y), sin(y + x) = x with 5/6 ≤ x ≤ 1, 7/8 ≤ y ≤ 10/9');
+  await page.screenshot({ path: testInfo.outputPath('certified-system.png'), fullPage: true });
+  await row(page, 2, '');
+
+  // Regions (EQUATION-SEMIALGEBRAIC1): cylindrical decomposition, cells written like Mathematica's Reduce.
+  await row(page, 1, 'x^2+y^2<1');
+  await row(page, 2, 'y>x');
+  // Rows without an equation make every name an unknown: x and y.
+  await expect(workspace.getByRole('group', { name: 'Solve for' })).toContainText('y');
+  await solve(page);
+  await workspace.getByRole('button', { name: 'Exact', exact: true }).click();
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText))
+    .toBe('-1 < x ≤ -√2/2 and -√(1 - x^2) < y < √(1 - x^2)\nor -√2/2 < x < √2/2 and x < y < √(1 - x^2)');
+  await page.screenshot({ path: testInfo.outputPath('region.png'), fullPage: true });
+  await row(page, 2, '');
+  // ∨ in a row: its tooltip on hover, and the Logic keyboard page.
+  await row(page, 1, 'x^2+y^2<1\\lor x>2');
+  const bounds = await page.getByTestId('new-equation-row-1').evaluate(el => {
+    const f = el as unknown as { getElementInfo(o: number): { latex?: string; bounds?: DOMRect } | undefined; lastOffset: number };
+    for (let o = 0; o <= f.lastOffset; o++) {
+      const info = f.getElementInfo(o);
+      if (info?.latex?.trim() === '\\lor' && info.bounds) return { x: info.bounds.left + info.bounds.width / 2, y: info.bounds.top + info.bounds.height / 2 };
+    }
+    return undefined;
+  });
+  expect(bounds).toBeDefined();
+  await page.mouse.move((bounds as { x: number }).x, (bounds as { y: number }).y);
+  await expect(workspace.getByTestId('new-equation-symbol-tip')).toContainText('or (∨)');
+  await page.screenshot({ path: testInfo.outputPath('symbol-tooltip.png'), fullPage: true });
+  await solve(page);
+  await expect(answer(page)).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('region-or.png'), fullPage: true });
+  // Quantifiers (PR B): ∀ eliminated into a range of the free name; a row with every name quantified is True or False.
+  await row(page, 1, '\\forall x: x^2+ax+1>0');
+  await solve(page);
+  await workspace.getByRole('button', { name: 'Copy text', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toBe('a ∈ (-2, 2)');
+  await page.screenshot({ path: testInfo.outputPath('forall.png'), fullPage: true });
+  await row(page, 1, '\\forall x,\\exists y: y>x^2');
+  await solve(page);
+  await expect(answer(page)).toContainText('True');
+  await page.screenshot({ path: testInfo.outputPath('statement.png'), fullPage: true });
+  // Several parameters: cases written like Reduce.
+  await row(page, 1, 'x^2<a');
+  await row(page, 2, 'x>b');
+  await workspace.getByRole('button', { name: 'Stop solving for b' }).click().catch(() => undefined);
+  await workspace.getByRole('button', { name: 'Stop solving for a' }).click().catch(() => undefined);
+  await solve(page);
+  await expect(answer(page)).toContainText('No solution');
+  await page.screenshot({ path: testInfo.outputPath('parameter-cases.png'), fullPage: true });
+  await workspace.getByRole('button', { name: 'Automatic' }).click();
   await row(page, 2, '');
 
   // Domain conditions the engine applies.

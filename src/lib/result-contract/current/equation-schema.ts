@@ -66,7 +66,10 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
   const bad = (message: string, path: string): never => { throw new InvalidEquationPrimary(message, path); };
   if (!record(p) || !keys(p, ['kind', 'domain', 'targets', 'parameters', 'roots', 'outcome', 'provenance'], ['assumptions']) || p.kind !== 'equation-outcome'
     || (p.domain !== 'real' && p.domain !== 'complex')) return bad('Invalid Equation primary.', '$.primary');
-  if (!names(p.targets) || p.targets.length === 0 || !names(p.parameters) || p.parameters.some(n => (p.targets as string[]).includes(n))) return bad('Targets and parameters must be distinct symbols.', '$.primary.targets');
+  if (!names(p.targets) || !names(p.parameters) || p.parameters.some(n => (p.targets as string[]).includes(n))) return bad('Targets and parameters must be distinct symbols.', '$.primary.targets');
+  // No targets only for a decided statement (every name quantified): its answer is a truth value, or a non-answer.
+  const truthSet = record(p.outcome) && p.outcome.kind === 'solved' && record(p.outcome.set) && p.outcome.set.kind === 'truth';
+  if ((p.targets.length === 0) !== truthSet && !(p.targets.length === 0 && record(p.outcome) && p.outcome.kind !== 'solved' && p.outcome.kind !== 'empty')) return bad('A truth answer has no targets; every other answer has targets.', '$.primary.targets');
   const targets = p.targets, parameters = p.parameters, domain = p.domain;
   const taken = new Set([...targets, ...parameters]);
   const math = (v: unknown, scope: ReadonlySet<string>, path: string): void => {
@@ -77,8 +80,34 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
   // Root binders: fresh symbols, independent of each other.
   if (!Array.isArray(p.roots)) return bad('Roots must be a list.', '$.primary.roots');
   const roots: string[] = [];
+  // Root binders in the targets: the deepest target each one uses (index into targets).
+  const regional = new Map<string, number>();
   p.roots.forEach((b, i) => {
     const path = `$.primary.roots[${i}]`;
+    if (record(b) && b.kind === 'isolated-real-point') {
+      // A certified solution of a square system: one fresh symbol per coordinate, the system in them, a rational box.
+      if (!keys(b, ['kind', 'symbols', 'equations', 'box'])) return bad('Invalid isolated point keys.', path);
+      if (!names(b.symbols) || b.symbols.length < 2 || b.symbols.some(n => taken.has(n))) return bad('An isolated point needs fresh symbols, at least two.', `${path}.symbols`);
+      if (domain !== 'real') bad('Isolated points are real; the domain must be real.', path);
+      const own = new Set(b.symbols), n = b.symbols.length;
+      if (!Array.isArray(b.equations) || b.equations.length !== n) return bad('An isolated point needs as many equations as symbols.', `${path}.equations`);
+      b.equations.forEach((e, k) => math(e, own, `${path}.equations[${k}]`));
+      if (!b.symbols.every(s => (b.equations as CanonicalMathValue[]).some(e => mentions(e.mathJson, s)))) bad('Every symbol of an isolated point appears in its equations.', `${path}.equations`);
+      if (!Array.isArray(b.box) || b.box.length !== n) return bad('An isolated point needs one interval per symbol.', `${path}.box`);
+      const none = new Set<string>();
+      b.box.forEach((iv, k) => {
+        const at = `${path}.box[${k}]`;
+        if (!record(iv) || !keys(iv, ['lo', 'hi'])) return bad('Invalid box interval keys.', at);
+        for (const side of ['lo', 'hi']) {
+          math(iv[side], none, `${at}.${side}`);
+          if (!rationalConstant((iv[side] as CanonicalMathValue).mathJson)) bad('Box bounds must be rational constants.', `${at}.${side}`);
+        }
+        const lo = rationalValue((iv.lo as CanonicalMathValue).mathJson), hi = rationalValue((iv.hi as CanonicalMathValue).mathJson);
+        if (!lo || !hi || lo[0] * hi[1] >= hi[0] * lo[1]) bad('A box interval needs lo < hi.', at);
+      });
+      for (const s of b.symbols) { taken.add(s); roots.push(s); }
+      return;
+    }
     if (!record(b) || !symbol(b.symbol) || taken.has(b.symbol)) return bad('A root binder needs a fresh symbol.', path);
     taken.add(b.symbol);
     roots.push(b.symbol);
@@ -93,7 +122,10 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
     } else if (b.kind === 'indexed-real-root') {
       if (!keys(b, ['kind', 'symbol', 'polynomial', 'index'], ['lo', 'hi']) || (b.lo === undefined) !== (b.hi === undefined)) return bad('Invalid indexed root keys.', path);
       if (!Number.isSafeInteger(b.index) || (b.index as number) < 1) bad('A root index is a positive integer.', `${path}.index`);
-      math(b.polynomial, new Set([b.symbol, ...parameters]), `${path}.polynomial`);
+      // Inside a cylindrical region a root may depend on the outer variables of its cell (checked where it is used).
+      math(b.polynomial, new Set([b.symbol, ...parameters, ...targets]), `${path}.polynomial`);
+      const uses = targets.filter(t => mentions((b.polynomial as CanonicalMathValue).mathJson, t));
+      if (uses.length) regional.set(b.symbol, Math.max(...uses.map(t => targets.indexOf(t))));
       if (b.lo !== undefined) { bound(b.lo, 'lo'); bound(b.hi, 'hi'); }
     } else if (b.kind === 'isolated-real-root') {
       if (!keys(b, ['kind', 'symbol', 'expression', 'lo', 'hi'])) return bad('Invalid isolated root keys.', path);
@@ -105,7 +137,7 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
       if (!lo || !hi || lo[0] * hi[1] >= hi[0] * lo[1]) bad('An isolating interval needs lo < hi.', path);
     } else bad('Unknown root binder kind.', path);
   });
-  const outer = new Set([...parameters, ...roots]);
+  const outer = new Set([...parameters, ...roots.filter(r => !regional.has(r))]);
   // Assumptions: relations on the declared parameters only (no root binders), orders over ℝ only.
   if (p.assumptions !== undefined) {
     if (!Array.isArray(p.assumptions) || p.assumptions.length === 0 || parameters.length === 0) return bad('Assumptions are a non-empty list on parameters.', '$.primary.assumptions');
@@ -217,6 +249,28 @@ export function checkEquationPrimary(p: unknown, outcomeKind: unknown, counted: 
         });
         return s.conditions.forEach((c, i) => condition(c, inner, `${path}.conditions[${i}]`));
       }
+      case 'cylindrical': {
+        if (!keys(s, ['kind', 'variables', 'cells']) || targets.length < 2) break;
+        realOnly(path); variables(s.variables, path);
+        // A level-d cell's ends may use the first d − 1 targets and the root binders that use only those.
+        const cells = (list: unknown, depth: number, at: string): void => {
+          if (!Array.isArray(list) || list.length === 0) return bad('A cell list is non-empty.', at);
+          const inner = new Set([...scope, ...targets.slice(0, depth - 1), ...[...regional].filter(([, d]) => d < depth - 1).map(([r]) => r)]);
+          list.forEach((c, i) => {
+            const cp = `${at}[${i}]`;
+            if (!record(c) || !keys(c, ['lo', 'hi', 'loClosed', 'hiClosed'], ['children'])) return bad('Invalid cell.', cp);
+            interval({ lo: c.lo, hi: c.hi, loClosed: c.loClosed, hiClosed: c.hiClosed }, inner, cp);
+            if (c.children !== undefined) {
+              if (depth >= targets.length) return bad('The last variable has no children.', `${cp}.children`);
+              cells(c.children, depth + 1, `${cp}.children`);
+            }
+          });
+        };
+        return cells(s.cells, 1, `${path}.cells`);
+      }
+      case 'truth':
+        if (!keys(s, ['kind', 'value']) || typeof s.value !== 'boolean' || targets.length !== 0 || path !== '$.primary.outcome.set') break;
+        return;
       case 'unconfirmed':
         if (!keys(s, ['kind', 'variables', 'candidates']) || !Array.isArray(s.candidates) || s.candidates.length === 0) break;
         variables(s.variables, path);

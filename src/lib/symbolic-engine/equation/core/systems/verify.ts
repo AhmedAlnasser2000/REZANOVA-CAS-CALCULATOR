@@ -13,6 +13,7 @@ import { isLinear } from './linear';
 import { decideEquation } from '../decide';
 import { decideSystem, targetsInKernel } from './solve';
 import { holdsAt, verifyEliminationSamples, verifyInfiniteSamples, verifyPolynomialCertificate } from './verify-nonlinear';
+import { verifyCertifiedSystem } from '../numeric/cover-box';
 
 /**
  * Independent evidence for a system outcome:
@@ -41,6 +42,8 @@ export function verifySystemOutcome(problem: RelationProblem, outcome: EquationO
   if (report.leaves.length !== 1 || report.leaves[0] !== problem.hash) fail('a systems proof is the problem itself');
   if (targetsInKernel(problem)) {
     if (outcome.kind === 'solved') verifyEliminationSamples(problem, outcome.set);
+    // Certified system solutions: certificates, and completeness by an independent cover where it applies.
+    if (outcome.kind === 'solved' && verifyCertifiedSystem(problem, outcome.set)) return;
     return rederive(problem, outcome);
   }
   const atoms = parametricAtoms(problem);

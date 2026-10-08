@@ -3,6 +3,7 @@ import type { CanonicalEquationDocument } from '../../../../types/calculator/can
 import { autoTargets, checkRows, parseRow, pickOrder } from '../../../new-equation/parse';
 import { DEFAULT_EQUATION_LIMITS, type EquationPreview, type EquationRequest } from '../../../new-equation/types';
 import { verificationSummary } from '../../../new-equation/verification';
+import { validateCanonicalResultDocument } from '../../../result-contract/current';
 import { executeEquation } from './service';
 
 const request = (rows: string[], targets: string[], over: Partial<EquationRequest> = {}): EquationRequest =>
@@ -35,6 +36,9 @@ group('New Equation rows', () => {
     expect(autoTargets(['x^2+y^2=5', 'xy=2', 'x\\ne-1'].map(parseRow))).toEqual(['x', 'y']);
     expect(autoTargets(['a+b=1'].map(parseRow))).toEqual(['a']);
     expect(autoTargets(['x>1'].map(parseRow))).toEqual(['x']);
+    // No equation: every free name (a region in x and y; x and a for x² < a).
+    expect(autoTargets(['x^2+y^2<1', 'y>x'].map(parseRow))).toEqual(['x', 'y']);
+    expect(autoTargets(['x^2<a'].map(parseRow))).toEqual(['x', 'a']);
   });
 
   it('checks before solving: inequalities over ℂ, stray assumptions, missing unknowns', () => {
@@ -120,6 +124,23 @@ group('New Equation service', () => {
     const open = v6(solve(['e^x+\\sin x=0'])).primary.outcome;
     expect(open).toMatchObject({ kind: 'incomplete', owner: 'EQUATION-CERTIFIED-NUMERICS1' });
     expect(open.kind === 'incomplete' && open.reason).toMatch(/infinitely many roots.*range row/);
+  }, 60_000);
+
+  it('gives certified solutions of square systems, one definition per point (PR B)', () => {
+    const r = solve(['\\sin(x+y)=x', '\\cos(x-y)=y'], ['x', 'y']);
+    expect(shown(r, 'decimal')).toBe('(x, y) ≈ (0.935082, 0.998020)\n  the solution of y = cos(x - y), sin(y + x) = x with 5/6 ≤ x ≤ 1, 7/8 ≤ y ≤ 10/9');
+    expect(verificationSummary(v6(r))?.headline).toBe('Certified');
+    expect(v6(r).primary.roots.map(b => b.kind)).toEqual(['isolated-real-point']);
+    // The contract checks the binder's shape: a box side with lo ≥ hi, or a missing equation, is invalid.
+    const flipped = structuredClone(v6(r)), point = flipped.primary.roots[0] as Extract<CanonicalEquationDocument['primary']['roots'][number], { kind: 'isolated-real-point' }>;
+    point.box[0] = { lo: point.box[0].hi, hi: point.box[0].lo };
+    expect(validateCanonicalResultDocument(flipped).ok).toBe(false);
+    const short = structuredClone(v6(r));
+    (short.primary.roots[0] as typeof point).equations.pop();
+    expect(validateCanonicalResultDocument(short).ok).toBe(false);
+    const open = v6(solve(['e^x+\\sin y=1', 'e^y+\\sin x=1'], ['x', 'y'])).primary.outcome;
+    expect(open).toMatchObject({ kind: 'incomplete', owner: 'EQUATION-CERTIFIED-NUMERICS1' });
+    expect(open.kind === 'incomplete' && open.reason).toMatch(/add range rows for x and y/);
   }, 60_000);
 
   it('hands over the decided answer before verification, laid out as the verified one', () => {

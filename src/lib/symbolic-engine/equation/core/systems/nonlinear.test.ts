@@ -109,9 +109,9 @@ group('systems with kernels: elimination', () => {
     expect(run(['And', eq(['Exp', 'x'], 'y'), eq('y', 2)], ['x', 'y'], 'complex').text).toBe('{["Add",["Multiply",2,"Pi","k","ImaginaryUnit"],["Ln",2]], 2 : k ∈ ℤ}');
   });
 
-  it('refuses what elimination cannot reach', () => {
+  it('hands what elimination cannot reach to certified numerics, which asks for range rows when unbounded', () => {
     const r = setup(['And', eq(add(['Exp', 'x'], ['Sin', 'y']), 1), eq(add(['Exp', 'y'], ['Sin', 'x']), 1)]);
-    expect(describe(r.store, r.outcome)).toMatch(/incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: no target can be isolated/);
+    expect(describe(r.store, r.outcome)).toMatch(/incomplete-implementation: EQUATION-CERTIFIED-NUMERICS1: the solutions are not bounded in x and y; add range rows/);
   });
 });
 

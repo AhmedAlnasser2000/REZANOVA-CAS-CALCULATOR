@@ -45,12 +45,15 @@ V6 adds them before adoption, as V5 did before New Integration.
 **Root binders**: an algebraic number is never a custom `RootOf` head inside a math leaf. It is declared once and referenced by its symbol:
 - `real-algebraic`: an integer polynomial in the binder's symbol, with rational bounds lo < root < hi (or lo = hi);
 - `complex-algebraic`: the same polynomial, with a rational disk (re, im, radius);
-- `indexed-real-root`: the index-th real root (1 = smallest) of a polynomial whose coefficients carry parameters, with optional rational bounds;
+- `indexed-real-root`: the index-th real root (1 = smallest) of a polynomial whose coefficients carry parameters, with optional rational bounds. Since `EQUATION-SEMIALGEBRAIC1` its polynomial may also use targets; such a root is then only usable inside a `cylindrical` cell deeper than every target it uses, where it is a root in that cell's variable;
 - `isolated-real-root` (added by `EQUATION-CERTIFIED-NUMERICS1`, schema 7, real domain only): the unique zero of an expression in the binder's symbol with rational bounds lo < zero < hi. The expression is defined and strictly monotone on [lo, hi] and changes sign there. Readers re-check this certificate (`core/numeric/isolated.ts` `certifyIsolated`), as they re-check the isolation of algebraic binders.
+- `isolated-real-point` (added by `EQUATION-CERTIFIED-NUMERICS1` PR B, schema 7, real domain only): one binder per certified solution of a square system, `{ symbols, equations, box }`. It declares one fresh symbol per coordinate (answers reference these), the system written in them (as many equations as symbols, each symbol used) and a rational box (lo < hi per coordinate) in which every equation is defined and continuously differentiable and the Krawczyk test proves exactly one solution. Readers re-prove the Krawczyk test (`core/numeric/krawczyk.ts` `certifyPoint`).
 
 Either algebraic kind may carry a `form`, a closed form proven by the producer to equal the root.
 
-**Sets**: `finite`, `intervals`, `cofinite`, `union`, `case-tree`, `periodic-set`, `interval-family`, `root-set`, `periodic`, `parametric`, `reduced-form` and `unconfirmed`, mirroring the core. Endpoints are a value or a typed ±∞; conditions are typed (`nonzero`, `positive`, `nonnegative`, `in-domain`, `equal`, `not-equal`).
+**Sets**: `finite`, `intervals`, `cofinite`, `union`, `case-tree`, `periodic-set`, `interval-family`, `root-set`, `periodic`, `parametric`, `reduced-form`, `unconfirmed` and `cylindrical`, mirroring the core.
+
+`cylindrical` (added by `EQUATION-SEMIALGEBRAIC1`, schema 7, real only, at least two targets) is a region in the form of Mathematica's Reduce: `{ variables, cells }`. Each cell is an interval of its level's variable (`lo`, `hi`, `loClosed`, `hiClosed`; a section is [v, v]) with optional `children`, the cells of the next variable over it. Without children, the remaining variables are free. A level-d cell's ends may use the first d − 1 targets, and indexed roots that use only those. Cell lists are non-empty, disjoint and ascending. Endpoints are a value or a typed ±∞; conditions are typed (`nonzero`, `positive`, `nonnegative`, `in-domain`, `equal`, `not-equal`).
 
 ## Validation (`src/lib/result-contract/validation-v6.ts`)
 

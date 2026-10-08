@@ -8,7 +8,7 @@ import { diskOf } from '../core/decision/algebraic-coefficients';
 import { conjugate, evaluateExact, imaginaryPart, realPart, type ExactValue } from '../core/representation/evaluate';
 import type { ExprId, ExpressionStore } from '../core/representation/expression';
 import { realSign } from '../core/representation/real-order';
-import { compareValues, type Point, type PointValue } from '../core/representation/solution-set';
+import { compareCertifiedPoints, compareValues, type Point, type PointValue } from '../core/representation/solution-set';
 
 /**
  * Display values for Equation answers (EQUATION-PRESENTATION1, part A).
@@ -269,6 +269,9 @@ export function orderPoints(store: ExpressionStore, points: readonly Point[], do
   const placed = keyed.filter(k => k.keys.every(x => x !== undefined)), rest = keyed.filter(k => k.keys.some(x => x === undefined));
   const compare = (a: typeof keyed[number], b: typeof keyed[number]) => {
     try {
+      // Certified system solutions can share a coordinate, which refinement never orders: their boxes do.
+      const certified = compareCertifiedPoints(store, a.p, b.p);
+      if (certified !== undefined) return certified;
       for (let j = 0; j < a.keys.length; j++) {
         const c = compareKeys(store, a.keys[j] as Key, b.keys[j] as Key);
         if (c) return c;

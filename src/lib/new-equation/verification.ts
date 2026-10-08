@@ -22,6 +22,8 @@ const SENTENCES: Readonly<Record<Kind, string>> = {
   parametric: 'The parametrised solutions were substituted back into the original rows exactly.',
   'reduced-form': 'Each rewriting step was checked exactly to keep the same solutions.',
   unconfirmed: 'The candidates were checked exactly; they are shown as candidates.',
+  cylindrical: 'Every cell was checked exactly at a sample point, and a second decomposition in another variable order agrees.',
+  truth: 'The statement was decided by an exact decomposition, and a second, independent decomposition agrees.',
 };
 
 function kinds(s: CanonicalEquationSet, out: Set<Kind>): Set<Kind> {
@@ -36,7 +38,11 @@ export function verificationSummary(doc: CanonicalEquationDocument): Verificatio
   if (p.provenance.verification !== 'independent' || (o.kind !== 'solved' && o.kind !== 'empty')) return undefined;
   const assumed = p.assumptions?.length ? ' Cases ruled out by the assumptions were checked to be excluded.' : '';
   if (o.kind === 'empty') return { headline: 'Verified exactly', detail: `The engine proved that no value satisfies every row.${assumed}` };
-  // Certified numerics (EQUATION-CERTIFIED-NUMERICS1): roots without closed forms, each proven in its interval.
+  // Certified numerics (EQUATION-CERTIFIED-NUMERICS1): solutions of systems, each proven alone in its box (PR B).
+  if (p.roots.some(b => b.kind === 'isolated-real-point')) {
+    return { headline: 'Certified', detail: `Each solution was proven to be the only one in its box (an interval Newton test, the Krawczyk test, checked exactly), the digits shown are correct, and no other solutions exist.${assumed}` };
+  }
+  // Roots without closed forms, each proven in its interval.
   if (p.roots.some(b => b.kind === 'isolated-real-root')) {
     return { headline: 'Certified', detail: `Each root was proven to be the only one in its interval (the expression changes sign there and is strictly monotone), the digits shown are correct, and no other solutions exist.${assumed}` };
   }

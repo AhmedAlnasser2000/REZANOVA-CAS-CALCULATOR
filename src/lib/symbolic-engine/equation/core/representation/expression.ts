@@ -60,10 +60,23 @@ export type ExpressionNode =
    * `expr` is defined and strictly monotone on [lo, hi] and has sign `loSign` just above lo
    * (EQUATION-CERTIFIED-NUMERICS1). A leaf: its bound variable is not a free symbol.
    */
-  | { readonly kind: 'isolated'; readonly expr: ExprId; readonly lo: Rational; readonly hi: Rational; readonly loSign: 1 | -1 };
+  | { readonly kind: 'isolated'; readonly expr: ExprId; readonly lo: Rational; readonly hi: Rational; readonly loSign: 1 | -1 }
+  /**
+   * Coordinate `index` of the unique real solution of the square system `system` (written in the bound
+   * variables pointVariable(0…n−1)) in the box `box`, where every equation is defined and continuously
+   * differentiable and the Krawczyk test proves exactly one solution (EQUATION-CERTIFIED-NUMERICS1 PR B).
+   * A leaf like `isolated`; the coordinates of one solution share their system and box.
+   */
+  | { readonly kind: 'isolated-point'; readonly system: readonly ExprId[]; readonly box: readonly PointBound[]; readonly index: number };
+
+/** One coordinate's rational bounds in a point's box. */
+export interface PointBound { readonly lo: Rational; readonly hi: Rational }
 
 /** The bound variable of isolated zeros (users cannot name it: rows accept Latin letters only). */
 export const ISOLATED_VARIABLE = 'ξ';
+
+/** The bound variables of isolated points: ξ1, ξ2, … */
+export const pointVariable = (i: number): string => `${ISOLATED_VARIABLE}${i + 1}`;
 
 interface Entry {
   readonly node: ExpressionNode;
@@ -149,7 +162,7 @@ export class ExpressionStore {
       case 'symbol': return false;
       case 'constant': return node.name === 'pi';
       case 'algebraic': return node.root.kind === 'real';
-      case 'isolated': return true;
+      case 'isolated': case 'isolated-point': return true;
       case 'add': case 'mul': return node.args.every(real);
       case 'pow': {
         const e = this.#entries[node.exponent].node;
@@ -266,6 +279,33 @@ export class ExpressionStore {
     demand(this.freeSymbols(expr).every(s => s === ISOLATED_VARIABLE), 'invalid-input', 'an isolated zero has one variable');
     const text = `${this.digest(expr)}|${lo.numerator}/${lo.denominator}|${hi.numerator}/${hi.denominator}|${loSign}`;
     return this.#make(`i:${text}`, { kind: 'isolated', expr, lo, hi, loSign }, `i|${text}`, [], true);
+  }
+
+  /**
+   * Coordinate `index` of the solution of `system` (in `variables`) in `box` (see the node). The certificate is
+   * checked by its producers and verifiers, not here.
+   */
+  isolatedPoint(system: readonly ExprId[], variables: readonly string[], box: readonly PointBound[], index: number): ExprId {
+    const n = variables.length;
+    demand(n >= 2 && system.length === n && box.length === n && Number.isInteger(index) && index >= 0 && index < n, 'invalid-input', 'an isolated point needs a square system');
+    for (const b of box) {
+      assertRational(this.ctx, b.lo); assertRational(this.ctx, b.hi);
+      demand(b.lo.numerator * b.hi.denominator < b.hi.numerator * b.lo.denominator, 'invalid-input', 'a point box needs lo < hi');
+    }
+    const bound = new Map(variables.map((v, i) => [v, this.symbol(pointVariable(i))] as const));
+    const exprs = system.map(f => this.substitute(f, bound)), names = variables.map((_, i) => pointVariable(i));
+    demand(exprs.every(e => this.freeSymbols(e).every(s => names.includes(s))), 'invalid-input', 'an isolated point has only its own variables');
+    const text = `${exprs.map(e => this.digest(e)).join(',')}|${box.map(b => `${b.lo.numerator}/${b.lo.denominator}:${b.hi.numerator}/${b.hi.denominator}`).join(',')}|${index}`;
+    return this.#make(`p:${text}`, { kind: 'isolated-point', system: Object.freeze([...exprs]), box: Object.freeze(box.map(b => Object.freeze({ lo: b.lo, hi: b.hi }))), index }, `p|${text}`, [], true);
+  }
+
+  /** The system of an isolated point, in `variables`. */
+  isolatedPointSystem(id: ExprId, variables: readonly string[]): ExprId[] {
+    const n = this.node(id);
+    demand(n.kind === 'isolated-point', 'invalid-input', 'not an isolated point');
+    const node = n as Extract<ExpressionNode, { kind: 'isolated-point' }>;
+    const map = new Map(variables.map((v, i) => [pointVariable(i), this.symbol(v)] as const));
+    return node.system.map(e => this.substitute(e, map));
   }
 
   /** The function of an isolated zero, in `variable`. */

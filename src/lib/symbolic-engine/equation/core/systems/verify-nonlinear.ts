@@ -15,6 +15,7 @@ import { checkCofactors, groebner, isGroebner, reduce } from './groebner';
 import { systemPolys } from './polynomial';
 import { hermite, multiplication, quotient, rankSignature } from './zero-dim';
 import { verifyPointsInNumberField } from './verify-zero-dim';
+import { isolatedLeaves, quickSign, vanishesByIdentity } from '../numeric/identity';
 
 /**
  * Evidence for nonlinear systems and systems with kernels.
@@ -60,16 +61,22 @@ export function verifyPolynomialCertificate(problem: RelationProblem, atoms: rea
 /** Whether the system's relations and conditions all hold at a point (exactly, or by certified sign). */
 export function holdsAt(problem: RelationProblem, point: readonly ExprId[]): boolean {
   const store = problem.store, env = new Map(problem.targets.map((t, i) => [t, point[i]] as const));
-  const zero = (e: ExprId): boolean | undefined => {
+  /** The sign of a value: exact where possible; a value built from certified numerics is 0 only by identity. */
+  const sign = (e: ExprId): -1 | 0 | 1 | undefined => {
     const id = store.substitute(e, env), v = evaluateExact(store, id, problem.domain);
-    if (v.kind === 'exact') return v.value.kind === 'rational' && v.value.value.numerator === 0n;
+    if (v.kind === 'exact') return v.value.kind === 'rational' ? (v.value.value.numerator === 0n ? 0 : v.value.value.numerator < 0n ? -1 : 1) : problem.domain === 'real' ? realSign(store, id) : complexIsZero(store, id) ? 0 : 1;
     if (v.kind === 'undefined') return undefined;
-    if (problem.domain === 'real') return realSign(store, id) === 0;
+    if (isolatedLeaves(store, id).length) {
+      if (vanishesByIdentity(store, id)) return 0;
+      return quickSign(store, id) ?? fail('a value with a certified numeric root is not decided exactly');
+    }
+    if (problem.domain === 'real') return realSign(store, id);
     const z = complexIsZero(store, id);
-    return z === true ? true : z === false ? false : fail('a value has no zero test');
+    return z === true ? 0 : z === false ? 1 : fail('a value has no zero test');
   };
-  return problem.relations.every(r => (r.op === 'eq' ? zero(store.sub(r.lhs, r.rhs)) === true : zero(store.sub(r.lhs, r.rhs)) === false))
-    && problem.conditions.every(c => c.kind === 'in-domain' || ('other' in c ? zero(store.sub(c.expr, c.other)) === false : zero(c.expr) === false));
+  const relation = (op: string, s: -1 | 0 | 1 | undefined) => s !== undefined && (op === 'eq' ? s === 0 : op === 'ne' ? s !== 0 : op === 'lt' ? s < 0 : s <= 0);
+  return problem.relations.every(r => relation(r.op, sign(store.sub(r.lhs, r.rhs))))
+    && problem.conditions.every(c => c.kind === 'in-domain' || ('other' in c ? sign(store.sub(c.expr, c.other)) !== 0 && sign(store.sub(c.expr, c.other)) !== undefined : (() => { const s = sign(c.expr); return s !== undefined && s !== 0; })()));
 }
 
 const GRID: readonly [bigint, bigint][] = [[0n, 1n], [1n, 1n], [-1n, 1n], [2n, 1n], [-2n, 1n], [1n, 2n], [-1n, 2n], [3n, 1n]];

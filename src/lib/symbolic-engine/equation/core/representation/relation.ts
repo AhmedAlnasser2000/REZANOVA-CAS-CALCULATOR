@@ -37,6 +37,8 @@ export interface RelationProblem {
   readonly generators: readonly Generator[];
   /** Constraint store slot (filled by later slices). */
   readonly constraints: readonly Condition[];
+  /** Rows with ∧, ∨, ∀ or ∃ (EQUATION-SEMIALGEBRAIC1); empty for plain conjunctions, which every slice reads. */
+  readonly formulas: readonly Formula[];
   readonly hash: string;
 }
 
@@ -48,6 +50,39 @@ export interface ProblemInput {
   readonly conditions?: readonly Condition[];
   readonly generators?: readonly Generator[];
   readonly constraints?: readonly Condition[];
+  /** Rows that combine relations with ∧, ∨, ¬, ∀ or ∃, canonical (`formula.ts`); they hold together with `relations`. */
+  readonly formulas?: readonly Formula[];
+}
+
+/**
+ * A row's formula in negation normal form (EQUATION-SEMIALGEBRAIC1): relations under ∧, ∨, ∀ and ∃. Built and
+ * canonicalized by `formula.ts`.
+ */
+export type Formula =
+  | { readonly kind: 'rel'; readonly rel: Relation }
+  | { readonly kind: 'and'; readonly args: readonly Formula[] }
+  | { readonly kind: 'or'; readonly args: readonly Formula[] }
+  | { readonly kind: 'forall'; readonly variable: string; readonly body: Formula }
+  | { readonly kind: 'exists'; readonly variable: string; readonly body: Formula };
+
+export function formulaKey(store: ExpressionStore, f: Formula): string {
+  switch (f.kind) {
+    case 'rel': return `r(${relationKey(store, f.rel)})`;
+    case 'and': case 'or': return `${f.kind}(${f.args.map(a => formulaKey(store, a)).join(';')})`;
+    case 'forall': case 'exists': return `${f.kind}(${f.variable}:${formulaKey(store, f.body)})`;
+  }
+}
+
+/** Every relation in a formula, and the variables it binds. */
+function formulaParts(f: Formula): { relations: Relation[]; bound: Set<string> } {
+  const relations: Relation[] = [], bound = new Set<string>(), pending: Formula[] = [f];
+  while (pending.length) {
+    const g = pending.pop() as Formula;
+    if (g.kind === 'rel') relations.push(g.rel);
+    else if (g.kind === 'and' || g.kind === 'or') pending.push(...g.args);
+    else { bound.add(g.variable); pending.push(g.body); }
+  }
+  return { relations, bound };
 }
 
 export function canonicalRelation(store: ExpressionStore, r: RelationInput): Relation {
@@ -97,23 +132,30 @@ export function relationProblem(store: ExpressionStore, input: ProblemInput): Re
   for (const g of input.generators ?? []) { demand(isSymbolName(g.symbol), 'invalid-input', 'generator symbol'); store.node(g.definition); }
   const generators = sortedUnique((input.generators ?? []).map(g => Object.freeze({ symbol: g.symbol, definition: g.definition })), g => generatorKey(store, g));
   demand(new Set(generators.map(g => g.symbol)).size === generators.length, 'invalid-input', 'generator defined twice');
+  const formulas = sortedUnique(input.formulas ?? [], f => formulaKey(store, f));
+  const parts = formulas.map(formulaParts), bound = new Set(parts.flatMap(p => [...p.bound]));
+  demand(input.domain === 'real' || parts.every(p => p.relations.every(r => r.op === 'eq' || r.op === 'ne')), 'invalid-input', 'order relations need the real domain');
+  demand(targets.every(t => !bound.has(t)), 'invalid-input', 'a quantified variable cannot be a target');
   const roots = [...relations.flatMap(r => [r.lhs, r.rhs]), ...[...conditions, ...constraints].flatMap(c => ('other' in c ? [c.expr, c.other] : [c.expr])), ...generators.map(g => g.definition)];
   const taken = new Set([...targets, ...generators.map(g => g.symbol)]);
-  const parameters = Object.freeze(store.freeSymbols(...roots).filter(s => !taken.has(s)));
+  // Bound variables are not parameters (a quantified name used free in another row is refused by the input layer).
+  const formulaSymbols = store.freeSymbols(...parts.flatMap(p => p.relations.flatMap(r => [r.lhs, r.rhs]))).filter(s => !bound.has(s));
+  const parameters = Object.freeze([...new Set([...store.freeSymbols(...roots), ...formulaSymbols])].filter(s => !taken.has(s)).sort());
   const text = JSON.stringify({
     v: 1, domain: input.domain, targets, parameters,
     relations: relations.map(r => relationKey(store, r)),
     conditions: conditions.map(c => conditionKey(store, c)),
     generators: generators.map(g => generatorKey(store, g)),
     constraints: constraints.map(c => conditionKey(store, c)),
+    ...(formulas.length ? { formulas: formulas.map(f => formulaKey(store, f)) } : {}),
   });
-  return Object.freeze({ store, domain: input.domain, relations, targets, parameters, conditions, generators, constraints, hash: sha256(ctx, text) });
+  return Object.freeze({ store, domain: input.domain, relations, targets, parameters, conditions, generators, constraints, formulas, hash: sha256(ctx, text) });
 }
 
 /** Same problem with some parts replaced (re-canonicalized and re-hashed). */
 export function withChanges(problem: RelationProblem, changes: Partial<ProblemInput>): RelationProblem {
   return relationProblem(problem.store, {
     domain: problem.domain, relations: problem.relations, targets: problem.targets, conditions: problem.conditions,
-    generators: problem.generators, constraints: problem.constraints, ...changes,
+    generators: problem.generators, constraints: problem.constraints, formulas: problem.formulas, ...changes,
   });
 }

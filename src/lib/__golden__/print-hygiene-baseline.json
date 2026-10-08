@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "INTEGRATION-EXPONENTIAL-ADOPTION1 merge: New Integration polynomial case now projects rationalPart and typed restrictions",
-  "caseCount": 52,
+  "acceptedReason": "EQUATION-SEMIALGEBRAIC1 PR B: quantifier golden case and region wording",
+  "caseCount": 55,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -13,7 +13,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 3,
+    "new-equation": 6,
     "new-integration": 2
   },
   "successfulWorkspaceCounts": {
@@ -27,7 +27,7 @@
     "vector": 3,
     "table": 2,
     "graphing": 1,
-    "new-equation": 3,
+    "new-equation": 6,
     "new-integration": 2
   },
   "entries": [
@@ -1543,6 +1543,160 @@
           "path": "canonicalResult.primary.outcome.set.points[0][0]",
           "kind": "typed-math-leaf",
           "value": "r_{1}"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-certified-system",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.roots[0].equations[0]",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\cos\\left(r_{1}+\\left(-1\\right)\\left(r_{2}\\right)\\right)\\right)+r_{2}"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].equations[1]",
+          "kind": "typed-math-leaf",
+          "value": "\\sin\\left(r_{1}+r_{2}\\right)+\\left(-1\\right)\\left(r_{1}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].box[0].lo",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{5}{6}"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].box[0].hi",
+          "kind": "typed-math-leaf",
+          "value": "1"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].box[1].lo",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{7}{8}"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].box[1].hi",
+          "kind": "typed-math-leaf",
+          "value": "\\frac{10}{9}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[0][0]",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.points[0][1]",
+          "kind": "typed-math-leaf",
+          "value": "r_{2}"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-region",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.roots[0].polynomial",
+          "kind": "typed-math-leaf",
+          "value": "-1+\\left(2\\right)\\left(\\left(r_{1}\\right)^{2}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].lo",
+          "kind": "typed-math-leaf",
+          "value": "-2"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].hi",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.roots[0].form",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(\\frac{1}{2}\\right)^{\\frac{1}{2}}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].polynomial",
+          "kind": "typed-math-leaf",
+          "value": "-1+\\left(2\\right)\\left(\\left(r_{2}\\right)^{2}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].lo",
+          "kind": "typed-math-leaf",
+          "value": "0"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].hi",
+          "kind": "typed-math-leaf",
+          "value": "2"
+        },
+        {
+          "path": "canonicalResult.primary.roots[1].form",
+          "kind": "typed-math-leaf",
+          "value": "\\left(\\frac{1}{2}\\right)^{\\frac{1}{2}}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "-1"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].children[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(-1\\right)\\left(\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}\\right)"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[0].children[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{1}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "r_{2}"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].children[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "x"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.cells[1].children[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "\\left(1+\\left(-1\\right)\\left(\\left(x\\right)^{2}\\right)\\right)^{\\frac{1}{2}}"
+        }
+      ]
+    },
+    {
+      "id": "new-equation-forall",
+      "workspace": "new-equation",
+      "outcomeKind": "success",
+      "title": "Equation",
+      "fragments": [
+        {
+          "path": "canonicalResult.primary.outcome.set.intervals[0].lo.value",
+          "kind": "typed-math-leaf",
+          "value": "-2"
+        },
+        {
+          "path": "canonicalResult.primary.outcome.set.intervals[0].hi.value",
+          "kind": "typed-math-leaf",
+          "value": "2"
         }
       ]
     },

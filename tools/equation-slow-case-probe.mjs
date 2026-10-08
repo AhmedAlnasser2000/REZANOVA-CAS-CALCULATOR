@@ -31,6 +31,25 @@ export const DEFAULT_CASES = [
   { rows: ['e^x+\\sin x=0', '-10\\le x\\le0'], domain: 'real' },
   { rows: ['e^x+\\sin x>0', 'x\\ge-10'], domain: 'real' },
   { rows: ['e^x+\\sin x=0'], domain: 'real' },
+  // Systems eliminated to one certified root (PR B, B0: verification used to refine forever).
+  { rows: ['y=\\sin x', 'x+e^y=2'], domain: 'real' },
+  // Certified square systems (PR B): range rows, none needed, three unknowns, unbounded, a tangent solution.
+  { rows: ['e^x+\\sin y=1', 'e^y-\\sin x=1', '-5\\le x\\le1', '-5\\le y\\le1'], domain: 'real' },
+  { rows: ['\\sin(x+y)=x', '\\cos(x-y)=y'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2=3', 'e^x-yz=1', '\\sin y+xz=\\frac{1}{2}'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2=3', 'e^x-yz=1', '\\sin y+xz=0'], domain: 'real' },
+  { rows: ['e^x+\\sin y=1', 'e^y+\\sin x=1'], domain: 'real' },
+  { rows: ['e^x+\\sin y=1', 'e^y+\\sin x=1', '-1\\le x\\le1', '-1\\le y\\le1'], domain: 'real' },
+  // EQUATION-SEMIALGEBRAIC1: ∨ ∧ ¬ rows and regions by cylindrical decomposition.
+  { rows: ['x^2+y^2<1', 'y>x'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['x^2+y^2<4', 'x^2+y^2>1'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['x^2+y^2<1\\lor x>2'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['x^2+y^2=5', 'xy=2', 'x>0', 'y>0'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2\\le1', 'z=x+y'], targets: ['x', 'y', 'z'], domain: 'real' },
+  { rows: ['x^2+y^2+z^2<1'], targets: ['x', 'y', 'z'], domain: 'real' },
+  { rows: ['y^3+xy+1<0'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['x^2+y^2<1', 'x+y>2'], targets: ['x', 'y'], domain: 'real' },
+  { rows: ['\\neg\\left(x^2\\le1\\right)'], domain: 'real' },
 ];
 
 /** Run one case; resolves with its phases, and `killed` naming the phase that was running at 60 s. */

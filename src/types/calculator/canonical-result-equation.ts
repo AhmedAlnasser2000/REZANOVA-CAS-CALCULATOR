@@ -34,7 +34,10 @@ export type CanonicalEquationRootBinder =
   | {
       kind: 'indexed-real-root';
       symbol: string;
-      /** The index-th real root (1 = smallest) of `polynomial`, whose coefficients may carry parameters. */
+      /**
+       * The index-th real root (1 = smallest) of `polynomial`, whose coefficients may carry parameters, and inside a
+       * cylindrical region the outer variables of the cell it bounds.
+       */
       polynomial: CanonicalEquationMath;
       index: number;
       /** Optional rational isolating bounds (constant, possibly transcendental, coefficients). */
@@ -51,6 +54,18 @@ export type CanonicalEquationRootBinder =
       expression: CanonicalEquationMath;
       lo: CanonicalEquationMath;
       hi: CanonicalEquationMath;
+    }
+  | {
+      kind: 'isolated-real-point';
+      /** One fresh symbol per coordinate, in the problem's target order; answers reference these. */
+      symbols: string[];
+      /**
+       * The unique real solution of the square system `equations` (each = 0, written in `symbols`) in `box`, where
+       * every equation is defined and continuously differentiable and the Krawczyk test proves exactly one
+       * solution (EQUATION-CERTIFIED-NUMERICS1 PR B).
+       */
+      equations: CanonicalEquationMath[];
+      box: Array<{ lo: CanonicalEquationMath; hi: CanonicalEquationMath }>;
     };
 
 export type CanonicalEquationCondition =
@@ -66,6 +81,14 @@ export interface CanonicalEquationInterval {
   hi: CanonicalEquationEndpoint;
   loClosed: boolean;
   hiClosed: boolean;
+}
+
+/**
+ * A cell of a cylindrical region: an interval of its level's variable (a section is [v, v]), with ends in the outer
+ * variables, and the cells of the next variable over it (absent: the remaining variables are free).
+ */
+export interface CanonicalEquationRegionCell extends CanonicalEquationInterval {
+  children?: CanonicalEquationRegionCell[];
 }
 
 export interface CanonicalEquationRelation {
@@ -124,7 +147,14 @@ export type CanonicalEquationSet =
       kind: 'unconfirmed';
       variables: string[];
       candidates: Array<{ point: CanonicalEquationMath[]; derivations: string[] }>;
-    };
+    }
+  /**
+   * A region of ℝⁿ as nested cells (EQUATION-SEMIALGEBRAIC1): the first variable in one of `cells`, the next in one
+   * of that cell's children, and so on. Cells of one list are disjoint and ascending.
+   */
+  | { kind: 'cylindrical'; variables: string[]; cells: CanonicalEquationRegionCell[] }
+  /** A decided statement (EQUATION-SEMIALGEBRAIC1 PR B): every name is quantified; only with no targets. */
+  | { kind: 'truth'; value: boolean };
 
 export type CanonicalEquationOutcome =
   | { kind: 'solved'; set: CanonicalEquationSet }
