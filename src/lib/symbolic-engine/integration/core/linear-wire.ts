@@ -1,6 +1,10 @@
 import { demand, type ExecutionContext } from './execution';
-import type { LinearSolution, RowOperation } from './linear-system';
+import type { LinearSolution, LinearSystem, RowOperation } from './linear-system';
 import * as w from './decision-wire-algebra';
+
+export function linearSystemCodec<E>(ctx: ExecutionContext, element: w.EvidenceCodec<E>): w.EvidenceCodec<LinearSystem<E>> {
+  return w.structure(ctx, {rows: w.integer(ctx), columns: w.integer(ctx), matrix: w.list(ctx, w.list(ctx, element)), rhs: w.list(ctx, element)});
+}
 
 function kind(value: unknown): unknown {
   demand(value !== null && typeof value === 'object', 'invalid-input', 'linear evidence record');

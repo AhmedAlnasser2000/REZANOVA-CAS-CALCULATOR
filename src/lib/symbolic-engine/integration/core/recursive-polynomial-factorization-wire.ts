@@ -11,7 +11,8 @@ import { factorConversionCodec, factorMultivariateTreeCodec, factorSparsePrimiti
 import { verifyRecursiveFactorizationInternal, type RecursivePolynomialFactorization } from './recursive-polynomial-factorization';
 import * as w from './decision-wire-algebra';
 
-function codec<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, bounds: DifferentialBounds): w.EvidenceCodec<RecursivePolynomialFactorization<E>> {
+/** Composition helper. Decoding grants no authority; the enclosing verifier checks the complete evidence. */
+export function recursiveFactorizationEvidenceCodec<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, bounds: DifferentialBounds): w.EvidenceCodec<RecursivePolynomialFactorization<E>> {
   const domain = factorCoefficientDomain(ctx, ring.domain, bounds.towerHeight), element = domain.codec(ctx), p = w.polynomial(ctx, ring, element);
   const zero = w.structure(ctx, {kind: w.literal(ctx, 'zero'), input: p});
   const base = {kind: w.literal(ctx, 'factorization'), input: p, unit: element,
@@ -35,7 +36,7 @@ function codec<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, bounds: Differ
 export function encodeRecursivePolynomialFactorization<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input: Polynomial<E>, decision: RecursivePolynomialFactorization<E>, bounds: DifferentialBounds): unknown {
   return ctx.operation(() => {
     checkArtifactBounds(ctx, bounds); verifyRecursiveFactorizationInternal(ctx, ring, input, decision, bounds); ctx.allocate(3);
-    const data = Object.freeze({tag: 'recursive-polynomial-factorization', version: 1, decision: codec(ctx, ring, bounds).encode(decision)});
+    const data = Object.freeze({tag: 'recursive-polynomial-factorization', version: 1, decision: recursiveFactorizationEvidenceCodec(ctx, ring, bounds).encode(decision)});
     inspectExactArtifact(ctx, bounds, data); return data;
   });
 }
@@ -45,6 +46,6 @@ export function decodeRecursivePolynomialFactorization<E>(ctx: ExecutionContext,
     assertPolynomialRingOwner(ctx, ring); ring.assert(ctx, input);
     const raw = w.record(ctx, data, ['tag', 'version', 'decision']);
     demand(raw.tag === 'recursive-polynomial-factorization' && raw.version === 1, 'invalid-input', 'factorization artifact version');
-    const decision = codec(ctx, ring, bounds).decode(raw.decision); verifyRecursiveFactorizationInternal(ctx, ring, input, decision, bounds); return decision;
+    const decision = recursiveFactorizationEvidenceCodec(ctx, ring, bounds).decode(raw.decision); verifyRecursiveFactorizationInternal(ctx, ring, input, decision, bounds); return decision;
   });
 }
