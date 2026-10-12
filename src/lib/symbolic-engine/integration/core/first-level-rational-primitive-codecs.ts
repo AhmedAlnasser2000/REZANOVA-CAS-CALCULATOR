@@ -1,6 +1,6 @@
+import { type ArithmeticRationalDomain } from './transcendental-domain';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialField, DifferentialElement as E } from './differential-field';
-import type { FirstLevelRationalDomain } from './first-level-rational-domain';
 import { verifyFirstLevelLogTerm, type FirstLevelLogTerm, type FirstLevelPrimitive, type FirstLevelPrimitiveDerivative } from './first-level-rational-primitive';
 import type { FirstLevelCondition } from './first-level-rational-conditions';
 import { SquareFreeQuotientAlgebra } from './quotient-algebra';
@@ -16,7 +16,7 @@ export function differentialValueCodec(ctx: ExecutionContext, owner: Differentia
   return { encode(v) { owner.assert(ctx, v); demand(v.kind === 'fraction', 'domain-mismatch', 'wire fraction'); return c.encode(v.value); },
     decode(v) { return owner.fraction(ctx, c.decode(v)); } };
 }
-export function firstLevelPrimitiveCodecs<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, d: D) {
+export function firstLevelPrimitiveCodecs<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, d: D) {
   const e = differentialValueCodec(ctx, d.field), p = w.polynomial(ctx, d.fz, e), q = w.polynomial(ctx, d.z, w.scalar(ctx));
   const derivative = w.structure(ctx, { input: e, derivative: e });
   const term: w.EvidenceCodec<FirstLevelLogTerm<D>> = {

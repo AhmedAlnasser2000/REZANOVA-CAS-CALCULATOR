@@ -1,14 +1,14 @@
+import { type ArithmeticRationalDomain } from './transcendental-domain';
 import { demand, type ExecutionContext } from './execution';
 import { PolynomialRing } from './polynomial';
 import { SquareFreeQuotientAlgebra } from './quotient-algebra';
-import type { FirstLevelRationalDomain } from './first-level-rational-domain';
 import { differentialValueCodec, firstLevelPrimitiveCodecs } from './first-level-rational-primitive-codecs';
 import type { DifferentialHermite } from './first-level-rational-hermite';
 import type { FirstLevelResidue } from './first-level-rational-residue';
 import type { LrtComponent, LrtGroup, ResiduePartitionNode } from './first-level-rational-selection';
 import * as w from './decision-wire-algebra';
 
-export function firstLevelReductionCodecs<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, d: D) {
+export function firstLevelReductionCodecs<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, d: D) {
   const c = firstLevelPrimitiveCodecs(ctx, d), base = differentialValueCodec(ctx, d.base);
   const t = w.polynomial(ctx, d.t, base), z = w.polynomial(ctx, d.kz, base);
   const hermite: w.EvidenceCodec<DifferentialHermite> = w.structure(ctx, {

@@ -55,7 +55,7 @@ export function recursiveParametricRdeEvidenceCodec(ctx: ExecutionContext, view:
     family: w.optional(w.structure(ctx, {particular: v.pair, directions: w.list(ctx, v.pair)})), conditions: v.conditions});
   return {encode: c.encode, decode(data) { const e = c.decode(data); ctx.allocate(1); return Object.freeze({...e, view}); }};
 }
-function constantExtractionCodec(ctx: ExecutionContext, owner: DifferentialField, bounds: DifferentialBounds): w.EvidenceCodec<RecursiveConstantExtraction> {
+export function constantExtractionCodec(ctx: ExecutionContext, owner: DifferentialField, bounds: DifferentialBounds): w.EvidenceCodec<RecursiveConstantExtraction> {
   const value = factorCoefficientDomain(ctx, owner, bounds.towerHeight).codec(ctx), q = w.scalar(ctx);
   const absent: w.EvidenceCodec<null> = {encode(data) { demand(data === null, 'verification-failed', 'scalar constant leaf'); return null; },
     decode(data) { demand(data === null, 'invalid-input', 'scalar constant leaf'); return null; }};

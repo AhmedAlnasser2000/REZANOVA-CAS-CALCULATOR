@@ -1,3 +1,4 @@
+import { type ArithmeticRationalDomain } from './transcendental-domain';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialElement as E } from './differential-field';
 import { differentiate, verifyDerivative, type DerivativeEvidence } from './differential-derivative';
@@ -9,7 +10,7 @@ import { extendedGcd, verifyBezout, type Bezout } from './polynomial-division';
 import type { Rational } from './rational';
 import { selectFirstLevelResidues, verifyFirstLevelSelection, type BivariatePRS, type LrtGroup } from './first-level-rational-selection';
 
-export interface FirstLevelResidue<D extends FirstLevelRationalDomain = FirstLevelRationalDomain> {
+export interface FirstLevelResidue<D extends ArithmeticRationalDomain = FirstLevelRationalDomain> {
   readonly denominatorDerivative: DerivativeEvidence;
   readonly normal: Bezout<E>;
   readonly prs: BivariatePRS;
@@ -20,7 +21,7 @@ export interface FirstLevelResidue<D extends FirstLevelRationalDomain = FirstLev
   readonly decomposition: SquareFreeDecomposition<Rational> | null;
   readonly groups: readonly LrtGroup<D>[];
 }
-export function firstLevelResidues<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, d: D, residual: E): FirstLevelResidue<D> {
+export function firstLevelResidues<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, d: D, residual: E): FirstLevelResidue<D> {
   demand(residual.kind === 'fraction' && !d.field.isZero(ctx, residual), 'invalid-input', 'nonzero residual required');
   const denominatorDerivative = totalPolynomialDerivative(ctx, d.field, residual.value.denominator);
   const dn = verifyTotalPolynomialDerivative(ctx, d.field, residual.value.denominator, denominatorDerivative);
@@ -35,7 +36,7 @@ export function firstLevelResidues<D extends FirstLevelRationalDomain>(ctx: Exec
   const out = Object.freeze({ denominatorDerivative, normal, prs, scalar, monic, coefficients, nonconstant, decomposition, groups });
   verifyFirstLevelResidues(ctx, d, residual, out); return out;
 }
-export function verifyFirstLevelResidues<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, d: D, residual: E, proof: FirstLevelResidue<D>): void {
+export function verifyFirstLevelResidues<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, d: D, residual: E, proof: FirstLevelResidue<D>): void {
   d.field.assert(ctx, residual); demand(residual.kind === 'fraction' && !d.field.isZero(ctx, residual), 'verification-failed', 'nonzero normal residual');
   const n = residual.value.denominator;
   demand(d.t.degree(ctx, residual.value.numerator) < d.t.degree(ctx, n), 'verification-failed', 'proper residual');

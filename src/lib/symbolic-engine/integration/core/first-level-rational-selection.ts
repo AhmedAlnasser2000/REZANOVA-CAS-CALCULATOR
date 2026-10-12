@@ -1,7 +1,8 @@
+import { type ArithmeticRationalDomain } from './transcendental-domain';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialElement as E } from './differential-field';
 import { type EP, FirstLevelRationalDomain } from './first-level-rational-domain';
-import { type FirstLevelLogTerm, firstLevelLogTerm, verifyFirstLevelLogTerm } from './first-level-rational-primitive';
+import { type FirstLevelLogTerm, firstLevelLogTermWithin, verifyFirstLevelLogTerm } from './first-level-rational-primitive';
 import { descendConstantPolynomial, residueInputs, selectionArgument } from './first-level-rational-residue-algebra';
 import { PolynomialRing, type Polynomial } from './polynomial';
 import type { PolynomialDomain } from './polynomial-domain';
@@ -19,7 +20,7 @@ export interface ResiduePartitionNode {
   readonly algebra: ResidueAlgebra;
   readonly analyses: readonly UnitAnalysis<E>[];
 }
-export interface LrtComponent<D extends FirstLevelRationalDomain = FirstLevelRationalDomain> {
+export interface LrtComponent<D extends ArithmeticRationalDomain = FirstLevelRationalDomain> {
   readonly node: number;
   readonly specializedDegree: number;
   readonly index: number;
@@ -30,7 +31,7 @@ export interface LrtComponent<D extends FirstLevelRationalDomain = FirstLevelRat
   readonly residueDivision: MonicDivision<QuotientElement<E>, ResidueAlgebra>;
   readonly term: FirstLevelLogTerm<D>;
 }
-export interface LrtGroup<D extends FirstLevelRationalDomain = FirstLevelRationalDomain> {
+export interface LrtGroup<D extends ArithmeticRationalDomain = FirstLevelRationalDomain> {
   readonly nodes: readonly ResiduePartitionNode[];
   readonly components: readonly LrtComponent<D>[];
 }
@@ -38,7 +39,7 @@ export function specializeComponent(ctx: ExecutionContext, ring: ComponentRing, 
   ctx.allocate(input.coefficients.length);
   return ring.make(ctx, input.coefficients.map(c => ring.domain.make(ctx, c)));
 }
-export function selectFirstLevelResidues<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, owner: D, residual: E, dn: EP, prs: BivariatePRS, decomposition: SquareFreeDecomposition<import('./rational').Rational>): readonly LrtGroup<D>[] {
+export function selectFirstLevelResidues<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, owner: D, residual: E, dn: EP, prs: BivariatePRS, decomposition: SquareFreeDecomposition<import('./rational').Rational>): readonly LrtGroup<D>[] {
   const { denominator, residue } = residueInputs(ctx, owner, residual, dn);
   demand(residual.kind === 'fraction', 'domain-mismatch', 'residual fraction');
   const n = owner.t.degree(ctx, residual.value.denominator);
@@ -70,7 +71,7 @@ export function selectFirstLevelResidues<D extends FirstLevelRationalDomain>(ctx
       const denominatorDivision = monicDivide(ctx, ring, specializeComponent(ctx, ring, denominator), argument);
       const residueDivision = monicDivide(ctx, ring, specializeComponent(ctx, ring, residue), argument);
       ctx.allocate(argument.coefficients.length + 8);
-      const term = firstLevelLogTerm(ctx, owner, descendConstantPolynomial(ctx, owner, modulus),
+      const term = firstLevelLogTermWithin(ctx, owner, descendConstantPolynomial(ctx, owner, modulus),
         owner.z.make(ctx, [owner.z.domain.fromInteger(ctx, 0n), owner.z.domain.fromInteger(ctx, 1n)]), selectionArgument(ctx, owner, argument));
       components.push(Object.freeze({ node, specializedDegree: degree, index: multiplicity, ring, normalization, argument, denominatorDivision, residueDivision, term }));
     }
@@ -79,7 +80,7 @@ export function selectFirstLevelResidues<D extends FirstLevelRationalDomain>(ctx
   const result = Object.freeze(groups); verifyFirstLevelSelection(ctx, owner, residual, dn, prs, decomposition, result); return result;
 }
 
-export function verifyFirstLevelSelection<D extends FirstLevelRationalDomain>(ctx: ExecutionContext, owner: D, residual: E, dn: EP,
+export function verifyFirstLevelSelection<D extends ArithmeticRationalDomain>(ctx: ExecutionContext, owner: D, residual: E, dn: EP,
   prs: BivariatePRS, decomposition: SquareFreeDecomposition<import('./rational').Rational>, groups: readonly LrtGroup<D>[]): void {
   const { denominator, residue, z } = residueInputs(ctx, owner, residual, dn);
   demand(residual.kind === 'fraction', 'domain-mismatch', 'residual fraction');

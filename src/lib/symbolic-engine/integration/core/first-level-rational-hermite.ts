@@ -1,7 +1,8 @@
+import { assertArithmeticDomain, type ArithmeticRationalDomain } from './transcendental-domain';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialElement as E } from './differential-field';
 import { differentiate, verifyDerivative, type DerivativeEvidence } from './differential-derivative';
-import { FirstLevelRationalDomain, assertFirstLevelRationalDomain, totalPolynomialDerivative, verifyTotalPolynomialDerivative, type EP } from './first-level-rational-domain';
+import { totalPolynomialDerivative, verifyTotalPolynomialDerivative, type EP } from './first-level-rational-domain';
 import { exactDivide, extendedGcd, polynomialDivide, verifyBezout, verifyDivision, type Bezout, type Division } from './polynomial-division';
 import { squareFree, verifySquareFree, type SquareFreeDecomposition } from './polynomial-square-free';
 
@@ -29,17 +30,17 @@ export interface DifferentialHermite {
   readonly laurent: E;
   readonly residual: E;
 }
-export function firstLevelFraction(ctx: ExecutionContext, d: FirstLevelRationalDomain, n: EP, den: EP): E {
+export function firstLevelFraction(ctx: ExecutionContext, d: ArithmeticRationalDomain, n: EP, den: EP): E {
   return d.field.fraction(ctx, d.field.fractions!.make(ctx, n, den));
 }
-export function firstLevelDenominatorPower(ctx: ExecutionContext, d: FirstLevelRationalDomain, denominator: EP): number {
+export function firstLevelDenominatorPower(ctx: ExecutionContext, d: ArithmeticRationalDomain, denominator: EP): number {
   d.t.assert(ctx, denominator); demand(!d.t.isZero(ctx, denominator), 'verification-failed', 'zero denominator');
-  if (d.field.admission?.kind === 'logarithmic') return 0;
+  if (d.monomial !== 'hyperexponential') return 0;
   let k = 0; while (k < denominator.coefficients.length && d.base.isZero(ctx, denominator.coefficients[k])) { ctx.tick(); k++; }
   return k;
 }
-export function firstLevelHermite(ctx: ExecutionContext, d: FirstLevelRationalDomain, input: E): DifferentialHermite {
-  assertFirstLevelRationalDomain(ctx, d); const f = d.field, r = d.t, k = d.base; f.assert(ctx, input); demand(input.kind === 'fraction', 'domain-mismatch', 'Hermite field input');
+export function firstLevelHermite(ctx: ExecutionContext, d: ArithmeticRationalDomain, input: E): DifferentialHermite {
+  assertArithmeticDomain(ctx, d); const f = d.field, r = d.t, k = d.base; f.assert(ctx, input); demand(input.kind === 'fraction', 'domain-mismatch', 'Hermite field input');
   const denominator = input.value.denominator, power = firstLevelDenominatorPower(ctx, d, denominator);
   ctx.allocate(denominator.coefficients.length - power);
   const normalDenominator = r.make(ctx, denominator.coefficients.slice(power)), decomposition = squareFree(ctx, r, normalDenominator);
@@ -69,13 +70,13 @@ export function firstLevelHermite(ctx: ExecutionContext, d: FirstLevelRationalDo
   const proof = Object.freeze({ power, normalDenominator, decomposition, division, blocks: Object.freeze(blocks), fieldPart, derivative, laurent, residual });
   verifyFirstLevelHermite(ctx, d, input, proof); return proof;
 }
-export function verifyFirstLevelHermite(ctx: ExecutionContext, d: FirstLevelRationalDomain, input: E, proof: DifferentialHermite): void {
-  assertFirstLevelRationalDomain(ctx, d); const f = d.field, r = d.t, k = d.base; f.assert(ctx, input); demand(input.kind === 'fraction', 'domain-mismatch', 'Hermite input');
+export function verifyFirstLevelHermite(ctx: ExecutionContext, d: ArithmeticRationalDomain, input: E, proof: DifferentialHermite): void {
+  assertArithmeticDomain(ctx, d); const f = d.field, r = d.t, k = d.base; f.assert(ctx, input); demand(input.kind === 'fraction', 'domain-mismatch', 'Hermite input');
   const denominator = input.value.denominator;
   demand(proof.power === firstLevelDenominatorPower(ctx, d, denominator), 'verification-failed', 'special denominator power');
   ctx.allocate(proof.power + 1); const special = r.make(ctx, [...Array<E>(proof.power).fill(k.fromInteger(ctx, 0n)), k.fromInteger(ctx, 1n)]);
   demand(r.equal(ctx, r.multiply(ctx, special, proof.normalDenominator), denominator)
-    && (f.admission?.kind === 'logarithmic' || !k.isZero(ctx, proof.normalDenominator.coefficients[0])), 'verification-failed', 'normal/special reconstruction');
+    && (d.monomial !== 'hyperexponential' || !k.isZero(ctx, proof.normalDenominator.coefficients[0])), 'verification-failed', 'normal/special reconstruction');
   verifySquareFree(ctx, r, proof.normalDenominator, proof.decomposition);
   demand(k.equal(ctx, proof.decomposition.scalar, k.fromInteger(ctx, 1n)), 'verification-failed', 'monic normal denominator');
   verifyDivision(ctx, r, input.value.numerator, denominator, proof.division);
@@ -104,7 +105,7 @@ export function verifyFirstLevelHermite(ctx: ExecutionContext, d: FirstLevelRati
   demand(f.equal(ctx, input, f.add(ctx, separated, proof.laurent)) && f.equal(ctx, fieldPart, proof.fieldPart)
     && f.equal(ctx, residual, proof.residual), 'verification-failed', 'Hermite assembly');
   f.assert(ctx, proof.laurent); demand(proof.laurent.kind === 'fraction' && proof.residual.kind === 'fraction', 'domain-mismatch', 'Hermite values');
-  demand(f.admission?.kind === 'logarithmic' ? r.equal(ctx, proof.laurent.value.denominator, r.one(ctx))
+  demand(d.monomial !== 'hyperexponential' ? r.equal(ctx, proof.laurent.value.denominator, r.one(ctx))
     : firstLevelDenominatorPower(ctx, d, proof.laurent.value.denominator) === r.degree(ctx, proof.laurent.value.denominator),
     'verification-failed', 'Hermite Laurent denominator');
   demand(r.degree(ctx, proof.residual.value.numerator) < r.degree(ctx, proof.residual.value.denominator), 'verification-failed', 'proper normal residual');

@@ -91,7 +91,7 @@ function derivativeCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain, pr
   };
 }
 /** Saves every certificate, including norm PRS and inverse/trace evidence. */
-function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
+export function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
   verifyRationalDecisionWithin(ctx, owner, decision.input, decision);
   const c = codecs(ctx, owner); ctx.allocate(11 + owner.x.variable.length + owner.z.variable.length + decision.primitive.terms.length);
   return Object.freeze({ kind: 'rational-integration-decision', version: 1, variable: owner.x.variable, residueVariable: owner.z.variable,
@@ -101,7 +101,7 @@ function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimit
     derivative: derivativeCodec(ctx, owner, decision.primitive).encode(decision.derivative), conditions: c.decisionConditions.encode(decision.conditions) });
 }
 /** Explicit expected input is mandatory. Replay never invokes the integration producers. */
-function decodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, expected: QRationalFunction, value: unknown): RationalDecision {
+export function decodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, expected: QRationalFunction, value: unknown): RationalDecision {
   owner.fractions.assert(ctx, expected);
   const raw = record(ctx, value, ['kind', 'version', 'variable', 'residueVariable', 'input', 'primitive', 'normEvidence', 'hermite', 'lrt', 'derivative', 'conditions']);
   demand(raw.kind === 'rational-integration-decision' && raw.version === 1 && raw.variable === owner.x.variable && raw.residueVariable === owner.z.variable,
