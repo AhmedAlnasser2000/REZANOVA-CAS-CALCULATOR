@@ -13,6 +13,8 @@ Investigation outcome: [reconstruction design](integration-reconstruction-design
 
 Build a Risch–Bronstein-style engine that constructs an elementary antiderivative or proves that none exists over an explicitly declared effective differential-field domain. Rebuild or replace existing foundations wherever their representation prevents correctness or generality. Existing implementation effort is not a reason to preserve an unsuitable foundation.
 
+Product clarification (2026-10-12): New Integration is a constructive elementary-integration workspace: return the actual verified elementary antiderivative with integration constant and retained conditions when one exists, or checked proof of non-elementarity otherwise. The solver must use complete procedures for its declared mathematical classes instead of depending on recognition of particular integrand families; general decisions remain the foundation of constructive answers. A negative proof concerns elementary expressibility, not the nonexistence of every antiderivative. Elliptic/hypergeometric/other special-function antiderivatives and related future workspaces are separate future work; their design is not opened by this clarification.
+
 The long-term target includes rational operations, finite algebraic extensions, exponentials, logarithms, arbitrary finite nesting and mixtures, and one selected integration variable with other independent variables treated as parameters. Intermediate releases must state the smaller domains for which their guarantees actually hold.
 
 Completeness is conditional on the required exact subsidiary algorithms being available for the chosen coefficient and constant fields. A finite expression and an exact-looking constant do not by themselves guarantee decidable equality, dependency recognition, or constant-field computation. The implementation investigation must specify these assumptions rather than promise an unconditional decision for arbitrary constants.
@@ -162,3 +164,5 @@ Revise this blueprint and its roadmap together when investigation changes assump
 - verified_by_agent_model: gpt-6-astra
 - verified_by_agent_family: astra
 - attribution_basis: live
+
+2026-10-12 algebraic foundation: INTEGRATION-ALGEBRAIC-FIELD1 verifies formally owned nested algebraic arithmetic, complete Trager factorization, implicit/dual derivatives and full constants via complete finite/infinity integral closures and exact intersection kernels. Constant extensions may be hidden; supplied owners are preserved and Q-only integration is not widened. Integral-basis prerequisites now belong that foundation gate; algebraic integration decisions, mixed recursion and coordinated adoption remain separate reviewed work.

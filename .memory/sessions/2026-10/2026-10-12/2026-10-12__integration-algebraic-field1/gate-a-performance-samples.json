@@ -1,0 +1,278 @@
+{
+  "warmups": 2,
+  "samples": 5,
+  "bytes": 219774,
+  "observations": {
+    "construction": {
+      "samples": [
+        {
+          "milliseconds": 10.838039999999978,
+          "work": 503586,
+          "allocation": 5280160,
+          "heap": -2633984
+        },
+        {
+          "milliseconds": 11.286370999999917,
+          "work": 503586,
+          "allocation": 5280160,
+          "heap": -2481632
+        },
+        {
+          "milliseconds": 10.99679100000003,
+          "work": 503586,
+          "allocation": 5280160,
+          "heap": -2369392
+        },
+        {
+          "milliseconds": 11.063887000000022,
+          "work": 503586,
+          "allocation": 5280160,
+          "heap": -2369336
+        },
+        {
+          "milliseconds": 9.894558999999958,
+          "work": 503586,
+          "allocation": 5280160,
+          "heap": 14249736
+        }
+      ],
+      "median": 10.99679100000003,
+      "minimum": 9.894558999999958,
+      "maximum": 11.286370999999917
+    },
+    "factorization": {
+      "samples": [
+        {
+          "milliseconds": 116.21377700000005,
+          "work": 5440724,
+          "allocation": 60834269,
+          "heap": 46024
+        },
+        {
+          "milliseconds": 112.42774899999995,
+          "work": 5440724,
+          "allocation": 60834269,
+          "heap": 6952
+        },
+        {
+          "milliseconds": 110.07916,
+          "work": 5440724,
+          "allocation": 60834269,
+          "heap": -299392
+        },
+        {
+          "milliseconds": 111.0231409999999,
+          "work": 5440724,
+          "allocation": 60834269,
+          "heap": -288344
+        },
+        {
+          "milliseconds": 122.28264300000001,
+          "work": 5440724,
+          "allocation": 60834269,
+          "heap": 1027584
+        }
+      ],
+      "median": 112.42774899999995,
+      "minimum": 110.07916,
+      "maximum": 122.28264300000001
+    },
+    "differentiation": {
+      "samples": [
+        {
+          "milliseconds": 4.878251999999975,
+          "work": 242657,
+          "allocation": 2499332,
+          "heap": 5693760
+        },
+        {
+          "milliseconds": 4.844124999999849,
+          "work": 242657,
+          "allocation": 2499332,
+          "heap": 5609680
+        },
+        {
+          "milliseconds": 8.640642999999955,
+          "work": 242657,
+          "allocation": 2499332,
+          "heap": -27810352
+        },
+        {
+          "milliseconds": 4.689284999999927,
+          "work": 242657,
+          "allocation": 2499332,
+          "heap": 5606184
+        },
+        {
+          "milliseconds": 4.703710000000001,
+          "work": 242657,
+          "allocation": 2499332,
+          "heap": 5631432
+        }
+      ],
+      "median": 4.844124999999849,
+      "minimum": 4.689284999999927,
+      "maximum": 8.640642999999955
+    },
+    "derivativeVerification": {
+      "samples": [
+        {
+          "milliseconds": 2.476167999999916,
+          "work": 123955,
+          "allocation": 1189973,
+          "heap": 3644624
+        },
+        {
+          "milliseconds": 2.4641999999998916,
+          "work": 123955,
+          "allocation": 1189973,
+          "heap": 3651592
+        },
+        {
+          "milliseconds": 2.475153999999975,
+          "work": 123955,
+          "allocation": 1189973,
+          "heap": 3668680
+        },
+        {
+          "milliseconds": 5.719957999999906,
+          "work": 123955,
+          "allocation": 1189973,
+          "heap": -29928312
+        },
+        {
+          "milliseconds": 2.4358219999999164,
+          "work": 123955,
+          "allocation": 1189973,
+          "heap": 3644712
+        }
+      ],
+      "median": 2.475153999999975,
+      "minimum": 2.4358219999999164,
+      "maximum": 5.719957999999906
+    },
+    "verification": {
+      "samples": [
+        {
+          "milliseconds": 14.50602200000003,
+          "work": 836173,
+          "allocation": 9779219,
+          "heap": 18857776
+        },
+        {
+          "milliseconds": 18.229172999999946,
+          "work": 836173,
+          "allocation": 9779219,
+          "heap": -15279720
+        },
+        {
+          "milliseconds": 14.608146000000033,
+          "work": 836173,
+          "allocation": 9779219,
+          "heap": 18824712
+        },
+        {
+          "milliseconds": 17.923009000000093,
+          "work": 836173,
+          "allocation": 9779219,
+          "heap": -15127704
+        },
+        {
+          "milliseconds": 18.88190899999995,
+          "work": 836173,
+          "allocation": 9779219,
+          "heap": -15063824
+        }
+      ],
+      "median": 17.923009000000093,
+      "minimum": 14.50602200000003,
+      "maximum": 18.88190899999995
+    },
+    "encoding": {
+      "samples": [
+        {
+          "milliseconds": 23.48549100000014,
+          "work": 1150180,
+          "allocation": 10969005,
+          "heap": -3801120
+        },
+        {
+          "milliseconds": 21.666848999999957,
+          "work": 1150180,
+          "allocation": 10969005,
+          "heap": 29270528
+        },
+        {
+          "milliseconds": 22.685077000000092,
+          "work": 1150180,
+          "allocation": 10969005,
+          "heap": -4503896
+        },
+        {
+          "milliseconds": 23.22818899999993,
+          "work": 1150180,
+          "allocation": 10969005,
+          "heap": -4712240
+        },
+        {
+          "milliseconds": 23.1656559999999,
+          "work": 1150180,
+          "allocation": 10969005,
+          "heap": -4953184
+        }
+      ],
+      "median": 23.1656559999999,
+      "minimum": 21.666848999999957,
+      "maximum": 23.48549100000014
+    },
+    "decoding": {
+      "samples": [
+        {
+          "milliseconds": 34.383424000000105,
+          "work": 1377257,
+          "allocation": 13336393,
+          "heap": -26322608
+        },
+        {
+          "milliseconds": 32.498571000000084,
+          "work": 1377257,
+          "allocation": 13336393,
+          "heap": 6678920
+        },
+        {
+          "milliseconds": 31.62007799999992,
+          "work": 1377257,
+          "allocation": 13336393,
+          "heap": 6721552
+        },
+        {
+          "milliseconds": 31.27756700000009,
+          "work": 1377257,
+          "allocation": 13336393,
+          "heap": 6021632
+        },
+        {
+          "milliseconds": 32.37792599999989,
+          "work": 1377257,
+          "allocation": 13336393,
+          "heap": 5895832
+        }
+      ],
+      "median": 32.37792599999989,
+      "minimum": 31.27756700000009,
+      "maximum": 34.383424000000105
+    }
+  },
+  "attribution": {
+    "primary_agent": "codex",
+    "primary_agent_model": "gpt-6",
+    "primary_agent_family": "sol",
+    "recorded_by_agent": "codex",
+    "recorded_by_agent_model": "gpt-6",
+    "recorded_by_agent_family": "sol",
+    "verified_by_agent": "codex",
+    "verified_by_agent_model": "gpt-6",
+    "verified_by_agent_family": "sol",
+    "attribution_basis": "live"
+  }
+}
