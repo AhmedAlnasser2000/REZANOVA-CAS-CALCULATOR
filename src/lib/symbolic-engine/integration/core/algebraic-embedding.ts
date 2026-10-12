@@ -7,6 +7,9 @@ import type { DifferentialBounds } from './differential-field';
 import { algebraicHeight, isAlgebraicField, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 
 const key = Symbol('algebraic embedding'), embeddings = new WeakSet<object>();
+export function assertAlgebraicEmbedding<S, T>(ctx: ExecutionContext, value: AlgebraicEmbedding<S, T>): void {
+  ctx.tick(); demand(value !== null && typeof value === 'object' && embeddings.has(value), 'domain-mismatch', 'owned algebraic embedding');
+}
 /** Embeddings carry exact generator images; names and equal derivatives grant no
  * compatibility. A parent embedding is part of each extension map. */
 export class AlgebraicEmbedding<S, T> {
