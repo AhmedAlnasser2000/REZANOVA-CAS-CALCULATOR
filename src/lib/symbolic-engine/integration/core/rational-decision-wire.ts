@@ -5,9 +5,9 @@ import { PolynomialRing } from './polynomial';
 import { SquareFreeQuotientAlgebra } from './quotient-algebra';
 import { hermiteEvidenceCodec } from './hermite-wire';
 import type { LrtCertificate, LrtComponent, LrtGroup, ResiduePartitionNode } from './lrt-reduction';
-import type { PrimitiveDerivativeCertificate } from './primitive-verification';
+import { rationalPrimitiveDerivativeCodec as derivativeCodec } from './rational-primitive-evidence-codecs';
 import { verifyRationalDecisionWithin, type DecisionConditions, type RationalDecision } from './rational-decision-internal';
-import { array, record, structure, list, integer, optional, scalar, polynomial, fraction, division, squareFreeEvidence,
+import { record, structure, list, integer, optional, scalar, polynomial, fraction, division, squareFreeEvidence,
   prsEvidence, quotientElement, unitEvidence, type EvidenceCodec } from './decision-wire-algebra';
 
 export interface RationalDecisionWire {
@@ -67,28 +67,6 @@ function lrtCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain, primitive
     },
   };
   return structure(ctx, { prs, decomposition, groups: list(ctx, group) });
-}
-function derivativeCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain, primitive: FormalPrimitive): EvidenceCodec<PrimitiveDerivativeCertificate> {
-  const c = codecs(ctx, owner), p = polynomial(ctx, owner.residues, c.f);
-  function termCodec(algebra: PrimitiveDerivativeCertificate['terms'][number]['algebra']) {
-    return structure(ctx, { inverse: unitEvidence(ctx, algebra, p), logarithmicDerivative: quotientElement(ctx, algebra, p),
-      trace: structure(ctx, { columns: list(ctx, p), trace: c.f }) });
-  }
-  return {
-    encode(value) {
-      ctx.allocate(value.terms.length + 3);
-      return Object.freeze({ terms: Object.freeze(value.terms.map(t => termCodec(t.algebra).encode(t))), derivative: c.f.encode(value.derivative), conditions: c.conditions.encode(value.conditions) });
-    },
-    decode(value) {
-      const raw = record(ctx, value, ['terms', 'derivative', 'conditions']), rawTerms = array(ctx, raw.terms);
-      demand(rawTerms.length === primitive.terms.length, 'invalid-input', 'derivative evidence coverage');
-      const terms = rawTerms.map((v, i) => {
-        const algebra = new SquareFreeQuotientAlgebra(ctx, owner.residues, owner.liftResidue(ctx, primitive.terms[i].modulus));
-        ctx.allocate(4); return Object.freeze({ algebra, ...termCodec(algebra).decode(v) });
-      });
-      return Object.freeze({ terms: Object.freeze(terms), derivative: c.f.decode(raw.derivative), conditions: c.conditions.decode(raw.conditions) });
-    },
-  };
 }
 /** Saves every certificate, including norm PRS and inverse/trace evidence. */
 export function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, decision: RationalDecision): RationalDecisionWire {
