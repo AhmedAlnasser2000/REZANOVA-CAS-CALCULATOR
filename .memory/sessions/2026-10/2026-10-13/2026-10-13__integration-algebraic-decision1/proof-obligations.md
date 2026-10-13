@@ -22,7 +22,7 @@
 - After finite reduction, any elementary exact part is finite-regular; the corresponding infinity pole bound and complete local principal-part constraints establish the full reduction problem.
 - Simple-pole residues use the checked uniformizer ratio pi*f/Dpi and explicit residue map, never horizontal interpretation of arbitrary lifts.
 
-## Gate B (backend; inactive)
+## Gate B (backend; verified)
 
 - Full finite/infinity residue coverage, residue minimal polynomials and checked splitting constructions bind every auxiliary constant and original generator.
 - Rational independence, even over nonrational actual constants, proves complete residue-span coordinates. Combined divisors are formed before complete least-order torsion decisions.
@@ -30,11 +30,17 @@
 - Complete native derivative targets authorize positives. Exhaustion, failed search, malformed evidence and negative exactness alone never authorize integration negatives.
 - Bounded fresh replay invokes no construction/search, factorization, differentiation, Hermite, place, module/linear, Riemann–Roch, torsion or integration producers.
 
-### Planned Liouville completeness argument
+### Liouville completeness argument
 
 After reduction and the required finite constant extension, every residue is an explicitly checked element of L. A Q-independent basis of the residue span forces each combined divisor to have degree zero: the global residue trace is sum degree(P)*rho_P=0, and all resulting basis coefficients are rational. Liouville logarithmic residues are integer valuations times constants. Exact rational linear relations therefore combine them into the same residue-span basis; a positive principal multiple of every combined divisor is necessary and sufficient for constructing a logarithmic part with those residues. Principality and torsion do not change after finite constant extension, by the checked Riemann–Roch base-change theorem.
 
 The complete combined logarithmic derivative must descend explicitly to K, not merely have zero derivative. Its normalized relative trace has this same derivative because every embedding fixing C leaves the descended value fixed. The post-subtraction differential is holomorphic by full finite/infinity support and residue coverage. An exact holomorphic differential on the proper curve is zero, since a field primitive would have no poles and hence belong to the full constant field. A logarithmic combination with all residues zero contributes zero: rational independence of its constant coefficients forces its corresponding principal divisors to vanish. Thus a verified nonzero holomorphic remainder is not elementary. These arguments supply integration authority only at Gate B, after its constructive evidence and replay pass.
+
+The same necessity applies over an algebraic closure or complex constants, without representing complex constants in arithmetic. Complete Riemann–Roch spaces and finite linear constraints commute with constant-field extension: a zero space or nonzero inconsistency row remains so, while a principal divisor after extension already has a witness over the field of definition. In Liouville's finite logarithmic sum, extend the Q-independent residue basis to a Q-basis of all coefficient constants. Every extra coordinate has zero divisor and therefore contributes zero logarithmic derivative on the proper curve. Only the algebraic residue span remains. Thus the checked finite residue splitting field suffices; further constant extension cannot defeat the stored principality/torsion or holomorphic obstructions.
+
+Complete principality may precede torsion recognition. When the full L(-Delta) produces a nonzero member, degree zero proves its complete divisor equals Delta, so the least positive order is exactly one. Otherwise its complete zero-space certificate is retained and the unchanged two-reduction procedure determines the principal multiple or proves non-torsion. This is a general exact composition, not a bounded small-multiple search. The initial finite-field exhaustion on Schultz's already-principal combined divisor motivated this ordering; limits remain unchanged and exhaustion never activates an alternative.
+
+Number-field GCD-only normalization removes the complete coefficient-field leading unit before each Euclidean division. Every division identity and inverse-unit reconstruction proves equality of the successive polynomial ideals, and strict remainder-degree descent proves termination and greatest-common-divisor coverage. This prevents the artificial irrational leading-unit powers of pseudo-division. Rational modular/content paths, Bézout production and Brown subresultant/resultant scaling retain their existing contracts; all actual values and arithmetic remain charged and bounded.
 
 ## Primary references
 

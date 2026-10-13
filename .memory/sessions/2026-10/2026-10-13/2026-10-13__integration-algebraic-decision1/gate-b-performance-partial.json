@@ -1,0 +1,288 @@
+{
+  "status": "user-stopped",
+  "stopped_at": "2026-10-13T18:30:21+03:00",
+  "timezone": "Asia/Riyadh",
+  "warmups": 2,
+  "samples": 5,
+  "coverage": "Last completed fixture only; earlier progress snapshots were overwritten and the final six-fixture aggregate was not produced.",
+  "last_completed_fixture": {
+    "name": "hiddenConstant",
+    "observation": {
+      "kind": "elementary",
+      "reason": null,
+      "bytes": 48991,
+      "construction": {
+        "samples": [
+          {
+            "milliseconds": 180.4624340000155,
+            "work": 8213585,
+            "allocation": 85097849,
+            "heap": 134182808,
+            "rss": 557236224,
+            "heapDelta": 13172616,
+            "rssDelta": 1269760
+          },
+          {
+            "milliseconds": 187.58895299999858,
+            "work": 8213585,
+            "allocation": 85097849,
+            "heap": 80477176,
+            "rss": 557707264,
+            "heapDelta": -53707296,
+            "rssDelta": 471040
+          },
+          {
+            "milliseconds": 178.7843029999931,
+            "work": 8213585,
+            "allocation": 85097849,
+            "heap": 93669664,
+            "rss": 558284800,
+            "heapDelta": 13190976,
+            "rssDelta": 577536
+          },
+          {
+            "milliseconds": 176.59159099997487,
+            "work": 8213585,
+            "allocation": 85097849,
+            "heap": 106776664,
+            "rss": 559947776,
+            "heapDelta": 13105488,
+            "rssDelta": 1662976
+          },
+          {
+            "milliseconds": 180.25410999997985,
+            "work": 8213585,
+            "allocation": 85097849,
+            "heap": 119867192,
+            "rss": 560869376,
+            "heapDelta": 13089016,
+            "rssDelta": 921600
+          }
+        ],
+        "median": 180.25410999997985,
+        "minimum": 176.59159099997487,
+        "maximum": 187.58895299999858
+      },
+      "integration": {
+        "samples": [
+          {
+            "milliseconds": 890.3100700000068,
+            "work": 36108443,
+            "allocation": 345103479,
+            "heap": 96548072,
+            "rss": 567005184,
+            "heapDelta": -53943840,
+            "rssDelta": 1208320
+          },
+          {
+            "milliseconds": 891.4794180000026,
+            "work": 36108443,
+            "allocation": 345103479,
+            "heap": 110310960,
+            "rss": 568553472,
+            "heapDelta": 13761224,
+            "rssDelta": 1548288
+          },
+          {
+            "milliseconds": 907.2967460000073,
+            "work": 36108443,
+            "allocation": 345103479,
+            "heap": 124595160,
+            "rss": 570609664,
+            "heapDelta": 14282688,
+            "rssDelta": 2056192
+          },
+          {
+            "milliseconds": 920.61946300001,
+            "work": 36108443,
+            "allocation": 345103479,
+            "heap": 139143392,
+            "rss": 572497920,
+            "heapDelta": 14546720,
+            "rssDelta": 1888256
+          },
+          {
+            "milliseconds": 923.2738109999918,
+            "work": 36108443,
+            "allocation": 345103479,
+            "heap": 153988176,
+            "rss": 573771776,
+            "heapDelta": 14843272,
+            "rssDelta": 1273856
+          }
+        ],
+        "median": 907.2967460000073,
+        "minimum": 890.3100700000068,
+        "maximum": 923.2738109999918
+      },
+      "verification": {
+        "samples": [
+          {
+            "milliseconds": 163.94354700000258,
+            "work": 6723655,
+            "allocation": 64817390,
+            "heap": 158245176,
+            "rss": 576237568,
+            "heapDelta": 46988936,
+            "rssDelta": 1634304
+          },
+          {
+            "milliseconds": 179.74179600001662,
+            "work": 6723655,
+            "allocation": 64817390,
+            "heap": 136998040,
+            "rss": 576696320,
+            "heapDelta": -21248800,
+            "rssDelta": 458752
+          },
+          {
+            "milliseconds": 175.98645600001328,
+            "work": 6723655,
+            "allocation": 64817390,
+            "heap": 115392184,
+            "rss": 576802816,
+            "heapDelta": -21607368,
+            "rssDelta": 106496
+          },
+          {
+            "milliseconds": 163.60502699998324,
+            "work": 6723655,
+            "allocation": 64817390,
+            "heap": 162270432,
+            "rss": 578134016,
+            "heapDelta": 46876736,
+            "rssDelta": 1331200
+          },
+          {
+            "milliseconds": 177.00319000001764,
+            "work": 6723655,
+            "allocation": 64817390,
+            "heap": 140849944,
+            "rss": 578347008,
+            "heapDelta": -21422000,
+            "rssDelta": 212992
+          }
+        ],
+        "median": 175.98645600001328,
+        "minimum": 163.60502699998324,
+        "maximum": 179.74179600001662
+      },
+      "encoding": {
+        "samples": [
+          {
+            "milliseconds": 1017.980601999996,
+            "work": 34298750,
+            "allocation": 341916425,
+            "heap": 243101664,
+            "rss": 591568896,
+            "heapDelta": 76417320,
+            "rssDelta": 6213632
+          },
+          {
+            "milliseconds": 1028.2404860000242,
+            "work": 34298750,
+            "allocation": 341916425,
+            "heap": 257406608,
+            "rss": 597331968,
+            "heapDelta": 14303280,
+            "rssDelta": 5763072
+          },
+          {
+            "milliseconds": 1049.7404539999843,
+            "work": 34298750,
+            "allocation": 341916425,
+            "heap": 270245024,
+            "rss": 602562560,
+            "heapDelta": 12836904,
+            "rssDelta": 5230592
+          },
+          {
+            "milliseconds": 1028.495259999996,
+            "work": 34298750,
+            "allocation": 341916425,
+            "heap": 280721976,
+            "rss": 606474240,
+            "heapDelta": 10475440,
+            "rssDelta": 3911680
+          },
+          {
+            "milliseconds": 1002.690306000004,
+            "work": 34298750,
+            "allocation": 341916425,
+            "heap": 356343816,
+            "rss": 613081088,
+            "heapDelta": 75620328,
+            "rssDelta": 6606848
+          }
+        ],
+        "median": 1028.2404860000242,
+        "minimum": 1002.690306000004,
+        "maximum": 1049.7404539999843
+      },
+      "decoding": {
+        "samples": [
+          {
+            "milliseconds": 694.2262869999977,
+            "work": 25211060,
+            "allocation": 241599442,
+            "heap": 377270192,
+            "rss": 624164864,
+            "heapDelta": 27462416,
+            "rssDelta": 3284992
+          },
+          {
+            "milliseconds": 721.4416590000037,
+            "work": 25211060,
+            "allocation": 241599442,
+            "heap": 338906504,
+            "rss": 628187136,
+            "heapDelta": -38365352,
+            "rssDelta": 4022272
+          },
+          {
+            "milliseconds": 707.1538139999902,
+            "work": 25211060,
+            "allocation": 241599442,
+            "heap": 367138928,
+            "rss": 632414208,
+            "heapDelta": 28230912,
+            "rssDelta": 4227072
+          },
+          {
+            "milliseconds": 650.2282059999998,
+            "work": 25211060,
+            "allocation": 241599442,
+            "heap": 128887400,
+            "rss": 561233920,
+            "heapDelta": -238253040,
+            "rssDelta": -71180288
+          },
+          {
+            "milliseconds": 626.2183599999989,
+            "work": 25211060,
+            "allocation": 241599442,
+            "heap": 88002320,
+            "rss": 562860032,
+            "heapDelta": -40886592,
+            "rssDelta": 1626112
+          }
+        ],
+        "median": 694.2262869999977,
+        "minimum": 626.2183599999989,
+        "maximum": 721.4416590000037
+      }
+    }
+  },
+  "attribution": {
+    "primary_agent": "codex",
+    "primary_agent_model": "gpt-6",
+    "primary_agent_family": "sol",
+    "recorded_by_agent": "codex",
+    "recorded_by_agent_model": "gpt-6",
+    "recorded_by_agent_family": "sol",
+    "verified_by_agent": "codex",
+    "verified_by_agent_model": "gpt-6",
+    "verified_by_agent_family": "sol",
+    "attribution_basis": "live"
+  }
+}

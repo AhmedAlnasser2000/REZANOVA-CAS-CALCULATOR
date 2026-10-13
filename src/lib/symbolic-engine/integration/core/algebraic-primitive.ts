@@ -106,12 +106,17 @@ export function constructAlgebraicPrimitiveWithin<E>(ctx: ExecutionContext, curv
   const terms = Object.freeze(input.map((t, i) => constructAlgebraicTraceLogTermWithin(ctx, curve, t, i, bounds)));
   return reconstructAlgebraicPrimitiveWithin(ctx, curve, fieldPart, terms, primitiveConditions(ctx, curve, fieldPart, terms, bounds), bounds);
 }
+/** Compose already checked terms without regenerating their inverses or norms. */
+export function assembleAlgebraicPrimitiveWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, fieldPart: E, terms: readonly AlgebraicTraceLogTerm<E>[], bounds: DifferentialBounds): AlgebraicPrimitive<E> {
+  return reconstructAlgebraicPrimitiveWithin(ctx, curve, fieldPart, terms, primitiveConditions(ctx, curve, fieldPart, terms, bounds), bounds);
+}
 export interface AlgebraicTraceLogDerivative<E> {
   readonly factors: readonly Readonly<{derivative: AlgebraicDerivative<ConstantBaseChangeValue>; conversion: AlgebraicConstantValueConversion<E>}>[];
   readonly polynomial: Polynomial<E>;
   readonly trace: TraceCertificate<E>;
 }
 export interface AlgebraicPrimitiveDerivative<E> {
+  readonly arithmetic?: RationalGcdEvidence;
   readonly field: AlgebraicDerivative<E>;
   readonly terms: readonly AlgebraicTraceLogDerivative<E>[];
   readonly derivative: E;

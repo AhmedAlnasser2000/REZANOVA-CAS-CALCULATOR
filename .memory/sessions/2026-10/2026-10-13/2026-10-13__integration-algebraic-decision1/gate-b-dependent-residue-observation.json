@@ -1,0 +1,63 @@
+{
+  "fixture": "Schultz dependent residue integral",
+  "bytes": 880899,
+  "observations": {
+    "integration": {
+      "milliseconds": 341940.14881100005,
+      "work": 13703762606,
+      "allocation": 245737332556,
+      "heap": 334072016,
+      "rss": 586395648,
+      "heapDelta": 286227568,
+      "rssDelta": 462053376
+    },
+    "verification": {
+      "milliseconds": 39951.67372000002,
+      "work": 1646627613,
+      "allocation": 27559148099,
+      "heap": 120898848,
+      "rss": 576835584,
+      "heapDelta": -213274672,
+      "rssDelta": -9752576
+    },
+    "encoding": {
+      "milliseconds": 254067.55885200005,
+      "work": 10471564067,
+      "allocation": 183564100493,
+      "heap": 572705152,
+      "rss": 1163206656,
+      "heapDelta": 451798096,
+      "rssDelta": 586371072
+    },
+    "decoding": {
+      "milliseconds": 208202.19154399994,
+      "work": 8727283530,
+      "allocation": 154580409286,
+      "heap": 476767888,
+      "rss": 1134485504,
+      "heapDelta": -97179248,
+      "rssDelta": -29622272
+    },
+    "replayVerification": {
+      "milliseconds": 38726.06579800008,
+      "work": 1643135496,
+      "allocation": 27521819637,
+      "heap": 380679920,
+      "rss": 1130602496,
+      "heapDelta": -96121696,
+      "rssDelta": -3883008
+    }
+  },
+  "attribution": {
+    "primary_agent": "codex",
+    "primary_agent_model": "gpt-6",
+    "primary_agent_family": "sol",
+    "recorded_by_agent": "codex",
+    "recorded_by_agent_model": "gpt-6",
+    "recorded_by_agent_family": "sol",
+    "verified_by_agent": "codex",
+    "verified_by_agent_model": "gpt-6",
+    "verified_by_agent_family": "sol",
+    "attribution_basis": "live"
+  }
+}

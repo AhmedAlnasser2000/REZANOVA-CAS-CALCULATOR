@@ -1,6 +1,9 @@
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import { rationalField as Q } from './field';
+import type { Rational } from './rational';
+import type { AlgebraicField } from './algebraic-field';
+import { AlgebraicEmbedding } from './algebraic-embedding';
 import { PolynomialRing } from './polynomial';
 import { RationalFunctionField } from './rational-function';
 import { verifyAlgebraicCurveWithin, type AlgebraicCurveView } from './algebraic-curve';
@@ -15,22 +18,33 @@ import { reconstructAlgebraicPrimitiveWithin, verifyAlgebraicPrimitiveWithin, wi
 import { encodeAlgebraicArithmeticArtifact, decodeAlgebraicArithmeticArtifact } from './algebraic-arithmetic-wire';
 import * as w from './decision-wire-algebra';
 
-export function algebraicConstantQuotientCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicConstantQuotient<E>> {
+export function algebraicConstantQuotientCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>, expectedConstants?: AlgebraicField<Rational>): w.EvidenceCodec<AlgebraicConstantQuotient<E>> {
   const {ctx, bounds} = s;
-  return s.memo('algebraic-constant-quotient', curve, {encode(q) {
-    demand(q.curve === curve, 'domain-mismatch', 'constant quotient codec original curve'); const change = q.change, native = algebraicCoefficientCodec(ctx, change.field, bounds);
+  const codec = s.memo<AlgebraicConstantQuotient<E>>('algebraic-constant-quotient' + (expectedConstants ? '-bound' : ''), curve, {encode(q) {
+    demand(q.curve === curve && (expectedConstants === undefined || q.relative.target === expectedConstants), 'domain-mismatch', 'constant quotient codec complete expected construction'); const change = q.change, native = algebraicCoefficientCodec(ctx, change.field, bounds);
     return Object.freeze({constants: auxiliaryAlgebraicCodec(ctx, Q, bounds).encode(change.constants), relative: relativeNumberFieldCodec(ctx, curve.coordinates.constantOwner, change.constants, bounds).encode(q.relative),
       lift: auxiliaryAlgebraicCodec(ctx, change.lift.parent, bounds).encode(change.lift), field: auxiliaryAlgebraicCodec(ctx, change.lift, bounds).encode(change.field),
       evidence: w.structure(ctx, {originalImages: w.list(ctx, native), basisImages: w.list(ctx, native), finite: s.order(change.coordinates.scalar, false), infinity: s.order(change.infinity.lattice.scalar, true)}).encode(change)});
   }, decode(v) {
-    const raw = w.record(ctx, v, ['constants', 'relative', 'lift', 'field', 'evidence']), constants = auxiliaryAlgebraicCodec(ctx, Q, bounds).decode(raw.constants),
-      relative = relativeNumberFieldCodec(ctx, curve.coordinates.constantOwner, constants, bounds).decode(raw.relative);
+    const raw = w.record(ctx, v, ['constants', 'relative', 'lift', 'field', 'evidence']), decoded = auxiliaryAlgebraicCodec(ctx, Q, bounds).decode(raw.constants), constants = expectedConstants ?? decoded;
+    if (expectedConstants) {
+      demand(constants.ring.variable === decoded.ring.variable && constants.ring.equal(ctx, constants.construction.relation, constants.ring.make(ctx, decoded.construction.relation.coefficients)), 'domain-mismatch', 'complete expected auxiliary constant construction');
+      // The supplied expected owner gives an explicit generator image. Verify
+      // the defining relation and every basis image; names alone never bind it.
+      const embedding = AlgebraicEmbedding.extension(ctx, decoded, constants, AlgebraicEmbedding.rationals(ctx, constants, bounds), constants.generator(ctx), bounds);
+      let power = decoded.fromInteger(ctx, 1n); for (let i = 0; i < decoded.ring.degree(ctx, decoded.modulus); i++) {
+        demand(constants.equal(ctx, embedding.map(ctx, power), constants.make(ctx, constants.ring.make(ctx, power.representative.coefficients))), 'verification-failed', 'complete expected constant basis correspondence'); power = decoded.multiply(ctx, power, decoded.generator(ctx));
+      }
+    }
+    const relative = relativeNumberFieldCodec(ctx, curve.coordinates.constantOwner, constants, bounds).decode(raw.relative);
     const base = new RationalFunctionField(new PolynomialRing(Q, curve.coordinates.scalar.ring.variable)), lift = auxiliaryAlgebraicCodec(ctx, base, bounds).decode(raw.lift), field = auxiliaryAlgebraicCodec(ctx, lift, bounds).decode(raw.field);
     const scalar = new RationalFunctionField(new PolynomialRing(constants, curve.coordinates.scalar.ring.variable)), infinity = new RationalFunctionField(new PolynomialRing(constants, curve.infinity.lattice.scalar.ring.variable)), native = algebraicCoefficientCodec(ctx, field, bounds);
     const evidence = w.structure(ctx, {originalImages: w.list(ctx, native), basisImages: w.list(ctx, native), finite: s.order(scalar, false), infinity: s.order(infinity, true)}).decode(raw.evidence);
     const change = reconstructAlgebraicConstantBaseChangeWithin(ctx, curve, constants, relative.embedding, lift, field, scalar, evidence.originalImages, evidence.basisImages, evidence.finite, evidence.infinity, bounds);
     return reconstructAlgebraicConstantQuotientWithin(ctx, curve, change, relative, bounds);
   }});
+  return {encode(q) { demand(q.curve === curve && (expectedConstants === undefined || q.relative.target === expectedConstants), 'domain-mismatch', 'cached exact constant-owner binding'); return codec.encode(q); },
+    decode(v) { const q = codec.decode(v); demand(q.curve === curve && (expectedConstants === undefined || q.relative.target === expectedConstants), 'domain-mismatch', 'cached exact constant-owner binding'); return q; }};
 }
 export function algebraicConstantValueConversionCodec<E>(s: AlgebraicDivisorWireContext, q: AlgebraicConstantQuotient<E>): w.EvidenceCodec<AlgebraicConstantValueConversion<E>> {
   const {ctx, bounds} = s, target = s.scalar(q.change.coordinates.scalar), source = s.scalar(q.curve.coordinates.scalar), p = w.polynomial(ctx, q.scalarAlgebra.ring, source), native = algebraicCoefficientCodec(ctx, q.curve.owner, bounds);
@@ -38,21 +52,25 @@ export function algebraicConstantValueConversionCodec<E>(s: AlgebraicDivisorWire
     inverse: w.unitEvidence(ctx, q.scalarAlgebra, p), coefficients: w.list(ctx, source)})), polynomial: w.polynomial(ctx, q.algebra.ring, native)});
   return s.memo('algebraic-constant-value-conversion', q, {encode: parts.encode, decode(v) { const proof = parts.decode(v); verifyAlgebraicConstantValueConversion(ctx, q, proof.input, proof); return proof; }});
 }
-export function algebraicTraceLogTermCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicTraceLogTerm<E>> {
-  const {ctx, bounds} = s, quotient = algebraicConstantQuotientCodec(s, curve);
+export function algebraicTraceLogTermCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>, expectedConstants?: AlgebraicField<Rational>): w.EvidenceCodec<AlgebraicTraceLogTerm<E>> {
+  const {ctx, bounds} = s, quotient = algebraicConstantQuotientCodec(s, curve, expectedConstants);
   const parts = (q: AlgebraicConstantQuotient<E>) => {
     const constant = algebraicCoefficientCodec(ctx, q.relative.target, bounds), native = algebraicCoefficientCodec(ctx, q.curve.owner, bounds), target = algebraicCoefficientCodec(ctx, q.change.field, bounds), p = w.polynomial(ctx, q.algebra.ring, native);
     return w.structure(ctx, {weight: constant, unit: constant, weightDerivative: algebraicDerivativeCodec(ctx, q.change.field, bounds), unitDerivative: algebraicDerivativeCodec(ctx, q.change.field, bounds),
       factors: w.list(ctx, w.structure(ctx, {value: target, exponent: s.integer(), conversion: algebraicConstantValueConversionCodec(s, q), inverse: w.unitEvidence(ctx, q.algebra, p),
         normEvidence: w.prsEvidence(ctx, p, native), normMatrix: matrixInverseCodec(ctx, native), norm: native})), conditions: algebraicConditionsCodec(ctx, q.change.field, bounds)});
   };
-  return s.memo('algebraic-trace-log-term', curve, {encode(t) { return Object.freeze({quotient: quotient.encode(t.quotient), evidence: parts(t.quotient).encode(t)}); }, decode(v) {
+  const codec = s.memo<AlgebraicTraceLogTerm<E>>('algebraic-trace-log-term' + (expectedConstants ? '-bound' : ''), curve, {encode(t) { return Object.freeze({quotient: quotient.encode(t.quotient), evidence: parts(t.quotient).encode(t)}); }, decode(v) {
     const raw = w.record(ctx, v, ['quotient', 'evidence']), q = quotient.decode(raw.quotient); return Object.freeze({quotient: q, ...parts(q).decode(raw.evidence)});
   }});
+  const check = (t: AlgebraicTraceLogTerm<E>) => { ctx.tick(); demand(t.quotient.curve === curve && (expectedConstants === undefined || t.quotient.relative.target === expectedConstants), 'domain-mismatch', 'cached complete trace-log owner binding'); return t; };
+  return {encode(t) { return codec.encode(check(t)); }, decode(v) { return check(codec.decode(v)); }};
 }
-export function algebraicPrimitiveCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicPrimitive<E>> {
-  const {ctx, bounds} = s, parts = w.structure(ctx, {fieldPart: algebraicCoefficientCodec(ctx, curve.owner, bounds), terms: w.list(ctx, algebraicTraceLogTermCodec(s, curve)), conditions: algebraicConditionsCodec(ctx, curve.owner, bounds)});
-  return s.memo<AlgebraicPrimitive<E>>('algebraic-primitive', curve, {encode: parts.encode, decode(v) { const p = parts.decode(v); return reconstructAlgebraicPrimitiveWithin(ctx, curve, p.fieldPart, p.terms, p.conditions, bounds); }});
+export function algebraicPrimitiveCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>, expectedConstants?: AlgebraicField<Rational>): w.EvidenceCodec<AlgebraicPrimitive<E>> {
+  const {ctx, bounds} = s, parts = w.structure(ctx, {fieldPart: algebraicCoefficientCodec(ctx, curve.owner, bounds), terms: w.list(ctx, algebraicTraceLogTermCodec(s, curve, expectedConstants)), conditions: algebraicConditionsCodec(ctx, curve.owner, bounds)});
+  const codec = s.memo<AlgebraicPrimitive<E>>('algebraic-primitive' + (expectedConstants ? '-bound' : ''), curve, {encode: parts.encode, decode(v) { const p = parts.decode(v); return reconstructAlgebraicPrimitiveWithin(ctx, curve, p.fieldPart, p.terms, p.conditions, bounds); }});
+  const check = (p: AlgebraicPrimitive<E>) => { ctx.tick(p.terms.length + 1); demand(p.curve === curve && p.terms.every(t => t.quotient.curve === curve && (expectedConstants === undefined || t.quotient.relative.target === expectedConstants)), 'domain-mismatch', 'cached complete primitive owner binding'); return p; };
+  return {encode(p) { return codec.encode(check(p)); }, decode(v) { return check(codec.decode(v)); }};
 }
 export function algebraicPrimitiveDerivativeCodec<E>(s: AlgebraicDivisorWireContext, primitive: AlgebraicPrimitive<E>): w.EvidenceCodec<AlgebraicPrimitiveDerivative<E>> {
   const {ctx, bounds} = s, curve = primitive.curve, native = algebraicCoefficientCodec(ctx, curve.owner, bounds);
