@@ -3,6 +3,8 @@ import { requireField, type ExactField } from './field';
 import type { Polynomial, PolynomialRing } from './polynomial';
 import { exactDivide, extendedGcd, polynomialGcd } from './polynomial-division';
 import { fractionCoefficient, registerFractionCoefficient } from './fraction-coefficient';
+import {checkedLinearPowerGcd} from './polynomial-linear-power';
+import {numberFieldPolynomialGcd} from './number-field-polynomial-gcd';
 
 export interface RationalFunction<E> {
   readonly field: RationalFunctionField<E>;
@@ -77,6 +79,10 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
       const cs: E[] = Array(k - cancel).fill(r.domain.fromInteger(ctx, 0n));
       cs.push(r.domain.fromInteger(ctx, 1n)); d = r.make(ctx, cs);
     } else {
+      const linear=checkedLinearPowerGcd(ctx,r,numerator,denominator)??numberFieldPolynomialGcd(ctx,r,numerator,denominator);
+      if(linear!==null){n=exactDivide(ctx,r,numerator,linear);d=exactDivide(ctx,r,denominator,linear);const inverse=r.domain.inverse(ctx,r.leading(ctx,d));n=r.scale(ctx,n,inverse);d=r.scale(ctx,d,inverse);
+        const remaining=checkedLinearPowerGcd(ctx,r,n,d)??numberFieldPolynomialGcd(ctx,r,n,d);coprime=r.degree(ctx,d)===0||(remaining!==null&&r.equal(ctx,remaining,r.one(ctx)));
+      }else{
       const proof = extendedGcd(ctx, r, numerator, denominator);
       n = exactDivide(ctx, r, numerator, proof.gcd); d = exactDivide(ctx, r, denominator, proof.gcd);
       const inverse = r.domain.inverse(ctx, r.leading(ctx, d));
@@ -86,6 +92,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
       // producing a second Euclidean sequence for the normalized pair.
       coprime = !r.domain.isZero(ctx, inverse) && r.equal(ctx,
         r.add(ctx, r.multiply(ctx, proof.s, n), r.multiply(ctx, proof.t, d)), r.constant(ctx, inverse));
+      }
     }
     demand(r.domain.equal(ctx, r.leading(ctx, d), r.domain.fromInteger(ctx, 1n)), 'verification-failed', 'fraction denominator not monic');
     // Monic degree-zero denominator is exactly one, hence coprime to every numerator.

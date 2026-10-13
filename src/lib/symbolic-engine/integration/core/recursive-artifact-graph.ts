@@ -4,18 +4,18 @@ import { checkArtifactBounds, inspectExactArtifact, type ExactArtifactBounds } f
 import * as w from './decision-wire-algebra';
 
 type Atom = null | string | number | boolean;
-type Node = readonly ['atom', Atom] | readonly ['list', readonly number[]] | readonly ['record', readonly string[], readonly number[]];
-export interface RecursiveArtifactGraph { readonly root: number; readonly nodes: readonly Node[] }
-function signature(ctx: ExecutionContext, node: Node): string {
+export type RecursiveArtifactNode = readonly ['atom', Atom] | readonly ['list', readonly number[]] | readonly ['record', readonly string[], readonly number[]];
+export interface RecursiveArtifactGraph { readonly root: number; readonly nodes: readonly RecursiveArtifactNode[] }
+function signature(ctx: ExecutionContext, node: RecursiveArtifactNode): string {
   let capacity = 32;
   if (node[0] === 'atom') capacity += typeof node[1] === 'string' ? node[1].length * 6 : 24;
   else if (node[0] === 'list') capacity += node[1].length * 20;
   else { capacity += node[2].length * 20; for (const key of node[1]) capacity += key.length * 6 + 4; }
   ctx.allocate(capacity); const key = JSON.stringify(node); ctx.allocate(key.length); return key;
 }
-export function packRecursiveArtifactGraph(ctx: ExecutionContext, input: unknown, bounds: ExactArtifactBounds): RecursiveArtifactGraph {
-  checkArtifactBounds(ctx, bounds); const nodes: Node[] = [], ids = new Map<string, number>(), active = new Set<object>();
-  function intern(node: Node): number {
+export function buildRecursiveArtifactGraphWithin(ctx: ExecutionContext, input: unknown): RecursiveArtifactGraph {
+  const nodes: RecursiveArtifactNode[] = [], ids = new Map<string, number>(), active = new Set<object>();
+  function intern(node: RecursiveArtifactNode): number {
     const key = signature(ctx, node), previous = ids.get(key); if (previous !== undefined) return previous;
     ctx.allocate(3 + key.length); const id = nodes.length; demand(Number.isSafeInteger(id), 'invalid-input', 'recursive graph index');
     nodes.push(Object.freeze(node)); ids.set(key, id); return id;
@@ -43,11 +43,13 @@ export function packRecursiveArtifactGraph(ctx: ExecutionContext, input: unknown
     active.delete(value); return result;
   }
   const root = visit(input); ctx.allocate(2); const graph = Object.freeze({root, nodes: Object.freeze(nodes)});
-  inspectExactArtifact(ctx, bounds, graph); return graph;
+  return graph;
+}
+export function packRecursiveArtifactGraph(ctx: ExecutionContext, input: unknown, bounds: ExactArtifactBounds): RecursiveArtifactGraph {
+  checkArtifactBounds(ctx, bounds); const graph=buildRecursiveArtifactGraphWithin(ctx,input);inspectExactArtifact(ctx,bounds,graph);return graph;
 }
 /** Topological order, exact shapes, uniqueness and reachability are all checked. */
-export function unpackRecursiveArtifactGraph(ctx: ExecutionContext, data: unknown, bounds: ExactArtifactBounds): unknown {
-  checkArtifactBounds(ctx, bounds); inspectExactArtifact(ctx, bounds, data);
+export function replayRecursiveArtifactGraphWithin(ctx: ExecutionContext, data: unknown): unknown {
   const raw = w.record(ctx, data, ['root', 'nodes']), nodes = w.array(ctx, raw.nodes), root = w.integer(ctx).decode(raw.root);
   demand(nodes.length > 0 && root === nodes.length - 1, 'invalid-input', 'recursive graph complete root');
   ctx.allocate(nodes.length * 3); const values: unknown[] = [], edges: (readonly number[])[] = [], signatures = new Set<string>();
@@ -56,7 +58,7 @@ export function unpackRecursiveArtifactGraph(ctx: ExecutionContext, data: unknow
     return Object.freeze(source.map(ref => { const n = w.integer(ctx).decode(ref); demand(n < index, 'invalid-input', 'recursive graph forward/cyclic reference'); return n; }));
   }
   for (let i = 0; i < nodes.length; i++) {
-    ctx.tick(); const n = w.array(ctx, nodes[i]); let node: Node, value: unknown, children: readonly number[];
+    ctx.tick(); const n = w.array(ctx, nodes[i]); let node: RecursiveArtifactNode, value: unknown, children: readonly number[];
     if (n[0] === 'atom') {
       demand(n.length === 2 && (n[1] === null || typeof n[1] === 'string' || typeof n[1] === 'boolean' || typeof n[1] === 'number' && Number.isSafeInteger(n[1])), 'invalid-input', 'recursive graph atom shape');
       node = ['atom', n[1] as Atom]; value = n[1]; children = Object.freeze([]);
@@ -83,4 +85,11 @@ export function unpackRecursiveArtifactGraph(ctx: ExecutionContext, data: unknow
     ctx.allocate(edges[id].length + 1); reached.add(id); for (const child of edges[id]) pending.push(child);
   }
   demand(reached.size === nodes.length, 'invalid-input', 'unreachable recursive graph evidence'); return values[root];
+}
+
+/** Existing tags retain their complete physical-data bound and format. New
+ * private edge codecs must bound their whole stored data before composing the
+ * same strict graph verifier; temporary decoded edges stay cumulatively charged. */
+export function unpackRecursiveArtifactGraph(ctx: ExecutionContext, data: unknown, bounds: ExactArtifactBounds): unknown {
+  checkArtifactBounds(ctx,bounds);inspectExactArtifact(ctx,bounds,data);return replayRecursiveArtifactGraphWithin(ctx,data);
 }

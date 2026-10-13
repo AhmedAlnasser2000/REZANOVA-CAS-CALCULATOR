@@ -1,6 +1,6 @@
 # INTEGRATION-ALGEBRAIC-DIVISOR1
 
-Status: Gate A verified (2026-10-13); Gate B approved but not yet activated. The milestone remains incomplete.
+Status: both ordered backend gates verified (2026-10-13). Gate A committed at 27df6528; Gate B is recorded by its containing separately authorized checkpoint. The milestone is complete.
 
 ## Scope and sequencing
 
@@ -34,6 +34,8 @@ Rule `algebraic-divisor-two-reduction-v1`: prime-to-characteristic torsion injec
 
 Explicit-owner/request verifiers and version-1 codecs accompany curve construction/base change, place decomposition/valuations, principal divisors, `solveAlgebraicRiemannRoch`, `decideAlgebraicPrincipality` and `decideAlgebraicDivisorTorsion`. Whole artifacts are bounded before nested processing. Auxiliary owners require checked defining evidence. Replay invokes no constant/factorization/place/module/linear/Riemann–Roch/prime/torsion producers. References and flags grant no authority.
 
+The new Gate B tags share record keys and encode graph references as canonical decimal indices. Mathematical atoms and complete nested proof data remain structured. The whole stored artifact obeys the unchanged node budget; each reconstructed adjacency array also fits that budget, with cumulative traversal and allocation charged. Published codecs keep their existing shapes, guards and bounds; the common strict graph reconstruction and mathematical verifiers still check the evidence. Factored witnesses compare native factors by exact field equality, preserving replay under structural data sharing.
+
 Fresh external proof state, shared cumulative nested accounting and sticky exhaustion remain mandatory. Invalid input, unsupported domains, ownership, division by zero, verification and exhaustion remain distinct. Preserve input/returned-value evaluation provenance; auxiliary ideals, discriminants and denominator clearing add no source exclusions.
 
 ## Resources and acceptance
@@ -45,3 +47,7 @@ Coverage includes rational and arbitrary polynomial-defined fields, singular mod
 Each gate runs focused two-worker Vitest, incremental TypeScript, scoped lint, isolation, OOE/compartment, memory/file-size and diff checks. Repository lint/build precede each gate commit. Private backend work requires no Playwright. Serial two-warm-up/five-sample construction/solving/verification/codec observations report counters and memory without timing assertions.
 
 Primary algorithm sources: [Hess](https://research-information.bris.ac.uk/en/publications/computing-riemann-roch-spaces-in-algebraic-function-fields-and-re/), [Schultz](https://bpb-us-e1.wpmucdn.com/sites.psu.edu/dist/d/34699/files/2016/12/IntegrationOnCurves-2hhuby8.pdf), [Bronstein](https://www.math.kobe-u.ac.jp/HOME/taka/2007/knx/bronstein-tutorial-issac98.pdf). The following INTEGRATION-ALGEBRAIC-DECISION1 plan requires separate review against verified interfaces.
+
+## Completion evidence
+
+Verified complete divisor arithmetic, Riemann–Roch spaces, principality and least-order principal-multiple recognition over certified algebraic function fields and their actual constant fields, with independent replay. Retained/focused evidence covers 1,203 private-core checks plus 84 adopted Integration checks; the final affected replay and geometry corrections pass without rerunning unaffected broad coverage. Order two/three/29, the infinite-order elliptic divisor, nonrational places, hidden constants/base change and full nested height-eight artifacts pass. Serial two-warm-up/five-sample observations and the separately labelled order-29 acceptance observation are retained in the [milestone dossier](../../../.memory/sessions/2026-10/2026-10-13/2026-10-13__integration-algebraic-divisor1/verification-summary.md). Type/lint/build, isolation, OOE/compartment and durable/file-size/diff gates pass. These are divisor authorities; algebraic integrability assembly remains the next separate reviewed plan.

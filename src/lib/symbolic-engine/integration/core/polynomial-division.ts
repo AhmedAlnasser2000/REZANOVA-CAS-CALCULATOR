@@ -3,6 +3,8 @@ import { divide, requireField } from './field';
 import type { Polynomial, PolynomialRing } from './polynomial';
 import { fractionCoefficient } from './fraction-coefficient';
 import { primitiveExtendedGcd } from './primitive-euclid';
+import {checkedLinearPowerGcd} from './polynomial-linear-power';
+import {numberFieldPolynomialGcd} from './number-field-polynomial-gcd';
 
 export interface Division<E> { readonly quotient: Polynomial<E>; readonly remainder: Polynomial<E> }
 export interface Bezout<E> { readonly gcd: Polynomial<E>; readonly s: Polynomial<E>; readonly t: Polynomial<E> }
@@ -70,12 +72,18 @@ export function extendedGcd<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, a
     return primitiveExtendedGcd(ctx, ring, adapter, a, b);
   }
   let oldR = a, r = b, oldS = ring.one(ctx), s = ring.zero(ctx), oldT = ring.zero(ctx), t = ring.one(ctx);
+  // Keep each Euclidean divisor monic and scale its Bezout pair with it.
+  // This removes inessential scalar growth before the next division; it is
+  // not a fallback and does not change the returned checked certificate.
+  if(!ring.isZero(ctx,oldR)){const unit=ring.domain.inverse(ctx,ring.leading(ctx,oldR));oldR=ring.scale(ctx,oldR,unit);oldS=ring.scale(ctx,oldS,unit);oldT=ring.scale(ctx,oldT,unit);}
+  if(!ring.isZero(ctx,r)){const unit=ring.domain.inverse(ctx,ring.leading(ctx,r));r=ring.scale(ctx,r,unit);s=ring.scale(ctx,s,unit);t=ring.scale(ctx,t,unit);}
   while (!ring.isZero(ctx, r)) {
     ctx.tick();
     const d = division(ctx, ring, oldR, r);
     const nextS = ring.subtract(ctx, oldS, ring.multiply(ctx, d.quotient, s));
     const nextT = ring.subtract(ctx, oldT, ring.multiply(ctx, d.quotient, t));
     oldR = r; r = d.remainder; oldS = s; s = nextS; oldT = t; t = nextT;
+    if(!ring.isZero(ctx,r)){const unit=ring.domain.inverse(ctx,ring.leading(ctx,r));r=ring.scale(ctx,r,unit);s=ring.scale(ctx,s,unit);t=ring.scale(ctx,t,unit);}
   }
   if (!ring.isZero(ctx, oldR)) {
     const inv = ring.domain.inverse(ctx, ring.leading(ctx, oldR));
@@ -86,5 +94,7 @@ export function extendedGcd<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, a
   verifyBezout(ctx, ring, a, b, result); return result;
 }
 export function polynomialGcd<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, a: Polynomial<E>, b: Polynomial<E>): Polynomial<E> {
+  const linear=checkedLinearPowerGcd(ctx,ring,a,b);if(linear!==null)return linear;
+  const primitive=numberFieldPolynomialGcd(ctx,ring,a,b);if(primitive!==null)return primitive;
   return extendedGcd(ctx, ring, a, b).gcd;
 }

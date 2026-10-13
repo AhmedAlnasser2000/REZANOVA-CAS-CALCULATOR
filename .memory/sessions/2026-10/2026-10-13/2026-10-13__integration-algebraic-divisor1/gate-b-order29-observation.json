@@ -1,0 +1,58 @@
+{
+  "attribution": {
+    "primary_agent": "codex",
+    "primary_agent_model": "gpt-6",
+    "primary_agent_family": "sol",
+    "recorded_by_agent": "codex",
+    "recorded_by_agent_model": "gpt-6",
+    "recorded_by_agent_family": "sol",
+    "verified_by_agent": "codex",
+    "verified_by_agent_model": "gpt-6",
+    "verified_by_agent_family": "sol",
+    "attribution_basis": "live"
+  },
+  "date": "2026-10-13",
+  "method": "single additional acceptance observation; not the serial sampled benchmark",
+  "records": [
+    {
+      "fixture": "order29",
+      "stage": "torsion",
+      "milliseconds": 289513.001756,
+      "usage": {
+        "work": 7047125096,
+        "allocation": 236662625298
+      }
+    },
+    {
+      "fixture": "order29",
+      "stage": "verification",
+      "milliseconds": 32483.846363000048,
+      "usage": {
+        "work": 904671423,
+        "allocation": 28603827450
+      }
+    },
+    {
+      "fixture": "order29",
+      "stage": "encoding",
+      "milliseconds": 142169.41195100005,
+      "usage": {
+        "work": 4153137460,
+        "allocation": 173294409706
+      }
+    },
+    {
+      "fixture": "order29",
+      "bytes": 791876
+    },
+    {
+      "fixture": "order29",
+      "stage": "decoding",
+      "milliseconds": 89956.38878800004,
+      "usage": {
+        "work": 2960474208,
+        "allocation": 140567471401
+      }
+    }
+  ]
+}
