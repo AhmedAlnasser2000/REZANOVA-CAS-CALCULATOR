@@ -1,3 +1,4 @@
+import type { DecisionCandidate } from './decision-candidate';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialField, DifferentialBounds, DifferentialElement as E } from './differential-field';
 import { LogarithmicRationalDomain, assertLogarithmicRationalDomain, requireLogarithmicField } from './logarithmic-rational-domain';
@@ -33,6 +34,7 @@ export type LogarithmicRationalDecision = Readonly<Common & (
   | { kind: 'elementary'; obstruction: null; remainder: LogarithmicRationalRemainder; rational: RationalDecision;
       embedding: LogarithmicPrimitive; primitive: LogarithmicPrimitive; derivative: LogarithmicPrimitiveDerivative }
 )>;
+export type LogarithmicRationalCandidate = DecisionCandidate<LogarithmicRationalDecision>;
 export function logarithmicResidueTerms(ctx: ExecutionContext, proof: LogarithmicResidue | null): readonly LogarithmicLogTerm[] {
   const terms: LogarithmicLogTerm[] = [];
   if (proof) for (const group of proof.groups) {
@@ -48,15 +50,15 @@ function sameTerms(ctx: ExecutionContext, d: LogarithmicRationalDomain, a: reado
       && d.field.equal(ctx, a[i].norm, b[i].norm), 'verification-failed', 'exact logarithm assembly');
   }
 }
-export function integrateLogarithmicRational(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalDecision {
+export function produceLogarithmicRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalCandidate {
   return ctx.operation(() => {
     const d = new LogarithmicRationalDomain(ctx, owner, bounds); owner.assert(ctx, input);
     const hermite = logarithmicHermite(ctx, d, input), residue = owner.isZero(ctx, hermite.residual) ? null : logarithmicResidues(ctx, d, hermite.residual);
     const common = { domain: d, input, rule: LOGARITHMIC_RATIONAL_REDUCTION, hermite, residue }; ctx.allocate(15);
-    let out: LogarithmicRationalDecision;
+    let out: LogarithmicRationalCandidate;
     if (residue !== null && residue.nonconstant !== null) {
       out = Object.freeze({ ...common, kind: 'non-elementary', obstruction: 'nonconstant-residue', remainder: null,
-        rational: null, embedding: null, primitive: null, derivative: null, conditions: logarithmicConditions(ctx, d, input) });
+        rational: null, embedding: null, primitive: null, conditions: logarithmicConditions(ctx, d, input) });
     } else {
       const terms = logarithmicResidueTerms(ctx, residue), logarithms = logarithmicPrimitive(ctx, d, owner.fromInteger(ctx, 0n), terms);
       const derivative = differentiateLogarithmicPrimitive(ctx, logarithms, bounds);
@@ -64,7 +66,7 @@ export function integrateLogarithmicRational(ctx: ExecutionContext, owner: Diffe
       const reduction = reduceLogarithmicPolynomial(ctx, d, polynomial), remainder = Object.freeze({ logarithms, derivative, polynomial, reduction });
       if (reduction.failure !== null) {
         out = Object.freeze({ ...common, kind: 'non-elementary', obstruction: 'polynomial-coefficient', remainder,
-          rational: null, embedding: null, primitive: null, derivative: null, conditions: logarithmicConditions(ctx, d, input) });
+          rational: null, embedding: null, primitive: null, conditions: logarithmicConditions(ctx, d, input) });
       } else {
         demand(reduction.remainder !== null, 'verification-failed', 'missing base remainder');
         const native = limitedIntegrationDomain(ctx, d.base), value = toRationalPrimitiveInput(ctx, d.base, native, reduction.remainder);
@@ -73,11 +75,24 @@ export function integrateLogarithmicRational(ctx: ExecutionContext, owner: Diffe
         const field = owner.add(ctx, hermite.fieldPart, owner.add(ctx, reduction.fieldPart, embedding.fieldPart));
         const primitive = logarithmicPrimitive(ctx, d, field, [...terms, ...embedding.terms]);
         out = Object.freeze({ ...common, kind: 'elementary', obstruction: null, remainder, rational, embedding, primitive,
-          derivative: differentiateLogarithmicPrimitive(ctx, primitive, bounds), conditions: logarithmicConditions(ctx, d, input, primitive) });
+          conditions: logarithmicConditions(ctx, d, input, primitive) });
       }
     }
-    verifyLogarithmicRationalDecision(ctx, owner, input, out, bounds); return out;
+    return out;
   });
+}
+export function checkLogarithmicRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  candidate: LogarithmicRationalCandidate, bounds: DifferentialBounds): LogarithmicRationalDecision {
+  return ctx.operation(() => {
+    owner.assert(ctx, input); ctx.allocate(2);
+    const decision = candidate.kind === 'elementary'
+      ? Object.freeze({...candidate, derivative: differentiateLogarithmicPrimitive(ctx, candidate.primitive, bounds)})
+      : Object.freeze({...candidate, derivative: null});
+    verifyLogarithmicRationalDecision(ctx, owner, input, decision, bounds); return decision;
+  });
+}
+export function integrateLogarithmicRational(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalDecision {
+  return ctx.operation(() => checkLogarithmicRationalCandidate(ctx, owner, input, produceLogarithmicRationalCandidate(ctx, owner, input, bounds), bounds));
 }
 export function verifyLogarithmicRationalDecision(ctx: ExecutionContext, owner: DifferentialField, input: E,
   decision: LogarithmicRationalDecision, bounds: DifferentialBounds): void {

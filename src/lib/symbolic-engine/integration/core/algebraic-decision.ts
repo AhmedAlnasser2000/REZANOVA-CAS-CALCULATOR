@@ -1,3 +1,4 @@
+import type { DecisionCandidate } from './decision-candidate';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import { verifyAlgebraicCurveWithin, type AlgebraicCurveView } from './algebraic-curve';
@@ -28,6 +29,7 @@ export type AlgebraicDecision<E> = Readonly<Common<E> & (
   (Remaining<E> & {kind: 'non-elementary'; reason: 'nonzero-holomorphic-remainder'; later: 'complete'}) |
   (Remaining<E> & {kind: 'elementary'; primitive: AlgebraicPrimitive<E>; derivative: AlgebraicPrimitiveDerivative<E>})
 )>;
+export type AlgebraicCandidate<E> = DecisionCandidate<AlgebraicDecision<E>>;
 function returned<E>(proof: AlgebraicDecision<E>): readonly E[] {
   if (proof.kind === 'elementary') return [proof.primitive.fieldPart];
   return [proof.reduction.kind === 'simple-poles' ? proof.reduction.fieldPart : proof.reduction.hermite.fieldPart];
@@ -55,8 +57,8 @@ export function verifyAlgebraicDecisionWithin<E>(ctx: ExecutionContext, curve: A
   }
   verifyAlgebraicConditions(ctx, f, algebraicIntegrationConditionSources(ctx, curve, input, returned(proof)), proof.conditions, bounds);
 }
-export function integrateAlgebraicWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, bounds: DifferentialBounds): AlgebraicDecision<E> {
-  curve.owner.assert(ctx, input); const f = curve.owner, reduction = reduceAlgebraicDifferentialWithin(ctx, curve, input, bounds), common = {rule: algebraicIntegrationRule, input, reduction}; let decision: AlgebraicDecision<E>;
+export function produceAlgebraicCandidateWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, bounds: DifferentialBounds): AlgebraicCandidate<E> {
+  curve.owner.assert(ctx, input); const f = curve.owner, reduction = reduceAlgebraicDifferentialWithin(ctx, curve, input, bounds), common = {rule: algebraicIntegrationRule, input, reduction}; let decision: AlgebraicCandidate<E>;
   if (reduction.kind === 'infinity-unsolved') decision = Object.freeze({...common, kind: 'non-elementary', reason: 'infinity-principal-part-obstruction', later: 'unperformed', conditions: algebraicConditions(ctx, f, algebraicIntegrationConditionSources(ctx, curve, input, [reduction.hermite.fieldPart]), bounds)});
   else {
     const splitting = splitAlgebraicResiduesWithin(ctx, curve, reduction.remainder, reduction.residues, bounds), relations = combineAlgebraicResiduesWithin(ctx, splitting, bounds), logarithms = constructAlgebraicLogarithmsWithin(ctx, curve, relations, bounds);
@@ -65,14 +67,39 @@ export function integrateAlgebraicWithin<E>(ctx: ExecutionContext, curve: Algebr
       const remainder = f.subtract(ctx, reduction.remainder, logarithms.nativeDerivative), exact = solveAlgebraicExactDifferentialWithin(ctx, curve, remainder, bounds);
       demand((exact.differential.divisor?.entries ?? []).every(p => p.coefficient >= 0n), 'verification-failed', 'logarithmic subtraction leaves a holomorphic differential');
       if (f.isZero(ctx, remainder)) {
-        demand(exact.kind === 'primitive', 'verification-failed', 'zero remainder exactness'); const fieldPart = f.add(ctx, reduction.fieldPart, exact.primitive), primitive = assembleAlgebraicPrimitiveWithin(ctx, curve, fieldPart, logarithms.primitive.terms, bounds), derivative = differentiateAlgebraicPrimitiveWithin(ctx, curve, primitive, bounds);
-        decision = Object.freeze({...common, relations, logarithms, remainder, exact, kind: 'elementary', primitive, derivative, conditions: algebraicConditions(ctx, f, algebraicIntegrationConditionSources(ctx, curve, input, [fieldPart]), bounds)});
+        demand(exact.kind === 'primitive', 'verification-failed', 'zero remainder exactness'); const fieldPart = f.add(ctx, reduction.fieldPart, exact.primitive), primitive = assembleAlgebraicPrimitiveWithin(ctx, curve, fieldPart, logarithms.primitive.terms, bounds);
+        decision = Object.freeze({...common, relations, logarithms, remainder, exact, kind: 'elementary', primitive, conditions: algebraicConditions(ctx, f, algebraicIntegrationConditionSources(ctx, curve, input, [fieldPart]), bounds)});
       } else {
         demand(exact.kind === 'no-field-primitive', 'verification-failed', 'proper-curve holomorphic exactness'); decision = Object.freeze({...common, relations, logarithms, remainder, exact, kind: 'non-elementary', reason: 'nonzero-holomorphic-remainder', later: 'complete', conditions: algebraicConditions(ctx, f, algebraicIntegrationConditionSources(ctx, curve, input, [reduction.fieldPart]), bounds)});
       }
     }
   }
-  verifyAlgebraicDecisionWithin(ctx, curve, input, decision, bounds); return decision;
+  return decision;
+}
+export function checkAlgebraicCandidateWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, candidate: AlgebraicCandidate<E>, bounds: DifferentialBounds): AlgebraicDecision<E> {
+  curve.owner.assert(ctx,input);ctx.allocate(2);
+  const decision: AlgebraicDecision<E> = candidate.kind === 'elementary'
+    ? Object.freeze({...candidate, derivative:differentiateAlgebraicPrimitiveWithin(ctx,curve,candidate.primitive,bounds)})
+    : candidate;
+  verifyAlgebraicDecisionWithin(ctx,curve,input,decision,bounds);return decision;
+}
+export function integrateAlgebraicWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, bounds: DifferentialBounds): AlgebraicDecision<E> {
+  return checkAlgebraicCandidateWithin(ctx,curve,input,produceAlgebraicCandidateWithin(ctx,curve,input,bounds),bounds);
+}
+export function produceAlgebraicCandidate<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, bounds: DifferentialBounds): AlgebraicCandidate<E> {
+  return ctx.operation(()=>verifyGoodReductionClaim(()=>{
+    const p=recordRationalGcdEvidence(ctx,()=>{verifyAlgebraicCurveWithin(ctx,curve.owner,curve,bounds);return produceAlgebraicCandidateWithin(ctx,curve,input,bounds);});
+    ctx.allocate(2);return Object.freeze({...p.value,arithmetic:p.evidence});
+  }));
+}
+export function checkAlgebraicCandidate<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, candidate: AlgebraicCandidate<E>, bounds: DifferentialBounds): AlgebraicDecision<E> {
+  return ctx.operation(()=>verifyGoodReductionClaim(()=>{
+    demand(candidate.arithmetic!==undefined,'verification-failed','candidate arithmetic coverage');
+    const p=recordRationalGcdEvidence(ctx,()=>{verifyAlgebraicCurveWithin(ctx,curve.owner,curve,bounds);return checkAlgebraicCandidateWithin(ctx,curve,input,candidate,bounds);},candidate.arithmetic);
+    ctx.allocate(2);return p.value.kind === 'elementary'
+      ? Object.freeze({...p.value,primitive:withAlgebraicPrimitiveArithmeticWithin(ctx,p.value.primitive,p.evidence),derivative:Object.freeze({...p.value.derivative,arithmetic:p.evidence}),arithmetic:p.evidence})
+      : Object.freeze({...p.value,arithmetic:p.evidence});
+  }));
 }
 export function integrateAlgebraic<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, input: E, bounds: DifferentialBounds): AlgebraicDecision<E> {
   return ctx.operation(() => verifyGoodReductionClaim(() => { const p = recordRationalGcdEvidence(ctx, () => { verifyAlgebraicCurveWithin(ctx, curve.owner, curve, bounds); return integrateAlgebraicWithin(ctx, curve, input, bounds); });

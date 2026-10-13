@@ -20,6 +20,15 @@ export function readIntegrationPresentation(document: CanonicalResultDocument,
   limits: MathJsonValidationLimits = {}): IntegrationPresentation | undefined {
   // Authority/shape errors are not optional formatting errors.
   const native = requireCanonicalResultAuthority(document);
+  if (native.outcomeKind !== 'success') return undefined;
+  return formatIntegrationPayload(native, limits);
+}
+/** Pure page-preview formatting. Its output is never canonical authority. */
+export function presentIntegrationCandidate(primary: CanonicalResultDocument['primary'], limits: MathJsonValidationLimits = {}): IntegrationPresentation | undefined {
+  return formatIntegrationPayload({primary}, limits);
+}
+function formatIntegrationPayload(native: Pick<CanonicalResultDocument, 'primary' | 'supplements'>,
+  limits: MathJsonValidationLimits): IntegrationPresentation | undefined {
   const primary = native.primary;
   const formal = primary?.kind === 'rational-antiderivative' || primary?.kind === 'exponential-antiderivative' ? primary : undefined;
   const negative = primary?.kind === 'non-elementary' ? primary : undefined;
@@ -32,7 +41,6 @@ export function readIntegrationPresentation(document: CanonicalResultDocument,
   let expandedTraversalExceeded = false;
   const output = (text: string) => {if (text.length > byteLimit || new TextEncoder().encode(text).length > byteLimit) throw Error('Presentation output limit'); return text;};
   const cache = new Map<CanonicalMathValueV2, Map<string, IntegrationMathPresentation>>();
-  if (document.outcomeKind !== 'success') return undefined;
   const originalConditions: Condition[] = [], conditions: Condition[] = [], seen = new Map<string, Condition>();
   const format = (value: CanonicalMathValueV2, variables: string[], expand = true): IntegrationMathPresentation => {
     const key = JSON.stringify([variables, expand]);

@@ -1,3 +1,4 @@
+import type { DecisionCandidate } from './decision-candidate';
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialField, DifferentialBounds, DifferentialElement as E } from './differential-field';
 import { ExponentialRationalDomain, assertExponentialRationalDomain, requireExponentialField } from './exponential-rational-domain';
@@ -33,6 +34,7 @@ export type ExponentialRationalDecision = Readonly<Common & (
   | { kind: 'elementary'; obstruction: null; remainder: ExponentialRationalRemainder; embedding: ExponentialPrimitive;
       primitive: ExponentialPrimitive; derivative: ExponentialPrimitiveDerivative }
 )>;
+export type ExponentialRationalCandidate = DecisionCandidate<ExponentialRationalDecision>;
 /** Coefficient slots are explicitly retained even when the nested sum rebases its generator. */
 export function extractExponentialLaurent(ctx: ExecutionContext, d: ExponentialRationalDomain, value: E) {
   d.field.assert(ctx, value); demand(value.kind === 'fraction', 'domain-mismatch', 'Laurent fraction');
@@ -81,17 +83,17 @@ export function residueLogTerms(ctx: ExecutionContext, residue: ExponentialResid
   }
   return Object.freeze(out);
 }
-export function integrateExponentialRational(ctx: ExecutionContext, owner: DifferentialField, input: E,
-  bounds: DifferentialBounds): ExponentialRationalDecision {
+export function produceExponentialRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  bounds: DifferentialBounds): ExponentialRationalCandidate {
   return ctx.operation(() => {
     const d = new ExponentialRationalDomain(ctx, owner, bounds); owner.assert(ctx, input);
     const hermite = differentialHermite(ctx, d, input);
     const residue = owner.isZero(ctx, hermite.residual) ? null : exponentialResidues(ctx, d, hermite.residual);
     const common = { domain: d, input, rule: EXPONENTIAL_RATIONAL_REDUCTION, hermite, residue }; ctx.allocate(12);
-    let result: ExponentialRationalDecision;
+    let result: ExponentialRationalCandidate;
     if (residue?.nonconstant !== null && residue !== null) {
       result = Object.freeze({ ...common, kind: 'non-elementary', obstruction: 'nonconstant-residue', remainder: null, embedding: null,
-        primitive: null, derivative: null, conditions: exponentialConditions(ctx, d, input) });
+        primitive: null, conditions: exponentialConditions(ctx, d, input) });
     } else {
       const terms = residueLogTerms(ctx, residue);
       const logarithms = exponentialPrimitive(ctx, d, owner.fromInteger(ctx, 0n), terms), derivative = differentiateExponentialPrimitive(ctx, logarithms, bounds);
@@ -100,18 +102,30 @@ export function integrateExponentialRational(ctx: ExecutionContext, owner: Diffe
       demand(sum.kind !== 'unsupported', 'verification-failed', 'one-family Laurent remainder refused');
       const remainder = Object.freeze({ logarithms, derivative, remainder: value, ...extracted, sum });
       if (sum.kind === 'non-elementary') result = Object.freeze({ ...common, kind: 'non-elementary', obstruction: 'laurent', remainder,
-        embedding: null, primitive: null, derivative: null, conditions: exponentialConditions(ctx, d, input) });
+        embedding: null, primitive: null, conditions: exponentialConditions(ctx, d, input) });
       else {
         const embedding = embedRationalPrimitive(ctx, d, sum.primitive.rational.primitive), exponential = reconstructExponentialSum(ctx, d, remainder);
         ctx.allocate(terms.length + embedding.terms.length);
         const primitive = exponentialPrimitive(ctx, d, owner.add(ctx, hermite.fieldPart, owner.add(ctx, embedding.fieldPart, exponential)), [...terms, ...embedding.terms]);
-        const proof = differentiateExponentialPrimitive(ctx, primitive, bounds);
-        result = Object.freeze({ ...common, kind: 'elementary', obstruction: null, remainder, embedding, primitive, derivative: proof,
+        result = Object.freeze({ ...common, kind: 'elementary', obstruction: null, remainder, embedding, primitive,
           conditions: exponentialConditions(ctx, d, input, primitive) });
       }
     }
-    verifyExponentialRationalDecision(ctx, owner, input, result, bounds); return result;
+    return result;
   });
+}
+export function checkExponentialRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  candidate: ExponentialRationalCandidate, bounds: DifferentialBounds): ExponentialRationalDecision {
+  return ctx.operation(() => {
+    owner.assert(ctx, input); ctx.allocate(2);
+    const decision = candidate.kind === 'elementary'
+      ? Object.freeze({...candidate, derivative: differentiateExponentialPrimitive(ctx, candidate.primitive, bounds)})
+      : Object.freeze({...candidate, derivative: null});
+    verifyExponentialRationalDecision(ctx, owner, input, decision, bounds); return decision;
+  });
+}
+export function integrateExponentialRational(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): ExponentialRationalDecision {
+  return ctx.operation(() => checkExponentialRationalCandidate(ctx, owner, input, produceExponentialRationalCandidate(ctx, owner, input, bounds), bounds));
 }
 export function verifyExponentialRationalDecision(ctx: ExecutionContext, owner: DifferentialField, input: E,
   decision: ExponentialRationalDecision, bounds: DifferentialBounds): void {

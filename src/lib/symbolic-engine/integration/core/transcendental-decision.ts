@@ -33,7 +33,8 @@ function sameTerms(ctx: ExecutionContext,d: TranscendentalDomain,a: readonly Tra
   for(let i=0;i<a.length;i++)demand(d.z.equal(ctx,a[i].modulus,b[i].modulus)&&d.z.equal(ctx,a[i].weight,b[i].weight)
     &&d.fz.equal(ctx,a[i].argument,b[i].argument)&&d.field.equal(ctx,a[i].norm,b[i].norm),'verification-failed','ordered root-log exact mapping');
 }
-export function transcendentalDecisionConditions(ctx: ExecutionContext,e: TranscendentalDecision): readonly TranscendentalCondition[] {
+export type TranscendentalCandidate = Readonly<Omit<TranscendentalDecision, 'derivative'>>;
+export function transcendentalDecisionConditions(ctx: ExecutionContext,e: TranscendentalCandidate): readonly TranscendentalCondition[] {
   const d=e.domain;let retained=e.primitive??undefined;
   if(!retained&&e.hermite){
     let part=e.hermite.fieldPart;if(e.polynomial)part=d.field.add(ctx,part,e.polynomial.fieldPart);if(e.laurent)part=d.field.add(ctx,part,e.laurent.fieldPart);
@@ -50,16 +51,16 @@ export function transcendentalDecisionConditions(ctx: ExecutionContext,e: Transc
   return Object.freeze(out);
 }
 function obstruction(d: TranscendentalDomain,kind: TranscendentalObstruction['kind'],index: number|null): TranscendentalObstruction {return Object.freeze({kind,index,level:d.field.height});}
-function base(d: TranscendentalDomain,input: E): Omit<TranscendentalDecision,'kind'|'conditions'> {
+function base(d: TranscendentalDomain,input: E): Omit<TranscendentalDecision,'kind'|'conditions'|'derivative'> {
   return {rule:TRANSCENDENTAL_RULE,domain:d,input,stage:d.view.monomial==='variable'?'rational':d.view.monomial==='primitive'?'logarithmic':'exponential',
-    rational:null,hermite:null,residue:null,remainder:null,polynomial:null,laurent:null,parent:null,embedding:null,primitive:null,derivative:null,obstruction:null};
+    rational:null,hermite:null,residue:null,remainder:null,polynomial:null,laurent:null,parent:null,embedding:null,primitive:null,obstruction:null};
 }
-export function integrateTranscendentalWithin(ctx: ExecutionContext,view: CertifiedTowerView,input: E,bounds: DifferentialBounds): TranscendentalDecision {
-  const d=new TranscendentalDomain(ctx,view,bounds),f=d.field;f.assert(ctx,input);ctx.allocate(17);let data: Omit<TranscendentalDecision,'conditions'>;
+export function produceTranscendentalCandidateWithin(ctx: ExecutionContext,view: CertifiedTowerView,input: E,bounds: DifferentialBounds): TranscendentalCandidate {
+  const d=new TranscendentalDomain(ctx,view,bounds),f=d.field;f.assert(ctx,input);ctx.allocate(17);let data: Omit<TranscendentalDecision,'conditions'|'derivative'>;
   if(view.monomial==='variable'){
     const owner=new FormalPrimitiveDomain(d.t.variable,d.z.variable),native=toRationalPrimitiveInput(ctx,f,owner,input);
-    const rational=integrateRationalWithin(ctx,owner,native),primitive=embedTranscendentalRationalPrimitiveWithin(ctx,d,rational.primitive),derivative=differentiateTranscendentalPrimitiveWithin(ctx,primitive,bounds);
-    data={...base(d,input),kind:'elementary',rational,primitive,derivative};
+    const rational=integrateRationalWithin(ctx,owner,native),primitive=embedTranscendentalRationalPrimitiveWithin(ctx,d,rational.primitive);
+    data={...base(d,input),kind:'elementary',rational,primitive};
   }else{
     const hermite=firstLevelHermite(ctx,d,input),residue=f.isZero(ctx,hermite.residual)?null:transcendentalResiduesWithin(ctx,d,hermite.residual);
     const common={...base(d,input),hermite,residue};
@@ -78,14 +79,29 @@ export function integrateTranscendentalWithin(ctx: ExecutionContext,view: Certif
         else{
           const embedding=embedTranscendentalPrimitiveWithin(ctx,d,parent.primitive!,bounds),part=f.add(ctx,hermite.fieldPart,f.add(ctx,polynomial?polynomial.fieldPart:laurent!.fieldPart,embedding.fieldPart));
           ctx.allocate(logarithms.terms.length+embedding.terms.length);
-          const primitive=transcendentalPrimitiveWithin(ctx,d,part,[...logarithms.terms,...embedding.terms]),proof=differentiateTranscendentalPrimitiveWithin(ctx,primitive,bounds);
-          data={...processed,parent,embedding,kind:'elementary',primitive,derivative:proof};
+          const primitive=transcendentalPrimitiveWithin(ctx,d,part,[...logarithms.terms,...embedding.terms]);
+          data={...processed,parent,embedding,kind:'elementary',primitive};
         }
       }
     }
   }
   const temporary={...data,conditions:Object.freeze([])},conditions=transcendentalDecisionConditions(ctx,temporary);ctx.allocate(2);
-  const decision=Object.freeze({...data,conditions});verifyTranscendentalDecisionWithin(ctx,view,input,decision,bounds);return decision;
+  return Object.freeze({...data,conditions});
+}
+export function checkTranscendentalCandidateWithin(ctx: ExecutionContext,view: CertifiedTowerView,input: E,candidate: TranscendentalCandidate,bounds: DifferentialBounds): TranscendentalDecision {
+  view.owner.assert(ctx,input);ctx.allocate(2);
+  demand(candidate.kind !== 'elementary' || candidate.primitive !== null,'verification-failed','candidate primitive coverage');
+  const derivative=candidate.kind === 'elementary'?differentiateTranscendentalPrimitiveWithin(ctx,candidate.primitive!,bounds):null;
+  const decision=Object.freeze({...candidate,derivative});verifyTranscendentalDecisionWithin(ctx,view,input,decision,bounds);return decision;
+}
+export function integrateTranscendentalWithin(ctx: ExecutionContext,view: CertifiedTowerView,input: E,bounds: DifferentialBounds): TranscendentalDecision {
+  return checkTranscendentalCandidateWithin(ctx,view,input,produceTranscendentalCandidateWithin(ctx,view,input,bounds),bounds);
+}
+export function produceTranscendentalCandidate(ctx: ExecutionContext,view: CertifiedTowerView,input: E,bounds: DifferentialBounds): TranscendentalCandidate {
+  return ctx.operation(()=>produceTranscendentalCandidateWithin(ctx,view,input,bounds));
+}
+export function checkTranscendentalCandidate(ctx: ExecutionContext,view: CertifiedTowerView,input: E,candidate: TranscendentalCandidate,bounds: DifferentialBounds): TranscendentalDecision {
+  return ctx.operation(()=>checkTranscendentalCandidateWithin(ctx,view,input,candidate,bounds));
 }
 function checkObstruction(e: TranscendentalDecision,kind: TranscendentalObstruction['kind'],index: number|null): void {
   demand(e.kind==='non-elementary'&&e.obstruction?.kind===kind&&e.obstruction.index===index&&e.obstruction.level===e.domain.field.height

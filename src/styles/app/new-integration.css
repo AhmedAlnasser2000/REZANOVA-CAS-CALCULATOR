@@ -18,3 +18,12 @@
 .ni-term {margin: 20px 0; border-top: 1px solid #64748b44; padding-top: 16px;}
 .ni-result .ni-math {max-width: 100%; overflow-x: auto; padding: 8px 0;}
 @media (max-width: 640px) {.new-integration-page {padding: 12px;} .ni-panel, .ni-editor {padding: 12px;} .new-integration-page header {align-items: flex-start;}}
+.new-integration-page .ni-unchecked-badge {
+  display: inline-block;
+  margin-inline-start: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--color-warning, #b7791f);
+}

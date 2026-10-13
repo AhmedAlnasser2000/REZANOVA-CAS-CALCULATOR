@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-10-13
+Last updated: 2026-10-14
 
 ## Purpose
 
@@ -11,24 +11,24 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 ## Agent Ownership
 
 - primary_agent: codex
-- primary_agent_model: gpt-6-astra
-- primary_agent_family: astra
+- primary_agent_model: gpt-6
+- primary_agent_family: sol
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-6-astra
-- recorded_by_agent_family: astra
+- recorded_by_agent_model: gpt-6
+- recorded_by_agent_family: sol
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-6-astra
-- verified_by_agent_family: astra
+- verified_by_agent_model: gpt-6
+- verified_by_agent_family: sol
 - attribution_basis: live
-- Most recent Graphing milestone: `PIECEWISE-CORE1` owned by claude / claude-opus-5-5 / opus-5.5 (live), after `PTX1`; the block above retains prior Integration backend ownership.
+- Most recent Graphing milestone: `PIECEWISE-CORE1` owned by claude / claude-opus-5-5 / opus-5.5 (live), after `PTX1`; the block above records current Integration gate ownership.
 - Focused contract consolidation checkpoint (2026-10-06): primary/recording/verifying/committing agent codex / gpt-6 / sol, attribution_basis live; its separate dossier records the approved commit and stop.
-- Latest completed Integration backend milestone (2026-10-13): INTEGRATION-ALGEBRAIC-DECISION1, primary/recording/verifying/committing agent codex / gpt-6 / sol, attribution_basis live. Gate A is committed at 12498c26; the containing authorized Gate B commit completes constructive algebraic integration and fresh positive/negative replay. Prior divisor Gate B 40702fb8 and earlier field/transcendental/RDE/workspace history remain preserved. No push authorized.
+- Latest completed Integration gate (2026-10-14): INTEGRATION-SOLVER-VERIFIER-SEPARATION1, backend/ui owned/recorded/verified/committed by codex / gpt-6 / sol, live attribution; user authorizes the containing Gate 1 commit with existing review notes. Prior algebraic Gates A/B 12498c26/fb0f3436 and all earlier history remain. Gate 2 performance follows; no push authorized.
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
 
 - Matrix/Vector editors compose supported scalar, matrix, and vector expressions with exact/symbolic coefficients and explicit shape, type, divisor, and limit stops. Named values stay in their own Matrix or Vector workspace, while Calculate evaluates inline Matrix/Vector expressions as answers using its own scalar variables. The 8 by 8 Matrix and length-8 Vector editing caps remain. The latest main-based merge snapshot passed 4,554 unit and 607 UI tests, a production build, and two headed Chrome checks. No push is authorized.
-- Integration reconstruction (2026-10-13; codex / gpt-6 / sol): INTEGRATION-ALGEBRAIC-DECISION1 is backend verified: actual-constant normalized trace primitives, general Hermite/infinity/residue reduction and complete logarithmic assembly with checked infinity, non-torsion-divisor and holomorphic negatives. Gate A 141 focused plus 84 adopted checks and Gate B 122 focused checks pass; Schultz/order-29 fresh round trips fit unchanged limits. Type/lint/build/isolation/boundary/durable checks accompany the separately authorized Gate B commit after Gate A 12498c26. User stops further slow measurements at 18:30:21 Riyadh and requests commit; partial warmed coverage is explicit, with no performance claim. A later performance gate covers multiple slow cases. Existing adoption is unchanged; broader adoption stays planned after separately reviewed mixed decisions and construction-height repair. Current height remains eight; trigs alone are deferred. No push.
+- Integration reconstruction (2026-10-14; codex / gpt-6 / sol): algebraic integration Gates A/B remain committed at 12498c26/fb0f3436; stopped multi-minute baseline observations remain stopped. The user approves two CRITICAL root-only gates: INTEGRATION-SOLVER-VERIFIER-SEPARATION1 first (private candidates plus currently adopted rational/exponential UI), then INTEGRATION-PERFORMANCE1 (multiple slow cases, advanced checked algorithms and compact replay). Gate 1 is verified backend/ui: native candidates across all completed backends, current answer-first display and separate export OOE job pass focused correctness, replay, visual and static/build checks. The containing authorized commit folds existing review notes. Gate 2 performance implementation follows; no speedup or target completion claimed. User authorizes existing machinery-review notes with the Gate 1 commit; Gate 2 commit and pushes remain unauthorized. Preserve height eight for these gates; height repair precedes broader adoption, mixed decisions need a separate plan, and trigs remain deferred.
 
 - Equation reconstruction (2026-10-08; milestone owner claude / claude-opus-5-5 / opus-5.5, synchronization recorded by codex / gpt-6 / sol): incoming main at 124b1e0b contains certified square systems (PR #26) and both semialgebraic gates (PR #27 and #29), completing roadmap stages 15–16. New Equation retains its independent equation.new-equation worker, schema-7 answers, exact and certified numeric results, assumptions/conditions, copy, Stop, tabs and drafts. Cylindrical regions, Boolean rows, quantifiers and parameter cases are now in the merged source. Original Equation dossiers retain their verification and authorship; this reconciliation adds combined-state checks without modifying their source. Stage 17 closeout and retirement of the old Equation engine require separate approval.
 

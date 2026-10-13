@@ -90,7 +90,7 @@ test('New Integration preserves verified output when only derivation export is u
       constructor(url: string | URL, options?: WorkerOptions) {
         super(url, options);
         if (String(url).includes('integration.worker')) this.addEventListener('message', event => {
-          if (event.data.document?.outcomeKind === 'success') {
+          if (event.data.phase === 'export') {
             delete event.data.artifact;
             event.data.exportUnavailable = 'Derivation export exceeds 16 MiB. The verified answer remains available.';
           }

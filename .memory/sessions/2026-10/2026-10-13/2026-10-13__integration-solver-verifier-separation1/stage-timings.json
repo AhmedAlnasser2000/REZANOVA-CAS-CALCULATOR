@@ -1,0 +1,666 @@
+{
+  "gate": "INTEGRATION-SOLVER-VERIFIER-SEPARATION1",
+  "profile": {
+    "work": 20000000000,
+    "allocation": 1000000000000,
+    "integerBits": 2048,
+    "degree": 256
+  },
+  "node": "v24.19.0",
+  "warmups": 2,
+  "samples": 5,
+  "serial": true,
+  "speedClaim": false,
+  "cases": [
+    {
+      "source": "\\int x\\,dx",
+      "records": [
+        {
+          "candidateAt": 62.910405999999966,
+          "timings": {
+            "construction": 8.559981000000107,
+            "candidate": 62.907469999999876,
+            "verification": 0.7302700000000186,
+            "projection": 52.550089999999955,
+            "export": 6.02290099999982
+          },
+          "candidateUsage": {
+            "work": 131884,
+            "allocation": 1061027
+          },
+          "verifiedUsage": {
+            "work": 209604,
+            "allocation": 1777199
+          },
+          "exportUsage": {
+            "work": 447894,
+            "allocation": 3114874
+          },
+          "totalMs": 122.32517899999993,
+          "artifactBytes": 32247,
+          "heap": {
+            "rss": 286183424,
+            "heapTotal": 214851584,
+            "heapUsed": 112247392,
+            "external": 4470682,
+            "arrayBuffers": 140565
+          }
+        },
+        {
+          "candidateAt": 61.10780599999998,
+          "timings": {
+            "construction": 8.327276999999867,
+            "candidate": 61.10511999999994,
+            "verification": 1.003577999999834,
+            "projection": 64.81362100000001,
+            "export": 6.923704999999927
+          },
+          "candidateUsage": {
+            "work": 131884,
+            "allocation": 1061027
+          },
+          "verifiedUsage": {
+            "work": 209604,
+            "allocation": 1777199
+          },
+          "exportUsage": {
+            "work": 447894,
+            "allocation": 3114874
+          },
+          "totalMs": 133.95711800000004,
+          "artifactBytes": 32247,
+          "heap": {
+            "rss": 296304640,
+            "heapTotal": 225099776,
+            "heapUsed": 125517848,
+            "external": 4469303,
+            "arrayBuffers": 139146
+          }
+        },
+        {
+          "candidateAt": 64.37155499999994,
+          "timings": {
+            "construction": 8.718798000000106,
+            "candidate": 64.36876800000005,
+            "verification": 0.4442829999998139,
+            "projection": 58.77700899999991,
+            "export": 6.309696000000031
+          },
+          "candidateUsage": {
+            "work": 131884,
+            "allocation": 1061027
+          },
+          "verifiedUsage": {
+            "work": 209604,
+            "allocation": 1777199
+          },
+          "exportUsage": {
+            "work": 447894,
+            "allocation": 3114874
+          },
+          "totalMs": 129.99519600000008,
+          "artifactBytes": 32247,
+          "heap": {
+            "rss": 305807360,
+            "heapTotal": 232841216,
+            "heapUsed": 155942768,
+            "external": 4469314,
+            "arrayBuffers": 139157
+          }
+        },
+        {
+          "candidateAt": 66.89040399999999,
+          "timings": {
+            "construction": 11.456629999999905,
+            "candidate": 66.88722499999994,
+            "verification": 0.39898700000003373,
+            "projection": 52.36151499999983,
+            "export": 7.262428
+          },
+          "candidateUsage": {
+            "work": 131884,
+            "allocation": 1061027
+          },
+          "verifiedUsage": {
+            "work": 209604,
+            "allocation": 1777199
+          },
+          "exportUsage": {
+            "work": 447894,
+            "allocation": 3114874
+          },
+          "totalMs": 127.01403699999992,
+          "artifactBytes": 32247,
+          "heap": {
+            "rss": 319406080,
+            "heapTotal": 246472704,
+            "heapUsed": 122670256,
+            "external": 4469325,
+            "arrayBuffers": 138034
+          }
+        },
+        {
+          "candidateAt": 63.278430999999955,
+          "timings": {
+            "construction": 8.598160999999891,
+            "candidate": 63.27415799999994,
+            "verification": 0.4143189999999777,
+            "projection": 53.97269799999981,
+            "export": 5.226918999999953
+          },
+          "candidateUsage": {
+            "work": 131884,
+            "allocation": 1061027
+          },
+          "verifiedUsage": {
+            "work": 209604,
+            "allocation": 1777199
+          },
+          "exportUsage": {
+            "work": 447894,
+            "allocation": 3114874
+          },
+          "totalMs": 122.99138200000016,
+          "artifactBytes": 32247,
+          "heap": {
+            "rss": 332161024,
+            "heapTotal": 260104192,
+            "heapUsed": 151414848,
+            "external": 4469292,
+            "arrayBuffers": 139135
+          }
+        }
+      ]
+    },
+    {
+      "source": "\\int \\frac{1}{x^2+1}\\,dx",
+      "records": [
+        {
+          "candidateAt": 216.00160099999994,
+          "timings": {
+            "construction": 26.02235299999984,
+            "candidate": 215.99948300000005,
+            "verification": 35.578371999999945,
+            "projection": 189.35811599999988,
+            "export": 35.731757000000016
+          },
+          "candidateUsage": {
+            "work": 2006429,
+            "allocation": 20641669
+          },
+          "verifiedUsage": {
+            "work": 5272555,
+            "allocation": 58513423
+          },
+          "exportUsage": {
+            "work": 6998088,
+            "allocation": 75458411
+          },
+          "totalMs": 476.7769589999998,
+          "artifactBytes": 95009,
+          "heap": {
+            "rss": 480796672,
+            "heapTotal": 393220096,
+            "heapUsed": 298882544,
+            "external": 4470827,
+            "arrayBuffers": 138034
+          }
+        },
+        {
+          "candidateAt": 216.45110999999997,
+          "timings": {
+            "construction": 26.52683399999978,
+            "candidate": 216.44889300000023,
+            "verification": 36.1699050000002,
+            "projection": 190.6991509999998,
+            "export": 30.927214000000276
+          },
+          "candidateUsage": {
+            "work": 2006429,
+            "allocation": 20641669
+          },
+          "verifiedUsage": {
+            "work": 5272555,
+            "allocation": 58513423
+          },
+          "exportUsage": {
+            "work": 6998088,
+            "allocation": 75458411
+          },
+          "totalMs": 474.3462840000002,
+          "artifactBytes": 95009,
+          "heap": {
+            "rss": 522944512,
+            "heapTotal": 435179520,
+            "heapUsed": 343856080,
+            "external": 4470746,
+            "arrayBuffers": 140589
+          }
+        },
+        {
+          "candidateAt": 219.18536099999938,
+          "timings": {
+            "construction": 31.49128500000006,
+            "candidate": 219.1784990000001,
+            "verification": 35.61919600000056,
+            "projection": 188.91640499999994,
+            "export": 30.590430999999626
+          },
+          "candidateUsage": {
+            "work": 2006429,
+            "allocation": 20641669
+          },
+          "verifiedUsage": {
+            "work": 5272555,
+            "allocation": 58513423
+          },
+          "exportUsage": {
+            "work": 6998088,
+            "allocation": 75458411
+          },
+          "totalMs": 474.4011139999998,
+          "artifactBytes": 95009,
+          "heap": {
+            "rss": 572416000,
+            "heapTotal": 481861632,
+            "heapUsed": 394037008,
+            "external": 4470746,
+            "arrayBuffers": 140589
+          }
+        },
+        {
+          "candidateAt": 212.14321500000005,
+          "timings": {
+            "construction": 25.90085999999974,
+            "candidate": 212.13835599999948,
+            "verification": 35.88096499999938,
+            "projection": 224.38301799999954,
+            "export": 33.14506600000004
+          },
+          "candidateUsage": {
+            "work": 2006429,
+            "allocation": 20641669
+          },
+          "verifiedUsage": {
+            "work": 5272555,
+            "allocation": 58513423
+          },
+          "exportUsage": {
+            "work": 6998088,
+            "allocation": 75458411
+          },
+          "totalMs": 505.6741149999998,
+          "artifactBytes": 95009,
+          "heap": {
+            "rss": 662536192,
+            "heapTotal": 514015232,
+            "heapUsed": 351078904,
+            "external": 4470768,
+            "arrayBuffers": 140611
+          }
+        },
+        {
+          "candidateAt": 216.15129999999954,
+          "timings": {
+            "construction": 27.202320000000327,
+            "candidate": 216.14970399999947,
+            "verification": 42.75840700000026,
+            "projection": 186.81771299999946,
+            "export": 31.20933200000036
+          },
+          "candidateUsage": {
+            "work": 2006429,
+            "allocation": 20641669
+          },
+          "verifiedUsage": {
+            "work": 5272555,
+            "allocation": 58513423
+          },
+          "exportUsage": {
+            "work": 6998088,
+            "allocation": 75458411
+          },
+          "totalMs": 477.03249999999935,
+          "artifactBytes": 95009,
+          "heap": {
+            "rss": 663584768,
+            "heapTotal": 522555392,
+            "heapUsed": 395327408,
+            "external": 4470768,
+            "arrayBuffers": 140611
+          }
+        }
+      ]
+    },
+    {
+      "source": "\\int e^x\\,dx",
+      "records": [
+        {
+          "candidateAt": 132.92791299999953,
+          "timings": {
+            "construction": 10.11851200000001,
+            "candidate": 132.92624999999953,
+            "verification": 5.68999199999962,
+            "projection": 124.75551300000006,
+            "export": 70.56487199999992
+          },
+          "candidateUsage": {
+            "work": 564029,
+            "allocation": 4099307
+          },
+          "verifiedUsage": {
+            "work": 1049927,
+            "allocation": 7202848
+          },
+          "exportUsage": {
+            "work": 3891949,
+            "allocation": 18400178
+          },
+          "totalMs": 334.0609999999997,
+          "artifactBytes": 361118,
+          "heap": {
+            "rss": 674070528,
+            "heapTotal": 583335936,
+            "heapUsed": 463052336,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 135.09009400000014,
+          "timings": {
+            "construction": 10.196601000000555,
+            "candidate": 135.08762399999978,
+            "verification": 8.687289000000419,
+            "projection": 127.27239199999985,
+            "export": 72.42278299999998
+          },
+          "candidateUsage": {
+            "work": 564029,
+            "allocation": 4099307
+          },
+          "verifiedUsage": {
+            "work": 1049927,
+            "allocation": 7202848
+          },
+          "exportUsage": {
+            "work": 3891949,
+            "allocation": 18400178
+          },
+          "totalMs": 343.5936529999999,
+          "artifactBytes": 361118,
+          "heap": {
+            "rss": 698646528,
+            "heapTotal": 607576064,
+            "heapUsed": 505218864,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 138.0279559999999,
+          "timings": {
+            "construction": 10.406405000000632,
+            "candidate": 138.02517199999966,
+            "verification": 5.783113000000412,
+            "projection": 132.7352579999997,
+            "export": 70.03409300000021
+          },
+          "candidateUsage": {
+            "work": 564029,
+            "allocation": 4099307
+          },
+          "verifiedUsage": {
+            "work": 1049927,
+            "allocation": 7202848
+          },
+          "exportUsage": {
+            "work": 3891949,
+            "allocation": 18400178
+          },
+          "totalMs": 346.68382399999973,
+          "artifactBytes": 361118,
+          "heap": {
+            "rss": 734363648,
+            "heapTotal": 643874816,
+            "heapUsed": 557841184,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 132.3297480000001,
+          "timings": {
+            "construction": 12.297810000000027,
+            "candidate": 132.32724700000017,
+            "verification": 5.580156999999417,
+            "projection": 117.05928899999981,
+            "export": 72.33236800000032
+          },
+          "candidateUsage": {
+            "work": 564029,
+            "allocation": 4099307
+          },
+          "verifiedUsage": {
+            "work": 1049927,
+            "allocation": 7202848
+          },
+          "exportUsage": {
+            "work": 3891949,
+            "allocation": 18400178
+          },
+          "totalMs": 327.4087869999994,
+          "artifactBytes": 361118,
+          "heap": {
+            "rss": 764837888,
+            "heapTotal": 673484800,
+            "heapUsed": 533860728,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 132.03942000000006,
+          "timings": {
+            "construction": 10.08984000000055,
+            "candidate": 132.03689699999995,
+            "verification": 5.62659899999926,
+            "projection": 115.56467299999986,
+            "export": 70.8511840000001
+          },
+          "candidateUsage": {
+            "work": 564029,
+            "allocation": 4099307
+          },
+          "verifiedUsage": {
+            "work": 1049927,
+            "allocation": 7202848
+          },
+          "exportUsage": {
+            "work": 3891949,
+            "allocation": 18400178
+          },
+          "totalMs": 324.1847170000001,
+          "artifactBytes": 361118,
+          "heap": {
+            "rss": 794984448,
+            "heapTotal": 703094784,
+            "heapUsed": 576725528,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        }
+      ]
+    },
+    {
+      "source": "\\int \\frac{e^x}{x}\\,dx",
+      "records": [
+        {
+          "candidateAt": 160.61117899999954,
+          "timings": {
+            "construction": 13.556054000000586,
+            "candidate": 160.60914400000001,
+            "verification": 2.852235999998811,
+            "projection": 142.71148999999969,
+            "export": 73.74719399999958
+          },
+          "candidateUsage": {
+            "work": 839055,
+            "allocation": 6083216
+          },
+          "verifiedUsage": {
+            "work": 1242379,
+            "allocation": 8728469
+          },
+          "exportUsage": {
+            "work": 4246837,
+            "allocation": 21519995
+          },
+          "totalMs": 380.0297709999995,
+          "artifactBytes": 382458,
+          "heap": {
+            "rss": 901971968,
+            "heapTotal": 809144320,
+            "heapUsed": 674486656,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 162.46099600000161,
+          "timings": {
+            "construction": 13.771827999999005,
+            "candidate": 162.45892300000014,
+            "verification": 2.8467860000000655,
+            "projection": 148.1395790000006,
+            "export": 72.55252800000017
+          },
+          "candidateUsage": {
+            "work": 839055,
+            "allocation": 6083216
+          },
+          "verifiedUsage": {
+            "work": 1242379,
+            "allocation": 8728469
+          },
+          "exportUsage": {
+            "work": 4246837,
+            "allocation": 21519995
+          },
+          "totalMs": 386.1058490000014,
+          "artifactBytes": 382458,
+          "heap": {
+            "rss": 937361408,
+            "heapTotal": 844406784,
+            "heapUsed": 706445888,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 159.46598500000073,
+          "timings": {
+            "construction": 13.620532999999341,
+            "candidate": 159.4632619999993,
+            "verification": 2.835411000000022,
+            "projection": 141.97832500000004,
+            "export": 70.63975500000015
+          },
+          "candidateUsage": {
+            "work": 839055,
+            "allocation": 6083216
+          },
+          "verifiedUsage": {
+            "work": 1242379,
+            "allocation": 8728469
+          },
+          "exportUsage": {
+            "work": 4246837,
+            "allocation": 21519995
+          },
+          "totalMs": 375.0275020000008,
+          "artifactBytes": 382458,
+          "heap": {
+            "rss": 972587008,
+            "heapTotal": 879669248,
+            "heapUsed": 804508272,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 161.68087099999866,
+          "timings": {
+            "construction": 16.48875600000065,
+            "candidate": 161.67833099999916,
+            "verification": 2.8606479999998555,
+            "projection": 140.11073699999906,
+            "export": 68.2089849999993
+          },
+          "candidateUsage": {
+            "work": 839055,
+            "allocation": 6083216
+          },
+          "verifiedUsage": {
+            "work": 1242379,
+            "allocation": 8728469
+          },
+          "exportUsage": {
+            "work": 4246837,
+            "allocation": 21519995
+          },
+          "totalMs": 372.96317400000044,
+          "artifactBytes": 382458,
+          "heap": {
+            "rss": 1008467968,
+            "heapTotal": 915193856,
+            "heapUsed": 835810680,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        },
+        {
+          "candidateAt": 162.5030170000009,
+          "timings": {
+            "construction": 15.896307000000888,
+            "candidate": 162.50091600000087,
+            "verification": 2.8592939999998634,
+            "projection": 140.33477400000083,
+            "export": 70.08427800000027
+          },
+          "candidateUsage": {
+            "work": 839055,
+            "allocation": 6083216
+          },
+          "verifiedUsage": {
+            "work": 1242379,
+            "allocation": 8728469
+          },
+          "exportUsage": {
+            "work": 4246837,
+            "allocation": 21519995
+          },
+          "totalMs": 375.89408600000024,
+          "artifactBytes": 382458,
+          "heap": {
+            "rss": 1043529728,
+            "heapTotal": 950194176,
+            "heapUsed": 867063056,
+            "external": 4468213,
+            "arrayBuffers": 138056
+          }
+        }
+      ]
+    }
+  ],
+  "primary_agent": "codex",
+  "primary_agent_model": "gpt-6",
+  "primary_agent_family": "sol",
+  "recorded_by_agent": "codex",
+  "recorded_by_agent_model": "gpt-6",
+  "recorded_by_agent_family": "sol",
+  "verified_by_agent": "codex",
+  "verified_by_agent_model": "gpt-6",
+  "verified_by_agent_family": "sol",
+  "attribution_basis": "live"
+}

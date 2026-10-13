@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { runIntegrationJob } from '../../lib/calculus/new-integration/runtime';
 import { integrationError } from '../../lib/calculus/new-integration/error';
-import type { IntegrationDraft, IntegrationResponse } from '../../lib/calculus/new-integration/types';
+import type { IntegrationDraft, IntegrationResponse, IntegrationPreview } from '../../lib/calculus/new-integration/types';
 import { loadIntegrationDrafts, readIntegrationDraft, readFormulaView, saveIntegrationDrafts, type FormulaView } from './new-integration-drafts';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import { workspaceInstanceRuntimeContext } from './workspace-instances';
-export type IntegrationViewState = {response?: IntegrationResponse; running?: boolean; notice?: string};
+export type IntegrationViewState = {response?: IntegrationResponse; preview?: IntegrationPreview; unchecked?: string; withdrawn?: boolean; phase?: 'solving' | 'checking' | 'exporting'; running?: boolean; notice?: string};
 export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorkspaceInstancesRuntime>) {
   const current = useRef(workspaces); current.current = workspaces;
   const [views, setViews] = useState<Record<string, IntegrationViewState>>({});
@@ -13,7 +13,12 @@ export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorksp
   const enteredRef = useRef(false);
   const jobs = useRef(new Map<string, AbortController>()), revisions = useRef(new Map<string, number>());
   const setView = useCallback((id: string, patch: Partial<IntegrationViewState>) => setViews(v => ({...v, [id]: {...v[id], ...patch}})), []);
-  const stop = useCallback((id: string) => {jobs.current.get(id)?.abort(); jobs.current.delete(id); setView(id, {running: false, notice: 'Stopped.'});}, [setView]);
+  const stop = useCallback((id: string) => {
+    jobs.current.get(id)?.abort(); jobs.current.delete(id);
+    setViews(v => ({...v,[id]:{...v[id],running:false,phase:undefined,notice:'Stopped.',
+      ...(v[id]?.preview?{unchecked:'cancelled'}:{}),
+      ...(v[id]?.phase==='exporting'&&v[id]?.response?{response:{...v[id].response!,exportUnavailable:'Saved-file preparation was stopped.'}}:{})}}));
+  }, []);
   const create = useCallback((draft: IntegrationDraft, title = 'New Integration') => current.current.createNewIntegrationTabs([{title, state: {...draft, formulaView: 'compact'}}])[0], []);
   const open = useCallback(() => {
     if (!enteredRef.current) {
@@ -28,8 +33,10 @@ export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorksp
     revisions.current.set(id, (revisions.current.get(id) ?? 0) + 1);
     const previous = current.current.workspaceInstances.find(v => v.id === id);
     current.current.updateInstanceSurfaceState(id, {...draft, formulaView: readFormulaView(previous?.surfaceState)});
-    setView(id, {running: false, notice: undefined});
-  }, [setView]);
+    setViews(v => ({...v,[id]:{...v[id],running:false,phase:undefined,notice:undefined,
+      ...(v[id]?.preview?{unchecked:'cancelled'}:{}),
+      ...(v[id]?.phase==='exporting'&&v[id]?.response?{response:{...v[id].response!,exportUnavailable:'Saved-file preparation was stopped.'}}:{})}}));
+  }, []);
   const setFormulaView = useCallback((id: string, formulaView: FormulaView) => {
     const instance = current.current.workspaceInstances.find(v => v.id === id);
     if (instance?.workspaceKind === 'new-integration') current.current.updateInstanceSurfaceState(id, {...readIntegrationDraft(instance.surfaceState), formulaView});
@@ -41,23 +48,37 @@ export function useNewIntegrationRuntime(workspaces: ReturnType<typeof useWorksp
     jobs.current.get(id)?.abort(); const abort = new AbortController(); jobs.current.set(id, abort);
     const revision = (revisions.current.get(id) ?? 0) + 1; revisions.current.set(id, revision);
     const request = readIntegrationDraft(instance.surfaceState);
-    setView(id, {running: true, notice: undefined});
+    let targetId=id, published=false, previewed=false;
+    setView(id, {running: true, phase:'solving', notice: undefined, preview:undefined, unchecked:undefined, withdrawn:false});
+    const targetCurrent=()=>!abort.signal.aborted&&jobs.current.get(targetId)===abort&&current.current.workspaceInstances.some(v=>v.id===targetId);
     try {
       const result = await runIntegrationJob({request, artifact, action}, workspace, revision, () => revisions.current.get(id) ?? 0,
-        () => current.current.workspaceInstances.some(v => v.id === id), abort.signal);
+        () => current.current.workspaceInstances.some(v => v.id === id), abort.signal, undefined, {
+          candidate: preview => {if(!abort.signal.aborted&&jobs.current.get(id)===abort){previewed=true;setView(id,{preview,unchecked:undefined,phase:'checking'});}},
+          verified: response => {
+            if(abort.signal.aborted||jobs.current.get(id)!==abort)return;
+            published=true;
+            if(action==='open'){targetId=create(response.request,'Saved integral');jobs.current.set(targetId,abort);}
+            setView(targetId,{response,preview:undefined,unchecked:undefined,withdrawn:false,phase:undefined,running:true});
+          },
+          exporting:()=>{if(!abort.signal.aborted&&jobs.current.get(targetId)===abort)setView(targetId,{phase:'exporting',running:true});},
+        });
       if (!result || abort.signal.aborted) return;
       if (artifact && result.document.outcomeKind === 'error') {setView(id, {notice: result.document.error ?? 'Artifact verification failed.'}); return;}
-      if (action === 'open') {
+      if(published){if(targetCurrent())setView(targetId,{response:result,phase:undefined});}
+      else if(previewed&&result.stop)setView(id,{unchecked:result.stop,phase:undefined});
+      else if (action === 'open') {
         const nextId = create(result.request, 'Saved integral'); setView(nextId, {response: result});
-      } else setView(id, {response: result});
+      } else setView(id, {response: result,preview:undefined,unchecked:undefined,withdrawn:previewed&&result.document.outcomeKind==='error',phase:undefined});
     } catch (e) {
       if (!abort.signal.aborted && current.current.workspaceInstances.some(v => v.id === id)) {
         const message = e instanceof Error ? e.message : String(e);
         if (artifact) setView(id, {notice: message});
-        else setView(id, {response: {request, document: integrationError(message), elapsedMs: 0, usage: {work: 0, allocation: 0}, checks: []}});
+        else if(published&&targetCurrent())setViews(v=>({...v,[targetId]:{...v[targetId],response:{...v[targetId].response!,exportUnavailable:message},phase:undefined}}));
+        else setView(id, {preview:undefined,withdrawn:previewed,response: {request, document: integrationError(message), elapsedMs: 0, usage: {work: 0, allocation: 0}, checks: []}});
       }
     } finally {
-      if (jobs.current.get(id) === abort) {jobs.current.delete(id); setView(id, {running: false});}
+      for(const key of new Set([id,targetId]))if (jobs.current.get(key) === abort) {jobs.current.delete(key);if(current.current.workspaceInstances.some(v=>v.id===key))setView(key, {running: false,phase:undefined});}
     }
   }, [create, setView]);
   useEffect(() => {

@@ -15,8 +15,14 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
   const importAction = useRef<'open' | 'verify'>('open');
   const [notice, setNotice] = useState('');
   const draft = readIntegrationDraft(instance.surfaceState), view = runtime.views[instance.id] ?? {};
-  const result = view.response, doc = result?.document;
-  const presentation = useMemo(() => doc ? readIntegrationPresentation(doc) : undefined, [doc]);
+  const result = view.response, doc = result?.document, preview = view.preview;
+  const shownRequest = preview?.request ?? result?.request;
+  const earlier = shownRequest && (shownRequest.source !== draft.source || JSON.stringify(shownRequest.limits) !== JSON.stringify(draft.limits));
+  const presentation = useMemo(() => {
+    if(preview){const p=preview.presentation;return {...p,expanded:()=>p.full,copy:()=>p.copy,expansionUnavailable:()=>p.expansionUnavailable,
+      explanation:'The solver proposes that no elementary antiderivative exists. This conclusion is not checked yet.'};}
+    return doc ? readIntegrationPresentation(doc) : undefined;
+  }, [doc,preview]);
   const formulaView = readFormulaView(instance.surfaceState);
   const latex = presentation && (formulaView === 'full' ? presentation.expanded() : presentation.compact);
   const changeSource = (source: string) => runtime.change(instance.id, {...draft, source});
@@ -27,7 +33,7 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
     } else {changeSource(`\\int ${draft.source || '\\placeholder{}'}\\,d\\placeholder{}`); field?.focus();}
   }
   function copyAnswer() {
-    try {if (presentation) void writeTextClipboard(presentation.copy()).then(ok => setNotice(ok ? presentation.negative ? 'Conclusion copied.' : 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}
+    try {if (presentation) void writeTextClipboard(presentation.copy()).then(ok => setNotice(ok ? preview ? 'Copied — this answer is not checked.' : presentation.negative ? 'Conclusion copied.' : 'LaTeX copied.' : 'Clipboard is unavailable.'), () => setNotice('Clipboard is unavailable.'));}
     catch (e) {setNotice(e instanceof Error ? e.message : 'Copy is unavailable.');}
   }
   function exportArtifact() {
@@ -61,13 +67,14 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
     <div className="ni-actions"><button onClick={() => beginImport('open')}>Open saved problem</button><button onClick={() => beginImport('verify')}>Verify against current problem</button>
       <input ref={file} data-testid="integration-artifact-file" type="file" accept=".json,application/json" hidden onChange={e => {void importFile(e.target.files?.[0]); e.target.value = '';}} /></div>
     {(notice || view.notice) && <p role="status">{notice || view.notice}</p>}
-    {view.running && <p role="status">Computing and verifying the complete answer…</p>}
-    {doc && <section className="ni-panel ni-result" data-testid="integration-result" aria-label="Integration result">
-      <h2>{doc.title}</h2>
-      {result?.request.source !== draft.source && <p>Result for an earlier expression:</p>}
-      {result?.request.source !== draft.source && <MathStatic className="ni-math" latex={result?.request.source} block normalizeDisplay={false} />}
-      {doc.outcomeKind === 'error' ? <p role="alert">{doc.error}</p> : <>
-        {presentation?.negative ? <p>{presentation.explanation}</p> : <p>Verified · formal local complex primitive. Logarithm choices differ locally by constants.</p>}
+    {view.running && <p role="status">{view.phase==='exporting'?'Preparing the downloadable saved-problem file…':view.phase==='checking'?'Checking the answer exactly…':'Computing the answer…'}</p>}
+    {(doc || preview) && <section className="ni-panel ni-result" data-testid="integration-result" data-checked={preview?'no':view.withdrawn?'failed':doc?.outcomeKind==='error'?undefined:'yes'} aria-label="Integration result">
+      <h2>{preview ? preview.presentation.negative?'Proposed non-elementarity':'Antiderivative' : doc?.title}{preview && <span className="ni-unchecked-badge" data-testid="integration-unchecked">{view.unchecked?'Not checked':'Not checked yet'}</span>}</h2>
+      {earlier && <p>Result for an earlier request:</p>}
+      {earlier && <MathStatic className="ni-math" latex={shownRequest?.source} block normalizeDisplay={false} />}
+      {!preview && doc?.outcomeKind === 'error' ? <><p role="alert">{doc.error}</p>{view.withdrawn&&<p role="alert">Verification failed — the computed answer was withdrawn.</p>}</> : <>
+        {preview ? <p role="status">{view.unchecked ? view.unchecked==='cancelled'?'Not checked: verification was stopped.':`Not checked: verification stopped (${view.unchecked}).` : 'Not checked yet. Verification is in progress.'}</p> : null}
+        {presentation?.negative ? <p>{presentation.explanation}</p> : <p>{preview?'Formal local complex primitive · not checked.':'Verified · formal local complex primitive.'} Logarithm choices differ locally by constants.</p>}
         {presentation && <div className="ni-formal-answer">
           <MathStatic className="ni-math" block normalizeDisplay={false} latex={latex} />
           {(presentation.terms.length > 0 || presentation.generatorDefinition) && <>
@@ -84,14 +91,14 @@ export default function NewIntegrationPage({instance, runtime}: {instance: Works
           {presentation.expansionUnavailable() && <><p role="status">{presentation.expansionUnavailable()}</p><MathStatic className="ni-math" block normalizeDisplay={false} latex={presentation.fallbackDefinition} /></>}
         </div>}
         <div className="ni-actions"><button onClick={copyAnswer}>{presentation?.negative ? 'Copy conclusion' : 'Copy LaTeX'}</button>
-          <button disabled={!result?.artifact} onClick={exportArtifact}>Export derivation</button></div>
-        {result?.exportUnavailable && <p role="status">{result.exportUnavailable}</p>}
+          <button disabled={!!preview || !result?.artifact} onClick={exportArtifact}>Export derivation</button></div>
+        {!preview && result?.exportUnavailable && <p role="status">{result.exportUnavailable}</p>}
         <details><summary>Conditions</summary>
           {presentation?.conditions.length === 0 && <p>No nontrivial restrictions.</p>}
           {presentation?.conditions.map((c, i) => <div className="ni-condition" key={i}><span>{c.origins.map((origin, j) => <Fragment key={origin}>{j > 0 && ' · '}<span>{origin}</span></Fragment>)}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}
           <details><summary>Original condition entries</summary>{presentation?.originals.map((c, i) => <div className="ni-condition" key={i}><span>{c.origins.join(' · ')}</span><MathStatic className="ni-math" latex={c.latex} block normalizeDisplay={false} /></div>)}</details>
         </details>
-        <details><summary>Verification details</summary><ul>{result?.checks.map(c => <li key={c}>{c}</li>)}</ul><p>{result?.elapsedMs.toFixed(1)} ms · {result?.usage.work.toLocaleString()} work · {result?.usage.allocation.toLocaleString()} cumulative allocation units</p></details>
+        {!preview && <details><summary>Verification details</summary><ul>{result?.checks.map(c => <li key={c}>{c}</li>)}</ul><p>{result?.elapsedMs.toFixed(1)} ms · {result?.usage.work.toLocaleString()} work · {result?.usage.allocation.toLocaleString()} cumulative allocation units</p></details>}
       </>}
     </section>}
   </main>;

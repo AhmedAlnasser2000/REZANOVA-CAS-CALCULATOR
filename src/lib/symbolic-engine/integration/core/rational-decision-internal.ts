@@ -13,18 +13,27 @@ export interface RationalDecision {
   readonly derivative: PrimitiveDerivativeCertificate;
   readonly conditions: DecisionConditions;
 }
-export function integrateRationalWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction): RationalDecision {
+/** A computed native primitive; final derivative/decision authority is absent. */
+export type RationalCandidate = Readonly<Omit<RationalDecision, 'derivative'>>;
+export function produceRationalCandidateWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction): RationalCandidate {
   owner.fractions.assert(ctx, input);
   const hermite = hermiteReduce(ctx, owner, input);
   const lrt = owner.fractions.isZero(ctx, hermite.residual) ? null : lrtReduce(ctx, owner, hermite.residual);
   const terms = []; // Preserve factor-first component order.
   for (const group of lrt?.groups ?? []) for (const component of group.components) { ctx.allocate(1); terms.push(component.term); }
   const primitive = owner.make(ctx, hermite.rationalPart, terms);
-  const derivative = verifyPrimitiveWithin(ctx, primitive, input);
   ctx.allocate(10);
   const conditions = Object.freeze({ ...primitive.conditions, inputDenominator: input.denominator });
-  const decision = Object.freeze({ input, primitive, hermite, lrt, derivative, conditions });
+  return Object.freeze({ input, primitive, hermite, lrt, conditions });
+}
+export function checkRationalCandidateWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction, candidate: RationalCandidate): RationalDecision {
+  owner.fractions.assert(ctx, input); owner.assert(ctx, candidate.primitive);
+  const derivative = verifyPrimitiveWithin(ctx, candidate.primitive, input);
+  ctx.allocate(7); const decision = Object.freeze({...candidate, derivative});
   verifyRationalDecisionWithin(ctx, owner, input, decision); return decision;
+}
+export function integrateRationalWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction): RationalDecision {
+  return checkRationalCandidateWithin(ctx, owner, input, produceRationalCandidateWithin(ctx, owner, input));
 }
 /** Replays supplied evidence. Does not invoke Hermite or LRT producers. */
 export function verifyRationalDecisionWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction, decision: RationalDecision): void {
