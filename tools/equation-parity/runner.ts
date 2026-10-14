@@ -4,7 +4,7 @@
 import { appendFileSync, readFileSync } from 'node:fs';
 import { ComputeEngine } from '@cortex-js/compute-engine';
 
-type Case = { id: string; latex: string };
+type Case = { id: string; latex: string; targets?: string[]; domains?: Domain[] };
 type Domain = 'real' | 'complex';
 type Num = [number, number];
 const [engine, casesFile, fromArg, toArg, outFile, firstDomain] = process.argv.slice(2);
@@ -56,7 +56,7 @@ async function runOld(latex: string, domain: Domain) {
   };
 }
 
-async function runNew(latex: string, domain: Domain) {
+async function runNew(latex: string, domain: Domain, forced?: string[]) {
   const { parseRow, autoTargets } = await import('../../src/lib/new-equation/parse');
   const { DEFAULT_EQUATION_LIMITS } = await import('../../src/lib/new-equation/types');
   const { decideEquation, verifyEquationOutcome } = await import('../../src/lib/symbolic-engine/equation/core/decide');
@@ -67,7 +67,7 @@ async function runNew(latex: string, domain: Domain) {
   const { decimalOf } = await import('../../src/lib/symbolic-engine/equation/presentation/values');
   const row = parseRow(latex);
   if (row.kind === 'error') return { kind: 'row-error', reason: row.message.slice(0, 160) };
-  const targets = autoTargets([row]);
+  const targets = forced ?? autoTargets([row]);
   const ctx = new ExecutionContext({ ...DEFAULT_EQUATION_LIMITS });
   const store = new ExpressionStore(ctx);
   const { problem } = lowerEquation(store, { rows: [latex], targets, domain, limits: { ...DEFAULT_EQUATION_LIMITS }, digits: 6 });
@@ -99,12 +99,13 @@ async function runNew(latex: string, domain: Domain) {
 for (let i = from; i < to; i++) {
   for (const domain of domains) {
     if (i === from && firstDomain === 'complex' && domain === 'real') continue;
+    if (all[i].domains && !all[i].domains.includes(domain)) continue;
     process.stdout.write(`${JSON.stringify({ i, domain, event: 'start' })}\n`);
     const started = performance.now();
     let result: Record<string, unknown>;
-    try { result = await (engine === 'old' ? runOld : runNew)(all[i].latex, domain); }
+    try { result = engine === 'old' ? await runOld(all[i].latex, domain) : await runNew(all[i].latex, domain, all[i].targets); }
     catch (e) { result = { kind: 'crash', reason: String(e).slice(0, 200) }; }
-    appendFileSync(outFile, `${JSON.stringify({ i, id: all[i].id, domain, ms: Math.round(performance.now() - started), ...result })}\n`);
+    appendFileSync(outFile, `${JSON.stringify({ i, id: all[i].id, latex: all[i].latex, domain, forcedTargets: all[i].targets, ms: Math.round(performance.now() - started), ...result })}\n`);
   }
 }
 process.stdout.write(`${JSON.stringify({ event: 'done' })}\n`);

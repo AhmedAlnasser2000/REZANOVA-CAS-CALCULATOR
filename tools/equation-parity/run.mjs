@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Developer tool (EQUATION-RECONSTRUCTION-CLOSEOUT1, PR A): run the parity corpus on one engine.
-//   node tools/equation-parity/run.mjs old|new [shards=4] [--fresh]
+//   node tools/equation-parity/run.mjs old|new [shards=4] [--fresh] [--corpus=<file in .task_tmp/equation-parity>] [--tag=<name>]
 // Each shard is a process that runs its cases in turn (real, then complex). A case still running at the limit is
 // killed (SIGKILL), recorded as "killed", and the shard restarts at the next run. The limit is 60 s for the new core
 // (the 60-second rule) and 10 s for the old engine (user decision, 2026-10-14: the old benchmark is not waited on).
@@ -14,13 +14,14 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const dir = join(root, '.task_tmp/equation-parity');
 const engine = process.argv[2], shards = Number(process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : 4);
 if (engine !== 'old' && engine !== 'new') throw new Error('usage: run.mjs old|new [shards]');
-const corpus = join(dir, 'corpus.json');
+const option = name => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+const corpus = join(dir, option('corpus') ?? 'corpus.json'), tag = option('tag');
 const total = JSON.parse(readFileSync(corpus, 'utf8')).cases.length;
 const LIMIT = engine === 'old' ? 10_000 : 60_000;
 const viteNode = join(root, 'node_modules/vite-node/dist/cli.mjs');
 
 function runShard(shard, from, to) {
-  const out = join(dir, `${engine}-${shard}.jsonl`);
+  const out = join(dir, `${engine}-${tag ? `${tag}-` : ''}${shard}.jsonl`);
   let resumeAt = from, resumeDomain = 'real';
   if (process.argv.includes('--fresh') && existsSync(out)) rmSync(out);
   if (existsSync(out)) {

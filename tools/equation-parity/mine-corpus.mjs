@@ -59,8 +59,10 @@ for (const file of legacyFiles) {
   let text;
   try { text = readFileSync(file, 'utf8'); } catch { continue; }
   const source = relative(root, file);
-  for (const m of text.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`([^`$\n]*)`/gu)) {
-    const value = unescape(m[1] ?? m[2] ?? m[3] ?? '');
+  for (const m of text.matchAll(/(String\.raw)?(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`([^`$\n]*)`)/gu)) {
+    // String.raw`…` keeps its backslashes as written; ordinary literals are unescaped.
+    const raw = m[4] ?? '';
+    const value = m[1] && m[4] !== undefined ? raw : unescape(m[2] ?? m[3] ?? raw);
     if (!relation.test(value) || prose.test(value) || answerLike.test(value)) continue;
     if (value.includes('=>') || /^(https?:|\.{1,2}\/|<)/u.test(value) || value.length > 400) continue;
     literals++;
