@@ -2,7 +2,7 @@
 // Developer tool (EQUATION-RECONSTRUCTION-CLOSEOUT1, PR A): compare the old engine with the new core on the corpus.
 //   node tools/equation-parity/compare.mjs            summary on stdout, details in .task_tmp/equation-parity/
 // Classes, best first: exact (3), certified numeric (2), approximate (1), refused (0: an error, a typed refusal,
-// a 60-second kill). A regression is a run where the new core's class is lower than the old engine's. Where both
+// a kill: 10 s for the old engine, 60 s for the new core). A regression is a run where the new core's class is lower than the old engine's. Where both
 // give finitely many values they are compared numerically; a mismatch is listed for review, not judged here.
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -21,8 +21,10 @@ const load = engine => {
 const olds = load('old'), news = load('new');
 
 const RANK = { exact: 3, certified: 2, approximate: 1, refused: 0, unreadable: 0, missing: -1 };
+const OLD_LIMIT_MS = 10_000; // results recorded before the 10-second old-engine limit count as killed above it
 function oldClass(r) {
   if (!r) return 'missing';
+  if (r.ms > OLD_LIMIT_MS) return 'refused';
   if (r.kind !== 'success') return 'refused';
   return r.solutionKind === 'approximate-numeric' || r.origin === 'numeric-fallback' ? 'approximate' : 'exact';
 }
