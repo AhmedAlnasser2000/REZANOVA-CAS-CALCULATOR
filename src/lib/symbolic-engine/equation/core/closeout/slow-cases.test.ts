@@ -32,3 +32,17 @@ group('exact zeros hidden in unexpanded arguments and log sums', () => {
     expect(run(latex, domain)).toBe(kind);
   });
 });
+
+group('exact zeros behind domain-kept forms and complex radicals', () => {
+  // e^{ln A}, 0·t, (√u)² and products of nested radicals: the definedness folds, the kernel normal form of
+  // arguments, and field arithmetic over ℚ(π, i, √D) for complex quadratic roots.
+  it.each([
+    ['\\sin(x)+\\pi=0', 'complex'],
+    ['\\ln(e^x+1)=2', 'complex'],
+    ['\\sin\\left(x^2+x\\right)=\\frac{1}{2}', 'complex'],
+    ['\\exp((x-1)/(x+2))=1', 'complex'],
+    ['\\exp\\left(\\frac{x^2+1}{x-2}\\right)=\\imaginaryI', 'complex'],
+  ] as const)('%s over %s', (latex, domain) => {
+    expect(run(latex, domain)).toBe('solved');
+  });
+});

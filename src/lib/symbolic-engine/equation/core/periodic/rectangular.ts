@@ -4,6 +4,7 @@ import { canonicalAngle, expandConstant } from '../representation/angles';
 import { enclose, type Bounds } from '../representation/enclosure';
 import { evaluateExact, imaginaryPart, realPart, type ExactValue } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
+import { kernelIdentityHolds, kernelNormalForm } from '../representation/kernel-identity';
 import { realSign, START_BITS } from '../representation/real-order';
 
 /**
@@ -230,7 +231,41 @@ export function complexIsZero(store: ExpressionStore, id: ExprId): boolean | 'un
   if (e.kind === 'undefined') return 'undefined';
   const r = rect(store, id);
   if (r === undefined) return 'unknown';
+  const quick = complexBounds(store, id, START_BITS * 2);
+  if (quick !== undefined && excludesZero(quick)) return false;
+  if (quick !== undefined && identityIsZero(store, id)) return true;
   return sign(store, r.re) === 0 && sign(store, r.im) === 0;
+}
+
+const excludesZero = (b: { re: Bounds; im: Bounds }) =>
+  b.re.lo.numerator > 0n || b.re.hi.numerator < 0n || b.im.lo.numerator > 0n || b.im.hi.numerator < 0n;
+
+/**
+ * Exact zero test of a defined complex value (it has a certified enclosure) by field arithmetic in its kernels:
+ * every function argument is rebuilt in its rationalized kernel normal form (i² = −1, (a + b√u)⁻¹ by the
+ * conjugate when that is certified nonzero), so the builders' folds apply to what it exposes — at a quadratic
+ * root x = (c + √D)/2 of x² − c·x + 2c + 1, exp((x² + 1)/(x − 2)) → exp(c) → i when c = (½ + 2k)·π·i — then the
+ * result is tested as a kernel identity. True is exact; false means only "not shown".
+ */
+function identityIsZero(store: ExpressionStore, id: ExprId): boolean {
+  const nonzero = (x: ExprId) => { const b = complexBounds(store, x, START_BITS * 2); return b !== undefined && excludesZero(b); };
+  const size = (x: ExprId) => store.postorder([x]).length;
+  const normal = (arg: ExprId) => {
+    if (store.numberValue(arg)) return arg;
+    const form = kernelNormalForm(store, arg, nonzero);
+    return form !== undefined && (store.numberValue(form) || size(form) < size(arg)) ? form : arg;
+  };
+  const done = new Map<ExprId, ExprId>();
+  for (const n of store.postorder([id])) {
+    store.ctx.tick();
+    const node = store.node(n), get = (c: ExprId) => done.get(c) as ExprId;
+    done.set(n, node.kind === 'add' ? store.add(...node.args.map(get))
+      : node.kind === 'mul' ? store.mul(...node.args.map(get))
+        : node.kind === 'pow' ? store.pow(get(node.base), get(node.exponent))
+          : node.kind === 'apply' ? store.apply(node.fn, normal(get(node.arg))) : n);
+  }
+  const folded = done.get(id) as ExprId;
+  return store.numberValue(folded)?.numerator === 0n || kernelIdentityHolds(store, folded, store.integer(0)) === true;
 }
 
 /** Certified enclosures of both parts at the given precision (undefined when a part cannot be enclosed). */

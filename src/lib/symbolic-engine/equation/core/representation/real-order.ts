@@ -5,6 +5,8 @@ import { compareReal, type RealRootOf } from '../algebraic/root-of';
 import { enclose, minusInverseE } from './enclosure';
 import { angleLinearIsZero, expandDeep } from './angles';
 import { algebraicLogIsZero, logCombinationIsZero } from './log-zero';
+import { foldDefined } from './defined-folds';
+import { kernelIdentityHolds } from './kernel-identity';
 import { asRoot, evaluateExact, type ExactValue } from './evaluate';
 import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from './expression';
 
@@ -95,7 +97,13 @@ function computeSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
       // forever. The expanded form is a fixed point, so this recursion happens at most once.
       const deep = expandDeep(store, id);
       if (deep !== id) return realSign(store, deep);
-      if (logCombinationIsZero(store, id, a => realSign(store, a) > 0) === true) return 0;
+      const positive = (a: ExprId) => realSign(store, a) > 0;
+      if (logCombinationIsZero(store, id, positive) === true) return 0;
+      // Folds the builders keep for domain reasons (0·t, (√u)², e^{c·ln A}) hold for this defined value; then an
+      // identity between rational functions of its kernels (modulo radical relations) is an exact zero.
+      const folded = foldDefined(store, id, positive);
+      if (folded !== id) return realSign(store, folded);
+      if (kernelIdentityHolds(store, id, store.integer(0)) === true) return 0;
     }
     const b = enclose(store, id, bits);
     if (b.kind === 'bounds') {
