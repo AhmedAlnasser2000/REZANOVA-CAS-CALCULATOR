@@ -3,8 +3,8 @@ import { rational } from '../algebra/rational';
 import { compareRational } from '../algebraic/real-roots';
 import { compareReal, type RealRootOf } from '../algebraic/root-of';
 import { enclose, minusInverseE } from './enclosure';
-import { angleLinearIsZero } from './angles';
-import { algebraicLogIsZero } from './log-zero';
+import { angleLinearIsZero, expandDeep } from './angles';
+import { algebraicLogIsZero, logCombinationIsZero } from './log-zero';
 import { asRoot, evaluateExact, type ExactValue } from './evaluate';
 import { ISOLATED_VARIABLE, type ExprId, type ExpressionStore } from './expression';
 
@@ -90,6 +90,12 @@ function computeSign(store: ExpressionStore, id: ExprId): -1 | 0 | 1 {
     if (bits > START_BITS && !tested) {
       tested = true;
       if (angleLinearIsZero(store, id) === true || algebraicLogIsZero(store, id) === true) return 0;
+      // The same value with sums expanded inside function arguments too, where folds such as ln eᵃ = a apply:
+      // an exact zero hidden by an unexpanded argument (ln(1 + 2·(−½ + ½e³)) − 3) would otherwise be refined
+      // forever. The expanded form is a fixed point, so this recursion happens at most once.
+      const deep = expandDeep(store, id);
+      if (deep !== id) return realSign(store, deep);
+      if (logCombinationIsZero(store, id, a => realSign(store, a) > 0) === true) return 0;
     }
     const b = enclose(store, id, bits);
     if (b.kind === 'bounds') {
