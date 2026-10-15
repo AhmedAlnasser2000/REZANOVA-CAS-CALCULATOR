@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import {
+  EXEMPT_LANES,
   FALLBACK_REGISTRATIONS,
   INPUT_LATEX_PROPERTY_NAMES,
   MIGRATION_FUNCTION_CONTEXTS,
@@ -216,6 +217,7 @@ function registryDigest() {
     fallback: FALLBACK_REGISTRATIONS,
     nonProducer: NON_PRODUCER_RESULT_REGISTRATIONS,
     builders: RESULT_BUILDER_SPECS,
+    exemptLanes: EXEMPT_LANES,
     migrationFunctionContexts: MIGRATION_FUNCTION_CONTEXTS,
     migrationMarkers: [...MIGRATION_MARKER_NAMES].sort(),
     migrationWrappers: [...MIGRATION_WRAPPER_NAMES].sort(),
@@ -342,7 +344,7 @@ function classifyResultCandidate(candidate, violations) {
   }
   return {
     ...candidate,
-    classification: 'compatibility-fallback',
+    classification: Object.hasOwn(EXEMPT_LANES, registration.lane) ? 'exempt-lane-fallback' : 'compatibility-fallback',
     lane: registration.lane,
     registrationId: registration.id,
   };
@@ -452,8 +454,10 @@ export function scanPrinterMigrationRepository({ rootDir = process.cwd() } = {})
       migrated: 0,
       forwarded: 0,
       absent: 0,
+      exempt: 0,
     };
     if (candidate.classification === 'compatibility-fallback') lane.compatibility += 1;
+    else if (candidate.classification === 'exempt-lane-fallback') lane.exempt += 1;
     else if (candidate.classification === 'migrated-dual-write') lane.migrated += 1;
     else if (candidate.classification === 'result-forwarder') lane.forwarded += 1;
     else if (candidate.classification === 'absent-result-slot') lane.absent += 1;
@@ -613,7 +617,8 @@ export function formatPrinterMigrationReport(report, validation) {
   ];
   for (const [lane, counts] of Object.entries(report.lanes)) {
     lines.push(
-      `  ${lane}: ${counts.compatibility} compatibility, ${counts.migrated} migrated, ${counts.forwarded} forwarded`,
+      `  ${lane}: ${counts.compatibility} compatibility, ${counts.migrated} migrated, ${counts.forwarded} forwarded${
+        Object.hasOwn(EXEMPT_LANES, lane) ? `, ${counts.exempt} exempt (not ratcheted)` : ''}`,
     );
   }
   lines.push('', 'Fallback registrations:');

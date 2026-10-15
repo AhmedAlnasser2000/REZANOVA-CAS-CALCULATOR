@@ -68,6 +68,17 @@ export const NON_PRODUCER_RESULT_REGISTRATIONS = [
   },
 ];
 
+/**
+ * Lanes whose compatibility serializers are no longer ratcheted (user decision, 2026-10-15): Calculate and
+ * Matrix/Vector will be rebuilt from scratch on new engines, so their producers are not migrated. Their result paths
+ * are still classified (an unregistered path still fails), but compatibility fallbacks in these lanes count as
+ * `exempt-lane-fallback` and have no floor.
+ */
+export const EXEMPT_LANES = {
+  calculate: 'Calculate is rebuilt from scratch on a new engine; its current producers are not migrated.',
+  'linear-algebra': 'Matrix and Vector are rebuilt from scratch on a new engine; their current producers are not migrated.',
+};
+
 export const FALLBACK_REGISTRATIONS = [
   {
     id: 'app-history-result-v1',
