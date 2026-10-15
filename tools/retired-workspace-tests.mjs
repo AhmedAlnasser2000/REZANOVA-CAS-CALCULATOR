@@ -18,11 +18,17 @@ export const RETIRED_WORKSPACE_TEST_FOLDERS = [
   'src/app/shell/statistics/**', // Statistics
 ];
 
-/** Tests of retired workspaces in shared folders: Calculate, Table, Matrix/Vector, old Calculus, the calculator keypad. */
+/**
+ * Tests of retired workspaces in shared folders: Calculate, Table, Matrix/Vector, old Calculus, the calculator keypad,
+ * and the calculator shell's app tests (src/AppMain.ui.test.tsx), which start in Calculate. Every open surface is now a
+ * page; the shell opens nothing until a workspace is rebuilt.
+ */
 export const RETIRED_WORKSPACE_TEST_FILES = [
+  'src/AppMain.ui.test.tsx',
   'src/app/logic/expressionRouting.test.ts',
   'src/app/logic/keypadRouter.test.ts',
   'src/app/logic/primaryActionRouter.test.ts',
+  'src/app/logic/runtimeControllers.test.ts',
   'src/app/logic/softActionRouter.test.ts',
   'src/app/runtime/calculus-derivative-source.test.ts',
   'src/app/runtime/linearAlgebraActionRequest.test.ts',
@@ -52,7 +58,9 @@ export const RETIRED_WORKSPACE_TEST_FILES = [
   'src/lib/calculus/limit-route-classifier.test.ts',
   'src/lib/calculus/limit-route-corpus.test.ts',
   'src/lib/calculus/limit-route-orchestrator.test.ts',
+  'src/lib/calculus/workspace/engine.test.ts',
   'src/lib/calculus/workspace/implicit-derivative.test.ts',
+  'src/lib/calculus/workspace/integrals.test.ts',
   'src/lib/calculus/workspace/laplace.test.ts',
   'src/lib/calculus/workspace/limits.test.ts',
   'src/lib/calculus/workspace/navigation.test.ts',
@@ -66,6 +74,8 @@ export const RETIRED_WORKSPACE_TEST_FILES = [
   'src/lib/linear-algebra/editor-dispatch-named-values.test.ts',
   'src/lib/linear-algebra/editor-dispatch.test.ts',
   'src/lib/linear-algebra/editor-parser.test.ts',
+  'src/lib/linear-algebra/exact-orthogonalization.test.ts',
+  'src/lib/linear-algebra/matrix-column-family.test.ts',
   'src/lib/linear-algebra/matrix-core.test.ts',
   'src/lib/linear-algebra/matrix-definiteness.test.ts',
   'src/lib/linear-algebra/matrix-eigen.test.ts',
@@ -75,7 +85,14 @@ export const RETIRED_WORKSPACE_TEST_FILES = [
   'src/lib/linear-algebra/matrix-svd.test.ts',
   'src/lib/linear-algebra/matrix-system.test.ts',
   'src/lib/linear-algebra/matrix.test.ts',
+  'src/lib/linear-algebra/numeric-scalar-projection.test.ts',
   'src/lib/linear-algebra/runtime-request.test.ts',
+  'src/lib/linear-algebra/symbolic-elimination.test.ts',
+  'src/lib/linear-algebra/symbolic-matrix-spectral.test.ts',
+  'src/lib/linear-algebra/symbolic-matrix-systems.test.ts',
+  'src/lib/linear-algebra/symbolic-matrix.test.ts',
+  'src/lib/linear-algebra/symbolic-vector-editor.test.ts',
+  'src/lib/linear-algebra/symbolic-vector.test.ts',
   'src/lib/linear-algebra/typed-expression.test.ts',
   'src/lib/linear-algebra/vector-core.test.ts',
   'src/lib/linear-algebra/vector-family.test.ts',
@@ -105,6 +122,7 @@ export const RETIRED_ENGINE_TEST_FILES = [
   'src/lib/algebra/branch-core.test.ts',
   'src/lib/algebra/capability-readiness.test.ts',
   'src/lib/algebra/domain-range/domain-range-core.test.ts',
+  'src/lib/algebra/domain-range/readback.test.ts',
   'src/lib/algebra/domain-sampling-readiness.test.ts',
   'src/lib/algebra/inequality/inequality-core.test.ts',
   'src/lib/algebra/inequality/inequality-sign-analysis-core.test.ts',
@@ -112,6 +130,7 @@ export const RETIRED_ENGINE_TEST_FILES = [
   'src/lib/algebra/polynomial-factor/polynomial-factor-solve.test.ts',
   'src/lib/algebra/radical/radical-core.test.ts',
   'src/lib/algebra/transform-core/transform-core.test.ts',
+  'src/lib/algebra/value-domain-core.test.ts',
   'src/lib/algebra/variable-core/variable-core.test.ts',
   'src/lib/algebra/variable-hints.test.ts',
   'src/lib/engine/math-analysis.test.ts',
@@ -121,10 +140,13 @@ export const RETIRED_ENGINE_TEST_FILES = [
   'src/lib/engine/math-engine/symbolic-simplify.test.ts',
   'src/lib/engine/result-guard.test.ts',
   'src/lib/engine/semantic-planner.test.ts',
+  'src/lib/symbolic-engine/differentiation-normalization.test.ts',
   'src/lib/symbolic-engine/factoring.test.ts',
   'src/lib/symbolic-engine/limits.test.ts',
   'src/lib/symbolic-engine/limits/abs-side-behavior.test.ts',
+  'src/lib/symbolic-engine/limits/asymptotic-terms.test.ts',
   'src/lib/symbolic-engine/limits/complex-domain.test.ts',
+  'src/lib/symbolic-engine/limits/conditional-cases.test.ts',
   'src/lib/symbolic-engine/limits/detail-intent.test.ts',
   'src/lib/symbolic-engine/limits/detail-readback.test.ts',
   'src/lib/symbolic-engine/limits/finite-leading-terms.test.ts',
@@ -141,6 +163,8 @@ export const RETIRED_ENGINE_TEST_FILES = [
   'src/lib/symbolic-engine/orchestrator.test.ts',
   'src/lib/symbolic-engine/partials.test.ts',
   'src/lib/symbolic-engine/power-log.test.ts',
+  'src/lib/symbolic-engine/primitives/elimination/elimination.test.ts',
+  'src/lib/symbolic-engine/primitives/factorization/factorization.test.ts',
   'src/lib/symbolic-engine/radical.test.ts',
   'src/lib/symbolic-engine/rational.test.ts',
 ];

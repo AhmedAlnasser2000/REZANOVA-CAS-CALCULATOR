@@ -218,8 +218,9 @@ export function createWorkspaceInstance(
 
 export function createInitialWorkspaceInstancesState(
   options: WorkspaceInstanceFactoryOptions = {},
+  workspaceKind: WorkspaceKind = DEFAULT_WORKSPACE_KIND,
 ): WorkspaceInstancesState {
-  const instance = createWorkspaceInstance(DEFAULT_WORKSPACE_KIND, 1, options);
+  const instance = createWorkspaceInstance(workspaceKind, 1, options);
   return {
     activeInstanceId: instance.id,
     instances: [instance],

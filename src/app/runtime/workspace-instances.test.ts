@@ -67,20 +67,20 @@ function createFormulaViewerArtifact(suffix = 'one'): FormulaViewerArtifact {
 }
 
 describe('workspace instance model', () => {
-  it('creates an initial blank Calculate instance', () => {
+  it('creates an initial blank Equation instance', () => {
     const options = createDeterministicOptions();
     const state = createInitialWorkspaceInstancesState(options);
     const activeInstance = getActiveWorkspaceInstance(state);
 
-    expect(state.activeInstanceId).toBe('calculate.1');
+    expect(state.activeInstanceId).toBe('new-equation.1');
     expect(state.instances).toHaveLength(1);
     expect(state.nextOrder).toBe(2);
     expect(state.nextGraphSequence).toBe(1);
     expect(activeInstance).toMatchObject({
-      workspaceKind: 'calculate',
-      title: 'Calculate',
+      workspaceKind: 'new-equation',
+      title: 'Equation',
       titleSource: 'default',
-      compartmentId: 'calculate',
+      compartmentId: 'equation',
       navigationRevision: 0,
       surfaceState: null,
       displayState: null,
@@ -90,7 +90,7 @@ describe('workspace instance model', () => {
 
   it('focuses an existing instance and updates activation metadata', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = createBlankWorkspaceInstance(state, 'equation', options);
     state = focusWorkspaceInstance(state, 'calculate.1', options);
 
@@ -100,7 +100,7 @@ describe('workspace instance model', () => {
 
   it('focuses the latest instance by kind or creates one when absent', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = focusLatestWorkspaceKindOrCreate(state, 'equation', options);
     expect(state.activeInstanceId).toBe('equation.2');
@@ -118,7 +118,7 @@ describe('workspace instance model', () => {
 
   it('creates blank instances with the correct compartment metadata', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = createBlankWorkspaceInstance(state, 'matrix', options);
     expect(getActiveWorkspaceInstance(state)).toMatchObject({
@@ -133,7 +133,7 @@ describe('workspace instance model', () => {
 
   it('builds a runtime context for OOE launch scoping', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = createBlankWorkspaceInstance(state, 'equation', options);
     const activeInstance = getActiveWorkspaceInstance(state);
 
@@ -149,7 +149,7 @@ describe('workspace instance model', () => {
 
   it('opens Formula Viewer as a session-only workspace without OOE runtime context', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     const firstArtifact = createFormulaViewerArtifact('one');
 
     state = openFormulaViewerWorkspaceInstance(state, firstArtifact, options);
@@ -182,7 +182,7 @@ describe('workspace instance model', () => {
 
   it('opens Settings, History, and Guide as singleton app pages without OOE runtime context', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = openAppPageWorkspaceInstance(state, 'settings', options);
     const settingsPage = getActiveWorkspaceInstance(state);
@@ -236,7 +236,7 @@ describe('workspace instance model', () => {
 
   it('creates independent Graph pages with monotonic titles, session state, and runtime context', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = createBlankWorkspaceInstance(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
     const firstGraphId = state.activeInstanceId;
@@ -291,7 +291,7 @@ describe('workspace instance model', () => {
 
   it('keeps Graph creation non-singleton and blocks retarget, duplicate, and clear shortcuts', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = focusLatestWorkspaceKindOrCreate(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
     state = focusLatestWorkspaceKindOrCreate(state, GRAPHING_PAGE_WORKSPACE_KIND, options);
     expect(state.instances.filter((instance) => instance.workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND)).toHaveLength(2);
@@ -306,7 +306,7 @@ describe('workspace instance model', () => {
 
   it('renames with trimmed titles and falls back to the default label', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = renameWorkspaceInstance(state, 'calculate.1', '  Scratch numeric  ', options);
     expect(getActiveWorkspaceInstance(state)?.title).toBe('Scratch numeric');
@@ -319,7 +319,7 @@ describe('workspace instance model', () => {
 
   it('retargets the active instance to a new kind and invalidates prior surface state', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = updateWorkspaceInstanceSurfaceState(
       state,
       'calculate.1',
@@ -350,7 +350,7 @@ describe('workspace instance model', () => {
 
   it('preserves custom tab titles when retargeting the active instance', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = renameWorkspaceInstance(state, 'calculate.1', 'Scratch', options);
     state = retargetActiveWorkspaceInstanceKind(state, 'equation', options);
 
@@ -365,7 +365,7 @@ describe('workspace instance model', () => {
 
   it('duplicates metadata and placeholder state into a new active instance', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = renameWorkspaceInstance(state, 'calculate.1', 'Scratch', options);
     state = updateWorkspaceInstanceSurfaceState(
       state,
@@ -391,7 +391,7 @@ describe('workspace instance model', () => {
 
   it('duplicates with an explicit captured surface-state override', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = updateWorkspaceInstanceSurfaceState(
       state,
       'calculate.1',
@@ -411,7 +411,7 @@ describe('workspace instance model', () => {
 
   it('updates a surface-state slot without changing the active instance', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = updateWorkspaceInstanceSurfaceState(
       state,
@@ -429,7 +429,7 @@ describe('workspace instance model', () => {
 
   it('updates a display-state slot with direct values and updater functions', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = updateWorkspaceInstanceDisplayState(
       state,
@@ -453,7 +453,7 @@ describe('workspace instance model', () => {
 
   it('updates a runtime-state slot with direct values and updater functions', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
 
     state = updateWorkspaceInstanceRuntimeState(
       state,
@@ -480,7 +480,7 @@ describe('workspace instance model', () => {
 
   it('clears state placeholders without changing identity', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = {
       ...state,
       instances: state.instances.map((instance) => ({
@@ -502,7 +502,7 @@ describe('workspace instance model', () => {
 
   it('closes instances and keeps the latest remaining instance active', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = createBlankWorkspaceInstance(state, 'equation', options);
     state = createBlankWorkspaceInstance(state, 'calculus', options);
     state = focusWorkspaceInstance(state, 'equation.2', options);
@@ -512,22 +512,22 @@ describe('workspace instance model', () => {
     expect(state.activeInstanceId).toBe('calculus.3');
   });
 
-  it('closing the final instance creates a blank Calculate fallback', () => {
+  it('closing the final instance creates a blank Equation fallback', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = closeWorkspaceInstance(state, 'calculate.1', options);
 
     expect(state.instances).toHaveLength(1);
     expect(getActiveWorkspaceInstance(state)).toMatchObject({
-      id: 'calculate.1',
-      workspaceKind: 'calculate',
-      title: 'Calculate',
+      id: 'new-equation.1',
+      workspaceKind: 'new-equation',
+      title: 'Equation',
     });
   });
 
   it('closes other instances around the selected target', () => {
     const options = createDeterministicOptions();
-    let state = createInitialWorkspaceInstancesState(options);
+    let state = createInitialWorkspaceInstancesState(options, 'calculate');
     state = createBlankWorkspaceInstance(state, 'equation', options);
     state = createBlankWorkspaceInstance(state, 'calculus', options);
     state = closeOtherWorkspaceInstances(state, 'equation.2');

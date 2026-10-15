@@ -38,7 +38,10 @@ import { GRAPHING_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
 import { loadGraphWorkspaceRuntimeForInstance } from './graph-workspace-module-loader';
 
 export function useWorkspaceInstancesRuntime(
-  options: WorkspaceInstanceFactoryOptions = {},
+  options: WorkspaceInstanceFactoryOptions & {
+    /** The first tab's kind; the app starts on Equation. Tests of generic tab mechanics use a shell kind. */
+    initialWorkspaceKind?: WorkspaceKind;
+  } = {},
 ) {
   const factoryOptions = useCallback(
     () => ({
@@ -52,7 +55,7 @@ export function useWorkspaceInstancesRuntime(
     createInitialWorkspaceInstancesState({
       idFactory: options.idFactory,
       now: options.now,
-    }));
+    }, options.initialWorkspaceKind));
 
   const activateWorkspaceKind = useCallback((workspaceKind: WorkspaceKind) => {
     setState((currentState) =>

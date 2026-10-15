@@ -121,7 +121,7 @@ function renderWorkspaceTabsShell() {
   const markPendingHistoryTicketsForWorkspaceInstanceAsStopping = vi.fn();
   const discardPendingHistoryTicketsForWorkspaceInstance = vi.fn();
   const setEditorRuntimeStatusOverride = vi.fn();
-  const workspaceInstanceOptions = createDeterministicOptions();
+  const workspaceInstanceOptions = { ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' as const };
 
   const hook = renderHook(() => {
     const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
@@ -485,7 +485,7 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
     expect(hook.result.current.workspaceInstances.activeInstance?.id).toBe('calculate.1');
     expect(listActiveOoeJobs()).toMatchObject([
       {
-        workspaceInstanceId: 'calculate.2',
+        workspaceInstanceId: 'new-equation.2',
         status: 'started',
         cancellationRequest: undefined,
       },

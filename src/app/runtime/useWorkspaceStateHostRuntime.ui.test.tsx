@@ -19,7 +19,7 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
 
 function renderStateHost() {
   return renderHook(() => {
-    const instances = useWorkspaceInstancesRuntime(createDeterministicOptions());
+    const instances = useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' });
     const calculateStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'calculate-default' });
     const equationStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'equation-current' });
     const matrixStateRef = useRef<WorkspaceInstanceStateSlot>({ value: 'matrix-current' });
