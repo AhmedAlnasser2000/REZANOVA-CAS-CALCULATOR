@@ -195,6 +195,10 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | No multivariate factorization: only powers of the unknown split off, so a polynomial with other factors keeps "k-th root" bounds where a factored form would give closed forms | `EQUATION-SEMIALGEBRAIC1` PR B | expansion roadmap |
 | Quotients with free symbols are not cancelled in closed forms (2ac/c² is not shown as 2a/c), and products of radicals are not joined (√a·√2/2) | `EQUATION-SEMIALGEBRAIC1` PR B | Phase 2 (presentation) |
 | Answers with parameters through the decomposition are checked at every cell of a reversed-order decomposition (cases disjoint and covering), not also at samples of each claimed case | `EQUATION-SEMIALGEBRAIC1` PR B | Phase 2 |
+| Input forms the old Equation tests used that New Equation's row reader refuses with a typed message: subscripted names, ±, ∪, Max/Min, factorial, degree signs, integrals inside equations ([capability ledger](equation-capability-ledger.md)) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
+| The constant i in Real mode with parameters, several unknowns or orders (one unknown without parameters is decided over ℂ and intersected with ℝ) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
+| Real roots of ((z³ + z + 1)/(z − m))ⁿ = b and similar: after outer-power decomposition the inner cubic in two parameters needs a root of degree ≥ 3 inside conditions (the row above, from `EQUATION-SEMIALGEBRAIC1`) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
+| Exact real and imaginary parts of algebraic numbers off the unit circle compose resultants of degree d² (sin 4x + sin 6x = 1 over ℂ reaches the work stop) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
 
 ### Phase 2 and Phase 3 items (user decisions, 2026-10-14)
 
