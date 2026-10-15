@@ -3,6 +3,7 @@ import { exactPolynomial, OWNERS, rationalForm, type Refusal } from '../decision
 import { domainBases } from '../decision/rules';
 import { decidePolynomialProblem } from '../decision/solve';
 import { decideGeneratorProblem } from '../generators/solve';
+import { decideConstantProblem, hasTranscendentalConstants } from './constants';
 import { decideSystem } from '../systems/solve';
 import { sortedDistinct } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
@@ -85,7 +86,9 @@ export function targetInKernel(problem: RelationProblem): boolean {
 export function decideAt(problem: RelationProblem, values: ReadonlyMap<string, ExprId>): Specialized {
   const sp = specializedProblem(problem, values);
   if (sp.parameters.length) return { kind: 'refused', reason: 'specialization left free symbols' };
-  const o = sp.targets.length > 1 ? decideSystem(sp) : targetInKernel(sp) ? decideGeneratorProblem(sp) : decidePolynomialProblem(sp);
+  // As the main route: transcendental constants (sin 1 = c at A = 0 in sin(A·z + B) = c) go to their own slice.
+  const o = sp.targets.length > 1 ? decideSystem(sp) : targetInKernel(sp) ? decideGeneratorProblem(sp)
+    : hasTranscendentalConstants(sp) ? decideConstantProblem(sp) : decidePolynomialProblem(sp);
   if (o.kind === 'resource') {
     // The context keeps its stop: re-raise it unchanged.
     problem.store.ctx.checkCancelled();

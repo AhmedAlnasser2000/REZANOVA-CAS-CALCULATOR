@@ -62,7 +62,14 @@ export function decideEquation(problem: RelationProblem): EquationOutcome {
   }
 }
 
+/** The constant i in a problem over ℝ: undefined there (as 0·i keeps it), so the problem belongs to ℂ. */
+function hasImaginaryUnit(problem: RelationProblem): boolean {
+  const s = problem.store;
+  return someNode(problem, n => { const node = s.node(n); return node.kind === 'constant' && node.name === 'i'; });
+}
+
 function route(problem: RelationProblem): EquationOutcome {
+  if (problem.domain === 'real' && hasImaginaryUnit(problem)) return { kind: 'unsupported', reason: 'i is not a real number: an equation with i is decided over ℂ' };
   // Real polynomial problems in several unknowns with orders or ∨: cylindrical decomposition (EQUATION-SEMIALGEBRAIC1).
   if (routesToCad(problem)) return decideByCad(problem);
   // Other rows with ∧, ∨, ¬, ∀ or ∃: by disjuncts.

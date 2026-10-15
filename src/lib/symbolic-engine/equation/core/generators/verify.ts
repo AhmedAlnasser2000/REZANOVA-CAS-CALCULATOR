@@ -12,7 +12,7 @@ import {
 import { verifyProofLog } from '../representation/transform';
 import { verifyNumericAnswer } from '../numeric/cover';
 import { allHold, closedAtoms, decideClosedForm, holds } from './closed-form-set';
-import { simplestBetween } from './samples';
+import { rationalBetween, simplestBetween } from './samples';
 import { FINAL_FORM_RULES, GENERATOR_RULES } from './solve';
 import { commonPeriod, hasTrig, kernelPeriods, periodicIn } from '../periodic/families';
 
@@ -95,6 +95,8 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
     const above = hi.kind === 'infinity' ? undefined : bounds(store, idOf(store, hi)).lo;
     if (below === undefined && above === undefined) return store.integer(0);
     if (below === undefined) return store.number(simplestBetween(ctx, rSubtract(ctx, above as Rational, rational(ctx, 2n)), above));
+    // Both ends finite: enclosures refined until they separate (narrow members overlap at a fixed precision).
+    if (above !== undefined) return store.number(rationalBetween(store, idOf(store, lo as Exclude<Endpoint, { kind: 'infinity' }>), idOf(store, hi as Exclude<Endpoint, { kind: 'infinity' }>)));
     return store.number(simplestBetween(ctx, below, above));
   };
   const x0 = problem.targets[0];

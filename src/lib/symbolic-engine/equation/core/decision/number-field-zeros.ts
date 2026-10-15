@@ -65,11 +65,12 @@ function rounded(ctx: ExecutionContext, d: Disk, W: number): Disk {
 }
 
 /** A certified disk of Σ cᵢ(γ)·θⁱ at width 2^−w (Horner over z at γ's disk, then over y at θ's). */
-function diskAt(ctx: ExecutionContext, f: KPoly, gamma: ExactValue, theta: ExactValue, w: number): Disk {
-  const width = rational(ctx, 1n, 1n << BigInt(w)), W = w + 16, g = diskOf(ctx, gamma, width), t = diskOf(ctx, theta, width);
+function diskAt(ctx: ExecutionContext, f: KPoly, gamma: (w: number) => Disk, theta: ExactValue, w: number): Disk {
+  const width = rational(ctx, 1n, 1n << BigInt(w)), W = w + 16, g = gamma(w), t = rounded(ctx, diskOf(ctx, theta, width), W);
   const zero: Disk = { re: rational(ctx, 0n), im: rational(ctx, 0n), r: rational(ctx, 0n) };
   const horner = (cs: readonly Disk[], x: Disk) => cs.reduceRight((acc, c) => { ctx.tick(); return rounded(ctx, diskAdd(ctx, diskMultiply(ctx, acc, x), c), W); }, zero);
-  const exact = (q: Rational): Disk => ({ re: q, im: rational(ctx, 0n), r: rational(ctx, 0n) });
+  // Coefficients rounded to the working grid first (Euclid in K leaves rationals with large numerators and denominators).
+  const exact = (q: Rational): Disk => rounded(ctx, { re: q, im: rational(ctx, 0n), r: rational(ctx, 0n) }, W);
   return horner(f.map(c => horner(c.coefficients.map(exact), g)), t);
 }
 
@@ -80,6 +81,13 @@ export function numberFieldZeros(store: ExpressionStore, coefficients: readonly 
   const gamma = generators[0], field = new NumberField(ctx, monic(ctx, QX, integerToRational(ctx, QX, (gamma as { root: { poly: Polynomial<bigint> } }).root.poly)));
   const z = QX.make(ctx, [rational(ctx, 0n), rational(ctx, 1n)]);
   const f: KPoly = coefficients.map(c => (c.kind === 'rational' ? QX.constant(ctx, c.value) : z));
+  // γ's disk at each working precision, shared by every root and both factors.
+  const gammaDisks = new Map<number, Disk>();
+  const gammaAt = (w: number) => {
+    let d = gammaDisks.get(w);
+    if (!d) { d = rounded(ctx, diskOf(ctx, gamma, rational(ctx, 1n, 1n << BigInt(w))), w + 16); gammaDisks.set(w, d); }
+    return d;
+  };
   const out: ExactValue[] = [];
   for (const { factor } of factorQ(ctx, QX, normPolynomial(store, coefficients), ALGEBRAIC_RING).factors) {
     const h = integerToRational(ctx, QX, factor), H: KPoly = h.coefficients.map(c => QX.constant(ctx, c));
@@ -93,8 +101,8 @@ export function numberFieldZeros(store: ExpressionStore, coefficients: readonly 
     for (const theta of roots) {
       for (let w = 16; ; w *= 2) {
         ctx.tick();
-        if (!mayContainZero(ctx, diskAt(ctx, split.q, gamma, theta, w))) { out.push(theta); break; }
-        if (!mayContainZero(ctx, diskAt(ctx, G, gamma, theta, w))) break;
+        if (!mayContainZero(ctx, diskAt(ctx, split.q, gammaAt, theta, w))) { out.push(theta); break; }
+        if (!mayContainZero(ctx, diskAt(ctx, G, gammaAt, theta, w))) break;
       }
     }
   }

@@ -102,7 +102,11 @@ export function atomSign(store: ExpressionStore, atom: ClosedAtom, x: string, po
 }
 
 export function allHold(store: ExpressionStore, atoms: readonly ClosedAtom[], x: string, point: ExprId): boolean {
-  for (const a of atoms) if (!holds(a.op, atomSign(store, a, x, point))) return false;
+  for (const a of atoms) {
+    // A point where an atom is exactly undefined (1/x² at 0) is outside the domain: the atom does not hold there.
+    if (evaluateExact(store, store.substitute(a.f, new Map([[x, point]])), 'real').kind === 'undefined') return false;
+    if (!holds(a.op, atomSign(store, a, x, point))) return false;
+  }
   return true;
 }
 

@@ -78,3 +78,21 @@ group('angles: principal-branch identities, direct unit points, unit-circle part
     expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe(kind);
   }, 60_000);
 });
+
+group('internal errors and verification failures found by the corpus', () => {
+  it.each([
+    // The constant i in a problem over ℝ is a typed stop (it is undefined there), not a crash in the sign test.
+    ['\\sin(x)=i', 'real', 'unsupported'],
+    ['x=\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)', 'real', 'unsupported'],
+    // The polynomial conversion reaches its fixed point (expression coefficients left 0·x·i for a second pass).
+    ['\\frac{x^2+1}{x^2-2}=\\imaginaryI', 'complex', 'solved'],
+    // A specialized sample with transcendental constants goes to the constants slice, as in the main route.
+    ['\\sin\\left(A z+B\\right)=c', 'real', 'solved'],
+    // Points where φ′ is undefined cut the monotone pieces; points where an atom is undefined do not satisfy it;
+    // samples inside narrow interval-family members come from refined enclosures.
+    ['\\arcsin\\left(\\sin\\left(x^{\\frac{1}{3}}-1\\right)\\right)=\\frac{1}{2}', 'real', 'incomplete-implementation'],
+    ['\\tan\\left(\\sqrt{\\ln\\left(\\frac{1}{x^2}\\right)}\\right)\\le1', 'real', 'solved'],
+  ] as const)('%s over %s', (latex, domain, kind) => {
+    expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe(kind);
+  }, 60_000);
+});
