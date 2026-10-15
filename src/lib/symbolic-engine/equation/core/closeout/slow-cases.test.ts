@@ -101,3 +101,15 @@ group('internal errors and verification failures found by the corpus', () => {
     expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe(kind);
   }, 60_000);
 });
+
+group('radical chains by isolating and squaring', () => {
+  // √E = R ⇔ E = R² ∧ R ≥ 0 at each level: a polynomial and polynomial sign conditions, decided exactly at each
+  // candidate (decision and verification), with no algebraic arithmetic on the nested radicals.
+  it.each([
+    ['\\sqrt{x+\\sqrt{x+\\sqrt{x+\\sqrt{x}}}}=1'],
+    ['\\sqrt{x+\\sqrt{x}}=2'],
+    ['\\sqrt{x+1}=x-1'],
+  ] as const)('%s', latex => {
+    expect(run(latex, 'real', DEFAULT_EQUATION_LIMITS.work)).toBe('solved');
+  }, 60_000);
+});

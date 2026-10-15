@@ -12,6 +12,7 @@ import {
 import { verifyProofLog } from '../representation/transform';
 import { verifyNumericAnswer } from '../numeric/cover';
 import { allHold, closedAtoms, decideClosedForm, holds } from './closed-form-set';
+import { chainZeroAt, radicalChain } from '../constraints/radical-chain';
 import { rationalBetween, simplestBetween } from './samples';
 import { FINAL_FORM_RULES, GENERATOR_RULES } from './solve';
 import { commonPeriod, hasTrig, kernelPeriods, periodicIn } from '../periodic/families';
@@ -72,6 +73,12 @@ export function verifyGeneratorOutcome(problem: RelationProblem, outcome: Equati
   // Independent evidence against the original relations, before re-deriving anything.
   const satisfiesProblem = (point: ExprId, label: string) => {
     for (const r of problem.relations) {
+      // A chain of square roots: the isolate-and-square equivalence proves a zero exactly, without composing the
+      // radicals (F(x₀) = 0 and every sign condition, modulo x₀'s minimal polynomial).
+      const chain = r.op === 'eq' ? radicalChain(store, store.sub(r.lhs, r.rhs), problem.targets[0]) : undefined;
+      const exactPoint = chain ? evaluateExact(store, point, 'real') : undefined;
+      // A point that is not a zero falls through to exact substitution, which names why (domain or value).
+      if (chain && exactPoint?.kind === 'exact' && chainZeroAt(store, chain, exactPoint.value)) continue;
       const d = store.substitute(store.sub(r.lhs, r.rhs), new Map([[problem.targets[0], point]]));
       const e = evaluateExact(store, d, 'real');
       if (e.kind === 'undefined') fail(`${label} is outside the domain of a relation`);

@@ -4,7 +4,8 @@ import { assemble } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
 import { evaluateExact } from '../representation/evaluate';
 import type { ExprId, ExpressionStore } from '../representation/expression';
-import { realCompare, realSign } from '../representation/real-order';
+import { enclose } from '../representation/enclosure';
+import { realCompare, realSign, START_BITS } from '../representation/real-order';
 import { rangeBound } from '../numeric/isolated';
 import type { Condition, RelationProblem } from '../representation/relation';
 import type { PointValue, SolutionSet } from '../representation/solution-set';
@@ -101,10 +102,15 @@ export function atomSign(store: ExpressionStore, atom: ClosedAtom, x: string, po
   return realSign(store, store.substitute(atom.f, new Map([[x, point]])));
 }
 
+function undefinedAt(store: ExpressionStore, e: ExprId): boolean {
+  return enclose(store, e, START_BITS * 2).kind !== 'bounds' && evaluateExact(store, e, 'real').kind === 'undefined';
+}
+
 export function allHold(store: ExpressionStore, atoms: readonly ClosedAtom[], x: string, point: ExprId): boolean {
   for (const a of atoms) {
     // A point where an atom is exactly undefined (1/x² at 0) is outside the domain: the atom does not hold there.
-    if (evaluateExact(store, store.substitute(a.f, new Map([[x, point]])), 'real').kind === 'undefined') return false;
+    // The atom's own zeros are defined, and so is a value with a certified enclosure; only otherwise is it evaluated.
+    if (!(a.zeros === 'all' || a.zeros.has(point)) && undefinedAt(store, store.substitute(a.f, new Map([[x, point]])))) return false;
     if (!holds(a.op, atomSign(store, a, x, point))) return false;
   }
   return true;

@@ -13,6 +13,7 @@ import { dependsOn } from './normal-form';
 import { sampleBetween } from './samples';
 import type { Polynomial } from '../algebra/polynomial';
 import { eliminateRadicals } from '../constraints/elimination';
+import { radicalChainZeros } from '../constraints/radical-chain';
 import { absPiecewise, containsAbs } from '../constraints/piecewise';
 import { asRadical, invertRadical, sameBaseSubstitution, type RadicalKernel } from '../constraints/radicals';
 import { mergeAffineFamilies, type FamilyZeros, type Param, type PeriodicZeros } from '../periodic/families';
@@ -243,6 +244,9 @@ export function zerosOf(store: ExpressionStore, f: ExprId, x: string, fresh = fr
           for (const c of r.values) if (same.order % 2n === 1n || realSign(store, c) >= 0) push(same.base, store.pow(c, store.integer(same.order)));
           continue;
         }
+        // A chain of square roots: isolate and square with polynomial sign conditions (no nested algebraic arithmetic).
+        const chain = radicalChainZeros(store, store.sub(g.h, g.level), g.variable);
+        if (chain) { chain.forEach(emit); continue; }
         const el = eliminateRadicals(store, store.sub(g.h, g.level), g.variable);
         if (el.kind === 'refused') throw new Refused(el.refusal);
         if (el.kind === 'all') { if (g.top) return { kind: 'all' }; refuse(OWNERS.constraints, 'an inner identity among radicals'); continue; }
