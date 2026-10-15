@@ -1,9 +1,5 @@
 import { type RefObject, useEffect } from 'react';
 import type { MathfieldElement } from 'mathlive';
-import {
-  isPolynomialEquationScreen,
-  isSimultaneousEquationScreen,
-} from '../../lib/equation/equation-navigation';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import type { CalculusRouteMeta } from '../../lib/calculus/workspace/navigation';
 import type { GeometryRouteMeta } from '../../lib/geometry/navigation';
@@ -558,21 +554,6 @@ export function useShellFocusRuntime({
         mainFieldRef.current?.focus?.();
         activeFieldRef.current = mainFieldRef.current;
         return;
-      }
-
-      if (
-        equationRouteMeta.focusTarget === 'polynomial' &&
-        isPolynomialEquationScreen(equationScreen)
-      ) {
-        polynomialInputRefs.current[equationScreen]?.focus();
-        return;
-      }
-
-      if (
-        equationRouteMeta.focusTarget === 'simultaneous' &&
-        isSimultaneousEquationScreen(equationScreen)
-      ) {
-        systemInputRefs.current[equationScreen]?.focus();
       }
     }, 0);
     return () => window.clearTimeout(timer);

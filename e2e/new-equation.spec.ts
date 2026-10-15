@@ -1,11 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
-import { openLauncherApp, setMathFieldLatex, getMathFieldLatex } from './helpers';
+import { setMathFieldLatex, getMathFieldLatex } from './helpers';
 import { installClipboardCapture } from './calculus-integral-evidence';
 
 // EQUATION-ADOPTION1: the New Equation workspace on the real app (worker, presentation, drafts), with screenshots.
 const open = async (page: Page) => {
+  // Equation is the starting workspace (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
   await page.goto('/');
-  await openLauncherApp(page, 'Core', 'New Equation');
   const workspace = page.getByTestId('new-equation-page');
   await expect(workspace).toBeVisible();
   return workspace;
@@ -205,7 +205,7 @@ test('New Equation: plain non-answers, ℂ refusals, keys, Stop, tabs, drafts an
   expect(await getMathFieldLatex(page, 'new-equation-row-1')).toBe('');
   await row(page, 1, 'x+1=2');
   await page.reload();
-  await openLauncherApp(page, 'Core', 'New Equation');
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
   await expect(tabs).toHaveCount(2);
   await expect(answer(page)).toHaveCount(0);
   expect(await getMathFieldLatex(page, 'new-equation-row-1')).toContain('x');

@@ -16,9 +16,10 @@ function hook() {
 }
 
 it('starts from the settings style, keeps tabs independent and restores drafts without answers', () => {
+  // Equation is the starting workspace: the boot tab is an Equation tab and saving starts at once.
   const h = hook();
-  act(() => h.result.current.equation.open());
   const first = h.result.current.workspaces.activeInstanceId;
+  expect(h.result.current.workspaces.activeInstance?.workspaceKind).toBe('new-equation');
   expect(h.result.current.equation.draftOf(first).style).toBe('both');
   const draft = { ...blankEquationDraft('both'), rows: ['x^2=a', 'a>0'], targets: ['x'], domain: 'real' as const, style: 'exact' as const };
   act(() => h.result.current.equation.change(first, draft));
@@ -27,12 +28,26 @@ it('starts from the settings style, keeps tabs independent and restores drafts w
   expect(readEquationDraft(h.result.current.workspaces.activeInstance?.surfaceState).rows).toEqual(['', '']);
   h.unmount();
   const restored = hook();
+  const tabs = restored.result.current.workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-equation');
+  expect(tabs).toHaveLength(2);
+  expect(restored.result.current.workspaces.activeInstanceId).toBe(tabs[0].id);
+  expect(readEquationDraft(tabs[0].surfaceState)).toEqual(draft);
+  expect(readEquationDraft(tabs[1].surfaceState).rows).toEqual(['', '']);
+  expect(restored.result.current.equation.views).toEqual({});
+  expect(runEquationJob).not.toHaveBeenCalled();
+});
+
+it('opens a further blank tab after the boot tab restored the saved drafts', () => {
+  const h = hook();
+  const boot = h.result.current.workspaces.activeInstanceId;
+  act(() => h.result.current.equation.change(boot, { ...blankEquationDraft('both'), rows: ['x=1', ''] }));
+  h.unmount();
+  const restored = hook();
   act(() => restored.result.current.equation.open());
   const tabs = restored.result.current.workspaces.workspaceInstances.filter(v => v.workspaceKind === 'new-equation');
   expect(tabs).toHaveLength(2);
-  expect(readEquationDraft(tabs[0].surfaceState)).toEqual(draft);
-  expect(restored.result.current.equation.views).toEqual({});
-  expect(runEquationJob).not.toHaveBeenCalled();
+  expect(readEquationDraft(tabs[0].surfaceState).rows).toEqual(['x=1', '']);
+  expect(restored.result.current.workspaces.activeInstanceId).toBe(tabs[1].id);
 });
 
 it('sends the resolved unknowns and the settings digits; refuses inequalities over ℂ without starting a job', async () => {

@@ -5,36 +5,35 @@ import { runHistoryReplayHarness } from './replay-harness';
 
 const expectedCounts = {
   calculate: 20,
-  equation: 25,
-  calculus: 25,
+  calculus: 24,
   matrix: 5,
   vector: 5,
   table: 5,
-  trigonometry: 5,
+  trigonometry: 4,
   statistics: 5,
   geometry: 5,
 } as const;
 
 describe('History replay ratchet', () => {
-  it('keeps 100 unique versioned sanitized fixtures at the approved distribution', () => {
-    expect(HISTORY_REPLAY_FIXTURE_FILES).toHaveLength(9);
-    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
-    expect(new Set(HISTORY_REPLAY_FIXTURES.map((fixture) => fixture.id)).size).toBe(100);
+  it('keeps 73 unique versioned sanitized fixtures at the approved distribution', () => {
+    expect(HISTORY_REPLAY_FIXTURE_FILES).toHaveLength(8);
+    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(73);
+    expect(new Set(HISTORY_REPLAY_FIXTURES.map((fixture) => fixture.id)).size).toBe(73);
 
     for (const workspace of HISTORY_REPLAY_WORKSPACES) {
       const fixtures = HISTORY_REPLAY_FIXTURES.filter((fixture) => fixture.workspace === workspace);
       expect(fixtures).toHaveLength(expectedCounts[workspace]);
       expect(fixtures.every((fixture) => fixture.snapshot.version === 1)).toBe(true);
-      if (workspace !== 'calculate' && workspace !== 'equation' && workspace !== 'calculus') {
-        expect(new Set(fixtures.map((fixture) => fixture.family)).size).toBe(5);
+      if (workspace !== 'calculate' && workspace !== 'calculus') {
+        expect(new Set(fixtures.map((fixture) => fixture.family)).size).toBe(fixtures.length);
       }
     }
   });
 
   it('hard-compares migrated workspace LaTeX while retaining report-only families', async () => {
     const report = await runHistoryReplayHarness();
-    expect(report.fixtureCount).toBe(100);
-    expect(report.hardLatexFixtureCount).toBe(100);
+    expect(report.fixtureCount).toBe(73);
+    expect(report.hardLatexFixtureCount).toBe(73);
     expect(report.reportOnlyLatexFixtureCount).toBe(0);
     expect(report.hardFailures).toEqual([]);
     expect(Array.isArray(report.latexDifferences)).toBe(true);

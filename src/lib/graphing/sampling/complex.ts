@@ -1,4 +1,4 @@
-import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
+import { createComplexNumericEvaluator } from '../../symbolic-engine/equation/numeric/complex-sampling';
 import { complex, complexAbs, complexArg } from '../../numeric/complex';
 import { clipGraphComplexBranchRay, graphComplexBranchGeometry } from './complex-branch-geometry';
 import { graphRealLogConvention } from './real-log-convention';

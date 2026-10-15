@@ -120,14 +120,57 @@ function sameOrderedValues(left, right) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+/** The bootstrap inventory size; routes leave it only through the baseline's reasoned `retired` section. */
+const BOOTSTRAP_FROZEN_ROUTE_COUNT = 57;
+
+/**
+ * Entries that left with a retired engine (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B): routes, frozen files that were
+ * deleted or no longer produce V1 output (a file left in place must pass the unfrozen-V1 check like any other), and
+ * frozen files whose digest changed only by losing calls into that engine. The section needs
+ * a reason, only grows, and is the one way the frozen inventory may shrink or a frozen digest may change.
+ */
+function retiredSection(baseline) {
+  const retired = baseline.retired ?? {};
+  return {
+    reason: retired.reason ?? '',
+    routeIds: retired.routeIds ?? [],
+    files: (retired.files ?? []).map(normalizePath),
+    rehashed: (retired.rehashed ?? []).map((entry) => ({ ...entry, path: normalizePath(entry.path ?? '') })),
+  };
+}
+
+function validateRetiredShape(baseline) {
+  const errors = [];
+  if (baseline.retired === undefined) return errors;
+  const retired = retiredSection(baseline);
+  if (!retired.reason.trim()) errors.push('Retired entries require a non-empty reason.');
+  const frozenRoutes = new Set(baseline.frozenRouteIds ?? []);
+  const frozenPaths = new Set((baseline.files ?? []).map((entry) => normalizePath(entry.path ?? '')));
+  for (const routeId of retired.routeIds) {
+    if (frozenRoutes.has(routeId)) errors.push(`Retired route is still frozen: ${routeId}.`);
+  }
+  for (const repoPath of retired.files) {
+    if (frozenPaths.has(repoPath)) errors.push(`Retired file is still frozen: ${repoPath}.`);
+  }
+  for (const entry of retired.rehashed) {
+    if (!frozenPaths.has(entry.path)) errors.push(`Re-hashed file is not frozen: ${entry.path}.`);
+    if (!/^[a-f0-9]{64}$/u.test(entry.previousSha256 ?? '') || !/^[a-f0-9]{64}$/u.test(entry.sha256 ?? '')) {
+      errors.push(`Re-hashed file needs both digests: ${entry.path}.`);
+    }
+  }
+  return errors;
+}
+
 export function validateBaselineShape(baseline, v2DefaultRouteIds = []) {
   const errors = [];
   if (baseline.version !== 1) errors.push('Enforcement baseline version must be 1.');
   if (baseline.bootstrapMilestone !== 'CANONICAL-RESULT-V2-ENFORCEMENT1') {
     errors.push('Enforcement baseline bootstrap milestone is invalid.');
   }
-  if (!Array.isArray(baseline.frozenRouteIds) || baseline.frozenRouteIds.length !== 57) {
-    errors.push('Frozen V1 route inventory must contain exactly 57 routes.');
+  const expectedRouteCount = BOOTSTRAP_FROZEN_ROUTE_COUNT - retiredSection(baseline).routeIds.length;
+  errors.push(...validateRetiredShape(baseline));
+  if (!Array.isArray(baseline.frozenRouteIds) || baseline.frozenRouteIds.length !== expectedRouteCount) {
+    errors.push(`Frozen V1 route inventory must contain exactly ${expectedRouteCount} routes.`);
   } else if (new Set(baseline.frozenRouteIds).size !== baseline.frozenRouteIds.length) {
     errors.push('Frozen V1 route inventory must not contain duplicates.');
   }
@@ -169,7 +212,17 @@ export function validateBaselineShape(baseline, v2DefaultRouteIds = []) {
 
 export function compareEnforcementBaselines(current, base, v2DefaultRouteIds) {
   const errors = [];
-  if (!sameOrderedValues(current.frozenRouteIds, base.frozenRouteIds)) {
+  const retired = retiredSection(current);
+  const baseRetired = retiredSection(base);
+  for (const routeId of baseRetired.routeIds) {
+    if (!retired.routeIds.includes(routeId)) errors.push(`Retired route left the retired list: ${routeId}.`);
+  }
+  for (const repoPath of baseRetired.files) {
+    if (!retired.files.includes(repoPath)) errors.push(`Retired file left the retired list: ${repoPath}.`);
+  }
+  const retiredRoutes = new Set(retired.routeIds);
+  const remainingBaseRoutes = base.frozenRouteIds.filter((routeId) => !retiredRoutes.has(routeId));
+  if (!sameOrderedValues(current.frozenRouteIds, remainingBaseRoutes)) {
     errors.push('Frozen V1 route inventory changed; it is immutable.');
   }
   const currentFiles = new Map(current.files.map((entry) => [normalizePath(entry.path), entry]));
@@ -180,16 +233,21 @@ export function compareEnforcementBaselines(current, base, v2DefaultRouteIds) {
       errors.push(`Frozen V1 producer additions are forbidden: ${repoPath}.`);
       continue;
     }
-    if (entry.sha256 !== previous.sha256) {
+    const rehash = retired.rehashed.find((candidate) => candidate.path === repoPath);
+    const approvedRehash = rehash !== undefined
+      && rehash.previousSha256 === previous.sha256
+      && rehash.sha256 === entry.sha256;
+    if (entry.sha256 !== previous.sha256 && !approvedRehash) {
       errors.push(`Frozen V1 producer digest changes are forbidden: ${repoPath}.`);
     }
-    if (!sameOrderedValues(entry.routeIds, previous.routeIds)) {
+    const previousOwned = previous.routeIds.filter((routeId) => !retiredRoutes.has(routeId));
+    if (!sameOrderedValues(entry.routeIds, previousOwned)) {
       errors.push(`Frozen V1 producer route ownership changed: ${repoPath}.`);
     }
   }
   const defaults = new Set(v2DefaultRouteIds);
   for (const [repoPath, previous] of baseFiles) {
-    if (currentFiles.has(repoPath)) continue;
+    if (currentFiles.has(repoPath) || retired.files.includes(repoPath)) continue;
     const remainingV1 = previous.routeIds.filter((routeId) => !defaults.has(routeId));
     if (remainingV1.length > 0) {
       errors.push(
@@ -210,12 +268,16 @@ export function validateCurrentRepository(
   const errors = [...validateBaselineShape(baseline, policy.explicitV2DefaultRouteIds)];
   const routeIds = readMathJsonRouteIds(root);
   if (!sameOrderedValues(policy.frozenRouteIds, baseline.frozenRouteIds)) {
-    errors.push('Producer-version registry no longer matches the immutable 57-route V1 inventory.');
+    errors.push('Producer-version registry no longer matches the frozen V1 route inventory.');
   }
   if (!policy.source.includes('|| !frozenV1Routes.has(routeId)')) {
     errors.push('New producer routes no longer default to V2.');
   }
   const routeIdSet = new Set(routeIds);
+  const retired = retiredSection(baseline);
+  for (const routeId of retired.routeIds) {
+    if (routeIdSet.has(routeId)) errors.push(`Retired route is still in the MathJSON registry: ${routeId}.`);
+  }
   for (const routeId of baseline.frozenRouteIds) {
     if (!routeIdSet.has(routeId)) errors.push(`Frozen route is missing from MathJSON registry: ${routeId}.`);
   }

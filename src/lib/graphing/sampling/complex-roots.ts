@@ -1,7 +1,7 @@
 import {
   findComplexNewtonCandidates,
   type ComplexNumericEvaluator,
-} from '../../equation/complex-domain-public';
+} from '../../symbolic-engine/equation/numeric/complex-sampling';
 import { complex, complexAbs, complexAdd, complexDiv, complexMul, complexSub, type ComplexValue } from '../../numeric/complex';
 import type { GraphExpressionIR, GraphViewportV1 } from '../contracts';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';

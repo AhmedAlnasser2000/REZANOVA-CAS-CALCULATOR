@@ -101,45 +101,6 @@ describe('Linear Algebra canonical authority', () => {
     });
   });
 
-  it('builds the unsupported spectral Equation action from native coefficients', () => {
-    const outcome = runMatrixMode({
-      operation: 'eigenA',
-      matrixA: [[0, -1], [1, 0]],
-      matrixB: [[1, 0], [0, 1]],
-    });
-    expect(outcome.kind).toBe('error');
-    if (outcome.kind !== 'error') throw new Error('Expected unsupported Matrix spectral result.');
-    expect(outcome.canonicalResult?.version).toBe(7);
-    expect(outcome.actions).toEqual([{
-      version: 7,
-      kind: 'send',
-      target: 'equation',
-      math: {
-        canonicalLatex: '\\lambda^{2}+1=0',
-        mathJson: [
-          'Equal',
-          ['Add', ['Power', 'lambda', 2], ['Multiply', 0, 'lambda'], 1],
-          0,
-        ],
-      },
-    }]);
-  });
-
-  it('proves rational and negative spectral readback without a custom MathJSON operator', () => {
-    const outcome = runMatrixMode({
-      operation: 'eigenA',
-      matrixA: [[-1, 0], [0, 0.5]],
-      matrixB: [[1, 0], [0, 1]],
-      exactMatrixA: [
-        [{ numerator: -1, denominator: 1 }, { numerator: 0, denominator: 1 }],
-        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 2 }],
-      ],
-    });
-    expect(outcome.kind).toBe('success');
-    if (outcome.kind !== 'success') throw new Error('Expected rational Matrix spectral success.');
-    expect(outcome.canonicalResult?.version).toBe(7);
-  });
-
   it('proves a singular Matrix null space as the span of its native basis', () => {
     const outcome = runMatrixMode({
       operation: 'nullSpaceA',

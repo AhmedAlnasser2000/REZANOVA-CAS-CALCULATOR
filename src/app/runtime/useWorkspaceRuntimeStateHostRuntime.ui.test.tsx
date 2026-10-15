@@ -22,7 +22,7 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
 
 function renderRuntimeHost() {
   return renderHook(() => {
-    const instances = useWorkspaceInstancesRuntime(createDeterministicOptions());
+    const instances = useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' });
     const [runtimeState, setRuntimeState] = useState<WorkspaceRuntimeState>(
       EMPTY_WORKSPACE_RUNTIME_STATE,
     );

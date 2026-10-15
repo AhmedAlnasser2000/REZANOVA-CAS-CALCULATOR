@@ -1,8 +1,10 @@
 import {
+  render,
   screen,
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   beforeEach,
   describe,
@@ -10,18 +12,9 @@ import {
   it,
   vi,
 } from 'vitest';
+import AppMain from './AppMain';
 import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
-import {
-  DEFAULT_SETTINGS,
-  type HistoryEntry,
-} from './types/calculator';
-import {
-  openLauncherApp,
-  type AppUser,
-  legacyEquationIt, renderAppMain,
-  setMathFieldLatex,
-} from './test/renderAppMain';
-import { historyEntryFixture } from './test-utils/history-result-document';
+import { DEFAULT_SETTINGS } from './types/calculator';
 
 function setViewportWidth(width: number) {
   Object.defineProperty(window, 'innerWidth', {
@@ -32,16 +25,21 @@ function setViewportWidth(width: number) {
   window.dispatchEvent(new Event('resize'));
 }
 
-async function openLauncherAppInNewTab(user: AppUser, categoryLabel: string, appLabel: string) {
-  await user.click(screen.getByTestId('keypad-menu'));
-  const menuInspector = await screen.findByTestId('left-menu-inspector');
-  await user.click(await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${categoryLabel}`, 'i') }));
-  const appButton = await within(menuInspector).findByRole('button', { name: new RegExp(`^\\d*\\s*${appLabel}`, 'i') });
-  const appRow = appButton.closest('.launcher-entry-row');
-  if (!appRow) {
-    throw new Error(`Missing launcher row for ${appLabel}`);
-  }
-  await user.click(within(appRow as HTMLElement).getByLabelText('Open in new tab'));
+/** Equation is the starting workspace (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B). */
+async function renderAppAtEquation() {
+  const user = userEvent.setup();
+  render(<AppMain />);
+  await screen.findByTestId('new-equation-page', {}, { timeout: 10_000 });
+  return { user };
+}
+
+async function openCreateMenu(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('workspace-tab-add-menu'));
+  return screen.getByTestId('workspace-tab-create-menu');
+}
+
+function activeTab() {
+  return screen.getAllByTestId('workspace-tab').find((tab) => tab.classList.contains('is-active'));
 }
 
 describe('AppMain workspace tabs', () => {
@@ -51,17 +49,17 @@ describe('AppMain workspace tabs', () => {
     vi.clearAllMocks();
   });
 
-  it('renders workspace tabs as app chrome outside the calculator shell', async () => {
-    await renderAppMain();
+  it('starts on an Equation tab rendered as app chrome around the page', async () => {
+    await renderAppAtEquation();
 
     const appFrame = screen.getByTestId('app-frame');
-    const calculatorShell = screen.getByTestId('calculator-shell');
     const tabList = screen.getByRole('tablist', { name: 'Open workspaces' });
 
     expect(appFrame).toContainElement(tabList);
-    expect(appFrame).toContainElement(calculatorShell);
-    expect(calculatorShell).not.toContainElement(tabList);
-    expect(calculatorShell.querySelector('.mode-strip')).toBeTruthy();
+    expect(appFrame).toContainElement(screen.getByTestId('new-equation-page'));
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+    expect(activeTab()).toHaveAttribute('data-workspace-kind', 'new-equation');
+    expect(within(activeTab() as HTMLElement).getByRole('tab')).toHaveTextContent('Equation');
   });
 
   it('never zooms single surfaces: UI scale is the webview\'s native zoom (GRAPHING-UI1)', async () => {
@@ -75,164 +73,74 @@ describe('AppMain workspace tabs', () => {
       variableMemory: [],
     }));
 
-    await renderAppMain();
+    await renderAppAtEquation();
 
     expect(screen.getByTestId('app-frame').getAttribute('style') ?? '')
       .not.toContain('--ui-scale');
-    expect(screen.getByTestId('calculator-shell').getAttribute('style') ?? '')
-      .not.toContain('--ui-scale');
   });
 
-  it('suppresses quick inspectors when a page surface becomes active', async () => {
-    const { user } = await renderAppMain();
+  it('shows no quick inspectors on pages and opens Settings as a page', async () => {
+    const { user } = await renderAppAtEquation();
 
-    await user.click(screen.getByTestId('keypad-menu'));
-    expect(await screen.findByTestId('left-menu-inspector')).toBeInTheDocument();
+    expect(screen.queryByTestId('side-surface-host')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
 
-    await user.click(screen.getByTestId('settings-toggle'));
-    const settingsPanel = await screen.findByTestId('settings-panel');
-    await user.click(within(settingsPanel).getByTestId('settings-open-full-page'));
+    const menu = await openCreateMenu(user);
+    await user.click(within(menu).getByRole('menuitem', { name: 'Open Settings Page' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('active-surface-page')).toHaveAttribute(
-        'data-surface-kind',
-        'settings',
-      );
-    });
-    await waitFor(() => {
+      expect(screen.getByTestId('active-surface-page')).toHaveAttribute('data-surface-kind', 'settings');
       expect(screen.queryByTestId('side-surface-host')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('side-surface-overlay-backdrop')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
     });
   });
 
-  it('opens Guide as a singleton page tab without replacing the calculator workspace', async () => {
-    const { user } = await renderAppMain();
+  it('opens Guide as a singleton page tab beside Equation', async () => {
+    const { user } = await renderAppAtEquation();
 
-    await user.click(screen.getByTestId('keypad-menu'));
-    expect(await screen.findByTestId('left-menu-inspector')).toBeInTheDocument();
-
-    await user.click(screen.getByTestId('guide-toggle'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('active-surface-page')).toHaveAttribute(
-        'data-surface-kind',
-        'guide',
-      );
-      expect(screen.getByTestId('guide-page')).toBeInTheDocument();
-      expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('side-surface-host')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
-    });
+    await user.click(within(await openCreateMenu(user)).getByRole('menuitem', { name: 'Open Guide Page' }));
+    await waitFor(() => expect(screen.getByTestId('guide-page')).toBeInTheDocument());
 
     let tabs = screen.getAllByTestId('workspace-tab');
     expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveAttribute('data-workspace-kind', 'calculate');
+    expect(tabs[0]).toHaveAttribute('data-workspace-kind', 'new-equation');
     expect(tabs[1]).toHaveAttribute('data-workspace-kind', 'guide-page');
 
-    await user.click(within(tabs[0]).getByRole('tab', { name: /Calculate/ }));
-
+    await user.click(within(tabs[0]).getByRole('tab', { name: /Equation/ }));
     await waitFor(() => {
-      expect(screen.getByTestId('calculator-shell')).toBeInTheDocument();
+      expect(screen.getByTestId('new-equation-page')).toBeInTheDocument();
       expect(screen.queryByTestId('guide-page')).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getByTestId('guide-toggle'));
+    await user.click(within(await openCreateMenu(user)).getByRole('menuitem', { name: 'Open Guide Page' }));
     await waitFor(() => {
       tabs = screen.getAllByTestId('workspace-tab');
-      expect(tabs.filter((tab) => tab.getAttribute('data-workspace-kind') === 'guide-page'))
-        .toHaveLength(1);
+      expect(tabs.filter((tab) => tab.getAttribute('data-workspace-kind') === 'guide-page')).toHaveLength(1);
     });
   });
 
-  it('retargets the active workspace tab for normal mode selection', async () => {
-    const { user } = await renderAppMain();
+  it('opens a blank Equation tab from plus and New Integration from the plus menu', async () => {
+    const { user } = await renderAppAtEquation();
 
     await user.click(screen.getByTestId('workspace-tab-add'));
-    await waitFor(() => expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2));
-
-    await openLauncherApp(user, 'Calculus', 'Calculus');
-
     await waitFor(() => {
-      const tabs = screen.getAllByTestId('workspace-tab');
-      expect(tabs).toHaveLength(2);
-      const activeTab = tabs.find((tab) => tab.classList.contains('is-active'));
-      expect(activeTab).toHaveAttribute('data-workspace-kind', 'calculus');
-      expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Calculus');
+      expect(screen.getAllByTestId('workspace-tab')).toHaveLength(2);
+      expect(activeTab()).toHaveAttribute('data-workspace-kind', 'new-equation');
     });
+
+    await user.click(within(await openCreateMenu(user)).getByRole('menuitem', { name: 'New Integration' }));
+    await waitFor(() => expect(activeTab()).toHaveAttribute('data-workspace-kind', 'new-integration'));
   });
 
-  it('opens launcher entries in explicit new tabs while plus remains blank Calculate', async () => {
-    const { user } = await renderAppMain();
+  it('lists the workspaces being rebuilt in the plus menu, disabled and signed', async () => {
+    const { user } = await renderAppAtEquation();
 
-    await openLauncherAppInNewTab(user, 'Core', 'Equation');
+    const group = within(await openCreateMenu(user)).getByTestId('workspace-tab-unavailable-group');
+    const calculate = within(group).getByRole('menuitem', { name: /^Calculate/ });
+    expect(calculate).toBeDisabled();
+    expect(calculate).toHaveTextContent('Unavailable: being rebuilt');
 
-    await waitFor(() => {
-      const tabs = screen.getAllByTestId('workspace-tab');
-      expect(tabs).toHaveLength(2);
-      const activeTab = tabs.find((tab) => tab.classList.contains('is-active'));
-      expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
-      expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Equation');
-    });
-    expect(await screen.findByRole('button', { name: /symbolic/i }, { timeout: 5_000 })).toBeInTheDocument();
-
-    await user.click(screen.getByTestId('workspace-tab-add'));
-
-    await waitFor(() => {
-      const tabs = screen.getAllByTestId('workspace-tab');
-      expect(tabs).toHaveLength(3);
-      const activeTab = tabs.find((tab) => tab.classList.contains('is-active'));
-      expect(activeTab).toHaveAttribute('data-workspace-kind', 'calculate');
-      expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Calculate');
-    });
-  });
-
-  legacyEquationIt('replays an Equation history card into its destination on the first click', async () => {
-    const historyEntry: HistoryEntry = historyEntryFixture({
-      id: 'history.equation.destination',
-      mode: 'equation',
-      inputLatex: 'x+1=2',
-      resultLatex: 'x=1',
-      equationSolveTarget: 'x',
-      timestamp: '2026-07-01T00:00:00.000Z',
-    });
-    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
-      currentMode: 'calculate',
-      settings: DEFAULT_SETTINGS,
-      history: [historyEntry],
-      variableMemory: [],
-    }));
-    const { user } = await renderAppMain();
-
-    await user.click(screen.getByTestId('history-toggle'));
-    await user.click((await screen.findAllByTestId('history-entry'))[0]);
-
-    await waitFor(() => {
-      const activeTab = screen.getAllByTestId('workspace-tab')
-        .find((tab) => tab.classList.contains('is-active'));
-      expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
-      const editor = screen.getByTestId('main-editor') as HTMLElement & {
-        getValue: (format?: string) => string;
-      };
-      expect(editor.getValue('latex')).toBe('x+1=2');
-    });
-  });
-
-  it('auto-switches Calculate equation prompts directly into symbolic Equation', async () => {
-    const { user } = await renderAppMain();
-
-    await user.click(screen.getByTestId('quick-setting-auto-equation'));
-    setMathFieldLatex('main-editor', 'x+1=2');
-    await user.click(screen.getByTestId('keypad-execute'));
-
-    await waitFor(() => {
-      const activeTab = screen.getAllByTestId('workspace-tab')
-        .find((tab) => tab.classList.contains('is-active'));
-      expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
-      const editor = screen.getByTestId('main-editor') as HTMLElement & {
-        getValue: (format?: string) => string;
-      };
-      expect(editor.getValue('latex')).toBe('x+1=2');
-    }, { timeout: 5_000 });
+    await user.click(calculate);
+    expect(screen.getAllByTestId('workspace-tab')).toHaveLength(1);
+    expect(screen.getByTestId('new-equation-page')).toBeInTheDocument();
   });
 });

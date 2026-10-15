@@ -53,7 +53,7 @@ describe('feature probe registry', () => {
 
   it('pins the required cross-setting behavior families', () => {
     expect(FEATURE_PROBE_REGISTRY.angleUnit.probes).toContain('inverse-trig-angle-units-native');
-    expect(FEATURE_PROBE_REGISTRY.outputStyle.probes).toContain('output-style-native');
+    expect(FEATURE_PROBE_REGISTRY.outputStyle.probes).toContain('output-style-component');
     expect(FEATURE_PROBE_REGISTRY.approxDigits.probes).toContain('numeric-precision-native');
     expect(FEATURE_PROBE_REGISTRY.numericNotationMode.probes).toContain('numeric-scientific-native');
     expect(FEATURE_PROBE_REGISTRY.highContrast.probes).toContain('surface-scale-contrast-component');

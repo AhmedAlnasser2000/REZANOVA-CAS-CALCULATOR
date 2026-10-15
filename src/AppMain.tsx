@@ -25,6 +25,7 @@ import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
 import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
+import { isShellModeAvailable, unavailableModeNotice } from './lib/workspaces/availability';
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
@@ -56,7 +57,7 @@ import { useGeometryRuntime } from './app/runtime/useGeometryRuntime';
 import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { useCalculusRuntime } from './app/runtime/useCalculusRuntime';
 import { useCalculateRuntime } from './app/runtime/useCalculateRuntime';
-import { useEquationRuntime } from './app/runtime/useEquationRuntime';
+import { useRetiredEquationRuntime } from './app/runtime/useRetiredEquationRuntime';
 import {
   blurLatexEditorTarget,
   executeLatexEditorCommand,
@@ -95,8 +96,7 @@ import { resolveCanonicalResultForConsumer } from './lib/result-contract/consume
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
-import type { AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
-import { getEquationAlgebraActionLabel } from './lib/modes/equation/transform-contract';
+import { getAlgebraTransformLabel, type AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
 import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   LAUNCHER_SOFT_ACTIONS,
@@ -161,11 +161,6 @@ import type { NotebookWorkspaceTarget } from './lib/notebook/types';
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
     default: module.CalculusWorkspace,
-  })),
-);
-const EquationWorkspace = lazy(() =>
-  import('./app/workspaces/EquationWorkspace').then((module) => ({
-    default: module.EquationWorkspace,
   })),
 );
 const GeometryWorkspace = lazy(() =>
@@ -283,6 +278,7 @@ export default function App() {
     import.meta.env.DEV && import.meta.env.VITE_SHOW_OOE_DIAGNOSTICS === '1';
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
+  const [appNotice, setAppNotice] = useState<string | null>(null);
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const { newIntegrationRuntime, newEquationRuntime } = useNewPageRuntimes(workspaceInstancesRuntime, settings);
@@ -536,6 +532,7 @@ export default function App() {
     restoreHistoryDisplayMemorySnapshot,
     restoreLoadedHistory,
     setClipboardNotice,
+    showAppNotice: setAppNotice,
     setCurrentMode,
     setPreviousNonGuideMode,
     setSettings,
@@ -1078,34 +1075,7 @@ export default function App() {
     setGuideQuery,
   } = guideRuntime;
   resetGuideRuntimeRef.current = resetGuideRuntime;
-  const equationRuntime = useEquationRuntime({
-    activeFieldRef,
-    ansLatex,
-    commitOutcome,
-    currentMode,
-    currentModeRef,
-    discardHistoryTicket: discardPendingHistoryTicket,
-    displayOutcome,
-    editorAnalysisControl,
-    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
-    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
-    isLauncherOpen,
-    mainFieldRef,
-    openGuideArticle,
-    openGuideMode,
-    openLauncher,
-    patchSettings,
-    replayVariableSubstitutions,
-    reserveHistoryTicket: reservePendingHistoryTicket,
-    routeToModeDestination,
-    settings,
-    setDisplayOutcome,
-    setMode,
-    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-    startTransition,
-    storedVariables: variableMemory,
-    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
-  });
+  const equationRuntime = useRetiredEquationRuntime({ commitOutcome, displayOutcome, openLauncher });
   const {
     clearActiveEquationDraft,
     cubicCoefficients,
@@ -1127,7 +1097,6 @@ export default function App() {
     equationSoftActions,
     equationSolveTarget,
     equationSolveTargetResolution,
-    equationWorkspaceProps,
     goBackInEquation,
     isEquationMenuOpen,
     isEquationWorkScreen,
@@ -1180,15 +1149,6 @@ export default function App() {
   createWorkspaceKindTabRef.current = createWorkspaceKindTab;
   openGuidePageTabRef.current = () =>
     workspaceTabsRuntime.onOpenAppPageTab(GUIDE_PAGE_WORKSPACE_KIND);
-  useEffect(() => {
-    if (isLauncherOpen || currentMode !== 'equation') {
-      return;
-    }
-
-    void import('./lib/modes/equation').catch(() => {
-      // Active-route preloading is opportunistic; runtime action handlers still own errors.
-    });
-  }, [currentMode, equationScreen, isLauncherOpen]);
   const displayHeaderLabel =
     isLauncherOpen
       ? 'Menu'
@@ -1878,8 +1838,15 @@ export default function App() {
     });
   }
 
+  /** Retired workspaces cannot be opened by any route (launcher, Guide, hotkeys, mode strip); a notice says why. */
+  function refuseUnavailableMode(mode: ModeId) {
+    if (isShellModeAvailable(mode)) return false;
+    setAppNotice(unavailableModeNotice(MODE_LABELS[mode]));
+    return true;
+  }
+
   function commitVisibleModeSelection(mode: ModeId) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return;
     }
     if (mode !== 'guide') {
@@ -1893,7 +1860,7 @@ export default function App() {
   }
 
   function setMode(mode: ModeId) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return;
     }
     retargetActiveWorkspaceKind(mode);
@@ -1901,7 +1868,7 @@ export default function App() {
   }
 
   function routeToModeDestination(mode: ModeId, applyDestination: () => void) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return false;
     }
 
@@ -1913,7 +1880,7 @@ export default function App() {
   }
 
   function routeToModeDestinationInNewTab(mode: ModeId, applyDestination: () => void) {
-    if (mode === 'guide' || mode === 'labs') {
+    if (mode === 'guide' || mode === 'labs' || refuseUnavailableMode(mode)) {
       return false;
     }
 
@@ -1937,6 +1904,9 @@ export default function App() {
   ) {
     if (intent !== 'new-tab') {
       return routeToModeDestination(entry.launch.mode, applyDestination);
+    }
+    if (refuseUnavailableMode(entry.launch.mode)) {
+      return false;
     }
 
     const createWorkspaceKindTab = createWorkspaceKindTabRef.current;
@@ -2740,7 +2710,13 @@ export default function App() {
         data-testid="app-frame"
         style={appFrameStyle}
       >
-        <WorkspaceTabs {...workspaceTabsRuntime} />
+        <WorkspaceTabs {...workspaceTabsRuntime} onOpenNewIntegration={newIntegrationRuntime.open} />
+        {appNotice ? (
+          <div className="app-notice" role="status" data-testid="app-notice">
+            <span>{appNotice}</span>
+            <button type="button" onClick={() => setAppNotice(null)}>Dismiss</button>
+          </div>
+        ) : null}
         <ActiveSurfaceHost
           newIntegrationRuntime={newIntegrationRuntime} newEquationRuntime={newEquationRuntime} activeInstance={workspaceInstancesRuntime.activeInstance}
           guide={{
@@ -2852,7 +2828,7 @@ export default function App() {
           geometryMenuFooterText={geometryMenuFooterText}
           geometryRouteMeta={geometryRouteMeta}
           geometryScreen={geometryScreen}
-          getAlgebraTransformLabel={getEquationAlgebraActionLabel}
+          getAlgebraTransformLabel={getAlgebraTransformLabel}
           getPeriodicStopReasonText={getPeriodicStopReasonText}
           guideArticle={guideArticle}
           guideModeRef={guideModeRef}
@@ -3241,12 +3217,6 @@ export default function App() {
                 onSetGuideQuery={setGuideQuery}
                 onLaunchGuideExample={launchGuideExample}
                 onCopyGuideExample={(example) => void copyText(copyableGuideExampleLatex(example), 'Example copied', 'guide')}
-              />
-            ) : null}
-
-            {!isLauncherOpen && currentMode === 'equation' ? (
-              <EquationWorkspace
-                {...equationWorkspaceProps}
               />
             ) : null}
 

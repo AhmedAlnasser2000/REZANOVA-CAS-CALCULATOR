@@ -18,6 +18,7 @@ import {
   persistVariableMemory,
 } from './tauri';
 import { historyResultDocument } from '../../test-utils/history-result-document';
+import { HISTORY_RETIREMENT_WIPE_KEY } from './history-retirement-wipe';
 import {
   canonicalResultDocumentV2Fixture,
   standardV2MathValue,
@@ -226,9 +227,34 @@ describe('web-preview app-state persistence', () => {
 
   beforeEach(() => {
     storage = new MemoryStorage();
+    // These tests cover ordinary loading; the one-time retirement wipe has its own tests.
+    storage.setItem(HISTORY_RETIREMENT_WIPE_KEY, 'done');
     vi.stubGlobal('window', {
       localStorage: storage,
     });
+  });
+
+  it('clears all stored History once when Equation is upgraded, then loads normally', async () => {
+    storage.removeItem(HISTORY_RETIREMENT_WIPE_KEY);
+    storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      history: [{ id: 'old', future: true }, { id: 'older' }],
+      variableMemory: [],
+      calculatorMemory: null,
+    }));
+
+    await expect(loadHistoryEntriesWithCleanup()).resolves.toMatchObject({ entries: [], retirementWipedCount: 2 });
+    const stored = JSON.parse(storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}') as { history: unknown[] };
+    expect(stored.history).toEqual([]);
+    expect(storage.getItem(HISTORY_RETIREMENT_WIPE_KEY)).toBe('done');
+    const again = await loadHistoryEntriesWithCleanup();
+    expect(again.retirementWipedCount).toBeUndefined();
+  });
+
+  it('does not report the retirement wipe when there was no History to clear', async () => {
+    storage.removeItem(HISTORY_RETIREMENT_WIPE_KEY);
+    await expect(loadHistoryEntriesWithCleanup()).resolves.toMatchObject({ entries: [], retirementWipedCount: 0 });
   });
 
   it('persists and clears current results as supported history rather than opaque future data', async () => {

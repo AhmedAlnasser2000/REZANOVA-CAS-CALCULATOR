@@ -1,11 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
-import { LEGACY_EQUATION_E2E_TESTS, LEGACY_EQUATION_ENABLED } from './tools/legacy-equation-tests.mjs';
+import { RETIRED_BROWSER_SPECS } from './tools/retired-workspace-tests.mjs';
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
-  // Old Equation engine specs are inert unless CALCWIZ_LEGACY_EQUATION=1 (npm run test:legacy-equation:e2e).
-  testIgnore: LEGACY_EQUATION_ENABLED ? [] : LEGACY_EQUATION_E2E_TESTS.map(p => p.replace(/^e2e\//, '**/')),
+  // Specs of retired workspaces stay on disk but do not run (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+  testIgnore: RETIRED_BROWSER_SPECS.map((spec) => `**/${spec}`),
   fullyParallel: false,
   workers: 1,
   retries: 0,

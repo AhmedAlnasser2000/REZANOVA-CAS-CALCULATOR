@@ -1,4 +1,5 @@
 import { canOpenLauncherEntryInNewTab } from '../../lib/navigation/launcher';
+import { isLauncherEntryAvailable } from '../../lib/workspaces/availability';
 import type {
   CalculateScreen,
   CalculusScreen,
@@ -91,6 +92,8 @@ export function launchWorkspaceEntryFromLauncher(
 ) {
   if (entry.launch.mode === 'calculus' && entry.launch.workspace === 'new-integration') {deps.openNewIntegration?.(); return;}
   if (entry.launch.mode === 'equation' && entry.launch.workspace === 'new-equation') { deps.openNewEquation?.(); return; }
+  // Calculator-shell workspaces are unavailable until they are rebuilt (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+  if (!isLauncherEntryAvailable(entry)) return;
   if (entry.launch.mode === 'calculate') {
     const screen = entry.launch.calculateScreen ?? 'standard';
     openLauncherDestination(entry, intent, deps, () =>

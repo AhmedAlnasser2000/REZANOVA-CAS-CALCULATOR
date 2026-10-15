@@ -5,7 +5,6 @@ import { canonicalMathValue } from '../../lib/result-contract';
 import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
-import { getEquationAlgebraActionLabel } from '../../lib/modes/equation';
 
 async function waitForDisplayQueueToSettle() {
   await waitFor(() => {
@@ -14,39 +13,6 @@ async function waitForDisplayQueueToSettle() {
 }
 
 describe('DisplayPanel result shell', () => {
-  it('renders Equation algebra tray actions supplied by the runtime', () => {
-    const runEquationAlgebraTransformAction = vi.fn();
-
-    render(
-      <DisplayPanel
-        activeAlgebraTransforms={['combineFractions', 'useStoredValues']}
-        activeResultCopyText={() => ''}
-        activeResultEditorLatex={() => ''}
-        copyText={() => undefined}
-        currentMode="equation"
-        displayHeaderLabel="Equation"
-        displayResultBadges={[]}
-        getAlgebraTransformLabel={getEquationAlgebraActionLabel}
-        getPeriodicStopReasonText={(reason: string) => reason}
-        hydrated
-        runEquationAlgebraTransformAction={runEquationAlgebraTransformAction}
-        settings={DEFAULT_SETTINGS}
-        shouldShowEquationAlgebraTray
-        symbolicDisplayPrefs={DEFAULT_SETTINGS}
-      />,
-    );
-
-    const action = screen.getByTestId('algebra-transform-combineFractions');
-    expect(action).toHaveTextContent('Combine Fractions');
-    expect(screen.getByTestId('algebra-transform-useStoredValues')).toHaveTextContent('Use Stored Values');
-
-    fireEvent.click(action);
-    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('combineFractions');
-
-    fireEvent.click(screen.getByTestId('algebra-transform-useStoredValues'));
-    expect(runEquationAlgebraTransformAction).toHaveBeenCalledWith('useStoredValues');
-  });
-
   it('keeps Stop available for active runtime work even when editor analysis is paused', () => {
     const onStopEditorAnalysis = vi.fn();
 

@@ -62,13 +62,24 @@ export function ensureNewIntegrationLauncherEntry(categories: LauncherCategory[]
   return current ? categories.map(c => c.id === 'calculus' ? {...c, entries: [...c.entries, entry]} : c) : [...categories, standard];
 }
 
-/** The same for New Equation (Core, after Equation and Table). */
+/**
+ * The same for Equation (the New Equation page, Core, right after Calculate). The old Equation workspace was retired
+ * (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B), so any catalog's old `equation` leaf is dropped and the page takes its
+ * name and place, whatever an older desktop catalog says.
+ */
 export function ensureNewEquationLauncherEntry(categories: LauncherCategory[]): LauncherCategory[] {
-  const current = categories.find(c => c.id === 'core');
-  if (current?.entries.some(e => e.id === 'new-equation')) return categories;
   const standard = DEFAULT_LAUNCHER_CATEGORIES.find(c => c.id === 'core')!;
   const entry = standard.entries.find(e => e.id === 'new-equation')!;
-  return current ? categories.map(c => (c.id === 'core' ? { ...c, entries: [...c.entries, entry] } : c)) : [standard, ...categories];
+  const current = categories.find(c => c.id === 'core');
+  const hasRetiredEquation = categories.some(c => c.entries.some(e => e.id === 'equation'));
+  if (!hasRetiredEquation && current?.entries.some(e => e.id === 'new-equation')) return categories;
+  if (!current) return [standard, ...categories.map(c => ({ ...c, entries: c.entries.filter(e => e.id !== 'equation') }))];
+  return categories.map((c) => {
+    const kept = c.entries.filter(e => e.id !== 'equation' && e.id !== 'new-equation');
+    if (c.id !== 'core') return kept.length === c.entries.length ? c : { ...c, entries: kept };
+    const calculate = kept.findIndex(e => e.id === 'calculate');
+    return { ...c, entries: [...kept.slice(0, calculate + 1), entry, ...kept.slice(calculate + 1)] };
+  });
 }
 
 function categoryForLeafId(id: LauncherLeafId): LauncherCategoryId {

@@ -4,7 +4,6 @@ import type {
   RuntimeAdvisories,
   RuntimeStopReason,
 } from '../../types/calculator';
-import { UNSUPPORTED_FAMILY_ERROR } from '../equation/guarded/outcome';
 
 function advisories(
   stopReason?: RuntimeStopReason,
@@ -43,8 +42,7 @@ function deriveEquationNumericSolveAdvisory(
 
 function isUnsupportedFamilyMessage(error: string) {
   return (
-    error === UNSUPPORTED_FAMILY_ERROR
-    || error.includes('outside the supported exact symbolic solve families')
+    error.includes('outside the supported exact symbolic solve families')
     || error.includes('outside the supported symbolic solve families')
     || error.includes('outside the current exact bounded solve set')
     || error.includes('not supported by the shared runtime host')
@@ -83,27 +81,4 @@ export function classifyCalculateRuntimeAdvisories(options: {
       : undefined;
 
   return advisories(stopReason);
-}
-
-export function classifyEquationRuntimeAdvisories(options: {
-  invalidRequest?: boolean;
-  outcome?: ResultProducerDraft;
-}): RuntimeAdvisories | undefined {
-  const { invalidRequest = false, outcome } = options;
-
-  const stopReason: RuntimeStopReason | undefined = invalidRequest
-    ? { kind: 'invalid-request', source: 'host' }
-    : outcome && outcome.kind !== 'prompt' && (outcome.solveBadges ?? []).includes('Range Guard')
-      ? { kind: 'range-guard', source: 'stage' }
-      : outcome?.kind === 'error' && isUnsupportedFamilyMessage(outcome.error)
-        ? {
-            kind: 'unsupported-family',
-            source: outcome.error === UNSUPPORTED_FAMILY_ERROR ? 'stage' : 'host',
-          }
-        : undefined;
-
-  return advisories(
-    stopReason,
-    deriveEquationNumericSolveAdvisory(outcome, stopReason),
-  );
 }

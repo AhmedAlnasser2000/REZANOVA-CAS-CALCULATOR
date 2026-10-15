@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createComplexNumericEvaluator } from '../../../equation/complex-domain-public';
+import { createComplexNumericEvaluator } from '../../../symbolic-engine/equation/numeric/complex-sampling';
 import type { GraphExpressionIR } from '../../contracts';
 import { compileGraphExpression, createGraphExpressionEvaluator } from '../../evaluator';
 import { compileGraphComplexPlan } from '../../evaluator/complex-plan';

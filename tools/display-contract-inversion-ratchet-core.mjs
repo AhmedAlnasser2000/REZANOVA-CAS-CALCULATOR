@@ -20,6 +20,7 @@ import {
   PRODUCER_DRAFT_OWNER_MATCHERS,
   PRODUCER_INPUT_REGISTRATIONS,
   REFERENCE_OUTCOME_MATCHERS,
+  RETIRED_NATIVE_DOCUMENT_LANES,
 } from './display-contract-inversion-registry.mjs';
 
 export const DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION = 2;
@@ -401,6 +402,7 @@ function validateRegistry(displayType, checker) {
 function registryDigest() {
   return stableHash(JSON.stringify({
     lanes: DISPLAY_CONTRACT_LANES,
+    retiredNativeDocumentLanes: RETIRED_NATIVE_DOCUMENT_LANES,
     canonicalProjections: CANONICAL_PROJECTION_REGISTRATIONS,
     canonicalConsumerCallNames: [...CANONICAL_CONSUMER_CALL_NAMES].sort(),
     controlOutcomeRegistrations: CONTROL_OUTCOME_REGISTRATIONS,
@@ -891,7 +893,7 @@ export function validateDisplayContractInversionReport(report, baseline) {
     if (counts['legacy-read'] > floor.legacyRead) {
       errors.push(`Lane ${lane} legacy read debt ${counts['legacy-read']} exceeds ${floor.legacyRead}.`);
     }
-    if (counts['native-document'] < floor.nativeDocument) {
+    if (counts['native-document'] < floor.nativeDocument && !Object.hasOwn(RETIRED_NATIVE_DOCUMENT_LANES, lane)) {
       errors.push(`Lane ${lane} native document coverage ${counts['native-document']} is below ${floor.nativeDocument}.`);
     }
   }
@@ -925,7 +927,7 @@ export function assertDisplayContractInversionBaselineUpdateAllowed(report, prev
     if (current['legacy-read'] > previous.legacyRead) {
       throw new Error(`Display contract lane ${lane} legacy read debt cannot rise from ${previous.legacyRead} to ${current['legacy-read']}`);
     }
-    if (current['native-document'] < previous.nativeDocument) {
+    if (current['native-document'] < previous.nativeDocument && !Object.hasOwn(RETIRED_NATIVE_DOCUMENT_LANES, lane)) {
       throw new Error(`Display contract lane ${lane} native document coverage cannot fall from ${previous.nativeDocument} to ${current['native-document']}`);
     }
   }

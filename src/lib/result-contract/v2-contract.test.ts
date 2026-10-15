@@ -334,9 +334,9 @@ describe('Canonical Result V2 contract', () => {
     });
   });
 
-  it('keeps the frozen 57-route inventory while enabling the reviewed V2 producer gates', () => {
+  it('keeps the frozen 48-route inventory (57 less the 9 retired equation routes) while enabling the reviewed V2 producer gates', () => {
     const routeIds = Object.keys(MATHJSON_ROUTE_REGISTRY).sort();
-    expect(FROZEN_V1_PRODUCER_ROUTE_IDS).toHaveLength(57);
+    expect(FROZEN_V1_PRODUCER_ROUTE_IDS).toHaveLength(48);
     expect(routeIds.filter((routeId) =>
       (FROZEN_V1_PRODUCER_ROUTE_IDS as readonly string[]).includes(routeId)))
       .toEqual([...FROZEN_V1_PRODUCER_ROUTE_IDS].sort());
@@ -371,12 +371,6 @@ describe('Canonical Result V2 contract', () => {
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
       'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error', 'newIntegration:standard', 'newIntegration:error'],
-      'equation.linear': ['nativeSystem'],
-      'equation.polynomial': ['directPolynomialSystem'],
-      'equation.domain-boundary': ['typedLabeledSupplement', 'directLocus'],
-      'equation.rational-radical': ['typedLabeledSupplement'],
-      'equation.trig-exp-log': ['typedLabeledSupplement'],
-      'trigonometry.equation': ['equationSolve'],
       'trigonometry.right-triangle': ['rightTriangle'],
     });
     expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({
@@ -420,18 +414,6 @@ describe('Canonical Result V2 contract', () => {
               'newIntegration:standard': 2,
               'newIntegration:error': 2,
             }
-        : routeId === 'equation.domain-boundary'
-          ? { typedLabeledSupplement: 2, directLocus: 2 }
-          : routeId === 'equation.linear'
-          ? { nativeSystem: 2 }
-          : routeId === 'equation.polynomial'
-            ? { directPolynomialSystem: 2 }
-        : routeId === 'equation.rational-radical'
-            ? { typedLabeledSupplement: 2 }
-        : routeId === 'equation.trig-exp-log'
-          ? { typedLabeledSupplement: 2 }
-        : routeId === 'trigonometry.equation'
-          ? { equationSolve: 2 }
         : routeId === 'trigonometry.right-triangle'
           ? { rightTriangle: 2 }
         : routeId === 'vector.angle'
@@ -446,14 +428,6 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'calculus.derivatives',
       selector: 'derivativePoint',
-    })).toBe(2);
-    expect(canonicalResultVersionForProducer({
-      routeId: 'equation.rational-radical',
-      selector: 'typedLabeledSupplement',
-    })).toBe(2);
-    expect(canonicalResultVersionForProducer({
-      routeId: 'equation.trig-exp-log',
-      selector: 'typedLabeledSupplement',
     })).toBe(2);
     expect(canonicalResultVersionForProducer({
       routeId: 'trigonometry.right-triangle',

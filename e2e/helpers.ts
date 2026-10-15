@@ -57,8 +57,24 @@ export async function closeSidePanelIfOpen(page: Page) {
   }
 }
 
+/**
+ * Launcher entries that still open (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B). They are reached from the tab strip's
+ * "+" menu, because every open surface is a page and pages have no MENU key.
+ */
+const OPEN_LAUNCHER_ENTRIES: Record<string, string> = {
+  Equation: 'New Equation tab',
+  'New Equation': 'New Equation tab',
+  'New Integration': 'New Integration',
+};
+
 export async function openLauncherApp(page: Page, categoryLabel: string, appLabel: string) {
   await closeSidePanelIfOpen(page);
+  const tabMenuItem = OPEN_LAUNCHER_ENTRIES[appLabel];
+  if (tabMenuItem && !(await page.getByTestId('keypad-menu').isVisible())) {
+    await page.getByTestId('workspace-tab-add-menu').click();
+    await page.getByTestId('workspace-tab-create-menu').getByRole('menuitem', { name: tabMenuItem, exact: true }).click();
+    return;
+  }
   await page.getByTestId('keypad-menu').click();
   await clickVisibleLauncherEntryByTitle(page, categoryLabel);
   await clickVisibleLauncherEntryByTitle(page, appLabel);
@@ -188,6 +204,31 @@ export async function openStatisticsRegression(page: Page) {
   await page.getByRole('radio', { name: 'Regression' }).click();
   await page.getByRole('radio', { name: 'Expression' }).click();
   await expect(page.getByTestId('main-editor')).toBeVisible();
+}
+
+/** Opens a singleton page (Settings, History, Guide, …) from the tab strip's "+" menu, which every surface has. */
+export async function openPageFromTabMenu(page: Page, item: string) {
+  await page.getByTestId('workspace-tab-add-menu').click();
+  await page.getByTestId('workspace-tab-create-menu').getByRole('menuitem', { name: item, exact: true }).click();
+}
+
+/** Sets the angle unit and output style on the Settings page, then returns to the tab that was active. */
+export async function applySettingsOnSettingsPage(
+  page: Page,
+  settings: { angleUnit: 'deg' | 'rad' | 'grad'; outputStyle: 'exact' | 'decimal' | 'both' },
+) {
+  const returnKind = await page.locator('.workspace-tab.is-active').getAttribute('data-workspace-kind');
+  await openPageFromTabMenu(page, 'Open Settings Page');
+  const settingsPage = page.getByTestId('settings-page');
+  await settingsPage.getByTestId('settings-category-general').click();
+  await settingsPage.getByTestId('settings-active-category')
+    .getByRole('button', { name: settings.outputStyle.toUpperCase(), exact: true }).first().click();
+  await settingsPage.getByTestId('settings-category-math').click();
+  await settingsPage.getByTestId('settings-active-category')
+    .getByRole('button', { name: settings.angleUnit.toUpperCase(), exact: true }).first().click();
+  await expect(settingsPage.getByTestId('settings-impact-angle')).toContainText(settings.angleUnit.toUpperCase());
+  await expect(settingsPage.getByTestId('settings-impact-output')).toContainText(settings.outputStyle.toUpperCase());
+  await page.locator(`.workspace-tab[data-workspace-kind="${returnKind}"]`).first().getByRole('tab').click();
 }
 
 export async function openSettingsPanel(page: Page) {

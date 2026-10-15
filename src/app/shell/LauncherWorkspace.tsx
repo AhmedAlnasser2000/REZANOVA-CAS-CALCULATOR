@@ -5,6 +5,7 @@ import {
 } from 'react';
 import { useLanguage } from '../../lib/language/language-context';
 import { canOpenLauncherEntryInNewTab } from '../../lib/navigation/launcher';
+import { isLauncherEntryAvailable, UNAVAILABLE_WORKSPACE_SIGN } from '../../lib/workspaces/availability';
 import type {
   LauncherAppEntry,
   LauncherCategory,
@@ -80,16 +81,18 @@ function LauncherWorkspace({
             ? index === launcherState.rootSelectedIndex
             : index === launcherState.categorySelectedIndex;
           const launcherAppEntry = isRootLevel ? null : entry as LauncherAppEntry;
+          const isUnavailable = launcherAppEntry ? !isLauncherEntryAvailable(launcherAppEntry) : false;
           const canOpenInNewTab =
-            launcherAppEntry ? canOpenLauncherEntryInNewTab(launcherAppEntry) : false;
+            launcherAppEntry && !isUnavailable ? canOpenLauncherEntryInNewTab(launcherAppEntry) : false;
 
           return (
             <div
               key={entry.id}
-              className={`launcher-entry-row ${isSelected ? 'is-selected' : ''}`}
+              className={`launcher-entry-row ${isSelected ? 'is-selected' : ''} ${isUnavailable ? 'is-unavailable' : ''}`}
               data-testid={isRootLevel ? 'launcher-category-row' : 'launcher-app-row'}
+              data-unavailable={isUnavailable ? 'true' : undefined}
               onContextMenu={(event) => {
-                if (launcherAppEntry) {
+                if (launcherAppEntry && !isUnavailable) {
                   openEntryActions(event, launcherAppEntry, index);
                 }
               }}
@@ -98,6 +101,9 @@ function LauncherWorkspace({
               <button
                 type="button"
                 className={`launcher-entry ${isSelected ? 'is-selected' : ''}`}
+                disabled={isUnavailable}
+                aria-disabled={isUnavailable || undefined}
+                title={isUnavailable ? UNAVAILABLE_WORKSPACE_SIGN : undefined}
                 onClick={() =>
                   isRootLevel
                     ? onOpenCategory(entry.id as LauncherCategory['id'], activeLauncherLeafId)
@@ -108,6 +114,11 @@ function LauncherWorkspace({
                   <strong>{entry.label}</strong>
                   <small>{entry.description}</small>
                 </span>
+                {isUnavailable ? (
+                  <span className="launcher-entry-unavailable" data-testid="launcher-entry-unavailable">
+                    {UNAVAILABLE_WORKSPACE_SIGN}
+                  </span>
+                ) : null}
               </button>
               {launcherAppEntry && canOpenInNewTab ? (
                 <button

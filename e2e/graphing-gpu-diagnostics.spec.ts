@@ -3,8 +3,9 @@ import { expect, test } from '@playwright/test';
 test.describe('Graph GPU diagnostics @gpu', () => {
   test('Settings reports WebGL2 capabilities for the Graph GPU renderer', async ({ page }, testInfo) => {
     await page.goto('/');
-    await page.getByTestId('settings-toggle').click();
-    await page.getByRole('button', { name: 'Open Full Settings' }).click();
+    // Every open surface is a page; Settings opens from the tab strip's "+" menu.
+    await page.getByTestId('workspace-tab-add-menu').click();
+    await page.getByRole('menuitem', { name: 'Open Settings Page' }).click();
     await page.getByTestId('settings-category-graphing').click();
     const card = page.getByTestId('graphics-diagnostics');
     await card.scrollIntoViewIfNeeded();

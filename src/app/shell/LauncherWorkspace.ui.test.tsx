@@ -64,7 +64,7 @@ function launcherRow(label: string) {
 describe('LauncherWorkspace', () => {
   it('opens a launcher leaf in the current tab from the primary row action', () => {
     const { activeCategory, onLaunchApp } = renderLauncher();
-    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'equation');
+    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'new-equation');
 
     fireEvent.click(screen.getByRole('button', { name: /^\d*\s*Equation/i }));
 
@@ -73,7 +73,7 @@ describe('LauncherWorkspace', () => {
 
   it('opens a launcher leaf in a new tab from the visible row action', () => {
     const { activeCategory, onLaunchApp } = renderLauncher();
-    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'equation');
+    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'new-equation');
 
     const newTabAction = within(launcherRow('Equation')).getByLabelText('Open in new tab');
     expect(newTabAction).toHaveAttribute('title', 'Open Equation in new tab');
@@ -85,7 +85,7 @@ describe('LauncherWorkspace', () => {
 
   it('exposes open-here and new-tab actions from a leaf context menu', () => {
     const { activeCategory, onLaunchApp } = renderLauncher();
-    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'equation');
+    const equationEntry = activeCategory.entries.find((entry) => entry.id === 'new-equation');
 
     fireEvent.contextMenu(launcherRow('Equation'));
 
@@ -107,7 +107,22 @@ describe('LauncherWorkspace', () => {
     expect(screen.queryByTestId('launcher-entry-menu')).not.toBeInTheDocument();
   });
 
-  it('does not expose a new-tab action for Labs launcher entries', () => {
+  it('shows workspaces being rebuilt as signed, disabled rows without actions', () => {
+    const { onLaunchApp } = renderLauncher();
+    const row = launcherRow('Calculate');
+
+    expect(row).toHaveAttribute('data-unavailable', 'true');
+    expect(within(row).getByTestId('launcher-entry-unavailable')).toHaveTextContent('Unavailable: being rebuilt');
+    expect(within(row).getByRole('button', { name: /Calculate/i })).toBeDisabled();
+    expect(within(row).queryByLabelText('Open in new tab')).not.toBeInTheDocument();
+
+    fireEvent.click(within(row).getByRole('button', { name: /Calculate/i }));
+    fireEvent.contextMenu(row);
+    expect(onLaunchApp).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('launcher-entry-menu')).not.toBeInTheDocument();
+  });
+
+  it('keeps Labs launcher entries signed as being rebuilt', () => {
     const categories = createLauncherCategories({ labsEnabled: true });
     const labsCategory = categories.find((category) => category.id === 'labs');
     if (!labsCategory) {
@@ -118,11 +133,10 @@ describe('LauncherWorkspace', () => {
       categories,
     });
 
+    expect(launcherRow('Labs')).toHaveAttribute('data-unavailable', 'true');
     expect(within(launcherRow('Labs')).queryByLabelText('Open in new tab')).not.toBeInTheDocument();
 
     fireEvent.contextMenu(launcherRow('Labs'));
-    const menu = screen.getByTestId('launcher-entry-menu');
-    expect(within(menu).getByRole('menuitem', { name: 'Open Here' })).toBeInTheDocument();
-    expect(within(menu).queryByRole('menuitem', { name: 'Open in New Tab' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('launcher-entry-menu')).not.toBeInTheDocument();
   });
 });

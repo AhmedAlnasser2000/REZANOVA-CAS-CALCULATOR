@@ -24,7 +24,7 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
 describe('useWorkspaceInstancesRuntime', () => {
   it('loads the Graph runtime chunk only after a Graph instance becomes active', async () => {
     resetGraphWorkspaceModuleLoaderForTest();
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
     expect(getGraphWorkspaceModuleLoadState()).toBe('idle');
 
     act(() => {
@@ -42,7 +42,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('starts with a single active Calculate instance', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     expect(hook.result.current.activeInstance).toMatchObject({
       id: 'calculate.1',
@@ -53,7 +53,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('syncs external singleton mode changes into the shadow instance model', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     act(() => {
       hook.result.current.syncSingletonMode('equation');
@@ -80,7 +80,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('retargets the active instance without focusing another matching tab', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     act(() => {
       hook.result.current.createBlankInstance('calculate');
@@ -103,7 +103,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('activates the latest matching workspace kind for existing mode switches', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     act(() => {
       hook.result.current.createBlankInstance('equation');
@@ -119,7 +119,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('exposes active runtime context and open-instance checks', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     act(() => {
       hook.result.current.createBlankInstance('equation');
@@ -143,7 +143,7 @@ describe('useWorkspaceInstancesRuntime', () => {
 
   it('keeps stable runtime getters fresh after focus and retarget changes', () => {
     const hook = renderHook(() => {
-      const runtime = useWorkspaceInstancesRuntime(createDeterministicOptions());
+      const runtime = useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' });
       const getters = useWorkspaceRuntimeContextGetters(runtime);
       return { getters, runtime };
     });
@@ -182,7 +182,7 @@ describe('useWorkspaceInstancesRuntime', () => {
   });
 
   it('supports rename, duplicate, close, and final-tab fallback operations', () => {
-    const hook = renderHook(() => useWorkspaceInstancesRuntime(createDeterministicOptions()));
+    const hook = renderHook(() => useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' }));
 
     act(() => {
       hook.result.current.renameInstance('calculate.1', '  Scratch  ');
@@ -199,10 +199,11 @@ describe('useWorkspaceInstancesRuntime', () => {
       hook.result.current.closeInstance('calculate.2');
     });
 
+    // Closing the last tab leaves a blank Equation tab, the starting workspace.
     expect(hook.result.current.activeInstance).toMatchObject({
-      id: 'calculate.1',
-      workspaceKind: 'calculate',
-      title: 'Calculate',
+      id: 'new-equation.1',
+      workspaceKind: 'new-equation',
+      title: 'Equation',
     });
     expect(hook.result.current.workspaceInstances).toHaveLength(1);
   });

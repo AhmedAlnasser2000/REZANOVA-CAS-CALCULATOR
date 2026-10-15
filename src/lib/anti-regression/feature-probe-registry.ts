@@ -25,25 +25,27 @@ export const EXECUTABLE_FEATURE_PROBES = {
     testFile: 'src/lib/engine/math-engine/numeric-evaluation.test.ts',
     testName: 'keeps exact inverse-trig special values',
   },
-  'output-style-native': {
-    kind: 'native',
-    testFile: 'src/lib/equation/equation-complex.test.ts',
-    testName: 'respects output style for bounded complex branches',
+  // The old Equation engine's native probes were retired with it (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B); these
+  // settings are now probed where a kept workspace or the History replay still reads them.
+  'output-style-component': {
+    kind: 'component',
+    testFile: 'src/app/runtime/useNewEquationRuntime.ui.test.tsx',
+    testName: 'starts from the settings style, keeps tabs independent and restores drafts without answers',
   },
-  'equation-answer-mode-native': {
-    kind: 'native',
-    testFile: 'src/lib/modes/equation/answer-modes.test.ts',
-    testName: 'keeps exact symbolic parameters exact and asks for missing values only on numeric routes',
+  'equation-answer-mode-persistence': {
+    kind: 'persistence',
+    testFile: 'src/lib/history-replay/replay-snapshot.test.ts',
+    testName: 'copies only deterministic launch-time settings and Ans',
   },
-  'equation-domain-native': {
-    kind: 'native',
-    testFile: 'src/lib/modes/equation/complex-domain.test.ts',
-    testName: 'keeps simple real linear equations stable when Complex intent is enabled',
+  'equation-domain-component': {
+    kind: 'component',
+    testFile: 'src/app/shell/ModeStrip.ui.test.tsx',
+    testName: 'renders language-backed utility labels and keeps callbacks wired',
   },
-  'complex-exact-form-native': {
-    kind: 'native',
-    testFile: 'src/lib/equation/equation-complex.test.ts',
-    testName: 'uses the selected exact form for awkward exact imaginary-unit power branches',
+  'complex-exact-form-component': {
+    kind: 'component',
+    testFile: 'src/components/SettingsPanel.ui.test.tsx',
+    testName: 'offers complex exact branch display forms',
   },
   'math-notation-native': {
     kind: 'native',
@@ -135,19 +137,19 @@ export const FEATURE_PROBE_REGISTRY = {
   },
   outputStyle: {
     policyClass: 'semantic-runtime',
-    probes: ['output-style-native'],
+    probes: ['output-style-component'],
   },
   equationAnswerMode: {
     policyClass: 'semantic-runtime',
-    probes: ['equation-answer-mode-native'],
+    probes: ['equation-answer-mode-persistence'],
   },
   equationDomainIntent: {
     policyClass: 'semantic-runtime',
-    probes: ['equation-domain-native'],
+    probes: ['equation-domain-component'],
   },
   complexExactForm: {
     policyClass: 'formatting',
-    probes: ['complex-exact-form-native'],
+    probes: ['complex-exact-form-component'],
   },
   mathNotationDisplay: {
     policyClass: 'formatting',

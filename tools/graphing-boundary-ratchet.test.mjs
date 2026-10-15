@@ -65,10 +65,10 @@ describe('Graphing boundary ratchet', () => {
 
   it('allows only the reviewed domain-neutral complex seam', () => {
     const publicRoot = rootWith('src/lib/graphing/sampling/complex.ts',
-      "import { evaluate } from '../../equation/complex-domain-public';\n");
+      "import { evaluate } from '../../symbolic-engine/equation/numeric/complex-sampling';\n");
     assert.doesNotThrow(() => validateGraphingBoundaries({ rootDir: publicRoot }));
     const privateRoot = rootWith('src/lib/graphing/sampling/complex.ts',
-      "import { evaluate } from '../../equation/complex/numeric-evaluator';\n");
+      "import { evaluate } from '../../symbolic-engine/equation/numeric/complex-sampling/numeric-evaluator';\n");
     assert.throws(() => validateGraphingBoundaries({ rootDir: privateRoot }), /imports private solver ownership/u);
   });
 

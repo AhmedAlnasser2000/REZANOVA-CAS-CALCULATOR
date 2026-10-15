@@ -2,21 +2,18 @@ import type { DisplayDetailSection, ExactScalarWire, MatrixResponse } from '../.
 import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   addExactScalars,
-  exactScalarToNumber,
   multiplyExactScalars,
   negateExactScalar,
-  normalizeExactScalar,
   subtractExactScalars,
   buildExactScalarNode,
 } from '../algebra/polynomial-core';
-import { solveEquationExactQuadraticBoundary } from '../equation/exact-polynomial-boundary';
-import { rrefExactMatrix, scalar, type ExactMatrix, type ExactVector } from './exact-matrix-core';
+import { RETIRED_ENGINE_MESSAGE } from '../kernel/retired-engine';
+import { scalar, type ExactMatrix, type ExactVector } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
   exactMatrixToLatex,
   exactScalarToLatex,
-  exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import { LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
@@ -59,7 +56,6 @@ export type MatrixEigenAnalysisResult =
   | { kind: 'success'; analysis: MatrixEigenAnalysis }
   | { kind: 'stop'; response: MatrixResponse };
 
-const ZERO = scalar(0);
 const ONE = scalar(1);
 const EIGENVALUE_METHOD_TITLE = 'How Eigenvalues Were Found';
 
@@ -80,29 +76,6 @@ function matrixEigenStop(
 
 function exactInputMatrix(input: MatrixEigenInput): ExactMatrix | null {
   return exactMatrixFromWire(input.exactMatrix) ?? exactMatrixFromNumeric(input.matrix);
-}
-
-function basisLatex(basis: ExactVector[]) {
-  if (basis.length === 0) {
-    return '\\{0\\}';
-  }
-
-  return `\\operatorname{span}\\left\\{${basis.map(exactVectorToColumnLatex).join(',')}\\right\\}`;
-}
-
-function nullSpaceBasis(rref: ExactMatrix, pivotColumns: number[], unknowns: number) {
-  const pivotSet = new Set(pivotColumns);
-  const freeColumns = Array.from({ length: unknowns }, (_, index) => index)
-    .filter((column) => !pivotSet.has(column));
-
-  return freeColumns.map((freeColumn) => {
-    const vector = Array.from({ length: unknowns }, () => ZERO);
-    vector[freeColumn] = ONE;
-    pivotColumns.forEach((pivotColumn, pivotRow) => {
-      vector[pivotColumn] = negateExactScalar(rref[pivotRow][freeColumn]);
-    });
-    return vector;
-  });
 }
 
 function characteristicData(matrix: ExactMatrix) {
@@ -150,14 +123,6 @@ function characteristicEvidence(
       kind: 'math' as const,
       value: canonicalLeafEvidence(equationLatex, characteristicEquationMathJson(characteristic), 'matrix.eigen.native-characteristic-polynomial'),
     },
-  ];
-}
-
-function shiftedMatrix(matrix: ExactMatrix, eigenvalue: ExactScalar): ExactMatrix {
-  const [[a, b], [c, d]] = matrix;
-  return [
-    [subtractExactScalars(a, eigenvalue), b],
-    [c, subtractExactScalars(d, eigenvalue)],
   ];
 }
 
@@ -263,85 +228,8 @@ export function analyzeMatrixEigen2x2(input: MatrixEigenInput): MatrixEigenAnaly
     };
   }
 
-  const characteristic = characteristicData(exactMatrix);
-  const solved = solveEquationExactQuadraticBoundary({
-    variable: '\\lambda',
-    coefficients: characteristic.coefficients,
-    source: 'matrix-eigen-2x2',
-  });
-
-  if (solved.kind === 'unsupported') {
-    const response = matrixEigenStop(
-      solved.reason === 'complex-roots'
-        ? 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.'
-        : 'Irrational eigenvalue vector readback is deferred for Matrix V1.',
-      {
-        detailSections: characteristicDetails({
-          label: input.label,
-          trace: characteristic.trace,
-          determinant: characteristic.determinant,
-          equationLatex: solved.equationLatex,
-          boundaryLine: solved.message,
-        }),
-        handoffEquationLatex: solved.equationLatex,
-      },
-    );
-    const equationEvidence = canonicalLeafEvidence(
-      solved.equationLatex,
-      characteristicEquationMathJson(characteristic),
-      'matrix.eigen.native-characteristic-polynomial-action',
-    );
-    attachLinearAlgebraCanonicalEvidence(response, {
-      details: characteristicEvidence(input.label, exactMatrix, characteristic, solved.equationLatex),
-      runtimeActions: [equationEvidence],
-    });
-    return {
-      kind: 'stop',
-      response,
-    };
-  }
-
-  const roots = [...solved.roots].sort((left, right) =>
-    exactScalarToNumber(right.value) - exactScalarToNumber(left.value));
-  const analyzedRoots: MatrixEigenAnalysisRoot[] = [];
-
-  for (const root of roots) {
-    const eigenvalue = normalizeExactScalar(root.value);
-    const shifted = shiftedMatrix(exactMatrix, eigenvalue);
-    const reduced = rrefExactMatrix(shifted);
-    if (reduced.kind === 'stop') {
-      return {
-        kind: 'stop',
-        response: matrixEigenStop('Eigen could not compute the eigenspace for this Matrix.'),
-      };
-    }
-
-    const pivotColumns = reduced.pivotColumns.filter((column) => column < 2);
-    const basis = nullSpaceBasis(reduced.matrix, pivotColumns, 2);
-    const eigenvalueLatex = exactScalarToLatex(eigenvalue);
-    const spaceLatex = basisLatex(basis);
-    analyzedRoots.push({
-      eigenvalue,
-      eigenvalueLatex,
-      rootLatex: root.latex,
-      multiplicity: root.multiplicity,
-      shifted,
-      basis,
-      spaceLatex,
-    });
-  }
-
-  return {
-    kind: 'success',
-    analysis: {
-      label: input.label,
-      exactMatrix,
-      trace: characteristic.trace,
-      determinant: characteristic.determinant,
-      equationLatex: solved.equationLatex,
-      roots: analyzedRoots,
-    },
-  };
+  // Eigenvalues came from the old Equation engine's polynomial boundary (retired); Matrix is unavailable until rebuilt.
+  return { kind: 'stop', response: matrixEigenStop(RETIRED_ENGINE_MESSAGE) };
 }
 
 export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {

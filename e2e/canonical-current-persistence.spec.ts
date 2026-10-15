@@ -27,9 +27,11 @@ test('focused migration cleans incompatible results and preserves independent wo
     localStorage.setItem('rezanova.new-equation.drafts.v1', JSON.stringify([{title: 'Preserved equation',
       draft: {rows: ['x^2=2'], targets: null, domain: 'real', style: 'exact', limits: equationLimits}}]));
     localStorage.setItem('unrelated-document', 'untouched');
+    // The one-time History wipe of EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B already ran in this profile.
+    localStorage.setItem('rezanova.history-wipe.equation-retirement.v1', 'done');
   }, {settings: DEFAULT_SETTINGS, integrationLimits: DEFAULT_INTEGRATION_LIMITS, equationLimits: DEFAULT_EQUATION_LIMITS});
   await page.goto('/');
-  await expect(page.getByTestId('display-status')).toHaveText('1 incompatible History record was removed.');
+  await expect(page.getByTestId('app-notice')).toContainText('1 incompatible History record was removed.');
   await page.screenshot({path: `${directory}/cleanup-notice.png`, fullPage: true});
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('rezanova-classwiz-calculator:app-state:v1') ?? '{}'));
   expect(stored.calculatorMemory.ansLatex).toBe('0');
@@ -44,7 +46,8 @@ test('focused migration cleans incompatible results and preserves independent wo
   await expect(integral.getByRole('button', {name: 'Show compact formula'})).toBeVisible();
   await integral.getByText('Conditions', {exact: true}).click();
   await page.screenshot({path: `${directory}/restored-integral.png`, fullPage: true});
-  await openLauncherApp(page, 'Core', 'New Equation');
+  // Equation is the starting workspace: its saved draft was restored into the first tab.
+  await page.getByRole('tab', {name: /Preserved equation/}).click();
   expect(await getMathFieldLatex(page, 'new-equation-row-1')).toContain('x^2');
   await expect(page.getByTestId('new-equation-answer')).toHaveCount(0);
   await page.getByTestId('new-equation-page').getByRole('button', {name: 'Solve', exact: true}).click();
@@ -52,5 +55,6 @@ test('focused migration cleans incompatible results and preserves independent wo
   await page.screenshot({path: `${directory}/restored-equation.png`, fullPage: true});
   expect(await page.evaluate(() => localStorage.getItem('unrelated-document'))).toBe('untouched');
   await page.reload();
-  await expect(page.getByTestId('display-status')).not.toContainText('incompatible History');
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
+  await expect(page.getByTestId('app-notice')).toHaveCount(0);
 });

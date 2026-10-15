@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
+import { createComplexNumericEvaluator } from '../../symbolic-engine/equation/numeric/complex-sampling';
 import { complex } from '../../numeric/complex';
 import { adaptGraphExpressionMathJson, parseGraphLatexToStructuralMathJson } from '../parser/mathjson';
 import { compileGraphComplexPlan } from './complex-plan';

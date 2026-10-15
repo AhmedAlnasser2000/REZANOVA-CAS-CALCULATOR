@@ -495,7 +495,8 @@
       "expected": {
         "identity": {
           "kind": "success",
-          "title": "Derivative"
+          "title": "Derivative",
+          "resultOrigin": "symbolic-engine"
         },
         "cardinalities": {
           "warnings": 0,
@@ -509,134 +510,6 @@
           "tableRows": 0
         },
         "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=6\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=x\ncanonicalResult.details[0].lines[1][1].math.canonicalLatex=x\ncanonicalResult.details[0].lines[2][0].math.canonicalLatex=D_{1}=2x\ncanonicalResult.details[0].lines[3][1].math.canonicalLatex=x=3\ncanonicalResult.details[0].lines[3][3].math.canonicalLatex=D_{1}=6\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}"
-      }
-    },
-    {
-      "id": "calculus-implicit-circle",
-      "workspace": "calculus",
-      "family": "derivatives",
-      "snapshot": {
-        "version": 1,
-        "ansLatex": "0",
-        "angleUnit": "rad",
-        "outputStyle": "both",
-        "equationAnswerMode": "exact",
-        "equationDomainIntent": "real",
-        "complexExactForm": "rectangular",
-        "mathNotationDisplay": "rendered",
-        "historyInspectorNotationMode": "rendered",
-        "historyPageNotationMode": "latex",
-        "symbolicDisplayMode": "auto",
-        "flattenNestedRootsWhenSafe": true,
-        "approxDigits": 6,
-        "numericNotationMode": "decimal",
-        "scientificNotationStyle": "times10",
-        "detailedFactsEnabled": false
-      },
-      "request": {
-        "screen": "implicitDerivative",
-        "derivative": {
-          "bodyLatex": "x^2",
-          "variable": "x"
-        },
-        "derivativePoint": {
-          "bodyLatex": "x^2",
-          "point": "2",
-          "variable": "x"
-        },
-        "implicitDerivative": {
-          "relationLatex": "x^2+y^2=1",
-          "independentVariable": "x",
-          "dependentVariable": "y"
-        },
-        "indefiniteIntegral": {
-          "bodyLatex": "x"
-        },
-        "definiteIntegral": {
-          "bodyLatex": "x",
-          "lower": "0",
-          "upper": "1"
-        },
-        "improperIntegral": {
-          "bodyLatex": "\\frac{1}{1+x^2}",
-          "lowerKind": "finite",
-          "lower": "0",
-          "upperKind": "posInfinity",
-          "upper": ""
-        },
-        "finiteLimit": {
-          "bodyLatex": "\\frac{\\sin(x)}{x}",
-          "target": "0",
-          "direction": "two-sided"
-        },
-        "infiniteLimit": {
-          "bodyLatex": "\\frac{1}{x}",
-          "targetKind": "posInfinity"
-        },
-        "limit": {
-          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
-        },
-        "maclaurin": {
-          "bodyLatex": "e^x",
-          "kind": "maclaurin",
-          "center": "0",
-          "order": 4
-        },
-        "taylor": {
-          "bodyLatex": "e^x",
-          "kind": "taylor",
-          "center": "1",
-          "order": 3
-        },
-        "laplace": {
-          "bodyLatex": "1"
-        },
-        "partialDerivative": {
-          "bodyLatex": "x^2y+y^2",
-          "variable": "x"
-        },
-        "firstOrderOde": {
-          "lhsLatex": "\\frac{dy}{dx}",
-          "rhsLatex": "xy",
-          "classification": "separable"
-        },
-        "secondOrderOde": {
-          "a2": "1",
-          "a1": "0",
-          "a0": "1",
-          "forcingLatex": "0"
-        },
-        "numericIvp": {
-          "bodyLatex": "y",
-          "x0": "0",
-          "y0": "1",
-          "xEnd": "1",
-          "step": "0.1",
-          "method": "rk4"
-        },
-        "angleUnit": "rad",
-        "outputStyle": "both",
-        "equationDomainIntent": "real",
-        "ansLatex": "0"
-      },
-      "expected": {
-        "identity": {
-          "kind": "success",
-          "title": "Implicit Derivative",
-          "resultOrigin": "symbolic-engine"
-        },
-        "cardinalities": {
-          "warnings": 0,
-          "supplements": 1,
-          "answerRows": 0,
-          "branchRows": 0,
-          "systemRows": 0,
-          "periodicBranches": 0,
-          "detailSections": 5,
-          "actions": 0,
-          "tableRows": 0
-        },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\frac{dy}{dx}=-\\frac{x}{y}\ncanonicalResult.supplements[0].canonicalLatex=2y\\ne0\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=x^2+y^2=1\ncanonicalResult.details[0].lines[1][1].math.canonicalLatex=y\ncanonicalResult.details[0].lines[1][3].math.canonicalLatex=x\ncanonicalResult.details[0].lines[2][1].math.canonicalLatex=2uy+2x=0\ncanonicalResult.details[3].lines[1][1].math.canonicalLatex=2uy=-2x"
       }
     },
     {

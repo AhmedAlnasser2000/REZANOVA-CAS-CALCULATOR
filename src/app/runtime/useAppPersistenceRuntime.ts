@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
   HISTORY_CANONICAL_CLEANUP_NOTICE,
+  HISTORY_RETIREMENT_WIPE_NOTICE,
   acknowledgeResultCleanupNotice,
   bootApp,
   clearCalculatorMemorySnapshot,
@@ -57,6 +58,8 @@ type UseAppPersistenceRuntimeOptions = {
   restoreHistoryDisplayMemorySnapshot: (snapshot: CalculatorMemorySnapshot) => void;
   restoreLoadedHistory: (history: HistoryEntry[]) => void;
   setClipboardNotice: (notice: string | null) => void;
+  /** An app-level notice shown above every surface (pages have no display panel). */
+  showAppNotice: (notice: string) => void;
   setCurrentMode: Dispatch<SetStateAction<ModeId>>;
   setPreviousNonGuideMode: Dispatch<SetStateAction<Exclude<ModeId, 'guide'>>>;
   setSettings: Dispatch<SetStateAction<Settings>>;
@@ -163,12 +166,18 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
         } else {
           optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
         }
+        const wiped = 'retirementWipedCount' in loadedHistory && (loadedHistory.retirementWipedCount ?? 0) > 0;
+        if (wiped) {
+          optionsRef.current.showAppNotice(HISTORY_RETIREMENT_WIPE_NOTICE);
+        }
         const removedCount = (loadedHistory.pendingNoticeCount ?? loadedHistory.removedCount)
           + (loadedMemory.pendingNoticeCount ?? loadedMemory.removedCount);
         if (removedCount > 0) {
           optionsRef.current.setClipboardNotice(
             HISTORY_CANONICAL_CLEANUP_NOTICE(removedCount),
           );
+          // Pages have no display panel, so the cleanup is also announced app-wide (the wipe notice takes precedence).
+          if (!wiped) optionsRef.current.showAppNotice(HISTORY_CANONICAL_CLEANUP_NOTICE(removedCount));
           acknowledgeResultCleanupNotice();
         }
       } catch {

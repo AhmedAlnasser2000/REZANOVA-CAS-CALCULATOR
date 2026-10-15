@@ -6,8 +6,8 @@ import {
 } from '../radical-core';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { boxLatex, isNodeArray } from '../../symbolic-engine/patterns';
-import { buildAbsoluteValueNode } from './families';
 import {
+  buildAbsoluteValueNode,
   buildScalarNode,
   parsePositiveEvenInteger,
   readExactScalar,

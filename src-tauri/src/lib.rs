@@ -807,17 +807,7 @@ fn launcher_categories() -> Vec<LauncherCategory> {
                         ..LauncherLaunchTarget::default()
                     },
                 },
-                LauncherAppEntry {
-                    id: "equation".into(),
-                    label: "Equation".into(),
-                    description: "Symbolic, polynomial, and simultaneous systems".into(),
-                    hotkey: "2".into(),
-                    launch: LauncherLaunchTarget {
-                        mode: ModeId::Equation,
-                        equation_screen: Some("home".into()),
-                        ..LauncherLaunchTarget::default()
-                    },
-                },
+                // The old Equation workspace was retired; the client adds the Equation page (New Equation) here.
                 LauncherAppEntry {
                     id: "table".into(),
                     label: "Table".into(),

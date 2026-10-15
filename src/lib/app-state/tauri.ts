@@ -19,6 +19,7 @@ import {
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from '../result-contract/validation-router';
 import { rememberResultCleanup } from './result-cleanup-notice';
+import { historyRetirementWipeOwed, markHistoryRetirementWipeDone } from './history-retirement-wipe';
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,
@@ -103,6 +104,8 @@ export type HistoryLoadResult = {
   entries: HistoryEntry[];
   removedCount: number;
   pendingNoticeCount?: number;
+  /** The one-time Equation-retirement wipe cleared this many stored entries on this load. */
+  retirementWipedCount?: number;
 };
 
 type ParsedHistoryLedger = HistoryLoadResult & {
@@ -349,6 +352,14 @@ export async function persistSettings(settingsPatch: SettingsPatch): Promise<Set
 export async function loadHistoryEntriesWithCleanup(): Promise<HistoryLoadResult> {
   const nativePayload = await optionalInvoke<unknown[]>('load_history');
   const browserState = nativePayload ? null : readWebPreviewState();
+  if (historyRetirementWipeOwed()) {
+    const stored = nativePayload ?? browserState?.history;
+    if (nativePayload) await optionalInvoke('replace_history', { entries: [] });
+    else writeWebPreviewState((state) => ({ ...state, history: [] }));
+    markHistoryRetirementWipeDone();
+    return { entries: [], removedCount: 0, pendingNoticeCount: 0,
+      retirementWipedCount: Array.isArray(stored) ? stored.length : 0 };
+  }
   const parsed = parseHistoryLedger(nativePayload ?? browserState?.history);
   if (parsed.changed) {
     if (nativePayload) {

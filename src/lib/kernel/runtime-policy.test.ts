@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { PlannerOutcome } from '../../types/calculator';
 import {
   classifyCalculateRuntimeAdvisories,
-  classifyEquationRuntimeAdvisories,
   classifyPlannerBlockedRuntimeAdvisories,
 } from './runtime-policy';
 
@@ -31,67 +30,6 @@ describe('runtime-policy', () => {
       equationNumericSolve: {
         kind: 'blocked',
         reason: 'invalid-request',
-      },
-    });
-  });
-
-  it('maps invalid symbolic equation requests to invalid-request', () => {
-    expect(classifyEquationRuntimeAdvisories({
-      invalidRequest: true,
-      outcome: {
-        kind: 'error',
-        title: 'Solve',
-        error: 'Enter an equation containing x.',
-        warnings: [],
-      },
-    })).toEqual({
-      stopReason: {
-        kind: 'invalid-request',
-        source: 'host',
-      },
-      equationNumericSolve: {
-        kind: 'blocked',
-        reason: 'invalid-request',
-      },
-    });
-  });
-
-  it('maps range guard errors to the shared range-guard stop reason', () => {
-    expect(classifyEquationRuntimeAdvisories({
-      outcome: {
-        kind: 'error',
-        title: 'Solve',
-        error: 'No real solution.',
-        warnings: [],
-        solveBadges: ['Range Guard'],
-      },
-    })).toEqual({
-      stopReason: {
-        kind: 'range-guard',
-        source: 'stage',
-      },
-      equationNumericSolve: {
-        kind: 'blocked',
-        reason: 'range-guard',
-      },
-    });
-  });
-
-  it('maps bounded unsupported symbolic families to unsupported-family', () => {
-    expect(classifyEquationRuntimeAdvisories({
-      outcome: {
-        kind: 'error',
-        title: 'Solve',
-        error: 'This equation is outside the supported exact symbolic solve families.',
-        warnings: [],
-      },
-    })).toEqual({
-      stopReason: {
-        kind: 'unsupported-family',
-        source: 'stage',
-      },
-      equationNumericSolve: {
-        kind: 'suggest-on-error',
       },
     });
   });

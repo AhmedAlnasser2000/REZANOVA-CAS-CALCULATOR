@@ -27,7 +27,7 @@ export const englishShell = {
   workspaceTabs: {
     workspaceTabs: 'Workspace tabs',
     openWorkspaces: 'Open workspaces',
-    newCalculateTab: 'New Calculate tab',
+    newEquationTab: 'New Equation tab',
     openCreateMenu: 'Open tab menu',
     createMenuTitle: 'New workspace',
     newGraphPage: 'New Graph',
@@ -35,6 +35,8 @@ export const englishShell = {
     openGuidePage: 'Open Guide Page',
     openSettingsPage: 'Open Settings Page',
     openHistoryPage: 'Open History Page',
+    openNewIntegrationPage: 'New Integration',
+    beingRebuiltTitle: 'Being rebuilt',
     openActions: 'Open actions',
     workspaceTabName: 'Workspace tab name',
     save: 'Save',

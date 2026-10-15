@@ -1,7 +1,6 @@
 import { buildCanonicalGeometryModeRunPayload } from '../geometry/runtime-run';
 import { runCalculateCanonicalRuntimeRequest, type RunCalculateModeRequest } from '../modes/calculate';
 import { runCalculusCanonicalRuntimeRequest, type RunCalculusModeRequest } from '../modes/calculus';
-import { runEquationModeForIsolatedWorker, type RunEquationModeRequest } from '../modes/equation';
 import { runMatrixMode, type RunMatrixModeRequest } from '../modes/matrix';
 import { runTableMode, type RunTableModeRequest } from '../modes/table';
 import { runVectorMode, type RunVectorModeRequest } from '../modes/vector';
@@ -26,12 +25,6 @@ export async function executeHistoryReplayRequest(
           kind: 'standard',
           request: request as RunCalculateModeRequest,
         }),
-      };
-    case 'equation':
-      return {
-        outcome: (await runEquationModeForIsolatedWorker(
-          request as RunEquationModeRequest,
-        )).outcome,
       };
     case 'calculus':
       return { outcome: await runCalculusCanonicalRuntimeRequest(request as RunCalculusModeRequest) };

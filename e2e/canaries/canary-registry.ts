@@ -41,7 +41,6 @@ export type CanaryExpectation =
 
 export type CanaryDriver =
   | { kind: 'calculate'; inputLatex: string }
-  | { kind: 'equation'; inputLatex: string }
   | { kind: 'new-equation'; inputLatex: string }
   | { kind: 'calculus'; tool: 'Derivative' | 'Integral'; inputLatex: string }
   | { kind: 'trigonometry'; path: readonly string[]; inputLatex: string }
@@ -97,26 +96,8 @@ export const WORKSPACE_CANARIES = [
     ],
   },
   {
-    workspace: 'equation',
-    label: 'Equation',
-    cases: [
-      {
-        id: 'equation-quadratic-two-roots',
-        settings: EXACT_DEG,
-        driver: { kind: 'equation', inputLatex: 'x^2-5x+6=0' },
-        expectation: { surface: 'answer', rawLatexIncludes: ['x', '2', '3'] },
-      },
-      {
-        id: 'equation-linear-root',
-        settings: EXACT_DEG,
-        driver: { kind: 'equation', inputLatex: '3x+5=20' },
-        expectation: { surface: 'answer', rawLatexIncludes: ['x=5'] },
-      },
-    ],
-  },
-  {
     workspace: 'new-equation',
-    label: 'New Equation',
+    label: 'Equation',
     cases: [
       {
         id: 'new-equation-quadratic-two-roots',

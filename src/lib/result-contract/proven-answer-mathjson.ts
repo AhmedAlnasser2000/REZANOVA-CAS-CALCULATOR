@@ -13,11 +13,6 @@ import { printValidatedBoxedMathJson } from '../display/printer/printer';
 import type { CanonicalMathJsonProducerOwner, MathJsonRouteId } from './mathjson-route-registry';
 import { findCustomMathJsonOperator } from './standard-mathjson-operators';
 import { compareFormalMathJson } from './formal-mathjson-comparison';
-import {
-  activeMathJsonProofVerificationSession,
-  mathJsonProofComparisonCacheKey,
-  type MathJsonProofComparisonMode,
-} from './mathjson-proof-verification-session';
 export { findCustomMathJsonOperator } from './standard-mathjson-operators';
 
 declare const producerOwnedCandidateBrand: unique symbol;
@@ -178,6 +173,8 @@ type InternalProvenAnswerMathJsonResult = ProvenAnswerMathJsonResult | {
   failure: Extract<ProvenStandardAnswerMathJsonFailure, { reason: 'custom-operator' }>;
 };
 
+type MathJsonProofComparisonMode = 'answer' | 'standard';
+
 function proveAnswerMathJsonForMode(
   input: ProveAnswerMathJsonInput,
   comparisonMode: MathJsonProofComparisonMode,
@@ -230,33 +227,7 @@ function proveAnswerMathJsonForMode(
     return failure('clone-failure', 'Answer MathJSON could not cross a structured-clone boundary.');
   }
 
-  const session = provenance.owner === 'equation'
-    ? activeMathJsonProofVerificationSession()
-    : undefined;
-  const cacheKey = mathJsonProofComparisonCacheKey({
-    canonicalLatex,
-    serializedMathJson: JSON.stringify(cloned),
-    mode: comparisonMode,
-  });
-  const cached = session?.getCachedSuccess(cacheKey);
-  if (cached) {
-    return {
-      ok: true,
-      evidence: {
-        canonicalLatex,
-        mathJson: cloned as ProvenAnswerMathJson,
-        owner: provenance.owner,
-        routeId: provenance.routeId,
-        source: provenance.source,
-        nodeCount: validation.validated.nodeCount,
-        depth: validation.validated.depth,
-        byteLength: validation.validated.byteLength,
-        ...cached,
-      },
-    };
-  }
-  const ce = session?.getComputeEngine() ?? new ComputeEngine();
-  session?.recordComparisonExecution();
+  const ce = new ComputeEngine();
   let answerExpression: ReturnType<typeof ce.box>;
   let canonicalExpression: ReturnType<typeof ce.parse>;
   try {
@@ -390,7 +361,6 @@ function proveAnswerMathJsonForMode(
       ? 'math-json'
       : 'compatibility-fallback') as ProvenAnswerMathJsonEvidence['printerSource'],
   };
-  session?.setCachedSuccess(cacheKey, cachedSuccess);
   return {
     ok: true,
     evidence: {

@@ -1,7 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { GUIDE_ARTICLES } from '../src/lib/guide/content/selectors';
 import type { GuideArticle, GuideExample } from '../src/types/calculator';
-import type { WorkspaceKind } from '../src/app/runtime/workspace-instances';
 
 type GuideExampleRef = {
   articleId: string;
@@ -57,79 +56,32 @@ async function openGuideExampleInTool(page: Page, ref: GuideExampleRef) {
   return { article, example };
 }
 
-async function expectActiveWorkspace(page: Page, workspaceKind: WorkspaceKind) {
-  await expect(page.locator('.workspace-tab.is-active')).toHaveAttribute('data-workspace-kind', workspaceKind);
+/**
+ * Every Guide worked example opens a workspace being rebuilt (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B). The examples
+ * stay listed; Open in Tool is refused with the sign and Guide stays open. They are marked for removal or rewriting
+ * when their workspace is rebuilt.
+ */
+async function expectRefusedWithSign(page: Page, ref: GuideExampleRef, workspaceLabel: string) {
+  await openGuideExampleInTool(page, ref);
+  await expect(page.getByTestId('app-notice')).toContainText(`${workspaceLabel}: Unavailable: being rebuilt`);
+  await expect(page.getByTestId('guide-page')).toBeVisible();
+  await page.getByTestId('app-notice').getByRole('button', { name: 'Dismiss' }).click();
 }
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
 });
 
-test('Guide examples route and run representative math-output workspaces', async ({ page }) => {
-  await openGuideExampleInTool(page, {
-    articleId: 'basics-keyboard',
-    exampleId: 'basics-fraction',
-  });
-  await expectActiveWorkspace(page, 'calculate');
-  await page.getByTestId('keypad-execute').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-exact')).toBeVisible();
-
-  await openGuideExampleInTool(page, {
-    articleId: 'algebra-equations',
-    exampleId: 'algebra-equation-symbolic',
-  });
-  await expectActiveWorkspace(page, 'equation');
-  await page.getByTestId('soft-action-solve').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-exact')).toContainText('x');
-
-  await openGuideExampleInTool(page, {
-    articleId: 'calculus-derivatives',
-    exampleId: 'calc-derivative-function-power',
-  });
-  await expectActiveWorkspace(page, 'calculus');
-  await page.getByTestId('keypad-execute').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.locator('.result-title')).toContainText('Derivative');
-
-  await openGuideExampleInTool(page, {
-    articleId: 'trig-period-phase',
-    exampleId: 'trig-period-phase-sine',
-  });
-  await expectActiveWorkspace(page, 'trigonometry');
-  await page.getByTestId('keypad-execute').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-root')).toContainText(/Period|Phase|Amplitude/);
+test('Guide examples of math-output workspaces being rebuilt are refused with the sign', async ({ page }) => {
+  await expectRefusedWithSign(page, { articleId: 'basics-keyboard', exampleId: 'basics-fraction' }, 'Calculate');
+  await expectRefusedWithSign(page, { articleId: 'calculus-derivatives', exampleId: 'calc-derivative-function-power' }, 'Calculus');
+  await expectRefusedWithSign(page, { articleId: 'trig-period-phase', exampleId: 'trig-period-phase-sine' }, 'Trigonometry');
 });
 
-test('Guide examples route representative management and data workspaces', async ({ page }) => {
-  await openGuideExampleInTool(page, {
-    articleId: 'statistics-inference',
-    exampleId: 'statistics-inference-mean',
-  });
-  await expectActiveWorkspace(page, 'statistics');
-  await expect(page.locator('.statistics-panel')).toContainText(/Mean|Inference/);
-
-  await openGuideExampleInTool(page, {
-    articleId: 'geometry-coordinate',
-    exampleId: 'geometry-distance',
-  });
-  await expectActiveWorkspace(page, 'geometry');
-  await expect(page.locator('.geometry-panel')).toContainText('Distance');
-
-  await openGuideExampleInTool(page, {
-    articleId: 'linear-algebra-matrix-vector',
-    exampleId: 'linear-open-matrix',
-  });
-  await expectActiveWorkspace(page, 'matrix');
-  await expect(page.getByText('Matrix Workspace')).toBeVisible();
-
-  await openGuideExampleInTool(page, {
-    articleId: 'linear-algebra-matrix-vector',
-    exampleId: 'linear-open-vector',
-  });
-  await expectActiveWorkspace(page, 'vector');
-  await expect(page.getByText('Vector Workspace')).toBeVisible();
+test('Guide examples of data and management workspaces being rebuilt are refused with the sign', async ({ page }) => {
+  await expectRefusedWithSign(page, { articleId: 'statistics-inference', exampleId: 'statistics-inference-mean' }, 'Statistics');
+  await expectRefusedWithSign(page, { articleId: 'geometry-coordinate', exampleId: 'geometry-distance' }, 'Geometry');
+  await expectRefusedWithSign(page, { articleId: 'linear-algebra-matrix-vector', exampleId: 'linear-open-matrix' }, 'Matrix');
+  await expectRefusedWithSign(page, { articleId: 'linear-algebra-matrix-vector', exampleId: 'linear-open-vector' }, 'Vector');
 });

@@ -109,7 +109,7 @@ describe('launcher helpers', () => {
 
   it('keeps new-tab launcher actions limited to hosted workspace entries', () => {
     const categories = createLauncherCategories({ labsEnabled: true });
-    const equationEntry = DEFAULT_LAUNCHER_CATEGORIES[0].entries.find((entry) => entry.id === 'equation');
+    const equationEntry = DEFAULT_LAUNCHER_CATEGORIES[0].entries.find((entry) => entry.id === 'new-equation');
     const labsEntry = categories.find((category) => category.id === 'labs')?.entries[0];
 
     expect(equationEntry && canOpenLauncherEntryInNewTab(equationEntry)).toBe(true);
@@ -127,6 +127,14 @@ it('retains the client-owned New Integration entry with older host launcher cata
 it('retains the client-owned New Equation entry with older host launcher catalogs', () => {
   const old = DEFAULT_LAUNCHER_CATEGORIES.map(c => ({ ...c, entries: c.entries.filter(e => e.id !== 'new-equation') }));
   const merged = ensureNewEquationLauncherEntry(old);
-  expect(merged.find(c => c.id === 'core')?.entries.map(e => e.id)).toEqual(['calculate', 'equation', 'table', 'new-equation']);
+  expect(merged.find(c => c.id === 'core')?.entries.map(e => e.id)).toEqual(['calculate', 'new-equation', 'table']);
   expect(ensureNewEquationLauncherEntry(merged)).toBe(merged);
+});
+
+it('drops the retired Equation entry that older host launcher catalogs still list', () => {
+  const core = DEFAULT_LAUNCHER_CATEGORIES.find(c => c.id === 'core')!;
+  const retired = { ...core.entries[0], id: 'equation' as const, label: 'Equation (old)' };
+  const old = DEFAULT_LAUNCHER_CATEGORIES.map(c => c.id !== 'core' ? c : ({ ...c, entries: [core.entries[0], retired, core.entries[2]] }));
+  const merged = ensureNewEquationLauncherEntry(old);
+  expect(merged.find(c => c.id === 'core')?.entries.map(e => e.id)).toEqual(['calculate', 'new-equation', 'table']);
 });

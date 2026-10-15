@@ -13,7 +13,9 @@ import { DEFAULT_LAUNCHER_CATEGORIES } from '../../src/types/calculator';
 type CanaryFloor = {
   version: number;
   total: number;
-  perWorkspace: Record<ComputationalWorkspaceId, number>;
+  perWorkspace: Partial<Record<ComputationalWorkspaceId, number>>;
+  /** Workspaces whose launcher leaf was retired, with the reason. Their floors may leave; the list only grows. */
+  retired?: Partial<Record<ComputationalWorkspaceId, string>>;
 };
 
 const registry: readonly WorkspaceCanary[] = WORKSPACE_CANARIES;
@@ -64,15 +66,28 @@ describe('workspace canary registry', () => {
     expect(total).toBeGreaterThanOrEqual(floor.total);
     for (const entry of registry) {
       expect(entry.cases.length).toBeGreaterThanOrEqual(2);
-      expect(entry.cases.length).toBeGreaterThanOrEqual(floor.perWorkspace[entry.workspace]);
+      expect(entry.cases.length).toBeGreaterThanOrEqual(floor.perWorkspace[entry.workspace] ?? Infinity);
+    }
+
+    const retired = floor.retired ?? {};
+    for (const [workspace, reason] of Object.entries(retired)) {
+      expect(reason?.trim()).toBeTruthy();
+      expect(floor.perWorkspace).not.toHaveProperty(workspace);
+      expect(registry.map((entry) => entry.workspace)).not.toContain(workspace);
     }
 
     const previous = committedFloor();
     if (previous) {
-      expect(floor.total).toBeGreaterThanOrEqual(previous.total);
+      let retiredFloor = 0;
+      for (const workspace of Object.keys(previous.retired ?? {})) expect(retired).toHaveProperty(workspace);
       for (const workspace of Object.keys(previous.perWorkspace) as ComputationalWorkspaceId[]) {
-        expect(floor.perWorkspace[workspace]).toBeGreaterThanOrEqual(previous.perWorkspace[workspace]);
+        if (workspace in retired && !(workspace in floor.perWorkspace)) {
+          retiredFloor += previous.perWorkspace[workspace] ?? 0;
+          continue;
+        }
+        expect(floor.perWorkspace[workspace]).toBeGreaterThanOrEqual(previous.perWorkspace[workspace] ?? 0);
       }
+      expect(floor.total + retiredFloor).toBeGreaterThanOrEqual(previous.total);
     }
   });
 

@@ -1,6 +1,7 @@
 type PersistenceModule = typeof import('./tauri');
 export { isNativeUiScaleHost, nextUiScale, UI_SCALE_STEPS, type UiScale } from './ui-scale';
 export { acknowledgeResultCleanupNotice } from './result-cleanup-notice';
+export { HISTORY_RETIREMENT_WIPE_NOTICE } from './history-retirement-wipe';
 
 export const HISTORY_CANONICAL_CLEANUP_NOTICE =
   (count: number) => `${count} incompatible History ${count === 1 ? 'record was' : 'records were'} removed.`;

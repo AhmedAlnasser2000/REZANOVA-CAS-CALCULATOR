@@ -32,7 +32,7 @@ function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions>
 
 function renderDisplayStateHost() {
   return renderHook(() => {
-    const instances = useWorkspaceInstancesRuntime(createDeterministicOptions());
+    const instances = useWorkspaceInstancesRuntime({ ...createDeterministicOptions(), initialWorkspaceKind: 'calculate' });
     const displayStateRef = useRef<WorkspaceDisplayState>({
       ansLatex: '0',
       displayOutcome: null,

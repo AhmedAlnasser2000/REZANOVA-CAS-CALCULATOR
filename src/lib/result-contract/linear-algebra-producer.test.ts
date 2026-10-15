@@ -19,21 +19,6 @@ describe('Linear Algebra canonical result producers', () => {
     expect(outcome.canonicalResult?.metadata?.sourceMode).toBe('matrix');
   });
 
-  it('keeps Matrix Equation-transfer actions transient', () => {
-    const outcome = runMatrixMode({
-      operation: 'eigenA',
-      matrixA: [[0, -1], [1, 0]],
-      matrixB: [[1, 0], [0, 1]],
-    });
-
-    expect(outcome.kind).toBe('error');
-    if (outcome.kind === 'prompt') throw new Error('Expected Matrix result.');
-    expect(outcome.actions?.[0]).toMatchObject({ kind: 'send', target: 'equation' });
-    expect(requireCanonicalResultAuthority(outcome, 'Matrix action test').canonicalResult)
-      .toBeDefined();
-    expect(JSON.stringify(outcome.canonicalResult)).not.toContain('actions');
-  });
-
   it('stores Vector Gram-Schmidt truth through the Vector owner boundary', () => {
     const outcome = runVectorMode({
       operation: 'gramSchmidtUV',

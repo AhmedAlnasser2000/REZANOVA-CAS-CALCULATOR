@@ -8,7 +8,6 @@ import { executeEquation } from '../symbolic-engine/equation/service/service';
 import { buildCanonicalGeometryModeRunPayload } from '../geometry/runtime-run';
 import { runCalculateCanonicalRuntimeRequest } from '../modes/calculate';
 import { runCalculusCanonicalRuntimeRequest } from '../modes/calculus';
-import { runEquationModeForIsolatedWorker } from '../modes/equation';
 import { runMatrixMode } from '../modes/matrix';
 import { runTableMode } from '../modes/table';
 import { runVectorMode } from '../modes/vector';
@@ -41,17 +40,6 @@ export type GoldenExecution = {
 const typedOutcome = (document: CanonicalResultDocument) =>
   ({ kind: document.outcomeKind, canonicalResult: document }) as unknown as CanonicalRuntimeOutcome;
 
-const system2 = [
-  [1, 1, 3],
-  [2, -1, 0],
-];
-
-const system3 = [
-  [1, 1, 1, 6],
-  [2, -1, 1, 3],
-  [1, 2, -1, 3],
-];
-
 export async function runGoldenCase(goldenCase: GoldenCase): Promise<GoldenExecution> {
   switch (goldenCase.mode) {
     case 'new-equation': {
@@ -75,23 +63,6 @@ export async function runGoldenCase(goldenCase: GoldenCase): Promise<GoldenExecu
             ansLatex: '0',
           },
         }),
-      };
-    case 'equation':
-      return {
-        outcome: (await runEquationModeForIsolatedWorker({
-          equationScreen: goldenCase.equationScreen ?? 'symbolic',
-          equationLatex: goldenCase.equationLatex,
-          equationSolveTarget: undefined,
-          quadraticCoefficients: [1, -5, 6],
-          cubicCoefficients: [1, -6, 11, -6],
-          quarticCoefficients: [1, 0, -5, 0, 4],
-          polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
-          system2,
-          system3,
-          angleUnit: 'deg',
-          outputStyle: 'both',
-          ansLatex: '0',
-        })).outcome,
       };
     case 'calculus':
       return { outcome: await runCalculusCanonicalRuntimeRequest(goldenCase.request) };
