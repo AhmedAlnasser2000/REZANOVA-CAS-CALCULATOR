@@ -25,6 +25,7 @@ import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
 import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
+import { isShellModeAvailable, unavailableModeNotice } from './lib/workspaces/availability';
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
@@ -1837,8 +1838,15 @@ export default function App() {
     });
   }
 
+  /** Retired workspaces cannot be opened by any route (launcher, Guide, hotkeys, mode strip); a notice says why. */
+  function refuseUnavailableMode(mode: ModeId) {
+    if (isShellModeAvailable(mode)) return false;
+    setAppNotice(unavailableModeNotice(mode));
+    return true;
+  }
+
   function commitVisibleModeSelection(mode: ModeId) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return;
     }
     if (mode !== 'guide') {
@@ -1852,7 +1860,7 @@ export default function App() {
   }
 
   function setMode(mode: ModeId) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return;
     }
     retargetActiveWorkspaceKind(mode);
@@ -1860,7 +1868,7 @@ export default function App() {
   }
 
   function routeToModeDestination(mode: ModeId, applyDestination: () => void) {
-    if (mode === 'labs' && !labsEnabled) {
+    if ((mode === 'labs' && !labsEnabled) || refuseUnavailableMode(mode)) {
       return false;
     }
 
@@ -1872,7 +1880,7 @@ export default function App() {
   }
 
   function routeToModeDestinationInNewTab(mode: ModeId, applyDestination: () => void) {
-    if (mode === 'guide' || mode === 'labs') {
+    if (mode === 'guide' || mode === 'labs' || refuseUnavailableMode(mode)) {
       return false;
     }
 
@@ -1896,6 +1904,9 @@ export default function App() {
   ) {
     if (intent !== 'new-tab') {
       return routeToModeDestination(entry.launch.mode, applyDestination);
+    }
+    if (refuseUnavailableMode(entry.launch.mode)) {
+      return false;
     }
 
     const createWorkspaceKindTab = createWorkspaceKindTabRef.current;

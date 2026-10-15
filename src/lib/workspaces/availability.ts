@@ -1,4 +1,5 @@
 import type { LauncherAppEntry, LauncherLeafId, ModeId } from '../../types/calculator';
+import { MODE_LABELS } from '../navigation/menu';
 
 /**
  * Which workspaces can be opened (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B, user decision 2026-10-14). The rebuilt
@@ -26,4 +27,9 @@ export function isLauncherEntryAvailable(entry: Pick<LauncherAppEntry, 'id'>): b
 
 export function isShellModeAvailable(mode: ModeId): boolean {
   return AVAILABLE_SHELL_MODES.has(mode);
+}
+
+/** The notice shown when a route asks for a calculator-shell workspace that is being rebuilt. */
+export function unavailableModeNotice(mode: ModeId): string {
+  return `${MODE_LABELS[mode]}: ${UNAVAILABLE_WORKSPACE_SIGN}`;
 }
