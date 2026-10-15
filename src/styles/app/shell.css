@@ -1056,9 +1056,16 @@
   color: var(--page-subtle);
 }
 
+.active-surface--history {
+  min-height: calc(100vh - 150px);
+}
+
 .app-page--history {
   width: 100%;
   max-width: none;
+  /* Fill the window: the History ledger is a full-height workspace, not a capped card. */
+  height: calc(100vh - 154px);
+  min-height: calc(100vh - 154px);
   grid-template-rows: 42px auto auto minmax(0, 1fr) 40px;
 }
 

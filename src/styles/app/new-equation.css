@@ -31,6 +31,10 @@
 .ne-solve-for {display: flex; flex-wrap: wrap; align-items: center; gap: 8px;}
 .ne-chip {display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 12px; border-radius: 999px; background: #275dad22; font-style: italic; font-family: 'Times New Roman', serif; font-size: 1.1rem;}
 .ne-chip button {border: 0; padding: 0 7px; font-style: normal;}
+.ne-solve-for select {color-scheme: dark; background: #13202a; color: #e8eef5; border-color: #8fa3b8aa; font-size: 1.05rem; min-width: 3.4rem;}
+.ne-solve-for select:focus-visible {outline: 2px solid #6ea8ff; outline-offset: 1px;}
+.ne-solve-for option {background: #13202a; color: #f1f5f9; font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.1rem;}
+.ne-solve-for option[value=""] {font-family: inherit; font-style: normal;}
 .ne-link {border: 0 !important; text-decoration: underline;}
 .ne-segmented {display: inline-flex; border: 1px solid #64748b66; border-radius: 8px; overflow: hidden;}
 .ne-segmented button {border: 0; border-radius: 0;}
