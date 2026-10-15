@@ -58,6 +58,11 @@ export function verifyParametricOutcome(problem: RelationProblem, outcome: Equat
   // One parameter: every case whose conditions are polynomial has a sample (cells are never empty).
   if (problem.parameters.length === 1 && cases.some((c, i) => !hit.has(i) && c.conditions.every(k => polynomialIn(store, k, problem.parameters[0])))) fail('a case is never sampled');
   const again = rederive(problem);
+  if (again.kind === 'resource') {
+    // The budget ran out while re-deriving: the typed stop, never a claim that the outcomes differ.
+    store.ctx.checkCancelled();
+    demand(false, 'verification-failed', 'a resource outcome without a stopped context');
+  }
   if (again.kind !== outcome.kind) fail('re-derivation gives a different outcome');
   if (outcome.kind === 'solved' && again.kind === 'solved'
     && setKey(store, normalizeSet(store, outcome.set, domain)) !== setKey(store, normalizeSet(store, again.set, domain))) fail('case tree differs from the re-derived tree');

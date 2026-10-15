@@ -58,6 +58,8 @@ group('parameters specialized at algebraic samples', () => {
     ['z^4+z+1=b^6', 'complex'],
     ['b^{45}=nvm^3', 'complex'],
     ['\\left(y^3+y+1\\right)^{12}=b', 'complex'],
+    // An atom's own zeros have sign 0 by construction (not re-proven to a Liouville bound): 18.7·10⁹ → 1.3·10⁷ work.
+    ['z^7-z=a', 'real'],
   ] as const)('%s over %s', (latex, domain) => {
     expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe('solved');
   }, 60_000);
