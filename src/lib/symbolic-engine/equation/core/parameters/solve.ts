@@ -7,6 +7,9 @@ import { decideCells, type ParamCase } from './cells';
 import { decidePolynomialProblem } from '../decision/solve';
 import { decideKernels } from './kernels';
 import { decideExclusions } from './exclusions';
+import { decideParametersByCad } from '../cad/cases';
+import { decideEquation } from '../decide';
+import { decideOuterPower } from './outer-power';
 import { decideProduct } from './product';
 import { decideShifted } from './shift';
 import { parametricAtoms, targetInKernel } from './specialize';
@@ -29,9 +32,26 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
       const k = decideKernels(problem);
       return k.kind === 'refused' ? { kind: 'incomplete-implementation', reason: k.reason } : caseOutcome(problem, simplifyCases(problem.store, k.cases));
     }
+    // u(x)ⁿ = b: decided through u = w (outer-power decomposition) before anything expands the power.
+    const power = decideOuterPower(problem, decideEquation);
+    if (power !== undefined && 'fallback' in power) {
+      // As without the step: the slice, and where its tree refuses with several parameters, the decomposition.
+      const plain = decideWithoutPower(problem);
+      return plain.kind === 'incomplete-implementation' && problem.parameters.length >= 2 ? decideParametersByCad(problem) : plain;
+    }
+    if (power !== undefined) return 'refused' in power ? power.refused : caseOutcome(problem, simplifyCases(problem.store, power.cases));
+    return decideWithoutPower(problem);
+  } catch (e) {
+    return resourceOutcome(e);
+  }
+}
+
+/** The parameters slice after the outer-power step (also its fallback when that step cannot express an answer). */
+function decideWithoutPower(problem: RelationProblem): EquationOutcome {
+  try {
     if (problem.parameters.length >= 2) {
       // Factor first, before anything expands the product: a product equals zero exactly when a factor does.
-      const product = decideProduct(problem, p => (p.parameters.length ? decideParametricProblem(p) : decidePolynomialProblem(p)));
+      const product = decideProduct(problem, decideParametricOrPolynomial);
       if (product !== undefined) return caseOutcome(problem, simplifyCases(problem.store, product));
     }
     const atoms = parametricAtoms(problem);
@@ -51,6 +71,8 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
     return resourceOutcome(e);
   }
 }
+
+const decideParametricOrPolynomial = (p: RelationProblem): EquationOutcome => (p.parameters.length ? decideParametricProblem(p) : decidePolynomialProblem(p));
 
 const isEmpty = (s: SolutionSet) => s.kind === 'finite' && s.points.length === 0;
 

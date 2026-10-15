@@ -78,3 +78,15 @@ group('exclusion splitting (denominators beside one equation, several parameters
     expect(outcome.kind === 'solved' ? outcome.set.kind : '').toBe('case-tree');
   }, 60_000);
 });
+
+group('outer-power decomposition u(x)ⁿ = b (several parameters)', () => {
+  it.each([
+    ['\\left(\\frac{z-a}{z-m}\\right)^3=b', 'solved'],
+    ['\\left(\\frac{z-a}{z-m}\\right)^2=b', 'solved'],
+    // The inner equation u = w is a cubic with two parameters: its typed refusal arrives in seconds.
+    ['\\left(\\frac{z^3+z+1}{z-m}\\right)^3=b', 'incomplete-implementation'],
+    ['\\left(\\frac{z^4+z+1}{z-m}\\right)^2=b', 'incomplete-implementation'],
+  ])('%s', (latex, kind) => {
+    expect(decide(latex).outcome.kind).toBe(kind);
+  }, 60_000);
+});

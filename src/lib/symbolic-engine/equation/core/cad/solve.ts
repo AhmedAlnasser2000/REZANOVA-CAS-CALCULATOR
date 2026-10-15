@@ -7,6 +7,7 @@ import { decompose } from './decompose';
 import { regionSet } from './region';
 import { decideParametersByCad } from './cases';
 import { exclusionsApply } from '../parameters/exclusions';
+import { outerPowerPlan } from '../parameters/outer-power';
 import { factorProblem, productFactors } from '../parameters/product';
 import { shiftPlan } from '../parameters/shift';
 import { parametricAtoms } from '../parameters/specialize';
@@ -28,7 +29,7 @@ export function cadApplies(problem: RelationProblem): boolean {
 
 /** One unknown with several parameters where the sign-condition tree refuses: several relations in it, or degree ≥ 3. */
 function treeRefuses(problem: RelationProblem): boolean {
-  if (problem.targets.length !== 1 || problem.parameters.length < 2) return false;
+  if (problem.targets.length !== 1 || problem.parameters.length < 2 || outerPowerPlan(problem) !== undefined) return false;
   // A product whose factors the parameters slice decides is split there (factor first, before anything expands it).
   const factors = productFactors(problem);
   if (factors) return !factors.every(F => !treeRefuses(factorProblem(problem, F)));

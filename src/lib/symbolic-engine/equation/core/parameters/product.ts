@@ -57,7 +57,7 @@ export function factorProblem(problem: RelationProblem, F: ExprId): RelationProb
   return relationProblem(problem.store, { domain: problem.domain, targets: problem.targets, relations: [{ op: 'eq', lhs: F, rhs: problem.store.integer(0) }] });
 }
 
-function casesOf(out: EquationOutcome): { conditions: readonly Condition[]; points: readonly Point[] }[] | undefined {
+export function casesOf(out: EquationOutcome): { conditions: readonly Condition[]; points: readonly Point[] }[] | undefined {
   if (out.kind === 'empty') return [{ conditions: [], points: [] }];
   if (out.kind !== 'solved') return undefined;
   const set = out.set;
