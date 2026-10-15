@@ -274,11 +274,10 @@ export const COMPARTMENT_MANIFEST = [
     diagnosticsLabel: 'Equation',
     stateSurface: 'ooe',
     surfaceExposureCandidate: 'future-surface',
+    // The old Equation engine (src/lib/equation/, src/lib/modes/equation*) was deleted by
+    // EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B; Equation is the New Equation page and its client.
     ownedPaths: [
-      'src/lib/equation/',
       'src/lib/new-equation/',
-      'src/lib/modes/equation.ts',
-      'src/lib/modes/equation/',
     ],
     publicSeams: [
       'src/lib/new-equation/types.ts',
@@ -286,26 +285,8 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/new-equation/runtime.ts',
       'src/lib/new-equation/error.ts',
       'src/lib/new-equation/verification.ts',
-      'src/lib/equation/guarded-solve.ts',
-      'src/lib/equation/implicit-derivative-solve.ts',
-      'src/lib/equation/equation-solve-result.ts',
-      'src/lib/equation/shared-solve.ts',
-      'src/lib/modes/equation.ts',
     ],
-    privatePaths: [
-      'src/lib/equation/candidate/',
-      'src/lib/equation/complex/',
-      'src/lib/equation/composition/',
-      'src/lib/equation/direct-symbolic-worker/',
-      'src/lib/equation/guarded/',
-      'src/lib/equation/inequality/',
-      'src/lib/equation/isolation/',
-      'src/lib/equation/numeric-interval/',
-      'src/lib/equation/parameterized/',
-      'src/lib/equation/polynomial/',
-      'src/lib/equation/solve-result/',
-      'src/lib/equation/target/',
-    ],
+    privatePaths: [],
     dependencyPolicies: [
       'library-no-app-ui',
       'no-source-mirrors',

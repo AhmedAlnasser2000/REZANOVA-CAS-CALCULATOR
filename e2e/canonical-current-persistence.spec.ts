@@ -44,7 +44,7 @@ test('focused migration cleans incompatible results and preserves independent wo
   await expect(integral.getByRole('button', {name: 'Show compact formula'})).toBeVisible();
   await integral.getByText('Conditions', {exact: true}).click();
   await page.screenshot({path: `${directory}/restored-integral.png`, fullPage: true});
-  await openLauncherApp(page, 'Core', 'New Equation');
+  await openLauncherApp(page, 'Core', 'Equation');
   expect(await getMathFieldLatex(page, 'new-equation-row-1')).toContain('x^2');
   await expect(page.getByTestId('new-equation-answer')).toHaveCount(0);
   await page.getByTestId('new-equation-page').getByRole('button', {name: 'Solve', exact: true}).click();

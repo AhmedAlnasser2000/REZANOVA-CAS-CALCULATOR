@@ -1,8 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
-  closeSidePanelIfOpen,
+  applySettingsOnSettingsPage,
   openLauncherApp,
-  openSettingsPanel,
   openTable,
   setMathFieldLatex,
 } from '../helpers';
@@ -10,21 +9,14 @@ import {
   WORKSPACE_CANARIES,
   type CanaryCase,
   type CanaryExpectation,
-  type CanarySettings,
 } from './canary-registry';
 import { installClipboardCapture } from '../calculus-integral-evidence';
+import { isLauncherLeafAvailable } from '../../src/lib/workspaces/availability';
 
 async function clickVisibleMenuEntry(page: Page, label: string) {
   await page.locator('button.launcher-entry:visible')
     .filter({ has: page.locator('strong', { hasText: new RegExp(`^${label}$`, 'i') }) })
     .click();
-}
-
-async function applySettings(page: Page, settings: CanarySettings) {
-  await openSettingsPanel(page);
-  await page.getByTestId(`settings-angle-unit-${settings.angleUnit}`).click();
-  await page.getByTestId(`settings-output-style-${settings.outputStyle}`).click();
-  await closeSidePanelIfOpen(page);
 }
 
 async function fillNamedNumberInput(page: Page, label: string, value: number) {
@@ -41,7 +33,7 @@ async function runCanary(page: Page, canary: CanaryCase) {
     return;
   }
   if (driver.kind === 'new-equation') {
-    await openLauncherApp(page, 'Core', 'Equation');
+    // The app starts on Equation.
     await setMathFieldLatex(page, driver.inputLatex, 'new-equation-row-1');
     await page.getByTestId('new-equation-page').getByRole('button', { name: 'Solve', exact: true }).click();
     return;
@@ -144,14 +136,16 @@ test.beforeEach(async ({ page }) => {
     window.sessionStorage.clear();
   });
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
 });
 
-for (const workspace of WORKSPACE_CANARIES) {
+// Only workspaces that can be opened run; the retired workspaces' cases stay in the registry for their rebuild
+// (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B, user decision 2026-10-15).
+for (const workspace of WORKSPACE_CANARIES.filter((entry) => isLauncherLeafAvailable(entry.workspace))) {
   test.describe(workspace.label, () => {
     for (const canary of workspace.cases) {
       test(canary.id, async ({ page }) => {
-        await applySettings(page, canary.settings);
+        await applySettingsOnSettingsPage(page, canary.settings);
         await runCanary(page, canary);
         await assertExpectation(page, canary.expectation);
       });

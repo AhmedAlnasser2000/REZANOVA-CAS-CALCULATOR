@@ -197,7 +197,7 @@ describe('compartment boundary validation', () => {
         text: "import { useCalculusRuntime } from '../../../app/runtime/useCalculusRuntime';\n",
       },
       {
-        repoPath: 'src/lib/equation/equation-navigation.ts',
+        repoPath: 'src/lib/new-equation/equation-navigation.ts',
         text: "import { EquationWorkspace } from '../../app/workspaces/EquationWorkspace';\n",
       },
     ];
@@ -269,7 +269,7 @@ describe('compartment boundary validation', () => {
     const cases = [
       {
         repoPath: 'src/lib/guide/examples.ts',
-        text: "import { runGuarded } from '../equation/guarded/run';\n",
+        text: "import { runGuarded } from '../calculus/engine/run';\n",
       },
       {
         repoPath: 'src/lib/labs/experiments.ts',
@@ -293,12 +293,12 @@ describe('compartment boundary validation', () => {
     writeFile(
       rootDir,
       'src/app/runtime/useEquationRuntime.ts',
-      "import { runGuarded } from '../../lib/equation/guarded/run';\n",
+      "import { runGuarded } from '../../lib/calculus/engine/run';\n",
     );
 
     assert.throws(
       () => validateCompartmentBoundaries({ rootDir }),
-      /imports private solver district "\.\.\/\.\.\/lib\/equation\/guarded\/run"/,
+      /imports private solver district "\.\.\/\.\.\/lib\/calculus\/engine\/run"/,
     );
   });
 
@@ -308,7 +308,7 @@ describe('compartment boundary validation', () => {
       rootDir,
       'src/app/runtime/useEquationRuntime.ts',
       [
-        "import { getEquationScreenMeta } from '../../lib/equation/equation-navigation';",
+        "import { parseRow } from '../../lib/new-equation/parse';",
         "import { isCalculusMode } from '../../lib/calculus/calculus-identity';",
         "import { algebraTransformActions } from '../../lib/algebra/algebra-transform-ui';",
         "import { namedVariableEditorLatex } from '../../lib/algebra/named-variable';",
@@ -477,7 +477,7 @@ describe('compartment boundary validation', () => {
     const cases = [
       {
         repoPath: 'src/app/workspaces/BadEquationWorkspace.tsx',
-        text: "import { runGuardedEquationSolve } from '../../lib/equation/guarded/run';\n",
+        text: "import { runGuardedEquationSolve } from '../../lib/calculus/engine/run';\n",
       },
       {
         repoPath: 'src/components/BadSymbolicWidget.tsx',

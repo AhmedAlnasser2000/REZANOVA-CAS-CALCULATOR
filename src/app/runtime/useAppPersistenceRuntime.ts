@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
   HISTORY_CANONICAL_CLEANUP_NOTICE,
+  HISTORY_RETIREMENT_WIPE_NOTICE,
   acknowledgeResultCleanupNotice,
   bootApp,
   clearCalculatorMemorySnapshot,
@@ -18,7 +19,6 @@ import {
   persistSettings,
   persistVariableMemory,
 } from '../../lib/app-state/persistence';
-import { HISTORY_RETIREMENT_WIPE_NOTICE } from '../../lib/app-state/history-retirement-wipe';
 import {
   buildStoredVariableValue,
   removeStoredVariableValue,

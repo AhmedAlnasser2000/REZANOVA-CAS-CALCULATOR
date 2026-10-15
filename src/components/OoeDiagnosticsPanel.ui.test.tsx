@@ -294,7 +294,7 @@ describe('OoeDiagnosticsPanel', () => {
       'Owned paths',
     );
     expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
-      'src/lib/equation/',
+      'src/lib/new-equation/',
     );
     expect(screen.getByTestId('ooe-diagnostics-compartment-detail')).toHaveTextContent(
       'future-surface',

@@ -1,8 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import { RETIRED_BROWSER_SPECS } from './tools/retired-workspace-tests.mjs';
 
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
+  // Specs of retired workspaces stay on disk but do not run (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+  testIgnore: RETIRED_BROWSER_SPECS.map((spec) => `**/${spec}`),
   fullyParallel: false,
   workers: 1,
   retries: 0,

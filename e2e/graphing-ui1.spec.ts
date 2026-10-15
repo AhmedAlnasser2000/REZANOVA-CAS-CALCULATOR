@@ -297,7 +297,7 @@ test('stacks the Both view in a compact window with its own remembered split', a
 
 test('closes the New Equation Example picker on an outside press and Escape', async ({ page }) => {
   await page.goto('/');
-  await openLauncherApp(page, 'Core', 'New Equation');
+  await openLauncherApp(page, 'Core', 'Equation');
   const workspace = page.getByTestId('new-equation-page');
   const picker = workspace.locator('details.ne-examples');
   const summary = picker.locator('summary');

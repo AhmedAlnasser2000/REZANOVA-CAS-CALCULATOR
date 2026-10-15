@@ -36,7 +36,7 @@ function assertDeclaredResultIntent(outcome: CanonicalRuntimeOutcome, label: str
 
 describe('live result intent coverage', () => {
   it('declares summaries and detail lines for all golden executions', async () => {
-    expect(goldenCases).toHaveLength(47);
+    expect(goldenCases).toHaveLength(41);
     for (const goldenCase of goldenCases) {
       const execution = await runGoldenCase(goldenCase);
       assertDeclaredResultIntent(execution.outcome, goldenCase.id);
@@ -44,7 +44,7 @@ describe('live result intent coverage', () => {
   }, 60_000);
 
   it('declares summaries and detail lines for all History replay executions', async () => {
-    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
+    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(73);
     for (const fixture of HISTORY_REPLAY_FIXTURES) {
       const execution = await executeHistoryReplayRequest(fixture.workspace, fixture.request);
       assertDeclaredResultIntent(execution.outcome, fixture.id);
