@@ -24,6 +24,28 @@ function fixture() {
 }
 
 describe('operation-local proof authority', () => {
+  it('evicts only the oldest entry while preserving exact tuple prefixes and owner bindings',()=>{
+    const c=run(),cache=new ScopedProof(),keys=Array.from({length:129},()=>Object.freeze({}));let checks=0;
+    c.operation(()=>{
+      for(const key of keys)cache.check(c,[key],()=>{checks++;});expect(checks).toBe(129);
+      cache.check(c,[keys[128]],()=>{checks++;});cache.check(c,[keys[127]],()=>{checks++;});expect(checks).toBe(129);
+      cache.check(c,[keys[0]],()=>{checks++;});expect(checks).toBe(130);
+      cache.check(c,[keys[128],keys[127]],()=>{checks++;});expect(checks).toBe(131);
+      cache.check(c,[keys[128]],()=>{checks++;},[keys[127]]);expect(checks).toBe(132);
+    });
+  });
+  it('does not reuse immutable-graph eligibility under different owner exclusions',()=>{
+    class Owner{}const owner=Object.freeze(new Owner()),child=Object.freeze({owner}),key=Object.freeze({child}),cache=new ScopedProof(),c=run();let checks=0;
+    c.operation(()=>{
+      cache.check(c,[key],()=>{checks++;},[owner]);cache.check(c,[key],()=>{checks++;},[owner]);expect(checks).toBe(1);
+      for(let i=0;i<2;i++)cache.check(c,[key],()=>{checks++;});expect(checks).toBe(3);
+    });
+  });
+  it('does not register an identity tuple changed by the verification callback',()=>{
+    const c=run(),cache=new ScopedProof(),a=Object.freeze({}),b=Object.freeze({}),keys=[a];let checks=0;
+    c.operation(()=>{cache.check(c,keys,()=>{checks++;keys[0]=b;});
+      cache.check(c,[a],()=>{checks++;});cache.check(c,[b],()=>{checks++;});expect(checks).toBe(3);});
+  });
   it('keys successes by verifier, owner, inputs, evidence and target; all new operations start cold', () => {
     const c = run(), cache = new ScopedProof(), keys = Array.from({ length: 4 }, () => Object.freeze({}));
     let checks = 0; const verify = () => { checks++; };

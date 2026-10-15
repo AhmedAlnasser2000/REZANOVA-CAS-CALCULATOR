@@ -25,10 +25,10 @@ describe('bounded native GCD arithmetic for divisor replay',()=>{
   }
  });
  it('handles repeated linear poles and number-field content without changing owners',()=>{
-  const c=fresh(),r=new PolynomialRing(Q,'a'),relation=r.make(c,[Q.fromInteger(c,-2n),Q.fromInteger(c,0n),Q.fromInteger(c,1n)]),field=constructAlgebraicExtension(c,r,relation,bounds),z=new PolynomialRing(field,'z'),alpha=field.generator(c),h=z.make(c,[alpha,field.fromInteger(c,1n)]),power=z.multiply(c,h,z.multiply(c,h,h)),a=z.multiply(c,power,z.make(c,[field.fromInteger(c,3n),alpha,field.fromInteger(c,1n)])),fractions=new RationalFunctionField(z);
+  const c=fresh(),r=new PolynomialRing(Q,'a'),relation=r.make(c,[Q.fromInteger(c,-2n),Q.fromInteger(c,0n),Q.fromInteger(c,1n)]),field=constructAlgebraicExtension(c,r,relation,bounds),z=new PolynomialRing<ReturnType<typeof field.generator>>(field,'z'),alpha=field.generator(c),h=z.make(c,[alpha,field.fromInteger(c,1n)]),power=z.multiply(c,h,z.multiply(c,h,h)),a=z.multiply(c,power,z.make(c,[field.fromInteger(c,3n),alpha,field.fromInteger(c,1n)])),fractions=new RationalFunctionField(z);
   const proof=c.operation(()=>recordRationalGcdEvidence(c,()=>({gcd:polynomialGcd(c,z,a,power),value:fractions.make(c,a,power)})));
   expect(z.equal(c,proof.value.gcd,power)).toBe(true);expect(z.degree(c,proof.value.value.denominator)).toBe(0);expect(z.degree(c,proof.value.value.numerator)).toBe(2);expect(Object.isFrozen(proof.value.value)).toBe(true);
-  const other=new PolynomialRing(field,'z');expect(()=>c.operation(()=>recordRationalGcdEvidence(c,()=>polynomialGcd(c,z,other.one(c),power)))).toThrow(/domain-mismatch/);
+  const other=new PolynomialRing<ReturnType<typeof field.generator>>(field,'z');expect(()=>c.operation(()=>recordRationalGcdEvidence(c,()=>polynomialGcd(c,z,other.one(c),power)))).toThrow(/domain-mismatch/);
  });
  it('rejects incomplete or invalid arithmetic coverage and resets fresh scopes',()=>{
   const c=fresh(),r=new PolynomialRing(Q,'x'),a=r.make(c,[Q.fromInteger(c,2n),Q.fromInteger(c,0n),Q.fromInteger(c,1n)]),b=r.make(c,[Q.fromInteger(c,3n),Q.fromInteger(c,0n),Q.fromInteger(c,1n)]),stored=c.operation(()=>recordRationalGcdEvidence(c,()=>polynomialGcd(c,r,a,b)));

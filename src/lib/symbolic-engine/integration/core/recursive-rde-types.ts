@@ -18,13 +18,14 @@ interface HomogeneousBase {
   readonly forcing: readonly E[];
   readonly basis: readonly RecursiveRdePair[];
   readonly independence: RationalCoefficientSystem;
-  readonly independent: LinearSolution<Rational>;
 }
-export type RecursiveHomogeneousRde = Readonly<HomogeneousBase & (
+/** Complete differential reduction, before a separate paired-rank certificate. */
+export type RecursiveHomogeneousReduction = Readonly<HomogeneousBase & (
   | {route: 'rational'; rational: RationalParametricRdeDecision}
   | {route: 'recursive'; normalization: RecursiveWeakNormalization; denominator: RecursiveDenominatorBound;
       equation: RecursivePolynomialEquation; degree: RecursiveDegreeBound; polynomial: RecursivePolynomialSolution}
 )>;
+export type RecursiveHomogeneousRde = RecursiveHomogeneousReduction & Readonly<{independent: LinearSolution<Rational>}>;
 export interface RecursiveParametricRdeDecision {
   readonly rule: 'recursive-parametric-rde-completeness-v1';
   readonly view: CertifiedTowerView;

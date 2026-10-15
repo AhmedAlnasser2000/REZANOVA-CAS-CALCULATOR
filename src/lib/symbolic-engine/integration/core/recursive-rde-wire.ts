@@ -11,7 +11,7 @@ import { recursiveRdeValueCodecs, recursiveMembershipEvidenceCodec, hyperResonan
 import { encodeCertifiedTowerSnapshot, replayCertifiedTowerSnapshot } from './recursive-tower-wire';
 import { packRecursiveArtifactGraph, unpackRecursiveArtifactGraph } from './recursive-artifact-graph';
 import type { CertifiedTowerView } from './recursive-certified-tower';
-import type { RecursiveHomogeneousRde, RecursiveParametricRdeDecision } from './recursive-rde-types';
+import type { RecursiveHomogeneousReduction, RecursiveHomogeneousRde, RecursiveParametricRdeDecision } from './recursive-rde-types';
 import type { PolynomialCoefficientStep, RecursivePolynomialSolution } from './recursive-rde-polynomial';
 import type { RecursiveConstantExtraction } from './recursive-constant-extraction';
 import { verifyRecursiveParametricRdeWithin } from './recursive-rde';
@@ -34,8 +34,13 @@ function polynomialSolutionCodec(ctx: ExecutionContext, view: CertifiedTowerView
     basis: w.list(ctx, w.structure(ctx, {coefficients: w.list(ctx, w.scalar(ctx)), value: v.value}))});
 }
 export function recursiveHomogeneousRdeEvidenceCodec(ctx: ExecutionContext, view: CertifiedTowerView, bounds: DifferentialBounds): w.EvidenceCodec<RecursiveHomogeneousRde> {
+  return recursiveHomogeneousRankEvidenceCodec(ctx, view, bounds, linearEvidenceCodec(ctx, w.scalar(ctx)));
+}
+/** Only the identical differential-reduction payload is shared. Each caller
+ * supplies and verifies its distinct complete paired-rank certificate. */
+export function recursiveHomogeneousRankEvidenceCodec<T>(ctx: ExecutionContext, view: CertifiedTowerView, bounds: DifferentialBounds, independent: w.EvidenceCodec<T>): w.EvidenceCodec<RecursiveHomogeneousReduction & Readonly<{independent: T}>> {
   const v = recursiveRdeValueCodecs(ctx, view, bounds), common = {a: v.value, forcing: w.list(ctx, v.value), basis: w.list(ctx, v.pair),
-    independence: coefficientSystemCodec(ctx, view.owner, bounds), independent: linearEvidenceCodec(ctx, w.scalar(ctx))};
+    independence: coefficientSystemCodec(ctx, view.owner, bounds), independent};
   if (view.monomial === 'variable') {
     function codec(d: ReturnType<typeof rdeDomain>) { return w.structure(ctx, {...common, route: w.literal(ctx, 'rational'), rational: rationalParametricRdeEvidenceCodec(ctx, d)}); }
     return {encode(e) { demand(e.route === 'rational', 'verification-failed', 'RDE wire base route'); return codec(e.rational.domain).encode(e); },

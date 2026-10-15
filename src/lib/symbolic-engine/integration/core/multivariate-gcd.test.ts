@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { context } from './test-support';
 import { rational, rationalEqual } from './rational';
+import {normalizationContentCodec} from './exponential-normalization-wire-values';
+import {scalar} from './decision-wire-algebra';
 import { rationalField } from './field';
 import { MultivariateRing } from './multivariate-polynomial';
-import { multivariateGcd, verifyMultivariateGcd } from './multivariate-gcd';
+import { multivariateGcd, verifyMultivariateGcd, multivariateContent, verifyMultivariateContent } from './multivariate-gcd';
 
 function fixture(arity = 2) {
   const ctx = context({work: 20_000_000, allocation: 1_000_000_000});
@@ -68,7 +70,8 @@ describe('checked recursive multivariate GCD', () => {
     if (proof.kind !== 'recursive') throw Error('fixture');
     expect(() => verifyMultivariateGcd(ctx, ring, a, b, {...proof, s: ring.zero(ctx), t: ring.zero(ctx)})).toThrow('Bezout');
     expect(() => verifyMultivariateGcd(ctx, ring, a, b, {...proof, steps: []})).toThrow('PRS');
-    expect(() => verifyMultivariateGcd(ctx, ring, a, b, {...proof, a: {...proof.a, chain: []}})).toThrow('coverage');
+    const alteredContent = {...proof.a, chain: []};
+    expect(() => verifyMultivariateGcd(ctx, ring, a, b, {...proof, a: alteredContent})).toThrow('coverage');
     const steps = [...proof.steps]; steps[0] = {...steps[0], division: {...steps[0].division, multiplier: ring.lower!.zero(ctx)}};
     expect(() => verifyMultivariateGcd(ctx, ring, a, b, {...proof, steps})).toThrow('multiplier');
   });
@@ -86,4 +89,21 @@ describe('checked recursive multivariate GCD', () => {
     expect(() => multivariateGcd(context({allocation: 0}), ring, a, b)).toThrow('allocation');
     expect(() => verifyMultivariateGcd(context({work: 1}), ring, a, b, proof)).toThrow('work');
   });
+});
+
+it('checks the compact scalar-unit content and preserves original complete-chain replay', () => {
+  const {ctx, ring, p} = fixture(), a = p([[1, 3, 0], [3, 0, 4], [2, 0, 0]]);
+  const proof = multivariateContent(ctx, ring, a); expect(proof.format).toBe('unit-coefficient-v2');
+  const codec = normalizationContentCodec(ctx, ring, scalar(ctx));
+  verifyMultivariateContent(ctx, ring, a, codec.decode(JSON.parse(JSON.stringify(codec.encode(proof)))));
+  if (proof.format !== 'unit-coefficient-v2') throw Error('fixture');
+  for (const bad of [{...proof, index: 0}, {...proof, index: 99}, {...proof, index: .5},
+    {...proof, primitive: ring.zero(ctx)}, {...proof, content: ring.lower!.zero(ctx)}, {...proof, chain: []}]) {
+    expect(() => verifyMultivariateContent(ctx, ring, a, bad)).toThrow('verification-failed');
+  }
+  const cs = ring.coefficients(ctx, a), r = ring.lower!, chain = []; let c = r.zero(ctx);
+  for (const value of cs) {const step = multivariateGcd(ctx, r, c, value); chain.push(step); c = step.gcd;}
+  const original = Object.freeze({content: c, primitive: a, chain: Object.freeze(chain)});
+  verifyMultivariateContent(ctx, ring, a, codec.decode(JSON.parse(JSON.stringify(codec.encode(original)))));
+  expect(() => codec.decode({...codec.encode(proof) as object, index: -1})).toThrow('invalid-input');
 });

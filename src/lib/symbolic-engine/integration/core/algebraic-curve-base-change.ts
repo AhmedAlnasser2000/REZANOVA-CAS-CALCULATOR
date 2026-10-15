@@ -4,7 +4,7 @@ import type { Rational } from './rational';
 import { PolynomialRing, type Polynomial } from './polynomial';
 import { RationalFunctionField } from './rational-function';
 import type { DifferentialBounds } from './differential-field';
-import { constructAlgebraicExtension, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import { AlgebraicEmbedding, assertAlgebraicEmbedding } from './algebraic-embedding';
 import { algebraicCoordinates, type FunctionScalar } from './algebraic-presentation';
@@ -36,15 +36,16 @@ function transport(ctx: ExecutionContext, target: RationalFunctionField<CurveCon
 function maps(ctx: ExecutionContext, constants: AlgebraicField<Rational>, lift: AlgebraicField<FunctionScalar>, field: AlgebraicField<CurveConstantLift>,
   scalar: RationalFunctionField<CurveConstant>): AlgebraicCurveArithmetic<ConstantBaseChangeValue> {
   const base = lift.parent as RationalFunctionField<Rational>, n = field.ring.degree(ctx, field.modulus), d = constants.ring.degree(ctx, constants.modulus);
-  const constant = (c: ExecutionContext, value: CurveConstant) => {
-    constants.assert(c, value); return lift.make(c, lift.ring.make(c, value.representative.coefficients.map(q => base.fromCoefficient(c, q))));
-  };
   const toLift = (c: ExecutionContext, value: CurveScalar): CurveConstantLift => {
-    scalar.assert(c, value); const x = lift.embed(c, base.make(c, base.ring.make(c, [Q.fromInteger(c, 0n), Q.fromInteger(c, 1n)]), base.ring.one(c)));
-    const evaluate = (p: Polynomial<CurveConstant>) => {
-      let out = lift.fromInteger(c, 0n); for (let i = p.coefficients.length - 1; i >= 0; i--) out = lift.add(c, lift.multiply(c, out, x), constant(c, p.coefficients[i])); return out;
+    scalar.assert(c, value);
+    const transpose = (p: Polynomial<CurveConstant>): CurveConstantLift => {
+      scalar.ring.assert(c, p); const size = d * p.coefficients.length;
+      demand(Number.isSafeInteger(size), 'invalid-input', 'constant scalar transport dimensions'); c.allocate(size + d);
+      const coefficients = Array.from({length: d}, (_, i) => base.make(c, base.ring.make(c,
+        p.coefficients.map(coefficient => {constants.assert(c, coefficient); return coefficient.representative.coefficients[i] ?? Q.fromInteger(c, 0n);})), base.ring.one(c)));
+      return lift.make(c, lift.ring.make(c, coefficients));
     };
-    return lift.exactDivide(c, evaluate(value.numerator), evaluate(value.denominator));
+    return lift.exactDivide(c, transpose(value.numerator), transpose(value.denominator));
   };
   const fromLift = (c: ExecutionContext, value: CurveConstantLift): CurveScalar => {
     lift.assert(c, value); let out = scalar.fromInteger(c, 0n), power = constants.fromInteger(c, 1n);
@@ -86,18 +87,18 @@ export function baseChangeAlgebraicCurveWithin<E>(ctx: ExecutionContext, source:
   assertAlgebraicEmbedding(ctx, embedding);
   demand(constants.parent === Q && embedding.source === source.coordinates.constantOwner && embedding.target === constants, 'domain-mismatch', 'explicit constant extension/embedding');
   const scalarBase = new RationalFunctionField(new PolynomialRing(Q, source.coordinates.scalar.ring.variable)), constantRing = new PolynomialRing(scalarBase, 'gamma');
-  const lift = constructAlgebraicExtension(ctx, constantRing, constantRing.make(ctx, constants.modulus.coefficients.map(q => scalarBase.fromCoefficient(ctx, q))), bounds);
+  const lift = constructAlgebraicExtensionWithin(ctx, constantRing, constantRing.make(ctx, constants.modulus.coefficients.map(q => scalarBase.fromCoefficient(ctx, q))), bounds);
   const scalar = new RationalFunctionField(new PolynomialRing(constants, source.coordinates.scalar.ring.variable));
   // A temporary degree-one owner provides the same checked C'(x) arithmetic
   // conversion used by the final owner; it grants no geometry authority.
-  const temporaryRing = new PolynomialRing(lift, 'theta'), temporary = constructAlgebraicExtension(ctx, temporaryRing,
+  const temporaryRing = new PolynomialRing(lift, 'theta'), temporary = constructAlgebraicExtensionWithin(ctx, temporaryRing,
     temporaryRing.make(ctx, [lift.fromInteger(ctx, 0n), lift.fromInteger(ctx, 1n)]), bounds);
   const conversion = maps(ctx, constants, lift, temporary, scalar);
   const relation = source.coordinates.relation.coefficients.map(v => {
     const native = conversion.scalarNative(ctx, transport(ctx, scalar, embedding, v));
     return native.representative.coefficients[0] ?? lift.fromInteger(ctx, 0n);
   });
-  const field = constructAlgebraicExtension(ctx, temporaryRing, temporaryRing.make(ctx, relation), bounds), coordinates = maps(ctx, constants, lift, field, scalar);
+  const field = constructAlgebraicExtensionWithin(ctx, temporaryRing, temporaryRing.make(ctx, relation), bounds), coordinates = maps(ctx, constants, lift, field, scalar);
   const originals = algebraicCoordinates(ctx, source.owner, bounds), originalImages = Object.freeze(originals.generators.map(v => originalValue(ctx, source, v, coordinates, embedding)));
   const basisImages = Object.freeze(source.coordinates.basis.map(v => originalValue(ctx, source, v, coordinates, embedding)));
   const finite = changedOrder(ctx, source, embedding, coordinates, false), infinity = changedOrder(ctx, source, embedding, coordinates, true);

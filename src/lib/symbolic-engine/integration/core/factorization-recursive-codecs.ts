@@ -2,7 +2,7 @@ import { demand, type ExecutionContext } from './execution';
 import type { Rational } from './rational';
 import type { MultivariateRing } from './multivariate-polynomial';
 import type { MultivariateContent } from './multivariate-gcd';
-import { normalizationKind, normalizationPolynomialCodec, normalizationGcdCodec } from './exponential-normalization-wire-values';
+import { normalizationKind, normalizationPolynomialCodec, normalizationGcdCodec, normalizationContentCodec } from './exponential-normalization-wire-values';
 import { factorFiniteCodec } from './factorization-codecs';
 import type { FactorConversion } from './factorization-conversion';
 import type { FactorMultivariateTree, FactorMultivariateProof, FactorMultivariateRecovery, FactorMultivariateRejection } from './factorization-multivariate';
@@ -10,9 +10,7 @@ import type { FactorSparseSquareFree, FactorSparsePrimitive } from './factorizat
 import * as w from './decision-wire-algebra';
 
 export function factorContentCodec(ctx: ExecutionContext, ring: MultivariateRing<Rational>): w.EvidenceCodec<MultivariateContent<Rational>> {
-  demand(ring.lower !== undefined, 'invalid-input', 'factor content codec coordinates'); const q = w.scalar(ctx);
-  return w.structure(ctx, {content: normalizationPolynomialCodec(ctx, ring.lower, q), primitive: normalizationPolynomialCodec(ctx, ring, q),
-    chain: w.list(ctx, normalizationGcdCodec(ctx, ring.lower, q))});
+  return normalizationContentCodec(ctx, ring, w.scalar(ctx));
 }
 export function factorConversionCodec(ctx: ExecutionContext, ring: MultivariateRing<Rational>): w.EvidenceCodec<FactorConversion> {
   demand(ring.lower !== undefined, 'invalid-input', 'factor conversion coordinates');

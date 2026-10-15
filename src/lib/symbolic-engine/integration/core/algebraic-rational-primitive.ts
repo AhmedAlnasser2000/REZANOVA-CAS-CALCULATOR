@@ -7,7 +7,7 @@ import { verifyAlgebraicCurveWithin, type AlgebraicCurveView } from './algebraic
 import type { FormalPrimitive, QRationalFunction, RootLogTerm } from './formal-primitive';
 import { differentiatePrimitiveWithin, verifyPrimitiveDerivativeWithin, type PrimitiveDerivativeCertificate } from './primitive-verification-internal';
 import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
-import { constructAlgebraicExtension, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
 import { AlgebraicEmbedding } from './algebraic-embedding';
 import { constructNumberFieldPresentationWithin, verifyNumberFieldPresentationWithin, numberFieldPresentationValueWithin, type NumberFieldPresentation } from './number-field-presentation';
 import { constructRelativeNumberFieldWithin, type NumberValue } from './relative-number-field';
@@ -57,7 +57,7 @@ function rootConstruction<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>
   let extension: AlgebraicField<NumberValue> | null = null, presentation: NumberFieldPresentation<AlgebraicElement<NumberValue>> | null = null;
   if (degree === 1) root = c.negate(ctx, factor.coefficients[0]);
   else {
-    const r = new PolynomialRing(c, 'rationalRoot'); extension = constructAlgebraicExtension(ctx, r, r.make(ctx, factor.coefficients), bounds); presentation = constructNumberFieldPresentationWithin(ctx, extension, bounds); constants = presentation.field;
+    const r = new PolynomialRing(c, 'rationalRoot'); extension = constructAlgebraicExtensionWithin(ctx, r, r.make(ctx, factor.coefficients), bounds); presentation = constructNumberFieldPresentationWithin(ctx, extension, bounds); constants = presentation.field;
     root = numberFieldPresentationValueWithin(ctx, extension, presentation, extension.generator(ctx), bounds);
     const image = numberFieldPresentationValueWithin(ctx, extension, presentation, extension.embed(ctx, c.generator(ctx)), bounds);
     embedding = AlgebraicEmbedding.extension(ctx, c, constants, AlgebraicEmbedding.rationals(ctx, constants, bounds), image, bounds);

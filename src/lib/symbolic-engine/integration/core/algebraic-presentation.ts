@@ -5,7 +5,7 @@ import { PolynomialRing } from './polynomial';
 import { RationalFunctionField, type RationalFunction } from './rational-function';
 import { factorCoefficientDomain, type FactorCoefficientDomain } from './factorization-domain';
 import type { DifferentialBounds } from './differential-field';
-import { constructAlgebraicExtension, isAlgebraicField, UnsupportedAlgebraicDomain, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, isAlgebraicField, UnsupportedAlgebraicDomain, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import { transposeExactMatrix, invertExactMatrix, verifyExactMatrixInverse, type MatrixInverse } from './algebraic-matrix';
 
@@ -116,7 +116,7 @@ export function algebraicPrimitivePresentationWithin<E>(ctx: ExecutionContext, c
     const coefficients = basis.inverse.map(row => {
       let out = b.fromInteger(ctx, 0n); for (let i = 0; i < n; i++) out = b.add(ctx, out, b.multiply(ctx, row[i], vector[i])); return b.negate(ctx, out);
     }); coefficients.push(b.fromInteger(ctx, 1n));
-    const ring = new PolynomialRing(b, 'theta'), auxiliary = constructAlgebraicExtension(ctx, ring, ring.make(ctx, coefficients), bounds);
+    const ring = new PolynomialRing(b, 'theta'), auxiliary = constructAlgebraicExtensionWithin(ctx, ring, ring.make(ctx, coefficients), bounds);
     const partial = {auxiliary, combination: Object.freeze(combination), primitive, powers: Object.freeze(powers), basis};
     const result = Object.freeze({...partial, generatorCoordinates: Object.freeze(coordinates.generators.map(g => primitiveCoordinates(ctx, coordinates, {...partial, generatorCoordinates: []}, g)))});
     verifyAlgebraicPresentationWithin(ctx, coordinates, result, bounds); return result;

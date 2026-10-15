@@ -1,7 +1,7 @@
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import { PolynomialRing, type Polynomial } from './polynomial';
-import { constructAlgebraicExtension, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicField } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import { solveLinearSystem, verifyLinearSolution, type LinearSystem, type LinearSolution } from './linear-system';
 import { freezeExactMatrix } from './algebraic-matrix';
@@ -11,6 +11,7 @@ import { constructCurveResidueAlgebra, verifyCurveResidueAlgebra, residueCurvePo
   type CurveResidueAlgebra, type CurveBaseResidue, type CurvePlaceResidue } from './algebraic-residue-algebra';
 import { constructCurveIdeal, reconstructCurveIdeal, assertCurveIdeal, multiplyCurveIdeals, verifyCurveIdealProduct, unitCurveIdeal,
   equalCurveIdeals, type CurveFractionalIdeal, type CurveIdealProduct } from './algebraic-fractional-ideal';
+import {reuseAlgebraicVerification} from './algebraic-proof-reuse';
 
 export interface AlgebraicPlace<E> {
   readonly curve: AlgebraicCurveView<E>;
@@ -46,6 +47,17 @@ export function equalAlgebraicPlaces<E>(ctx: ExecutionContext, curve: AlgebraicC
   assertAlgebraicPlace(ctx, curve, a); assertAlgebraicPlace(ctx, curve, b);
   if (a.order !== b.order) return false;
   return equalCurveIdeals(ctx, curve, a.ideal, b.ideal);
+}
+/** Composition-only replay of one supplied owned place. No decomposition or
+ * residue-field search is performed; all retained defining/map evidence checks. */
+export function verifyAlgebraicPlaceWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, place: AlgebraicPlace<E>, bounds: DifferentialBounds): void {
+  assertAlgebraicPlace(ctx, curve, place);
+  const order = place.order.infinity ? curve.infinity : curve.finite;
+  demand(place.order === order, 'domain-mismatch', 'place expected curve chart');
+  reuseAlgebraicVerification(ctx, 'owned-place', curve, place, bounds, () => {
+    verifyCurveResidueAlgebra(ctx, order, place.prime, place.algebra, bounds);
+    verifyPlace(ctx, curve, order, place.prime, place.algebra, place.index, place, bounds);
+  });
 }
 function component(proof: CurveResidueAlgebra, index: number) {
   demand(proof.factorization.kind === 'factorization' && Number.isSafeInteger(index) && index >= 0 && index < proof.factorization.factors.length,
@@ -114,7 +126,7 @@ export function decomposeAlgebraicPlacesWithin<E>(ctx: ExecutionContext, curve: 
   const algebra = constructCurveResidueAlgebra(ctx, order, prime, bounds);
   demand(algebra.factorization.kind === 'factorization', 'verification-failed', 'residue component coverage');
   const result = algebra.factorization.factors.map((factor, index) => {
-    const residueRing = new PolynomialRing(algebra.base, 'sigma'), residue = constructAlgebraicExtension(ctx, residueRing, residueRing.make(ctx, factor.polynomial.coefficients), bounds);
+    const residueRing = new PolynomialRing(algebra.base, 'sigma'), residue = constructAlgebraicExtensionWithin(ctx, residueRing, residueRing.make(ctx, factor.polynomial.coefficients), bounds);
     const kernel = solveLinearSystem(ctx, algebra.base, residueRequest(ctx, algebra, residue)), vectors = primeIdealGenerators(ctx, order, prime, algebra, kernel);
     const ideal = constructCurveIdeal(ctx, curve, infinity, vectors), residueDegree = BigInt(residue.ring.degree(ctx, residue.modulus));
     return reconstructAlgebraicPlaceWithin(ctx, curve, order, prime, algebra, index, {residue, kernel, ideal, ramification: factor.multiplicity,

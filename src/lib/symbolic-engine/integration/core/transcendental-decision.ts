@@ -34,7 +34,14 @@ function sameTerms(ctx: ExecutionContext,d: TranscendentalDomain,a: readonly Tra
     &&d.fz.equal(ctx,a[i].argument,b[i].argument)&&d.field.equal(ctx,a[i].norm,b[i].norm),'verification-failed','ordered root-log exact mapping');
 }
 export type TranscendentalCandidate = Readonly<Omit<TranscendentalDecision, 'derivative'>>;
-export function transcendentalDecisionConditions(ctx: ExecutionContext,e: TranscendentalCandidate): readonly TranscendentalCondition[] {
+interface TranscendentalConditionSource {
+  readonly domain: TranscendentalDomain; readonly input: E; readonly primitive?: TranscendentalPrimitive|null;
+  readonly hermite: DifferentialHermite|null; readonly remainder: TranscendentalRemainder|null;
+  readonly polynomial: Readonly<{fieldPart: E; steps: readonly Readonly<{limited: Readonly<{conditions: readonly RecursiveCondition[]}>}>[]}>|null;
+  readonly laurent: Readonly<{fieldPart: E; steps: readonly Readonly<{rde: Readonly<{conditions: readonly RecursiveCondition[]}>}>[]}>|null;
+  readonly parent: Readonly<{conditions: readonly TranscendentalCondition[]}>|null;
+}
+export function transcendentalDecisionConditions(ctx: ExecutionContext,e: TranscendentalConditionSource): readonly TranscendentalCondition[] {
   const d=e.domain;let retained=e.primitive??undefined;
   if(!retained&&e.hermite){
     let part=e.hermite.fieldPart;if(e.polynomial)part=d.field.add(ctx,part,e.polynomial.fieldPart);if(e.laurent)part=d.field.add(ctx,part,e.laurent.fieldPart);
@@ -107,6 +114,15 @@ function checkObstruction(e: TranscendentalDecision,kind: TranscendentalObstruct
   demand(e.kind==='non-elementary'&&e.obstruction?.kind===kind&&e.obstruction.index===index&&e.obstruction.level===e.domain.field.height
     &&e.embedding===null&&e.primitive===null&&e.derivative===null,'verification-failed','checked Liouville obstruction authority');
 }
+/** Shared Hermite/residue identities; no family, outcome or negative authority. */
+export function verifyTranscendentalResiduePrefixWithin(ctx: ExecutionContext,d: TranscendentalDomain,input: E,h: DifferentialHermite,residue: TranscendentalResidue|null,r: TranscendentalRemainder|null,bounds: DifferentialBounds): number|null {
+  const f=d.field;verifyFirstLevelHermite(ctx,d,input,h);demand((residue===null)===f.isZero(ctx,h.residual),'verification-failed','normal residue coverage');
+  if(residue)verifyTranscendentalResidues(ctx,d,h.residual,residue);
+  if(residue!==null&&residue.evidence.nonconstant!==null){demand(r===null,'verification-failed','nonconstant residue subtraction unperformed');return residue.evidence.nonconstant;}
+  demand(r!==null,'verification-failed','missing verified residue subtraction');sameTerms(ctx,d,logs(ctx,residue),r.logarithms.terms);
+  demand(f.isZero(ctx,r.logarithms.fieldPart),'verification-failed','residue logarithm field part');verifyTranscendentalPrimitiveWithin(ctx,d,r.logarithms,r.derivative.derivative,r.derivative,bounds);
+  demand(f.equal(ctx,r.value,f.subtract(ctx,f.add(ctx,h.laurent,h.residual),r.derivative.derivative)),'verification-failed','complete residue subtraction');return null;
+}
 export function verifyTranscendentalDecisionWithin(ctx: ExecutionContext,view: CertifiedTowerView,input: E,e: TranscendentalDecision,bounds: DifferentialBounds): void {
   demand(e!==null&&typeof e==='object','invalid-input','transcendental decision record');const d=e.domain;requireArithmeticDomain(ctx,d,bounds);const f=d.field;f.assert(ctx,input);
   demand(d.view===view&&e.rule===TRANSCENDENTAL_RULE&&f.equal(ctx,input,e.input),'verification-failed','complete transcendental expected owner/input/rule');
@@ -116,14 +132,11 @@ export function verifyTranscendentalDecisionWithin(ctx: ExecutionContext,view: C
     verifyTranscendentalRationalEmbedding(ctx,d,e.rational.primitive,e.primitive);verifyTranscendentalPrimitiveWithin(ctx,d,e.primitive,input,e.derivative,bounds);
   }else{
     demand(e.stage===(view.monomial==='primitive'?'logarithmic':'exponential')&&e.rational===null&&e.hermite!==null,'verification-failed','recursive decision stage/coverage');
-    const h=e.hermite;verifyFirstLevelHermite(ctx,d,input,h);demand((e.residue===null)===f.isZero(ctx,h.residual),'verification-failed','normal residue coverage');
-    if(e.residue)verifyTranscendentalResidues(ctx,d,h.residual,e.residue);
-    if(e.residue?.evidence.nonconstant!==null&&e.residue!==null){
-      checkObstruction(e,'normal-residue',e.residue.evidence.nonconstant);demand(e.remainder===null&&e.polynomial===null&&e.laurent===null&&e.parent===null,'verification-failed','nonconstant residue terminal coverage');
+    const h=e.hermite,nonconstant=verifyTranscendentalResiduePrefixWithin(ctx,d,input,h,e.residue,e.remainder,bounds);
+    if(nonconstant!==null){
+      checkObstruction(e,'normal-residue',nonconstant);demand(e.remainder===null&&e.polynomial===null&&e.laurent===null&&e.parent===null,'verification-failed','nonconstant residue terminal coverage');
     }else{
-      const r=e.remainder;demand(r!==null,'verification-failed','missing verified residue subtraction');sameTerms(ctx,d,logs(ctx,e.residue),r.logarithms.terms);
-      demand(f.isZero(ctx,r.logarithms.fieldPart),'verification-failed','residue logarithm field part');verifyTranscendentalPrimitiveWithin(ctx,d,r.logarithms,r.derivative.derivative,r.derivative,bounds);
-      demand(f.equal(ctx,r.value,f.subtract(ctx,f.add(ctx,h.laurent,h.residual),r.derivative.derivative)),'verification-failed','complete residue subtraction');
+      const r=e.remainder;demand(r!==null,'verification-failed','missing verified residue subtraction');
       let failed: boolean,parentInput: E|null;
       if(view.monomial==='primitive'){
         demand(e.polynomial!==null&&e.laurent===null,'verification-failed','logarithmic polynomial coverage');verifyTranscendentalPolynomial(ctx,d,r.value,e.polynomial,bounds);

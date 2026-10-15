@@ -11,8 +11,9 @@ import { normalizationInteger, normalizationKind, normalizationText } from './ex
 import { algebraicConstructionSources, algebraicConditions, verifyAlgebraicConditions, type AlgebraicConditionSource } from './algebraic-conditions';
 import { AlgebraicField, algebraicHeight, isAlgebraicField, verifyAlgebraicConstructionWithin,
   type AlgebraicConstruction, type AlgebraicElement } from './algebraic-field';
-import { verifyAlgebraicFactorizationWithin, type AlgebraicFactorization, type AlgebraicFactorComponent, type AlgebraicNorm } from './algebraic-factorization';
+import { verifyAlgebraicFactorizationWithin, type AlgebraicFactorization, type AlgebraicFactorComponent, type AlgebraicNorm, type AlgebraicFactorNorm } from './algebraic-factorization';
 import { verifyAlgebraicChainWithin, verifyAlgebraicDerivativeWithin, type AlgebraicDerivative, type AlgebraicGeneratorDerivative } from './algebraic-derivative';
+import {numberFieldPolynomialNormEvidenceCodec} from './number-field-polynomial-norm-wire';
 import * as w from './decision-wire-algebra';
 
 export function algebraicCoefficientCodec<E>(ctx: ExecutionContext, field: ExactField<E>, bounds: DifferentialBounds): w.EvidenceCodec<E> {
@@ -31,6 +32,23 @@ export function algebraicNormCodec<E>(ctx: ExecutionContext, owner: AlgebraicFie
   return {encode(v) { return parts(v.outer, v.ring).encode(v.proof); }, decode(v) {
     const outer = new PolynomialRing(owner.parent, variable), ring = new PolynomialRing(new PolynomialDomain(outer), owner.ring.variable);
     ctx.allocate(3); return Object.freeze({outer, ring, proof: parts(outer, ring).decode(v)});
+  }};
+}
+/** Explicit nested v2 record; original Brown payloads still use their original verifier. */
+export function algebraicFactorNormCodec<E>(ctx: ExecutionContext, owner: AlgebraicField<E>, inputRing: PolynomialRing<AlgebraicElement<E>>, bounds: DifferentialBounds): w.EvidenceCodec<AlgebraicFactorNorm<E>> {
+  const original = algebraicNormCodec(ctx, owner, inputRing.variable, bounds);
+  function compact(ring: AlgebraicNorm<E>['ring'], scalar: PolynomialRing<E>) {
+    return w.structure(ctx, {format: w.literal(ctx, 'number-field-polynomial-norm-v2'), evidence: numberFieldPolynomialNormEvidenceCodec(ctx, owner, inputRing, ring, scalar, bounds)});
+  }
+  return {encode(value) {
+    if (value.format !== 'number-field-polynomial-norm-v2') return original.encode(value);
+    const scalar = value.evidence.resultant.method === 'complete-specialization' ? value.evidence.resultant.scalarRing : new PolynomialRing(owner.parent, owner.ring.variable);
+    return compact(value.ring, scalar).encode(value);
+  }, decode(data) {
+    demand(data !== null && typeof data === 'object', 'invalid-input', 'factor norm record');
+    if (!Object.hasOwn(data, 'format')) return original.decode(data);
+    const outer = new PolynomialRing(owner.parent, inputRing.variable), ring = new PolynomialRing(new PolynomialDomain(outer), owner.ring.variable), scalar = new PolynomialRing(owner.parent, owner.ring.variable);
+    const value = compact(ring, scalar).decode(data); ctx.allocate(4); return Object.freeze({...value, outer, ring});
   }};
 }
 export function algebraicFactorizationCodec<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, bounds: DifferentialBounds): w.EvidenceCodec<AlgebraicFactorization<E>> {
@@ -52,11 +70,11 @@ export function algebraicFactorizationCodec<E>(ctx: ExecutionContext, ring: Poly
   const components: w.EvidenceCodec<AlgebraicFactorComponent<unknown>> = {
     encode(v) {
       const np = w.polynomial(ctx, v.norm.outer, algebraicCoefficientCodec(ctx, owner.parent, bounds));
-      return w.structure(ctx, {shift: normalizationInteger(ctx), shifted: poly, norm: algebraicNormCodec(ctx, owner, ring.variable, bounds),
+      return w.structure(ctx, {shift: normalizationInteger(ctx), shifted: poly, norm: algebraicFactorNormCodec(ctx, owner, r, bounds),
         squareFreeNorm: w.bezout(ctx, np), parent: algebraicFactorizationCodec(ctx, v.norm.outer, bounds), gcds: w.list(ctx, w.bezout(ctx, poly))}).encode(v);
     }, decode(v) {
       const raw = w.record(ctx, v, ['shift', 'shifted', 'norm', 'squareFreeNorm', 'parent', 'gcds']);
-      const norm = algebraicNormCodec(ctx, owner, ring.variable, bounds).decode(raw.norm), np = w.polynomial(ctx, norm.outer, algebraicCoefficientCodec(ctx, owner.parent, bounds));
+      const norm = algebraicFactorNormCodec(ctx, owner, r, bounds).decode(raw.norm), np = w.polynomial(ctx, norm.outer, algebraicCoefficientCodec(ctx, owner.parent, bounds));
       return Object.freeze({shift: normalizationInteger(ctx).decode(raw.shift), shifted: poly.decode(raw.shifted), norm,
         squareFreeNorm: w.bezout(ctx, np).decode(raw.squareFreeNorm), parent: algebraicFactorizationCodec(ctx, norm.outer, bounds).decode(raw.parent),
         gcds: w.list(ctx, w.bezout(ctx, poly)).decode(raw.gcds)});
@@ -92,12 +110,13 @@ export function verifyAlgebraicSnapshot<E>(ctx: ExecutionContext, field: ExactFi
   const proof = algebraicConstructionCodec(ctx, field.ring, bounds).decode(raw.construction);
   verifyAlgebraicConstructionWithin(ctx, field.ring, field.construction.relation, proof, bounds);
 }
-export function algebraicDerivativeCodec<E>(ctx: ExecutionContext, field: ExactField<E>, bounds: DifferentialBounds): w.EvidenceCodec<AlgebraicDerivative<E>> {
-  const element = algebraicCoefficientCodec(ctx, field, bounds);
+export type AlgebraicValueCodecFactory = <E>(field: ExactField<E>) => w.EvidenceCodec<E>;
+export function algebraicDerivativeCodec<E>(ctx: ExecutionContext, field: ExactField<E>, bounds: DifferentialBounds, values: AlgebraicValueCodecFactory = owner => algebraicCoefficientCodec(ctx, owner, bounds)): w.EvidenceCodec<AlgebraicDerivative<E>> {
+  const element = values(field);
   if (!isAlgebraicField(field)) return w.structure(ctx, {kind: w.literal(ctx, 'base'), input: element, derivative: element});
-  const owner: AlgebraicField<unknown> = field, child = algebraicDerivativeCodec(ctx, owner.parent, bounds), c = algebraicCoefficientCodec(ctx, owner, bounds);
+  const owner: AlgebraicField<unknown> = field, child = algebraicDerivativeCodec(ctx, owner.parent, bounds, values), c = values(owner);
   const rule: w.EvidenceCodec<AlgebraicGeneratorDerivative<unknown>> = w.structure(ctx, {coefficients: w.list(ctx, child), separant: c, inverse: c,
-    bezout: w.bezout(ctx, w.polynomial(ctx, owner.ring, algebraicCoefficientCodec(ctx, owner.parent, bounds))), derivative: c});
+    bezout: w.bezout(ctx, w.polynomial(ctx, owner.ring, values(owner.parent))), derivative: c});
   const algebraic = w.structure(ctx, {kind: w.literal(ctx, 'algebraic'), input: element, derivative: element, rule, coefficients: w.list(ctx, child)});
   const embedded = w.structure(ctx, {kind: w.literal(ctx, 'embedded'), input: element, derivative: element, coefficient: w.optional(child)});
   return {encode(v) { demand(v.kind !== 'base', 'verification-failed', 'algebraic derivative codec'); return v.kind === 'embedded' ? embedded.encode(v) : algebraic.encode(v); },
@@ -107,8 +126,8 @@ function artifact(ctx: ExecutionContext, bounds: DifferentialBounds, data: unkno
   inspectExactArtifact(ctx, bounds, data); const raw = w.record(ctx, data, ['tag', 'version', 'construction', 'evidence', 'conditions']);
   demand(raw.tag === tag && raw.version === 1, 'invalid-input', 'algebraic artifact tag/version'); return raw;
 }
-export function algebraicConditionsCodec<E>(ctx: ExecutionContext, owner: ExactField<E>, bounds: DifferentialBounds) {
-  return w.list(ctx, w.structure(ctx, {kind: w.literal(ctx, 'denominator', 'nonzero'), path: normalizationText(ctx), value: algebraicCoefficientCodec(ctx, owner, bounds)}));
+export function algebraicConditionsCodec<E>(ctx: ExecutionContext, owner: ExactField<E>, bounds: DifferentialBounds, value = algebraicCoefficientCodec(ctx, owner, bounds)) {
+  return w.list(ctx, w.structure(ctx, {kind: w.literal(ctx, 'denominator', 'nonzero'), path: normalizationText(ctx), value}));
 }
 function sources<E>(owner: ExactField<E>, values: readonly {value: E; path: string; nonzero?: boolean}[]): readonly AlgebraicConditionSource[] {
   return values.map(v => ({...v, field: owner as ExactField<unknown>}));

@@ -1,8 +1,9 @@
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import type { RationalFunctionField } from './rational-function';
+import type { ExactField } from './field';
 import type { CurveConstant, CurveScalar } from './algebraic-curve-coordinates';
-import { algebraicCoefficientCodec } from './algebraic-wire';
+import { algebraicCoefficientCodec, algebraicDerivativeCodec, algebraicConditionsCodec } from './algebraic-wire';
 import { polynomialModuleCodec, matrixInverseCodec } from './algebraic-module-wire';
 import { normalizationInteger } from './exponential-normalization-wire-values';
 import type { CurveDenominators, CurveLattice, CurveLatticePreimage } from './algebraic-curve-lattice';
@@ -38,6 +39,9 @@ export class AlgebraicDivisorWireContext {
   }
   coefficient(field: RationalFunctionField<CurveConstant>) { return algebraicCoefficientCodec(this.ctx, field.ring.domain, this.bounds); }
   scalar(field: RationalFunctionField<CurveConstant>) { return w.fraction(this.ctx, field, this.coefficient(field)); }
+  native<E>(field: ExactField<E>) { return algebraicCoefficientCodec(this.ctx, field, this.bounds); }
+  derivative<E>(field: ExactField<E>) { return algebraicDerivativeCodec(this.ctx, field, this.bounds, owner => this.native(owner)); }
+  conditions<E>(field: ExactField<E>) { return algebraicConditionsCodec(this.ctx, field, this.bounds, this.native(field)); }
   denominators(field: RationalFunctionField<CurveConstant>): w.EvidenceCodec<CurveDenominators> {
     const ctx = this.ctx, p = w.polynomial(ctx, field.ring, this.coefficient(field));
     return this.memo('curve-denominators', field, w.structure(ctx, {input: w.list(ctx, p), steps: w.list(ctx, w.structure(ctx,

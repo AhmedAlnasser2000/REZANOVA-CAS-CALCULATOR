@@ -58,11 +58,18 @@ function check(ctx: ExecutionContext, owner: DifferentialField, input: Different
     'verification-failed', 'dual-number derivative identity');
 }
 export function verifyDerivative(ctx: ExecutionContext, owner: DifferentialField, input: DifferentialElement, evidence: DerivativeEvidence): void {
-  ctx.operation(() => check(ctx, owner, input, evidence));
+  ctx.operation(() => verifyDerivativeWithin(ctx, owner, input, evidence));
+}
+/** Composition entries preserve the caller's proof scope and cumulative budget. */
+export function verifyDerivativeWithin(ctx: ExecutionContext, owner: DifferentialField, input: DifferentialElement, evidence: DerivativeEvidence): void {
+  demand(ctx.operationToken !== undefined, 'invalid-input', 'derivative verification requires operation scope');
+  check(ctx, owner, input, evidence);
+}
+export function differentiateWithin(ctx: ExecutionContext, owner: DifferentialField, input: DifferentialElement): DerivativeEvidence {
+  demand(ctx.operationToken !== undefined, 'invalid-input', 'differentiation requires operation scope');
+  const derivative = compute(ctx, owner, input); ctx.allocate(2);
+  const evidence = Object.freeze({ input, derivative }); check(ctx, owner, input, evidence); return evidence;
 }
 export function differentiate(ctx: ExecutionContext, owner: DifferentialField, input: DifferentialElement): DerivativeEvidence {
-  return ctx.operation(() => {
-    const derivative = compute(ctx, owner, input); ctx.allocate(2);
-    const evidence = Object.freeze({ input, derivative }); check(ctx, owner, input, evidence); return evidence;
-  });
+  return ctx.operation(() => differentiateWithin(ctx, owner, input));
 }

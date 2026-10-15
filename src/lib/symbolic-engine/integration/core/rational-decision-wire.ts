@@ -1,6 +1,6 @@
 import { demand, type ExecutionContext } from './execution';
 import type { FormalPrimitive, FormalPrimitiveDomain, QRationalFunction } from './formal-primitive';
-import { encodePrimitive, decodePrimitiveInDomain } from './primitive-wire';
+import { encodePrimitiveWithin, decodePrimitiveInDomain } from './primitive-wire';
 import { PolynomialRing } from './polynomial';
 import { SquareFreeQuotientAlgebra } from './quotient-algebra';
 import { hermiteEvidenceCodec } from './hermite-wire';
@@ -73,7 +73,7 @@ export function encodeRationalDecisionWithin(ctx: ExecutionContext, owner: Forma
   verifyRationalDecisionWithin(ctx, owner, decision.input, decision);
   const c = codecs(ctx, owner); ctx.allocate(11 + owner.x.variable.length + owner.z.variable.length + decision.primitive.terms.length);
   return Object.freeze({ kind: 'rational-integration-decision', version: 1, variable: owner.x.variable, residueVariable: owner.z.variable,
-    input: c.f.encode(decision.input), primitive: encodePrimitive(ctx, decision.primitive),
+    input: c.f.encode(decision.input), primitive: encodePrimitiveWithin(ctx, decision.primitive),
     normEvidence: list(ctx, c.norm).encode(decision.primitive.terms.map(t => t.normEvidence)),
     hermite: c.hermite.encode(decision.hermite), lrt: optional(lrtCodec(ctx, owner, decision.primitive)).encode(decision.lrt),
     derivative: derivativeCodec(ctx, owner, decision.primitive).encode(decision.derivative), conditions: c.decisionConditions.encode(decision.conditions) });

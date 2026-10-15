@@ -4,6 +4,7 @@ import { buildCanonicalResultDocument } from '../../result-contract/current';
 import { demand, type ExecutionContext } from '../../symbolic-engine/integration/core/execution';
 import type { DifferentialField, DifferentialElement as E, DifferentialBounds } from '../../symbolic-engine/integration/core/differential-field';
 import { verifyExponentialRationalDecision, type ExponentialRationalDecision, type ExponentialRationalCandidate } from '../../symbolic-engine/integration/core/exponential-rational-decision';
+import {compactFirstLevelElementaryRule, verifyCompactExponentialElementaryWithin, type CompactExponentialCandidate, type CompactExponentialElementary} from '../../symbolic-engine/integration/core/first-level-elementary-evidence';
 import { freshName, projectQPolynomial, projectElement, projectFieldPolynomial, type FieldBindings } from './exponential-math';
 import { checkSourceTarget } from './source-target';
 import { normalizationRestrictions, type IntegrationSourceProof } from './normalization-result';
@@ -11,8 +12,11 @@ import { normalizationRestrictions, type IntegrationSourceProof } from './normal
 type ExponentialPrimary = Extract<NonNullable<CanonicalResultDocument['primary']>, {kind: 'exponential-antiderivative' | 'non-elementary'}>;
 /** Page-only candidate projection; mathematical checking happens separately. */
 export function projectExponentialCandidate(ctx: ExecutionContext, field: DifferentialField, input: E,
-  decision: ExponentialRationalCandidate, source?: IntegrationSourceProof): ExponentialPrimary {
-  return ctx.operation(() => {
+  decision: ExponentialRationalCandidate | CompactExponentialCandidate, source?: IntegrationSourceProof): ExponentialPrimary {
+  return ctx.operation(() => projectExponentialCandidateWithin(ctx, field, input, decision, source));
+}
+export function projectExponentialCandidateWithin(ctx: ExecutionContext, field: DifferentialField, input: E,
+  decision: ExponentialRationalCandidate | CompactExponentialCandidate, source?: IntegrationSourceProof): ExponentialPrimary {
     const base = field.parent!, variable = base.fractions!.ring.variable, used = new Set([variable]);
     const generator = freshName('t', used), integrationConstant = freshName('C', used);
     if (source) {demand(source.owner === base, 'domain-mismatch', 'result source owner'); checkSourceTarget(ctx, source, input);}
@@ -34,12 +38,16 @@ export function projectExponentialCandidate(ctx: ExecutionContext, field: Differ
     });
     return {kind: 'exponential-antiderivative', semantics: 'formal-local-complex', variable, integrationConstant, construction,
         fieldPart: projectElement(ctx, field, decision.primitive.fieldPart, bindings), terms, restrictions};
-  });
 }
 export function exponentialDecisionResult(ctx: ExecutionContext, field: DifferentialField, input: E,
-  decision: ExponentialRationalDecision, bounds: DifferentialBounds, source?: IntegrationSourceProof) {
-  verifyExponentialRationalDecision(ctx, field, input, decision, bounds);
+  decision: ExponentialRationalDecision | CompactExponentialElementary, bounds: DifferentialBounds, source?: IntegrationSourceProof) {
+  return ctx.operation(() => exponentialDecisionResultWithin(ctx, field, input, decision, bounds, source));
+}
+export function exponentialDecisionResultWithin(ctx: ExecutionContext, field: DifferentialField, input: E,
+  decision: ExponentialRationalDecision | CompactExponentialElementary, bounds: DifferentialBounds, source?: IntegrationSourceProof) {
+  if (decision.rule === compactFirstLevelElementaryRule) verifyCompactExponentialElementaryWithin(ctx, field, input, decision, bounds);
+  else verifyExponentialRationalDecision(ctx, field, input, decision, bounds);
   return buildCanonicalResultDocument({outcomeKind:'success',title:decision.kind === 'elementary'?'Verified antiderivative':'Verified non-elementary',
     warnings:decision.kind === 'elementary'?['Formal local complex primitive; logarithm choices differ locally by constants.']:[],
-    primary:projectExponentialCandidate(ctx,field,input,decision,source)});
+    primary:projectExponentialCandidateWithin(ctx,field,input,decision,source)});
 }

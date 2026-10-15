@@ -5,7 +5,7 @@ import { differentiate, verifyDerivative, type DerivativeEvidence } from './diff
 import { type ExactField } from './field';
 import type { QPolynomial } from './formal-primitive';
 import { polynomialDivide } from './polynomial-division';
-import { SquareFreeQuotientAlgebra, type UnitAnalysis } from './quotient-algebra';
+import { SquareFreeQuotientAlgebra, assertSquareFreeQuotientAlgebraOwner, type UnitAnalysis } from './quotient-algebra';
 import { quotientTrace, verifyQuotientTrace, type TraceCertificate } from './quotient-trace';
 import { subresultants, verifySubresultants, type SubresultantCertificate } from './subresultant';
 import { FirstLevelRationalDomain, assertFirstLevelRationalDomain, type EP } from './first-level-rational-domain';
@@ -38,6 +38,7 @@ export interface FirstLevelPrimitiveDerivative {
 export function verifyFirstLevelLogTerm(ctx: ExecutionContext, d: ArithmeticRationalDomain, term: FirstLevelLogTerm): void {
   assertArithmeticDomain(ctx, d);
   demand(term.domain === d, 'domain-mismatch', 'firstLevel logarithm owner');
+  assertSquareFreeQuotientAlgebraOwner(ctx, term.algebra);
   d.z.assert(ctx, term.modulus); d.z.assert(ctx, term.weight); d.fz.assert(ctx, term.argument);
   // Q square-freeness is independently checked; the lifted quotient is only a ring.
   new SquareFreeQuotientAlgebra(ctx, d.z, term.modulus);

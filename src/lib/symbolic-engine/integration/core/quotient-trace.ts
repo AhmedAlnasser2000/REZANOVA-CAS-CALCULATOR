@@ -1,13 +1,14 @@
 import { demand, type ExecutionContext } from './execution';
 import type { Polynomial } from './polynomial';
 import { polynomialDivide } from './polynomial-division';
-import { SquareFreeQuotientAlgebra, type QuotientElement } from './quotient-algebra';
+import { SquareFreeQuotientAlgebra, assertSquareFreeQuotientAlgebraOwner, type QuotientElement } from './quotient-algebra';
 
 export interface TraceCertificate<E> {
   readonly columns: readonly Polynomial<E>[];
   readonly trace: E;
 }
 export function quotientTrace<E>(ctx: ExecutionContext, algebra: SquareFreeQuotientAlgebra<E>, value: QuotientElement<E>): TraceCertificate<E> {
+  assertSquareFreeQuotientAlgebraOwner(ctx, algebra);
   algebra.assert(ctx, value); const r = algebra.ring, d = r.domain, n = r.degree(ctx, algebra.modulus);
   ctx.allocate(n * n + n + 2);
   const columns: Polynomial<E>[] = [];
@@ -26,6 +27,7 @@ export function quotientTrace<E>(ctx: ExecutionContext, algebra: SquareFreeQuoti
  * by Newton sums, without repeating the multiplication-matrix construction. */
 export function verifyQuotientTrace<E>(ctx: ExecutionContext, algebra: SquareFreeQuotientAlgebra<E>,
   value: QuotientElement<E>, proof: TraceCertificate<E>): void {
+  assertSquareFreeQuotientAlgebraOwner(ctx, algebra);
   algebra.assert(ctx, value); const r = algebra.ring, d = r.domain, q = algebra.modulus, n = r.degree(ctx, q);
   demand(proof.columns.length === n, 'verification-failed', 'trace matrix dimension'); ctx.allocate(n * n + n);
   let diagonal = d.fromInteger(ctx, 0n);

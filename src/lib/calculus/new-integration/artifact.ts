@@ -3,11 +3,15 @@ import { inspectExactArtifact, optionalArtifactExport, ArtifactExportTooLarge } 
 import { decodeDifferentialArtifactOverBase } from '../../symbolic-engine/integration/core/differential-wire';
 import { decodeExponentialRationalDecision, encodeExponentialRationalDecision } from '../../symbolic-engine/integration/core/exponential-rational-wire';
 import { decodeRationalDecision, encodeRationalDecision } from '../../symbolic-engine/integration/core/rational-decision-wire';
-import { fromRationalPrimitiveInput } from '../../symbolic-engine/integration/core/exponential-sum-bridge';
+import { decodeCompactRationalElementaryWithin, encodeCompactRationalElementaryWithin } from '../../symbolic-engine/integration/core/rational-elementary-wire';
+import type { CompactRationalElementary } from '../../symbolic-engine/integration/core/rational-elementary-evidence';
+import { fromRationalPrimitiveInput, toRationalPrimitiveInput } from '../../symbolic-engine/integration/core/exponential-sum-bridge';
 import { fraction, scalar, record } from '../../symbolic-engine/integration/core/decision-wire-algebra';
 import { decodeExponentialNormalization, encodeExponentialNormalization } from '../../symbolic-engine/integration/core/exponential-normalization-wire';
 import type { RationalDecision } from '../../symbolic-engine/integration/core/rational-decision';
 import type { ExponentialRationalDecision } from '../../symbolic-engine/integration/core/exponential-rational-decision';
+import {compactFirstLevelElementaryRule, type CompactExponentialElementary} from '../../symbolic-engine/integration/core/first-level-elementary-evidence';
+import {decodeCompactExponentialElementaryWithin, encodeCompactExponentialElementaryWithin} from '../../symbolic-engine/integration/core/first-level-elementary-wire';
 import type { IntegrationSourceProof } from './normalization-result';
 import { lowerExponentialIntegral, INTEGRATION_BOUNDS } from './exponential-lowering';
 import { produceCorrespondence, replayCorrespondence } from './correspondence';
@@ -16,8 +20,8 @@ import type { constructExecutionInput } from './execution-input';
 import { UnsupportedIntegral } from './lowering';
 
 export type ExecutionDecision =
-  | {kind: 'rational'; execution: Extract<ReturnType<typeof constructExecutionInput>, {kind: 'rational'}>; decision: RationalDecision}
-  | {kind: 'exponential'; execution: Extract<ReturnType<typeof constructExecutionInput>, {kind: 'exponential'}>; decision: ExponentialRationalDecision};
+  | {kind: 'rational'; execution: Extract<ReturnType<typeof constructExecutionInput>, {kind: 'rational'}>; decision: RationalDecision | CompactRationalElementary}
+  | {kind: 'exponential'; execution: Extract<ReturnType<typeof constructExecutionInput>, {kind: 'exponential'}>; decision: ExponentialRationalDecision | CompactExponentialElementary};
 export function readEnvelope(ctx: ExecutionContext, text: string) {
   demand(text.length <= MAX_INTEGRATION_ARTIFACT_BYTES && new TextEncoder().encode(text).length <= MAX_INTEGRATION_ARTIFACT_BYTES, 'resource-limit', 'artifact exceeds 16 MiB');
   ctx.allocate(text.length * 3); ctx.tick(text.length);
@@ -35,16 +39,26 @@ export function replaySaved(ctx: ExecutionContext, saved: ReturnType<typeof read
   const tag = record(ctx, saved.raw.decision, ['kind', 'evidence']);
   let result: ExecutionDecision;
   if (tag.kind === 'rational') {
-    demand(tag.evidence !== null && typeof tag.evidence === 'object' && 'input' in tag.evidence, 'invalid-input', 'saved rational input');
-    const input = fraction(ctx, original.native.fractions, scalar(ctx)).decode(tag.evidence.input);
-    const decision = decodeRationalDecision(ctx, original.native, input, tag.evidence);
-    result = {kind: 'rational', execution: {kind: 'rational', owner: original.native, input}, decision};
+    demand(tag.evidence !== null && typeof tag.evidence === 'object' && 'version' in tag.evidence, 'invalid-input', 'saved rational format');
+    if (tag.evidence.version === 2) {
+      demand(normalization.classification.kind === 'rational', 'verification-failed', 'compact rational source classification');
+      const input = toRationalPrimitiveInput(ctx, base, original.native, normalization.classification.value);
+      const decision = decodeCompactRationalElementaryWithin(ctx, original.native, input, tag.evidence, INTEGRATION_BOUNDS);
+      result = {kind: 'rational', execution: {kind: 'rational', owner: original.native, input}, decision};
+    } else {
+      demand('input' in tag.evidence, 'invalid-input', 'saved rational input');
+      const input = fraction(ctx, original.native.fractions, scalar(ctx)).decode(tag.evidence.input);
+      const decision = decodeRationalDecision(ctx, original.native, input, tag.evidence);
+      result = {kind: 'rational', execution: {kind: 'rational', owner: original.native, input}, decision};
+    }
   } else {
     demand(tag.kind === 'exponential' && tag.evidence !== null && typeof tag.evidence === 'object' && 'construction' in tag.evidence, 'invalid-input', 'saved exponential construction');
     const replay = decodeDifferentialArtifactOverBase(ctx, base, tag.evidence.construction, INTEGRATION_BOUNDS);
     demand(replay.elements.length === 1 && replay.derivatives.length === 0, 'invalid-input', 'saved input coverage');
     const input = replay.elements[0], owner = replay.owner;
-    const decision = decodeExponentialRationalDecision(ctx, owner, input, tag.evidence, INTEGRATION_BOUNDS);
+    const decision = 'version' in tag.evidence && tag.evidence.version === 2
+      ? decodeCompactExponentialElementaryWithin(ctx, owner, input, tag.evidence, INTEGRATION_BOUNDS)
+      : decodeExponentialRationalDecision(ctx, owner, input, tag.evidence, INTEGRATION_BOUNDS);
     result = {kind: 'exponential', execution: {kind: 'exponential', owner, input}, decision};
   }
   const target = result.kind === 'rational' ? fromRationalPrimitiveInput(ctx, base, result.execution.owner, result.execution.input) : result.execution.input;
@@ -58,8 +72,12 @@ export function exportSaved(ctx: ExecutionContext, request: IntegrationRequest, 
     return optionalArtifactExport(ctx, () => {
       const normalization = encodeExponentialNormalization(ctx, source.owner, source.input, source.normalization, source.bounds);
       const decision = retained?.decision ?? {kind: result.kind, evidence: result.kind === 'rational'
-        ? encodeRationalDecision(ctx, result.execution.owner, result.decision)
-        : encodeExponentialRationalDecision(ctx, result.execution.owner, result.execution.input, result.decision, INTEGRATION_BOUNDS)};
+        ? 'rule' in result.decision
+          ? encodeCompactRationalElementaryWithin(ctx, result.execution.owner, result.execution.input, result.decision, INTEGRATION_BOUNDS)
+          : encodeRationalDecision(ctx, result.execution.owner, result.decision)
+        : result.decision.rule === compactFirstLevelElementaryRule
+          ? encodeCompactExponentialElementaryWithin(ctx, result.execution.owner, result.execution.input, result.decision, INTEGRATION_BOUNDS)
+          : encodeExponentialRationalDecision(ctx, result.execution.owner, result.execution.input, result.decision, INTEGRATION_BOUNDS)};
       const target = result.kind === 'rational' ? fromRationalPrimitiveInput(ctx, source.owner, result.execution.owner, result.execution.input) : result.execution.input;
       const correspondence = retained?.correspondence ?? produceCorrespondence(ctx, source.owner, source.normalization.classification, target);
       const wire = {kind: 'new-integration', version: 2, request, normalization, decision, correspondence};

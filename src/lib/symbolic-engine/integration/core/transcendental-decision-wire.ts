@@ -6,16 +6,15 @@ import {FormalPrimitiveDomain} from './formal-primitive';
 import {toRationalPrimitiveInput} from './exponential-sum-bridge';
 import {encodeRationalDecisionWithin,decodeRationalDecisionWithin} from './rational-decision-wire';
 import {firstLevelReductionCodecs} from './first-level-rational-reduction-codecs';
-import {differentialValueCodec} from './first-level-rational-primitive-codecs';
 import {constantExtractionCodec,recursiveLimitedIntegrationEvidenceCodec,recursiveParametricRdeEvidenceCodec} from './recursive-rde-wire';
-import {normalizationInteger} from './exponential-normalization-wire-values';
+import {transcendentalFamilyReductionCodecs} from './transcendental-reduction-codecs';
 import {TRANSCENDENTAL_RULE,verifyTranscendentalDecisionWithin,type TranscendentalDecision} from './transcendental-decision';
 import {transcendentalEnvelope,transcendentalArtifactBody} from './transcendental-artifact';
 import * as w from './decision-wire-algebra';
 
 /** Composition only: all values are rebound to the explicit native owner chain. */
 function transcendentalDecisionEvidenceCodec(ctx: ExecutionContext,view: CertifiedTowerView,bounds: DifferentialBounds): w.EvidenceCodec<TranscendentalDecision> {
-  const d=new TranscendentalDomain(ctx,view,bounds),c=firstLevelReductionCodecs(ctx,d),base=differentialValueCodec(ctx,d.base),integer=normalizationInteger(ctx);
+  const d=new TranscendentalDomain(ctx,view,bounds),c=firstLevelReductionCodecs(ctx,d);
   const common={rule:w.literal(ctx,TRANSCENDENTAL_RULE),input:c.e,kind:w.literal(ctx,'elementary','non-elementary'),
     stage:w.literal(ctx,'rational','logarithmic','exponential'),primitive:w.optional(c.primitive),derivative:w.optional(c.proof),conditions:c.conditions};
   if(view.monomial==='variable'){
@@ -37,12 +36,7 @@ function transcendentalDecisionEvidenceCodec(ctx: ExecutionContext,view: Certifi
   const residue=w.structure(ctx,{evidence:c.residue,descent:w.list(ctx,constantExtractionCodec(ctx,d.base,bounds))});
   const remainder=w.structure(ctx,{logarithms:c.primitive,derivative:c.proof,value:c.e});
   const parent=transcendentalDecisionEvidenceCodec(ctx,view.parent!,bounds);
-  const polynomial=w.structure(ctx,{input:c.e,steps:w.list(ctx,w.structure(ctx,{degree:integer,input:c.e,leading:base,
-    limited:recursiveLimitedIntegrationEvidenceCodec(ctx,view.parent!,bounds),correction:w.optional(c.e),derivative:w.optional(c.derivative),next:w.optional(c.e)})),
-    fieldPart:c.e,remainder:w.optional(base),failure:w.optional(w.integer(ctx))});
-  const laurent=w.structure(ctx,{input:c.e,powers:w.list(ctx,integer),steps:w.list(ctx,w.structure(ctx,{power:integer,coefficient:base,
-    rde:recursiveParametricRdeEvidenceCodec(ctx,view.parent!,bounds),correction:w.optional(c.e),derivative:w.optional(c.derivative)})),
-    fieldPart:c.e,remainder:base,failure:w.optional(w.integer(ctx))});
+  const {polynomial,laurent}=transcendentalFamilyReductionCodecs(ctx,d,recursiveLimitedIntegrationEvidenceCodec(ctx,view.parent!,bounds),recursiveParametricRdeEvidenceCodec(ctx,view.parent!,bounds));
   const body=w.structure(ctx,{...common,hermite:w.optional(c.hermite),residue:w.optional(residue),remainder:w.optional(remainder),
     polynomial:w.optional(polynomial),laurent:w.optional(laurent),parent:w.optional(parent),embedding:w.optional(c.primitive),
     obstruction:w.optional(w.structure(ctx,{kind:w.literal(ctx,'normal-residue','logarithmic-coefficient','exponential-component','parent-decision'),index:w.optional(w.integer(ctx)),level:w.integer(ctx,1)}))});
@@ -57,14 +51,11 @@ export function encodeTranscendentalDecision(ctx: ExecutionContext,view: Certifi
   });
 }
 function encodeEvidence(ctx: ExecutionContext,e: TranscendentalDecision,bounds: DifferentialBounds): unknown {
-  const d=e.domain,c=firstLevelReductionCodecs(ctx,d),base=differentialValueCodec(ctx,d.base),integer=normalizationInteger(ctx);
+  const d=e.domain,c=firstLevelReductionCodecs(ctx,d);
   ctx.allocate(17);const common={rule:e.rule,input:c.e.encode(e.input),kind:e.kind,stage:e.stage,
     primitive:w.optional(c.primitive).encode(e.primitive),derivative:w.optional(c.proof).encode(e.derivative),conditions:c.conditions.encode(e.conditions)};
   if(e.stage==='rational')return Object.freeze({...common,rational:encodeRationalDecisionWithin(ctx,e.rational!.primitive.owner,e.rational!)});
-  const polynomial=w.structure(ctx,{input:c.e,steps:w.list(ctx,w.structure(ctx,{degree:integer,input:c.e,leading:base,
-    limited:recursiveLimitedIntegrationEvidenceCodec(ctx,d.view.parent!,bounds),correction:w.optional(c.e),derivative:w.optional(c.derivative),next:w.optional(c.e)})),fieldPart:c.e,remainder:w.optional(base),failure:w.optional(w.integer(ctx))});
-  const laurent=w.structure(ctx,{input:c.e,powers:w.list(ctx,integer),steps:w.list(ctx,w.structure(ctx,{power:integer,coefficient:base,
-    rde:recursiveParametricRdeEvidenceCodec(ctx,d.view.parent!,bounds),correction:w.optional(c.e),derivative:w.optional(c.derivative)})),fieldPart:c.e,remainder:base,failure:w.optional(w.integer(ctx))});
+  const {polynomial,laurent}=transcendentalFamilyReductionCodecs(ctx,d,recursiveLimitedIntegrationEvidenceCodec(ctx,d.view.parent!,bounds),recursiveParametricRdeEvidenceCodec(ctx,d.view.parent!,bounds));
   const residue=w.structure(ctx,{evidence:c.residue,descent:w.list(ctx,constantExtractionCodec(ctx,d.base,bounds))});
   const rem=w.structure(ctx,{logarithms:c.primitive,derivative:c.proof,value:c.e});
   return Object.freeze({...common,hermite:w.optional(c.hermite).encode(e.hermite),residue:w.optional(residue).encode(e.residue),remainder:w.optional(rem).encode(e.remainder),

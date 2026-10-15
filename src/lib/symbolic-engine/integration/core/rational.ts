@@ -4,6 +4,7 @@ import { OwnedValidation } from './owned-validation';
 export interface Rational { readonly numerator: bigint; readonly denominator: bigint }
 const values = new WeakSet<object>();
 const validation = new OwnedValidation();
+const smallValues = new WeakMap<object, {zero?: Rational; one?: Rational; minusOne?: Rational}>();
 export type IntegerInput = bigint | string | number;
 
 export function integerInput(ctx: ExecutionContext, input: IntegerInput): bigint {
@@ -32,10 +33,17 @@ export function rational(ctx: ExecutionContext, numerator: IntegerInput, denomin
   let n = integerInput(ctx, numerator), d = integerInput(ctx, denominator);
   demand(d !== 0n, 'division-by-zero', 'rational denominator');
   if (d < 0n) { n = -n; d = -d; }
+  const token = ctx.operationToken, name = n === 0n ? 'zero' : n === d ? 'one' : n === -d ? 'minusOne' : null;
+  let small = token && name ? smallValues.get(token) : undefined;
+  if (small && name && small[name]) {ctx.tick(); return small[name];}
   const g = integerGcd(ctx, n, d);
   ctx.allocate(2);
   const value = Object.freeze({ numerator: ctx.quotient(n, g), denominator: ctx.quotient(d, g) });
   values.add(value);
+  if (token && name) {
+    if (!small) {ctx.allocate(4); small = {}; smallValues.set(token, small); ctx.onOperationEnd(() => smallValues.delete(token));}
+    ctx.allocate(1); small[name] = value;
+  }
   return value;
 }
 

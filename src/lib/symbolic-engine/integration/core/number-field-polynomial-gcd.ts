@@ -6,7 +6,8 @@ import type {Polynomial,PolynomialRing} from './polynomial';
 import {pseudoDivide,verifyPseudoDivision} from './pseudo-division';
 import {polynomialDivide} from './polynomial-division';
 import {rationalModularGcd} from './rational-modular-gcd';
-import {hasRationalGcdEvidenceScope} from './rational-gcd-evidence';
+import {hasRationalGcdEvidenceScope,isRationalGcdEvidenceRecording} from './rational-gcd-evidence';
+import {produceNumberFieldModularGcdWithin,verifyNumberFieldModularGcdWithin} from './number-field-modular-gcd';
 /** Checked primitive PRS for GCD-only consumers. Rational inputs retain the
  * modular/content path, including degree-one number-field wrappers. Genuine
  * number fields remove the entire coefficient-field unit
@@ -17,6 +18,13 @@ import {hasRationalGcdEvidenceScope} from './rational-gcd-evidence';
 export function numberFieldPolynomialGcd<E>(ctx:ExecutionContext,r:PolynomialRing<E>,a:Polynomial<E>,b:Polynomial<E>):Polynomial<E>|null{
   if(!hasRationalGcdEvidenceScope(ctx))return null;
   const modular=rationalModularGcd(ctx,r,a,b);if(modular!==null)return modular;
+  // Record operations use the complete modular method over the original
+  // ordered number-field tower. Old version-1 replay retains its original
+  // exact Euclidean path before any new modular computation begins.
+  let base:unknown=r.domain;while(isAlgebraicField(base))base=base.parent;
+  if(base===Q&&isRationalGcdEvidenceRecording(ctx)){
+    const proof=produceNumberFieldModularGcdWithin(ctx,r,a,b);verifyNumberFieldModularGcdWithin(ctx,r,a,b,proof);return proof.gcd;
+  }
   const f=r.domain;if(f!==Q&&!(isAlgebraicField(f)&&f.parent===Q))return null;
   if(isAlgebraicField(f)&&f.ring.degree(ctx,f.modulus)>1){
     const monic=(p:Polynomial<E>)=>{r.assert(ctx,p);if(r.isZero(ctx,p))return p;const leading=r.leading(ctx,p),inverse=f.inverse(ctx,leading),out=r.scale(ctx,p,inverse);

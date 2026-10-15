@@ -14,11 +14,23 @@ import { verifyAlgebraicFactoredFunctionWithin, type AlgebraicFactoredFunction, 
 import type { CurveConstant } from './algebraic-curve-coordinates';
 import { verifyAlgebraicValuationWithin, type AlgebraicValuation } from './algebraic-valuation';
 import * as w from './decision-wire-algebra';
+import {verifyAlgebraicCanonicalGeometryWithin, type AlgebraicCanonicalGeometry} from './algebraic-canonical-geometry';
+
+function canonicalParts<E>(state: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>) {
+  const {ctx, bounds} = state, place = algebraicPlaceDecompositionCodec(state, curve);
+  return {finiteFactors: algebraicFactorizationCodec(ctx, curve.finite.lattice.scalar.ring, bounds), finite: w.list(ctx, place), infinity: place,
+    canonical: algebraicDivisorCodec(state, curve), genus: state.integer()};
+}
+export function algebraicCanonicalGeometryCodec<E>(state: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicCanonicalGeometry<E>> {
+  const parts = w.structure(state.ctx, canonicalParts(state, curve));
+  return state.memo('canonical-geometry', curve, {encode: parts.encode, decode(data) {
+    const proof = parts.decode(data); verifyAlgebraicCanonicalGeometryWithin(state.ctx, curve, proof, state.bounds); return proof;
+  }});
+}
 
 export function algebraicCurveGeometryCodec<E>(state: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicCurveGeometry<E>> {
-  const {ctx, bounds} = state, place = algebraicPlaceDecompositionCodec(state, curve), divisor = algebraicDivisorCodec(state, curve);
-  const parts = w.structure(ctx, {finiteFactors: algebraicFactorizationCodec(ctx, curve.finite.lattice.scalar.ring, bounds), finite: w.list(ctx, place), infinity: place,
-    canonical: divisor, genus: state.integer(), zero: divisor, globalFunctions: algebraicRiemannRochCodec(state, curve)});
+  const {ctx, bounds} = state, divisor = algebraicDivisorCodec(state, curve);
+  const parts = w.structure(ctx, {...canonicalParts(state, curve), zero: divisor, globalFunctions: algebraicRiemannRochCodec(state, curve)});
   return state.memo('curve-geometry', curve, {encode: parts.encode, decode(v) { const proof = parts.decode(v); verifyAlgebraicCurveGeometryWithin(ctx, curve, proof, bounds); return proof; }});
 }
 export function algebraicLocalExpansionCodec<E>(state: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicLocalExpansion<E>> {

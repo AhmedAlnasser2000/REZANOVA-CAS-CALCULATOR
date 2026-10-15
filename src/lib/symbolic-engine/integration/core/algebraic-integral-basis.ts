@@ -3,7 +3,7 @@ import { rationalField as Q } from './field';
 import type { Rational } from './rational';
 import { PolynomialRing, type Polynomial } from './polynomial';
 import type { DifferentialBounds } from './differential-field';
-import { constructAlgebraicExtension, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
 import { solveLinearSystem, verifyLinearSolution, type LinearSolution } from './linear-system';
@@ -71,7 +71,7 @@ function idealizerBasis(ctx: ExecutionContext, model: AlgebraicIntegralModel, or
   return multiplyExactMatrices(ctx, f, order.basis, inverse.map(row => row.map(v => f.multiply(ctx, d, v))), n);
 }
 export function algebraicIdealizerWithin(ctx: ExecutionContext, model: AlgebraicIntegralModel, order: AlgebraicOrder, prime: Polynomial<Rational>, bounds: DifferentialBounds): AlgebraicIdealizer {
-  const r = new PolynomialRing(Q, 'rho'), residue = constructAlgebraicExtension(ctx, r, r.make(ctx, prime.coefficients), bounds);
+  const r = new PolynomialRing(Q, 'rho'), residue = constructAlgebraicExtensionWithin(ctx, r, r.make(ctx, prime.coefficients), bounds);
   const traceKernel = solveLinearSystem(ctx, residue, residueSystem(ctx, order, residue)), n = order.basis.length;
   const radical = polynomialModuleHermite(ctx, modelBase(model).ring, radicalInput(ctx, model, prime, traceKernel), n);
   const c = radicalMatrix(ctx, model, radical), radicalInverse = invertExactMatrix(ctx, modelBase(model), c);

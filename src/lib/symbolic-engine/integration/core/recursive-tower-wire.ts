@@ -21,42 +21,47 @@ export function firstLevelAdmissionEvidenceCodec(ctx: ExecutionContext, parent: 
     decode(value) { if (normalizationKind(value) === 'exponential') return exp.decode(value);
       demand(normalizationKind(value) === 'logarithmic', 'invalid-input', 'stored first-level admission kind'); return log.decode(value); }};
 }
-function levels(ctx: ExecutionContext, view: CertifiedTowerView): readonly CertifiedTowerView[] {
+export function certifiedTowerLevelsWithin(ctx: ExecutionContext, view: CertifiedTowerView): readonly CertifiedTowerView[] {
   const out: CertifiedTowerView[] = []; for (let v: CertifiedTowerView | null = view; v; v = v.parent) { ctx.tick(); ctx.allocate(1); out.push(v); }
   return out.reverse();
 }
+/** Shared legacy level mechanics preserve the original snapshot representation. */
+export function encodeCertifiedTowerLevelWithin(ctx: ExecutionContext, v: CertifiedTowerView, bounds: DifferentialBounds): unknown {
+  const owner = v.owner, coefficient = factorCoefficientDomain(ctx, owner.parent!, bounds.towerHeight).codec(ctx);
+  const rule = w.polynomial(ctx, owner.fractions!.ring, coefficient).encode(owner.rule!); ctx.allocate(4);
+  if (v.proof.kind === 'base') return Object.freeze({kind: 'base', variable: owner.fractions!.ring.variable, rule});
+  if (v.proof.kind === 'first-level') return Object.freeze({kind: 'first-level', variable: owner.fractions!.ring.variable, rule,
+    admission: firstLevelAdmissionEvidenceCodec(ctx, owner.parent!, bounds).encode(v.proof.admission)});
+  demand(v.proof.kind === 'recursive', 'domain-mismatch', 'structured tower requires version-2 snapshot');
+  return Object.freeze({kind: 'recursive', variable: owner.fractions!.ring.variable, rule,
+    admission: recursiveAdmissionEvidenceCodec(ctx, v.parent!, owner, bounds).encode(v.proof.admission)});
+}
 export function encodeCertifiedTowerSnapshot(ctx: ExecutionContext, view: CertifiedTowerView, bounds: DifferentialBounds): unknown {
-  verifyCertifiedTowerWithin(ctx, view, bounds); const vs = levels(ctx, view); ctx.allocate(vs.length);
-  return Object.freeze(vs.map(v => {
-    const owner = v.owner, coefficient = factorCoefficientDomain(ctx, owner.parent!, bounds.towerHeight).codec(ctx), rule = w.polynomial(ctx, owner.fractions!.ring, coefficient).encode(owner.rule!);
-    ctx.allocate(4);
-    if (v.proof.kind === 'base') return Object.freeze({kind: 'base', variable: owner.fractions!.ring.variable, rule});
-    if (v.proof.kind === 'first-level') return Object.freeze({kind: 'first-level', variable: owner.fractions!.ring.variable, rule,
-      admission: firstLevelAdmissionEvidenceCodec(ctx, owner.parent!, bounds).encode(v.proof.admission)});
-    return Object.freeze({kind: 'recursive', variable: owner.fractions!.ring.variable, rule,
-      admission: recursiveAdmissionEvidenceCodec(ctx, v.parent!, owner, bounds).encode(v.proof.admission)});
-  }));
+  verifyCertifiedTowerWithin(ctx, view, bounds); const vs = certifiedTowerLevelsWithin(ctx, view); ctx.allocate(vs.length);
+  return Object.freeze(vs.map(v => encodeCertifiedTowerLevelWithin(ctx, v, bounds)));
 }
 /** No admission or differential-field constructor is called. Mathematical proof is replayed. */
-export function replayCertifiedTowerSnapshot(ctx: ExecutionContext, view: CertifiedTowerView, data: unknown, bounds: DifferentialBounds): void {
-  verifyCertifiedTowerWithin(ctx, view, bounds); const expected = levels(ctx, view), actual = w.array(ctx, data);
-  demand(actual.length === expected.length, 'verification-failed', 'stored tower height/coverage');
-  for (let i = 0; i < expected.length; i++) {
-    const v = expected[i], owner = v.owner;
-    const raw = w.record(ctx, actual[i], v.proof.kind === 'base' ? ['kind', 'variable', 'rule'] : ['kind', 'variable', 'rule', 'admission']);
-    demand(raw.kind === v.proof.kind && raw.variable === owner.fractions!.ring.variable, 'domain-mismatch', 'stored tower construction kind/name');
-    const coefficient = factorCoefficientDomain(ctx, owner.parent!, bounds.towerHeight).codec(ctx), p = w.polynomial(ctx, owner.fractions!.ring, coefficient).decode(raw.rule);
-    demand(owner.fractions!.ring.equal(ctx, owner.rule!, p), 'verification-failed', 'stored complete derivation rule');
-    if (v.proof.kind === 'first-level') {
-      const a = firstLevelAdmissionEvidenceCodec(ctx, owner.parent!, bounds).decode(raw.admission);
-      verifyAdmission(ctx, owner, a);
-      demand(a.kind === v.proof.admission.kind && owner.parent!.equal(ctx, a.argument, v.proof.admission.argument), 'verification-failed', 'stored original logarithm/exponent argument');
-    }
-    if (v.proof.kind === 'recursive') {
-      const a = recursiveAdmissionEvidenceCodec(ctx, v.parent!, owner, bounds).decode(raw.admission);
-      verifyRecursiveAdmissionEvidenceWithin(ctx, v.parent!, owner, v.proof.admission.construction, a, bounds);
-      demand(a.outcome === 'admitted' && a.construction.kind === v.proof.admission.construction.kind && owner.parent!.equal(ctx,
-        recursiveConstructionArgument(a.construction), recursiveConstructionArgument(v.proof.admission.construction)), 'verification-failed', 'stored complete recursive construction');
-    }
+export function replayCertifiedTowerLevelWithin(ctx: ExecutionContext, v: CertifiedTowerView, data: unknown, bounds: DifferentialBounds): void {
+  demand(v.proof.kind !== 'structured', 'domain-mismatch', 'structured tower requires version-2 snapshot');
+  const owner = v.owner;
+  const raw = w.record(ctx, data, v.proof.kind === 'base' ? ['kind', 'variable', 'rule'] : ['kind', 'variable', 'rule', 'admission']);
+  demand(raw.kind === v.proof.kind && raw.variable === owner.fractions!.ring.variable, 'domain-mismatch', 'stored tower construction kind/name');
+  const coefficient = factorCoefficientDomain(ctx, owner.parent!, bounds.towerHeight).codec(ctx), p = w.polynomial(ctx, owner.fractions!.ring, coefficient).decode(raw.rule);
+  demand(owner.fractions!.ring.equal(ctx, owner.rule!, p), 'verification-failed', 'stored complete derivation rule');
+  if (v.proof.kind === 'first-level') {
+    const a = firstLevelAdmissionEvidenceCodec(ctx, owner.parent!, bounds).decode(raw.admission);
+    verifyAdmission(ctx, owner, a);
+    demand(a.kind === v.proof.admission.kind && owner.parent!.equal(ctx, a.argument, v.proof.admission.argument), 'verification-failed', 'stored original logarithm/exponent argument');
   }
+  if (v.proof.kind === 'recursive') {
+    const a = recursiveAdmissionEvidenceCodec(ctx, v.parent!, owner, bounds).decode(raw.admission);
+    verifyRecursiveAdmissionEvidenceWithin(ctx, v.parent!, owner, v.proof.admission.construction, a, bounds);
+    demand(a.outcome === 'admitted' && a.construction.kind === v.proof.admission.construction.kind && owner.parent!.equal(ctx,
+      recursiveConstructionArgument(a.construction), recursiveConstructionArgument(v.proof.admission.construction)), 'verification-failed', 'stored complete recursive construction');
+  }
+}
+export function replayCertifiedTowerSnapshot(ctx: ExecutionContext, view: CertifiedTowerView, data: unknown, bounds: DifferentialBounds): void {
+  verifyCertifiedTowerWithin(ctx, view, bounds); const expected = certifiedTowerLevelsWithin(ctx, view), actual = w.array(ctx, data);
+  demand(actual.length === expected.length, 'verification-failed', 'stored tower height/coverage');
+  for (let i = 0; i < expected.length; i++) replayCertifiedTowerLevelWithin(ctx, expected[i], actual[i], bounds);
 }

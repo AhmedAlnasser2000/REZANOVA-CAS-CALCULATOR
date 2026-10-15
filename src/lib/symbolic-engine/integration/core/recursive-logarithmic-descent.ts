@@ -8,7 +8,7 @@ import { differentiate, verifyDerivative, type DerivativeEvidence } from './diff
 import { extendedGcd, exactDivide, polynomialDivide, verifyBezout, verifyDivision, type Bezout, type Division } from './polynomial-division';
 import { factorRecursivePolynomial, verifyRecursiveFactorizationInternal, type RecursivePolynomialFactorization } from './recursive-polynomial-factorization';
 import { solveLinearSystem, verifyLinearSolution, type LinearSystem, type LinearSolution } from './linear-system';
-import { descendCoefficientSystem, verifyCoefficientSystemWithin, matrixCapacity, type RationalCoefficientSystem } from './recursive-coefficient-system';
+import { descendCoefficientSystemWithin, verifyCoefficientSystemWithin, matrixCapacity, type RationalCoefficientSystem } from './recursive-coefficient-system';
 
 export interface RecursiveNormalLogFactor {
   readonly polynomial: P<E>;
@@ -83,7 +83,7 @@ export function produceLogarithmicDescent(ctx: ExecutionContext, owner: Differen
   ctx.allocate(hs.length * 2);
   const quotients = Object.freeze(hs.map(h => exactDivide(ctx, ring, denominator, fraction(ctx, owner, h).denominator)));
   const divisions = Object.freeze(hs.map((h, i) => polynomialDivide(ctx, ring, ring.multiply(ctx, fraction(ctx, owner, h).numerator, quotients[i]), denominator)));
-  const comparison = descendCoefficientSystem(ctx, owner.parent!, constraints(ctx, owner, divisions), bounds), linear = solveLinearSystem(ctx, Q, comparison.system);
+  const comparison = descendCoefficientSystemWithin(ctx, owner.parent!, constraints(ctx, owner, divisions), bounds), linear = solveLinearSystem(ctx, Q, comparison.system);
   demand(linear.kind === 'consistent', 'verification-failed', 'homogeneous logarithmic descent'); ctx.allocate(linear.nullspace.length);
   const lower = Object.freeze(linear.nullspace.map(v => constantCombination(ctx, owner, divisions, v)));
   ctx.allocate(8); const e = Object.freeze({factorizations, factors: Object.freeze(factors), denominator, quotients, divisions, comparison, linear, lower});

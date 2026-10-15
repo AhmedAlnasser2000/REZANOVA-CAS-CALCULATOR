@@ -7,7 +7,7 @@ import type { Polynomial as P } from './polynomial';
 import { differentiate, verifyDerivative, type DerivativeEvidence } from './differential-derivative';
 import { extendedGcd, polynomialDivide, verifyBezout, verifyDivision, type Bezout, type Division } from './polynomial-division';
 import { solveLinearSystem, verifyLinearSolution, type LinearSolution } from './linear-system';
-import { descendCoefficientSystem, verifyCoefficientSystemWithin, matrixCapacity, type RationalCoefficientSystem } from './recursive-coefficient-system';
+import { descendCoefficientSystemWithin, verifyCoefficientSystemWithin, matrixCapacity, type RationalCoefficientSystem } from './recursive-coefficient-system';
 import type { CertifiedTowerView } from './recursive-certified-tower';
 import { recursivePolynomialValue, checkedDerivativePolynomial } from './recursive-rde-poles';
 import { nativeCombination, rationalVectorCombination, polynomialCombination, homogeneousPolynomialConstraints } from './recursive-rde-family';
@@ -52,7 +52,7 @@ function initial(ctx: ExecutionContext, view: CertifiedTowerView, A: P<E>, B: P<
   return {A, B, C, n, map, correction: Object.freeze(C.map(() => view.owner.fromInteger(ctx, 0n))), scale: view.owner.fromInteger(ctx, 1n)};
 }
 function constrain(ctx: ExecutionContext, view: CertifiedTowerView, polynomials: readonly P<E>[], bounds: DifferentialBounds): PolynomialConstraint {
-  const comparison = descendCoefficientSystem(ctx, view.parent!.owner, homogeneousPolynomialConstraints(ctx, view.owner, polynomials), bounds);
+  const comparison = descendCoefficientSystemWithin(ctx, view.parent!.owner, homogeneousPolynomialConstraints(ctx, view.owner, polynomials), bounds);
   const linear = solveLinearSystem(ctx, Q, comparison.system); demand(linear.kind === 'consistent', 'verification-failed', 'homogeneous polynomial constraints');
   ctx.allocate(2); return Object.freeze({comparison, linear});
 }

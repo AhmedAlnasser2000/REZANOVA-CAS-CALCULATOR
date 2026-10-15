@@ -8,6 +8,7 @@ import { positiveLatticeCoordinates } from './positive-lattice';
 import { freezeExactMatrix, type ExactMatrix } from './arithmetic-matrix';
 import type { PositiveFraction } from './positive-fraction';
 import { requireGoodReduction } from './algebraic-reduction-errors';
+import {reuseAlgebraicVerification} from './algebraic-proof-reuse';
 
 export interface ReducedCurveModel<E> {
   readonly finite: ReducedCurveOrder<E>; readonly infinity: ReducedCurveOrder<E>;
@@ -34,6 +35,9 @@ export function constructReducedCurveModel<E>(ctx: ExecutionContext, algebra: Re
 }
 export function verifyReducedCurveModel<E>(ctx: ExecutionContext, algebra: ReducedCurveAlgebra<E>, proof: ReducedCurveModel<E>): void {
   demand(algebra.characteristic > BigInt(algebra.dimension), 'verification-failed', 'tame curve characteristic');
+  reuseAlgebraicVerification(ctx, 'reduced-model', algebra, proof, null, () => verifyReducedModelEvidence(ctx, algebra, proof));
+}
+function verifyReducedModelEvidence<E>(ctx: ExecutionContext, algebra: ReducedCurveAlgebra<E>, proof: ReducedCurveModel<E>): void {
   verifyReducedCurveOrder(ctx, algebra, false, proof.finite.lattice.input, proof.finite); verifyReducedCurveOrder(ctx, algebra, true, proof.infinity.lattice.input, proof.infinity);
   verifyPositiveBezout(ctx, algebra.relation.ring, algebra.relation, algebra.relation.ring.derivative(ctx, algebra.relation), proof.separability);
   demand(algebra.relation.ring.equal(ctx, proof.separability.gcd, algebra.relation.ring.one(ctx)), 'verification-failed', 'reduced curve separability');

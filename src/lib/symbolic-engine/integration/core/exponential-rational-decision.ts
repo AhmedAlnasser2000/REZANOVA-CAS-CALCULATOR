@@ -85,7 +85,11 @@ export function residueLogTerms(ctx: ExecutionContext, residue: ExponentialResid
 }
 export function produceExponentialRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
   bounds: DifferentialBounds): ExponentialRationalCandidate {
-  return ctx.operation(() => {
+  return ctx.operation(() => produceExponentialRationalCandidateWithin(ctx, owner, input, bounds));
+}
+export function produceExponentialRationalCandidateWithin(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  bounds: DifferentialBounds): ExponentialRationalCandidate {
+
     const d = new ExponentialRationalDomain(ctx, owner, bounds); owner.assert(ctx, input);
     const hermite = differentialHermite(ctx, d, input);
     const residue = owner.isZero(ctx, hermite.residual) ? null : exponentialResidues(ctx, d, hermite.residual);
@@ -112,24 +116,29 @@ export function produceExponentialRationalCandidate(ctx: ExecutionContext, owner
       }
     }
     return result;
-  });
 }
 export function checkExponentialRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
   candidate: ExponentialRationalCandidate, bounds: DifferentialBounds): ExponentialRationalDecision {
-  return ctx.operation(() => {
+  return ctx.operation(() => checkExponentialRationalCandidateWithin(ctx, owner, input, candidate, bounds));
+}
+/** Private composition retains the enclosing cumulative operation scope. */
+export function checkExponentialRationalCandidateWithin(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  candidate: ExponentialRationalCandidate, bounds: DifferentialBounds): ExponentialRationalDecision {
     owner.assert(ctx, input); ctx.allocate(2);
     const decision = candidate.kind === 'elementary'
       ? Object.freeze({...candidate, derivative: differentiateExponentialPrimitive(ctx, candidate.primitive, bounds)})
       : Object.freeze({...candidate, derivative: null});
-    verifyExponentialRationalDecision(ctx, owner, input, decision, bounds); return decision;
-  });
+    verifyExponentialRationalDecisionWithin(ctx, owner, input, decision, bounds); return decision;
 }
 export function integrateExponentialRational(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): ExponentialRationalDecision {
-  return ctx.operation(() => checkExponentialRationalCandidate(ctx, owner, input, produceExponentialRationalCandidate(ctx, owner, input, bounds), bounds));
+  return ctx.operation(() => checkExponentialRationalCandidateWithin(ctx, owner, input, produceExponentialRationalCandidateWithin(ctx, owner, input, bounds), bounds));
 }
 export function verifyExponentialRationalDecision(ctx: ExecutionContext, owner: DifferentialField, input: E,
   decision: ExponentialRationalDecision, bounds: DifferentialBounds): void {
-  ctx.operation(() => {
+  ctx.operation(() => verifyExponentialRationalDecisionWithin(ctx, owner, input, decision, bounds));
+}
+export function verifyExponentialRationalDecisionWithin(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  decision: ExponentialRationalDecision, bounds: DifferentialBounds): void {
     requireExponentialField(ctx, owner, bounds); owner.assert(ctx, input); const d = decision.domain; assertExponentialRationalDomain(ctx, d);
     demand(d.field === owner && decision.rule === EXPONENTIAL_RATIONAL_REDUCTION && owner.equal(ctx, input, decision.input),
       'verification-failed', 'exponential rational input/rule');
@@ -170,5 +179,4 @@ export function verifyExponentialRationalDecision(ctx: ExecutionContext, owner: 
       }
     }
     verifyExponentialConditions(ctx, d, exponentialConditions(ctx, d, input, decision.primitive ?? undefined), decision.conditions);
-  });
 }

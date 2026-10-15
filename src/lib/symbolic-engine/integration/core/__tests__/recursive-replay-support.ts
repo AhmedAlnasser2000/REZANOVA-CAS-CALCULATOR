@@ -2,6 +2,7 @@
 import { vi } from 'vitest';
 import { DifferentialField } from '../differential-field';
 import * as rde from '../recursive-rde';
+import * as degree from '../recursive-rde-degree';
 import * as polynomial from '../recursive-rde-polynomial';
 import * as limited from '../recursive-limited-integration';
 import * as relations from '../recursive-logarithmic-relations';
@@ -19,6 +20,9 @@ export function disableRecursiveProducers(): void {
   vi.spyOn(rde, 'solveRecursiveParametricRde').mockImplementation(forbidden);
   vi.spyOn(rde, 'solveRecursiveParametricRdeWithin').mockImplementation(forbidden);
   vi.spyOn(rde, 'solveRecursiveHomogeneousRdeWithin').mockImplementation(forbidden);
+  vi.spyOn(rde, 'solveRecursiveHomogeneousReductionWithin').mockImplementation(forbidden);
+  vi.spyOn(degree, 'boundRecursiveDegree').mockImplementation(forbidden);
+  vi.spyOn(degree, 'boundRecursiveDegreeWithin').mockImplementation(forbidden);
   vi.spyOn(polynomial, 'solveRecursivePolynomial').mockImplementation(forbidden);
   vi.spyOn(limited, 'solveRecursiveLimitedIntegration').mockImplementation(forbidden);
   vi.spyOn(limited, 'solveRecursiveLimitedIntegrationWithin').mockImplementation(forbidden);

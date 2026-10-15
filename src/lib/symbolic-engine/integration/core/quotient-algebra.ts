@@ -17,6 +17,12 @@ export type UnitAnalysis<E> =
   | { readonly kind: 'unit'; readonly inverse: QuotientElement<E>; readonly bezout: Bezout<E> }
   | { readonly kind: 'nonunit'; readonly bezout: Bezout<E>; readonly split: QuotientSplit<E> };
 
+const quotientOwners = new WeakSet<object>();
+export function assertSquareFreeQuotientAlgebraOwner<E>(ctx: ExecutionContext, algebra: SquareFreeQuotientAlgebra<E>): void {
+  ctx.tick(); demand(typeof algebra === 'object' && algebra !== null && quotientOwners.has(algebra)
+    && Object.getPrototypeOf(algebra) === SquareFreeQuotientAlgebra.prototype, 'domain-mismatch', 'registered square-free quotient owner');
+}
+
 /** Square-free does not imply irreducible: deliberately only a ring capability. */
 export class SquareFreeQuotientAlgebra<E> implements ExactRing<QuotientElement<E>> {
   readonly identity = Symbol('square-free-quotient');
@@ -31,7 +37,7 @@ export class SquareFreeQuotientAlgebra<E> implements ExactRing<QuotientElement<E
       'invalid-input', 'quotient requires nonconstant monic modulus');
     demand(ring.equal(ctx, polynomialGcd(ctx, ring, modulus, ring.derivative(ctx, modulus)), ring.one(ctx)),
       'invalid-input', 'quotient requires square-free modulus');
-    ctx.allocate(3); this.ring = ring; this.modulus = modulus; Object.freeze(this);
+    ctx.allocate(4); this.ring = ring; this.modulus = modulus; quotientOwners.add(this); Object.freeze(this);
   }
   assert(ctx: ExecutionContext, a: QuotientElement<E>) {
     ctx.tick(); demand(typeof a === 'object' && a !== null && this.#values.has(a), 'domain-mismatch', 'quotient ownership');

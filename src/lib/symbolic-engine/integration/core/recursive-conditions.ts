@@ -16,6 +16,7 @@ export function certifiedTowerConditionSources(ctx: ExecutionContext, view: Cert
     ctx.allocate(2); sources.push({path: `construction.${v.owner.height}.rate`, value: v.rate!});
     if (v.proof.kind === 'first-level') sources.push({path: `construction.${v.owner.height}.argument`, value: v.proof.admission.argument, nonzero: v.proof.admission.kind === 'logarithmic'});
     if (v.proof.kind === 'recursive') sources.push({path: `construction.${v.owner.height}.argument`, value: recursiveConstructionArgument(v.proof.admission.construction), nonzero: v.proof.admission.construction.kind === 'logarithm'});
+    if (v.proof.kind === 'structured') sources.push({path: `construction.${v.owner.height}.argument`, value: v.proof.admission.construction.argument, nonzero: v.proof.admission.construction.kind === 'logarithm'});
   }
   return Object.freeze(sources);
 }

@@ -22,7 +22,7 @@ function immutable(ctx: ExecutionContext, value: unknown, scope: ProofScope, act
 }
 /** Reuse only a successful check of exactly this immutable evidence, expected
  * owner and bounds, in the enclosing fresh operation. Never serialized. */
-export function reuseAlgebraicVerification(ctx: ExecutionContext, rule: 'construction-chain' | 'constant-field', owner: object, proof: object, bounds: DifferentialBounds, run: () => void): void {
+export function reuseAlgebraicVerification(ctx: ExecutionContext, rule: 'construction-chain' | 'constant-field' | 'owned-place' | 'good-reduction' | 'curve-geometry' | 'reduced-model' | 'balanced-torsion' | 'genus-one-presentation' | 'genus-one-coordinates' | 'genus-one-class' | 'genus-one-torsion', owner: object, proof: object, bounds: DifferentialBounds | null, run: () => void): void {
   const token = ctx.operationToken;
   if (!token) { run(); return; }
   let scope = scopes.get(token);
@@ -30,7 +30,9 @@ export function reuseAlgebraicVerification(ctx: ExecutionContext, rule: 'constru
     ctx.allocate(6); scope = {immutable: new WeakMap(), verified: new WeakMap()}; scopes.set(token, scope);
     ctx.onOperationEnd(() => scopes.delete(token));
   }
-  const eligible = immutable(ctx, proof, scope), key = `${rule}:${bounds.towerHeight}:${bounds.artifactDepth}:${bounds.artifactNodes}:${bounds.artifactBytes}`;
+  // Some existing positive-characteristic verifiers expose only the enclosing
+  // arithmetic context. Null preserves that interface and adds no shape cap.
+  const eligible = immutable(ctx, proof, scope), key = bounds === null ? rule : `${rule}:${bounds.towerHeight}:${bounds.artifactDepth}:${bounds.artifactNodes}:${bounds.artifactBytes}`;
   ctx.allocate(key.length + 1);
   if (eligible && scope.verified.get(owner)?.get(proof)?.has(key)) { ctx.tick(); return; }
   run();

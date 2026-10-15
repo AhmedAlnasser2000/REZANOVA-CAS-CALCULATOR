@@ -51,7 +51,10 @@ function sameTerms(ctx: ExecutionContext, d: LogarithmicRationalDomain, a: reado
   }
 }
 export function produceLogarithmicRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalCandidate {
-  return ctx.operation(() => {
+  return ctx.operation(() => produceLogarithmicRationalCandidateWithin(ctx, owner, input, bounds));
+}
+export function produceLogarithmicRationalCandidateWithin(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalCandidate {
+
     const d = new LogarithmicRationalDomain(ctx, owner, bounds); owner.assert(ctx, input);
     const hermite = logarithmicHermite(ctx, d, input), residue = owner.isZero(ctx, hermite.residual) ? null : logarithmicResidues(ctx, d, hermite.residual);
     const common = { domain: d, input, rule: LOGARITHMIC_RATIONAL_REDUCTION, hermite, residue }; ctx.allocate(15);
@@ -79,24 +82,29 @@ export function produceLogarithmicRationalCandidate(ctx: ExecutionContext, owner
       }
     }
     return out;
-  });
 }
 export function checkLogarithmicRationalCandidate(ctx: ExecutionContext, owner: DifferentialField, input: E,
   candidate: LogarithmicRationalCandidate, bounds: DifferentialBounds): LogarithmicRationalDecision {
-  return ctx.operation(() => {
+  return ctx.operation(() => checkLogarithmicRationalCandidateWithin(ctx, owner, input, candidate, bounds));
+}
+/** Private composition retains the enclosing cumulative operation scope. */
+export function checkLogarithmicRationalCandidateWithin(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  candidate: LogarithmicRationalCandidate, bounds: DifferentialBounds): LogarithmicRationalDecision {
     owner.assert(ctx, input); ctx.allocate(2);
     const decision = candidate.kind === 'elementary'
       ? Object.freeze({...candidate, derivative: differentiateLogarithmicPrimitive(ctx, candidate.primitive, bounds)})
       : Object.freeze({...candidate, derivative: null});
-    verifyLogarithmicRationalDecision(ctx, owner, input, decision, bounds); return decision;
-  });
+    verifyLogarithmicRationalDecisionWithin(ctx, owner, input, decision, bounds); return decision;
 }
 export function integrateLogarithmicRational(ctx: ExecutionContext, owner: DifferentialField, input: E, bounds: DifferentialBounds): LogarithmicRationalDecision {
-  return ctx.operation(() => checkLogarithmicRationalCandidate(ctx, owner, input, produceLogarithmicRationalCandidate(ctx, owner, input, bounds), bounds));
+  return ctx.operation(() => checkLogarithmicRationalCandidateWithin(ctx, owner, input, produceLogarithmicRationalCandidateWithin(ctx, owner, input, bounds), bounds));
 }
 export function verifyLogarithmicRationalDecision(ctx: ExecutionContext, owner: DifferentialField, input: E,
   decision: LogarithmicRationalDecision, bounds: DifferentialBounds): void {
-  ctx.operation(() => {
+  ctx.operation(() => verifyLogarithmicRationalDecisionWithin(ctx, owner, input, decision, bounds));
+}
+export function verifyLogarithmicRationalDecisionWithin(ctx: ExecutionContext, owner: DifferentialField, input: E,
+  decision: LogarithmicRationalDecision, bounds: DifferentialBounds): void {
     requireLogarithmicField(ctx, owner, bounds); owner.assert(ctx, input); const d = decision.domain; assertLogarithmicRationalDomain(ctx, d);
     demand(d.field === owner && decision.rule === LOGARITHMIC_RATIONAL_REDUCTION && owner.equal(ctx, decision.input, input), 'verification-failed', 'logarithmic input/rule');
     verifyLogarithmicHermite(ctx, d, input, decision.hermite); const h = decision.hermite;
@@ -129,5 +137,4 @@ export function verifyLogarithmicRationalDecision(ctx: ExecutionContext, owner: 
       }
     }
     verifyLogarithmicConditions(ctx, d, logarithmicConditions(ctx, d, input, decision.primitive ?? undefined), decision.conditions);
-  });
 }

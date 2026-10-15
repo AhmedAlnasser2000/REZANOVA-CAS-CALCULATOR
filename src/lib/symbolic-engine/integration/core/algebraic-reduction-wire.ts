@@ -19,6 +19,7 @@ import type { ExactField } from './field';
 import type { CurveConstant } from './algebraic-curve-coordinates';
 import type { Polynomial } from './polynomial';
 import * as w from './decision-wire-algebra';
+import type {AlgebraicDifferentialResidue} from './algebraic-residue-data';
 
 function residuePolynomialCodec(s: AlgebraicDivisorWireContext, ring: PolynomialRing<CurveConstant>): w.EvidenceCodec<Polynomial<CurveConstant>> {
   const p = w.polynomial(s.ctx, ring, algebraicCoefficientCodec(s.ctx, ring.domain, s.bounds));
@@ -53,20 +54,28 @@ export function algebraicInfinityReductionCodec<E>(s: AlgebraicDivisorWireContex
     const p = kind.value === 'reduced' ? yes.decode(v) : no.decode(v); verifyAlgebraicInfinityReductionWithin(ctx, curve, p.input, p, bounds); return p;
   }});
 }
-function minimalCodec<E>(s: AlgebraicDivisorWireContext, owner: ExactField<E>, ring: PolynomialRing<CurveConstant>): w.EvidenceCodec<ConstantMinimalPolynomial<E>> {
+export function algebraicResidueMinimalCodec<E>(s: AlgebraicDivisorWireContext, owner: ExactField<E>, ring: PolynomialRing<CurveConstant>): w.EvidenceCodec<ConstantMinimalPolynomial<E>> {
   const c = algebraicCoefficientCodec(s.ctx, owner, s.bounds);
   return w.structure(s.ctx, {input: c, powers: w.list(s.ctx, c), eliminations: w.list(s.ctx, linearEvidenceCodec(s.ctx, w.scalar(s.ctx))), polynomial: residuePolynomialCodec(s, ring)});
 }
-export function algebraicDifferentialResiduesCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicDifferentialResidues<E>> {
-  const {ctx, bounds} = s, native = algebraicCoefficientCodec(ctx, curve.owner, bounds), constant = algebraicCoefficientCodec(ctx, curve.coordinates.constantOwner, bounds), ring = new PolynomialRing(curve.coordinates.constantOwner, 'residue'), p = residuePolynomialCodec(s, ring);
+export function algebraicResidueDataCommonParts<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>) {
+  const {ctx, bounds} = s, native = algebraicCoefficientCodec(ctx, curve.owner, bounds), constant = algebraicCoefficientCodec(ctx, curve.coordinates.constantOwner, bounds), ring = new PolynomialRing<CurveConstant>(curve.coordinates.constantOwner, 'residue'), p = residuePolynomialCodec(s, ring);
+  return {ring, parts: {input: native, polynomials: w.list(ctx, p), lcm: denominatorCodec(s, ring), squareFree: w.bezout(ctx, p), totalResidue: constant}};
+}
+export function algebraicResidueDataParts<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>) {
+  const {ctx, bounds} = s, native = algebraicCoefficientCodec(ctx, curve.owner, bounds), {ring, parts} = algebraicResidueDataCommonParts(s, curve);
   const at = algebraicPlaceCodec(s, curve), entry = (place: ReturnType<typeof at.decode>) => w.structure(ctx, {order: w.optional(s.integer()), value: algebraicCoefficientCodec(ctx, place.residue, bounds),
     parameter: w.optional(w.structure(ctx, {index: w.integer(ctx), value: native, valuation: algebraicValuationCodec(s, curve)})), derivative: w.optional(algebraicDerivativeCodec(ctx, curve.owner, bounds)),
-    expansion: w.optional(algebraicLocalExpansionCodec(s, curve)), minimal: w.optional(minimalCodec(s, place.residue, ring))});
-  const residue = {encode(v: AlgebraicDifferentialResidues<E>['entries'][number]) { return Object.freeze({place: at.encode(v.place), evidence: entry(v.place).encode(v)}); }, decode(v: unknown) {
+    expansion: w.optional(algebraicLocalExpansionCodec(s, curve)), minimal: w.optional(algebraicResidueMinimalCodec(s, place.residue, ring))});
+  const residue = {encode(v: AlgebraicDifferentialResidue<E>) { return Object.freeze({place: at.encode(v.place), evidence: entry(v.place).encode(v)}); }, decode(v: unknown) {
     const raw = w.record(ctx, v, ['place', 'evidence']), place = at.decode(raw.place); return Object.freeze({place, ...entry(place).decode(raw.evidence)});
   }};
-  const common = w.structure(ctx, {input: native, differential: algebraicDifferentialCodec(s, curve), entries: w.list(ctx, residue), polynomials: w.list(ctx, p), lcm: denominatorCodec(s, ring), squareFree: w.bezout(ctx, p), totalResidue: constant});
-  return s.memo('algebraic-differential-residues', curve, {encode: common.encode, decode(v) { const proof = common.decode(v); verifyAlgebraicDifferentialResiduesWithin(ctx, curve, proof.input, proof, bounds); return proof; }});
+  const {input, ...rest} = parts; return {input, entries: w.list(ctx, residue), ...rest};
+}
+export function algebraicDifferentialResiduesCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicDifferentialResidues<E>> {
+  const {ctx, bounds} = s, {input, ...rest} = algebraicResidueDataParts(s, curve);
+  const common = w.structure(ctx, {input, differential: algebraicDifferentialCodec(s, curve), ...rest});
+  return s.memo('algebraic-differential-residues', curve, {encode: common.encode, decode(v) {const proof = common.decode(v); verifyAlgebraicDifferentialResiduesWithin(ctx, curve, proof.input, proof, bounds); return proof;}});
 }
 export function algebraicDifferentialReductionCodec<E>(s: AlgebraicDivisorWireContext, curve: AlgebraicCurveView<E>): w.EvidenceCodec<AlgebraicDifferentialReduction<E>> {
   const {ctx, bounds} = s, native = algebraicCoefficientCodec(ctx, curve.owner, bounds), common = {input: native, hermite: algebraicHermiteCodec(s, curve), infinity: algebraicInfinityReductionCodec(s, curve), conditions: algebraicConditionsCodec(ctx, curve.owner, bounds)};

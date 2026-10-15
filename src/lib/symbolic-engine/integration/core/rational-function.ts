@@ -11,6 +11,11 @@ export interface RationalFunction<E> {
   readonly numerator: Polynomial<E>;
   readonly denominator: Polynomial<E>;
 }
+const owners = new WeakSet<object>();
+/** Native ownership is separate from the narrower rational-tower conversion bridge. */
+export function assertRationalFunctionFieldOwner(ctx: ExecutionContext, owner: unknown): asserts owner is RationalFunctionField<unknown> {
+  ctx.tick(); demand(owner instanceof RationalFunctionField && owners.has(owner), 'domain-mismatch', 'rational function field owner');
+}
 
 export class RationalFunctionField<E> implements ExactField<RationalFunction<E>> {
   readonly capability = 'field' as const;
@@ -21,6 +26,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
   #coefficientUnits = new WeakMap<object, {zero?: RationalFunction<E>; one?: RationalFunction<E>}>();
   constructor(ring: PolynomialRing<E>) {
     requireField(ring.domain); this.ring = ring;
+    owners.add(this);
     registerFractionCoefficient(this, { ring,
       read: (ctx, value) => { this.assert(ctx, value); return value; },
       make: (ctx, n, d) => this.make(ctx, n, d) });
@@ -106,6 +112,29 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
     const value = Object.freeze({ field: this, numerator: n, denominator: d });
     this.#values.add(value); return value;
   }
+  /** Reconstruction-only entry for new explicit normalization evidence. A
+   * complete unit combination proves coprimality without running GCD search.
+   * Existing make(), arithmetic and version-1 codecs retain their signatures. */
+  bindNormalized(ctx: ExecutionContext, numerator: Polynomial<E>, denominator: Polynomial<E>,
+    evidence: Readonly<{s: Polynomial<E>; t: Polynomial<E>}>): RationalFunction<E> {
+    assertRationalFunctionFieldOwner(ctx, this); const r = this.ring, c = r.domain;
+    for (const p of [numerator, denominator, evidence.s, evidence.t]) r.assert(ctx, p);
+    demand(!r.isZero(ctx, denominator) && c.equal(ctx, r.leading(ctx, denominator), c.fromInteger(ctx, 1n)), 'verification-failed', 'canonical normalized denominator');
+    demand(!r.isZero(ctx, numerator) || r.equal(ctx, denominator, r.one(ctx)), 'verification-failed', 'canonical zero fraction');
+    const size = Math.max(1, evidence.s.coefficients.length && numerator.coefficients.length ? evidence.s.coefficients.length + numerator.coefficients.length - 1 : 0,
+      evidence.t.coefficients.length && denominator.coefficients.length ? evidence.t.coefficients.length + denominator.coefficients.length - 1 : 0);
+    demand(Number.isSafeInteger(size), 'invalid-input', 'normalization identity dimension');
+    for (let k = 0; k < size; k++) {
+      let value = c.fromInteger(ctx, 0n);
+      for (let term = 0; term < 2; term++) {
+        ctx.tick(); const left = term === 0 ? numerator : denominator, right = term === 0 ? evidence.s : evidence.t;
+        for (let i = Math.max(0, k + 1 - right.coefficients.length); i <= Math.min(k, left.coefficients.length - 1); i++)
+          value = c.add(ctx, value, c.multiply(ctx, left.coefficients[i], right.coefficients[k - i]));
+      }
+      demand(c.equal(ctx, value, c.fromInteger(ctx, k === 0 ? 1n : 0n)), 'verification-failed', 'complete fraction normalization unit identity');
+    }
+    ctx.allocate(3); const value = Object.freeze({field: this, numerator, denominator}); this.#values.add(value); return value;
+  }
   fromInteger(ctx: ExecutionContext, n: bigint): RationalFunction<E> { return this.fromCoefficient(ctx, this.ring.domain.fromInteger(ctx, n)); }
   fromCoefficient(ctx: ExecutionContext, a: E): RationalFunction<E> {
     this.ring.domain.assert(ctx, a);
@@ -168,6 +197,7 @@ export class RationalFunctionField<E> implements ExactField<RationalFunction<E>>
   subtract(ctx: ExecutionContext, a: RationalFunction<E>, b: RationalFunction<E>) { return this.add(ctx, a, this.negate(ctx, b)); }
   inverse(ctx: ExecutionContext, a: RationalFunction<E>) {
     this.assert(ctx, a);
+    if (this.ring.equal(ctx, a.numerator, a.denominator)) return a;
     // An owned normalized n/n is exactly one. Its reciprocal is the same
     // native value; rebuilding it recursively repeats unit normalization.
     if (fractionCoefficient(this) && this.ring.equal(ctx, a.numerator, a.denominator)) return a;

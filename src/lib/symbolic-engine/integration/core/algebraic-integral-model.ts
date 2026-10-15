@@ -5,7 +5,7 @@ import { PolynomialRing, type Polynomial } from './polynomial';
 import { RationalFunctionField } from './rational-function';
 import { exactDivide, extendedGcd, verifyBezout, type Bezout } from './polynomial-division';
 import type { DifferentialBounds } from './differential-field';
-import { constructAlgebraicExtension, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicField } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import type { FunctionScalar } from './algebraic-presentation';
 
@@ -66,7 +66,7 @@ export function algebraicIntegralModelWithin(ctx: ExecutionContext, presentation
   const coefficients: FunctionScalar[] = []; let power = base.fromInteger(ctx, 1n);
   for (let i = n; i >= 0; i--) { coefficients[i] = base.multiply(ctx, transformed.coefficients[i], power); if (i > 0) power = base.multiply(ctx, power, scale); }
   for (const c of coefficients) demand(base.ring.degree(ctx, c.denominator) === 0, 'verification-failed', 'integral model coefficient');
-  const field = constructAlgebraicExtension(ctx, r, r.make(ctx, coefficients), bounds), proof = Object.freeze({infinity, field, transformed, denominators});
+  const field = constructAlgebraicExtensionWithin(ctx, r, r.make(ctx, coefficients), bounds), proof = Object.freeze({infinity, field, transformed, denominators});
   verifyAlgebraicIntegralModelWithin(ctx, presentation, infinity, proof, bounds); return proof;
 }
 export function verifyAlgebraicIntegralModelWithin(ctx: ExecutionContext, presentation: AlgebraicField<FunctionScalar>, infinity: boolean,

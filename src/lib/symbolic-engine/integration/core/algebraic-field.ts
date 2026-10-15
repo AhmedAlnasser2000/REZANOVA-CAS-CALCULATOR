@@ -7,6 +7,7 @@ import { requireRationalVariable } from './differential-admission';
 import { RationalFunctionField } from './rational-function';
 import { factorCoefficientDomain, UnsupportedFactorizationDomain } from './factorization-domain';
 import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
+import {OwnedValidation} from './owned-validation';
 
 export interface AlgebraicElement<E> {
   readonly owner: AlgebraicField<E>;
@@ -85,6 +86,7 @@ export class AlgebraicField<E> implements ExactField<AlgebraicElement<E>> {
   readonly construction: AlgebraicConstruction<E>;
   readonly height: number;
   #values = new WeakSet<object>();
+  #validation = new OwnedValidation();
   #units = new WeakMap<object, {zero?: AlgebraicElement<E>; one?: AlgebraicElement<E>}>();
   private constructor(token: symbol, ring: PolynomialRing<E>, proof: AlgebraicConstruction<E>, height: number) {
     demand(token === key, 'domain-mismatch', 'private algebraic constructor');
@@ -103,7 +105,9 @@ export class AlgebraicField<E> implements ExactField<AlgebraicElement<E>> {
   assert(ctx: ExecutionContext, value: AlgebraicElement<E>): void {
     assertAlgebraicOwner(ctx, this);
     demand(value !== null && typeof value === 'object' && this.#values.has(value), 'domain-mismatch', 'algebraic element owner');
-    this.ring.assert(ctx, value.representative);
+    // Construction admits only registered immutable Q/Q(x)/algebraic parents.
+    // Membership is checked before operation-local coefficient validation.
+    this.#validation.check(ctx, value, () => this.ring.assert(ctx, value.representative));
   }
   make(ctx: ExecutionContext, p: Polynomial<E>): AlgebraicElement<E> {
     assertAlgebraicOwner(ctx, this);
@@ -127,12 +131,23 @@ export class AlgebraicField<E> implements ExactField<AlgebraicElement<E>> {
   }
   generator(ctx: ExecutionContext) { return this.make(ctx, this.ring.make(ctx, [this.parent.fromInteger(ctx, 0n), this.parent.fromInteger(ctx, 1n)])); }
   add(ctx: ExecutionContext, a: AlgebraicElement<E>, b: AlgebraicElement<E>) {
-    this.assert(ctx, a); this.assert(ctx, b); return this.make(ctx, this.ring.add(ctx, a.representative, b.representative));
+    this.assert(ctx, a); this.assert(ctx, b);
+    if (this.modulus.coefficients.length === 2) {
+      const left = a.representative.coefficients[0], right = b.representative.coefficients[0];
+      if (left === undefined) return b; if (right === undefined) return a;
+      return this.embed(ctx, this.parent.add(ctx, left, right));
+    }
+    return this.make(ctx, this.ring.add(ctx, a.representative, b.representative));
   }
   negate(ctx: ExecutionContext, a: AlgebraicElement<E>) { this.assert(ctx, a); return this.make(ctx, this.ring.negate(ctx, a.representative)); }
   subtract(ctx: ExecutionContext, a: AlgebraicElement<E>, b: AlgebraicElement<E>) { return this.add(ctx, a, this.negate(ctx, b)); }
   multiply(ctx: ExecutionContext, a: AlgebraicElement<E>, b: AlgebraicElement<E>) {
-    this.assert(ctx, a); this.assert(ctx, b); return this.make(ctx, this.ring.multiply(ctx, a.representative, b.representative));
+    this.assert(ctx, a); this.assert(ctx, b);
+    if (this.modulus.coefficients.length === 2) {
+      const left = a.representative.coefficients[0], right = b.representative.coefficients[0];
+      return left === undefined || right === undefined ? this.fromInteger(ctx, 0n) : this.embed(ctx, this.parent.multiply(ctx, left, right));
+    }
+    return this.make(ctx, this.ring.multiply(ctx, a.representative, b.representative));
   }
   equal(ctx: ExecutionContext, a: AlgebraicElement<E>, b: AlgebraicElement<E>) {
     this.assert(ctx, a); this.assert(ctx, b); return this.ring.equal(ctx, a.representative, b.representative);
@@ -157,16 +172,17 @@ export class AlgebraicField<E> implements ExactField<AlgebraicElement<E>> {
   }
   exactDivide(ctx: ExecutionContext, a: AlgebraicElement<E>, b: AlgebraicElement<E>) { return this.multiply(ctx, a, this.inverse(ctx, b)); }
 }
-export function constructAlgebraicExtension<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, relation: Polynomial<E>,
+export function constructAlgebraicExtensionWithin<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, relation: Polynomial<E>,
   bounds: DifferentialBounds): AlgebraicField<E> {
-  return ctx.operation(() => {
-    algebraicHeight(ctx, ring.domain, bounds); ring.assert(ctx, relation);
-    demand(ring.degree(ctx, relation) > 0, 'invalid-input', 'nonconstant algebraic defining relation required');
-    const normalization = ring.leading(ctx, relation), monic = ring.scale(ctx, relation, ring.domain.inverse(ctx, normalization));
-    const factorization = factorAlgebraicPolynomialWithin(ctx, ring, monic, bounds);
-    const proof = Object.freeze({relation, monic, normalization, factorization, separable: extendedGcd(ctx, ring, monic, ring.derivative(ctx, monic))});
-    return AlgebraicField.fromEvidence(ctx, ring, relation, proof, bounds);
-  });
+  algebraicHeight(ctx, ring.domain, bounds); ring.assert(ctx, relation);
+  demand(ring.degree(ctx, relation) > 0, 'invalid-input', 'nonconstant algebraic defining relation required');
+  const normalization = ring.leading(ctx, relation), monic = ring.scale(ctx, relation, ring.domain.inverse(ctx, normalization));
+  const factorization = factorAlgebraicPolynomialWithin(ctx, ring, monic, bounds);
+  const proof = Object.freeze({relation, monic, normalization, factorization, separable: extendedGcd(ctx, ring, monic, ring.derivative(ctx, monic))});
+  return AlgebraicField.fromEvidence(ctx, ring, relation, proof, bounds);
+}
+export function constructAlgebraicExtension<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, relation: Polynomial<E>, bounds: DifferentialBounds): AlgebraicField<E> {
+  return ctx.operation(() => constructAlgebraicExtensionWithin(ctx, ring, relation, bounds));
 }
 export function verifyAlgebraicExtension<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, relation: Polynomial<E>,
   owner: AlgebraicField<E>, bounds: DifferentialBounds): void {

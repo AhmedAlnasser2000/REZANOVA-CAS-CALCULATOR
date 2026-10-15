@@ -3,12 +3,12 @@ import { rationalField as Q, type ExactField } from './field';
 import type { Rational } from './rational';
 import { PolynomialRing } from './polynomial';
 import type { DifferentialBounds } from './differential-field';
-import { constructAlgebraicExtension, isAlgebraicField, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, isAlgebraicField, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 import { differentiateAlgebraicWithin, verifyAlgebraicDerivativeWithin, verifyAlgebraicChainWithin, type AlgebraicDerivative } from './algebraic-derivative';
 import { AlgebraicEmbedding } from './algebraic-embedding';
 import { factorCoefficientDomain } from './factorization-domain';
 import { solveLinearSystem, verifyLinearSolution, type LinearSolution, type LinearSystem } from './linear-system';
-import { descendCoefficientSystem, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
+import { descendCoefficientSystemWithin, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
 import { algebraicCoordinates, algebraicPrimitivePresentationWithin, verifyAlgebraicPresentationWithin, presentationValue,
   type AlgebraicCoordinates, type AlgebraicPresentation, type FunctionScalar } from './algebraic-presentation';
 import { algebraicIntegralModelWithin, verifyAlgebraicIntegralModelWithin, type AlgebraicIntegralModel } from './algebraic-integral-model';
@@ -90,10 +90,10 @@ export function certifyAlgebraicConstantFieldWithin<E>(ctx: ExecutionContext, ow
     const rank = solveLinearSystem(ctx, c.base, homogeneousRank(ctx, c, powers));
     if (rank.rank !== n) { seed++; continue; }
     const coordinates = invertExactMatrix(ctx, c.base, selectedMatrix(ctx, c, powers, rank)); demand(coordinates !== null, 'verification-failed', 'constant power coordinates');
-    const request = relationRequest(ctx, c, powers, power), descent = descendCoefficientSystem(ctx, c.base, request, bounds), elimination = solveLinearSystem(ctx, Q, descent.system);
+    const request = relationRequest(ctx, c, powers, power), descent = descendCoefficientSystemWithin(ctx, c.base, request, bounds), elimination = solveLinearSystem(ctx, Q, descent.system);
     demand(elimination.kind === 'consistent' && elimination.nullspace.length === 0, 'verification-failed', 'constant minimal relation');
     const r = new PolynomialRing(Q, 'gamma'), polynomial = r.make(ctx, [...elimination.particular.map(q => Q.negate(ctx, q)), Q.fromInteger(ctx, 1n)]);
-    const numberField = constructAlgebraicExtension(ctx, r, polynomial, bounds);
+    const numberField = constructAlgebraicExtensionWithin(ctx, r, polynomial, bounds);
     const partial = {numberField, primitive, powers: Object.freeze(powers), rank, coordinates};
     const parentCoordinates = parent && isAlgebraicField(owner) ? Object.freeze(parent.basis.map(v => constantCoordinatesWithin(ctx, c, partial, owner.embed(ctx, v) as E, bounds))) : Object.freeze([]);
     const conditions = algebraicConditions(ctx, owner, conditionSources(ctx, owner, basis, primitive, powers), bounds);

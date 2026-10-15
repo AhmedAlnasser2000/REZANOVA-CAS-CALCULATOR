@@ -73,24 +73,27 @@ function rationalRows(ctx: ExecutionContext, columns: number, rows: readonly Coe
   ctx.allocate(4); return Object.freeze({rows: count, columns, matrix: Object.freeze(matrix), rhs: Object.freeze(rhs)});
 }
 
+/** Private composition entry: keeps the enclosing cumulative proof scope. */
+export function descendCoefficientSystemWithin<E>(ctx: ExecutionContext, field: ExactField<E>, input: LinearSystem<E>, bounds: DifferentialBounds): RationalCoefficientSystem {
+  demand(ctx.operationToken !== undefined, 'invalid-input', 'coefficient descent requires operation scope');
+  checkDifferentialBounds(ctx, bounds); validate(ctx, field, input);
+  const domain = factorCoefficientDomain(ctx, field, bounds.towerHeight), auxiliary = MultivariateRing.create(ctx, Q, domain.height);
+  ctx.allocate(input.rows); const rows: CoefficientRowEvidence[] = [];
+  for (let i = 0; i < input.rows; i++) {
+    ctx.allocate(input.columns + 1);
+    const values = Object.freeze([...input.matrix[i], input.rhs[i]].map(v => flattenFactorCoefficient(ctx, domain, auxiliary, v)));
+    let denominator = auxiliary.one(ctx);
+    for (const v of values) denominator = auxiliary.multiply(ctx, denominator, v.denominator);
+    ctx.allocate(values.length * 2);
+    const quotients = Object.freeze(values.map(v => auxiliary.exactDivide(ctx, denominator, v.denominator)));
+    const cleared = Object.freeze(values.map((v, j) => auxiliary.multiply(ctx, v.numerator, quotients[j])));
+    rows.push(Object.freeze({values, denominator, quotients, cleared, support: support(ctx, auxiliary, cleared)}));
+  }
+  const evidence = Object.freeze({auxiliary, rows: Object.freeze(rows), system: rationalRows(ctx, input.columns, rows)});
+  verifyCoefficientSystemWithin(ctx, field, input, evidence, bounds); return evidence;
+}
 export function descendCoefficientSystem<E>(ctx: ExecutionContext, field: ExactField<E>, input: LinearSystem<E>, bounds: DifferentialBounds): RationalCoefficientSystem {
-  return ctx.operation(() => {
-    checkDifferentialBounds(ctx, bounds); validate(ctx, field, input);
-    const domain = factorCoefficientDomain(ctx, field, bounds.towerHeight), auxiliary = MultivariateRing.create(ctx, Q, domain.height);
-    ctx.allocate(input.rows); const rows: CoefficientRowEvidence[] = [];
-    for (let i = 0; i < input.rows; i++) {
-      ctx.allocate(input.columns + 1);
-      const values = Object.freeze([...input.matrix[i], input.rhs[i]].map(v => flattenFactorCoefficient(ctx, domain, auxiliary, v)));
-      let denominator = auxiliary.one(ctx);
-      for (const v of values) denominator = auxiliary.multiply(ctx, denominator, v.denominator);
-      ctx.allocate(values.length * 2);
-      const quotients = Object.freeze(values.map(v => auxiliary.exactDivide(ctx, denominator, v.denominator)));
-      const cleared = Object.freeze(values.map((v, j) => auxiliary.multiply(ctx, v.numerator, quotients[j])));
-      rows.push(Object.freeze({values, denominator, quotients, cleared, support: support(ctx, auxiliary, cleared)}));
-    }
-    const evidence = Object.freeze({auxiliary, rows: Object.freeze(rows), system: rationalRows(ctx, input.columns, rows)});
-    verifyCoefficientSystemWithin(ctx, field, input, evidence, bounds); return evidence;
-  });
+  return ctx.operation(() => descendCoefficientSystemWithin(ctx, field, input, bounds));
 }
 /** Replay only inverse conversions, nonzero clearing, support and coefficient identities. */
 export function verifyCoefficientSystemWithin<E>(ctx: ExecutionContext, field: ExactField<E>, input: LinearSystem<E>, evidence: RationalCoefficientSystem, bounds: DifferentialBounds): void {

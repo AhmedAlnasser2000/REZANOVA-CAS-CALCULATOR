@@ -1,7 +1,7 @@
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import { PolynomialRing, type Polynomial } from './polynomial';
-import { constructAlgebraicExtension, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 import { verifyAlgebraicChainWithin } from './algebraic-derivative';
 import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
 import { freezeExactMatrix, transposeExactMatrix, invertExactMatrix, verifyExactMatrixInverse, type ExactMatrix, type MatrixInverse } from './algebraic-matrix';
@@ -66,7 +66,7 @@ function primitive(ctx: ExecutionContext, base: AlgebraicField<CurveConstant>, s
 }
 export function constructCurveResidueAlgebra(ctx: ExecutionContext, order: AlgebraicCurveOrder, prime: Polynomial<CurveConstant>, bounds: DifferentialBounds): CurveResidueAlgebra {
   const r = order.lattice.scalar.ring; r.assert(ctx, prime);
-  const residueRing = new PolynomialRing(r.domain, 'rho'), base = constructAlgebraicExtension(ctx, residueRing, residueRing.make(ctx, prime.coefficients), bounds);
+  const residueRing = new PolynomialRing(r.domain, 'rho'), base = constructAlgebraicExtensionWithin(ctx, residueRing, residueRing.make(ctx, prime.coefficients), bounds);
   const multiplication = tables(ctx, order, base), n = order.lattice.dimension, one = oneVector(ctx, order, base), relationRing = new PolynomialRing(base, 'tau');
   let seed = 1n;
   for (;;) {

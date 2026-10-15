@@ -7,7 +7,7 @@ import { requireRationalVariable } from './differential-admission';
 import type { Polynomial as P } from './polynomial';
 import { differentiate, verifyDerivative, type DerivativeEvidence } from './differential-derivative';
 import { factorRecursivePolynomial, verifyRecursiveFactorizationInternal, type RecursivePolynomialFactorization } from './recursive-polynomial-factorization';
-import { descendCoefficientSystem, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
+import { descendCoefficientSystemWithin, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
 import { solveLinearSystem, verifyLinearSolution, type LinearSolution, type LinearSystem } from './linear-system';
 
 export interface LogarithmicFactor {
@@ -80,7 +80,7 @@ export function solveRationalLogarithmicDerivativeRelations(ctx: ExecutionContex
           logarithmicDerivative: owner.exactDivide(ctx, derivative.derivative, value)}));
       }
     }
-    const comparison = descendCoefficientSystem(ctx, owner, constraint(ctx, owner, inputs, factors), bounds);
+    const comparison = descendCoefficientSystemWithin(ctx, owner, constraint(ctx, owner, inputs, factors), bounds);
     const linear = solveLinearSystem(ctx, Q, comparison.system); demand(linear.kind === 'consistent', 'verification-failed', 'homogeneous radical relation system');
     ctx.allocate(linear.nullspace.length); const basis = Object.freeze(linear.nullspace.map(v => radicalValuations(ctx, v.slice(0, inputs.length), v.slice(inputs.length))));
     const independence = solveLinearSystem(ctx, Q, projectedSystem(ctx, inputs.length, basis));

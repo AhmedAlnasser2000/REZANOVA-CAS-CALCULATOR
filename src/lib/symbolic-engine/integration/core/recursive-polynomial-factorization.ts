@@ -25,7 +25,10 @@ function rationalInput<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input:
   ctx.allocate(input.coefficients.length); return {domain, q, value: q.make(ctx, input.coefficients.map(c => domain.rational(ctx, c)))};
 }
 export function factorRecursivePolynomial<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input: Polynomial<E>, bounds: DifferentialBounds): RecursivePolynomialFactorization<E> {
-  return ctx.operation(() => {
+  return ctx.operation(() => factorRecursivePolynomialWithin(ctx, ring, input, bounds));
+}
+/** Checked composition keeps the enclosing proof and cumulative budget. */
+export function factorRecursivePolynomialWithin<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input: Polynomial<E>, bounds: DifferentialBounds): RecursivePolynomialFactorization<E> {
     checkDifferentialBounds(ctx, bounds); assertPolynomialRingOwner(ctx, ring); ring.assert(ctx, input);
     const domain = factorCoefficientDomain(ctx, ring.domain, bounds.towerHeight);
     if (ring.isZero(ctx, input)) return Object.freeze({kind: 'zero', input});
@@ -51,7 +54,6 @@ export function factorRecursivePolynomial<E>(ctx: ExecutionContext, ring: Polyno
       result = Object.freeze({kind: 'factorization', route: 'recursive' as const, input, unit: ring.leading(ctx, input), auxiliary, conversion, squareFree, components, factors: Object.freeze(factors)});
     }
     verifyRecursiveFactorizationInternal(ctx, ring, input, result, bounds); return result;
-  });
 }
 export function verifyRecursivePolynomialFactorization<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input: Polynomial<E>, decision: RecursivePolynomialFactorization<E>, bounds: DifferentialBounds): void {
   ctx.operation(() => verifyRecursiveFactorizationInternal(ctx, ring, input, decision, bounds));

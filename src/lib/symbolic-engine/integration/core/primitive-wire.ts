@@ -37,7 +37,7 @@ function array(ctx: ExecutionContext, input: unknown): readonly unknown[] {
   }
   return input;
 }
-function encodePrimitiveWithin(ctx: ExecutionContext, candidate: FormalPrimitive): PrimitiveWire {
+export function encodePrimitiveWithin(ctx: ExecutionContext, candidate: FormalPrimitive): PrimitiveWire {
   const owner = candidate.owner; owner.assert(ctx, candidate); owner.verifyConditions(ctx, candidate, candidate.conditions);
   ctx.allocate(candidate.terms.length * 4 + owner.x.variable.length + owner.z.variable.length + 10);
   const terms = candidate.terms.map(term => {

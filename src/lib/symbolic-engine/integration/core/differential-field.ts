@@ -44,6 +44,8 @@ export class DifferentialField implements ExactField<DifferentialElement> {
   readonly constantField: 'Q' | 'unestablished';
   #values = new WeakSet<object>();
   #validation = new OwnedValidation();
+  #units = new WeakMap<object, {zero?: DifferentialElement; one?: DifferentialElement}>();
+  #embeddings = new WeakMap<object, {current: WeakMap<object, DifferentialElement>; previous: WeakMap<object, DifferentialElement>; count: number}>();
   private constructor(key: symbol, parent?: DifferentialField, fractions?: RationalFunctionField<DifferentialElement>,
     rule?: Polynomial<DifferentialElement>, kind: 'rational' | 'variable' | 'formal' = 'rational', admission?: FunctionAdmission) {
     demand(key === constructionKey, 'domain-mismatch', 'private differential constructor');
@@ -111,7 +113,18 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     this.#values.add(result); return result;
   }
   fromInteger(ctx: ExecutionContext, n: bigint): DifferentialElement {
-    return this.parent ? this.embed(ctx, this.parent.fromInteger(ctx, n)) : this.scalar(ctx, rational(ctx, n));
+    const token = ctx.operationToken;
+    if (!token || (n !== 0n && n !== 1n))
+      return this.parent ? this.embed(ctx, this.parent.fromInteger(ctx, n)) : this.scalar(ctx, rational(ctx, n));
+    ctx.integer(n); let units = this.#units.get(token);
+    const retained = n === 0n ? units?.zero : units?.one;
+    if (retained) {this.assert(ctx, retained); return retained;}
+    const value = this.parent ? this.embed(ctx, this.parent.fromInteger(ctx, n)) : this.scalar(ctx, rational(ctx, n));
+    if (!units) {
+      ctx.allocate(4); units = {}; ctx.onOperationEnd(() => this.#units.delete(token)); this.#units.set(token, units);
+    }
+    ctx.allocate(1); if (n === 0n) units.zero = value; else units.one = value;
+    return value;
   }
   /** Only ancestors embed. Equal printed names never establish an embedding. */
   embed(ctx: ExecutionContext, a: DifferentialElement): DifferentialElement {
@@ -119,7 +132,21 @@ export class DifferentialField implements ExactField<DifferentialElement> {
     a.owner.assert(ctx, a);
     if (a.owner === this) return a;
     demand(this.parent !== undefined, 'domain-mismatch', 'not an ancestor field');
-    return this.fraction(ctx, this.fractions!.fromCoefficient(ctx, this.parent.embed(ctx, a)));
+    const token = ctx.operationToken; let embeddings = token ? this.#embeddings.get(token) : undefined;
+    const retained = embeddings?.current.get(a) ?? embeddings?.previous.get(a);
+    if (retained) {this.assert(ctx, retained); return retained;}
+    const value = this.fraction(ctx, this.fractions!.fromCoefficient(ctx, this.parent.embed(ctx, a)));
+    if (token) {
+      if (!embeddings) {
+        ctx.allocate(5); embeddings = {current: new WeakMap(), previous: new WeakMap(), count: 0};
+        ctx.onOperationEnd(() => this.#embeddings.delete(token)); this.#embeddings.set(token, embeddings);
+      }
+      // Weak keys do not keep arithmetic temporaries alive. Retention capacity
+      // retires an old generation and never limits the mathematical request.
+      if (embeddings.count === 4096) {ctx.allocate(2); embeddings.previous = embeddings.current; embeddings.current = new WeakMap(); embeddings.count = 0;}
+      ctx.allocate(2); embeddings.current.set(a, value); embeddings.count++;
+    }
+    return value;
   }
   generator(ctx: ExecutionContext): DifferentialElement {
     demand(this.parent !== undefined, 'domain-mismatch', 'Q has no generator');

@@ -79,6 +79,18 @@ export function normalizationPolynomialCodec<C>(ctx: ExecutionContext, ring: Mul
     },
   };
 }
+/** Distinct compact unit witness; the original complete coefficient chain remains replayable. */
+export function normalizationContentCodec<C>(ctx: ExecutionContext, ring: MultivariateRing<C>, element: w.EvidenceCodec<C>, child?: w.EvidenceCodec<MultivariateGcd<C>>): w.EvidenceCodec<MultivariateContent<C>> {
+  demand(ring.lower !== undefined, 'invalid-input', 'content coefficient owner');
+  const c = normalizationPolynomialCodec(ctx, ring.lower, element), p = normalizationPolynomialCodec(ctx, ring, element);
+  const original = w.structure(ctx, {content: c, primitive: p, chain: w.list(ctx, child ?? normalizationGcdCodec(ctx, ring.lower, element))});
+  const unit = w.structure(ctx, {format: w.literal(ctx, 'unit-coefficient-v2'), content: c, primitive: p, index: w.integer(ctx)});
+  return {encode(v) {return v.format === 'unit-coefficient-v2' ? unit.encode(v) : original.encode(v);},
+    decode(v) {
+      demand(v !== null && typeof v === 'object', 'invalid-input', 'content evidence');
+      return Object.hasOwn(v, 'format') ? unit.decode(v) : original.decode(v);
+    }};
+}
 export function normalizationGcdCodec<C>(ctx: ExecutionContext, ring: MultivariateRing<C>, element: w.EvidenceCodec<C>): w.EvidenceCodec<MultivariateGcd<C>> {
   const p = normalizationPolynomialCodec(ctx, ring, element);
   const common = {gcd: p, left: p, right: p};
@@ -86,7 +98,7 @@ export function normalizationGcdCodec<C>(ctx: ExecutionContext, ring: Multivaria
   let recursive: w.EvidenceCodec<Extract<MultivariateGcd<C>, {kind: 'recursive'}>> | undefined;
   if (ring.lower) {
     const c = normalizationPolynomialCodec(ctx, ring.lower, element), child = normalizationGcdCodec(ctx, ring.lower, element);
-    const content: w.EvidenceCodec<MultivariateContent<C>> = w.structure(ctx, {content: c, primitive: p, chain: w.list(ctx, child)});
+    const content = normalizationContentCodec(ctx, ring, element, child);
     recursive = w.structure(ctx, {...common, kind: w.literal(ctx, 'recursive'), a: content, b: content, content: child,
       steps: w.list(ctx, w.structure(ctx, {division: w.structure(ctx, {quotient: p, remainder: p, multiplier: c}), content})),
       s: p, t: p, denominator: c});

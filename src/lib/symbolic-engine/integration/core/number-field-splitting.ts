@@ -3,7 +3,7 @@ import type { DifferentialBounds } from './differential-field';
 import { PolynomialRing, type Polynomial } from './polynomial';
 import { rationalField as Q } from './field';
 import type { Rational } from './rational';
-import { constructAlgebraicExtension, isAlgebraicField, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, isAlgebraicField, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
 import { AlgebraicEmbedding, assertAlgebraicEmbedding } from './algebraic-embedding';
 import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
 import { constructNumberFieldPresentationWithin, verifyNumberFieldPresentationWithin, numberFieldPresentationValueWithin, type NumberFieldPresentation } from './number-field-presentation';
@@ -80,7 +80,7 @@ export function splitNumberFieldPolynomialWithin(ctx: ExecutionContext, ring: Po
       const result = Object.freeze({input, steps: Object.freeze(steps), target: field, embedding, roots: roots(ctx, factorization)});
       verifyNumberFieldSplittingWithin(ctx, ring, input, result, bounds); return result;
     }
-    const extension = constructAlgebraicExtension(ctx, r, factorization.factors[selected].polynomial, bounds), presentation = constructNumberFieldPresentationWithin(ctx, extension, bounds);
+    const extension = constructAlgebraicExtensionWithin(ctx, r, factorization.factors[selected].polynomial, bounds), presentation = constructNumberFieldPresentationWithin(ctx, extension, bounds);
     steps.push(Object.freeze({input: value, factorization, selected, extension, presentation}));
     embedding = nextEmbedding(ctx, source, embedding, extension, presentation, bounds); field = presentation.field;
   }

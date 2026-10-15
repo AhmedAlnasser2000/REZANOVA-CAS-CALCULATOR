@@ -1,15 +1,15 @@
 import {describe,it,expect,vi,afterEach} from 'vitest';
 import {startIntegration} from './service';
 import {DEFAULT_INTEGRATION_LIMITS as limits,validIntegrationPreview,type IntegrationPreview} from './types';
-import * as rational from '../../symbolic-engine/integration/core/rational-decision';
-import * as exponential from '../../symbolic-engine/integration/core/exponential-rational-decision';
+import * as rational from '../../symbolic-engine/integration/core/rational-elementary-evidence';
+import * as exponential from '../../symbolic-engine/integration/core/first-level-elementary-evidence';
 import {AlgebraError} from '../../symbolic-engine/integration/core/execution';
 import {readIntegrationPresentation} from '../../result-contract/integration-presentation';
 afterEach(()=>vi.restoreAllMocks());
 const job=(body:string)=>({request:{source:`\\int ${body}\\,dx`,limits}});
 describe('Integration candidate/check/export boundaries',()=>{
   it.each(['x','\\frac{1}{x^2+1}','e^x','\\frac{e^x}{x}'])('publishes actual %s before checking and before export',body=>{
-    const check=body.includes('e^')?vi.spyOn(exponential,'checkExponentialRationalCandidate'):vi.spyOn(rational,'checkRationalCandidate');
+    const check=body.includes('e^')?vi.spyOn(exponential,'checkCompactExponentialCandidateWithin'):vi.spyOn(rational,'checkCompactRationalCandidateWithin');
     let preview:IntegrationPreview|undefined;
     const pending=startIntegration(job(body),p=>{expect(check).not.toHaveBeenCalled();expect(validIntegrationPreview(p,job(body).request)).toBe(true);preview=p;});
     expect(preview).toBeDefined();expect(check).toHaveBeenCalledOnce();expect(pending.response.document.outcomeKind).toBe('success');
@@ -21,13 +21,13 @@ describe('Integration candidate/check/export boundaries',()=>{
     expect(pending.response.usage).toEqual(before); // Published snapshot is stable.
   });
   it('keeps a verification failure distinct from a computed candidate',()=>{
-    vi.spyOn(rational,'checkRationalCandidate').mockImplementation(()=>{throw new AlgebraError('verification-failed','test target mismatch');});
+    vi.spyOn(rational,'checkCompactRationalCandidateWithin').mockImplementation(()=>{throw new AlgebraError('verification-failed','test target mismatch');});
     let shown=false;const p=startIntegration(job('x'),()=>{shown=true;});
     expect(shown).toBe(true);expect(p.response.document.title).toBe('Verification failed');expect(p.response.failedStage).toBe('verify');
     expect(p.exportArtifact).toBeUndefined();expect(p.response.stop).toBeUndefined();
   });
   it('keeps verification exhaustion distinct from a negative decision',()=>{
-    vi.spyOn(rational,'checkRationalCandidate').mockImplementation(ctx=>ctx.exhaust('work'));
+    vi.spyOn(rational,'checkCompactRationalCandidateWithin').mockImplementation(ctx=>ctx.exhaust('work'));
     let shown=false;const p=startIntegration(job('x'),()=>{shown=true;});
     expect(shown).toBe(true);expect(p.response.stop).toBe('work');expect(p.response.failedStage).toBe('verify');expect(p.response.document.outcomeKind).toBe('error');
   });

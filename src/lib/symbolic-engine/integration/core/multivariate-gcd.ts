@@ -1,11 +1,13 @@
 import { demand, type ExecutionContext } from './execution';
 import { assertMultivariateRing, MultivariateRing, type MultivariatePolynomial as P } from './multivariate-polynomial';
 
-export interface MultivariateContent<E> {
+export type MultivariateContent<E> = {
   readonly content: P<E>;
   readonly primitive: P<E>;
-  readonly chain: readonly MultivariateGcd<E>[];
-}
+} & (
+  | { readonly format?: never; readonly chain: readonly MultivariateGcd<E>[] }
+  | { readonly format: 'unit-coefficient-v2'; readonly index: number }
+);
 export interface MultivariatePseudoDivision<E> {
   readonly quotient: P<E>;
   readonly remainder: P<E>;
@@ -31,6 +33,15 @@ function power<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>, n: 
 }
 function content<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>): MultivariateContent<E> {
   const r = lower(ring), cs = ring.coefficients(ctx, a), chain: MultivariateGcd<E>[] = [];
+  // A nonzero scalar coefficient is a unit over the registered underlying field.
+  // It proves the content is one without constructing any coefficient PRS.
+  for (let i = cs.length - 1; i >= 0; i--) {
+    ctx.tick(r.arity + 1);
+    if (cs[i].terms.length === 1 && cs[i].terms[0].powers.every(n => n === 0)) {
+      ctx.allocate(4);
+      return Object.freeze({format: 'unit-coefficient-v2', index: i, content: r.one(ctx), primitive: a});
+    }
+  }
   let c = r.zero(ctx); ctx.allocate(cs.length + 3);
   for (const value of cs) { ctx.tick(); const step = compute(ctx, r, c, value); chain.push(step); c = step.gcd; }
   const primitive = ring.isZero(ctx, a) ? a : ring.exactDivide(ctx, a, ring.lift(ctx, c));
@@ -38,6 +49,17 @@ function content<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>): 
 }
 function checkContent<E>(ctx: ExecutionContext, ring: MultivariateRing<E>, a: P<E>, proof: MultivariateContent<E>): void {
   const r = lower(ring), cs = ring.coefficients(ctx, a);
+  if (proof.format === 'unit-coefficient-v2') {
+    demand(!('chain' in proof) && Number.isSafeInteger(proof.index) && proof.index >= 0 && proof.index < cs.length,
+      'verification-failed', 'unit content coefficient coverage');
+    const value = cs[proof.index]; r.assert(ctx, value); ctx.tick(r.arity + 1);
+    demand(value.terms.length === 1 && value.terms[0].powers.every(n => n === 0)
+      && !r.field.isZero(ctx, value.terms[0].coefficient), 'verification-failed', 'content scalar unit');
+    demand(r.equal(ctx, proof.content, r.one(ctx)) && ring.equal(ctx, a, proof.primitive),
+      'verification-failed', 'unit primitive reconstruction');
+    return;
+  }
+  demand(proof.format === undefined, 'verification-failed', 'content format');
   demand(Array.isArray(proof.chain) && proof.chain.length === cs.length, 'verification-failed', 'content coefficient coverage');
   let c = r.zero(ctx);
   for (let i = 0; i < cs.length; i++) { ctx.tick(); check(ctx, r, c, cs[i], proof.chain[i]); c = proof.chain[i].gcd; }

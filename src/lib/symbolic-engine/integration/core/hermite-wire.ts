@@ -1,11 +1,16 @@
 import type { ExecutionContext } from './execution';
 import type { FormalPrimitiveDomain } from './formal-primitive';
 import type { HermiteCertificate } from './hermite-reduction';
+import type { ConstantHermiteDomain, ConstantHermiteCertificate } from './constant-rational-hermite';
 import * as w from './decision-wire-algebra';
 
 /** Shared exact schema; preserves the rational-decision version-1 wire format. */
 export function hermiteEvidenceCodec(ctx: ExecutionContext, owner: FormalPrimitiveDomain): w.EvidenceCodec<HermiteCertificate> {
-  const q = w.scalar(ctx), x = w.polynomial(ctx, owner.x, q), f = w.fraction(ctx, owner.fractions, q);
+  return constantHermiteEvidenceCodec(ctx, owner, w.scalar(ctx));
+}
+/** Same arithmetic schema over explicitly owned constant coefficients. */
+export function constantHermiteEvidenceCodec<E>(ctx: ExecutionContext, owner: ConstantHermiteDomain<E>, q: w.EvidenceCodec<E>): w.EvidenceCodec<ConstantHermiteCertificate<E>> {
+  const x = w.polynomial(ctx, owner.x, q), f = w.fraction(ctx, owner.fractions, q);
   return w.structure(ctx, {
     division: w.division(ctx, x), polynomialPrimitive: x, decomposition: w.squareFreeEvidence(ctx, x, q),
     blocks: w.list(ctx, w.structure(ctx, { separation: w.bezout(ctx, x), numeratorDivision: w.division(ctx, x), derivativeBezout: w.bezout(ctx, x),

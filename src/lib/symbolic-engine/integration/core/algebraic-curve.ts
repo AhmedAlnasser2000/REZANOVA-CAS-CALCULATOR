@@ -13,6 +13,7 @@ import { constructCurveLattice, verifyCurveLattice, curveLatticeCoordinates, typ
 import { freezeExactMatrix, equalExactMatrices, invertExactMatrix, verifyExactMatrixInverse, determinantFromInverse,
   type ExactMatrix, type MatrixInverse } from './algebraic-matrix';
 import { verifyAlgebraicConstantBaseChangeWithin, type AlgebraicConstantBaseChange } from './algebraic-curve-base-change';
+import { ScopedProof } from './scoped-proof';
 
 export interface AlgebraicCurveOrder {
   readonly infinity: boolean;
@@ -39,6 +40,7 @@ export interface NativeAlgebraicCurveView<E> extends AlgebraicCurveView<E> {
   readonly authority: Readonly<{kind: 'native'; evidence: AlgebraicCurveEvidence<E>}>;
 }
 const curves = new WeakSet<object>();
+const curveProofs = new ScopedProof();
 function immutableCurveEvidence(ctx: ExecutionContext, value: unknown, seen = new WeakSet<object>()): void {
   if (value === null || typeof value !== 'object' || seen.has(value)) return;
   ctx.allocate(1); seen.add(value); demand(Object.isFrozen(value), 'invalid-input', 'mutable curve evidence');
@@ -183,6 +185,12 @@ export function verifyAlgebraicCurve<E>(ctx: ExecutionContext, owner: ExactField
 }
 export function verifyAlgebraicCurveWithin<E>(ctx: ExecutionContext, owner: ExactField<E>, view: AlgebraicCurveView<E>, bounds: DifferentialBounds): void {
   assertAlgebraicCurveOwner(ctx, view); demand(view.owner === owner, 'domain-mismatch', 'curve native field ownership');
+  // Only private registered views qualify: their retained mathematical evidence
+  // is recursively immutable and coordinate closures are constructed here from
+  // that evidence. A fresh operation still replays the complete authority.
+  curveProofs.check(ctx, [view, bounds], () => verifyCurveAuthority(ctx, owner, view, bounds), [view, owner]);
+}
+function verifyCurveAuthority<E>(ctx: ExecutionContext, owner: ExactField<E>, view: AlgebraicCurveView<E>, bounds: DifferentialBounds): void {
   if (view.authority.kind === 'native') reconstructAlgebraicCurveWithin(ctx, owner, view.authority.evidence, view.coordinates.scalar, view.coordinates.relationRing, bounds);
   else {
     const proof = view.authority.evidence; verifyAlgebraicConstantBaseChangeWithin(ctx, proof.source, proof.constants, proof.embedding, proof, bounds);

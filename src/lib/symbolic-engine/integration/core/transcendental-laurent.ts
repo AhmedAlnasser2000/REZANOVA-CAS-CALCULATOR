@@ -4,11 +4,12 @@ import {differentiate,verifyDerivative,type DerivativeEvidence} from './differen
 import type {TranscendentalDomain} from './transcendental-domain';
 import {solveRecursiveParametricRdeWithin,verifyRecursiveParametricRdeWithin} from './recursive-rde';
 import type {RecursiveParametricRdeDecision} from './recursive-rde-types';
-export interface TranscendentalLaurentStep {
-  readonly power: bigint;readonly coefficient: E;readonly rde: RecursiveParametricRdeDecision;readonly correction: E|null;readonly derivative: DerivativeEvidence|null;
+type RdeFamily = Pick<RecursiveParametricRdeDecision, 'kind' | 'family'>;
+export interface TranscendentalLaurentStep<R extends RdeFamily = RecursiveParametricRdeDecision> {
+  readonly power: bigint;readonly coefficient: E;readonly rde: R;readonly correction: E|null;readonly derivative: DerivativeEvidence|null;
 }
-export interface TranscendentalLaurentReduction {
-  readonly input: E;readonly powers: readonly bigint[];readonly steps: readonly TranscendentalLaurentStep[];readonly fieldPart: E;readonly remainder: E;readonly failure: number|null;
+export interface TranscendentalLaurentReduction<R extends RdeFamily = RecursiveParametricRdeDecision> {
+  readonly input: E;readonly powers: readonly bigint[];readonly steps: readonly TranscendentalLaurentStep<R>[];readonly fieldPart: E;readonly remainder: E;readonly failure: number|null;
 }
 export function extractTranscendentalLaurent(ctx: ExecutionContext,d: TranscendentalDomain,input: E) {
   d.field.assert(ctx,input);demand(input.kind==='fraction','domain-mismatch','Laurent native value');const den=input.value.denominator,degree=d.t.degree(ctx,den);
@@ -42,13 +43,17 @@ export function reduceTranscendentalLaurentWithin(ctx: ExecutionContext,d: Trans
   verifyTranscendentalLaurent(ctx,d,input,result,bounds);return result;
 }
 export function verifyTranscendentalLaurent(ctx: ExecutionContext,d: TranscendentalDomain,input: E,e: TranscendentalLaurentReduction,bounds: DifferentialBounds): void {
+  verifyTranscendentalLaurentFamily(ctx,d,input,e,bounds,verifyRecursiveParametricRdeWithin);
+}
+/** The full exponent support/mapping checks are identical for both family formats. */
+export function verifyTranscendentalLaurentFamily<R extends RdeFamily>(ctx: ExecutionContext,d: TranscendentalDomain,input: E,e: TranscendentalLaurentReduction<R>,bounds: DifferentialBounds,check: (ctx: ExecutionContext, view: TranscendentalDomain['view'], a: E, b: E, forcing: readonly E[], proof: R, bounds: DifferentialBounds) => void): void {
   demand(d.field.equal(ctx,input,e.input),'verification-failed','Laurent expected input');const coverage=extractTranscendentalLaurent(ctx,d,input);
   demand(e.powers.length===coverage.powers.length&&d.base.equal(ctx,e.remainder,coverage.remainder),'verification-failed','complete Laurent support/parent component');
   for(let i=0;i<e.powers.length;i++)demand(e.powers[i]===coverage.powers[i],'verification-failed','exact Laurent exponent order');
   let part=d.field.fromInteger(ctx,0n),failed=false;
   for(let i=0;i<e.steps.length;i++){
     const step=e.steps[i];demand(!failed&&i<coverage.powers.length&&step.power===coverage.powers[i]&&d.base.equal(ctx,step.coefficient,coverage.coefficients[i]),'verification-failed','ordered Laurent component coverage');
-    const a=d.base.multiply(ctx,d.base.fromInteger(ctx,step.power),d.view.rate!);verifyRecursiveParametricRdeWithin(ctx,d.view.parent!,a,step.coefficient,[],step.rde,bounds);
+    const a=d.base.multiply(ctx,d.base.fromInteger(ctx,step.power),d.view.rate!);check(ctx,d.view.parent!,a,step.coefficient,[],step.rde,bounds);
     if(step.rde.kind==='no-field-solution'){demand(e.failure===i&&i===e.steps.length-1&&step.correction===null&&step.derivative===null,'verification-failed','Laurent checked obstruction prefix');failed=true;continue;}
     demand(step.rde.family!==null&&step.rde.family.directions.length===0&&step.correction!==null&&step.derivative!==null,'verification-failed','complete unique Laurent solution');
     demand(d.field.equal(ctx,step.correction,transcendentalMonomial(ctx,d,step.power,step.rde.family.particular.value)),'verification-failed','Laurent solution mapping');

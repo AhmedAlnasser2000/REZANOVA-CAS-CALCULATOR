@@ -1,46 +1,48 @@
 import { demand, type ExecutionContext } from './execution';
 import type { DifferentialBounds } from './differential-field';
 import { verifyAlgebraicCurveWithin, type AlgebraicCurveView } from './algebraic-curve';
-import { factorAlgebraicPolynomialWithin, verifyAlgebraicFactorizationWithin, type AlgebraicFactorization } from './algebraic-factorization';
-import { decomposeAlgebraicPlacesWithin, verifyAlgebraicPlaceDecompositionWithin, type AlgebraicPlaceDecomposition } from './algebraic-place';
 import { constructAlgebraicDivisorWithin, verifyAlgebraicDivisorWithin, type AlgebraicDivisor } from './algebraic-divisor';
 import { solveAlgebraicRiemannRochWithin, verifyAlgebraicRiemannRochWithin, type AlgebraicRiemannRoch } from './algebraic-riemann-roch';
-import type { CurveConstant } from './algebraic-curve-coordinates';
+import {constructAlgebraicCanonicalGeometryWithin, verifyAlgebraicCanonicalGeometryWithin, type AlgebraicCanonicalGeometry} from './algebraic-canonical-geometry';
+import {ScopedProof} from './scoped-proof';
+import {reuseAlgebraicVerification} from './algebraic-proof-reuse';
+const produced = new WeakSet<object>(), checks = new ScopedProof();
 
-export interface AlgebraicCurveGeometry<E> {
-  readonly finiteFactors: AlgebraicFactorization<CurveConstant>;
-  readonly finite: readonly AlgebraicPlaceDecomposition<E>[];
-  readonly infinity: AlgebraicPlaceDecomposition<E>;
-  readonly canonical: AlgebraicDivisor<E>;
-  readonly genus: bigint;
+export interface AlgebraicCurveGeometry<E> extends AlgebraicCanonicalGeometry<E> {
   readonly zero: AlgebraicDivisor<E>;
   readonly globalFunctions: AlgebraicRiemannRoch<E>;
 }
-function canonicalEntries<E>(ctx: ExecutionContext, finite: readonly AlgebraicPlaceDecomposition<E>[], infinity: AlgebraicPlaceDecomposition<E>) {
-  ctx.allocate(finite.reduce((size, d) => size + d.places.length, infinity.places.length));
-  return [...finite.flatMap(d => d.places.map(place => ({place, coefficient: ctx.add(place.ramification, -1n)}))),
-    ...infinity.places.map(place => ({place, coefficient: ctx.add(-place.ramification, -1n)}))];
-}
+// Complete geometry is invariant under the integrand. Retain a successful
+// producer result only in its exact live operation/curve/bounds scope. This
+// never changes replay: fresh verifiers still check all stored evidence.
+const liveGeometry = new WeakMap<object, WeakMap<object, WeakMap<object, AlgebraicCurveGeometry<unknown>>>>();
 export function certifyAlgebraicCurveGeometryWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, bounds: DifferentialBounds): AlgebraicCurveGeometry<E> {
-  const r = curve.finite.lattice.scalar.ring, finiteFactors = factorAlgebraicPolynomialWithin(ctx, r, curve.finite.discriminant, bounds);
-  demand(finiteFactors.kind === 'factorization', 'verification-failed', 'nonzero maximal-order discriminant');
-  const finite = Object.freeze(finiteFactors.factors.map(f => decomposeAlgebraicPlacesWithin(ctx, curve, f.polynomial, false, bounds)));
-  const ur = curve.infinity.lattice.scalar.ring, infinity = decomposeAlgebraicPlacesWithin(ctx, curve,
-    ur.make(ctx, [ur.domain.fromInteger(ctx, 0n), ur.domain.fromInteger(ctx, 1n)]), true, bounds);
-  const canonical = constructAlgebraicDivisorWithin(ctx, curve, canonicalEntries(ctx, finite, infinity)), twiceGenus = ctx.add(canonical.degree, 2n);
-  demand(twiceGenus >= 0n && twiceGenus % 2n === 0n, 'verification-failed', 'canonical degree/genus parity');
-  const genus = ctx.quotient(twiceGenus, 2n), zero = constructAlgebraicDivisorWithin(ctx, curve, []), globalFunctions = solveAlgebraicRiemannRochWithin(ctx, curve, zero, bounds);
-  const proof = Object.freeze({finiteFactors, finite, infinity, canonical, genus, zero, globalFunctions});
-  verifyAlgebraicCurveGeometryWithin(ctx, curve, proof, bounds); return proof;
+  verifyAlgebraicCurveWithin(ctx, curve.owner, curve, bounds); ctx.tick();
+  const token = ctx.operationToken, reusable = token !== undefined && Object.isFrozen(bounds);
+  if (reusable) {
+    const saved = liveGeometry.get(token)?.get(curve)?.get(bounds);
+    if (saved !== undefined) return saved as AlgebraicCurveGeometry<E>;
+  }
+  const canonical = constructAlgebraicCanonicalGeometryWithin(ctx, curve, bounds), zero = constructAlgebraicDivisorWithin(ctx, curve, []), globalFunctions = solveAlgebraicRiemannRochWithin(ctx, curve, zero, bounds);
+  const proof = Object.freeze({...canonical, zero, globalFunctions});
+  ctx.allocate(1); produced.add(proof);
+  verifyAlgebraicCurveGeometryWithin(ctx, curve, proof, bounds);
+  if (reusable) {
+    let curves = liveGeometry.get(token);
+    if (curves === undefined) {ctx.allocate(3); curves = new WeakMap(); liveGeometry.set(token, curves); ctx.onOperationEnd(() => liveGeometry.delete(token));}
+    let values = curves.get(curve);
+    if (values === undefined) {ctx.allocate(3); values = new WeakMap(); curves.set(curve, values);}
+    ctx.allocate(2); values.set(bounds, proof as AlgebraicCurveGeometry<unknown>);
+  }
+  return proof;
 }
 export function verifyAlgebraicCurveGeometryWithin<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, proof: AlgebraicCurveGeometry<E>, bounds: DifferentialBounds): void {
-  const r = curve.finite.lattice.scalar.ring; verifyAlgebraicFactorizationWithin(ctx, r, curve.finite.discriminant, proof.finiteFactors, bounds);
-  demand(proof.finiteFactors.kind === 'factorization' && proof.finiteFactors.factors.length === proof.finite.length, 'verification-failed', 'canonical full finite ramification coverage');
-  for (let i = 0; i < proof.finite.length; i++) verifyAlgebraicPlaceDecompositionWithin(ctx, curve, proof.finiteFactors.factors[i].polynomial, false, proof.finite[i], bounds);
-  const ur = curve.infinity.lattice.scalar.ring, u = ur.make(ctx, [ur.domain.fromInteger(ctx, 0n), ur.domain.fromInteger(ctx, 1n)]);
-  verifyAlgebraicPlaceDecompositionWithin(ctx, curve, u, true, proof.infinity, bounds);
-  verifyAlgebraicDivisorWithin(ctx, curve, canonicalEntries(ctx, proof.finite, proof.infinity), proof.canonical); ctx.integer(proof.genus);
-  demand(proof.genus >= 0n && ctx.add(ctx.multiply(2n, proof.genus), -2n) === proof.canonical.degree, 'verification-failed', 'complete canonical degree/genus');
+  verifyAlgebraicCurveWithin(ctx, curve.owner, curve, bounds);
+  if (produced.has(proof)) checks.check(ctx, [proof, bounds], () => verifyGeometry(ctx, curve, proof, bounds), [curve, proof]);
+  else reuseAlgebraicVerification(ctx, 'curve-geometry', curve, proof, bounds, () => verifyGeometry(ctx, curve, proof, bounds));
+}
+function verifyGeometry<E>(ctx: ExecutionContext, curve: AlgebraicCurveView<E>, proof: AlgebraicCurveGeometry<E>, bounds: DifferentialBounds): void {
+  verifyAlgebraicCanonicalGeometryWithin(ctx, curve, proof, bounds);
   verifyAlgebraicDivisorWithin(ctx, curve, [], proof.zero);
   verifyAlgebraicRiemannRochWithin(ctx, curve, proof.zero, proof.globalFunctions, bounds);
   demand(proof.globalFunctions.dimension === 1, 'verification-failed', 'full global functions equal actual constants');

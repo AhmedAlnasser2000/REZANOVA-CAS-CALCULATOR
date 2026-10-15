@@ -1,11 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import { setup, bounds } from './differential-test-support';
 import { DifferentialField } from './differential-field';
-import { descendCoefficientSystem as descend, verifyCoefficientSystem as verify } from './recursive-coefficient-system';
+import { descendCoefficientSystem as descend, descendCoefficientSystemWithin, verifyCoefficientSystem as verify } from './recursive-coefficient-system';
 import { solveLinearSystem } from './linear-system';
 import { rationalField as Q } from './field';
 
 describe('checked rational coefficient comparison in recursive fields', () => {
+  it('shares composition scopes, keeps public entries cold, and never replenishes usage', () => {
+    const {ctx, f, p} = setup(), system = {rows: 1, columns: 1, matrix: [[p([1])]], rhs: [p([2])]};
+    expect(() => descendCoefficientSystemWithin(ctx, f, system, bounds)).toThrow('invalid-input');
+    ctx.operation(() => {
+      const token = ctx.operationToken, before = ctx.usage;
+      const composed = descendCoefficientSystemWithin(ctx, f, system, bounds);
+      expect(ctx.operationToken).toBe(token);
+      const middle = ctx.usage, external = descend(ctx, f, system, bounds);
+      expect(ctx.operationToken).toBe(token);
+      expect(external.system).toEqual(composed.system);
+      expect(middle.work).toBeGreaterThan(before.work);
+      expect(ctx.usage.work).toBeGreaterThan(middle.work);
+      expect(ctx.usage.allocation).toBeGreaterThan(middle.allocation);
+    });
+    expect(ctx.operationToken).toBeUndefined();
+  });
   it('forces rational constants by complete monomial comparison', () => {
     const {ctx, f, p} = setup(), system = {rows: 1, columns: 2, matrix: [[p([1, 1]), p([1, -1])]], rhs: [p([2])]};
     const d = descend(ctx, f, system, bounds); verify(ctx, f, system, d, bounds);

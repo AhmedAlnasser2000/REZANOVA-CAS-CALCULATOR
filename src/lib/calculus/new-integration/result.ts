@@ -3,7 +3,9 @@ import type { SerializableMathJson } from '../../../types/calculator';
 import { buildCanonicalResultDocument } from '../../result-contract/current';
 import { demand, type ExecutionContext } from '../../symbolic-engine/integration/core/execution';
 import { FormalPrimitiveDomain, type QPolynomial, type QRationalFunction } from '../../symbolic-engine/integration/core/formal-primitive';
-import { verifyRationalDecision, type RationalDecision, type RationalCandidate } from '../../symbolic-engine/integration/core/rational-decision';
+import type { RationalDecision, RationalCandidate } from '../../symbolic-engine/integration/core/rational-decision';
+import { verifyRationalDecisionWithin } from '../../symbolic-engine/integration/core/rational-decision-internal';
+import { verifyCompactRationalElementaryWithin, type CompactRationalElementary } from '../../symbolic-engine/integration/core/rational-elementary-evidence';
 import { checkSourceTarget } from './source-target';
 import { fromRationalPrimitiveInput } from '../../symbolic-engine/integration/core/exponential-sum-bridge';
 import { normalizationRestrictions, type IntegrationSourceProof } from './normalization-result';
@@ -12,8 +14,11 @@ import { fractionTree, polynomialTree, provenMath, treeFraction } from './exact-
 type RationalPrimary = Extract<NonNullable<CanonicalResultDocument['primary']>, {kind: 'rational-antiderivative'}>;
 /** Representation-only projection. Does not claim that the primitive differentiates to input. */
 export function projectRationalCandidate(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction,
-  decision: RationalCandidate, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): RationalPrimary {
-  return ctx.operation(() => {
+  decision: Pick<RationalCandidate, 'primitive' | 'conditions'>, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): RationalPrimary {
+  return ctx.operation(() => projectRationalCandidateWithin(ctx, owner, input, decision, sourceExclusions, source));
+}
+export function projectRationalCandidateWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction,
+  decision: Pick<RationalCandidate, 'primitive' | 'conditions'>, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): RationalPrimary {
     owner.assert(ctx, decision.primitive);
     if (source) checkSourceTarget(ctx, source, fromRationalPrimitiveInput(ctx, source.owner, owner, input));
     const x = owner.x.variable;
@@ -51,13 +56,16 @@ export function projectRationalCandidate(ctx: ExecutionContext, owner: FormalPri
         {kind: 'nonzero', value: conditions.rationalDenominator, origins: [{category: 'primitive-denominator', path: 'primitive.denominator'}]},
         ...conditions.logNorms.map((value, i) => ({kind: 'nonzero' as const, value, origins: [{category: 'log-norm' as const, path: `primitive.log.${i}`}]})),
       ]};
-
-  });
 }
 export function rationalDecisionResult(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction,
-  decision: RationalDecision, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): CanonicalResultDocument {
-  verifyRationalDecision(ctx, owner, input, decision);
+  decision: RationalDecision | CompactRationalElementary, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): CanonicalResultDocument {
+  return ctx.operation(() => rationalDecisionResultWithin(ctx, owner, input, decision, sourceExclusions, source));
+}
+export function rationalDecisionResultWithin(ctx: ExecutionContext, owner: FormalPrimitiveDomain, input: QRationalFunction,
+  decision: RationalDecision | CompactRationalElementary, sourceExclusions: readonly QPolynomial[] = [], source?: IntegrationSourceProof): CanonicalResultDocument {
+  if ('rule' in decision) verifyCompactRationalElementaryWithin(ctx, owner, input, decision);
+  else verifyRationalDecisionWithin(ctx, owner, input, decision);
   return buildCanonicalResultDocument({outcomeKind:'success',title:'Verified antiderivative',
     warnings:['Formal local complex primitive; logarithm choices differ locally by constants.'],
-    primary:projectRationalCandidate(ctx,owner,input,decision,sourceExclusions,source)});
+    primary:projectRationalCandidateWithin(ctx,owner,input,decision,sourceExclusions,source)});
 }

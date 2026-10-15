@@ -1,9 +1,13 @@
 import { demand, type ExecutionContext } from './execution';
 import { requirePositiveField, type PositiveField } from './positive-field';
 import { OwnedValidation } from './owned-validation';
+import {verifyCoefficientProductSum} from './polynomial-coefficient-identity';
 
 export interface PositivePolynomial<E> { readonly ring: PositivePolynomialRing<E>; readonly coefficients: readonly E[] }
 const owners = new WeakSet<object>();
+export function assertPositivePolynomialRingOwner(ctx: ExecutionContext, ring: unknown): asserts ring is PositivePolynomialRing<unknown> {
+  ctx.tick(); demand(ring instanceof PositivePolynomialRing && owners.has(ring), 'domain-mismatch', 'owned positive polynomial ring');
+}
 export class PositivePolynomialRing<E> {
   readonly identity = Symbol('positive-polynomial');
   readonly field: PositiveField<E>;
@@ -74,7 +78,8 @@ export function positiveBezout<E>(ctx: ExecutionContext, r: PositivePolynomialRi
   const proof = Object.freeze({gcd: old, s, t}); verifyPositiveBezout(ctx, r, a, b, proof); return proof;
 }
 export function verifyPositiveBezout<E>(ctx: ExecutionContext, r: PositivePolynomialRing<E>, a: PositivePolynomial<E>, b: PositivePolynomial<E>, proof: PositiveBezout<E>): void {
-  demand(r.equal(ctx, r.add(ctx, r.multiply(ctx, a, proof.s), r.multiply(ctx, b, proof.t)), proof.gcd), 'verification-failed', 'positive Bezout identity');
+  r.assert(ctx, a); r.assert(ctx, b); r.assert(ctx, proof.s); r.assert(ctx, proof.t); r.assert(ctx, proof.gcd);
+  ctx.allocate(6); verifyCoefficientProductSum(ctx, r.field, [[a.coefficients, proof.s.coefficients], [b.coefficients, proof.t.coefficients]], proof.gcd.coefficients, 'positive Bezout identity');
   if (r.isZero(ctx, proof.gcd)) demand(r.isZero(ctx, a) && r.isZero(ctx, b), 'verification-failed', 'positive zero GCD');
   else demand(r.field.equal(ctx, r.leading(ctx, proof.gcd), r.field.fromInteger(ctx, 1n)) && r.isZero(ctx, r.divide(ctx, a, proof.gcd).remainder) && r.isZero(ctx, r.divide(ctx, b, proof.gcd).remainder), 'verification-failed', 'positive GCD normalization/divisibility');
 }

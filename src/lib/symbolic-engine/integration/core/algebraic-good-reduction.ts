@@ -14,6 +14,7 @@ import { certifyReducedOrderMaximality } from './reduced-normality';
 import { constructReducedCurveModel, verifyReducedCurveModel, type ReducedCurveModel } from './reduced-model';
 import { RejectedAlgebraicReduction, requireGoodReduction, verifyGoodReductionClaim } from './algebraic-reduction-errors';
 import {recordRationalGcdEvidence,replayRationalGcdEvidence,currentRationalGcdEvidence,type RationalGcdEvidence} from './rational-gcd-evidence';
+import {reuseAlgebraicVerification} from './algebraic-proof-reuse';
 
 export interface AlgebraicGoodReduction<E> { readonly source: AlgebraicCurveView<E>; readonly geometry: AlgebraicCurveGeometry<E>; readonly number: AlgebraicNumberReduction;
   readonly curve: ReducedCurveView<ReductionConstant>; readonly model: ReducedCurveModel<ReductionConstant>;readonly arithmetic?:RationalGcdEvidence }
@@ -42,7 +43,11 @@ export function constructAlgebraicGoodReductionWithin<E>(ctx:ExecutionContext,so
   const proof=Object.freeze({source,geometry,number,curve,model});verifyAlgebraicGoodReductionWithin(ctx,source,proof,bounds);return Object.freeze({...proof,arithmetic:currentRationalGcdEvidence(ctx)});
 }
 export function verifyAlgebraicGoodReductionWithin<E>(ctx:ExecutionContext,source:AlgebraicCurveView<E>,proof:AlgebraicGoodReduction<E>,bounds:DifferentialBounds):void{
-  verifyAlgebraicCurveWithin(ctx,source.owner,source,bounds);demand(proof.source===source,'domain-mismatch','good reduction supplied source');verifyAlgebraicCurveGeometryWithin(ctx,source,proof.geometry,bounds);verifyAlgebraicNumberReduction(ctx,source.coordinates.constantOwner,proof.number);
+  verifyAlgebraicCurveWithin(ctx,source.owner,source,bounds);demand(proof.source===source,'domain-mismatch','good reduction supplied source');
+  reuseAlgebraicVerification(ctx,'good-reduction',source,proof,bounds,()=>verifyGoodReductionEvidence(ctx,source,proof,bounds));
+}
+function verifyGoodReductionEvidence<E>(ctx:ExecutionContext,source:AlgebraicCurveView<E>,proof:AlgebraicGoodReduction<E>,bounds:DifferentialBounds):void{
+  verifyAlgebraicCurveGeometryWithin(ctx,source,proof.geometry,bounds);verifyAlgebraicNumberReduction(ctx,source.coordinates.constantOwner,proof.number);
   const target=proof.curve,algebra=target.algebra,model=proof.model;demand(target.field.algebra===algebra&&algebra.constants===proof.number.residue&&algebra.dimension===source.coordinates.basis.length&&target.finite===model.finite&&target.infinity===model.infinity&&target.genus===model.genus&&model.genus===proof.geometry.genus,'verification-failed','complete reduction dimensions/genus/owners');
   const ring=algebra.relation.ring,expected=ring.make(ctx,source.coordinates.relation.coefficients.map(v=>reduceCurveScalar(ctx,proof.number,algebra.scalar,v)));demand(ring.equal(ctx,expected,algebra.relation),'verification-failed','full reduced defining relation');
   verifyReducedCurveModel(ctx,algebra,model);
@@ -57,9 +62,10 @@ export function verifyAlgebraicGoodReductionWithin<E>(ctx:ExecutionContext,sourc
   // smooth proper reduction. Divisor specialization is checked separately.
 }
 export function findAlgebraicGoodReductionWithin<E>(ctx:ExecutionContext,source:AlgebraicCurveView<E>,bounds:DifferentialBounds,excludedCharacteristic:bigint|null=null,
-  accept:(proof:AlgebraicGoodReduction<E>)=>void=()=>{}):AlgebraicGoodReduction<E>{
+  accept:(proof:AlgebraicGoodReduction<E>)=>void=()=>{}, additionalExcluded:readonly bigint[]=[]):AlgebraicGoodReduction<E>{
+  for(const characteristic of additionalExcluded){ctx.integer(characteristic);demand(characteristic>1n,'invalid-input','excluded residue characteristic');}
   verifyAlgebraicCurveWithin(ctx,source.owner,source,bounds);const geometry=certifyAlgebraicCurveGeometryWithin(ctx,source,bounds);let prime=ctx.add(BigInt(source.coordinates.basis.length),1n);
-  for(;;prime=ctx.add(prime,1n)){if(prime===excludedCharacteristic||!isFactorPrime(ctx,prime))continue;
+  for(;;prime=ctx.add(prime,1n)){ctx.tick(additionalExcluded.length);if(prime===excludedCharacteristic||additionalExcluded.includes(prime)||!isFactorPrime(ctx,prime))continue;
     let reductions:readonly AlgebraicNumberReduction[];try{reductions=constructAlgebraicNumberReductions(ctx,source.coordinates.constantOwner,prime);}catch(e){if(e instanceof RejectedAlgebraicReduction)continue;throw e;}
     for(const number of reductions)try{const proof=constructAlgebraicGoodReductionWithin(ctx,source,geometry,number,bounds);accept(proof);return proof;}catch(e){if(e instanceof RejectedAlgebraicReduction)continue;throw e;}}
 }

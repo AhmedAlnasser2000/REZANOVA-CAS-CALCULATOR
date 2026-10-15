@@ -40,6 +40,9 @@ function upper(ctx: ExecutionContext, baseline: bigint, e: RecursiveDegreeBound)
   return extra !== null && extra > baseline ? extra : baseline;
 }
 export function boundRecursiveDegree(ctx: ExecutionContext, view: CertifiedTowerView, A: P<E>, B: P<E>, C: readonly P<E>[], bounds: DifferentialBounds): RecursiveDegreeBound {
+  return ctx.operation(() => boundRecursiveDegreeWithin(ctx, view, A, B, C, bounds));
+}
+export function boundRecursiveDegreeWithin(ctx: ExecutionContext, view: CertifiedTowerView, A: P<E>, B: P<E>, C: readonly P<E>[], bounds: DifferentialBounds): RecursiveDegreeBound {
   verifyCertifiedTowerWithin(ctx, view, bounds); demand(view.parent !== null && view.rate !== null, 'domain-mismatch', 'recursive infinity level');
   const d = data(ctx, view, A, B, C); let membership: RecursiveLogarithmicMembership | null = null,
     limited: RecursiveLimitedIntegrationDecision | null = null, hyper: HyperexponentialResonance | null = null;
@@ -51,9 +54,12 @@ export function boundRecursiveDegree(ctx: ExecutionContext, view: CertifiedTower
     } else if (d.db === d.da - 1) limited = solveRecursiveLimitedIntegrationWithin(ctx, view.parent, d.beta, [view.rate], bounds);
   }
   const base = {baseline: d.baseline, bound: d.baseline, membership, limited, hyper}; ctx.allocate(5);
-  const e = Object.freeze({...base, bound: upper(ctx, d.baseline, base)}); verifyRecursiveDegreeBound(ctx, view, A, B, C, e, bounds); return e;
+  const e = Object.freeze({...base, bound: upper(ctx, d.baseline, base)}); verifyRecursiveDegreeBoundWithin(ctx, view, A, B, C, e, bounds); return e;
 }
 export function verifyRecursiveDegreeBound(ctx: ExecutionContext, view: CertifiedTowerView, A: P<E>, B: P<E>, C: readonly P<E>[], e: RecursiveDegreeBound, bounds: DifferentialBounds): void {
+  ctx.operation(() => verifyRecursiveDegreeBoundWithin(ctx, view, A, B, C, e, bounds));
+}
+export function verifyRecursiveDegreeBoundWithin(ctx: ExecutionContext, view: CertifiedTowerView, A: P<E>, B: P<E>, C: readonly P<E>[], e: RecursiveDegreeBound, bounds: DifferentialBounds): void {
   verifyCertifiedTowerWithin(ctx, view, bounds); demand(view.parent !== null && view.rate !== null, 'domain-mismatch', 'recursive infinity level');
   const d = data(ctx, view, A, B, C);
   demand(e.baseline === d.baseline, 'verification-failed', 'complete infinity forcing bound');

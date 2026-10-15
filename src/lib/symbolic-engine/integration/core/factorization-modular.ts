@@ -164,8 +164,20 @@ export function modularBezout(ctx: ExecutionContext, field: FactorPrimeField,
 export function verifyModularBezout(ctx: ExecutionContext, field: FactorPrimeField,
   a: FactorModularPolynomial, b: FactorModularPolynomial, proof: FactorModularBezout): void {
   const g = field.bind(ctx, proof.gcd), s = field.bind(ctx, proof.s), t = field.bind(ctx, proof.t);
-  demand(field.equal(ctx, field.add(ctx, field.multiply(ctx, s, a), field.multiply(ctx, t, b)), g),
-    'verification-failed', 'modular Bezout reconstruction');
+  field.assert(ctx, a); field.assert(ctx, b);
+  const size = Math.max(g.coefficients.length,
+    s.coefficients.length && a.coefficients.length ? s.coefficients.length + a.coefficients.length - 1 : 0,
+    t.coefficients.length && b.coefficients.length ? t.coefficients.length + b.coefficients.length - 1 : 0);
+  demand(Number.isSafeInteger(size), 'invalid-input', 'modular Bezout coverage');
+  for (let k = 0; k < size; k++) {
+    ctx.tick(); let value = 0n;
+    for (let term = 0; term < 2; term++) {
+      ctx.tick(); const left = term === 0 ? s : t, right = term === 0 ? a : b;
+      for (let i = Math.max(0, k + 1 - right.coefficients.length); i <= Math.min(k, left.coefficients.length - 1); i++)
+        value = field.plus(ctx, value, field.times(ctx, left.coefficients[i], right.coefficients[k - i]));
+    }
+    demand(value === (g.coefficients[k] ?? 0n), 'verification-failed', 'modular Bezout reconstruction');
+  }
   if (!g.coefficients.length) demand(!a.coefficients.length && !b.coefficients.length, 'verification-failed', 'modular zero GCD');
   else {
     demand(g.coefficients[g.coefficients.length - 1] === 1n, 'verification-failed', 'modular GCD normalization');

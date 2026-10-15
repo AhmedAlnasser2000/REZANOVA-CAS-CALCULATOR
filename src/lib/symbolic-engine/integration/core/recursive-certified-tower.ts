@@ -5,6 +5,7 @@ import { copyAdmission, verifyAdmission, type FunctionAdmission } from './differ
 import { verifyRecursiveAdmissionEvidenceWithin, recursiveConstructionIsHyper, type RecursiveAdmissionEvidence } from './recursive-differential-admission';
 import { recursiveAdmissionEvidenceCodec } from './recursive-differential-admission-wire';
 import { ScopedProof } from './scoped-proof';
+import { verifyStructuredAdmissionEvidenceWithin, requireImmutableStructuredAdmission, type StructuredAdmissionEvidence } from './structured-differential-admission';
 
 const key = Symbol('certified tower view'), views = new WeakSet<object>();
 const towerProofs = new ScopedProof();
@@ -13,7 +14,8 @@ export class CertifiedTowerView {
   readonly parent: CertifiedTowerView | null;
   readonly monomial: 'variable' | 'primitive' | 'hyperexponential';
   readonly rate: E | null;
-  readonly proof: Readonly<{kind: 'base'} | {kind: 'first-level'; admission: FunctionAdmission} | {kind: 'recursive'; admission: RecursiveAdmissionEvidence}>;
+  readonly proof: Readonly<{kind: 'base'} | {kind: 'first-level'; admission: FunctionAdmission} | {kind: 'recursive'; admission: RecursiveAdmissionEvidence}
+    | {kind: 'structured'; admission: StructuredAdmissionEvidence}>;
   private constructor(token: symbol, owner: DifferentialField, parent: CertifiedTowerView | null,
     monomial: CertifiedTowerView['monomial'], rate: E | null, proof: CertifiedTowerView['proof']) {
     demand(token === key, 'domain-mismatch', 'private certified tower constructor');
@@ -34,6 +36,17 @@ export class CertifiedTowerView {
     verifyRecursiveAdmissionEvidenceWithin(ctx, evidence.parent, evidence.owner, evidence.construction, retained, bounds); ctx.allocate(7);
     return new CertifiedTowerView(key, evidence.owner, evidence.parent, recursiveConstructionIsHyper(evidence.construction) ? 'hyperexponential' : 'primitive', retained.rate,
       Object.freeze({kind: 'recursive', admission: retained}));
+  }
+  /** New certificate type: complete checks and immutable retention, without a codec copy. */
+  static structured(ctx: ExecutionContext, evidence: StructuredAdmissionEvidence, bounds: DifferentialBounds): CertifiedTowerView {
+    return ctx.operation(() => CertifiedTowerView.structuredWithin(ctx, evidence, bounds));
+  }
+  static structuredWithin(ctx: ExecutionContext, evidence: StructuredAdmissionEvidence, bounds: DifferentialBounds): CertifiedTowerView {
+    verifyStructuredAdmissionEvidenceWithin(ctx, evidence.parent, evidence.owner, evidence.construction, evidence, bounds);
+    demand(evidence.outcome === 'admitted', 'verification-failed', 'dependent structured extension cannot be admitted');
+    requireImmutableStructuredAdmission(ctx, evidence); ctx.allocate(7);
+    return new CertifiedTowerView(key, evidence.owner, evidence.parent, evidence.construction.kind === 'exponential' ? 'hyperexponential' : 'primitive',
+      evidence.rate, Object.freeze({kind: 'structured', admission: evidence}));
   }
   /** Wrap existing admission evidence while retaining the supplied native owner. */
   static firstLevel(ctx: ExecutionContext, parent: CertifiedTowerView, owner: DifferentialField, admission: FunctionAdmission, bounds: DifferentialBounds): CertifiedTowerView {
@@ -67,7 +80,7 @@ export function assertCertifiedTower(ctx: ExecutionContext, view: unknown): asse
 }
 export function verifyCertifiedTowerWithin(ctx: ExecutionContext, view: CertifiedTowerView, bounds: DifferentialBounds): void {
   assertCertifiedTower(ctx, view);
-  // Registered sidecars retain only copied immutable evidence. The exact view
+  // Registered sidecars retain only checked immutable evidence. The exact view
   // identity covers its complete construction, owners and proof; bounds remain
   // part of the key. Success is scoped to this operation, including stricter calls.
   towerProofs.check(ctx, [view, bounds], () => verifyTowerEvidence(ctx, view, bounds), [view]);
@@ -85,6 +98,14 @@ function verifyTowerEvidence(ctx: ExecutionContext, view: CertifiedTowerView, bo
     verifyRecursiveAdmissionEvidenceWithin(ctx, view.parent, view.owner, e.construction, e, bounds);
     demand(view.monomial === (recursiveConstructionIsHyper(e.construction) ? 'hyperexponential' : 'primitive') && view.parent.owner.equal(ctx, view.rate, e.rate),
       'verification-failed', 'recursive certified monomial rate'); return;
+  }
+  if (view.proof.kind === 'structured') {
+    const e = view.proof.admission;
+    demand(view.parent !== null && e.outcome === 'admitted' && e.parent === view.parent && e.owner === view.owner && view.rate !== null,
+      'verification-failed', 'structured certified view coverage');
+    verifyStructuredAdmissionEvidenceWithin(ctx, view.parent, view.owner, e.construction, e, bounds);
+    demand(view.monomial === (e.construction.kind === 'exponential' ? 'hyperexponential' : 'primitive')
+      && view.parent.owner.equal(ctx, view.rate, e.rate), 'verification-failed', 'structured certified monomial rate'); return;
   }
   demand(view.parent !== null && view.owner.parent === view.parent.owner && view.parent.monomial === 'variable', 'verification-failed', 'certified first-level view coverage');
   verifyCertifiedTowerWithin(ctx, view.parent, bounds); verifyAdmission(ctx, view.owner, view.proof.admission);

@@ -5,6 +5,7 @@ import { fractionCoefficient } from './fraction-coefficient';
 import { primitiveExtendedGcd } from './primitive-euclid';
 import {checkedLinearPowerGcd} from './polynomial-linear-power';
 import {numberFieldPolynomialGcd} from './number-field-polynomial-gcd';
+import {verifyCoefficientProductSum} from './polynomial-coefficient-identity';
 
 export interface Division<E> { readonly quotient: Polynomial<E>; readonly remainder: Polynomial<E> }
 export interface Bezout<E> { readonly gcd: Polynomial<E>; readonly s: Polynomial<E>; readonly t: Polynomial<E> }
@@ -61,8 +62,10 @@ export function verifyBezout<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, 
       demand(ring.isZero(ctx, d.remainder), 'verification-failed', 'gcd does not divide input');
     }
   }
-  demand(ring.equal(ctx, ring.add(ctx, ring.multiply(ctx, s, a), ring.multiply(ctx, t, b)), gcd),
-    'verification-failed', 'Bezout identity');
+  // The two products can have higher degree than every input and cancel.
+  // Stream the complete identity; checking evidence must not construct an
+  // irrelevant polynomial beyond the actual-value degree profile.
+  ctx.allocate(6); verifyCoefficientProductSum(ctx, ring.domain, [[s.coefficients, a.coefficients], [t.coefficients, b.coefficients]], gcd.coefficients, 'Bezout identity');
 }
 export function extendedGcd<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, a: Polynomial<E>, b: Polynomial<E>): Bezout<E> {
   requireField(ring.domain);

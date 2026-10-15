@@ -5,7 +5,7 @@ import { factorPositivePolynomial, verifyPositiveFactorization, type PositiveFac
 import { solveArithmeticLinearSystem, verifyArithmeticLinearSolution, type LinearSolution } from './arithmetic-linear';
 import { freezeExactMatrix, transposeExactMatrix, invertArithmeticMatrix, verifyArithmeticMatrixInverse, type ExactMatrix, type MatrixInverse } from './arithmetic-matrix';
 import { reconstructReducedIdeal, constructReducedIdeal, equalReducedIdeals, multiplyReducedIdeals, verifyReducedIdealProduct, reducedUnitIdeal, verifyReducedUnitIdeal, type ReducedIdeal, type ReducedIdealProduct } from './reduced-ideal';
-import type { ReducedCurveOrder, ReducedCurveView } from './reduced-curve';
+import {reducedOrderCoordinates, type ReducedCurveOrder, type ReducedCurveView, type ReducedCurveValue} from './reduced-curve';
 
 export interface ReducedResidueAlgebra<E> { readonly base: PositiveFiniteExtension<E>; readonly tables: readonly ExactMatrix<FiniteExtensionValue<E>>[];
   readonly seed: bigint; readonly primitive: readonly FiniteExtensionValue<E>[]; readonly powers: ExactMatrix<FiniteExtensionValue<E>>; readonly inverse: MatrixInverse<FiniteExtensionValue<E>>;
@@ -16,6 +16,17 @@ export interface ReducedPlaceDecomposition<E> { readonly curve: ReducedCurveView
   readonly unit: ReducedIdeal<E>; readonly products: readonly ReducedIdealProduct<E>[]; readonly principal: ReducedIdeal<E> }
 const places = new WeakSet<object>();
 export function assertReducedPlace<E>(ctx: ExecutionContext, curve: ReducedCurveView<E>, place: ReducedPlace<E>): void { ctx.tick(); demand(place !== null && typeof place === 'object' && places.has(place) && place.curve === curve, 'domain-mismatch', 'owned reduced place'); }
+/** Supplied-place composition checks; no place or residue search. */
+export function verifyReducedPlace<E>(ctx: ExecutionContext, curve: ReducedCurveView<E>, place: ReducedPlace<E>): void {
+  assertReducedPlace(ctx, curve, place); demand(place.order === (place.order.infinity ? curve.infinity : curve.finite), 'domain-mismatch', 'reduced place expected chart');
+  verifyReducedResidueAlgebra(ctx, place.order, place.prime, curve, place.algebra);
+  reconstructReducedPlace(ctx, curve, place.order, place.prime, place.algebra, place.index, place);
+}
+export function evaluateReducedPlaceIntegral<E>(ctx: ExecutionContext, curve: ReducedCurveView<E>, place: ReducedPlace<E>, input: ReducedCurveValue<E>): FiniteExtensionValue<FiniteExtensionValue<E>> {
+  assertReducedPlace(ctx, curve, place); const base = place.algebra.base;
+  const coordinates = reducedOrderCoordinates(ctx, curve.algebra, place.order, input).map(value => base.exactDivide(ctx, residuePolynomial(ctx, base, value.numerator), residuePolynomial(ctx, base, value.denominator)));
+  return place.residue.make(ctx, place.residue.ring.make(ctx, reducedResidueCoordinates(ctx, place.algebra, coordinates)));
+}
 function residuePolynomial<E>(ctx: ExecutionContext, f: PositiveFiniteExtension<E>, p: PositivePolynomial<E>) { demand(p.ring.field === f.parent, 'domain-mismatch', 'finite residue coefficients'); return f.make(ctx, f.ring.make(ctx, p.coefficients)); }
 function ringTables<E>(ctx: ExecutionContext, order: ReducedCurveOrder<E>, base: PositiveFiniteExtension<E>) { return Object.freeze(order.multiplication.map(matrix => freezeExactMatrix(ctx, matrix.map(row => row.map(p => residuePolynomial(ctx, base, p)))))); }
 function vectorProduct<E>(ctx: ExecutionContext, base: PositiveFiniteExtension<E>, tables: readonly ExactMatrix<FiniteExtensionValue<E>>[], a: readonly FiniteExtensionValue<E>[], b: readonly FiniteExtensionValue<E>[]) {

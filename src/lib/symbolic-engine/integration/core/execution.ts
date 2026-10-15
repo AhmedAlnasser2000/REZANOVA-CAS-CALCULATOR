@@ -30,7 +30,7 @@ export class ExecutionContext {
   #work = 0;
   #allocation = 0;
   #stopped: AlgebraError | undefined;
-  #operation: { readonly token: object; readonly integers: Map<bigint, number>; readonly cleanups: (() => void)[] } | undefined;
+  #operation: { readonly token: object; readonly integers: Map<bigint, number>; readonly integerOrder:bigint[];integerNext:number;readonly cleanups: (() => void)[] } | undefined;
   constructor(limits: ExecutionLimits) {
     for (const key of ['work', 'integerBits', 'degree', 'allocation'] as const) {
       demand(Number.isSafeInteger(limits[key]) && limits[key] >= (key === 'integerBits' ? 1 : 0),
@@ -44,13 +44,13 @@ export class ExecutionContext {
   get operationToken(): object | undefined { return this.#operation?.token; }
   /** Every entry operation starts cold, even if the caller reuses this context. */
   operation<T>(run: () => T): T {
-    this.allocate(5);
+    this.allocate(7);
     const previous = this.#operation;
-    this.#operation = { token: Object.freeze({}), integers: new Map(), cleanups: [] };
+    this.#operation = { token: Object.freeze({}), integers: new Map(),integerOrder:[],integerNext:0,cleanups: [] };
     try { return run(); }
     finally {
       for (const cleanup of this.#operation.cleanups) cleanup();
-      this.#operation.integers.clear(); this.#operation = previous;
+      this.#operation.integers.clear();this.#operation.integerOrder.length=0;this.#operation = previous;
     }
   }
   /** Internal cache cleanup is unconditional, including after sticky exhaustion. */
@@ -85,6 +85,10 @@ export class ExecutionContext {
   integer(value: bigint): number {
     this.tick();
     demand(typeof value === 'bigint', 'invalid-input', 'expected bigint');
+    const scope=this.#operation,cache = scope?.integers, saved = cache?.get(value);
+    // Integers and this context's bounds are immutable. Same-operation hits
+    // allocate no fresh truncation/string scratch; liveness was checked above.
+    if (saved !== undefined) return saved;
     // Truncation scratch is bounded by the configured limit, even for an
     // enormous rejected input. A right shift could allocate a huge remainder.
     const negative = value < 0n;
@@ -92,8 +96,6 @@ export class ExecutionContext {
     this.allocate(Math.ceil(width / 64));
     const narrowed = negative ? BigInt.asIntN(width, value) : BigInt.asUintN(width, value);
     if (narrowed !== value) this.#stop('integer-bits');
-    const cache = this.#operation?.integers, saved = cache?.get(value);
-    if (saved !== undefined) return saved;
     if (negative) this.allocate(Math.ceil((this.limits.integerBits + 1) / 64));
     const magnitude = negative ? -value : value;
     let bits: number;
@@ -109,8 +111,10 @@ export class ExecutionContext {
     if (bits > this.limits.integerBits) this.#stop('integer-bits');
     if (cache) {
       // A cache capacity controls retention only; eviction never rejects math.
-      if (cache.size === 2048) cache.clear();
-      this.allocate(3 + Math.ceil(bits / 64)); cache.set(value, bits);
+      this.allocate(3 + Math.ceil(bits / 64));
+      if(scope!.integerOrder.length===2048){cache.delete(scope!.integerOrder[scope!.integerNext]);scope!.integerOrder[scope!.integerNext]=value;scope!.integerNext=(scope!.integerNext+1)%2048;}
+      else{this.allocate(1);scope!.integerOrder.push(value);}
+      cache.set(value,bits);
     }
     return bits;
   }

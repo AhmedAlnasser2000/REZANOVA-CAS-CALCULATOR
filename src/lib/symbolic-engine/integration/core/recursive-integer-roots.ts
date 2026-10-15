@@ -6,7 +6,7 @@ import { DifferentialField, type DifferentialElement, type DifferentialBounds } 
 import { PolynomialRing, assertPolynomialRingOwner, type Polynomial as P } from './polynomial';
 import { extendedGcd, verifyBezout, type Bezout } from './polynomial-division';
 import { positiveIntegerRoots, verifyIntegerRoots, type IntegerRootEvidence } from './rde-integer-roots';
-import { descendCoefficientSystem, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
+import { descendCoefficientSystemWithin, verifyCoefficientSystemWithin, type RationalCoefficientSystem } from './recursive-coefficient-system';
 
 interface RootComparison<E> {
   readonly input: P<E>;
@@ -35,7 +35,7 @@ function polynomialIn(ctx: ExecutionContext, ring: PolynomialRing<DifferentialEl
 export function integerRootsRecursive<E>(ctx: ExecutionContext, ring: PolynomialRing<E>, input: P<E>, bounds: DifferentialBounds): RecursiveIntegerRootEvidence<E> {
   return ctx.operation(() => {
     assertPolynomialRingOwner(ctx, ring); ring.assert(ctx, input);
-    const comparison = descendCoefficientSystem(ctx, ring.domain, comparisonInput(ctx, ring, input), bounds), qr = new PolynomialRing(Q, ring.variable);
+    const comparison = descendCoefficientSystemWithin(ctx, ring.domain, comparisonInput(ctx, ring, input), bounds), qr = new PolynomialRing(Q, ring.variable);
     const gcds: Bezout<Rational>[] = []; let polynomial = qr.zero(ctx); ctx.allocate(comparison.system.rows);
     for (const row of comparison.system.matrix) {
       const gcd = extendedGcd(ctx, qr, polynomial, qr.make(ctx, row)); gcds.push(gcd); polynomial = gcd.gcd;

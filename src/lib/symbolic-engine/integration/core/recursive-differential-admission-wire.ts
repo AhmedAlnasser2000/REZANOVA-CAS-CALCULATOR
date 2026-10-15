@@ -27,7 +27,7 @@ export function recursiveAdmissionEvidenceCodec(ctx: ExecutionContext, parent: C
     outcome: w.literal(ctx, 'admitted', 'dependent'), conditions: w.list(ctx, w.structure(ctx, {kind: w.literal(ctx, 'denominator', 'logarithm-argument'), path: normalizationText(ctx), value: outer}))});
   return {encode: c.encode, decode(data) { const e = c.decode(data); ctx.allocate(2); return Object.freeze({...e, parent, owner}); }};
 }
-function invariantCodec(ctx: ExecutionContext, parent: CertifiedTowerView, bounds: DifferentialBounds): w.EvidenceCodec<RecursiveAdmissionInvariant> {
+export function recursiveAdmissionInvariantCodec(ctx: ExecutionContext, parent: CertifiedTowerView, bounds: DifferentialBounds): w.EvidenceCodec<RecursiveAdmissionInvariant> {
   const value = factorCoefficientDomain(ctx, parent.owner, bounds.towerHeight).codec(ctx), integer = normalizationInteger(ctx);
   const additive = w.structure(ctx, {kind: w.literal(ctx, 'additive'), representative: value, derivative: w.structure(ctx, {input: value, derivative: value})});
   const multiplicative = w.structure(ctx, {kind: w.literal(ctx, 'multiplicative'), index: integer, factors: w.list(ctx, value), powers: w.list(ctx, integer)});
@@ -37,7 +37,7 @@ function invariantCodec(ctx: ExecutionContext, parent: CertifiedTowerView, bound
   }};
 }
 function decisionCodec(ctx: ExecutionContext, parent: CertifiedTowerView, owner: DifferentialField, bounds: DifferentialBounds) {
-  return w.structure(ctx, {kind: w.literal(ctx, 'admitted', 'dependent'), evidence: recursiveAdmissionEvidenceCodec(ctx, parent, owner, bounds), invariant: w.optional(invariantCodec(ctx, parent, bounds))});
+  return w.structure(ctx, {kind: w.literal(ctx, 'admitted', 'dependent'), evidence: recursiveAdmissionEvidenceCodec(ctx, parent, owner, bounds), invariant: w.optional(recursiveAdmissionInvariantCodec(ctx, parent, bounds))});
 }
 export function encodeRecursiveDifferentialAdmission(ctx: ExecutionContext, parent: CertifiedTowerView, owner: DifferentialField, construction: RecursiveConstruction, e: RecursiveDifferentialAdmission, bounds: DifferentialBounds): unknown {
   return ctx.operation(() => {

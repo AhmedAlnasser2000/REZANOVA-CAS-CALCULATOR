@@ -71,9 +71,24 @@ describe('exact integer validation and operation lifetime', () => {
       expect(c.integer(4096n)).toBe(13);
     });
   });
+  it('retains recent integer entries when crossing retention capacity',()=>{
+    const c=context();c.operation(()=>{
+      for(let i=0;i<2049;i++)c.integer(BigInt(i));
+      const before=c.usage.allocation;expect(c.integer(2048n)).toBe(12);expect(c.usage.allocation).toBe(before);
+      c.integer(0n);expect(c.usage.allocation).toBeGreaterThan(before);
+    });
+  });
 });
 
 describe('private owned-value validation', () => {
+  it('retires only an old weak generation while retaining recent owned values',()=>{
+    const c=context(),cache=new OwnedValidation(),keys=Array.from({length:8193},()=>Object.freeze({}));let checks=0;
+    c.operation(()=>{
+      for(const key of keys)cache.check(c,key,()=>{checks++;});expect(checks).toBe(8193);
+      cache.check(c,keys[8192],()=>{checks++;});cache.check(c,keys[8191],()=>{checks++;});expect(checks).toBe(8193);
+      cache.check(c,keys[0],()=>{checks++;});expect(checks).toBe(8194);
+    });
+  });
   it('registers only successful immutable values within one operation', () => {
     const c = context(), cache = new OwnedValidation(), value = Object.freeze({}), mutable = {};
     let checks = 0;

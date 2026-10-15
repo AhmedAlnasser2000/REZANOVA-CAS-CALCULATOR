@@ -5,12 +5,13 @@ import type {TranscendentalDomain} from './transcendental-domain';
 import {polynomialValue} from './first-level-rational-domain';
 import {solveRecursiveLimitedIntegrationWithin, verifyRecursiveLimitedIntegrationWithin, type RecursiveLimitedIntegrationDecision} from './recursive-limited-integration';
 import {rationalInOwner} from './recursive-rde-family';
-export interface TranscendentalPolynomialStep {
-  readonly degree: bigint; readonly input: E; readonly leading: E; readonly limited: RecursiveLimitedIntegrationDecision;
+type LimitedFamily = Pick<RecursiveLimitedIntegrationDecision, 'kind' | 'family'>;
+export interface TranscendentalPolynomialStep<L extends LimitedFamily = RecursiveLimitedIntegrationDecision> {
+  readonly degree: bigint; readonly input: E; readonly leading: E; readonly limited: L;
   readonly correction: E|null; readonly derivative: DerivativeEvidence|null; readonly next: E|null;
 }
-export interface TranscendentalPolynomialReduction {
-  readonly input: E; readonly steps: readonly TranscendentalPolynomialStep[]; readonly fieldPart: E;
+export interface TranscendentalPolynomialReduction<L extends LimitedFamily = RecursiveLimitedIntegrationDecision> {
+  readonly input: E; readonly steps: readonly TranscendentalPolynomialStep<L>[]; readonly fieldPart: E;
   readonly remainder: E|null; readonly failure: number|null;
 }
 export function transcendentalParentValue(ctx: ExecutionContext,d: TranscendentalDomain,value: E): E {
@@ -18,7 +19,7 @@ export function transcendentalParentValue(ctx: ExecutionContext,d: Transcendenta
   const out=p.coefficients[0]??d.base.fromInteger(ctx,0n);
   demand(d.field.equal(ctx,value,d.field.embed(ctx,out)),'verification-failed','parent exact inverse conversion');return out;
 }
-function correction(ctx: ExecutionContext,d: TranscendentalDomain,degree: bigint,e: RecursiveLimitedIntegrationDecision): E {
+function correction(ctx: ExecutionContext,d: TranscendentalDomain,degree: bigint,e: LimitedFamily): E {
   ctx.integer(degree);demand(degree>0n&&degree<BigInt(Number.MAX_SAFE_INTEGER),'verification-failed','checked polynomial coefficient position');
   demand(e.kind==='solutions'&&e.family!==null&&e.family.particular.coefficients.length===1&&e.family.directions.length===0,'verification-failed','admitted logarithm unique coefficient choice');
   const top=d.base.negate(ctx,d.base.exactDivide(ctx,rationalInOwner(ctx,d.base,e.family.particular.coefficients[0]),d.base.fromInteger(ctx,ctx.add(degree,1n))));
@@ -40,11 +41,15 @@ export function reduceTranscendentalPolynomialWithin(ctx: ExecutionContext,d: Tr
   verifyTranscendentalPolynomial(ctx,d,input,result,bounds);return result;
 }
 export function verifyTranscendentalPolynomial(ctx: ExecutionContext,d: TranscendentalDomain,input: E,e: TranscendentalPolynomialReduction,bounds: DifferentialBounds): void {
+  verifyTranscendentalPolynomialFamily(ctx,d,input,e,bounds,verifyRecursiveLimitedIntegrationWithin);
+}
+/** Only coefficient-family certificate mechanics vary; polynomial identities do not. */
+export function verifyTranscendentalPolynomialFamily<L extends LimitedFamily>(ctx: ExecutionContext,d: TranscendentalDomain,input: E,e: TranscendentalPolynomialReduction<L>,bounds: DifferentialBounds,check: (ctx: ExecutionContext, view: TranscendentalDomain['view'], f: E, generators: readonly E[], proof: L, bounds: DifferentialBounds) => void): void {
   demand(d.field.equal(ctx,input,e.input),'verification-failed','polynomial expected input');let current=input,part=d.field.fromInteger(ctx,0n),failed=false;
   for(let i=0;i<e.steps.length;i++){
     ctx.tick();const step=e.steps[i],p=polynomialValue(ctx,d.field,current),m=d.t.degree(ctx,p);
     demand(!failed&&m>0&&step.degree===BigInt(m)&&d.field.equal(ctx,current,step.input)&&d.base.equal(ctx,p.coefficients[m],step.leading),'verification-failed','polynomial ordered degree coverage');
-    verifyRecursiveLimitedIntegrationWithin(ctx,d.view.parent!,step.leading,[d.view.rate!],step.limited,bounds);
+    check(ctx,d.view.parent!,step.leading,[d.view.rate!],step.limited,bounds);
     if(step.limited.kind==='no-field-solution'){
       demand(e.failure===i&&i===e.steps.length-1&&step.correction===null&&step.derivative===null&&step.next===null&&e.remainder===null,'verification-failed','polynomial checked obstruction prefix');failed=true;continue;
     }

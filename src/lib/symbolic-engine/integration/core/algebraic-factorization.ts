@@ -5,7 +5,9 @@ import { PolynomialDomain } from './polynomial-domain';
 import { subresultants, verifySubresultants, type SubresultantCertificate } from './subresultant';
 import { extendedGcd, verifyBezout, type Bezout } from './polynomial-division';
 import { checkedFactorSquareFree, verifyFactorSquareFree, factorIndex, type FactorSquareFree } from './factorization-square-free';
-import { factorRecursivePolynomial, verifyRecursiveFactorizationInternal, type RecursivePolynomialFactorization } from './recursive-polynomial-factorization';
+import { factorRecursivePolynomialWithin, verifyRecursiveFactorizationInternal, type RecursivePolynomialFactorization } from './recursive-polynomial-factorization';
+import {rationalField} from './field';
+import {produceNumberFieldPolynomialNormWithin, verifyNumberFieldPolynomialNormWithin, type NumberFieldPolynomialNorm} from './number-field-polynomial-norm';
 import { algebraicHeight, isAlgebraicField, type AlgebraicElement, type AlgebraicField } from './algebraic-field';
 
 export interface AlgebraicFactor<E> { readonly polynomial: Polynomial<E>; readonly multiplicity: bigint }
@@ -14,10 +16,35 @@ export interface AlgebraicNorm<E> {
   readonly ring: PolynomialRing<Polynomial<E>, PolynomialDomain<E>>;
   readonly proof: SubresultantCertificate<Polynomial<E>, PolynomialDomain<E>>;
 }
+/** Search-history norms and compact modular norms are distinct certificate types. */
+export type AlgebraicFactorNorm<E> = (AlgebraicNorm<E> & {readonly format?: never}) | Readonly<{
+  format: 'number-field-polynomial-norm-v2'; outer: PolynomialRing<E>;
+  ring: NumberFieldPolynomialNorm<E>['ring']; evidence: NumberFieldPolynomialNorm<E>;
+}>;
+export function algebraicFactorNormValue<E>(proof: AlgebraicFactorNorm<E>): Polynomial<E> {
+  return proof.format === 'number-field-polynomial-norm-v2' ? proof.evidence.value : proof.proof.resultant;
+}
+function finiteConstantOwner(ctx: ExecutionContext, owner: unknown): boolean {
+  ctx.tick(); return owner === rationalField || (isAlgebraicField(owner) && finiteConstantOwner(ctx, owner.parent));
+}
+export function produceAlgebraicFactorNormWithin<E>(ctx: ExecutionContext, owner: AlgebraicField<E>, input: Polynomial<AlgebraicElement<E>>, bounds: DifferentialBounds): AlgebraicFactorNorm<E> {
+  if (!finiteConstantOwner(ctx, owner)) return algebraicNormPolynomial(ctx, owner, input);
+  const evidence = produceNumberFieldPolynomialNormWithin(ctx, owner, input, bounds); ctx.allocate(4);
+  return Object.freeze({format: 'number-field-polynomial-norm-v2', outer: evidence.ring.domain.ring, ring: evidence.ring, evidence});
+}
+export function verifyAlgebraicFactorNormWithin<E>(ctx: ExecutionContext, owner: AlgebraicField<E>, input: Polynomial<AlgebraicElement<E>>, proof: AlgebraicFactorNorm<E>, bounds: DifferentialBounds): void {
+  if (proof.format === 'number-field-polynomial-norm-v2') {
+    demand(proof.ring === proof.evidence.ring && proof.outer === proof.ring.domain.ring, 'domain-mismatch', 'compact factor norm owners');
+    verifyNumberFieldPolynomialNormWithin(ctx, owner, input, proof.evidence, bounds);
+  } else {
+    demand(proof.format === undefined, 'verification-failed', 'factor norm format');
+    verifyAlgebraicNormPolynomial(ctx, owner, input, proof);
+  }
+}
 export interface AlgebraicFactorComponent<E> {
   readonly shift: bigint;
   readonly shifted: Polynomial<AlgebraicElement<E>>;
-  readonly norm: AlgebraicNorm<E>;
+  readonly norm: AlgebraicFactorNorm<E>;
   readonly squareFreeNorm: Bezout<E>;
   readonly parent: AlgebraicFactorization<E>;
   readonly gcds: readonly Bezout<AlgebraicElement<E>>[];
@@ -63,7 +90,7 @@ export function factorAlgebraicPolynomialWithin<E>(ctx: ExecutionContext, ring: 
     ctx.allocate(6); return Object.freeze({kind: 'factorization', route: 'linear' as const, input, unit, factors: Object.freeze(factors)});
   }
   if (!isAlgebraicField(ring.domain)) {
-    const proof = factorRecursivePolynomial(ctx, ring, input, bounds);
+    const proof = factorRecursivePolynomialWithin(ctx, ring, input, bounds);
     demand(proof.kind === 'factorization', 'verification-failed', 'base factorization zero');
     ctx.allocate(5); return Object.freeze({kind: 'factorization', route: 'base' as const, input, unit: proof.unit, factors: proof.factors, proof});
   }
@@ -75,9 +102,9 @@ export function factorAlgebraicPolynomialWithin<E>(ctx: ExecutionContext, ring: 
     while (true) {
       ctx.integer(shift);
       const shifted = translatePolynomial(ctx, r, c.polynomial, owner.multiply(ctx, owner.fromInteger(ctx, -shift), owner.generator(ctx)));
-      const norm = algebraicNormPolynomial(ctx, owner, shifted), squareFreeNorm = extendedGcd(ctx, norm.outer, norm.proof.resultant, norm.outer.derivative(ctx, norm.proof.resultant));
+      const norm = produceAlgebraicFactorNormWithin(ctx, owner, shifted, bounds), normValue = algebraicFactorNormValue(norm), squareFreeNorm = extendedGcd(ctx, norm.outer, normValue, norm.outer.derivative(ctx, normValue));
       if (norm.outer.equal(ctx, squareFreeNorm.gcd, norm.outer.one(ctx))) {
-        const parent = factorAlgebraicPolynomialWithin(ctx, norm.outer, norm.proof.resultant, bounds);
+        const parent = factorAlgebraicPolynomialWithin(ctx, norm.outer, normValue, bounds);
         demand(parent.kind === 'factorization', 'verification-failed', 'nonzero square-free norm');
         ctx.allocate(parent.factors.length * 4); const gcds = parent.factors.map(f => {
           const lifted = r.make(ctx, f.polynomial.coefficients.map(v => owner.embed(ctx, v)));
@@ -123,10 +150,11 @@ export function verifyAlgebraicFactorizationWithin<E>(ctx: ExecutionContext, rin
       const c = decision.components[i]; ctx.integer(c.shift); demand(c.shift >= 0n, 'verification-failed', 'norm shift');
       demand(r.equal(ctx, c.shifted, translatePolynomial(ctx, r, sq.components[i].polynomial,
         owner.multiply(ctx, owner.fromInteger(ctx, -c.shift), owner.generator(ctx)))), 'verification-failed', 'norm shift identity');
-      verifyAlgebraicNormPolynomial(ctx, owner, c.shifted, c.norm);
-      verifyBezout(ctx, c.norm.outer, c.norm.proof.resultant, c.norm.outer.derivative(ctx, c.norm.proof.resultant), c.squareFreeNorm);
+      verifyAlgebraicFactorNormWithin(ctx, owner, c.shifted, c.norm, bounds);
+      const normValue = algebraicFactorNormValue(c.norm);
+      verifyBezout(ctx, c.norm.outer, normValue, c.norm.outer.derivative(ctx, normValue), c.squareFreeNorm);
       demand(c.norm.outer.equal(ctx, c.squareFreeNorm.gcd, c.norm.outer.one(ctx)), 'verification-failed', 'square-free norm required');
-      verifyAlgebraicFactorizationWithin(ctx, c.norm.outer, c.norm.proof.resultant, c.parent, bounds);
+      verifyAlgebraicFactorizationWithin(ctx, c.norm.outer, normValue, c.parent, bounds);
       demand(c.parent.kind === 'factorization' && c.gcds.length === c.parent.factors.length, 'verification-failed', 'norm factor coverage');
       for (let j = 0; j < c.parent.factors.length; j++) {
         const f = c.parent.factors[j], gcd = c.gcds[j]; demand(f.multiplicity === 1n, 'verification-failed', 'norm factor multiplicity');

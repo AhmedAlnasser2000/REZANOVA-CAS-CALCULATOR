@@ -3,7 +3,7 @@ import { rationalField as Q, type ExactField } from './field';
 import type { Rational } from './rational';
 import type { DifferentialBounds } from './differential-field';
 import { PolynomialRing } from './polynomial';
-import { constructAlgebraicExtension, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
+import { constructAlgebraicExtensionWithin, type AlgebraicField, type AlgebraicElement } from './algebraic-field';
 import { AlgebraicEmbedding, assertAlgebraicEmbedding } from './algebraic-embedding';
 import { numberFieldCoordinatesWithin, type NumberFieldCoordinates } from './number-field-coordinates';
 import { invertExactMatrix, verifyExactMatrixInverse, transposeExactMatrix, type MatrixInverse } from './algebraic-matrix';
@@ -54,7 +54,7 @@ export function constructNumberFieldPresentationWithin<E>(ctx: ExecutionContext,
     const inverse = invertExactMatrix(ctx, Q, transposeExactMatrix(ctx, powers.map(v => c.coordinates(ctx, v)), n));
     if (inverse === null) continue;
     const ring = new PolynomialRing(Q, 'constant'), next = polynomialCoordinates(ctx, c, {inverse}, power);
-    const field = constructAlgebraicExtension(ctx, ring, ring.make(ctx, [...next.map(q => Q.negate(ctx, q)), Q.fromInteger(ctx, 1n)]), bounds);
+    const field = constructAlgebraicExtensionWithin(ctx, ring, ring.make(ctx, [...next.map(q => Q.negate(ctx, q)), Q.fromInteger(ctx, 1n)]), bounds);
     const embedding = AlgebraicEmbedding.extension(ctx, field, owner, AlgebraicEmbedding.rationals(ctx, owner, bounds), primitive, bounds);
     const result = Object.freeze({combination: Object.freeze(combination), primitive, powers: Object.freeze(powers), inverse, field, embedding});
     verifyNumberFieldPresentationWithin(ctx, owner, result, bounds); return result;
