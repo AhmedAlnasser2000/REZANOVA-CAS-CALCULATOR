@@ -39,7 +39,7 @@ afterEach(() => {
 describe('printer migration ratchet', () => {
   it('classifies producer debt separately from input, prose, and reference content', () => {
     const rootDir = fixture({
-      'src/lib/modes/calculate/sample.ts': `
+      'src/lib/modes/statistics/sample.ts': `
         export const result = {
           inputLatex: '2+2',
           title: 'Numeric result',
@@ -61,7 +61,7 @@ describe('printer migration ratchet', () => {
     assert.equal(report.categoryCounts['prose-only'], 1);
     assert.equal(report.categoryCounts['reference-content'], 1);
     assert.equal(report.classificationCounts['notebook-document-content'], 1);
-    assert.match(formatPrinterMigrationReport(report), /calculate-result-v1/u);
+    assert.match(formatPrinterMigrationReport(report), /statistics-result-v1/u);
     assert.deepEqual(JSON.parse(JSON.stringify(report)), report);
     assert.deepEqual(scanPrinterMigrationRepository({ rootDir }), report);
   });
@@ -178,7 +178,7 @@ describe('printer migration ratchet', () => {
   });
 
   it('pins source fingerprints while ignoring line-only movement', () => {
-    const repoPath = 'src/lib/modes/calculate/sample.ts';
+    const repoPath = 'src/lib/modes/statistics/sample.ts';
     const rootDir = fixture({
       [repoPath]: `export const result = { exactLatex: '4' };`,
     });
@@ -203,7 +203,7 @@ describe('printer migration ratchet', () => {
   });
 
   it('requires accepted updates to lower or preserve every lane and registration floor', () => {
-    const repoPath = 'src/lib/modes/calculate/sample.ts';
+    const repoPath = 'src/lib/modes/statistics/sample.ts';
     const rootDir = fixture({
       [repoPath]: `export const first = { exactLatex: '4' };`,
     });
@@ -225,6 +225,29 @@ describe('printer migration ratchet', () => {
       () => buildPrinterMigrationBaseline(initial, ''),
       /non-empty reason/u,
     );
+  });
+
+  it('classifies but does not ratchet compatibility fallbacks in exempt lanes', () => {
+    const rootDir = fixture({
+      'src/lib/modes/calculate/sample.ts': `export const result = { exactLatex: '4' };`,
+      'src/lib/linear-algebra/sample.ts': `export const result = { resultLatex: '1' };`,
+      'src/lib/modes/statistics/sample.ts': `export const result = { exactLatex: '2' };`,
+    });
+    const initial = scanPrinterMigrationRepository({ rootDir });
+    const baseline = buildPrinterMigrationBaseline(initial, 'Exempt lanes');
+
+    assert.equal(initial.summary.compatibilityFallbackCount, 1);
+    assert.equal(initial.summary.violationCount, 0);
+    assert.equal(initial.classificationCounts['exempt-lane-fallback'], 2);
+    assert.equal(initial.lanes.calculate.exempt, 1);
+    assert.equal(initial.lanes['linear-algebra'].exempt, 1);
+    assert.deepEqual(initial.compatibilityAssignments.map((entry) => entry.lane), ['statistics']);
+
+    rewrite(rootDir, 'src/lib/modes/calculate/sample.ts', `
+      export const first = { exactLatex: '4' };
+      export const second = { exactLatex: '5' };
+    `);
+    assert.equal(validatePrinterMigrationReport(scanPrinterMigrationRepository({ rootDir }), baseline).ok, true);
   });
 
   it('pins the reviewed proof markers and wrappers in the registry digest', () => {

@@ -3,6 +3,8 @@ import {
   rAbs, rAdd, rational, rCompare, rInverse, rMultiply, rNegate, type Rational,
 } from '../algebra/rational';
 import * as algebraic from '../algebraic/arithmetic';
+import { arcUnitRoot } from './arc-unit';
+import { unitCircleParts } from './unit-circle';
 import { compareRational } from '../algebraic/real-roots';
 import { cyclotomic } from '../algebraic/cyclotomic';
 import {
@@ -74,6 +76,9 @@ export function addValues(ctx: ExecutionContext, a: ExactValue, b: ExactValue): 
 export function multiplyValues(ctx: ExecutionContext, a: ExactValue, b: ExactValue): ExactValue {
   if (a.kind === 'rational' && b.kind === 'rational') return q(rMultiply(ctx, a.value, b.value));
   if (isZero(a) || isZero(b)) return q(rational(ctx, 0n));
+  // A rational factor scales the minimal polynomial (no resultant; 1·α is α).
+  if (a.kind === 'rational' && b.kind === 'algebraic') return isOne(a) ? b : normalizeValue(algebraic.scale(ctx, b.root, a.value));
+  if (b.kind === 'rational' && a.kind === 'algebraic') return isOne(b) ? a : normalizeValue(algebraic.scale(ctx, a.root, b.value));
   return normalizeValue(algebraic.multiply(ctx, asRoot(ctx, a), asRoot(ctx, b)));
 }
 
@@ -85,6 +90,8 @@ function inverseValue(ctx: ExecutionContext, a: ExactValue): ExactValue {
 function integerPower(ctx: ExecutionContext, a: ExactValue, n: bigint): ExactValue {
   if (n === 0n) return isZero(a) ? undefinedValue('0^0') : q(rational(ctx, 1n));
   let base = n < 0n ? inverseValue(ctx, a) : a, e = n < 0n ? -n : n, result: ExactValue = q(rational(ctx, 1n));
+  // An algebraic base: one resultant of degree deg α (algebraic.power) instead of repeated products.
+  if (base.kind === 'algebraic' && e >= 2n) return normalizeValue(algebraic.power(ctx, base.root, e));
   while (e > 0n) {
     ctx.tick();
     if (e & 1n) result = multiplyValues(ctx, result, base);
@@ -234,10 +241,15 @@ export function conjugate(ctx: ExecutionContext, v: ExactValue): ExactValue {
 /** Re v and Im v of an algebraic number (exact). */
 export function realPart(ctx: ExecutionContext, v: ExactValue): ExactValue {
   if (v.kind === 'rational' || v.root.kind === 'real') return v;
+  // On the unit circle (unit points of angles): cos θ from the self-reciprocal minimal polynomial, degree d/2.
+  const circle = unitCircleParts(ctx, v.root);
+  if (circle) return normalizeValue(circle.re);
   return multiplyValues(ctx, addValues(ctx, v, conjugate(ctx, v)), q(rational(ctx, 1n, 2n)));
 }
 export function imaginaryPart(ctx: ExecutionContext, v: ExactValue): ExactValue {
   if (v.kind === 'rational' || v.root.kind === 'real') return q(rational(ctx, 0n));
+  const circle = unitCircleParts(ctx, v.root);
+  if (circle) return normalizeValue(circle.im);
   const difference = addValues(ctx, v, negateValue(ctx, conjugate(ctx, v)));
   return multiplyValues(ctx, difference, multiplyValues(ctx, imaginaryUnit(ctx), q(rational(ctx, -1n, 2n))));
 }
@@ -270,16 +282,11 @@ export function rootOfUnity(ctx: ExecutionContext, t: Rational): ExactValue {
   }
 }
 
-/** e^{i·arc(u)} for real algebraic u in the arc's domain; undefined outside it. */
+/** e^{i·arc(u)} for real algebraic u in the arc's domain (|u| ≤ 1 for asin and acos); undefined outside it. */
 function arcUnit(ctx: ExecutionContext, fn: 'asin' | 'acos' | 'atan', u: ExactValue): ExactValue | undefined {
   if (u.kind === 'algebraic' && u.root.kind !== 'real') return undefined;
-  const one = q(rational(ctx, 1n)), i = imaginaryUnit(ctx), u2 = multiplyValues(ctx, u, u);
-  const root = (v: ExactValue) => (isZero(v) ? v : positiveRoot(ctx, v, 2));
-  if (fn === 'atan') return multiplyValues(ctx, addValues(ctx, one, multiplyValues(ctx, i, u)), inverseValue(ctx, root(addValues(ctx, one, u2))));
-  const rest = addValues(ctx, one, negateValue(ctx, u2));
-  if (realSign(ctx, rest) === -1) return undefined;
-  const s = root(rest);
-  return fn === 'asin' ? addValues(ctx, s, multiplyValues(ctx, i, u)) : addValues(ctx, u, multiplyValues(ctx, i, s));
+  if (fn !== 'atan' && (compareToRational(ctx, u, rational(ctx, 1n)) === 1 || compareToRational(ctx, u, rational(ctx, -1n)) === -1)) return undefined;
+  return normalizeValue(arcUnitRoot(ctx, fn, u.kind === 'rational' ? u : { kind: 'real', root: u.root as RealRootOf }));
 }
 
 /**

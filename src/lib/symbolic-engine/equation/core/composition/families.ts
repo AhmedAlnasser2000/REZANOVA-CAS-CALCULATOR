@@ -127,7 +127,15 @@ export function decideIntervalFamilies(problem: RelationProblem, decide: Decide,
     if (dphi === undefined) return refuse('a common argument without a derivative');
     const z = zeros(dphi, x);
     if (z.kind !== 'zeros' || z.periodic?.length || z.families?.length || z.intervals?.length) return refuse('a common argument with infinitely many turning points');
+    // φ′ may be undefined where φ is defined (x^{1/3} at 0, x^{2/3} at 0, which turns there): those points cut too.
     const turning = [...(z.values ?? [])];
+    for (const n of s.postorder([dphi])) {
+      const node = s.node(n), e = node.kind === 'pow' ? s.numberValue(node.exponent) : undefined;
+      if (node.kind !== 'pow' || !e || (e.numerator > 0n && e.denominator === 1n) || !s.freeSymbols(node.base).includes(x)) continue;
+      const w = zeros(node.base, x);
+      if (w.kind !== 'zeros' || w.periodic?.length || w.families?.length || w.intervals?.length) return refuse('a common argument whose derivative is undefined at infinitely many points');
+      for (const v of w.values ?? []) if (!turning.some(c => realCompare(s, c, v) === 0)) turning.push(v);
+    }
     const end = (e: Endpoint): ExprId | undefined => (e.kind === 'infinity' ? undefined : idOf(s, e));
     const out: SolutionSet[] = [];
     const points: ExprId[] = [...isolated];

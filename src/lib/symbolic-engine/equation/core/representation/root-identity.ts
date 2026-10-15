@@ -44,6 +44,8 @@ function disksMeet(ctx: ExecutionContext, a: ComplexRootOf, b: ComplexRootOf): b
 /** Per-owner cache of each minimal polynomial's deterministic root list. */
 export class RootCatalog {
   readonly #roots = new Map<string, readonly RootOf[]>();
+  /** A root's catalog index, kept per (frozen, immutable) RootOf object: sorting asks for it again and again. */
+  readonly #indexOf = new WeakMap<RootOf, number>();
 
   roots(ctx: ExecutionContext, poly: Polynomial<bigint>): readonly RootOf[] {
     ALGEBRAIC_RING.assert(ctx, poly);
@@ -60,7 +62,11 @@ export class RootCatalog {
   canonical(ctx: ExecutionContext, root: RootOf): CanonicalRoot {
     demand(typeof root === 'object' && root !== null && (root.kind === 'real' || root.kind === 'complex'), 'invalid-input', 'RootOf expected');
     const list = this.roots(ctx, root.poly);
-    const index = root.kind === 'real' ? this.#realIndex(ctx, root, list) : this.#complexIndex(ctx, root, list);
+    let index = this.#indexOf.get(root);
+    if (index === undefined) {
+      index = root.kind === 'real' ? this.#realIndex(ctx, root, list) : this.#complexIndex(ctx, root, list);
+      this.#indexOf.set(root, index);
+    }
     return Object.freeze({ poly: list[index].poly, index, root: list[index], key: `${polynomialKey(root.poly)}#${index}` });
   }
 

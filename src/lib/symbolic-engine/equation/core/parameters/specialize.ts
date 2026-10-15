@@ -3,6 +3,7 @@ import { exactPolynomial, OWNERS, rationalForm, type Refusal } from '../decision
 import { domainBases } from '../decision/rules';
 import { decidePolynomialProblem } from '../decision/solve';
 import { decideGeneratorProblem } from '../generators/solve';
+import { decideConstantProblem, hasTranscendentalConstants } from './constants';
 import { decideSystem } from '../systems/solve';
 import { sortedDistinct } from '../decision/real-set';
 import type { AtomOperator } from '../decision/univariate';
@@ -85,7 +86,9 @@ export function targetInKernel(problem: RelationProblem): boolean {
 export function decideAt(problem: RelationProblem, values: ReadonlyMap<string, ExprId>): Specialized {
   const sp = specializedProblem(problem, values);
   if (sp.parameters.length) return { kind: 'refused', reason: 'specialization left free symbols' };
-  const o = sp.targets.length > 1 ? decideSystem(sp) : targetInKernel(sp) ? decideGeneratorProblem(sp) : decidePolynomialProblem(sp);
+  // As the main route: transcendental constants (sin 1 = c at A = 0 in sin(A·z + B) = c) go to their own slice.
+  const o = sp.targets.length > 1 ? decideSystem(sp) : targetInKernel(sp) ? decideGeneratorProblem(sp)
+    : hasTranscendentalConstants(sp) ? decideConstantProblem(sp) : decidePolynomialProblem(sp);
   if (o.kind === 'resource') {
     // The context keeps its stop: re-raise it unchanged.
     problem.store.ctx.checkCancelled();
@@ -129,9 +132,17 @@ function rootsAt(store: ExpressionStore, poly: ExprId, variable: string, values:
  * a reversed interval). Root-sets become their finite sets of roots.
  */
 export function instantiate(store: ExpressionStore, set: SolutionSet, values: ReadonlyMap<string, ExprId>, domain: ProblemDomain): SolutionSet | undefined {
+  // Every root value of one polynomial shares its zeros: computed once per instantiation.
+  const zeros = new Map<string, ExactValue[]>();
+  const realRoots = (poly: ExprId, variable: string) => {
+    const key = `${poly}|${variable}`;
+    let zs = zeros.get(key);
+    if (!zs) { zs = rootsAt(store, poly, variable, values, 'real'); zeros.set(key, zs); }
+    return zs;
+  };
   const value = (v: PointValue): PointValue => {
     if (v.kind === 'root') {
-      const zs = rootsAt(store, v.poly, v.variable, values, 'real');
+      const zs = realRoots(v.poly, v.variable);
       if (v.index > zs.length) throw new Mismatch();
       return zs[v.index - 1];
     }

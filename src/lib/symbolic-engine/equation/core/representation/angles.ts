@@ -169,6 +169,36 @@ export function expandConstant(store: ExpressionStore, id: ExprId): ExprId {
   return done.get(id) as ExprId;
 }
 
+/**
+ * expandConstant through every level: function arguments and powers are rebuilt from their expanded parts, so
+ * the canonical builders' folds apply inside them too (ln(1 + 2·(−½ + ½e³)) → ln e³ → 3), repeated until nothing
+ * changes. The same value; the result is a fixed point (expanding it again gives the same id). Each pass ticks.
+ */
+export function expandDeep(store: ExpressionStore, id: ExprId): ExprId {
+  // Repeat to a fixed point: a fold can create a new product to distribute ((½·√u)² → ¼·u, u a sum).
+  for (let current = id; ;) {
+    store.ctx.tick();
+    const next = expandOnce(store, current);
+    if (next === current) return current;
+    current = next;
+  }
+}
+function expandOnce(store: ExpressionStore, id: ExprId): ExprId {
+  const done = new Map<ExprId, ExprId>();
+  for (const n of store.postorder([id])) {
+    store.ctx.tick();
+    const node = store.node(n), get = (c: ExprId) => done.get(c) as ExprId;
+    let rebuilt: ExprId;
+    if (node.kind === 'add') rebuilt = store.add(...node.args.map(get));
+    else if (node.kind === 'mul') rebuilt = expandConstant(store, store.mul(...node.args.map(get)));
+    else if (node.kind === 'pow') rebuilt = store.pow(get(node.base), get(node.exponent));
+    else if (node.kind === 'apply') rebuilt = store.apply(node.fn, get(node.arg));
+    else rebuilt = n;
+    done.set(n, rebuilt);
+  }
+  return done.get(id) as ExprId;
+}
+
 function angleZero(store: ExpressionStore, raw: ExprId): boolean | undefined {
   const id = expandConstant(store, raw), ctx = store.ctx, node = store.node(id);
   if (store.numberValue(id)) return store.numberValue(id)?.numerator === 0n;

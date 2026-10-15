@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-10-14
+Last updated: 2026-10-15
 
 ## Purpose
 
@@ -26,6 +26,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
+
+- Equation stage 17 `EQUATION-RECONSTRUCTION-CLOSEOUT1` PR A (2026-10-15; claude / claude-opus-5-5 / opus-5.5, live): on branch `claude/confident-goodall-fbqe99-stage17`, the corpus (1,540 problems, 3,080 runs) ends with 0 runs past 60 s and 0 failures. The capability ledger is `docs/architecture/equation/equation-capability-ledger.md`. Next: PR B, retirement of the old Equation workspace and engine. #31 is merged; #32 is being made mergeable (conflicts resolved; `ci-linux` repairs: Calculate/Matrix ratchet lanes exempt by user decision, and the steps that ratchet had masked).
 
 - Equation phases recorded (2026-10-14; claude / claude-opus-5-5 / opus-5.5, live): Phase 1 ends with stage 17 `EQUATION-RECONSTRUCTION-CLOSEOUT1` (next, planned: parity corpus and capability ledger, then retirement of the old engine); Phase 2 and Phase 3 contents and the re-tagged ledger are in the Equation roadmap.
 
