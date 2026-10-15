@@ -2,12 +2,12 @@ import { demand, type ExecutionContext } from '../execution';
 import type { Polynomial } from '../algebra/polynomial';
 import { divideWithRemainder, integerToRational, monic } from '../algebra/polynomial-division';
 import { extendedGcdQ } from '../algebra/polynomial-gcd';
-import { rational, rDyadic, type Rational } from '../algebra/rational';
+import { rational, type Rational } from '../algebra/rational';
 import { factorQ } from '../algebra/factor';
 import { ALGEBRAIC_RING } from '../algebraic/root-of';
 import { normalizeValue, type ExactValue } from '../representation/evaluate';
 import type { ExpressionStore } from '../representation/expression';
-import { diskAdd, diskMultiply, diskOf, mayContainZero, normPolynomial, type Disk } from './algebraic-coefficients';
+import { diskOf, normPolynomial, type Disk } from './algebraic-coefficients';
 import { QX } from './rational-form';
 
 /**
@@ -57,22 +57,31 @@ class NumberField {
   }
 }
 
-/** A disk rounded outward to the grid 2^−W: centre coordinates truncated (each off by < 2^−W), radius rounded up. */
-function rounded(ctx: ExecutionContext, d: Disk, W: number): Disk {
-  const S = 1n << BigInt(W);
-  const floor = (q: Rational) => { const n = q.numerator * S; return n >= 0n ? n / q.denominator : -((-n + q.denominator - 1n) / q.denominator); };
-  return { re: rDyadic(ctx, floor(d.re), W), im: rDyadic(ctx, floor(d.im), W), r: rDyadic(ctx, -floor({ numerator: -d.r.numerator, denominator: d.r.denominator } as Rational) + 2n, W) };
-}
+/**
+ * Fixed-point disks: centre (re, im)·2^−W and radius r·2^−W in bigints. Each truncated centre coordinate moves the
+ * centre by less than one unit, so a rounding adds 2 units to the radius (√2 < 2); radii round up.
+ */
+interface Fixed { readonly re: bigint; readonly im: bigint; readonly r: bigint }
+const floorDiv = (n: bigint, d: bigint) => (n >= 0n ? n / d : -((-n + d - 1n) / d));
+const abs = (v: bigint) => (v < 0n ? -v : v);
 
-/** A certified disk of Σ cᵢ(γ)·θⁱ at width 2^−w (Horner over z at γ's disk, then over y at θ's). */
-function diskAt(ctx: ExecutionContext, f: KPoly, gamma: (w: number) => Disk, theta: ExactValue, w: number): Disk {
-  const width = rational(ctx, 1n, 1n << BigInt(w)), W = w + 16, g = gamma(w), t = rounded(ctx, diskOf(ctx, theta, width), W);
-  const zero: Disk = { re: rational(ctx, 0n), im: rational(ctx, 0n), r: rational(ctx, 0n) };
-  const horner = (cs: readonly Disk[], x: Disk) => cs.reduceRight((acc, c) => { ctx.tick(); return rounded(ctx, diskAdd(ctx, diskMultiply(ctx, acc, x), c), W); }, zero);
-  // Coefficients rounded to the working grid first (Euclid in K leaves rationals with large numerators and denominators).
-  const exact = (q: Rational): Disk => rounded(ctx, { re: q, im: rational(ctx, 0n), r: rational(ctx, 0n) }, W);
-  return horner(f.map(c => horner(c.coefficients.map(exact), g)), t);
+function fixedOf(q: Rational, S: bigint): Fixed {
+  const n = q.numerator * S;
+  return { re: floorDiv(n, q.denominator), im: 0n, r: n % q.denominator === 0n ? 0n : 1n };
 }
+function fixedDisk(d: Disk, S: bigint): Fixed {
+  const at = (q: Rational) => floorDiv(q.numerator * S, q.denominator);
+  return { re: at(d.re), im: at(d.im), r: -floorDiv(-d.r.numerator * S, d.r.denominator) + 2n };
+}
+function fixedMulAdd(ctx: ExecutionContext, acc: Fixed, x: Fixed, c: Fixed, S: bigint): Fixed {
+  ctx.tick();
+  const re = floorDiv(acc.re * x.re - acc.im * x.im, S), im = floorDiv(acc.re * x.im + acc.im * x.re, S);
+  const r = -floorDiv(-((abs(acc.re) + abs(acc.im)) * x.r + (abs(x.re) + abs(x.im)) * acc.r + acc.r * x.r), S) + 2n;
+  return { re: re + c.re, im: im + c.im, r: r + c.r };
+}
+const horner = (ctx: ExecutionContext, cs: readonly Fixed[], x: Fixed, S: bigint): Fixed =>
+  cs.reduceRight((acc, c) => fixedMulAdd(ctx, acc, x, c, S), { re: 0n, im: 0n, r: 0n });
+const excludesZero = (d: Fixed) => d.re * d.re + d.im * d.im > d.r * d.r;
 
 export function numberFieldZeros(store: ExpressionStore, coefficients: readonly ExactValue[], domain: 'real' | 'complex'): ExactValue[] | undefined {
   const ctx = store.ctx;
@@ -81,12 +90,22 @@ export function numberFieldZeros(store: ExpressionStore, coefficients: readonly 
   const gamma = generators[0], field = new NumberField(ctx, monic(ctx, QX, integerToRational(ctx, QX, (gamma as { root: { poly: Polynomial<bigint> } }).root.poly)));
   const z = QX.make(ctx, [rational(ctx, 0n), rational(ctx, 1n)]);
   const f: KPoly = coefficients.map(c => (c.kind === 'rational' ? QX.constant(ctx, c.value) : z));
-  // γ's disk at each working precision, shared by every root and both factors.
-  const gammaDisks = new Map<number, Disk>();
-  const gammaAt = (w: number) => {
-    let d = gammaDisks.get(w);
-    if (!d) { d = rounded(ctx, diskOf(ctx, gamma, rational(ctx, 1n, 1n << BigInt(w))), w + 16); gammaDisks.set(w, d); }
-    return d;
+  // γ's disk and the coefficient disks cᵢ(γ) of each polynomial, once per working precision (they do not depend on θ).
+  const coefficientDisks = new Map<KPoly, Map<number, Fixed[]>>();
+  const coefficientsAt = (p: KPoly, w: number): Fixed[] => {
+    let byW = coefficientDisks.get(p);
+    if (!byW) { byW = new Map(); coefficientDisks.set(p, byW); }
+    let cs = byW.get(w);
+    if (!cs) {
+      const S = 1n << BigInt(w + 16), g = fixedDisk(diskOf(ctx, gamma, rational(ctx, 1n, 1n << BigInt(w))), S);
+      cs = p.map(c => horner(ctx, c.coefficients.map(q => fixedOf(q, S)), g, S));
+      byW.set(w, cs);
+    }
+    return cs;
+  };
+  const valueAt = (p: KPoly, theta: ExactValue, w: number) => {
+    const S = 1n << BigInt(w + 16);
+    return horner(ctx, coefficientsAt(p, w), fixedDisk(diskOf(ctx, theta, rational(ctx, 1n, 1n << BigInt(w))), S), S);
   };
   const out: ExactValue[] = [];
   for (const { factor } of factorQ(ctx, QX, normPolynomial(store, coefficients), ALGEBRAIC_RING).factors) {
@@ -101,8 +120,8 @@ export function numberFieldZeros(store: ExpressionStore, coefficients: readonly 
     for (const theta of roots) {
       for (let w = 16; ; w *= 2) {
         ctx.tick();
-        if (!mayContainZero(ctx, diskAt(ctx, split.q, gammaAt, theta, w))) { out.push(theta); break; }
-        if (!mayContainZero(ctx, diskAt(ctx, G, gammaAt, theta, w))) break;
+        if (excludesZero(valueAt(split.q, theta, w))) { out.push(theta); break; }
+        if (excludesZero(valueAt(G, theta, w))) break;
       }
     }
   }

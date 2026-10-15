@@ -132,9 +132,17 @@ function rootsAt(store: ExpressionStore, poly: ExprId, variable: string, values:
  * a reversed interval). Root-sets become their finite sets of roots.
  */
 export function instantiate(store: ExpressionStore, set: SolutionSet, values: ReadonlyMap<string, ExprId>, domain: ProblemDomain): SolutionSet | undefined {
+  // Every root value of one polynomial shares its zeros: computed once per instantiation.
+  const zeros = new Map<string, ExactValue[]>();
+  const realRoots = (poly: ExprId, variable: string) => {
+    const key = `${poly}|${variable}`;
+    let zs = zeros.get(key);
+    if (!zs) { zs = rootsAt(store, poly, variable, values, 'real'); zeros.set(key, zs); }
+    return zs;
+  };
   const value = (v: PointValue): PointValue => {
     if (v.kind === 'root') {
-      const zs = rootsAt(store, v.poly, v.variable, values, 'real');
+      const zs = realRoots(v.poly, v.variable);
       if (v.index > zs.length) throw new Mismatch();
       return zs[v.index - 1];
     }
