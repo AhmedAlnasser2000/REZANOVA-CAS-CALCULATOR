@@ -81,9 +81,14 @@ group('angles: principal-branch identities, direct unit points, unit-circle part
 
 group('internal errors and verification failures found by the corpus', () => {
   it.each([
-    // The constant i in a problem over ℝ is a typed stop (it is undefined there), not a crash in the sign test.
-    ['\\sin(x)=i', 'real', 'unsupported'],
-    ['x=\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)', 'real', 'unsupported'],
+    // The constant i in Real mode: decided over ℂ and intersected with ℝ (user decision, 2026-10-15).
+    ['\\sin(x)=i', 'real', 'empty'],
+    ['x=\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)', 'real', 'empty'],
+    ['(1+i)(1-i)x=2', 'real', 'solved'],
+    ['\\sin(x)+i=i', 'real', 'solved'],
+    ['\\exp(2x+1)=i', 'real', 'empty'],
+    ['\\exp(i x)=1', 'real', 'solved'],
+    ['x+i>0', 'real', 'unsupported'],
     // The polynomial conversion reaches its fixed point (expression coefficients left 0·x·i for a second pass).
     ['\\frac{x^2+1}{x^2-2}=\\imaginaryI', 'complex', 'solved'],
     // A specialized sample with transcendental constants goes to the constants slice, as in the main route.
