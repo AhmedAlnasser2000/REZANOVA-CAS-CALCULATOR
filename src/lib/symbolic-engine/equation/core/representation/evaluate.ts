@@ -74,6 +74,9 @@ export function addValues(ctx: ExecutionContext, a: ExactValue, b: ExactValue): 
 export function multiplyValues(ctx: ExecutionContext, a: ExactValue, b: ExactValue): ExactValue {
   if (a.kind === 'rational' && b.kind === 'rational') return q(rMultiply(ctx, a.value, b.value));
   if (isZero(a) || isZero(b)) return q(rational(ctx, 0n));
+  // A rational factor scales the minimal polynomial (no resultant; 1·α is α).
+  if (a.kind === 'rational' && b.kind === 'algebraic') return isOne(a) ? b : normalizeValue(algebraic.scale(ctx, b.root, a.value));
+  if (b.kind === 'rational' && a.kind === 'algebraic') return isOne(b) ? a : normalizeValue(algebraic.scale(ctx, a.root, b.value));
   return normalizeValue(algebraic.multiply(ctx, asRoot(ctx, a), asRoot(ctx, b)));
 }
 
@@ -85,6 +88,8 @@ function inverseValue(ctx: ExecutionContext, a: ExactValue): ExactValue {
 function integerPower(ctx: ExecutionContext, a: ExactValue, n: bigint): ExactValue {
   if (n === 0n) return isZero(a) ? undefinedValue('0^0') : q(rational(ctx, 1n));
   let base = n < 0n ? inverseValue(ctx, a) : a, e = n < 0n ? -n : n, result: ExactValue = q(rational(ctx, 1n));
+  // An algebraic base: one resultant of degree deg α (algebraic.power) instead of repeated products.
+  if (base.kind === 'algebraic' && e >= 2n) return normalizeValue(algebraic.power(ctx, base.root, e));
   while (e > 0n) {
     ctx.tick();
     if (e & 1n) result = multiplyValues(ctx, result, base);

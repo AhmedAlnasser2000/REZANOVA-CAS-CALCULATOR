@@ -7,9 +7,9 @@ import { ExecutionContext } from '../execution';
 import { ExpressionStore } from '../representation/expression';
 
 // EQUATION-RECONSTRUCTION-CLOSEOUT1: corpus cases that ran past 60 s now decide and verify within a modest budget
-// (work units, not time). Each was an exact zero the sign test refined forever.
-function run(latex: string, domain: 'real' | 'complex') {
-  const limits = { ...DEFAULT_EQUATION_LIMITS, work: 400_000_000 };
+// (work units, not time; the parameter cases run with the app's default limits).
+function run(latex: string, domain: 'real' | 'complex', work = 400_000_000) {
+  const limits = { ...DEFAULT_EQUATION_LIMITS, work };
   const ctx = new ExecutionContext(limits), store = new ExpressionStore(ctx);
   const row = parseRow(latex);
   if (row.kind === 'error') throw new Error(row.message);
@@ -45,4 +45,17 @@ group('exact zeros behind domain-kept forms and complex radicals', () => {
   ] as const)('%s over %s', (latex, domain) => {
     expect(run(latex, domain)).toBe('solved');
   });
+});
+
+group('parameters specialized at algebraic samples', () => {
+  // Certified enclosures before exact arithmetic, one resultant for αⁿ, rational scaling without resultants,
+  // memoized root identity, and zeros in ℚ(γ)[y] by dynamic evaluation instead of Liouville-bound refinement.
+  it.each([
+    ['z^4+z+1=b^6', 'real'],
+    ['z^4+z+1=b^6', 'complex'],
+    ['b^{45}=nvm^3', 'complex'],
+    ['\\left(y^3+y+1\\right)^{12}=b', 'complex'],
+  ] as const)('%s over %s', (latex, domain) => {
+    expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe('solved');
+  }, 60_000);
 });

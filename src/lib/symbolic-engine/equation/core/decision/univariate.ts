@@ -12,6 +12,7 @@ import { valueKey, type Point, type SolutionSet } from '../representation/soluti
 import { normPolynomial, signAt, vanishesAt } from './algebraic-coefficients';
 import { attachForm } from './radical-forms';
 import { exactPolynomial, multiplyForms, QX, rationalForm, type LeafPoly, type Refusal } from './rational-form';
+import { numberFieldZeros } from './number-field-zeros';
 import { assemble, pieces, sortedDistinct } from './real-set';
 
 /**
@@ -69,6 +70,9 @@ export function problemAtoms(problem: RelationProblem): Atom[] {
 export function zerosOf(store: ExpressionStore, p: LeafPoly, domain: EvaluationDomain): ExactValue[] {
   const ctx = store.ctx;
   demand(!isZeroPoly(p), 'invalid-input', 'zeros of the zero polynomial');
+  // One algebraic coefficient value (a specialized parameter): exact splitting in ℚ(γ)[y], no Liouville bound.
+  const split = p.kind === 'algebraic' ? numberFieldZeros(store, p.coefficients, domain) : undefined;
+  if (split !== undefined) return split;
   const rational = p.kind === 'rational' ? p.poly : normPolynomial(store, p.coefficients);
   if (QX.degree(ctx, rational) <= 0) return [];
   const out: ExactValue[] = [];
