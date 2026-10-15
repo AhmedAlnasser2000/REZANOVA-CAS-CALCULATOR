@@ -6,6 +6,7 @@ import { hasQuantifier } from '../representation/formula';
 import { decompose } from './decompose';
 import { regionSet } from './region';
 import { decideParametersByCad } from './cases';
+import { exclusionsApply } from '../parameters/exclusions';
 import { factorProblem, productFactors } from '../parameters/product';
 import { shiftPlan } from '../parameters/shift';
 import { parametricAtoms } from '../parameters/specialize';
@@ -34,6 +35,7 @@ function treeRefuses(problem: RelationProblem): boolean {
   if (shiftPlan(problem) !== undefined) return false;
   const atoms = parametricAtoms(problem);
   if ('owner' in atoms) return false;
+  if (exclusionsApply(atoms.atoms)) return false;
   const inX = atoms.atoms.filter(a => degreeIn(a.poly, 0) > 0);
   return inX.length > 1 || inX.some(a => degreeIn(a.poly, 0) >= 3);
 }

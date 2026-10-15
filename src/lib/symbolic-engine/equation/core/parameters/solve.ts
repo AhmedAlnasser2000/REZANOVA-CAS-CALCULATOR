@@ -6,6 +6,7 @@ import { ProofLogBuilder } from '../representation/transform';
 import { decideCells, type ParamCase } from './cells';
 import { decidePolynomialProblem } from '../decision/solve';
 import { decideKernels } from './kernels';
+import { decideExclusions } from './exclusions';
 import { decideProduct } from './product';
 import { decideShifted } from './shift';
 import { parametricAtoms, targetInKernel } from './specialize';
@@ -41,6 +42,9 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
     }
     const shifted = decideShifted(problem, decideParametricProblem);
     if (shifted !== undefined) return shifted;
+    // Exclusions (denominators) beside one equation: split on whether each excluded value is a root.
+    const excluded = decideExclusions(problem, atoms.atoms, decideTree);
+    if (excluded !== undefined) return excluded.kind === 'refused' ? { kind: 'incomplete-implementation', reason: excluded.reason } : caseOutcome(problem, simplifyCases(problem.store, excluded.cases));
     const tree = decideTree(problem, atoms.atoms);
     return tree.kind === 'refused' ? { kind: 'incomplete-implementation', reason: tree.reason } : caseOutcome(problem, simplifyCases(problem.store, tree.cases));
   } catch (e) {

@@ -66,3 +66,15 @@ group('zero-product split (factor first)', () => {
     expect(outcome.kind === 'solved' && outcome.set.kind === 'case-tree' ? outcome.set.cases.length : -1).toBe(16);
   }, 60_000);
 });
+
+group('exclusion splitting (denominators beside one equation, several parameters)', () => {
+  it.each([
+    ['\\frac{z-a}{z-b}=k'],
+    ['\\frac{z^2-a}{z-b}=c'],
+    ['\\frac{\\frac{z-a}{z+b}}{\\frac{z+c}{z-d}}=k'],
+  ])('%s: the complete case list, verified', latex => {
+    const { outcome } = decide(latex);
+    expect(outcome.kind).toBe('solved');
+    expect(outcome.kind === 'solved' ? outcome.set.kind : '').toBe('case-tree');
+  }, 60_000);
+});
