@@ -209,4 +209,8 @@ Two CI steps named retired specs directly:
 
 ### Verification (PR B)
 
-To be filled in at delivery.
+- `tsc -b`, ESLint, and every static gate step of `ci-linux`.
+- UI suite: 71 files, 386 tests passed.
+- Unit suite: 606 files passed. The 28 failing files are all Integration files, and each fails the same way on `main` (`b69c261`): timeouts past 120 s, the `integration/core` circular import, and three assertions, including `integration-transcendental-certificate-result-shape`. They are the Integration program's and are left untouched.
+- Browser (Chromium, preview build): every kept spec passes, except three Graphing canvas tests that fail identically on `main` in the build container (GPU real fields, z-map zero/pole markers, the throttled performance contract).
+- Screenshots: the start on Equation with the History-wiped notice; the "+" menu with the "Being rebuilt" group; an Equation solve; a refused Guide example; Graphing domain colouring of (z²−1)/z; New Integration; Notebook; the History page after the wipe.
