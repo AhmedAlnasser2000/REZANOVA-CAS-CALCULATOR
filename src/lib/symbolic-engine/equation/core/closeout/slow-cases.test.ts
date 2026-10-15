@@ -59,3 +59,19 @@ group('parameters specialized at algebraic samples', () => {
     expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe('solved');
   }, 60_000);
 });
+
+group('angles: principal-branch identities, direct unit points, unit-circle parts', () => {
+  // asin(−u) = −asin(u) and atan(tan 1) = 1 were hidden zeros; e^{i·arc u} from a direct annihilator and
+  // cos θ, sin θ of unit points from self-reciprocal polynomials replace products whose resultants multiply degrees.
+  it.each([
+    ['\\cos(2\\sin(x))\\le0', 'real', 'solved'],
+    ['\\arctan\\left(\\tan\\left(\\cos\\left(x\\right)\\right)\\right)=1', 'real', 'solved'],
+    ['\\sin\\left(4x\\right)+\\sin\\left(6x\\right)=1', 'real', 'solved'],
+    // Typed stops that now arrive in seconds (Phase 2 ledger rows: composition families).
+    ['\\frac{\\tan\\left(\\left|x-4\\right|\\right)}{4}-55\\le4', 'real', 'incomplete-implementation'],
+    ['2^{\\left|\\sin\\left(x^3+x\\right)\\right|}=2^{\\frac{1}{2}}', 'real', 'incomplete-implementation'],
+    ['2^{\\left|\\sin\\left(x^5+x\\right)\\right|}=2^{\\frac{1}{2}}', 'real', 'incomplete-implementation'],
+  ] as const)('%s over %s', (latex, domain, kind) => {
+    expect(run(latex, domain, DEFAULT_EQUATION_LIMITS.work)).toBe(kind);
+  }, 60_000);
+});

@@ -1,8 +1,8 @@
-import { rMultiply } from '../algebra/rational';
+import { rational, rCompare, rMultiply, type Rational } from '../algebra/rational';
 import { expandDeep } from './angles';
 import { enclose } from './enclosure';
 import { kernelNormalForm } from './kernel-identity';
-import type { ExprId, ExpressionStore } from './expression';
+import type { ExprId, ExpressionStore, FunctionName } from './expression';
 
 /**
  * Folds of a defined number-only real value that the canonical builders keep for domain reasons or cannot see
@@ -10,6 +10,7 @@ import type { ExprId, ExpressionStore } from './expression';
  * - 0·t → 0 when t has a certified enclosure (t is defined, so the product is 0);
  * - (u^a)^n → u^{a·n} for an integer n (principal powers: (e^{a·Log u})^n = e^{n·a·Log u});
  * - exp(c·log A + rest) → A^c·exp(rest) when c is an integer (e^{Log A} = A for every defined A) or A > 0;
+ * - odd symmetry and principal-branch inverses (foldApply);
  * - a function argument → its kernel normal form when that is strictly smaller (kernel-identity.ts: sums of
  *   products expanded, radical relations applied, so sin(−½ − ½√u + (½ + ½√u)²) → sin(¼u − ¼));
  * then sums are expanded at every level (expandDeep), so the builders' folds apply to what the rewrites expose
@@ -47,11 +48,37 @@ function foldOnce(store: ExpressionStore, id: ExprId, positive: (id: ExprId) => 
         ? store.pow(inner.base, store.number(rMultiply(ctx, a, n2)))
         : store.pow(base, exponent);
     } else if (node.kind === 'apply' && node.fn === 'exp') rebuilt = foldExpLogs(store, normalArgument(store, get(node.arg)), positive);
-    else if (node.kind === 'apply') rebuilt = store.apply(node.fn, normalArgument(store, get(node.arg)));
+    else if (node.kind === 'apply') rebuilt = foldApply(store, node.fn, normalArgument(store, get(node.arg)));
     else rebuilt = n;
     done.set(n, rebuilt);
   }
   return done.get(id) as ExprId;
+}
+
+/**
+ * f(u) with the identities of the real functions: odd symmetry f(−u) = −f(u) for sin, tan, asin and atan (so
+ * asin(π/4) + asin(−π/4) cancels), and an inverse of its own function on the principal branch: atan(tan u) = u
+ * for u ∈ (−π/2, π/2), asin(sin u) = u for u ∈ [−π/2, π/2], acos(cos u) = u for u ∈ [0, π], each certified by an
+ * enclosure of u strictly inside the interval.
+ */
+function foldApply(store: ExpressionStore, fn: FunctionName, arg: ExprId): ExprId {
+  const node = store.node(arg), ctx = store.ctx;
+  if ((fn === 'sin' || fn === 'tan' || fn === 'asin' || fn === 'atan') && node.kind === 'mul') {
+    const c = store.numberValue(node.args[0]);
+    if (c && c.numerator < 0n) return store.neg(store.apply(fn, store.neg(arg)));
+  }
+  const inverse: Partial<Record<FunctionName, { fn: FunctionName; lo: Rational; hi: Rational }>> = {
+    atan: { fn: 'tan', lo: rational(ctx, -1n, 2n), hi: rational(ctx, 1n, 2n) },
+    asin: { fn: 'sin', lo: rational(ctx, -1n, 2n), hi: rational(ctx, 1n, 2n) },
+    acos: { fn: 'cos', lo: rational(ctx, 0n), hi: rational(ctx, 1n) },
+  };
+  const range = inverse[fn];
+  if (range && node.kind === 'apply' && node.fn === range.fn && store.freeSymbols(node.arg).length === 0) {
+    // u/π strictly inside (lo, hi) by a certified enclosure.
+    const b = enclose(store, store.div(node.arg, store.constant('pi')), 64);
+    if (b.kind === 'bounds' && rCompare(ctx, b.lo, range.lo) > 0 && rCompare(ctx, b.hi, range.hi) < 0) return node.arg;
+  }
+  return store.apply(fn, arg);
 }
 
 /** A function argument in its kernel normal form when that is strictly smaller (so repeating this ends). */
