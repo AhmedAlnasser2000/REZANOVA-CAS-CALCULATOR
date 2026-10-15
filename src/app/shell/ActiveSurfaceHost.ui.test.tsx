@@ -23,6 +23,9 @@ import {
 } from '../../lib/guide/navigation';
 import type { GuideWorkspaceProps } from '../workspaces/GuideWorkspace';
 
+// The first lazy import of a page's module graph can take seconds on a cold runner, past the 1 s default wait.
+const LAZY_PAGE = { timeout: 10_000 };
+
 const modeLabels: Record<ModeId, string> = {
   calculate: 'Calculate',
   calculus: 'Calculus',
@@ -157,7 +160,7 @@ describe('ActiveSurfaceHost', () => {
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'formula-viewer');
-    expect(pageSurface).toContainElement(await screen.findByTestId('formula-viewer-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('formula-viewer-page', {}, LAZY_PAGE));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
@@ -177,7 +180,7 @@ describe('ActiveSurfaceHost', () => {
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'settings');
-    expect(pageSurface).toContainElement(await screen.findByTestId('settings-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('settings-page', {}, LAZY_PAGE));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 
@@ -225,7 +228,7 @@ describe('ActiveSurfaceHost', () => {
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'history');
-    expect(pageSurface).toContainElement(await screen.findByTestId('history-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('history-page', {}, LAZY_PAGE));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('history-page-row'));
@@ -243,7 +246,7 @@ describe('ActiveSurfaceHost', () => {
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'guide');
-    expect(pageSurface).toContainElement(await screen.findByTestId('guide-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('guide-page', {}, LAZY_PAGE));
     expect(await screen.findByTestId('guide-page-main')).toBeInTheDocument();
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
@@ -262,7 +265,7 @@ describe('ActiveSurfaceHost', () => {
 
     const pageSurface = await screen.findByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'notebook');
-    expect(pageSurface).toContainElement(await screen.findByTestId('notebook-page'));
+    expect(pageSurface).toContainElement(await screen.findByTestId('notebook-page', {}, LAZY_PAGE));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 });

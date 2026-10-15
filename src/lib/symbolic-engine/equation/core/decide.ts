@@ -9,6 +9,7 @@ import { verifyComplexOutcome } from './periodic/complex-verify';
 import { decideFormulas, verifyFormulaOutcome } from './logic/decide';
 import { decideByCad, routesToCad } from './cad/solve';
 import { verifyCadOutcome } from './cad/verify';
+import { decideRealRestriction, verifyRealRestriction } from './real-restriction';
 import { decideSystem } from './systems/solve';
 import { verifySystemOutcome } from './systems/verify';
 import type { ExprId } from './representation/expression';
@@ -62,7 +63,15 @@ export function decideEquation(problem: RelationProblem): EquationOutcome {
   }
 }
 
+/** The constant i in a problem over ℝ (user decision, 2026-10-15: decided over ℂ, then intersected with ℝ). */
+function hasImaginaryUnit(problem: RelationProblem): boolean {
+  const s = problem.store;
+  return someNode(problem, n => { const node = s.node(n); return node.kind === 'constant' && node.name === 'i'; });
+}
+
 function route(problem: RelationProblem): EquationOutcome {
+  // Real mode restricts the unknown, not the constants: decided over ℂ, then intersected with ℝ.
+  if (problem.domain === 'real' && hasImaginaryUnit(problem)) return decideRealRestriction(problem, decideEquation);
   // Real polynomial problems in several unknowns with orders or ∨: cylindrical decomposition (EQUATION-SEMIALGEBRAIC1).
   if (routesToCad(problem)) return decideByCad(problem);
   // Other rows with ∧, ∨, ¬, ∀ or ∃: by disjuncts.
@@ -77,6 +86,7 @@ function route(problem: RelationProblem): EquationOutcome {
 }
 
 export function verifyEquationOutcome(problem: RelationProblem, outcome: EquationOutcome): void {
+  if (problem.domain === 'real' && hasImaginaryUnit(problem)) return verifyRealRestriction(problem, outcome, decideEquation, verifyEquationOutcome);
   if (routesToCad(problem)) verifyCadOutcome(problem, outcome);
   else if (problem.formulas.length) verifyFormulaOutcome(problem, outcome, decideEquation, verifyEquationOutcome);
   else if (problem.targets.length > 1) verifySystemOutcome(problem, outcome);

@@ -85,6 +85,13 @@ function rootForm(store: ExpressionStore, B: BPoly, x: string, p: string, index:
     const sign = (index === 1 ? -1 : 1) * lcSign;
     return { kind: 'expression', id: store.div(store.add(store.neg(c[1]), store.mul(store.integer(sign), store.sqrt(D))), store.mul(store.integer(2), c[2])) };
   }
+  // A binomial cₙ·xⁿ + c₀ (n ≥ 3): its real roots are ±r with r = (−c₀/cₙ)^{1/n} (the real odd root for odd n: one
+  // root; for even n, −r < r when there are two, and r = 0 when there is one).
+  const n = degX(B);
+  if (n >= 3 && B.slice(1, n).every(c => QX.isZero(store.ctx, c))) {
+    const r = store.pow(store.div(store.neg(c[0]), c[n]), store.number(rational(store.ctx, 1n, BigInt(n))));
+    return { kind: 'expression', id: n % 2 === 0 && count === 2 && index === 1 ? store.neg(r) : r };
+  }
   return { kind: 'root', poly: bExpression(store, B, x, p), variable: x, index };
 }
 

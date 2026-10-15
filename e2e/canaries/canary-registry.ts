@@ -6,6 +6,14 @@ import type {
 
 export type ComputationalWorkspaceId = Exclude<LauncherLeafId, 'labs'>;
 
+/**
+ * Launcher leaves without browser canaries, each with its reason. New Integration is owned by the Integration program
+ * and covered by its own specs (user decision, 2026-10-15).
+ */
+export const CANARY_EXEMPT_WORKSPACES: Partial<Record<ComputationalWorkspaceId, string>> = {
+  'new-integration': 'Covered by e2e/new-integration.spec.ts and e2e/new-integration-exponential.spec.ts.',
+};
+
 export type CanarySettings = {
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
@@ -18,6 +26,12 @@ export type CanaryExpectation =
       visibleTextIncludes?: readonly string[];
     }
   | {
+      /** New Equation: the outcome kind, the verified flag, and the plain text that Copy text writes. */
+      surface: 'new-equation';
+      outcome: 'solved' | 'empty';
+      copyText: string;
+    }
+  | {
       surface: 'table';
       rows: readonly {
         index: number;
@@ -28,6 +42,7 @@ export type CanaryExpectation =
 export type CanaryDriver =
   | { kind: 'calculate'; inputLatex: string }
   | { kind: 'equation'; inputLatex: string }
+  | { kind: 'new-equation'; inputLatex: string }
   | { kind: 'calculus'; tool: 'Derivative' | 'Integral'; inputLatex: string }
   | { kind: 'trigonometry'; path: readonly string[]; inputLatex: string }
   | { kind: 'geometry'; path: readonly string[]; inputLatex: string }
@@ -96,6 +111,24 @@ export const WORKSPACE_CANARIES = [
         settings: EXACT_DEG,
         driver: { kind: 'equation', inputLatex: '3x+5=20' },
         expectation: { surface: 'answer', rawLatexIncludes: ['x=5'] },
+      },
+    ],
+  },
+  {
+    workspace: 'new-equation',
+    label: 'New Equation',
+    cases: [
+      {
+        id: 'new-equation-quadratic-two-roots',
+        settings: EXACT_DEG,
+        driver: { kind: 'new-equation', inputLatex: 'x^2-5x+6=0' },
+        expectation: { surface: 'new-equation', outcome: 'solved', copyText: 'x = 2\nx = 3' },
+      },
+      {
+        id: 'new-equation-linear-root',
+        settings: EXACT_DEG,
+        driver: { kind: 'new-equation', inputLatex: '3x+5=20' },
+        expectation: { surface: 'new-equation', outcome: 'solved', copyText: 'x = 5' },
       },
     ],
   },

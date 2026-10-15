@@ -12,6 +12,7 @@ import { valueKey, type Point, type SolutionSet } from '../representation/soluti
 import { normPolynomial, signAt, vanishesAt } from './algebraic-coefficients';
 import { attachForm } from './radical-forms';
 import { exactPolynomial, multiplyForms, QX, rationalForm, type LeafPoly, type Refusal } from './rational-form';
+import { numberFieldZeros } from './number-field-zeros';
 import { assemble, pieces, sortedDistinct } from './real-set';
 
 /**
@@ -69,6 +70,9 @@ export function problemAtoms(problem: RelationProblem): Atom[] {
 export function zerosOf(store: ExpressionStore, p: LeafPoly, domain: EvaluationDomain): ExactValue[] {
   const ctx = store.ctx;
   demand(!isZeroPoly(p), 'invalid-input', 'zeros of the zero polynomial');
+  // One algebraic coefficient value (a specialized parameter): exact splitting in ℚ(γ)[y], no Liouville bound.
+  const split = p.kind === 'algebraic' ? numberFieldZeros(store, p.coefficients, domain) : undefined;
+  if (split !== undefined) return split;
   const rational = p.kind === 'rational' ? p.poly : normPolynomial(store, p.coefficients);
   if (QX.degree(ctx, rational) <= 0) return [];
   const out: ExactValue[] = [];
@@ -141,12 +145,18 @@ export function satisfiesAll(store: ExpressionStore, atoms: readonly Atom[], v: 
 
 function decideReal(store: ExpressionStore, atoms: readonly Atom[], variable: string): LeafDecision {
   const polys = atoms as readonly Extract<Atom, { kind: 'poly' }>[];
-  const critical = sortedDistinct(store, polys.filter(a => !isZeroPoly(a.poly)).flatMap(a => zerosOf(store, a.poly, 'real')));
+  // Each atom's zeros, by canonical identity: there its sign is 0 by construction, not re-proven (with algebraic
+  // coefficients that proof refines to a Liouville bound).
+  const key = (v: ExactValue) => (v.kind === 'rational' ? `q${v.value.numerator}/${v.value.denominator}` : store.roots.canonical(store.ctx, v.root).key);
+  const zeroKeys = polys.map(a => (isZeroPoly(a.poly) ? [] : zerosOf(store, a.poly, 'real')));
+  const own = zeroKeys.map(list => new Set(list.map(key)));
+  const critical = sortedDistinct(store, zeroKeys.flat());
   const parts = pieces(store, critical);
   const truth = parts.map(piece => {
     store.ctx.tick();
     const v: ExactValue = piece.kind === 'open' ? { kind: 'rational', value: piece.sample } : piece.value;
-    return polys.every(a => holds(a.op, signOf(store, a.poly, v)));
+    const k = piece.kind === 'open' ? undefined : key(v);
+    return polys.every((a, i) => holds(a.op, k !== undefined && own[i].has(k) ? 0 : signOf(store, a.poly, v)));
   });
   const intervals = assemble(critical, truth);
   if (intervals.length === 0) return { kind: 'empty' };
@@ -161,7 +171,9 @@ function decideComplex(store: ExpressionStore, atoms: readonly Atom[], variable:
   if (equations.length) {
     const degree = (p: LeafPoly) => (p.kind === 'rational' ? p.poly.coefficients.length : p.coefficients.length);
     const pivot = equations.reduce((a, b) => (degree(b.poly) < degree(a.poly) ? b : a));
-    const points = zerosOf(store, pivot.poly, 'complex').filter(v => satisfiesAll(store, polys, v, 'complex'));
+    // The pivot's own zeros satisfy it by construction: only the other atoms are checked.
+    const others = polys.filter(a => a !== pivot);
+    const points = zerosOf(store, pivot.poly, 'complex').filter(v => satisfiesAll(store, others, v, 'complex'));
     return points.length ? { kind: 'set', set: { kind: 'finite', variables: [variable], points: points.map(v => [v]) } } : { kind: 'empty' };
   }
   if (polys.some(a => a.op === 'ne' && isZeroPoly(a.poly))) return { kind: 'empty' };

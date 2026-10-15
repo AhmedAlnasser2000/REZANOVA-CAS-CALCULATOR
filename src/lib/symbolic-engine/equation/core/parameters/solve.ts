@@ -4,7 +4,14 @@ import { conditionKey, type Condition, type RelationProblem } from '../represent
 import { finiteSet, normalizeSet, resourceOutcome, setKey, type EquationOutcome, type SolutionSet } from '../representation/solution-set';
 import { ProofLogBuilder } from '../representation/transform';
 import { decideCells, type ParamCase } from './cells';
+import { decidePolynomialProblem } from '../decision/solve';
 import { decideKernels } from './kernels';
+import { decideExclusions } from './exclusions';
+import { decideParametersByCad } from '../cad/cases';
+import { decideEquation } from '../decide';
+import { decideOuterPower } from './outer-power';
+import { decideProduct } from './product';
+import { decideShifted } from './shift';
 import { parametricAtoms, targetInKernel } from './specialize';
 import { decideTree } from './tree';
 
@@ -25,18 +32,47 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
       const k = decideKernels(problem);
       return k.kind === 'refused' ? { kind: 'incomplete-implementation', reason: k.reason } : caseOutcome(problem, simplifyCases(problem.store, k.cases));
     }
+    // u(x)ⁿ = b: decided through u = w (outer-power decomposition) before anything expands the power.
+    const power = decideOuterPower(problem, decideEquation);
+    if (power !== undefined && 'fallback' in power) {
+      // As without the step: the slice, and where its tree refuses with several parameters, the decomposition.
+      const plain = decideWithoutPower(problem);
+      return plain.kind === 'incomplete-implementation' && problem.parameters.length >= 2 ? decideParametersByCad(problem) : plain;
+    }
+    if (power !== undefined) return 'refused' in power ? power.refused : caseOutcome(problem, simplifyCases(problem.store, power.cases));
+    return decideWithoutPower(problem);
+  } catch (e) {
+    return resourceOutcome(e);
+  }
+}
+
+/** The parameters slice after the outer-power step (also its fallback when that step cannot express an answer). */
+function decideWithoutPower(problem: RelationProblem): EquationOutcome {
+  try {
+    if (problem.parameters.length >= 2) {
+      // Factor first, before anything expands the product: a product equals zero exactly when a factor does.
+      const product = decideProduct(problem, decideParametricOrPolynomial);
+      if (product !== undefined) return caseOutcome(problem, simplifyCases(problem.store, product));
+    }
     const atoms = parametricAtoms(problem);
     if ('owner' in atoms) return { kind: 'incomplete-implementation', reason: `${atoms.owner}: ${atoms.detail}` };
     if (problem.parameters.length === 1) {
       const cells = decideCells(problem, atoms.atoms);
       return cells.kind === 'refused' ? { kind: 'incomplete-implementation', reason: cells.reason } : caseOutcome(problem, cells.cases);
     }
+    const shifted = decideShifted(problem, decideParametricProblem);
+    if (shifted !== undefined) return shifted;
+    // Exclusions (denominators) beside one equation: split on whether each excluded value is a root.
+    const excluded = decideExclusions(problem, atoms.atoms, decideTree);
+    if (excluded !== undefined) return excluded.kind === 'refused' ? { kind: 'incomplete-implementation', reason: excluded.reason } : caseOutcome(problem, simplifyCases(problem.store, excluded.cases));
     const tree = decideTree(problem, atoms.atoms);
     return tree.kind === 'refused' ? { kind: 'incomplete-implementation', reason: tree.reason } : caseOutcome(problem, simplifyCases(problem.store, tree.cases));
   } catch (e) {
     return resourceOutcome(e);
   }
 }
+
+const decideParametricOrPolynomial = (p: RelationProblem): EquationOutcome => (p.parameters.length ? decideParametricProblem(p) : decidePolynomialProblem(p));
 
 const isEmpty = (s: SolutionSet) => s.kind === 'finite' && s.points.length === 0;
 

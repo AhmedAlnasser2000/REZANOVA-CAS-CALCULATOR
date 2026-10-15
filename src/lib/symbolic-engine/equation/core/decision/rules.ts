@@ -81,9 +81,27 @@ function polynomialRelation(problem: RelationProblem, r: Relation): Relation | u
   return { op: r.op, lhs: polynomialExpression(s, poly, x), rhs: s.integer(0) };
 }
 
+/**
+ * The conversion repeated to its fixed point: with expression coefficients the first pass can leave structural
+ * zeros (0·x·i, kept by the builder because i is not total) that the next pass collects, so a relation counts as
+ * converted only at the fixed point (a repeat of an earlier form ends the search there).
+ */
+function polynomialFixed(problem: RelationProblem, r: Relation): Relation | undefined {
+  let current = polynomialRelation(problem, r);
+  if (!current) return undefined;
+  const seen = new Set([current.lhs]);
+  for (;;) {
+    problem.store.ctx.tick();
+    const next = polynomialRelation(problem, current);
+    if (!next || next.lhs === current.lhs || seen.has(next.lhs)) return current;
+    seen.add(next.lhs);
+    current = next;
+  }
+}
+
 function pendingPolynomial(problem: RelationProblem): number {
   return problem.relations.filter(r => {
-    const p = polynomialRelation(problem, r);
+    const p = polynomialFixed(problem, r);
     return p !== undefined && (p.lhs !== r.lhs && p.lhs !== r.rhs);
   }).length;
 }
@@ -92,7 +110,7 @@ export const TO_POLYNOMIAL: TransformRule = Object.freeze<TransformRule>({
   id: 'to-polynomial',
   apply(problem) {
     if (problem.targets.length !== 1 || missingDomainConditions(problem).length) return null;
-    const converted = problem.relations.map(r => polynomialRelation(problem, r));
+    const converted = problem.relations.map(r => polynomialFixed(problem, r));
     if (converted.some(c => c === undefined)) return null;
     const before = pendingPolynomial(problem);
     if (before === 0) return null;

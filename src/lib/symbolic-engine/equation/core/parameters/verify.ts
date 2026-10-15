@@ -1,10 +1,14 @@
 import { demand } from '../execution';
 import { rational } from '../algebra/rational';
-import { exactPolynomial, rationalForm } from '../decision/rational-form';
+import { divides, rationalToPrimitive } from '../algebra/polynomial-division';
+import { ALGEBRAIC_RING, signAtReal } from '../algebraic/root-of';
+import { exactPolynomial, QX, rationalForm } from '../decision/rational-form';
 import { pieces, sortedDistinct } from '../decision/real-set';
 import { zerosOf } from '../decision/univariate';
 import { evaluateExact, type ExactValue } from '../representation/evaluate';
-import { realSign } from '../representation/real-order';
+import { enclose } from '../representation/enclosure';
+import { realSign, START_BITS } from '../representation/real-order';
+import { complexBounds } from '../periodic/rectangular';
 import type { ExprId, ExpressionStore } from '../representation/expression';
 import type { Condition, ProblemDomain, RelationProblem } from '../representation/relation';
 import {
@@ -54,6 +58,11 @@ export function verifyParametricOutcome(problem: RelationProblem, outcome: Equat
   // One parameter: every case whose conditions are polynomial has a sample (cells are never empty).
   if (problem.parameters.length === 1 && cases.some((c, i) => !hit.has(i) && c.conditions.every(k => polynomialIn(store, k, problem.parameters[0])))) fail('a case is never sampled');
   const again = rederive(problem);
+  if (again.kind === 'resource') {
+    // The budget ran out while re-deriving: the typed stop, never a claim that the outcomes differ.
+    store.ctx.checkCancelled();
+    demand(false, 'verification-failed', 'a resource outcome without a stopped context');
+  }
   if (again.kind !== outcome.kind) fail('re-derivation gives a different outcome');
   if (outcome.kind === 'solved' && again.kind === 'solved'
     && setKey(store, normalizeSet(store, outcome.set, domain)) !== setKey(store, normalizeSet(store, again.set, domain))) fail('case tree differs from the re-derived tree');
@@ -70,8 +79,23 @@ export function caseAt(problem: RelationProblem, set: SolutionSet, values: Reado
 /** Whether a condition holds at parameter values: exactly, or by certified sign for transcendental values over ℝ. */
 export function conditionHolds(store: ExpressionStore, c: Condition, values: ReadonlyMap<string, ExprId>, domain: ProblemDomain): boolean {
   if (c.kind === 'in-domain') return true;
-  const e = store.substitute('other' in c ? store.sub(c.expr, c.other) : c.expr, values);
+  const raw = 'other' in c ? store.sub(c.expr, c.other) : c.expr;
   const real = c.kind === 'positive' || c.kind === 'nonnegative' || domain === 'real';
+  const atRoot = signAtAlgebraicSample(store, raw, values, real);
+  if (atRoot !== undefined) return holds(c.kind, atRoot);
+  const e = store.substitute(raw, values);
+  // A certified enclosure that excludes 0 settles the sign without exact arithmetic (which composes algebraic
+  // sums: β′ − β for two roots of one degree-18 polynomial is a degree-324 resultant); equal values cancel by
+  // structure or reach the exact evaluation below.
+  if (store.freeSymbols(e).length === 0) {
+    if (real) {
+      const b = enclose(store, e, START_BITS * 2);
+      if (b.kind === 'bounds' && (b.lo.numerator > 0n || b.hi.numerator < 0n)) return holds(c.kind, b.lo.numerator > 0n ? 1 : -1);
+    } else {
+      const b = complexBounds(store, e, START_BITS * 2);
+      if (b !== undefined && (b.re.lo.numerator > 0n || b.re.hi.numerator < 0n || b.im.lo.numerator > 0n || b.im.hi.numerator < 0n)) return holds(c.kind, Number.NaN);
+    }
+  }
   const v = evaluateExact(store, e, real ? 'real' : domain);
   let sign: number;
   if (v.kind === 'exact') {
@@ -81,12 +105,38 @@ export function conditionHolds(store: ExpressionStore, c: Condition, values: Rea
   } else if (v.kind === 'not-exact' && v.reason === 'transcendental' && real) sign = realSign(store, e);
   else if (v.kind === 'undefined') return false;
   else return fail('a condition is not evaluable at a sample');
-  switch (c.kind) {
+  return holds(c.kind, sign);
+}
+
+function holds(kind: Exclude<Condition['kind'], 'in-domain'>, sign: number): boolean {
+  switch (kind) {
     case 'equal': return sign === 0;
     case 'nonzero': case 'not-equal': return sign !== 0;
     case 'positive': return sign > 0;
     case 'nonnegative': return sign >= 0;
   }
+}
+
+/**
+ * The sign of a condition n(p)/d(p) with rational coefficients at one parameter p = α, α an algebraic sample (a zero
+ * of another condition), by arithmetic modulo α's minimal polynomial m: n(α) = 0 exactly when m divides n, and the
+ * sign of n(α) for real α by refining α's isolating interval (no resultants: evaluating term by term composes
+ * algebraic sums whose degrees multiply). NaN for a nonzero value at a non-real α; undefined when not of this form.
+ */
+function signAtAlgebraicSample(store: ExpressionStore, raw: ExprId, values: ReadonlyMap<string, ExprId>, real: boolean): number | undefined {
+  const free = store.freeSymbols(raw);
+  if (free.length !== 1 || !values.has(free[0])) return undefined;
+  const v = evaluateExact(store, values.get(free[0]) as ExprId, real ? 'real' : 'complex');
+  if (v.kind !== 'exact' || v.value.kind !== 'algebraic') return undefined;
+  const r = rationalForm(store, raw, free[0]);
+  if (!r.ok || r.form.num.kind !== 'q' || r.form.den.kind !== 'q') return undefined;
+  const ctx = store.ctx, root = v.value.root, n = QX.make(ctx, r.form.num.c), d = QX.make(ctx, r.form.den.c);
+  if (root.kind === 'real') {
+    const sd = signAtReal(ctx, d, root);
+    return sd === 0 ? undefined : signAtReal(ctx, n, root) * sd;
+  }
+  const vanishes = (g: typeof n) => QX.isZero(ctx, g) || divides(ctx, ALGEBRAIC_RING, root.poly, rationalToPrimitive(ctx, ALGEBRAIC_RING, g).primitive);
+  return vanishes(d) ? undefined : vanishes(n) ? 0 : real ? undefined : Number.NaN;
 }
 
 function polynomialIn(store: ExpressionStore, c: Condition, p: string): boolean {

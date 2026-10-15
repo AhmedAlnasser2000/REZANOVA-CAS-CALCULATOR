@@ -1,7 +1,7 @@
 import { demand, type ExecutionContext } from '../execution';
 import { QQ } from '../algebra/domain';
 import { factorQ } from '../algebra/factor';
-import { imul, ipow } from '../algebra/integer';
+import { igcd, imul, ipow } from '../algebra/integer';
 import { PolynomialRing, type Polynomial } from '../algebra/polynomial';
 import { rational, rAbs, rAdd, rDivide, rEqual, rMultiply, rNegate, rSubtract, type Rational } from '../algebra/rational';
 import { resultantZ } from '../algebra/subresultant';
@@ -143,6 +143,64 @@ export function combine(ctx: ExecutionContext, op: Operation, a: RootOf, b: Root
 export const add = (ctx: ExecutionContext, a: RootOf, b: RootOf) => combine(ctx, 'add', a, b);
 export const subtract = (ctx: ExecutionContext, a: RootOf, b: RootOf) => combine(ctx, 'subtract', a, b);
 export const multiply = (ctx: ExecutionContext, a: RootOf, b: RootOf) => combine(ctx, 'multiply', a, b);
+
+/**
+ * αⁿ (n ≥ 2): every αᵢⁿ is a root of R(t) = Res_y(P(y), t − yⁿ) = ±∏(t − αᵢⁿ), of degree deg P in t (interpolated
+ * from t = 0..deg P), so one factorization of degree deg P replaces the repeated products, whose resultants have
+ * degree (deg P)² each. The root is picked inside the n-th power of α's region, refined until unique.
+ */
+export function power(ctx: ExecutionContext, a: RootOf, n: bigint): RootOf {
+  demand(n >= 2n, 'invalid-input', 'power exponent');
+  const dp = a.poly.coefficients.length - 1, values: Rational[] = [];
+  for (let t = 0; t <= dp; t++) {
+    ctx.tick();
+    const inY = Array<bigint>(Number(n) + 1).fill(0n);
+    inY[0] = BigInt(t); inY[Number(n)] = -1n;
+    values.push(rational(ctx, resultantZ(ctx, ALGEBRAIC_RING, a.poly, ALGEBRAIC_RING.make(ctx, inY))));
+  }
+  const candidates = factorQ(ctx, RATIONAL_RING, interpolate(ctx, values), ALGEBRAIC_RING).factors.flatMap(({ factor }) => rootsOfIrreducible(ctx, factor));
+  demand(candidates.length > 0, 'verification-failed', 'resultant has no roots');
+  const powerImage = (g: Region): Region => {
+    let result: Region | undefined, base = g;
+    for (let e = n; e > 0n; e >>= 1n) {
+      ctx.tick();
+      if (e & 1n) result = result === undefined ? base : image(ctx, 'multiply', result, base);
+      if (e > 1n) base = image(ctx, 'multiply', base, base);
+    }
+    return result as Region;
+  };
+  let x = a, pool = candidates;
+  for (;;) {
+    ctx.tick();
+    const target = powerImage(regionOf(x));
+    pool = pool.filter(c => intersects(ctx, regionOf(c), target));
+    demand(pool.length > 0, 'verification-failed', 'no candidate inside the power image');
+    if (pool.length === 1) return pool[0];
+    x = refine(ctx, x);
+    pool = pool.map(c => refine(ctx, c));
+  }
+}
+
+/**
+ * q·α for a rational q ≠ 0, without a resultant: with q = a/b, β = q·α is a root of Σ cᵢ·bⁱ·a^{d−i}·xⁱ (P(b·x/a)
+ * cleared of denominators), irreducible because P is; made primitive with a positive leading coefficient. x ↦ q·x
+ * maps P's roots one-to-one onto these, so the scaled region isolates β.
+ */
+export function scale(ctx: ExecutionContext, r: RootOf, q: Rational): RootOf {
+  demand(q.numerator !== 0n, 'invalid-input', 'scale by zero');
+  const c = r.poly.coefficients, d = c.length - 1;
+  let scaled = c.map((ci, i) => imul(ctx, imul(ctx, ci, ipow(ctx, q.denominator, i)), ipow(ctx, q.numerator, d - i)));
+  let g = 0n;
+  for (const v of scaled) g = igcd(ctx, g, v < 0n ? -v : v);
+  scaled = scaled.map(v => v / g);
+  if (scaled[d] < 0n) scaled = scaled.map(v => -v);
+  const poly = ALGEBRAIC_RING.make(ctx, scaled);
+  if (r.kind === 'real') {
+    const lo = rMultiply(ctx, r.lo, q), hi = rMultiply(ctx, r.hi, q);
+    return Object.freeze({ kind: 'real' as const, poly, lo: q.numerator > 0n ? lo : hi, hi: q.numerator > 0n ? hi : lo }) as RealRootOf;
+  }
+  return Object.freeze({ kind: 'complex' as const, poly, re: rMultiply(ctx, r.re, q), im: rMultiply(ctx, r.im, q), radius: rMultiply(ctx, r.radius, rAbs(ctx, q)) }) as ComplexRootOf;
+}
 
 /** −α: minimal polynomial P(−x) (sign-normalized), region mirrored. */
 export function negate(ctx: ExecutionContext, a: RootOf): RootOf {
