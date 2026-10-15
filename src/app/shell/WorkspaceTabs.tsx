@@ -43,6 +43,16 @@ import {
   SETTINGS_PAGE_WORKSPACE_KIND,
   type SingletonAppPageWorkspaceKind,
 } from '../runtime/app-page-workspaces';
+import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
+import {
+  isLauncherEntryAvailable,
+  UNAVAILABLE_WORKSPACE_SIGN,
+} from '../../lib/workspaces/availability';
+
+/** Retired workspaces stay listed in the create menu, disabled and signed, so pages show what is being rebuilt. */
+const UNAVAILABLE_LAUNCHER_ENTRIES = DEFAULT_LAUNCHER_CATEGORIES
+  .flatMap((category) => category.entries)
+  .filter((entry) => !isLauncherEntryAvailable(entry));
 
 export type WorkspaceTabItem = {
   id: WorkspaceInstanceId;
@@ -68,6 +78,7 @@ type WorkspaceTabsProps = {
   onDuplicateTab: (tabId: WorkspaceInstanceId) => void;
   onFocusTab: (tabId: WorkspaceInstanceId) => void;
   onOpenAppPageTab: (workspaceKind: SingletonAppPageWorkspaceKind) => void;
+  onOpenNewIntegration?: () => void;
   onRenameTab: (tabId: WorkspaceInstanceId, title: string) => void;
   onStopJobsInTab: (tabId: WorkspaceInstanceId) => void;
 };
@@ -147,6 +158,7 @@ export function WorkspaceTabs({
   onDuplicateTab,
   onFocusTab,
   onOpenAppPageTab,
+  onOpenNewIntegration,
   onRenameTab,
   onStopJobsInTab,
   tabs,
@@ -196,6 +208,11 @@ export function WorkspaceTabs({
   function createGraphFromMenu() {
     setCreateMenuOpen(false);
     onCreateGraphPageTab();
+  }
+
+  function openNewIntegrationFromMenu() {
+    setCreateMenuOpen(false);
+    onOpenNewIntegration?.();
   }
 
   function submitRename(event: FormEvent<HTMLFormElement>) {
@@ -334,7 +351,7 @@ export function WorkspaceTabs({
         <button
           type="button"
           className="workspace-tab-add"
-          aria-label={tabText.newCalculateTab}
+          aria-label={tabText.newEquationTab}
           data-testid="workspace-tab-add"
           onClick={() => {
             setCreateMenuOpen(false);
@@ -366,7 +383,7 @@ export function WorkspaceTabs({
         >
           <strong>{tabText.createMenuTitle}</strong>
           <button type="button" role="menuitem" onClick={createBlankTabFromMenu}>
-            {tabText.newCalculateTab}
+            {tabText.newEquationTab}
           </button>
           <button type="button" role="menuitem" onClick={createGraphFromMenu}>
             {tabText.newGraphPage}
@@ -395,6 +412,35 @@ export function WorkspaceTabs({
           >
             {tabText.openHistoryPage}
           </button>
+          {onOpenNewIntegration ? (
+            <button type="button" role="menuitem" onClick={openNewIntegrationFromMenu}>
+              {tabText.openNewIntegrationPage}
+            </button>
+          ) : null}
+          {UNAVAILABLE_LAUNCHER_ENTRIES.length > 0 ? (
+            <div
+              className="workspace-tab-menu-group"
+              role="group"
+              aria-label={tabText.beingRebuiltTitle}
+              data-testid="workspace-tab-unavailable-group"
+            >
+              <strong>{tabText.beingRebuiltTitle}</strong>
+              {UNAVAILABLE_LAUNCHER_ENTRIES.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  role="menuitem"
+                  disabled
+                  aria-disabled="true"
+                  title={UNAVAILABLE_WORKSPACE_SIGN}
+                  data-unavailable="true"
+                >
+                  <span>{entry.label}</span>
+                  <span className="workspace-tab-menu-sign">{UNAVAILABLE_WORKSPACE_SIGN}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

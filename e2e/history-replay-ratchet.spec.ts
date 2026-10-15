@@ -1,7 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   closeSidePanelIfOpen,
-  openEquationSymbolic,
   openLauncherApp,
   openSettingsPanel,
   openTable,
@@ -36,10 +35,6 @@ async function runWorkspaceCase(page: Page, canary: CanaryCase) {
   if (driver.kind === 'calculate') {
     await setMathFieldLatex(page, driver.inputLatex);
     await page.getByTestId('keypad-execute').click();
-  } else if (driver.kind === 'equation') {
-    await openEquationSymbolic(page);
-    await setMathFieldLatex(page, driver.inputLatex);
-    await page.getByTestId('soft-action-solve').click();
   } else if (driver.kind === 'calculus') {
     await openLauncherApp(page, 'Calculus', 'Calculus');
     const path = driver.tool === 'Derivative'

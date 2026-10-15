@@ -67,7 +67,7 @@ export type ShellLanguageCatalog = {
   workspaceTabs: {
     workspaceTabs: string;
     openWorkspaces: string;
-    newCalculateTab: string;
+    newEquationTab: string;
     openCreateMenu: string;
     createMenuTitle: string;
     newGraphPage: string;
@@ -75,6 +75,8 @@ export type ShellLanguageCatalog = {
     openGuidePage: string;
     openSettingsPage: string;
     openHistoryPage: string;
+    openNewIntegrationPage: string;
+    beingRebuiltTitle: string;
     openActions: string;
     workspaceTabName: string;
     save: string;

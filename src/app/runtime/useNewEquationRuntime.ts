@@ -66,7 +66,7 @@ export function useNewEquationRuntime(workspaces: ReturnType<typeof useWorkspace
       const saved = loadEquationDrafts(localStorage);
       if (saved.length) { current.current.createNewEquationTabs(saved.map(v => ({ title: v.title, state: { ...v.draft } }))); return; }
     }
-    current.current.createNewEquationTabs([{ title: 'New Equation', state: { ...blankEquationDraft(settingsRef.current.outputStyle) } }]);
+    current.current.createNewEquationTabs([{ title: 'Equation', state: { ...blankEquationDraft(settingsRef.current.outputStyle) } }]);
   }, []);
 
   const draftOf = useCallback((id: string) => readEquationDraft(find(id)?.surfaceState, settingsRef.current.outputStyle), []);

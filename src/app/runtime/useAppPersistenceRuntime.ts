@@ -18,6 +18,7 @@ import {
   persistSettings,
   persistVariableMemory,
 } from '../../lib/app-state/persistence';
+import { HISTORY_RETIREMENT_WIPE_NOTICE } from '../../lib/app-state/history-retirement-wipe';
 import {
   buildStoredVariableValue,
   removeStoredVariableValue,
@@ -57,6 +58,8 @@ type UseAppPersistenceRuntimeOptions = {
   restoreHistoryDisplayMemorySnapshot: (snapshot: CalculatorMemorySnapshot) => void;
   restoreLoadedHistory: (history: HistoryEntry[]) => void;
   setClipboardNotice: (notice: string | null) => void;
+  /** An app-level notice shown above every surface (pages have no display panel). */
+  showAppNotice: (notice: string) => void;
   setCurrentMode: Dispatch<SetStateAction<ModeId>>;
   setPreviousNonGuideMode: Dispatch<SetStateAction<Exclude<ModeId, 'guide'>>>;
   setSettings: Dispatch<SetStateAction<Settings>>;
@@ -162,6 +165,9 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
           setVariableMemory(bootstrap.variableMemory);
         } else {
           optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
+        }
+        if ('retirementWipedCount' in loadedHistory && (loadedHistory.retirementWipedCount ?? 0) > 0) {
+          optionsRef.current.showAppNotice(HISTORY_RETIREMENT_WIPE_NOTICE);
         }
         const removedCount = (loadedHistory.pendingNoticeCount ?? loadedHistory.removedCount)
           + (loadedMemory.pendingNoticeCount ?? loadedMemory.removedCount);

@@ -1908,6 +1908,29 @@ math-field:focus-visible {
   padding: 0 4px 4px;
 }
 
+.workspace-tab-create-menu {
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+}
+
+.workspace-tab-menu-group {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(228, 236, 220, 0.12);
+}
+
+.workspace-tab-menu-group button {
+  display: grid;
+  gap: 2px;
+}
+
+.workspace-tab-menu-sign {
+  font-size: 0.78em;
+  opacity: 0.85;
+}
+
 .workspace-tab-menu button {
   text-align: left;
   border-radius: 10px;
@@ -2167,6 +2190,30 @@ math-field:focus-visible {
   min-width: 0;
 }
 
+/* Calculator-shell workspaces retired until they are rebuilt (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B). */
+.launcher-entry-row.is-unavailable .launcher-entry,
+.launcher-entry:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.launcher-entry:disabled:hover,
+.launcher-entry:disabled:active {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.04);
+  transform: none;
+}
+
+.launcher-entry-unavailable {
+  margin-left: auto;
+  border: 1px solid rgba(228, 236, 220, 0.28);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--surface-subtle);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .launcher-entry-content small {
   color: var(--surface-subtle);
   font-family: 'IBM Plex Mono', monospace;
@@ -2337,3 +2384,27 @@ math-field:focus-visible {
     padding-block: 10px;
   }
 }
+
+/* App-level notices shown above every surface, such as the one-time History wipe notice. */
+.app-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 0;
+  border: 1px solid rgba(215, 223, 171, 0.32);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: rgba(215, 223, 171, 0.10);
+  color: var(--surface-ink);
+}
+
+.app-notice button {
+  border: 1px solid rgba(228, 236, 220, 0.28);
+  border-radius: 10px;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--surface-ink);
+  cursor: pointer;
+}
+

@@ -78,7 +78,7 @@ export default function NewEquationPage({ instance, runtime }: { instance: Works
 
   return <main className="new-equation-page" data-testid="new-equation-page">
     <header>
-      <div><h1>New Equation</h1><p>Equations, inequalities and systems · exact answers, each verified</p></div>
+      <div><h1>Equation</h1><p>Equations, inequalities and systems · exact answers, each verified</p></div>
       <button onClick={runtime.open}>New tab</button>
     </header>
 

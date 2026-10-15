@@ -1199,11 +1199,12 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
         launch: { mode: 'calculate', calculateScreen: 'standard' },
       },
       {
-        id: 'equation',
+        // The New Equation page, named Equation since the old Equation workspace was retired (stage 17).
+        id: 'new-equation',
         label: 'Equation',
-        description: 'Symbolic, polynomial, and simultaneous systems',
+        description: 'Verified exact equations, inequalities and systems, one relation per row',
         hotkey: '2',
-        launch: { mode: 'equation', equationScreen: 'home' },
+        launch: { mode: 'equation', workspace: 'new-equation' },
       },
       {
         id: 'table',
@@ -1211,13 +1212,6 @@ export const DEFAULT_LAUNCHER_CATEGORIES: LauncherCategory[] = [
         description: 'Function tables over a range',
         hotkey: '3',
         launch: { mode: 'table' },
-      },
-      {
-        id: 'new-equation',
-        label: 'New Equation',
-        description: 'Verified exact equations, inequalities and systems, one relation per row',
-        hotkey: '4',
-        launch: { mode: 'equation', workspace: 'new-equation' },
       },
     ],
   },

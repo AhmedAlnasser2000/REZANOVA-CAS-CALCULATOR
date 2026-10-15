@@ -44,7 +44,7 @@ test('Notebook library stays usable across desktop widths, scaling, contrast, an
   await expect(page.getByText('Saved locally').first()).toBeVisible();
 
   await page.getByTestId('workspace-tab-add-menu').click();
-  await page.getByRole('menuitem', { name: 'New Calculate tab' }).click();
+  await page.getByRole('menuitem', { name: 'New Equation tab' }).click();
   await expect(page.getByTestId('notebook-page')).toBeHidden();
   await page.getByRole('tab', { name: /Durable Library Evidence/ }).click();
   await expect(title).toHaveValue('Durable Library Evidence');

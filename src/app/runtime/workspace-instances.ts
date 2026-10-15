@@ -73,7 +73,8 @@ export type DuplicateWorkspaceInstanceOptions = WorkspaceInstanceFactoryOptions 
   runtimeState?: WorkspaceInstanceStateSlot;
 };
 
-export const DEFAULT_WORKSPACE_KIND: WorkspaceKind = 'calculate';
+// Equation (the New Equation page) since the old Equation workspace was retired (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+export const DEFAULT_WORKSPACE_KIND: WorkspaceKind = 'new-equation';
 
 function defaultWorkspaceInstanceId(workspaceKind: WorkspaceKind, order: number) {
   return `workspace.${workspaceKind}.${order}`;
@@ -120,7 +121,7 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
   }
 
   if (workspaceKind === 'new-integration') return {compartmentId: 'calculus' as CompartmentId, compartmentLabel: 'Calculus', surfaceLabel: 'New Integration'};
-  if (workspaceKind === 'new-equation') return { compartmentId: 'equation' as CompartmentId, compartmentLabel: 'Equation', surfaceLabel: 'New Equation' };
+  if (workspaceKind === 'new-equation') return { compartmentId: 'equation' as CompartmentId, compartmentLabel: 'Equation', surfaceLabel: 'Equation' };
 
   if (workspaceKind === GRAPHING_PAGE_WORKSPACE_KIND) {
     return {

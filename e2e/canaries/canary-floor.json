@@ -1,9 +1,8 @@
 {
   "version": 1,
-  "total": 21,
+  "total": 19,
   "perWorkspace": {
     "calculate": 3,
-    "equation": 2,
     "new-equation": 2,
     "calculus": 2,
     "trigonometry": 2,
@@ -12,5 +11,8 @@
     "matrix": 2,
     "vector": 2,
     "table": 2
+  },
+  "retired": {
+    "equation": "The old Equation workspace and engine were retired by EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B (user decision 2026-10-14); its launcher leaf is gone and Equation is the New Equation page, which has its own canaries."
   }
 }

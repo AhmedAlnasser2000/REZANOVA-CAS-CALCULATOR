@@ -1,7 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   closeSidePanelIfOpen,
-  openEquationSymbolic,
   openLauncherApp,
   openSettingsPanel,
   openTable,
@@ -41,14 +40,8 @@ async function runCanary(page: Page, canary: CanaryCase) {
     await page.getByTestId('keypad-execute').click();
     return;
   }
-  if (driver.kind === 'equation') {
-    await openEquationSymbolic(page);
-    await setMathFieldLatex(page, driver.inputLatex);
-    await page.getByTestId('soft-action-solve').click();
-    return;
-  }
   if (driver.kind === 'new-equation') {
-    await openLauncherApp(page, 'Core', 'New Equation');
+    await openLauncherApp(page, 'Core', 'Equation');
     await setMathFieldLatex(page, driver.inputLatex, 'new-equation-row-1');
     await page.getByTestId('new-equation-page').getByRole('button', { name: 'Solve', exact: true }).click();
     return;

@@ -277,6 +277,7 @@ export default function App() {
     import.meta.env.DEV && import.meta.env.VITE_SHOW_OOE_DIAGNOSTICS === '1';
   const labsRuntime = useLabsRuntime({ labsEnabled });
   const [currentMode, setCurrentMode] = useState<ModeId>('calculate');
+  const [appNotice, setAppNotice] = useState<string | null>(null);
   const workspaceInstancesRuntime = useWorkspaceInstancesRuntime();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const { newIntegrationRuntime, newEquationRuntime } = useNewPageRuntimes(workspaceInstancesRuntime, settings);
@@ -530,6 +531,7 @@ export default function App() {
     restoreHistoryDisplayMemorySnapshot,
     restoreLoadedHistory,
     setClipboardNotice,
+    showAppNotice: setAppNotice,
     setCurrentMode,
     setPreviousNonGuideMode,
     setSettings,
@@ -2697,7 +2699,13 @@ export default function App() {
         data-testid="app-frame"
         style={appFrameStyle}
       >
-        <WorkspaceTabs {...workspaceTabsRuntime} />
+        <WorkspaceTabs {...workspaceTabsRuntime} onOpenNewIntegration={newIntegrationRuntime.open} />
+        {appNotice ? (
+          <div className="app-notice" role="status" data-testid="app-notice">
+            <span>{appNotice}</span>
+            <button type="button" onClick={() => setAppNotice(null)}>Dismiss</button>
+          </div>
+        ) : null}
         <ActiveSurfaceHost
           newIntegrationRuntime={newIntegrationRuntime} newEquationRuntime={newEquationRuntime} activeInstance={workspaceInstancesRuntime.activeInstance}
           guide={{

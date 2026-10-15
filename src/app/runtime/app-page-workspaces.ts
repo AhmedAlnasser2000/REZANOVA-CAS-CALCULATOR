@@ -58,7 +58,7 @@ export function isSingletonAppPageWorkspaceKind(
 
 export function appPageWorkspaceTitle(workspaceKind: AppPageWorkspaceKind) {
   if (workspaceKind === NEW_INTEGRATION_PAGE_WORKSPACE_KIND) return 'New Integration';
-  if (workspaceKind === NEW_EQUATION_PAGE_WORKSPACE_KIND) return 'New Equation';
+  if (workspaceKind === NEW_EQUATION_PAGE_WORKSPACE_KIND) return 'Equation';
   if (workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND) {
     return 'Settings';
   }

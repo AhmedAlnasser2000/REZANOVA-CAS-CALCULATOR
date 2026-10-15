@@ -46,6 +46,7 @@ function renderTabs(tabs: WorkspaceTabItem[]) {
     onDuplicateTab: vi.fn(),
     onFocusTab: vi.fn(),
     onOpenAppPageTab: vi.fn(),
+    onOpenNewIntegration: vi.fn(),
     onRenameTab: vi.fn(),
     onStopJobsInTab: vi.fn(),
   };
@@ -63,7 +64,7 @@ function openMenu(label: string) {
 }
 
 describe('WorkspaceTabs', () => {
-  it('renders open workspace tabs and creates a blank Calculate tab from plus', () => {
+  it('renders open workspace tabs and creates a blank Equation tab from plus', () => {
     const handlers = renderTabs([
       tab({ id: 'workspace.calculate.1', isActive: true }),
       tab({
@@ -78,7 +79,7 @@ describe('WorkspaceTabs', () => {
     expect(screen.getByRole('tab', { name: /Equation/ })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tablist', { name: 'Open workspaces' })).toBeInTheDocument();
     expect(screen.getByLabelText('Open actions for Calculate')).toBeInTheDocument();
-    expect(screen.getByLabelText('New Calculate tab')).toBeInTheDocument();
+    expect(screen.getByLabelText('New Equation tab')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('workspace-tab-add'));
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
@@ -111,8 +112,26 @@ describe('WorkspaceTabs', () => {
     expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('history');
 
     fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'New Calculate tab' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Integration' }));
+    expect(handlers.onOpenNewIntegration).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Equation tab' }));
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists workspaces being rebuilt in the plus menu as disabled, signed items', () => {
+    renderTabs([tab({ id: 'workspace.calculate.1', isActive: true })]);
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    const group = screen.getByTestId('workspace-tab-unavailable-group');
+    expect(group).toHaveTextContent('Being rebuilt');
+    for (const label of ['Calculate', 'Table', 'Matrix', 'Vector', 'Calculus', 'Trigonometry', 'Geometry', 'Statistics']) {
+      const item = within(group).getByRole('menuitem', { name: new RegExp(`^${label}`) });
+      expect(item).toBeDisabled();
+      expect(item).toHaveTextContent('Unavailable: being rebuilt');
+    }
+    expect(within(group).queryByRole('menuitem', { name: /Equation|New Integration/ })).not.toBeInTheDocument();
   });
 
   it('focuses an existing workspace tab', () => {
