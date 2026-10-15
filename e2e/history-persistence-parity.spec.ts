@@ -1,12 +1,35 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_SETTINGS, type HistoryEntry } from '../src/types/calculator';
-import {
-  closeSidePanelIfOpen,
-  openSettingsPanel,
-  setMathFieldLatex,
-} from './helpers';
+import { openPageFromTabMenu } from './helpers';
 
 const APP_STATE_KEY = 'rezanova-classwiz-calculator:app-state:v1';
+const RETIREMENT_WIPE_KEY = 'rezanova.history-wipe.equation-retirement.v1';
+
+/**
+ * History is a page now (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B): the app starts on Equation and History opens from
+ * the tab strip's "+" menu. Seeded History must also mark the one-time retirement wipe as done, or it would be wiped.
+ */
+async function openHistoryPage(page: Page) {
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
+  await openPageFromTabMenu(page, 'Open History Page');
+  await expect(page.getByTestId('history-page')).toBeVisible();
+}
+
+function historyRows(page: Page) {
+  return page.getByTestId('history-page-row');
+}
+
+function rowResultMath(page: Page) {
+  return historyRows(page).first().locator('.history-page-row-result [data-raw-latex]').first();
+}
+
+/** Entries from retired workspaces stay listed; replaying one is refused with the sign. */
+async function expectReplayRefused(page: Page, workspaceLabel: string) {
+  await historyRows(page).first().click();
+  await page.getByRole('button', { name: 'Replay in Current Tab' }).click();
+  await expect(page.getByTestId('app-notice')).toContainText(`${workspaceLabel}: Unavailable: being rebuilt`);
+  await expect(page.getByTestId('history-page')).toBeVisible();
+}
 
 const RICH_HISTORY_ENTRY: HistoryEntry & {
   futureHistoryExtension: { version: number; payload: string[] };
@@ -104,10 +127,11 @@ const RICH_HISTORY_ENTRY: HistoryEntry & {
 };
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.addInitScript((wipeKey) => {
     window.localStorage.clear();
     window.sessionStorage.clear();
-  });
+    window.localStorage.setItem(wipeKey, 'done');
+  }, RETIREMENT_WIPE_KEY);
 });
 
 test('preserves a complete extension-rich History row across a real browser reload', async ({ page }) => {
@@ -139,14 +163,12 @@ test('preserves a complete extension-rich History row across a real browser relo
   });
 
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry').first()).toContainText('x+y=3');
+  await openHistoryPage(page);
+  await expect(historyRows(page).first()).toContainText('x+y=3');
 
   await page.reload();
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry').first()).toContainText('x+y=3');
+  await openHistoryPage(page);
+  await expect(historyRows(page).first()).toContainText('x+y=3');
 
   const persisted = await page.evaluate((key) => {
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as {
@@ -162,32 +184,8 @@ test('preserves a complete extension-rich History row across a real browser relo
   expect(persisted.calculatorMemoryEntry).toEqual(RICH_HISTORY_ENTRY);
 });
 
-test('keeps a new row in session and warns when browser persistence fails', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await page.evaluate((key) => {
-    const originalSetItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = function setItem(storageKey: string, value: string) {
-      if (storageKey === key) {
-        const state = JSON.parse(value) as { history?: unknown[] };
-        if ((state.history?.length ?? 0) > 0) {
-          throw new DOMException('Simulated storage failure', 'QuotaExceededError');
-        }
-      }
-      originalSetItem.call(this, storageKey, value);
-    };
-  }, APP_STATE_KEY);
-
-  await setMathFieldLatex(page, '2+2');
-  await page.getByTestId('keypad-execute').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-status')).toHaveText(
-    'History is available this session only; it could not be saved.',
-  );
-
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry').first()).toContainText('2+2');
-});
+// "keeps a new row in session and warns when browser persistence fails" created its row in Calculate, which is
+// retired; no open workspace writes History today. It returns when a History-writing workspace is rebuilt.
 
 test('renders stored canonical History math with current root and power preferences', async ({ page }) => {
   const entry: HistoryEntry = {
@@ -203,51 +201,28 @@ test('renders stored canonical History math with current root and power preferen
     },
     timestamp: '2026-07-12T00:00:00.000Z',
   };
-  await page.addInitScript(({ key, historyEntry, settings }) => {
-    window.localStorage.setItem(key, JSON.stringify({
-      version: 1,
-      currentMode: 'calculate',
-      settings,
-      history: [historyEntry],
-      variableMemory: [],
-    }));
-  }, {
-    key: APP_STATE_KEY,
-    historyEntry: entry as unknown,
-    settings: DEFAULT_SETTINGS as unknown,
-  });
-
-  await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await openSettingsPanel(page);
-  const powersButton = page.getByTestId('settings-symbolic-mode-powers');
-  await powersButton.click();
-  await expect(powersButton).toHaveClass(/is-active/);
-  await expect.poll(async () => page.evaluate((key) => {
-    const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as {
-      settings?: { symbolicDisplayMode?: unknown };
-    };
-    return state.settings?.symbolicDisplayMode;
-  }, APP_STATE_KEY)).toBe('powers');
-  await closeSidePanelIfOpen(page);
-  await page.getByTestId('history-toggle').click();
-
-  const resultMath = page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]');
-  await expect(resultMath).toHaveAttribute('data-raw-latex', String.raw`(\sqrt{x})^{1/3}`);
-  await expect(resultMath).toHaveAttribute('aria-label', String.raw`x^{\frac{1}{6}}`);
-
-  await closeSidePanelIfOpen(page);
-  await openSettingsPanel(page);
-  const rootsButton = page.getByTestId('settings-symbolic-mode-roots');
-  await rootsButton.click();
-  await expect(rootsButton).toHaveClass(/is-active/);
-  await closeSidePanelIfOpen(page);
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
-    .toHaveAttribute('aria-label', String.raw`\sqrt[6]{x}`);
+  for (const [symbolicDisplayMode, label] of [['powers', String.raw`x^{\frac{1}{6}}`], ['roots', String.raw`\sqrt[6]{x}`]]) {
+    await page.addInitScript(({ key, historyEntry, settings }) => {
+      window.localStorage.setItem(key, JSON.stringify({
+        version: 1,
+        currentMode: 'calculate',
+        settings,
+        history: [historyEntry],
+        variableMemory: [],
+      }));
+    }, {
+      key: APP_STATE_KEY,
+      historyEntry: entry as unknown,
+      settings: { ...DEFAULT_SETTINGS, symbolicDisplayMode } as unknown,
+    });
+    await page.goto('/');
+    await openHistoryPage(page);
+    await expect(rowResultMath(page)).toHaveAttribute('data-raw-latex', String.raw`(\sqrt{x})^{1/3}`);
+    await expect(rowResultMath(page)).toHaveAttribute('aria-label', label);
+  }
 });
 
-test('loads, renders, and replays a current V2 History result', async ({ page }) => {
+test('loads and renders a current V2 History result; replay into retired Calculate is refused', async ({ page }) => {
   const entry: HistoryEntry = {
     id: 'history.v2-visible.1',
     mode: 'calculate',
@@ -288,19 +263,13 @@ test('loads, renders, and replays a current V2 History result', async ({ page })
   });
 
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry')).toHaveCount(1);
-  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
-    .toHaveAttribute('data-raw-latex', 'x=2');
-  await page.getByTestId('history-entry-replay').click();
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-title')).toHaveText('Typed History Result');
-  await expect(page.locator('[data-testid="display-outcome-success"] [data-raw-latex]').first())
-    .toHaveAttribute('data-raw-latex', 'x=2');
+  await openHistoryPage(page);
+  await expect(historyRows(page)).toHaveCount(1);
+  await expect(rowResultMath(page)).toHaveAttribute('data-raw-latex', 'x=2');
+  await expectReplayRefused(page, 'Calculate');
 });
 
-test('loads, renders, copies, and replays a current V3 gradian angle quantity', async ({ page }) => {
+test('loads and renders a current V3 gradian angle quantity; replay into retired Vector is refused', async ({ page }) => {
   const entry: HistoryEntry = {
     id: 'history.v3-angle-visible.1',
     mode: 'vector',
@@ -332,29 +301,11 @@ test('loads, renders, copies, and replays a current V3 gradian angle quantity', 
     historyEntry: entry as unknown,
     settings: DEFAULT_SETTINGS as unknown,
   });
-  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry')).toHaveCount(1);
-  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
-    .toHaveAttribute('data-raw-latex', '100^{g}');
-  await page.screenshot({
-    path: '.task_tmp/canonical-result-v3-angle-quantity1/history-v3-grad-angle-entry.png',
-    fullPage: true,
-  });
-  await page.getByTestId('history-entry-replay').click();
-  await expect(page.getByTestId('display-outcome-title')).toHaveText('Angle');
-  await expect(page.locator('[data-testid="display-outcome-success"] [data-raw-latex]').first())
-    .toHaveAttribute('data-raw-latex', '100^{g}');
-  await page.getByTestId('display-outcome-action-copy-result').click();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText()))
-    .toContain('100^{g}');
-  await page.screenshot({
-    path: '.task_tmp/canonical-result-v3-angle-quantity1/history-v3-grad-angle.png',
-    fullPage: true,
-  });
+  await openHistoryPage(page);
+  await expect(historyRows(page)).toHaveCount(1);
+  await expect(rowResultMath(page)).toHaveAttribute('data-raw-latex', '100^{g}');
+  await expectReplayRefused(page, 'Vector');
 });
 
 test('removes old and malformed rows while preserving future result versions verbatim', async ({ page }) => {
@@ -400,12 +351,9 @@ test('removes old and malformed rows while preserving future result versions ver
   });
 
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
-  await expect(page.getByTestId('display-status')).toHaveText(
-    '2 incompatible History records were removed.',
-  );
-  await page.getByTestId('history-toggle').click();
-  await expect(page.getByTestId('history-entry')).toHaveCount(0);
+  await expect(page.getByTestId('app-notice')).toContainText('2 incompatible History records were removed.');
+  await openHistoryPage(page);
+  await expect(historyRows(page)).toHaveCount(0);
 
   const persisted = await page.evaluate((key) => {
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
@@ -414,7 +362,7 @@ test('removes old and malformed rows while preserving future result versions ver
   expect(persisted).toEqual([futureV5]);
 
   await page.reload();
-  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await expect(page.getByTestId('new-equation-page')).toBeVisible();
   const afterReload = await page.evaluate((key) => {
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
     return state.history ?? [];

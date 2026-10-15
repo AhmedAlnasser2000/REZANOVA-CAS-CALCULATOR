@@ -10,6 +10,11 @@ import { GUIDE_DOMAIN_CAPABILITY, GUIDE_DOMAINS, getActiveGuideDomains } from '.
 import { defineGuideArticle, type GuideArticleDraft } from './builders';
 import { NEW_EQUATION_ARTICLE } from './article-new-equation';
 
+// Worked examples that open a retired calculator-shell workspace (Calculate, Calculus, Trigonometry, Geometry,
+// Statistics, Matrix, Vector, Table) stay listed; "Open in Tool" is refused with "Unavailable: being rebuilt".
+// They are marked for removal or rewriting when their workspace is rebuilt (user decision 2026-10-15). The old
+// Equation workspace's examples were removed (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+
 const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   {
     id: 'basics-keyboard',
@@ -110,26 +115,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     bestModes: ['calculate', 'equation', 'table'],
     symbols: ['symbol-equal', 'symbol-less-equal', 'symbol-greater-equal'],
-    examples: [
-      {
-        id: 'basics-copy-reuse',
-        title: 'Reuse a result in Equation',
-        explanation: 'A solved or transformed expression can be sent back into an editor for faster follow-up work.',
-        steps: [
-          'Open the example in Equation > Symbolic.',
-          'Solve or transform it, then use To Editor or Copy Expr from the display card.',
-          'Continue editing the loaded expression instead of rebuilding it manually.',
-        ],
-        expected: 'The example opens Equation > Symbolic with a reusable expression.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: 'x^2-5x+6=0',
-          label: 'Open in Equation',
-        },
-      },
-    ],
+    examples: [],
     pitfalls: [
       'A warning line means the result may be numeric fallback, not a closed-form symbolic result.',
       'Copying or loading content does not evaluate it automatically.',
@@ -226,118 +212,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     bestModes: ['equation', 'calculate'],
     symbols: ['symbol-equal', 'symbol-not-equal', 'symbol-less', 'symbol-greater', 'symbol-less-equal', 'symbol-greater-equal'],
-    examples: [
-      {
-        id: 'algebra-equation-symbolic',
-        title: 'Open a symbolic equation',
-        explanation: 'Use Equation > Symbolic for standard equations in x.',
-        expected: 'The equation opens directly in Equation > Symbolic.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: 'x^2-5x+6=0',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-linear',
-        title: 'Solve a linear equation for z',
-        explanation: 'Selected-target solving keeps x as a symbolic parameter while isolating z.',
-        expected: 'The example opens Equation > Symbolic with z preselected as the solve target.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: 'x+z=5',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-quadratic',
-        title: 'Solve a quadratic equation for z',
-        explanation: 'Quadratic selected-target solving treats x as a parameter and preserves the real discriminant condition.',
-        expected: 'The example opens Equation > Symbolic with z preselected.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: 'z^2+x z+1=0',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-rational',
-        title: 'Solve a rational equation for z',
-        explanation: 'Rational selected-target solving clears denominators while keeping exclusion facts visible.',
-        expected: 'The example opens Equation > Symbolic with z preselected and preserves denominator restrictions.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: '\\frac{1}{z-a}=b',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-carrier',
-        title: 'Solve an absolute-value equation for z',
-        explanation: 'Carrier solving branches the absolute-value equation and preserves the branch condition.',
-        expected: 'The example opens Equation > Symbolic with z preselected.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: '\\left|z-a\\right|=b',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-exp-log',
-        title: 'Solve a logarithmic equation for z',
-        explanation: 'Exp/log selected-target solving uses inverse-pair isolation and keeps positivity facts.',
-        expected: 'The example opens Equation > Symbolic with z preselected.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: '\\ln\\left(z+a\\right)=b',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-param-trig',
-        title: 'Solve a trig equation for z',
-        explanation: 'Trig selected-target solving returns periodic families and range facts in the active angle unit.',
-        expected: 'The example opens Equation > Symbolic with z preselected.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          equationSolveTarget: 'z',
-          latex: '\\sin\\left(z\\right)=a',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'algebra-equation-poly',
-        title: 'Open a polynomial example',
-        explanation: 'Guided polynomial flows live under Equation > Polynomial.',
-        expected: 'The polynomial opens in Equation > Symbolic for direct solving or replay.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: 'x^4+4x^3-5x^2+13x+44=0',
-          label: 'Open in Equation',
-        },
-      },
-    ],
+    examples: [],
     pitfalls: [
       'Typing = in Calculate does not make Calculate a solver.',
       'Interval numeric solving is explicit; open Numeric Solve in Equation > Symbolic, set the interval, then press Run, F1, or EXE.',
@@ -1598,60 +1473,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     bestModes: ['equation', 'trigonometry'],
     symbols: ['symbol-sin', 'symbol-cos', 'symbol-tan', 'symbol-equal'],
-    examples: [
-      {
-        id: 'trig-equations-basic',
-        title: 'Solve sin(x)=1/2',
-        explanation: 'This is a relation, so the example opens Equation symbolic solve.',
-        expected: 'The example opens Equation and returns the supported trig solution family.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: '\\sin\\left(x\\right)=\\frac{1}{2}',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'trig-equations-scaled',
-        title: 'Solve sin(2x)=0',
-        explanation: 'Scaled arguments remain a relation-solving task.',
-        expected: 'The example opens Equation and solves the bounded trig family.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: '\\sin\\left(2x\\right)=0',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'trig-equations-rewrite',
-        title: 'Solve sin(x)cos(x)=1/2',
-        explanation: 'Selected exact rewrite families are handled through the Equation solving surface.',
-        expected: 'The example opens Equation and rewrites the equation through a bounded double-angle form before solving.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: '\\sin\\left(x\\right)\\cos\\left(x\\right)=\\frac{1}{2}',
-          label: 'Open in Equation',
-        },
-      },
-      {
-        id: 'trig-equations-substitution',
-        title: 'Solve 2sin^2(x)-3sin(x)+1=0',
-        explanation: 'Bounded single-carrier substitution belongs to Equation relation solving.',
-        expected: 'The example opens Equation and substitutes t=sin(x) before solving the resulting quadratic.',
-        launch: {
-          kind: 'load-expression',
-          targetMode: 'equation',
-          equationScreen: 'symbolic',
-          latex: '2\\sin^2\\left(x\\right)-3\\sin\\left(x\\right)+1=0',
-          label: 'Open in Equation',
-        },
-      },
-    ],
+    examples: [],
     pitfalls: [
       'Do not use Trigonometry as a second Equation workspace; new trig relation solving starts in Equation.',
       'Legacy Trigonometry equation history still replays, but it routes forward to Equation.',

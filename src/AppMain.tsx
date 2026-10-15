@@ -1841,7 +1841,7 @@ export default function App() {
   /** Retired workspaces cannot be opened by any route (launcher, Guide, hotkeys, mode strip); a notice says why. */
   function refuseUnavailableMode(mode: ModeId) {
     if (isShellModeAvailable(mode)) return false;
-    setAppNotice(unavailableModeNotice(mode));
+    setAppNotice(unavailableModeNotice(MODE_LABELS[mode]));
     return true;
   }
 

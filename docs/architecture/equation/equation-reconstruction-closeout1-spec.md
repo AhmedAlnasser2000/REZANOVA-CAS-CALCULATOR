@@ -142,6 +142,7 @@ Everything below is exact: no time limit, cap or rounding decides anything.
 - **Internals.** OOE, Surface Protocol, compartments, goldens, canaries and ratchets keep running. Internal tests that only exercise a retired workspace leave CI (the browser specs for Calculate, the History replay ratchet, the clipboard audit, and three result-contract unit tests). The canaries keep Equation's cases.
 - **Integration.** Every Integration unit test keeps running (the Integration program owns them); the three browser specs that drive the old Calculus integral UI leave CI.
 - **Ratchets.** See "Ratchet changes" below; each was approved in this conversation.
+- **Guide.** The 13 worked examples written for the old Equation are removed. The other examples open retired workspaces: "Open in Tool" is refused with the sign, and they are marked for removal or rewriting when their workspace is rebuilt.
 
 ### B1. Availability (`src/lib/workspaces/availability.ts`)
 
@@ -158,9 +159,11 @@ The old Equation launcher entry is removed from the client and Tauri catalogs. N
 
 New tabs and the boot tab are Equation. The boot tab restores the saved Equation drafts (the first fills it, the rest open beside it) and saves from the start. Tabs of calculator-shell workspaces were never saved, so none can come back on start.
 
+New tabs (the "+" button and "New Equation tab") are Equation tabs; closing the last tab leaves a blank Equation tab.
+
 ### B3. History wipe
 
-`src/lib/app-state/history-retirement-wipe.ts` clears all History once, on web and desktop. The versioned marker `rezanova.history-wipe.equation-retirement.v1` keeps it to one run. An app notice says "History was cleared when Equation was upgraded."
+`src/lib/app-state/history-retirement-wipe.ts` clears all History once, on web and desktop. The versioned marker `rezanova.history-wipe.equation-retirement.v1` keeps it to one run. An app notice says "History was cleared when Equation was upgraded." Pages have no display panel, so the existing "N incompatible History records were removed" cleanup is announced through the same app notice.
 
 ### B4. Moves
 
@@ -183,6 +186,11 @@ Deleted: `src/lib/equation/`, `src/lib/modes/equation/`, `src/lib/modes/equation
 - the browser specs of the retired workspaces and of the internals that drive them.
 
 The canary spec runs only open workspaces' cases; the retired cases stay in the registry for their rebuild.
+
+### B7. Guide
+
+- The old Equation's 13 worked examples are removed (`src/lib/guide/content/selectors.ts`); a Guide test asserts no example targets the retired Equation.
+- Every remaining example targets a workspace being rebuilt; "Open in Tool" is refused with "<Workspace>: Unavailable: being rebuilt" and Guide stays open. A Guide test counts them as the removal backlog.
 
 ### Ratchet changes
 

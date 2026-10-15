@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ACTIVE_CAPABILITIES } from '../virtual-keyboard/capabilities'
+import { isShellModeAvailable } from '../workspaces/availability'
 import {
   getActiveGuideArticles,
   getGuideArticle,
@@ -9,6 +10,15 @@ import {
 } from './content'
 
 describe('guide content', () => {
+  it('marks every worked example of a retired workspace for removal when that workspace is rebuilt', () => {
+    // Examples are refused with "Unavailable: being rebuilt" until their workspace returns (user decision
+    // 2026-10-15). This count is the removal backlog: it only shrinks as workspaces are rebuilt.
+    const examples = getActiveGuideArticles(ACTIVE_CAPABILITIES).flatMap((article) => article.examples)
+    const retired = examples.filter((example) => !isShellModeAvailable(example.launch.targetMode))
+    expect(retired).toHaveLength(examples.length)
+    expect(examples.some((example) => example.launch.targetMode === 'equation')).toBe(false)
+  })
+
   it('exposes the active home entries including Guide utilities', () => {
     const entries = getGuideHomeEntries(ACTIVE_CAPABILITIES)
 
@@ -168,26 +178,10 @@ describe('guide content', () => {
     expect(algebraEquations?.concepts.join(' ')).toContain('ln(x)+ln(x+1)=2')
     expect(algebraEquations?.concepts.join(' ')).toContain('symbolic parameters')
     expect(algebraEquations?.pitfalls.join(' ')).toContain('Raw adjacent text')
-    const paramExamples = algebraEquations?.examples.filter((example) => example.id.startsWith('algebra-equation-param-')) ?? []
-    expect(paramExamples.map((example) => example.id)).toEqual([
-      'algebra-equation-param-linear',
-      'algebra-equation-param-quadratic',
-      'algebra-equation-param-rational',
-      'algebra-equation-param-carrier',
-      'algebra-equation-param-exp-log',
-      'algebra-equation-param-trig',
-    ])
-    for (const example of paramExamples) {
-      expect(example.launch.kind).toBe('load-expression')
-      if (example.launch.kind !== 'load-expression') {
-        throw new Error('Expected parameterized Equation guide examples to load into Equation')
-      }
-      expect(example.launch.targetMode).toBe('equation')
-      expect(example.launch.equationScreen).toBe('symbolic')
-      expect(example.launch.equationSolveTarget).toBe('z')
-    }
-    expect(trigEquations?.examples[2]?.launch.targetMode).toBe('equation')
-    expect(trigEquations?.examples[2]?.launch.equationScreen).toBe('symbolic')
+    // The old Equation workspace was retired (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B); its worked examples were
+    // removed from the Guide, so no example launches it.
+    expect(algebraEquations?.examples).toEqual([])
+    expect(trigEquations?.examples).toEqual([])
   })
 
   it('exposes geometry guide examples that target Geometry mode', () => {

@@ -203,9 +203,11 @@ Still to come in the Graphing program: tracing on 3D surfaces, Riemann sheets an
 
 ### Equation solving
 
-Equation solving is being rebuilt on a new private core, `src/lib/symbolic-engine/equation/`, and is used through the **New Equation** workspace (Menu → Core → New Equation). The original Equation workspace (`src/lib/equation/`) remains available until New Equation reaches parity with it. At that point it is retired: stage 17 of the [reconstruction roadmap](docs/architecture/equation/equation-reconstruction-roadmap.md).
+Equation solving runs on a new private core, `src/lib/symbolic-engine/equation/`, through the **Equation** workspace, the app's starting workspace (internally `new-equation`). The original Equation workspace and engine were retired in stage 17 of the [reconstruction roadmap](docs/architecture/equation/equation-reconstruction-roadmap.md), which completes Phase 1.
 
-**New Equation**
+**Workspaces being rebuilt.** Equation, New Integration, Graphing, Notebook, Settings, History and Guide open. Calculate, Table, Matrix, Vector, Calculus, Trigonometry, Geometry and Statistics stay visible in the tab "+" menu and the launcher, signed "Unavailable: being rebuilt", until each is rebuilt on a new engine. Their tests stay on disk but out of CI (`tools/retired-workspace-tests.mjs`).
+
+**Equation**
 
 - **Rows**:
   - one relation per row (=, ≠, <, ≤, >, ≥), or relations joined with ∧, ∨ and ¬, and ∀ / ∃ prefixes;
@@ -472,7 +474,6 @@ Architecture at a glance:
 - `src/lib/graphing/*` — graph contracts, parser, evaluator, sampling, analysis, scenes, OOE, and renderer boundaries
 - `src/lib/notebook/*` — Notebook documents, media, persistence, publication, templates, and compatibility
 - `src/lib/symbolic-engine/equation/*` — the new Equation core (exact algebra, algebraic numbers, decision slices, cylindrical decomposition, certified numerics, verifiers) and its typed adapter for New Equation
-- `src/lib/equation/*` — the original Equation engine, kept until New Equation reaches parity
 - `src/lib/calculus/*` and `src/lib/symbolic-engine/integration/*` — calculus workflows and symbolic integration routes
 - `src/lib/linear-algebra/*` — Matrix/Vector exact, symbolic, complex, and numerical cores
 - `src/lib/statistics/*` — statistics parsing, calculations, readback, inference, distributions, and visualization contracts
@@ -614,13 +615,7 @@ npm run test:surface-protocol
 npm run test:ci-gate-alignment
 ```
 
-Tests of the old Equation engine are inert in these runs while the new Equation core replaces it; they still run on demand:
-
-```bash
-npm run test:legacy-equation
-npm run test:legacy-equation:ui
-npm run test:legacy-equation:e2e
-```
+Tests of the workspaces being rebuilt stay on disk but are not run; `tools/retired-workspace-tests.mjs` lists them for the unit, UI and browser runs.
 
 New Equation cases that take longer than a minute are abnormal. While testing, run them through the slow-case probe: it times each phase (reading rows, deciding, verifying, presenting) and kills a case at 60 s, naming the phase it was in. This is a development rule only; the app itself has no time limits.
 

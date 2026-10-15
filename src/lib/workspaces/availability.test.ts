@@ -25,6 +25,6 @@ describe('workspace availability', () => {
   });
 
   it('names the refused workspace in its notice', () => {
-    expect(unavailableModeNotice('calculate')).toBe(`Calculate: ${UNAVAILABLE_WORKSPACE_SIGN}`);
+    expect(unavailableModeNotice('Calculate')).toBe(`Calculate: ${UNAVAILABLE_WORKSPACE_SIGN}`);
   });
 });

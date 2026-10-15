@@ -68,22 +68,6 @@ describe('launchGuideExampleDestination', () => {
     expect(deps.setClipboardNotice).toHaveBeenCalledWith('Load in Calculate');
   });
 
-  it('routes Equation Guide examples into Symbolic Equation with the solve target preserved', () => {
-    const deps = createDeps();
-
-    launchGuideExampleDestination(
-      guideExample('algebra-equations', 'algebra-equation-param-linear'),
-      deps,
-    );
-
-    expectCommonLaunchPrep(deps);
-    expect(deps.routeToModeDestination).toHaveBeenCalledWith('equation', expect.any(Function));
-    expect(deps.setEquationLatex).toHaveBeenCalledWith('x+z=5');
-    expect(deps.setEquationSolveTarget).toHaveBeenCalledWith('z');
-    expect(deps.openEquationScreen).toHaveBeenCalledWith('symbolic');
-    expect(deps.clearDisplayOutcome).toHaveBeenCalledTimes(1);
-  });
-
   it('routes Calculus Guide examples into the requested Calculus screen and seed', () => {
     const deps = createDeps();
     const example = guideExample('calculus-derivatives', 'calc-derivative-function-power');

@@ -5,7 +5,6 @@ import { GUIDE_ARTICLES } from './content/selectors';
 const LOAD_EXPRESSION_TARGETS = new Set([
   'calculate',
   'calculus',
-  'equation',
   'geometry',
   'statistics',
   'table',
@@ -15,7 +14,6 @@ const LOAD_EXPRESSION_TARGETS = new Set([
 const OPEN_TOOL_TARGETS = new Set([
   'calculate',
   'calculus',
-  'equation',
   'geometry',
   'matrix',
   'statistics',
@@ -232,7 +230,6 @@ describe('Guide launch payloads', () => {
     expect(targets).toEqual(new Set([
       'calculate',
       'calculus',
-      'equation',
       'geometry',
       'matrix',
       'statistics',
@@ -246,7 +243,6 @@ describe('Guide launch payloads', () => {
 
     [
       'basics-keyboard/basics-fraction',
-      'algebra-equations/algebra-equation-param-linear',
       'calculus-derivatives/calc-derivative-function-power',
       'trig-period-phase/trig-period-phase-sine',
       'statistics-inference/statistics-inference-mean',

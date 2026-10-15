@@ -166,7 +166,8 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
         } else {
           optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
         }
-        if ('retirementWipedCount' in loadedHistory && (loadedHistory.retirementWipedCount ?? 0) > 0) {
+        const wiped = 'retirementWipedCount' in loadedHistory && (loadedHistory.retirementWipedCount ?? 0) > 0;
+        if (wiped) {
           optionsRef.current.showAppNotice(HISTORY_RETIREMENT_WIPE_NOTICE);
         }
         const removedCount = (loadedHistory.pendingNoticeCount ?? loadedHistory.removedCount)
@@ -175,6 +176,8 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
           optionsRef.current.setClipboardNotice(
             HISTORY_CANONICAL_CLEANUP_NOTICE(removedCount),
           );
+          // Pages have no display panel, so the cleanup is also announced app-wide (the wipe notice takes precedence).
+          if (!wiped) optionsRef.current.showAppNotice(HISTORY_CANONICAL_CLEANUP_NOTICE(removedCount));
           acknowledgeResultCleanupNotice();
         }
       } catch {
