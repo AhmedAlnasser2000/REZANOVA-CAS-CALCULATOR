@@ -180,7 +180,7 @@ jobs:
 
       - name: Create draft GitHub prerelease
         if: ${{ github.event_name == 'push' || inputs.create_github_release }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_NAME }}
