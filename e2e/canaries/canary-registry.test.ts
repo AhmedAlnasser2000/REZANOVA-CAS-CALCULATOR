@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  CANARY_EXEMPT_WORKSPACES,
   WORKSPACE_CANARIES,
   type ComputationalWorkspaceId,
   type WorkspaceCanary,
@@ -39,15 +40,19 @@ function committedFloor() {
 }
 
 describe('workspace canary registry', () => {
-  it('covers every computational launcher leaf and excludes Labs', () => {
-    const launcherWorkspaces = DEFAULT_LAUNCHER_CATEGORIES
+  it('covers every computational launcher leaf except Labs and the named exemptions', () => {
+    const launcherLeaves = DEFAULT_LAUNCHER_CATEGORIES
       .flatMap((category) => category.entries)
       .map((entry) => entry.id)
-      .filter((id): id is ComputationalWorkspaceId => id !== 'labs')
-      .sort();
+      .filter((id): id is ComputationalWorkspaceId => id !== 'labs');
+    const launcherWorkspaces = launcherLeaves.filter((id) => !(id in CANARY_EXEMPT_WORKSPACES)).sort();
     const registeredWorkspaces = registry.map((entry) => entry.workspace).sort();
 
     expect(registeredWorkspaces).toEqual(launcherWorkspaces);
+    for (const [workspace, reason] of Object.entries(CANARY_EXEMPT_WORKSPACES)) {
+      expect(launcherLeaves).toContain(workspace);
+      expect(reason?.trim()).toBeTruthy();
+    }
     expect(new Set(registeredWorkspaces).size).toBe(registeredWorkspaces.length);
   });
 

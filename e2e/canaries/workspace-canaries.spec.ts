@@ -13,6 +13,7 @@ import {
   type CanaryExpectation,
   type CanarySettings,
 } from './canary-registry';
+import { installClipboardCapture } from '../calculus-integral-evidence';
 
 async function clickVisibleMenuEntry(page: Page, label: string) {
   await page.locator('button.launcher-entry:visible')
@@ -44,6 +45,12 @@ async function runCanary(page: Page, canary: CanaryCase) {
     await openEquationSymbolic(page);
     await setMathFieldLatex(page, driver.inputLatex);
     await page.getByTestId('soft-action-solve').click();
+    return;
+  }
+  if (driver.kind === 'new-equation') {
+    await openLauncherApp(page, 'Core', 'New Equation');
+    await setMathFieldLatex(page, driver.inputLatex, 'new-equation-row-1');
+    await page.getByTestId('new-equation-page').getByRole('button', { name: 'Solve', exact: true }).click();
     return;
   }
   if (driver.kind === 'calculus') {
@@ -108,6 +115,16 @@ async function answerRawLatex(page: Page) {
 
 async function assertExpectation(page: Page, expectation: CanaryExpectation) {
   await expect(page.getByTestId('display-outcome-error')).toHaveCount(0);
+  if (expectation.surface === 'new-equation') {
+    // The answer shows before it is checked: wait for a current, verified answer.
+    const answer = page.getByTestId('new-equation-answer');
+    await expect(answer).toHaveAttribute('data-outdated', 'false', { timeout: 60_000 });
+    await expect(answer).toHaveAttribute('data-checked', 'yes', { timeout: 60_000 });
+    await expect(answer).toHaveAttribute('data-outcome', expectation.outcome);
+    await page.getByTestId('new-equation-page').getByRole('button', { name: 'Copy text', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.__calcwizClipboardText)).toBe(expectation.copyText);
+    return;
+  }
   if (expectation.surface === 'table') {
     await expect(page.getByTestId('table-preview')).toBeVisible();
     for (const row of expectation.rows) {
@@ -128,6 +145,7 @@ async function assertExpectation(page: Page, expectation: CanaryExpectation) {
 }
 
 test.beforeEach(async ({ page }) => {
+  await installClipboardCapture(page);
   await page.addInitScript(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
