@@ -1,4 +1,4 @@
-import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
+import { createComplexNumericEvaluator } from '../../symbolic-engine/equation/numeric/complex-sampling';
 import type { GraphExpressionIR, GraphRelationIR, GraphStopReason } from '../contracts';
 import { compileGraphComplexPlan } from '../evaluator/complex-plan';
 import type { GraphEvaluationResult, GraphExpressionEvaluator } from '../evaluator';

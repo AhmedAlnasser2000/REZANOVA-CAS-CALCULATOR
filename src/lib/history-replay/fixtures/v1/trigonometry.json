@@ -98,53 +98,6 @@
       }
     },
     {
-      "id": "trigonometry-equation",
-      "workspace": "trigonometry",
-      "family": "equation",
-      "snapshot": {
-        "version": 1,
-        "ansLatex": "0",
-        "angleUnit": "deg",
-        "outputStyle": "both",
-        "equationAnswerMode": "exact",
-        "equationDomainIntent": "real",
-        "complexExactForm": "rectangular",
-        "mathNotationDisplay": "rendered",
-        "historyInspectorNotationMode": "rendered",
-        "historyPageNotationMode": "latex",
-        "symbolicDisplayMode": "auto",
-        "flattenNestedRootsWhenSafe": true,
-        "approxDigits": 6,
-        "numericNotationMode": "decimal",
-        "scientificNotationStyle": "times10",
-        "detailedFactsEnabled": false
-      },
-      "request": {
-        "inputLatex": "\\sin(x)=\\frac{1}{2}",
-        "screenHint": "equationSolve",
-        "angleUnit": "deg"
-      },
-      "expected": {
-        "identity": {
-          "kind": "success",
-          "title": "Trig Equation",
-          "resultOrigin": "symbolic"
-        },
-        "cardinalities": {
-          "warnings": 0,
-          "supplements": 1,
-          "answerRows": 2,
-          "branchRows": 2,
-          "systemRows": 0,
-          "periodicBranches": 0,
-          "detailSections": 2,
-          "actions": 0,
-          "tableRows": 0
-        },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{30+360n,\\ 150+360n\\right\\}\ncanonicalResult.answerRows.rows[0].math.canonicalLatex=x=30+360n\ncanonicalResult.answerRows.rows[1].math.canonicalLatex=x=150+360n\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=30+360n\ncanonicalResult.branchReadback.branches[1].canonicalLatex=150+360n\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
-      }
-    },
-    {
       "id": "trigonometry-triangle",
       "workspace": "trigonometry",
       "family": "right-triangle",

@@ -21,23 +21,6 @@ type FixtureSeed = {
   ansLatex?: string;
 };
 
-const equationBase = {
-  equationScreen: 'symbolic',
-  equationSolveTarget: null,
-  equationAnswerMode: 'exact',
-  equationDomainIntent: 'real',
-  complexExactForm: 'rectangular',
-  quadraticCoefficients: [1, -5, 6],
-  cubicCoefficients: [1, -6, 11, -6],
-  quarticCoefficients: [1, 0, -5, 0, 4],
-  polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
-  system2: [[1, 1, 3], [2, -1, 0]],
-  system3: [[1, 1, 1, 6], [2, -1, 1, 3], [1, 2, -1, 3]],
-  angleUnit: 'deg',
-  outputStyle: 'both',
-  ansLatex: '0',
-};
-
 const calculusBase = {
   screen: 'finiteLimit',
   derivative: { bodyLatex: 'x^2', variable: 'x' },
@@ -116,55 +99,12 @@ function calculateSeeds(): FixtureSeed[] {
   });
 }
 
-function equationSeeds(): FixtureSeed[] {
-  const rows: Array<[string, string, string, Record<string, unknown>?]> = [
-    ['linear-basic', 'linear', '2x+3=7'],
-    ['linear-fraction', 'linear', '\\frac{x}{3}+2=5'],
-    ['linear-parentheses', 'linear', '3(x-2)=9'],
-    ['quadratic-factor', 'polynomial', 'x^2-5x+6=0'],
-    ['quadratic-double-root', 'polynomial', 'x^2-2x+1=0'],
-    ['quadratic-irrational', 'polynomial', 'x^2-2=0'],
-    ['cubic-factor', 'polynomial', 'x^3-6x^2+11x-6=0'],
-    ['quartic-biquadratic', 'polynomial', 'x^4-5x^2+4=0'],
-    ['rational-simple', 'rational-radical', '\\frac{x+1}{x-1}=2'],
-    ['rational-hole', 'rational-radical', '\\frac{x^2-1}{x-1}=2'],
-    ['radical-square', 'rational-radical', '\\sqrt{x+1}=3'],
-    ['radical-affine', 'rational-radical', '\\sqrt{2x+1}=5'],
-    ['absolute-basic', 'absolute-value', '\\left|x-2\\right|=3'],
-    ['trig-sine', 'trig-exp-log', '\\sin(x)=0'],
-    ['trig-cosine', 'trig-exp-log', '\\cos(x)=1'],
-    ['exponential-basic', 'trig-exp-log', '2^x=8'],
-    ['exponential-substitution', 'trig-exp-log', 'e^{2x}-5e^x+6=0'],
-    ['log-natural', 'trig-exp-log', '\\ln(x)=2'],
-    ['log-combine', 'trig-exp-log', '\\ln(x)+\\ln(x+1)=2'],
-    ['real-no-solution', 'domain-boundary', 'x^2+1=0'],
-    ['complex-quadratic', 'domain-boundary', 'x^2+1=0', { equationDomainIntent: 'complex' }],
-    ['denominator-exclusion', 'domain-boundary', '\\frac{1}{x}=0'],
-    ['even-root-domain', 'domain-boundary', '\\sqrt{x}=-1'],
-    ['isolate-mode', 'answer-mode', 'ax+b=0', { equationAnswerMode: 'isolate', equationSolveTarget: 'x' }],
-    ['numeric-interval', 'numeric-boundary', '\\cos(x)=x', {
-      numericInterval: { start: '0', end: '1', subdivisions: 64 },
-    }],
-  ];
-  return rows.map(([id, family, equationLatex, overrides = {}]) => ({
-    id: `equation-${id}`,
-    workspace: 'equation',
-    family,
-    settings: {
-      equationAnswerMode: (overrides.equationAnswerMode ?? 'exact') as Settings['equationAnswerMode'],
-      equationDomainIntent: (overrides.equationDomainIntent ?? 'real') as Settings['equationDomainIntent'],
-    },
-    request: { ...equationBase, equationLatex, ...overrides },
-  }));
-}
-
 function calculusSeeds(): FixtureSeed[] {
   const rows: Array<[string, string, Record<string, unknown>]> = [
     ['derivative-polynomial', 'derivatives', { screen: 'derivative', derivative: { bodyLatex: 'x^3+2x', variable: 'x' } }],
     ['derivative-trig', 'derivatives', { screen: 'derivative', derivative: { bodyLatex: '\\sin(x)', variable: 'x' } }],
     ['derivative-exp', 'derivatives', { screen: 'derivative', derivative: { bodyLatex: 'e^x', variable: 'x' } }],
     ['derivative-at-point', 'derivatives', { screen: 'derivativePoint', derivativePoint: { bodyLatex: 'x^2', point: '3', variable: 'x' } }],
-    ['implicit-circle', 'derivatives', { screen: 'implicitDerivative', implicitDerivative: { relationLatex: 'x^2+y^2=1', independentVariable: 'x', dependentVariable: 'y' } }],
     ['indefinite-power', 'integrals', { screen: 'indefiniteIntegral', indefiniteIntegral: { bodyLatex: 'x^2' } }],
     ['indefinite-trig', 'integrals', { screen: 'indefiniteIntegral', indefiniteIntegral: { bodyLatex: '\\sin(x)' } }],
     ['indefinite-log', 'integrals', { screen: 'indefiniteIntegral', indefiniteIntegral: { bodyLatex: '\\frac{1}{x}' } }],
@@ -214,7 +154,6 @@ function smallWorkspaceSeeds(): FixtureSeed[] {
     ['table-trigonometric', 'table', 'trigonometric-function', { primaryLatex: '\\sin(x)', secondaryLatex: '', secondaryEnabled: false, start: 0, end: 2, step: 1 }],
     ['trigonometry-function', 'trigonometry', 'function', { inputLatex: '\\sin(30)', screenHint: 'functions', angleUnit: 'deg' }],
     ['trigonometry-identity', 'trigonometry', 'identity', { inputLatex: '\\sin^2(x)+\\cos^2(x)', screenHint: 'identitySimplify', angleUnit: 'deg' }],
-    ['trigonometry-equation', 'trigonometry', 'equation', { inputLatex: '\\sin(x)=\\frac{1}{2}', screenHint: 'equationSolve', angleUnit: 'deg' }],
     ['trigonometry-triangle', 'trigonometry', 'right-triangle', { inputLatex: 'rightTriangle(a=3, b=4)', screenHint: 'rightTriangle', angleUnit: 'deg' }],
     ['trigonometry-convert', 'trigonometry', 'angle-conversion', { inputLatex: 'angleConvert(value=30, from=deg, to=rad)', screenHint: 'angleConvert', angleUnit: 'deg' }],
     ['statistics-descriptive', 'statistics', 'descriptive', { inputLatex: 'descriptive(values={12,15,15,18,20})', screenHint: 'descriptive', workingSourceHint: 'dataset' }],
@@ -238,7 +177,6 @@ function smallWorkspaceSeeds(): FixtureSeed[] {
 async function main() {
   const seeds = [
     ...calculateSeeds(),
-    ...equationSeeds(),
     ...calculusSeeds(),
     ...smallWorkspaceSeeds(),
   ];
@@ -272,7 +210,6 @@ async function main() {
   const hardLatexWorkspaces = new Set<HistoryReplayWorkspace>([
     'calculate',
     'calculus',
-    'equation',
     'geometry',
     'matrix',
     'statistics',

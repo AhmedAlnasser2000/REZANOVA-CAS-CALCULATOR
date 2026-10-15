@@ -6,7 +6,7 @@ import type {
 import {
   EQUATION_IMAGINARY_UNIT_LATEX,
   EQUATION_IMAGINARY_UNIT_SYMBOL,
-} from '../equation/complex-input-policy';
+} from './complex-input-policy';
 import { isDerivativeShortcutContext } from './derivative-shortcuts';
 import {
   COMMAND_FUNCTION_NAMES,

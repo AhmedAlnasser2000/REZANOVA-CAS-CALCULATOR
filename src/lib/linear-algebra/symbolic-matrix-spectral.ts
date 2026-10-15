@@ -4,11 +4,7 @@ import type {
   MatrixResponse,
   ScalarMatrixRequestV1,
 } from '../../types/calculator';
-import {
-  solveEquationPolynomialBoundary,
-  type EquationPolynomialResultV1,
-  type ProvenRoot,
-} from '../equation/polynomial-boundary';
+import { RETIRED_ENGINE_MESSAGE } from '../kernel/retired-engine';
 import { profileLinearAlgebraResult } from '../display/printer';
 import {
   attachLinearAlgebraCanonicalEvidence,
@@ -16,15 +12,6 @@ import {
   type LinearAlgebraCanonicalEvidence,
 } from './canonical-evidence';
 import {
-  classifySymbolicRref,
-  nullSpaceBasisForCase,
-  symbolicMathJsonLatex,
-} from './symbolic-elimination';
-import {
-  inverseSymbolicMatrix,
-  multiplySymbolicMatrices,
-  symbolicMatrixLatex,
-  symbolicMatrixMathJson,
   type SymbolicMatrix,
 } from './symbolic-matrix';
 import {
@@ -32,7 +19,6 @@ import {
   symbolicScalarFromMathJson,
   symbolicScalarMultiply,
   symbolicScalarNegate,
-  symbolicScalarSubtract,
   symbolicScalarZeroStatus,
 } from './symbolic-scalar-core';
 
@@ -49,12 +35,6 @@ type CharacteristicPolynomial = {
   coefficients: LinearAlgebraScalarWireV1[];
   expanded: LinearAlgebraScalarWireV1;
   presentation: LinearAlgebraScalarWireV1;
-};
-
-type RootSpace = {
-  root: ProvenRoot;
-  value: LinearAlgebraScalarWireV1;
-  basis: SymbolicMatrix[number][];
 };
 
 function scalar(node: unknown, domain: LinearAlgebraScalarDomain) {
@@ -202,24 +182,6 @@ function characteristicPolynomial(
   return { target, targetLatex, coefficients, expanded, presentation };
 }
 
-function vectorMathJson(vector: readonly LinearAlgebraScalarWireV1[]) {
-  return symbolicMatrixMathJson(vector.map((value) => [value]));
-}
-
-function vectorSetMathJson(vectors: readonly (readonly LinearAlgebraScalarWireV1[])[]) {
-  return vectors.length > 0 ? ['Set', ...vectors.map(vectorMathJson)] : 'EmptySet';
-}
-
-function conditionEvidence(result: EquationPolynomialResultV1, source: string) {
-  return result.kind === 'proved'
-    ? result.conditions.map((condition, index) => canonicalLeafEvidence(
-        condition.canonicalLatex,
-        condition.mathJson,
-        `${source}.condition-${index + 1}`,
-      ))
-    : [];
-}
-
 function responseWithEvidence(
   response: MatrixResponse,
   evidence: LinearAlgebraCanonicalEvidence,
@@ -243,50 +205,14 @@ function characteristicRow(
   };
 }
 
-function rootSpaces(
-  matrix: SymbolicMatrix,
-  roots: readonly ProvenRoot[],
-  domain: LinearAlgebraScalarDomain,
-): RootSpace[] | null {
-  const spaces: RootSpace[] = [];
-  for (const root of roots) {
-    const value = scalar(root.value.mathJson, domain);
-    const shifted = matrix.map((row, rowIndex) => row.map((entry, columnIndex) =>
-      rowIndex === columnIndex ? symbolicScalarSubtract(entry, value, domain) : entry));
-    const classified = classifySymbolicRref(shifted, domain);
-    if (!classified.ok || classified.cases.length !== 1 || classified.cases[0].conditions.length) {
-      return null;
-    }
-    spaces.push({
-      root,
-      value,
-      basis: nullSpaceBasisForCase(classified.cases[0], matrix.length, domain),
-    });
-  }
-  return spaces;
-}
-
 function characteristicOnlyResponse(input: {
   characteristic: CharacteristicPolynomial;
   label: string;
   source: string;
   warning?: string;
-  roots?: readonly ProvenRoot[];
-  unresolved?: { canonicalLatex: string; mathJson: unknown };
 }) {
   const characteristic = characteristicRow(input.characteristic, input.label, input.source);
-  const extraRows = [
-    ...(input.roots ?? []).map((root) => ({
-      label: root.multiplicity > 1 ? `Known root (multiplicity ${root.multiplicity})` : 'Known root',
-      latex: `${input.characteristic.targetLatex}=${root.value.canonicalLatex}`,
-      mathJson: ['Equal', input.characteristic.target, root.value.mathJson],
-    })),
-    ...(input.unresolved ? [{
-      label: 'Unresolved factor',
-      latex: input.unresolved.canonicalLatex,
-      mathJson: input.unresolved.mathJson,
-    }] : []),
-  ];
+  const extraRows: { label: string; latex: string; mathJson: unknown }[] = [];
   return responseWithEvidence({
     resultLatex: input.characteristic.presentation.canonicalLatex,
     answerRows: {
@@ -311,189 +237,6 @@ function characteristicOnlyResponse(input: {
   });
 }
 
-function eigenResponse(input: {
-  matrix: SymbolicMatrix;
-  characteristic: CharacteristicPolynomial;
-  boundary: Extract<EquationPolynomialResultV1, { kind: 'proved' }>;
-  domain: LinearAlgebraScalarDomain;
-  label: string;
-  source: string;
-}) {
-  const spaces = input.boundary.conditions.length === 0
-    ? rootSpaces(input.matrix, input.boundary.roots, input.domain)
-    : null;
-  const primaryMathJson = input.boundary.roots.length
-    ? ['Set', ...input.boundary.roots.map((root) => root.value.mathJson)]
-    : 'EmptySet';
-  const primaryLatex = symbolicMathJsonLatex(primaryMathJson);
-  const characteristic = characteristicRow(input.characteristic, input.label, input.source);
-  const emptyRootRow = input.boundary.roots.length === 0
-    ? {
-        row: { label: 'Eigenvalues', latex: primaryLatex },
-        evidence: canonicalLeafEvidence(
-          primaryLatex,
-          primaryMathJson,
-          `${input.source}.empty-eigenvalue-set`,
-        ),
-      }
-    : null;
-  const rootRows = input.boundary.roots.map((root, index) => {
-    const space = spaces?.[index];
-    const rootLatex = `${input.characteristic.targetLatex}=${root.value.canonicalLatex}`;
-    const spaceLatex = space
-      ? `E_{${root.value.canonicalLatex}}=${symbolicMathJsonLatex(vectorSetMathJson(space.basis))}`
-      : null;
-    return {
-      root: { label: root.multiplicity > 1 ? `Eigenvalue (multiplicity ${root.multiplicity})` : 'Eigenvalue', latex: rootLatex },
-      rootEvidence: canonicalLeafEvidence(
-        rootLatex,
-        ['Equal', input.characteristic.target, root.value.mathJson],
-        `${input.source}.root-${index + 1}`,
-      ),
-      ...(space && spaceLatex ? {
-        space: { label: 'Eigenspace', latex: spaceLatex },
-        spaceEvidence: canonicalLeafEvidence(
-          spaceLatex,
-          ['Equal', ['Subscript', 'E', root.value.mathJson], vectorSetMathJson(space.basis)],
-          `${input.source}.eigenspace-${index + 1}`,
-        ),
-      } : {}),
-    };
-  });
-  return responseWithEvidence({
-    resultLatex: primaryLatex,
-    answerRows: {
-      label: 'Spectral evidence',
-      rows: [
-        characteristic.row,
-        ...(emptyRootRow ? [emptyRootRow.row] : []),
-        ...rootRows.flatMap((entry) => [entry.root, ...(entry.space ? [entry.space] : [])]),
-      ],
-    },
-    exactSupplementLatex: input.boundary.conditions.map((condition) => condition.canonicalLatex),
-    warnings: spaces || input.boundary.roots.length === 0
-      ? []
-      : ['Eigenvalues are proved, but eigenspaces remain conditional under the displayed requirements.'],
-  }, {
-    primary: canonicalLeafEvidence(primaryLatex, primaryMathJson, `${input.source}.primary-eigenvalues`),
-    answerRows: [
-      characteristic.evidence,
-      ...(emptyRootRow ? [emptyRootRow.evidence] : []),
-      ...rootRows.flatMap((entry) => [
-        entry.rootEvidence,
-        ...(entry.spaceEvidence ? [entry.spaceEvidence] : []),
-      ]),
-    ],
-    supplements: conditionEvidence(input.boundary, input.source),
-  });
-}
-
-function matrixFromColumns(columns: readonly (readonly LinearAlgebraScalarWireV1[])[]) {
-  return columns[0].map((_, row) => columns.map((column) => column[row]));
-}
-
-function diagonalMatrix(
-  values: readonly LinearAlgebraScalarWireV1[],
-  domain: LinearAlgebraScalarDomain,
-) {
-  return values.map((value, row) => values.map((_, column) =>
-    row === column ? value : zero(domain)));
-}
-
-function diagonalizationResponse(input: {
-  matrix: SymbolicMatrix;
-  characteristic: CharacteristicPolynomial;
-  boundary: Extract<EquationPolynomialResultV1, { kind: 'proved' }>;
-  domain: LinearAlgebraScalarDomain;
-  label: string;
-  source: string;
-}) {
-  if (input.boundary.conditions.length) {
-    return characteristicOnlyResponse({
-      characteristic: input.characteristic,
-      label: input.label,
-      source: input.source,
-      roots: input.boundary.roots,
-      warning: 'Diagonalization was not claimed because the eigenvalues still carry conditions.',
-    });
-  }
-  const spaces = rootSpaces(input.matrix, input.boundary.roots, input.domain);
-  if (!spaces) {
-    return characteristicOnlyResponse({
-      characteristic: input.characteristic,
-      label: input.label,
-      source: input.source,
-      roots: input.boundary.roots,
-      warning: 'Diagonalization was not claimed because the eigenspaces remain conditional.',
-    });
-  }
-  const columns: LinearAlgebraScalarWireV1[][] = [];
-  const diagonalValues: LinearAlgebraScalarWireV1[] = [];
-  for (const space of spaces) {
-    if (space.basis.length < space.root.multiplicity) {
-      return characteristicOnlyResponse({
-        characteristic: input.characteristic,
-        label: input.label,
-        source: input.source,
-        roots: input.boundary.roots,
-        warning: 'This matrix does not have a proved complete eigenbasis, so it is not diagonalizable.',
-      });
-    }
-    for (let index = 0; index < space.root.multiplicity; index += 1) {
-      columns.push(space.basis[index]);
-      diagonalValues.push(space.value);
-    }
-  }
-  if (columns.length !== input.matrix.length) {
-    return characteristicOnlyResponse({
-      characteristic: input.characteristic,
-      label: input.label,
-      source: input.source,
-      roots: input.boundary.roots,
-      warning: 'The bounded polynomial result did not prove a complete eigenbasis.',
-    });
-  }
-  const p = matrixFromColumns(columns);
-  const d = diagonalMatrix(diagonalValues, input.domain);
-  const inverse = inverseSymbolicMatrix(p, input.domain);
-  if (!inverse.ok || inverse.supplements.length) {
-    return characteristicOnlyResponse({
-      characteristic: input.characteristic,
-      label: input.label,
-      source: input.source,
-      roots: input.boundary.roots,
-      warning: 'The eigenvector matrix was not proved invertible without additional conditions.',
-    });
-  }
-  const reconstructed = multiplySymbolicMatrices(
-    multiplySymbolicMatrices(p, d, input.domain)!,
-    inverse.matrix,
-    input.domain,
-  )!;
-  const resultLatex = `${input.label}=${symbolicMatrixLatex(p)}${symbolicMatrixLatex(d)}${symbolicMatrixLatex(inverse.matrix)}`;
-  const resultMathJson = ['Equal', symbolicMatrixMathJson(input.matrix), [
-    'Multiply', symbolicMatrixMathJson(p), symbolicMatrixMathJson(d), symbolicMatrixMathJson(inverse.matrix),
-  ]];
-  const rows = [
-    { label: 'P', latex: symbolicMatrixLatex(p), mathJson: symbolicMatrixMathJson(p) },
-    { label: 'D', latex: symbolicMatrixLatex(d), mathJson: symbolicMatrixMathJson(d) },
-    { label: 'P inverse', latex: symbolicMatrixLatex(inverse.matrix), mathJson: symbolicMatrixMathJson(inverse.matrix) },
-    { label: 'Reconstruction', latex: symbolicMatrixLatex(reconstructed), mathJson: symbolicMatrixMathJson(reconstructed) },
-  ];
-  return responseWithEvidence({
-    resultLatex,
-    answerRows: { label: 'Diagonalization', rows: rows.map(({ label, latex }) => ({ label, latex })) },
-    warnings: [],
-  }, {
-    primary: canonicalLeafEvidence(resultLatex, resultMathJson, `${input.source}.primary-diagonalization`),
-    answerRows: rows.map((row, index) => canonicalLeafEvidence(
-      row.latex,
-      row.mathJson,
-      `${input.source}.diagonalization-row-${index + 1}`,
-    )),
-  });
-}
-
 export function runSymbolicMatrixSpectralOperation(
   request: ScalarMatrixRequestV1,
 ): MatrixResponse | null {
@@ -514,35 +257,8 @@ export function runSymbolicMatrixSpectralOperation(
     if (request.operation === 'charpolyA' || request.operation === 'charpolyB') {
       return characteristicOnlyResponse({ characteristic, label, source });
     }
-    const boundary = solveEquationPolynomialBoundary({
-      version: 1,
-      target: characteristic.target,
-      domain,
-      coefficients: characteristic.coefficients,
-    });
-    if (boundary.kind === 'partial') {
-      return characteristicOnlyResponse({
-        characteristic,
-        label,
-        source,
-        roots: boundary.roots,
-        unresolved: boundary.unresolvedFactor,
-        warning: boundary.roots.length > 0
-          ? 'Known eigenvalues are shown; the remaining factor exceeded the bounded polynomial presentation policy.'
-          : 'The characteristic polynomial is shown; its unresolved factor exceeded the bounded polynomial presentation policy.',
-      });
-    }
-    if (boundary.kind === 'unsupported') {
-      return characteristicOnlyResponse({
-        characteristic,
-        label,
-        source,
-        warning: `The characteristic polynomial is proved, but bounded eigenvalue solving stopped (${boundary.reason}).`,
-      });
-    }
-    return request.operation === 'eigenA' || request.operation === 'eigenB'
-      ? eigenResponse({ matrix, characteristic, boundary, domain, label, source })
-      : diagonalizationResponse({ matrix, characteristic, boundary, domain, label, source });
+    // Eigenvalues came from the old Equation engine's polynomial boundary (retired); unavailable until Matrix is rebuilt.
+    return { warnings: [], error: RETIRED_ENGINE_MESSAGE };
   } catch (error) {
     return {
       warnings: [],

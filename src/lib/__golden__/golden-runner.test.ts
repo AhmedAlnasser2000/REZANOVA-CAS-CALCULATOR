@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
-import { goldenCases, LEGACY_EQUATION_GOLDEN_ENABLED, type GoldenExpectation } from './golden-cases';
+import { goldenCases, type GoldenExpectation } from './golden-cases';
 import { runGoldenCase, type GoldenExecution } from './golden-execution';
 import { resolveCanonicalResultForConsumer } from '../result-contract';
 
@@ -141,12 +141,12 @@ describe('MATH-GOLDEN0 shipped behavior corpus', () => {
       .flatMap((category) => category.entries)
       .map((entry) => entry.id)
       .filter((workspace) => workspace !== 'labs')
-      // Old Equation engine cases are inert unless the legacy flag is set (TESTS-LEGACY-EQUATION-INERT1).
-      .filter((workspace) => workspace !== 'equation' || LEGACY_EQUATION_GOLDEN_ENABLED);
+      // The old Equation workspace is retired (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+      .filter((workspace) => workspace !== 'equation');
 
     expect(new Set(ids).size).toBe(ids.length);
     expect(goldenCases.length).toBeGreaterThanOrEqual(43);
-    expect(goldenCases).toHaveLength(LEGACY_EQUATION_GOLDEN_ENABLED ? 55 : 49);
+    expect(goldenCases).toHaveLength(55);
 
     for (const workspace of launcherWorkspaces) {
       expect(

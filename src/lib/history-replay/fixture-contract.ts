@@ -12,7 +12,6 @@ import { resolveCanonicalResultForConsumer } from '../result-contract';
 
 export const HISTORY_REPLAY_WORKSPACES = [
   'calculate',
-  'equation',
   'calculus',
   'matrix',
   'vector',

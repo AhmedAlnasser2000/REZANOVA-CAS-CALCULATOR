@@ -9,6 +9,10 @@ export function simplifyNode(node: unknown) {
   return normalizeAst(ce.box(node as Parameters<typeof ce.box>[0]).simplify().json);
 }
 
+export function buildAbsoluteValueNode(node: unknown) {
+  return simplifyNode(['Abs', node]);
+}
+
 export function gcd(a: number, b: number): number {
   a = Math.abs(a);
   b = Math.abs(b);

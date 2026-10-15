@@ -23,13 +23,6 @@ import {
   getCalculateParentScreen,
 } from '../../lib/modes/calculate-navigation';
 import {
-  getEquationMenuEntryByHotkey,
-  getEquationParentScreen,
-  isEquationMenuScreen,
-  isPolynomialEquationScreen,
-  isSimultaneousEquationScreen,
-} from '../../lib/equation/equation-navigation';
-import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,
 } from '../../lib/geometry/navigation';
@@ -141,8 +134,6 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     guideRoute,
     guideListEntries,
     selectedGuideExample,
-    equationScreen,
-    equationMenuEntries,
     calculateScreen,
     isCalculateMenuOpen,
     isCalculateToolOpen,
@@ -172,7 +163,6 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     openGuideRoute,
     openSelectedGuideEntry,
     openLauncher,
-    openEquationScreen,
     openCalculateScreen,
     openCalculateMenuDigitEntry,
     openStatisticsScreen,
@@ -192,8 +182,6 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     launchGuideExample,
     moveCurrentCalculateMenuSelection,
     openSelectedCalculateMenuEntry,
-    moveCurrentEquationMenuSelection,
-    openSelectedEquationMenuEntry,
     executePrimaryAction,
     insertLatex,
     blurActiveEditor,
@@ -306,23 +294,9 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       } else {
         openLauncher();
       }
-    } else if (currentMode === 'equation' && isEquationMenuScreen(equationScreen)) {
-      const parentScreen = getEquationParentScreen(equationScreen);
-      if (parentScreen) {
-        openEquationScreen(parentScreen);
-      } else {
-        openLauncher();
-      }
-    } else if (
-      currentMode === 'equation'
-      && !isAnyFormTarget(event.target)
-      && equationScreen === 'symbolic'
-    ) {
-      openEquationScreen('home');
-    } else if (currentMode === 'equation' && isPolynomialEquationScreen(equationScreen)) {
-      openEquationScreen('polynomialMenu');
-    } else if (currentMode === 'equation' && isSimultaneousEquationScreen(equationScreen)) {
-      openEquationScreen('simultaneousMenu');
+    } else if (currentMode === 'equation') {
+      // The old Equation workspace is retired (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+      openLauncher();
     } else if (currentMode === 'calculate' && calculateScreen !== 'standard') {
       const parentScreen = getCalculateParentScreen(calculateScreen);
       if (parentScreen) {
@@ -649,35 +623,6 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     executePrimaryAction();
     event.preventDefault();
     return;
-  }
-
-  if (currentMode === 'equation' && isEquationMenuScreen(equationScreen)) {
-    if (!plainFormTarget && event.key === 'Enter') {
-      openSelectedEquationMenuEntry();
-      event.preventDefault();
-      return;
-    }
-
-    if (!plainFormTarget && event.key === 'ArrowUp') {
-      moveCurrentEquationMenuSelection(-1);
-      event.preventDefault();
-      return;
-    }
-
-    if (!plainFormTarget && event.key === 'ArrowDown') {
-      moveCurrentEquationMenuSelection(1);
-      event.preventDefault();
-      return;
-    }
-
-    if (!plainFormTarget && /^[1-3]$/.test(event.key)) {
-      const entry = getEquationMenuEntryByHotkey(equationMenuEntries, event.key);
-      if (entry) {
-        openEquationScreen(entry.target);
-        event.preventDefault();
-      }
-      return;
-    }
   }
 
   if (!plainFormTarget && event.key === 'Enter') {

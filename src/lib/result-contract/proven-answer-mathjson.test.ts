@@ -481,7 +481,7 @@ describe('producer-proven answer MathJSON', () => {
 
     const wrongOwner = declareProducerOwnedAnswerMathJson({
       mathJson: 1,
-      owner: 'equation',
+      owner: 'calculus',
       routeId: 'calculate.arithmetic',
       source: 'wrong-owner',
     });

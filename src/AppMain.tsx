@@ -56,7 +56,7 @@ import { useGeometryRuntime } from './app/runtime/useGeometryRuntime';
 import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { useCalculusRuntime } from './app/runtime/useCalculusRuntime';
 import { useCalculateRuntime } from './app/runtime/useCalculateRuntime';
-import { useEquationRuntime } from './app/runtime/useEquationRuntime';
+import { useRetiredEquationRuntime } from './app/runtime/useRetiredEquationRuntime';
 import {
   blurLatexEditorTarget,
   executeLatexEditorCommand,
@@ -95,8 +95,7 @@ import { resolveCanonicalResultForConsumer } from './lib/result-contract/consume
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
-import type { AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
-import { getEquationAlgebraActionLabel } from './lib/modes/equation/transform-contract';
+import { getAlgebraTransformLabel, type AlgebraTransformAction } from './lib/algebra/algebra-transform-ui';
 import { copyableGuideExampleLatex } from './lib/guide/examples';
 import {
   LAUNCHER_SOFT_ACTIONS,
@@ -161,11 +160,6 @@ import type { NotebookWorkspaceTarget } from './lib/notebook/types';
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
     default: module.CalculusWorkspace,
-  })),
-);
-const EquationWorkspace = lazy(() =>
-  import('./app/workspaces/EquationWorkspace').then((module) => ({
-    default: module.EquationWorkspace,
   })),
 );
 const GeometryWorkspace = lazy(() =>
@@ -1078,34 +1072,7 @@ export default function App() {
     setGuideQuery,
   } = guideRuntime;
   resetGuideRuntimeRef.current = resetGuideRuntime;
-  const equationRuntime = useEquationRuntime({
-    activeFieldRef,
-    ansLatex,
-    commitOutcome,
-    currentMode,
-    currentModeRef,
-    discardHistoryTicket: discardPendingHistoryTicket,
-    displayOutcome,
-    editorAnalysisControl,
-    getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
-    getWorkspaceInstances: getWorkspaceInstancesForRuntime,
-    isLauncherOpen,
-    mainFieldRef,
-    openGuideArticle,
-    openGuideMode,
-    openLauncher,
-    patchSettings,
-    replayVariableSubstitutions,
-    reserveHistoryTicket: reservePendingHistoryTicket,
-    routeToModeDestination,
-    settings,
-    setDisplayOutcome,
-    setMode,
-    setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
-    startTransition,
-    storedVariables: variableMemory,
-    clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
-  });
+  const equationRuntime = useRetiredEquationRuntime({ commitOutcome, displayOutcome, openLauncher });
   const {
     clearActiveEquationDraft,
     cubicCoefficients,
@@ -1127,7 +1094,6 @@ export default function App() {
     equationSoftActions,
     equationSolveTarget,
     equationSolveTargetResolution,
-    equationWorkspaceProps,
     goBackInEquation,
     isEquationMenuOpen,
     isEquationWorkScreen,
@@ -1180,15 +1146,6 @@ export default function App() {
   createWorkspaceKindTabRef.current = createWorkspaceKindTab;
   openGuidePageTabRef.current = () =>
     workspaceTabsRuntime.onOpenAppPageTab(GUIDE_PAGE_WORKSPACE_KIND);
-  useEffect(() => {
-    if (isLauncherOpen || currentMode !== 'equation') {
-      return;
-    }
-
-    void import('./lib/modes/equation').catch(() => {
-      // Active-route preloading is opportunistic; runtime action handlers still own errors.
-    });
-  }, [currentMode, equationScreen, isLauncherOpen]);
   const displayHeaderLabel =
     isLauncherOpen
       ? 'Menu'
@@ -2852,7 +2809,7 @@ export default function App() {
           geometryMenuFooterText={geometryMenuFooterText}
           geometryRouteMeta={geometryRouteMeta}
           geometryScreen={geometryScreen}
-          getAlgebraTransformLabel={getEquationAlgebraActionLabel}
+          getAlgebraTransformLabel={getAlgebraTransformLabel}
           getPeriodicStopReasonText={getPeriodicStopReasonText}
           guideArticle={guideArticle}
           guideModeRef={guideModeRef}
@@ -3241,12 +3198,6 @@ export default function App() {
                 onSetGuideQuery={setGuideQuery}
                 onLaunchGuideExample={launchGuideExample}
                 onCopyGuideExample={(example) => void copyText(copyableGuideExampleLatex(example), 'Example copied', 'guide')}
-              />
-            ) : null}
-
-            {!isLauncherOpen && currentMode === 'equation' ? (
-              <EquationWorkspace
-                {...equationWorkspaceProps}
               />
             ) : null}
 

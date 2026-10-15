@@ -1,15 +1,13 @@
 import type {
   AngleUnit,
   ResultProducerDraft,
-  ResultProducerActionDraft,
   TrigIdentityState,
   TrigParseResult,
   TrigRequest,
   TrigScreen,
 } from '../../types/calculator';
 import { canonicalizeMathInput } from '../input/input-canonicalization';
-import { planMathExecution } from '../engine/semantic-planner';
-import { runSharedEquationSolve } from '../equation/shared-solve';
+import { retiredEngineStop } from '../kernel/retired-engine';
 import { convertAngleState, type TrigEvaluation } from './angles';
 import { evaluateTrigFunction } from './functions';
 import { evaluateTrigIdentity } from './identities';
@@ -62,25 +60,6 @@ function rememberPeriodPhaseEvidence(
 ) {
   if (evidence) periodPhaseEvidenceByOutcome.set(outcome, evidence);
   return outcome;
-}
-
-function canonicalLeavesFromSharedEquation(outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>) {
-  const document = outcome.canonicalResult;
-  if (!document) return [];
-  const values = [
-    document.primaryMath,
-    document.branchReadback?.target,
-    ...(document.branchReadback?.branches ?? []),
-    ...(document.supplements ?? []),
-  ];
-  return values.flatMap((value): TrigonometryOwnedMathJsonLeaf[] =>
-    value?.mathJson === undefined
-      ? []
-      : [{
-          canonicalLatex: value.canonicalLatex,
-          mathJson: value.mathJson,
-          source: 'trigonometry.equation.shared-equation-canonical-result',
-        }]);
 }
 
 function toOutcome(
@@ -227,70 +206,9 @@ function runTrigRequest(
         expressionLatex: request.expressionLatex,
         targetForm: request.targetForm,
       }));
-    case 'equationSolve': {
-      const planner = planMathExecution(request.equationLatex, {
-        mode: 'trigonometry',
-        intent: 'equation-solve',
-        angleUnit,
-        screenHint: 'equationSolve',
-      });
-
-      if (planner.kind === 'blocked') {
-        return {
-          kind: 'error',
-          title,
-          error: planner.error,
-          warnings: [],
-          resolvedInputLatex: planner.canonicalLatex,
-          plannerBadges: planner.badges,
-        };
-      }
-
-      const outcome = runSharedEquationSolve({
-        originalLatex: request.equationLatex,
-        resolvedLatex: planner.resolvedLatex,
-        angleUnit,
-        outputStyle: 'both',
-        ansLatex: '',
-      });
-
-      if (outcome.kind === 'prompt') {
-        return outcome;
-      }
-
-      const shouldOfferEquationHandoff =
-        outcome.kind === 'error'
-        && !(outcome.solveBadges ?? []).includes('Range Guard')
-        && !outcome.exactLatex
-        && (outcome.error.includes('outside the supported exact symbolic solve families')
-          || outcome.error.includes('outside the supported symbolic solve families')
-          || outcome.error.includes('outside the current exact bounded solve set')
-          || outcome.error.includes('recognized mixed-base log family')
-          || outcome.error.includes('recognized trig sum-to-product family')
-          || outcome.error.includes('No symbolic solution')
-          || outcome.error.includes('No bracketed real roots')
-          || outcome.error.includes('No bracketed or near-zero real roots')
-          || outcome.error.includes('Candidate roots were found but rejected'));
-      const actions: ResultProducerActionDraft[] | undefined = shouldOfferEquationHandoff
-        ? [{ kind: 'send', target: 'equation', latex: request.equationLatex }]
-        : outcome.actions;
-
-      const trigonometryOutcome = {
-        ...outcome,
-        title,
-        actions,
-        resolvedInputLatex: planner.resolvedLatex !== request.equationLatex.trim()
-          ? planner.resolvedLatex
-          : outcome.resolvedInputLatex,
-        plannerBadges: [
-          ...(planner.badges ?? []),
-          ...((outcome.plannerBadges ?? []).filter((badge) => !(planner.badges ?? []).includes(badge))),
-        ],
-      };
-      const equationLeaves = canonicalLeavesFromSharedEquation(outcome);
-      delete trigonometryOutcome.canonicalResult;
-      return rememberOwnedMathJson(trigonometryOutcome, equationLeaves);
-    }
+    case 'equationSolve':
+      // The shared equation solve was the old Equation engine (retired); Trigonometry is unavailable until rebuilt.
+      return retiredEngineStop(title);
     case 'rightTriangle': {
       const evaluation = solveRightTriangle({
         knownSideA: request.knownSideA ?? '',

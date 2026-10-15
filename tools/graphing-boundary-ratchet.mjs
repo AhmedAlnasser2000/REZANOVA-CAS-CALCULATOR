@@ -41,8 +41,9 @@ const FORBIDDEN_SOLVER_ROOTS = [
   'src/lib/symbolic-engine/',
   'src/lib/trigonometry/',
 ];
+// Graphing's complex sampling, owned by New Equation since the old engine's retirement (temporary; C5 replaces it).
 const REVIEWED_PUBLIC_SOLVER_SEAMS = new Set([
-  'src/lib/equation/complex-domain-public',
+  'src/lib/symbolic-engine/equation/numeric/complex-sampling',
 ]);
 
 function normalize(value) {

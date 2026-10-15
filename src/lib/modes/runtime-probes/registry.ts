@@ -15,11 +15,6 @@ import {
   type RunCalculateRuntimeRequest,
 } from '../calculate';
 import {
-  buildEquationOoeSnapshot,
-  runEquationModeWithOoePilot,
-  type RunEquationModeRequest,
-} from '../equation';
-import {
   buildCalculusOoeSnapshot,
   runCalculusModeWithOoePilot,
   type RunCalculusModeRequest,
@@ -122,24 +117,6 @@ const calculateRequest: RunCalculateRuntimeRequest = {
   },
 };
 
-const equationRequest: RunEquationModeRequest = {
-  equationScreen: 'symbolic',
-  equationLatex: 'x=1',
-  equationAnswerMode: 'exact',
-  equationDomainIntent: 'real',
-  complexExactForm: 'rectangular',
-  quadraticCoefficients: [1, 0, 0],
-  cubicCoefficients: [1, 0, 0, 0],
-  quarticCoefficients: [1, 0, 0, 0, 0],
-  polynomialSystem2Latex: ['', ''],
-  system2: [],
-  system3: [],
-  angleUnit: 'deg',
-  outputStyle: 'exact',
-  ansLatex: '0',
-  storedVariables: [],
-};
-
 const calculusRequest: RunCalculusModeRequest = {
   screen: 'finiteLimit',
   indefiniteIntegral: { bodyLatex: '' },
@@ -212,17 +189,6 @@ export const WORKSPACE_RUNTIME_PROBES = [
     request: calculateRequest,
     requestSnapshot: buildCalculateRuntimeOoeSnapshot(calculateRequest),
     execute: (options) => runCalculateRuntimeWithOoePilot(calculateRequest, options),
-    outcome: directOutcome,
-  },
-  {
-    workspace: 'equation',
-    capabilityId: 'equation.solve',
-    primaryHostId: 'equation-worker-runtime',
-    fallbackHostId: 'equation-runtime',
-    shellId: 'equation-worker-shell',
-    request: equationRequest,
-    requestSnapshot: buildEquationOoeSnapshot(equationRequest),
-    execute: (options) => runEquationModeWithOoePilot(equationRequest, options),
     outcome: directOutcome,
   },
   {

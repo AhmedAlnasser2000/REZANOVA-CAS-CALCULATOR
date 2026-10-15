@@ -1,6 +1,6 @@
 import type { EvaluateResponse, SerializableMathJson, SolveDomainConstraint } from '../../../types/calculator';
 import { resolveCalculusEvaluation } from '../../calculus/engine/eval';
-import { latexToApproxText, solutionsToLatex } from '../../display/format';
+import { latexToApproxText } from '../../display/format';
 import { canUseExpressionNumericFallback } from '../../kernel/runtime-profile';
 import {
   containsRealNumericFamily,
@@ -15,12 +15,11 @@ import { runFactoringEngine } from '../../symbolic-engine/orchestrator';
 import { normalizeExactPowerLogNode } from '../../symbolic-engine/power-log';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
-import { detectRealRangeImpossibility } from '../../equation/range-impossibility';
+import { RETIRED_ENGINE_MESSAGE } from '../../kernel/retired-engine';
 import {
   ce,
   isNumericOnlyNode,
   numericExpression,
-  readNumericValue,
 } from './math-json';
 import { exactExpression } from './expression-prep';
 import type {
@@ -41,45 +40,6 @@ function normalizedSupplementLatex(
 
 function answerMathJson(node: unknown): SerializableMathJson {
   return node as SerializableMathJson;
-}
-
-function solutionApproximationText(symbol: string, solutions: unknown[]) {
-  const approximations = solutions
-    .map((solution) => {
-      const boxed = ce.box(solution as Parameters<typeof ce.box>[0]) as BoxedLike;
-      const numeric = boxed.N?.() ?? boxed.evaluate();
-      return latexToApproxText(numeric.latex);
-    })
-    .filter((value): value is string => Boolean(value));
-
-  if (approximations.length === 0) {
-    return undefined;
-  }
-
-  return approximations.length === 1
-    ? `${symbol} ~= ${approximations[0]}`
-    : `${symbol} ~= ${approximations.join(', ')}`;
-}
-
-function numericSolutionValues(solutions: unknown[]) {
-  return solutions.map((solution) => {
-    const boxed = ce.box(solution as Parameters<typeof ce.box>[0]) as BoxedLike;
-    const numeric = boxed.N?.() ?? boxed.evaluate();
-    return readNumericValue(numeric.json);
-  });
-}
-
-function guardSolvedSolutions(solutions: unknown[]) {
-  for (const solution of solutions) {
-    const boxed = ce.box(solution as Parameters<typeof ce.box>[0]) as BoxedLike;
-    const numeric = boxed.N?.() ?? boxed.evaluate();
-    const guardError = getResultGuardError(numeric?.latex, boxed?.latex);
-    if (guardError) {
-      return guardError;
-    }
-  }
-
-  return undefined;
 }
 
 function isCollapsedPowerSingularity(node: unknown, rawLatex: string) {
@@ -372,54 +332,8 @@ function executePreparedExpressionActionInternal(
     }
 
     if (action === 'solve') {
-      const rangeImpossibility = detectRealRangeImpossibility(sourceLatex);
-      if (rangeImpossibility.kind === 'impossible') {
-        return {
-          warnings: [],
-          normalizedMathJson: expr.json,
-          error: rangeImpossibility.error,
-        };
-      }
-
-      const solutions = expr.solve?.('x');
-      if (!Array.isArray(solutions) || solutions.length === 0) {
-        return {
-          warnings: [],
-          normalizedMathJson: expr.json,
-          error: 'No symbolic solution was found for x.',
-        };
-      }
-
-      const guardError = guardSolvedSolutions(solutions);
-      if (guardError) {
-        return {
-          warnings: [],
-          normalizedMathJson: expr.json,
-          error: guardError,
-        };
-      }
-
-      const exactLatex = solutionsToLatex(
-        'x',
-        solutions.map((solution) => ce.box(solution).latex),
-      );
-      const solutionNodes = solutions.map((solution) =>
-        ce.box(solution as Parameters<typeof ce.box>[0]).json);
-
-      return {
-        exactLatex,
-        answerMathJson: answerMathJson(
-          solutionNodes.length === 1
-            ? ['Equal', 'x', solutionNodes[0]]
-            : ['Element', 'x', ['Set', ...solutionNodes]],
-        ),
-        approxText: solutionApproximationText('x', solutions),
-        normalizedMathJson: expr.json,
-        rawSolutions: solutions,
-        rawSolutionLatex: solutions.map((solution) => ce.box(solution as Parameters<typeof ce.box>[0]).latex),
-        numericSolutions: numericSolutionValues(solutions),
-        warnings: [],
-      };
+      // Solving was guarded by the old Equation engine's range checks (retired); Calculate is unavailable until rebuilt.
+      return { warnings: [], normalizedMathJson: expr.json, error: RETIRED_ENGINE_MESSAGE };
     }
 
     const exact =

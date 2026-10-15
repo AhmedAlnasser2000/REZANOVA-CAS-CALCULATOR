@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { createCalculusResultOutcome } from '../calculus/workspace/result-document';
-import { createEquationResultOutcome } from '../equation/equation-solve-result';
 import { createGeometryResultOutcome } from '../geometry/result-document';
 import { createCalculateResultOutcome } from '../modes/calculate/result-document';
 import { createTableResultOutcome } from '../modes/table-result-document';
@@ -19,8 +18,8 @@ const proof = proveAnswerMathJson({
   canonicalLatex: 'x=1',
   candidate: declareProducerOwnedAnswerMathJson({
     mathJson: ['Equal', 'x', 1],
-    owner: 'equation',
-    routeId: 'equation.linear',
+    owner: 'calculate',
+    routeId: 'calculate.arithmetic',
     source: 'workspace-adapter-test',
   }),
 });
@@ -43,14 +42,13 @@ function expectNativeProvenPrimary(
 }
 
 describe('workspace canonical producer math values', () => {
-  it('passes direct proven values through Calculate, Equation, and Calculus owners', () => {
+  it('passes direct proven values through Calculate and Calculus owners', () => {
     const currentMath = requireProvenCanonicalMathValueV2({ canonicalLatex: success.exactLatex,
       mathJson: ['Equal', 'x', 1], owner: 'calculate', routeId: 'calculate.arithmetic', source: 'native-adapter-test' });
     const calculate = createCalculateResultOutcome(success, () => currentMath);
     expect(calculate.canonicalResult.version).toBe(7);
     expect(calculate.canonicalResult.primary).toEqual({ kind: 'math', value: currentMath });
 
-    expectNativeProvenPrimary(createEquationResultOutcome(success, options));
     expectNativeProvenPrimary(createCalculusResultOutcome(success, options));
   });
 

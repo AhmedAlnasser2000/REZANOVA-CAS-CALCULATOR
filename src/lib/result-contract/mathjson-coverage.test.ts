@@ -264,13 +264,13 @@ describe('MathJSON coverage registry', () => {
 
   it('executes all replay and golden native probes and reports classified coverage', async () => {
     const report = await buildMathJsonCoverageReport();
-    expect(report.replayFixtureCount).toBe(100);
-    expect(report.goldenCaseCount).toBe(47);
-    expect(report.evidenceCount).toBe(147);
+    expect(report.replayFixtureCount).toBe(73);
+    expect(report.goldenCaseCount).toBe(41);
+    expect(report.evidenceCount).toBe(114);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
     expect(report.totals).toMatchObject({
-      leaves: 506,
-      proven: 506,
+      leaves: 389,
+      proven: 389,
       exempt: 0,
       missing: 0,
     });

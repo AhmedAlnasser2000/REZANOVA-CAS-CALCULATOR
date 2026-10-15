@@ -117,4 +117,3 @@ export function expectMathStaticLatex(container: HTMLElement, latex: string | Re
   expect(within(container).getByLabelText(latex)).toBeInTheDocument();
 }
 
-export { legacyEquationIt } from './legacy-equation';

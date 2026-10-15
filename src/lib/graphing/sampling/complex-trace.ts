@@ -1,4 +1,4 @@
-import { createComplexNumericEvaluator } from '../../equation/complex-domain-public';
+import { createComplexNumericEvaluator } from '../../symbolic-engine/equation/numeric/complex-sampling';
 import { graphRealLogConvention } from './real-log-convention';
 
 export type GraphComplexTraceValue = { re: number; im: number; magnitude: number; phase: number };

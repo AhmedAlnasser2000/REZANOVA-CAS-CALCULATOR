@@ -1,6 +1,5 @@
 import calculate from './fixtures/v1/calculate.json';
 import calculus from './fixtures/v1/calculus.json';
-import equation from './fixtures/v1/equation.json';
 import geometry from './fixtures/v1/geometry.json';
 import matrix from './fixtures/v1/matrix.json';
 import statistics from './fixtures/v1/statistics.json';
@@ -11,7 +10,6 @@ import type { HistoryReplayFixtureFile } from './fixture-contract';
 
 export const HISTORY_REPLAY_FIXTURE_FILES = [
   calculate,
-  equation,
   calculus,
   matrix,
   vector,

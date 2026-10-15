@@ -3,7 +3,6 @@ import type {
   CalculateAction,
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
-  EquationScreen,
   OutputStyle,
   ResultOrigin,
 } from '../../types/calculator';
@@ -29,12 +28,6 @@ export type GoldenCalculateCase = GoldenBase & {
   latex: string;
   angleUnit?: AngleUnit;
   outputStyle?: OutputStyle;
-};
-
-export type GoldenEquationCase = GoldenBase & {
-  mode: 'equation';
-  equationScreen?: EquationScreen;
-  equationLatex: string;
 };
 
 export type GoldenCalculusCase = GoldenBase & {
@@ -94,7 +87,6 @@ export type GoldenCase =
   | GoldenNewEquationCase
   | GoldenNewIntegrationCase
   | GoldenCalculateCase
-  | GoldenEquationCase
   | GoldenCalculusCase
   | GoldenTrigonometryCase
   | GoldenGeometryCase
@@ -161,12 +153,6 @@ const CALCULUS_REQUEST: RunCalculusModeRequest = {
   outputStyle: 'both',
   ansLatex: '0',
 };
-
-/**
- * Old Equation engine cases are inert unless CALCWIZ_LEGACY_EQUATION=1 (TESTS-LEGACY-EQUATION-INERT1,
- * tools/legacy-equation-tests.mjs).
- */
-export const LEGACY_EQUATION_GOLDEN_ENABLED = process.env.CALCWIZ_LEGACY_EQUATION === '1';
 
 const allGoldenCases: GoldenCase[] = [
   {
@@ -448,83 +434,6 @@ const allGoldenCases: GoldenCase[] = [
     },
   },
   {
-    id: 'equation-linear-symbolic',
-    lane: 'equation',
-    mode: 'equation',
-    equationLatex: '5x+6=3',
-    expected: {
-      kind: 'success',
-      title: 'Solve',
-      exactIncludes: ['x=', '\\frac'],
-      approxIncludes: ['x \\approx'],
-      resultOrigin: 'symbolic',
-    },
-  },
-  {
-    id: 'equation-guided-quadratic-symbolic',
-    lane: 'equation',
-    mode: 'equation',
-    equationScreen: 'quadratic',
-    equationLatex: '',
-    expected: {
-      kind: 'success',
-      title: 'Quadratic',
-      exactIncludes: ['x\\in', '2', '3'],
-      resultOrigin: 'symbolic',
-    },
-  },
-  {
-    id: 'equation-rational-exclusion',
-    lane: 'equation',
-    mode: 'equation',
-    equationLatex: '\\frac{1}{3}+\\frac{1}{6x}=1',
-    expected: {
-      kind: 'success',
-      title: 'Solve',
-      exactIncludes: ['\\frac{1}{4}'],
-      supplementIncludes: ['x\\ne0'],
-    },
-  },
-  {
-    id: 'equation-radical-candidate-rejection',
-    lane: 'equation',
-    mode: 'equation',
-    equationLatex: '\\sqrt{x+1}=x-1',
-    expected: {
-      kind: 'success',
-      title: 'Solve',
-      exactEquals: 'x=3',
-      rejectedCandidateCount: 1,
-    },
-  },
-  {
-    id: 'equation-absolute-value-bounded',
-    lane: 'equation',
-    mode: 'equation',
-    equationLatex: '\\left|x^2+x-2\\right|=3',
-    expected: {
-      kind: 'success',
-      title: 'Solve',
-      exactIncludes: ['\\sqrt{21}'],
-    },
-  },
-  {
-    id: 'equation-range-impossibility-stop',
-    lane: 'equation',
-    mode: 'equation',
-    equationLatex: '\\sin\\left(x\\right)=2',
-    expected: {
-      kind: 'success',
-      title: 'Solve',
-      exactEquals: '\\varnothing',
-      answerRowsInclude: ['\\varnothing'],
-      warningIncludes: ['between -1 and 1'],
-      solveBadgesInclude: ['Range Guard'],
-      resultOrigin: 'symbolic',
-      runtimeStopReasonKind: 'range-guard',
-    },
-  },
-  {
     id: 'calculate-arcsin-one-deg',
     lane: 'calculate-inverse-trig',
     mode: 'calculate',
@@ -592,6 +501,21 @@ const allGoldenCases: GoldenCase[] = [
     },
   },
   {
+    // EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B: keeps two Trigonometry cases after its equation case left with the old engine.
+    id: 'trigonometry-identity-pythagorean',
+    lane: 'trigonometry-identity',
+    mode: 'trigonometry',
+    request: {
+      inputLatex: '\\sin^2(x)+\\cos^2(x)',
+      screenHint: 'identitySimplify',
+      angleUnit: 'deg',
+    },
+    expected: {
+      kind: 'success',
+      exactEquals: '1',
+    },
+  },
+  {
     id: 'trigonometry-period-phase-rad',
     lane: 'trigonometry-period-phase',
     mode: 'trigonometry',
@@ -604,25 +528,6 @@ const allGoldenCases: GoldenCase[] = [
       kind: 'success',
       exactIncludes: ['P=\\frac{2\\pi}{3}', 'h=\\frac{\\pi}{3}'],
       detailTitlesInclude: ['Wave Facts', 'First Cycle Landmarks'],
-    },
-  },
-  {
-    id: 'trigonometry-periodic-sine-equation',
-    lane: 'trigonometry-equations',
-    mode: 'trigonometry',
-    request: {
-      inputLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
-      screenHint: 'equationSolve',
-      angleUnit: 'deg',
-    },
-    expected: {
-      kind: 'success',
-      exactIncludes: ['30+360n', '150+360n'],
-      answerRowsInclude: ['x=30+360n', 'x=150+360n'],
-      branchIncludes: ['30+360n', '150+360n'],
-      supplementIncludes: ['n\\in\\mathbb{Z}'],
-      plannerBadgesInclude: ['Trig Solve Backend'],
-      resultOrigin: 'symbolic',
     },
   },
   {
@@ -955,6 +860,55 @@ const allGoldenCases: GoldenCase[] = [
     targets: ['a'],
     expected: { kind: 'success', title: 'Equation', presentedText: 'a ∈ (-2, 2)' },
   },
+  // EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B: the six retired old-Equation golden problems, on New Equation (user approval).
+  {
+    id: 'new-equation-linear',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['5x+6=3'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = -3/5' },
+  },
+  {
+    id: 'new-equation-cubic',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['x^3-6x^2+11x-6=0'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = 1\nx = 2\nx = 3' },
+  },
+  {
+    id: 'new-equation-rational-exclusion',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\frac{1}{3}+\\frac{1}{6x}=1'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = 1/4' },
+  },
+  {
+    id: 'new-equation-radical-candidate-rejection',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\sqrt{x+1}=x-1'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = 3' },
+  },
+  {
+    id: 'new-equation-absolute-value',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\left|x^2+x-2\\right|=3'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'x = (-1 - √21)/2\nx = (√21 - 1)/2' },
+  },
+  {
+    id: 'new-equation-range-impossibility',
+    lane: 'new-equation',
+    mode: 'new-equation',
+    rows: ['\\sin\\left(x\\right)=2'],
+    targets: ['x'],
+    expected: { kind: 'success', title: 'Equation', presentedText: 'No solution' },
+  },
   {
     id: 'new-integration-polynomial',
     lane: 'new-integration',
@@ -974,14 +928,14 @@ const allGoldenCases: GoldenCase[] = [
 /** Every golden case (55): print hygiene scans them all. */
 export const ALL_GOLDEN_CASES: readonly GoldenCase[] = allGoldenCases;
 
-/**
- * The behaviour corpus run by the golden runner: old Equation engine cases are inert unless the legacy flag is set.
- */
-export const goldenCases: GoldenCase[] = allGoldenCases.filter(goldenCase => goldenCase.mode !== 'equation' || LEGACY_EQUATION_GOLDEN_ENABLED);
+/** The behaviour corpus run by the golden runner. */
+export const goldenCases: GoldenCase[] = allGoldenCases;
 
 /**
- * Cases on the generic canonical-result contract (47): the coverage, MathJSON coverage and result-intent ratchets
- * keep all of them, old Equation included, so no ratchet loses evidence. New Equation and New Integration
+ * Cases on the generic canonical-result contract (41): the coverage, MathJSON coverage and result-intent ratchets
+ * keep all of them. The six old-Equation cases left with that engine (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B, user
+ * approval); their problems are New Equation cases now. The Trigonometry equation case left with it too.
+ * New Equation and New Integration
  * (schema-7 typed kinds) use their own read models and are checked by the golden runner and print hygiene instead.
  */
 export const CONTRACT_GOLDEN_CASES: GoldenCase[] = allGoldenCases.filter(goldenCase => goldenCase.mode !== 'new-equation' && goldenCase.mode !== 'new-integration');

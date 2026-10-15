@@ -15,8 +15,8 @@ function provenValue(canonicalLatex: string, mathJson: unknown) {
     canonicalLatex,
     candidate: declareProducerOwnedAnswerMathJson({
       mathJson,
-      owner: 'equation',
-      routeId: 'equation.linear',
+      owner: 'calculate',
+      routeId: 'calculate.arithmetic',
       source: 'producer-builder-test',
     }),
   });

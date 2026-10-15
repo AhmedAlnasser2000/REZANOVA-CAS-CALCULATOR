@@ -420,16 +420,6 @@ describe('Canonical Result V2 contract', () => {
               'newIntegration:standard': 2,
               'newIntegration:error': 2,
             }
-        : routeId === 'equation.domain-boundary'
-          ? { typedLabeledSupplement: 2, directLocus: 2 }
-          : routeId === 'equation.linear'
-          ? { nativeSystem: 2 }
-          : routeId === 'equation.polynomial'
-            ? { directPolynomialSystem: 2 }
-        : routeId === 'equation.rational-radical'
-            ? { typedLabeledSupplement: 2 }
-        : routeId === 'equation.trig-exp-log'
-          ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.equation'
           ? { equationSolve: 2 }
         : routeId === 'trigonometry.right-triangle'
@@ -446,14 +436,6 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'calculus.derivatives',
       selector: 'derivativePoint',
-    })).toBe(2);
-    expect(canonicalResultVersionForProducer({
-      routeId: 'equation.rational-radical',
-      selector: 'typedLabeledSupplement',
-    })).toBe(2);
-    expect(canonicalResultVersionForProducer({
-      routeId: 'equation.trig-exp-log',
-      selector: 'typedLabeledSupplement',
     })).toBe(2);
     expect(canonicalResultVersionForProducer({
       routeId: 'trigonometry.right-triangle',

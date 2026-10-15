@@ -5,7 +5,7 @@ import {
 import {
   createComplexNumericEvaluator,
   findComplexNewtonCandidates,
-} from '../../equation/complex-domain-public';
+} from '../../symbolic-engine/equation/numeric/complex-sampling';
 import type {
   GraphAnalysisEvidenceV1,
   GraphAnalysisFeature,
