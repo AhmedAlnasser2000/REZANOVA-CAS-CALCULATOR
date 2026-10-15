@@ -79,8 +79,18 @@ function kernelize(store: ExpressionStore, exprs: readonly ExprId[]): Kernels {
     const k = store.node(n);
     if (k.kind === 'apply' && k.fn === 'exp' && store.numberValue(k.arg)) expArgs.push(store.numberValue(k.arg) as Rational);
   }
-  let M = 1n;
-  for (const q of expArgs) M = iquot(ctx, imul(ctx, M, q.denominator), igcd(ctx, M, q.denominator));
+  const lcm = (qs: Iterable<Rational>) => { let m = 1n; for (const q of qs) m = iquot(ctx, imul(ctx, m, q.denominator), igcd(ctx, m, q.denominator)); return m; };
+  const M = lcm(expArgs);
+  // Exponentials of other constants, grouped by direction: exp(a) and exp(b) share a base when a/b is rational (its
+  // normal form is a number: (2 + 2i)/(1 + i) = 2), so exp(2 + 2i) = exp(1 + i)².
+  const groups: { base: ExprId; name: string; members: Map<ExprId, Rational>; M: bigint }[] = [];
+  for (const n of store.postorder([...exprs])) {
+    const k = store.node(n);
+    if (k.kind !== 'apply' || k.fn !== 'exp' || store.numberValue(k.arg) || store.freeSymbols(k.arg).length) continue;
+    const home = groups.find(g => { const r = kernelNormalForm(store, store.div(k.arg, g.base)); const q = r === undefined ? undefined : store.numberValue(r); if (q) g.members.set(n, q); return q !== undefined; });
+    if (!home) groups.push({ base: k.arg, name: `η${groups.length + 1}`, members: new Map([[n, rational(ctx, 1n)]]), M: 1n });
+  }
+  for (const g of groups) g.M = lcm(g.members.values());
   const EPS = 'ε', atoms = new Map<ExprId, string>(), radicals: { name: string; q: number; power: ExprId }[] = [];
   const kernelized = (e: ExprId): ExprId => {
     const done = new Map<ExprId, ExprId>();
@@ -94,6 +104,9 @@ function kernelize(store: ExpressionStore, exprs: readonly ExprId[]): Kernels {
       else if (k.kind === 'apply' && k.fn === 'exp' && store.numberValue(k.arg)) {
         const q = store.numberValue(k.arg) as Rational;
         done.set(n, store.pow(store.symbol(EPS), store.integer(iquot(ctx, imul(ctx, q.numerator, M), q.denominator))));
+      } else if (groups.some(g => g.members.has(n))) {
+        const g = groups.find(h => h.members.has(n)) as (typeof groups)[number], q = g.members.get(n) as Rational;
+        done.set(n, store.pow(store.symbol(g.name), store.integer(iquot(ctx, imul(ctx, q.numerator, g.M), q.denominator))));
       } else {
         if (!atoms.has(n)) {
           // A radical atom κ = u^{p/q} (q > 1, p ≥ 1) satisfies κ^q = u^p for the principal root, for any u.
@@ -108,8 +121,10 @@ function kernelize(store: ExpressionStore, exprs: readonly ExprId[]): Kernels {
     }
     return done.get(e) as ExprId;
   };
-  const ids = exprs.map(kernelized), vars = [EPS, ...atoms.values()];
-  const back = new Map<string, ExprId>([[EPS, store.exp(store.number(rational(ctx, 1n, M)))], ...[...atoms].map(([atom, name]) => [name, atom] as [string, ExprId])]);
+  const ids = exprs.map(kernelized), vars = [EPS, ...groups.map(g => g.name), ...atoms.values()];
+  const back = new Map<string, ExprId>([[EPS, store.exp(store.number(rational(ctx, 1n, M)))],
+    ...groups.map(g => [g.name, store.exp(store.mul(store.number(rational(ctx, 1n, g.M)), g.base))] as [string, ExprId]),
+    ...[...atoms].map(([atom, name]) => [name, atom] as [string, ExprId])]);
   // Reduce modulo the radical relations κ^q = U (U a polynomial in earlier variables), latest atom first.
   const relations = [...radicals].reverse().flatMap(rel => {
     const U = fractionOf(store, rel.power, vars);

@@ -42,6 +42,9 @@ group('exact zeros behind domain-kept forms and complex radicals', () => {
     ['\\sin\\left(x^2+x\\right)=\\frac{1}{2}', 'complex'],
     ['\\exp((x-1)/(x+2))=1', 'complex'],
     ['\\exp\\left(\\frac{x^2+1}{x-2}\\right)=\\imaginaryI', 'complex'],
+    // Exponentials grouped by direction (exp(2 + 2i) = exp(1 + i)²) and log(exp a) = a for |Im a| < π.
+    ['\\ln\\left(\\frac{x^2+1}{x-2}\\right)=1+\\imaginaryI', 'complex'],
+    ['(\\ln x)^6-5(\\ln x)^3+4=0', 'complex'],
   ] as const)('%s over %s', (latex, domain) => {
     expect(run(latex, domain)).toBe('solved');
   });

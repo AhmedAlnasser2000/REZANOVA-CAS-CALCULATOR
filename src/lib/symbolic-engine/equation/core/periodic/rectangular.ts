@@ -1,9 +1,9 @@
-import { rational, rMultiply, type Rational } from '../algebra/rational';
+import { rational, rCompare, rMultiply, rNegate, type Rational } from '../algebra/rational';
 import { attachForm } from '../decision/radical-forms';
 import { canonicalAngle, expandConstant } from '../representation/angles';
 import { enclose, type Bounds } from '../representation/enclosure';
 import { evaluateExact, imaginaryPart, realPart, type ExactValue } from '../representation/evaluate';
-import type { ExprId, ExpressionStore } from '../representation/expression';
+import type { ExprId, ExpressionStore, FunctionName } from '../representation/expression';
 import { kernelIdentityHolds, kernelNormalForm } from '../representation/kernel-identity';
 import { realSign, START_BITS } from '../representation/real-order';
 
@@ -247,6 +247,16 @@ const excludesZero = (b: { re: Bounds; im: Bounds }) =>
  * root x = (c + √D)/2 of x² − c·x + 2c + 1, exp((x² + 1)/(x − 2)) → exp(c) → i when c = (½ + 2k)·π·i — then the
  * result is tested as a kernel identity. True is exact; false means only "not shown".
  */
+/** log(exp a) = a on the principal branch: Im a certified inside (−π, π) by an enclosure of a/π. */
+function principalLogExp(store: ExpressionStore, fn: FunctionName, arg: ExprId): ExprId {
+  const a = store.node(arg);
+  if (fn === 'log' && a.kind === 'apply' && a.fn === 'exp' && store.freeSymbols(a.arg).length === 0) {
+    const b = complexBounds(store, store.div(a.arg, store.constant('pi')), START_BITS * 2), one = rational(store.ctx, 1n);
+    if (b !== undefined && rCompare(store.ctx, b.im.lo, rNegate(store.ctx, one)) > 0 && rCompare(store.ctx, b.im.hi, one) < 0) return a.arg;
+  }
+  return store.apply(fn, arg);
+}
+
 function identityIsZero(store: ExpressionStore, id: ExprId): boolean {
   const nonzero = (x: ExprId) => { const b = complexBounds(store, x, START_BITS * 2); return b !== undefined && excludesZero(b); };
   const size = (x: ExprId) => store.postorder([x]).length;
@@ -262,7 +272,7 @@ function identityIsZero(store: ExpressionStore, id: ExprId): boolean {
     done.set(n, node.kind === 'add' ? store.add(...node.args.map(get))
       : node.kind === 'mul' ? store.mul(...node.args.map(get))
         : node.kind === 'pow' ? store.pow(get(node.base), get(node.exponent))
-          : node.kind === 'apply' ? store.apply(node.fn, normal(get(node.arg))) : n);
+          : node.kind === 'apply' ? principalLogExp(store, node.fn, normal(get(node.arg))) : n);
   }
   const folded = done.get(id) as ExprId;
   return store.numberValue(folded)?.numerator === 0n || kernelIdentityHolds(store, folded, store.integer(0)) === true;
