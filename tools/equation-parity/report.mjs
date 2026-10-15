@@ -17,7 +17,7 @@ const runs = [];
 for (const f of readdirSync(dir).filter(f => f.startsWith(prefix) && /^\d+\.jsonl$/u.test(f.slice(prefix.length)))) {
   for (const line of readFileSync(join(dir, f), 'utf8').split('\n')) if (line) runs.push(JSON.parse(line));
 }
-const corpus = JSON.parse(readFileSync(join(dir, 'corpus.json'), 'utf8')).cases;
+const corpus = JSON.parse(readFileSync(join(root, 'tools/equation-parity/corpus.json'), 'utf8')).cases;
 const latexOf = r => r.latex ?? corpus[r.i]?.latex;
 
 function classOf(r) {
