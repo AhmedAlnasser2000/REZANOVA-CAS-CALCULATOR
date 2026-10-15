@@ -5,6 +5,7 @@ import { finiteSet, normalizeSet, resourceOutcome, setKey, type EquationOutcome,
 import { ProofLogBuilder } from '../representation/transform';
 import { decideCells, type ParamCase } from './cells';
 import { decideKernels } from './kernels';
+import { decideShifted } from './shift';
 import { parametricAtoms, targetInKernel } from './specialize';
 import { decideTree } from './tree';
 
@@ -31,6 +32,8 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
       const cells = decideCells(problem, atoms.atoms);
       return cells.kind === 'refused' ? { kind: 'incomplete-implementation', reason: cells.reason } : caseOutcome(problem, cells.cases);
     }
+    const shifted = decideShifted(problem, decideParametricProblem);
+    if (shifted !== undefined) return shifted;
     const tree = decideTree(problem, atoms.atoms);
     return tree.kind === 'refused' ? { kind: 'incomplete-implementation', reason: tree.reason } : caseOutcome(problem, simplifyCases(problem.store, tree.cases));
   } catch (e) {
