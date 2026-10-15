@@ -59,6 +59,23 @@ export function useNewEquationRuntime(workspaces: ReturnType<typeof useWorkspace
     leaveUnchecked(id, 'cancelled');
   }, [setView, leaveUnchecked]);
 
+  // Equation is the starting workspace (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B): the boot tab restores the saved drafts
+  // (the first fills it, the rest open beside it) and saving starts at once, without waiting for open().
+  useEffect(() => {
+    const boot = current.current.activeInstance;
+    if (enteredRef.current || boot?.workspaceKind !== 'new-equation') return;
+    enteredRef.current = true;
+    setEntered(true);
+    const [first, ...rest] = loadEquationDrafts(localStorage);
+    if (!first) return;
+    current.current.updateInstanceSurfaceState(boot.id, { ...first.draft });
+    current.current.renameInstance(boot.id, first.title);
+    if (rest.length) {
+      current.current.createNewEquationTabs(rest.map(v => ({ title: v.title, state: { ...v.draft } })));
+      current.current.focusInstance(boot.id);
+    }
+  }, []);
+
   const open = useCallback(() => {
     if (!enteredRef.current) {
       enteredRef.current = true;
