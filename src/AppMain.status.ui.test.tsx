@@ -9,7 +9,7 @@ describe('AppMain bootstrap status', () => {
     vi.doUnmock('./lib/tauri');
   });
 
-  it('marks the display ready after shell bootstrap even if background loaders lag', async () => {
+  it('shows the Equation start page after bootstrap even if background loaders lag', async () => {
     vi.doMock('./lib/tauri', async () => {
       const actual = await vi.importActual<typeof import('./lib/app-state/tauri')>('./lib/tauri');
 
@@ -32,9 +32,9 @@ describe('AppMain bootstrap status', () => {
     const { default: AppMain } = await import('./AppMain');
     render(<AppMain />);
 
-    await screen.findByTestId('main-editor');
-    await waitFor(() => expect(screen.getByTestId('display-status')).toHaveTextContent('Ready'));
-    expect(screen.getByTestId('display-status')).not.toHaveTextContent('Loading...');
-    expect(document.querySelector('.app-shell')).toHaveAttribute('lang', 'en');
+    // Equation is the starting workspace (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+    await screen.findByTestId('new-equation-page', {}, { timeout: 10_000 });
+    await waitFor(() => expect(document.querySelector('.app-shell')).toHaveAttribute('lang', 'en'));
+    expect(screen.queryByTestId('main-editor')).not.toBeInTheDocument();
   });
 });

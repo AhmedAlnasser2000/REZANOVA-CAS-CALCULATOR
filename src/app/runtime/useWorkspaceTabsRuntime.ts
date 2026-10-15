@@ -25,6 +25,7 @@ import {
   type WorkspaceInstance,
   type WorkspaceInstanceId,
   type WorkspaceKind,
+  DEFAULT_WORKSPACE_KIND,
   isWorkspaceModeKind,
 } from './workspace-instances';
 import {
@@ -196,9 +197,9 @@ export function useWorkspaceTabsRuntime({
   const createTab = useCallback(() => {
     workspaceDisplayHost.captureActiveDisplayState();
     workspaceRuntimeHost.captureActiveRuntimeState();
-    workspaceStateHost.createBlankInstance('calculate');
-    commitVisibleModeSelection('calculate');
-  }, [commitVisibleModeSelection, workspaceDisplayHost, workspaceRuntimeHost, workspaceStateHost]);
+    // A new tab is an Equation tab, the starting workspace (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+    workspaceStateHost.createBlankInstance(DEFAULT_WORKSPACE_KIND);
+  }, [workspaceDisplayHost, workspaceRuntimeHost, workspaceStateHost]);
 
   const duplicateTab = useCallback((instanceId: WorkspaceInstanceId) => {
     const source = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
