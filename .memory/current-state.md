@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-10-13
+Last updated: 2026-10-14
 
 ## Purpose
 
@@ -26,6 +26,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
+
+- Equation phases recorded (2026-10-14; claude / claude-opus-5-5 / opus-5.5, live): Phase 1 ends with stage 17 `EQUATION-RECONSTRUCTION-CLOSEOUT1` (next, planned: parity corpus and capability ledger, then retirement of the old engine); Phase 2 and Phase 3 contents and the re-tagged ledger are in the Equation roadmap.
 
 - Matrix/Vector editors compose supported scalar, matrix, and vector expressions with exact/symbolic coefficients and explicit shape, type, divisor, and limit stops. Named values stay in their own Matrix or Vector workspace, while Calculate evaluates inline Matrix/Vector expressions as answers using its own scalar variables. The 8 by 8 Matrix and length-8 Vector editing caps remain. The latest main-based merge snapshot passed 4,554 unit and 607 UI tests, a production build, and two headed Chrome checks. No push is authorized.
 - Integration reconstruction (2026-10-13; codex / gpt-6 / sol): INTEGRATION-ALGEBRAIC-DECISION1 is backend verified: actual-constant normalized trace primitives, general Hermite/infinity/residue reduction and complete logarithmic assembly with checked infinity, non-torsion-divisor and holomorphic negatives. Gate A 141 focused plus 84 adopted checks and Gate B 122 focused checks pass; Schultz/order-29 fresh round trips fit unchanged limits. Type/lint/build/isolation/boundary/durable checks accompany the separately authorized Gate B commit after Gate A 12498c26. User stops further slow measurements at 18:30:21 Riyadh and requests commit; partial warmed coverage is explicit, with no performance claim. A later performance gate covers multiple slow cases. Existing adoption is unchanged; broader adoption stays planned after separately reviewed mixed decisions and construction-height repair. Current height remains eight; trigs alone are deferred. No push.
