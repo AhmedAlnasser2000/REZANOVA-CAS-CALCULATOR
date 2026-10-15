@@ -67,7 +67,7 @@
     "report:workspace-freshness": "node tools/workspace-freshness.mjs",
     "update:history-replay-fixtures": "vite-node tools/update-history-replay-fixtures.ts",
     "test:history-replay": "vitest run src/lib/history-replay/*.test.ts && node --test tools/import-history-replay.test.mjs",
-    "test:history-replay:browser": "playwright test e2e/history-replay-ratchet.spec.ts --project=chromium",
+    "test:history-replay:browser": "playwright test e2e/history-replay-ratchet.spec.ts --project=chromium --pass-with-no-tests",
     "report:history-replay": "vite-node tools/report-history-replay.ts",
     "import:history-replay": "node tools/import-history-replay.mjs",
     "generate:labs-catalog": "node tools/generate-labs-catalog.mjs",

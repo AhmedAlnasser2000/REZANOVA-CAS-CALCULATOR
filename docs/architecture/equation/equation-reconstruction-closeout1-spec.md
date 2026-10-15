@@ -187,6 +187,10 @@ Deleted: `src/lib/equation/`, `src/lib/modes/equation/`, `src/lib/modes/equation
 
 The canary spec runs only open workspaces' cases; the retired cases stay in the registry for their rebuild.
 
+Two CI steps named retired specs directly:
+- `ci.yml` "Run focused browser smoke" ran the Calculate smoke; it now runs the History persistence and Guide specs, which cover this retirement on the open pages.
+- The weekly "Verify History create and replay flows" step runs the excluded History replay ratchet; `test:history-replay:browser` passes with no tests until a History-writing workspace returns.
+
 ### B7. Guide
 
 - The old Equation's 13 worked examples are removed (`src/lib/guide/content/selectors.ts`); a Guide test asserts no example targets the retired Equation.

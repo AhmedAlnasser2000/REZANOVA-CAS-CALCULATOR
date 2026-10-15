@@ -202,4 +202,4 @@ jobs:
         run: npm run test:canaries:browser
 
       - name: Run focused browser smoke
-        run: npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium
+        run: npx playwright test e2e/history-persistence-parity.spec.ts e2e/guide-capability-evidence.spec.ts --project=chromium
