@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B (user-approved 2026-10-15): the old Equation engine is retired, so its equation.* routes, 6 golden cases and replay fixtures leave; the Trigonometry equation golden case and the calculus-implicit-circle replay fixture used that engine and leave too (trigonometry.equation stays as a route without replay evidence); a Trigonometry identity golden case keeps two Trigonometry cases.",
+  "reason": "EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B (user-approved 2026-10-15): the old Equation engine is retired, so its equation.* routes, 6 golden cases and replay fixtures leave; trigonometry.equation (its golden case and replay fixture) and the calculus-implicit-circle replay fixture used that engine and leave too; a Trigonometry identity golden case keeps two Trigonometry cases.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -43,7 +43,6 @@
     "table.trigonometric-function",
     "table.two-functions",
     "trigonometry.angle-conversion",
-    "trigonometry.equation",
     "trigonometry.function",
     "trigonometry.identity",
     "trigonometry.period-phase",
@@ -517,17 +516,6 @@
       "maxBytes": 504,
       "leaves": 2,
       "proven": 2,
-      "exempt": 0,
-      "missing": 0
-    },
-    "trigonometry.equation": {
-      "evidence": 0,
-      "replayFixtures": 0,
-      "goldenCases": 0,
-      "bytes": 0,
-      "maxBytes": 0,
-      "leaves": 0,
-      "proven": 0,
       "exempt": 0,
       "missing": 0
     },

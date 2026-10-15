@@ -29,7 +29,6 @@ export const FROZEN_V1_PRODUCER_ROUTE_IDS = [
   'calculus.ode-ivp',
   'trigonometry.function',
   'trigonometry.identity',
-  'trigonometry.equation',
   'trigonometry.right-triangle',
   'trigonometry.angle-conversion',
   'trigonometry.period-phase',
@@ -99,7 +98,6 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
   {
     'calculus.derivatives': ['derivativePoint'],
     'calculus.integrals': ['indefiniteIntegral:standard', 'indefiniteIntegral:error', 'newIntegration:standard', 'newIntegration:error'],
-    'trigonometry.equation': ['equationSolve'],
     'trigonometry.right-triangle': ['rightTriangle'],
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );

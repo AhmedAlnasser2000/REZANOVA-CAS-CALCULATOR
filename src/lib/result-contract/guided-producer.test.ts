@@ -5,35 +5,9 @@ import {
   runTableMode,
 } from '../modes/table-core';
 import { buildStatisticsModeRunPayload } from '../statistics/runtime-run';
-import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
 import { requireCanonicalResultAuthority } from './native-result';
 
 describe('guided-domain canonical result producers', () => {
-  it('re-owns Trigonometry equation truth after the Equation handoff boundary', () => {
-    const result = buildTrigonometryModeRunPayload({
-      inputLatex: '\\sin(x)=\\frac{1}{2}',
-      screenHint: 'equationSolve',
-      angleUnit: 'deg',
-    });
-
-    expect(result.outcome.title).toBe('Trig Equation');
-    if (result.outcome.kind === 'prompt') throw new Error('Expected Trigonometry result.');
-    expect(requireCanonicalResultAuthority(result.outcome, 'Trigonometry test').canonicalResult)
-      .toBeDefined();
-    expect(result.outcome.canonicalResult?.version).toBe(2);
-    if (result.outcome.canonicalResult?.version !== 2) {
-      throw new Error('Expected the Trigonometry equation route to use Canonical Result V2.');
-    }
-    expect(result.outcome.canonicalResult.branchReadback?.target.mathJson).toBe('x');
-    expect(result.outcome.canonicalResult.branchReadback?.branches
-      .every((branch) => branch.mathJson !== undefined)).toBe(true);
-    expect(result.outcome.canonicalResult.answerRows?.rows
-      .every((row) => row.math.mathJson !== undefined)).toBe(true);
-    expect(result.outcome.canonicalResult.supplements?.[0]?.math.mathJson)
-      .toEqual(['Element', 'n', 'Integers']);
-    expect(JSON.stringify(result.outcome.canonicalResult)).not.toContain('actions');
-  });
-
   it('keeps Geometry transfer actions transient while storing native math', () => {
     const result = buildGeometryModeRunPayload({
       inputLatex: 'lineEquation(p1=(1,2), p2=(3,6), form=standard)',

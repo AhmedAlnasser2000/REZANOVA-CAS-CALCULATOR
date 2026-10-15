@@ -151,14 +151,18 @@ export function trigonometryV2MathResolverFromOwnedLeaves(input: {
   };
 }
 
+/**
+ * The route of a Trigonometry request; none for equation solving, which stops with the typed retired-engine stop
+ * since the old Equation engine it used was retired (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B).
+ */
 export function trigonometryMathJsonRouteForRequest(
   request: TrigRequest,
-): TrigonometryMathJsonRouteId {
+): TrigonometryMathJsonRouteId | undefined {
   if (request.kind === 'function') return 'trigonometry.function';
   if (request.kind === 'identitySimplify' || request.kind === 'identityConvert') {
     return 'trigonometry.identity';
   }
-  if (request.kind === 'equationSolve') return 'trigonometry.equation';
+  if (request.kind === 'equationSolve') return undefined;
   if (request.kind === 'angleConvert') return 'trigonometry.angle-conversion';
   if (request.kind === 'periodPhase') return 'trigonometry.period-phase';
   return 'trigonometry.right-triangle';

@@ -92,7 +92,6 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'calculus.ode-ivp': route('calculus', 'calculus-ode-separable'),
   'trigonometry.function': route('trigonometry', 'trigonometry-function'),
   'trigonometry.identity': route('trigonometry', 'trigonometry-identity'),
-  'trigonometry.equation': route('trigonometry'),
   'trigonometry.right-triangle': route('trigonometry', 'trigonometry-triangle'),
   'trigonometry.angle-conversion': route('trigonometry', 'trigonometry-convert'),
   'trigonometry.period-phase': route('trigonometry'),

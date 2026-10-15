@@ -653,3 +653,11 @@ export const CONTROL_ONLY_ERROR_PROPERTIES = new Set([
   'title',
   'warnings',
 ]);
+
+/**
+ * Lanes whose native-document floor may fall because their producers were deleted with a retired engine
+ * (EQUATION-RECONSTRUCTION-CLOSEOUT1 PR B, user-approved 2026-10-15). Debt floors in these lanes stay ratcheted.
+ */
+export const RETIRED_NATIVE_DOCUMENT_LANES = {
+  equation: 'The old Equation engine and workspace are retired; their native-document producers left with them. New Equation documents are schema 7 and checked by its own read model.',
+};

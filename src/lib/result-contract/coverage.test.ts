@@ -59,15 +59,15 @@ function assertCanonicalExecution(
 }
 
 describe('canonical runtime corpus coverage', () => {
-  it('carries all 47 golden executions without compatibility result fields', async () => {
-    expect(goldenCases).toHaveLength(47);
+  it('carries all 41 golden executions without compatibility result fields', async () => {
+    expect(goldenCases).toHaveLength(41);
     for (const goldenCase of goldenCases) {
       assertCanonicalExecution(await runGoldenCase(goldenCase), goldenCase.id);
     }
   }, 60_000);
 
-  it('carries all 100 deterministic History replay executions without compatibility result fields', async () => {
-    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
+  it('carries all 73 deterministic History replay executions without compatibility result fields', async () => {
+    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(73);
     for (const fixture of HISTORY_REPLAY_FIXTURES) {
       assertCanonicalExecution(
         await executeHistoryReplayRequest(fixture.workspace, fixture.request),

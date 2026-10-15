@@ -528,14 +528,6 @@ describe('display contract inversion ratchet', () => {
 
   it('keeps live producer lanes at zero compatibility after owner closeout', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
-    const mergeSource = fs.readFileSync('src/lib/equation/guarded/merge.ts', 'utf8');
-    const guardedTypesSource = fs.readFileSync('src/lib/equation/guarded/types.ts', 'utf8');
-    const orchestratorSource = fs.readFileSync('src/lib/equation/guarded/orchestrator.ts', 'utf8');
-    const guardedRunSource = fs.readFileSync('src/lib/equation/guarded/run.ts', 'utf8');
-    const selectedCarrierSources = [
-      'src/lib/equation/guarded/substitution-stage.ts',
-      'src/lib/equation/composition/stage.ts',
-    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
     const producerLanes = [
       'app-runtime',
       'calculate',
@@ -555,25 +547,12 @@ describe('display contract inversion ratchet', () => {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.ownerAssemblyCount, 39);
+    // The old Equation engine's 25 owner assemblies and one Trigonometry equation assembly left with that engine.
+    assert.equal(report.summary.ownerAssemblyCount, 13);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [],
     );
-    assert.doesNotMatch(mergeSource, /ResultProducerDraft|mergeDisplayOutcomes/u);
-    assert.doesNotMatch(orchestratorSource, /ResultProducerDraft/u);
-    assert.doesNotMatch(
-      guardedTypesSource,
-      /(?:GuardedSolveRunner|AsyncGuardedSolveRunner)[\s\S]{0,220}=>\s*(?:Promise<)?ResultProducerDraft/u,
-    );
-    assert.doesNotMatch(
-      guardedTypesSource,
-      /GuardedEquationStageDescriptor[\s\S]{0,400}ResultProducerDraft/u,
-    );
-    assert.match(guardedRunSource, /readEquationStageResultCarrier\(runGuardedEquationSolveInternal/u);
-    assert.doesNotMatch(selectedCarrierSources, /ResultProducerDraft\[\]/u);
-    assert.match(selectedCarrierSources, /buildEquationStageResultCarrier/u);
-    assert.match(selectedCarrierSources, /mergeEquationStageCarriers/u);
   });
 
   it('keeps Display blocks and hygiene canonical-first with no legacy detail inference', () => {
@@ -595,20 +574,17 @@ describe('display contract inversion ratchet', () => {
 
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
-    const equationPilotSource = fs.readFileSync(
-      'src/lib/ooe/pilots/equation-pilot.ts',
-      'utf8',
-    );
 
     // Current producers expose mandatory authority rather than the old optional
     // draft envelope. Reviewed adapter consolidation removes two old assemblies.
-    assert.equal(report.summary.producerCount, 448);
+    // The retired old Equation engine and workspace took 292 producer boundaries with them.
+    assert.equal(report.summary.producerCount, 156);
     // Current typed workspace readers replace five obsolete version-dispatch reads.
-    assert.equal(report.summary.consumerCount, 59);
+    assert.equal(report.summary.consumerCount, 31);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
-    assert.equal(report.summary.producerDraftReadCount, 100);
-    assert.equal(report.summary.nativeDocumentCount, 174);
+    assert.equal(report.summary.producerDraftReadCount, 23);
+    assert.equal(report.summary.nativeDocumentCount, 49);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);
@@ -620,9 +596,8 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes['history-replay']['canonical-read'], 2);
     assert.equal(report.lanes['surface-protocol']['canonical-read'], 1);
     assert.equal(report.lanes.history['legacy-read'], 0);
-    assert.equal(report.lanes['app-runtime']['canonical-read'], 5);
-    assert.match(equationPilotSource, /readEquationCanonicalDiagnostics/u);
-    assert.doesNotMatch(equationPilotSource, /from ['"]\.\.\/\.\.\/result-contract['"]/u);
+    assert.equal(report.lanes['app-runtime']['canonical-read'], 2);
+    assert.equal(report.lanes.equation['native-document'], 0);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
@@ -725,6 +700,18 @@ describe('display contract inversion ratchet', () => {
     assert.equal(changed.ok, false);
     assert.equal(changed.changes['compatibility-projection'].added.length, 1);
     assert.equal(changed.changes['compatibility-projection'].stale.length, 1);
+  });
+
+  it('lets only reasoned retired lanes lose native-document coverage', () => {
+    const rootDir = fixture({ 'src/lib/modes/calculate/sample.ts': 'export const value = 4;\n' });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+    const baseline = buildDisplayContractInversionBaseline(report, 'Floors');
+    const floors = { compatibilityProjection: 0, legacyRead: 0, nativeDocument: 3 };
+    const withFloors = { ...baseline, laneFloors: { ...baseline.laneFloors, equation: floors, calculate: floors } };
+    const errors = validateDisplayContractInversionReport(report, withFloors).errors.join('\n');
+    assert.match(errors, /Lane calculate native document coverage 0 is below 3/u);
+    assert.doesNotMatch(errors, /Lane equation native document/u);
+    assert.throws(() => assertDisplayContractInversionBaselineUpdateAllowed(report, withFloors), /calculate native document/u);
   });
 
   it('allows accepted migration updates but rejects debt growth or native coverage loss', () => {

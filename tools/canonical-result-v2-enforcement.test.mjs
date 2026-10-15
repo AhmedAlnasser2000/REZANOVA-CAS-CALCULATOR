@@ -90,6 +90,39 @@ test('rejects premature removal and permits removal after all owned routes defau
   assert.deepEqual(compareEnforcementBaselines(current, baseline, baseline.frozenRouteIds), []);
 });
 
+test('lets retired routes, files and approved re-hashes leave only through the reasoned retired section', () => {
+  const { baseline, producerPath } = fixtureRoot();
+  const retiredRoute = baseline.frozenRouteIds[1];
+  const current = structuredClone(baseline);
+  current.frozenRouteIds = baseline.frozenRouteIds.filter((routeId) => routeId !== retiredRoute);
+  current.files[0].routeIds = current.frozenRouteIds;
+  current.files[0].sha256 = 'b'.repeat(64);
+  assert.match(compareEnforcementBaselines(current, baseline, []).join('\n'), /immutable/u);
+  assert.match(compareEnforcementBaselines(current, baseline, []).join('\n'), /digest changes are forbidden/u);
+
+  current.retired = {
+    reason: 'engine retired',
+    routeIds: [retiredRoute],
+    files: [],
+    rehashed: [{ path: producerPath, previousSha256: baseline.files[0].sha256, sha256: 'b'.repeat(64) }],
+  };
+  const ownership = compareEnforcementBaselines(current, baseline, []).join('\n');
+  assert.doesNotMatch(ownership, /immutable|digest changes are forbidden/u);
+
+  const wrongRehash = structuredClone(current);
+  wrongRehash.retired.rehashed[0].previousSha256 = 'c'.repeat(64);
+  assert.match(compareEnforcementBaselines(wrongRehash, baseline, []).join('\n'), /digest changes are forbidden/u);
+
+  const later = structuredClone(current);
+  later.retired.routeIds = [];
+  later.frozenRouteIds = baseline.frozenRouteIds.filter((routeId) => routeId !== retiredRoute);
+  assert.match(compareEnforcementBaselines(later, current, []).join('\n'), /left the retired list/u);
+
+  const unreasoned = structuredClone(current);
+  unreasoned.retired.reason = ' ';
+  assert.match(validateCurrentRepository(fixtureRoot().root, unreasoned).errors.join('\n'), /non-empty reason/u);
+});
+
 test('rejects new V1 builders and runtime outcomes while permitting a new V2-only producer', () => {
   const { root, baseline } = fixtureRoot();
   const newPath = path.join(root, 'src/lib/new-producer.ts');
