@@ -4,7 +4,9 @@ import { conditionKey, type Condition, type RelationProblem } from '../represent
 import { finiteSet, normalizeSet, resourceOutcome, setKey, type EquationOutcome, type SolutionSet } from '../representation/solution-set';
 import { ProofLogBuilder } from '../representation/transform';
 import { decideCells, type ParamCase } from './cells';
+import { decidePolynomialProblem } from '../decision/solve';
 import { decideKernels } from './kernels';
+import { decideProduct } from './product';
 import { decideShifted } from './shift';
 import { parametricAtoms, targetInKernel } from './specialize';
 import { decideTree } from './tree';
@@ -25,6 +27,11 @@ export function decideParametricProblem(problem: RelationProblem): EquationOutco
     if (targetInKernel(problem)) {
       const k = decideKernels(problem);
       return k.kind === 'refused' ? { kind: 'incomplete-implementation', reason: k.reason } : caseOutcome(problem, simplifyCases(problem.store, k.cases));
+    }
+    if (problem.parameters.length >= 2) {
+      // Factor first, before anything expands the product: a product equals zero exactly when a factor does.
+      const product = decideProduct(problem, p => (p.parameters.length ? decideParametricProblem(p) : decidePolynomialProblem(p)));
+      if (product !== undefined) return caseOutcome(problem, simplifyCases(problem.store, product));
     }
     const atoms = parametricAtoms(problem);
     if ('owner' in atoms) return { kind: 'incomplete-implementation', reason: `${atoms.owner}: ${atoms.detail}` };

@@ -44,3 +44,25 @@ group('shift test and binomial roots', () => {
     expect(shiftPlan(decide('x^3+a x^2+b=0').problem)).toBeUndefined();
   });
 });
+
+group('zero-product split (factor first)', () => {
+  it.each([
+    ['(z-a)(z-b)(z-c)(z-d)(z-f)=0', 'real', 5],
+    ['(z-a)(z-b)(z-c)(z-d)(z-f)(z-g)(z-h)(z-j)(z-k)(z-l)(z-m)(z-n)(z-p)=0', 'real', 13],
+    ['(z-a)(z-b)(z-c)(z-d)(z-f)(z-g)(z-h)(z-j)(z-k)(z-l)(z-m)(z-n)(z-p)=0', 'complex', 13],
+  ] as const)('%s over %s: one value per factor, verified', (latex, domain, count) => {
+    const ctx = new ExecutionContext({ ...DEFAULT_EQUATION_LIMITS }), store = new ExpressionStore(ctx);
+    const row = parseRow(latex);
+    if (row.kind === 'error') throw new Error(row.message);
+    const { problem } = lowerEquation(store, { rows: [latex], targets: ['z'], domain, limits: { ...DEFAULT_EQUATION_LIMITS }, digits: 6 });
+    const outcome = decideEquation(problem);
+    expect(outcome.kind).toBe('solved');
+    verifyEquationOutcome(problem, outcome);
+    expect(outcome.kind === 'solved' && outcome.set.kind === 'finite' ? outcome.set.points.length : -1).toBe(count);
+  }, 60_000);
+
+  it('quadratic factors bring their own cases: 2⁴ sign cases for four parameters under roots', () => {
+    const { outcome } = decide('(z^2-a)(z-b)(z^2-c)(z-d)(z^2-m)(z-f)(z^2-g)(z-h)=0');
+    expect(outcome.kind === 'solved' && outcome.set.kind === 'case-tree' ? outcome.set.cases.length : -1).toBe(16);
+  }, 60_000);
+});
