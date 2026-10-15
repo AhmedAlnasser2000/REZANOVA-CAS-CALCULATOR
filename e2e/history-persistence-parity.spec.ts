@@ -159,7 +159,7 @@ test('preserves a complete extension-rich History row across a real browser relo
   }, {
     key: APP_STATE_KEY,
     entry: RICH_HISTORY_ENTRY as unknown,
-    settings: DEFAULT_SETTINGS as unknown,
+    settings: { ...DEFAULT_SETTINGS, historyPageNotationMode: 'rendered' } as unknown,
   });
 
   await page.goto('/');
@@ -213,7 +213,7 @@ test('renders stored canonical History math with current root and power preferen
     }, {
       key: APP_STATE_KEY,
       historyEntry: entry as unknown,
-      settings: { ...DEFAULT_SETTINGS, symbolicDisplayMode } as unknown,
+      settings: { ...DEFAULT_SETTINGS, historyPageNotationMode: 'rendered', symbolicDisplayMode } as unknown,
     });
     await page.goto('/');
     await openHistoryPage(page);
@@ -259,7 +259,7 @@ test('loads and renders a current V2 History result; replay into retired Calcula
   }, {
     key: APP_STATE_KEY,
     historyEntry: entry as unknown,
-    settings: DEFAULT_SETTINGS as unknown,
+    settings: { ...DEFAULT_SETTINGS, historyPageNotationMode: 'rendered' } as unknown,
   });
 
   await page.goto('/');
@@ -299,7 +299,7 @@ test('loads and renders a current V3 gradian angle quantity; replay into retired
   }, {
     key: APP_STATE_KEY,
     historyEntry: entry as unknown,
-    settings: DEFAULT_SETTINGS as unknown,
+    settings: { ...DEFAULT_SETTINGS, historyPageNotationMode: 'rendered' } as unknown,
   });
   await page.goto('/');
   await openHistoryPage(page);
@@ -347,7 +347,7 @@ test('removes old and malformed rows while preserving future result versions ver
     legacy: legacyEntry,
     malformed: malformedV1,
     future: futureV5,
-    settings: DEFAULT_SETTINGS as unknown,
+    settings: { ...DEFAULT_SETTINGS, historyPageNotationMode: 'rendered' } as unknown,
   });
 
   await page.goto('/');
