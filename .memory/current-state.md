@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-10-15
+Last updated: 2026-10-16
 
 ## Purpose
 
@@ -26,6 +26,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Current maintenance note: the July anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
+
+- Development pause (2026-10-16; [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | attribution_basis: live]): development is paused after the Equation, Graphing and Integration rebuilds so the user can catch up on studies; it resumes next year with no date promised. The showcase website lives in `website/` (no domain yet, preview mode); its examples come from `tools/website-examples.ts`.
 
 - Equation stage 17 (2026-10-15; milestone owner claude / claude-opus-5-5 / opus-5.5, live; synchronization recorded by codex / gpt-6 / sol): PR A #32 is merged at 66a6ab75 after phase-record PR #31 at 047a9276. Its attributed dossier records the complete corpus and capability ledger. PR B retirement of the old Equation workspace/engine and user-selected other-workspace cleanup remain Claude's subsequent work; New Integration and its tests are expressly preserved.
 
