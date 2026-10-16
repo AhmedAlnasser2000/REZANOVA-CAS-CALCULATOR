@@ -1,0 +1,42 @@
+---
+// Renders LaTeX to HTML at build time with KaTeX. No math code runs in the browser.
+// A LaTeX error fails the build, so a broken formula can never ship.
+import katex from 'katex';
+interface Props {
+  latex: string;
+  display?: boolean;
+  class?: string;
+}
+const { latex, display = false, class: className = '' } = Astro.props;
+
+/** The engines separate answer lines with a top-level `\\`; each becomes its own line. */
+function lines(source: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') depth -= 1;
+    else if (ch === '\\' && source[i + 1] === '\\' && depth === 0) {
+      out.push(source.slice(start, i).trim());
+      start = i + 2;
+      i += 1;
+    } else if (ch === '\\') i += 1;
+  }
+  out.push(source.slice(start).trim());
+  return out.filter(Boolean);
+}
+const all = lines(latex);
+// In a case list ("If a = 0:" …), the lines under each case are indented, as in the app.
+const isCase = (line: string) => line.startsWith('\\text{If }');
+const cases = all.some(isCase);
+const rendered = all.map((line) => ({
+  html: katex.renderToString(line, { displayMode: false, throwOnError: true, strict: 'ignore', output: 'html' }),
+  indent: cases && !isCase(line),
+}));
+---
+
+<span class:list={['math', { 'math-display': display }, className]} dir="ltr">
+  {rendered.map((line) => <span class:list={['math-line', { 'math-indent': line.indent }]} set:html={line.html} />)}
+</span>

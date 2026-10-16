@@ -1,0 +1,213 @@
+[
+  {
+    "id": "equation",
+    "en": {
+      "title": "Equation",
+      "summary": "Equations, inequalities, systems and statements with ∀ and ∃, decided exactly over ℝ or ℂ. Every answer is verified independently before it is shown.",
+      "bullets": [
+        "One relation per row (=, ≠, <, ≤, >, ≥), or rows joined with ∧, ∨ and ¬; all rows hold together.",
+        "Unknowns are picked automatically and can be changed; every other letter is a parameter, and answers split into exact cases over the parameters.",
+        "Polynomial and rational problems of any degree, with exact roots even when no radical formula exists.",
+        "Exponentials, logarithms and Lambert W; absolute values and radicals; trigonometric equations as exact periodic families.",
+        "Polynomial systems by Gröbner bases; regions by cylindrical algebraic decomposition; ∀ and ∃ by quantifier elimination.",
+        "Certified numeric roots and square systems when no closed form exists, proven by interval Newton and Krawczyk tests.",
+        "Exact, Decimal (certified digits) or Both; “Conditions used”; copy as text or LaTeX."
+      ],
+      "limit": "The decomposition is doubly exponential in the number of variables, so four or more unknowns may end at the work limit. Quantifiers are decided for real polynomial rows only. A problem it cannot decide yet ends with a stated reason, never a partial answer."
+    },
+    "ar": {
+      "title": "المعادلات",
+      "summary": "معادلات ومتباينات وأنظمة وعبارات بـ ∀ و∃، تُحسم بدقة تامة على ℝ أو ℂ. يُتحقق من كل جواب بصورة مستقلة قبل عرضه.",
+      "bullets": [
+        "علاقة واحدة في كل سطر (=، ≠، <، ≤، >، ≥)، أو أسطر مربوطة بـ ∧ و∨ و¬؛ وتتحقق الأسطر كلها معًا.",
+        "تُختار المجاهيل تلقائيًا ويمكن تغييرها؛ وكل حرف آخر وسيط، وتنقسم الأجوبة إلى حالات دقيقة حسب الوسطاء.",
+        "مسائل كثيرات الحدود والكسور من أي درجة، بجذور دقيقة حتى حين لا توجد صيغة بالجذور.",
+        "الدوال الأسية واللوغاريتمية ودالة Lambert W؛ القيم المطلقة والجذور؛ والمعادلات المثلثية كعائلات دورية دقيقة.",
+        "أنظمة كثيرات الحدود بقواعد غروبنر؛ والمناطق بالتفكيك الجبري الأسطواني؛ و∀ و∃ بحذف المكمّمات.",
+        "جذور عددية مُثبتة وأنظمة مربعة حين لا توجد صيغة مغلقة، تُثبت باختباري نيوتن الفتري وكراوتشيك.",
+        "عرض دقيق أو عشري (بأرقام مُثبتة) أو كلاهما؛ «الشروط المستخدمة»؛ ونسخ كنص أو LaTeX."
+      ],
+      "limit": "ينمو التفكيك نموًا أسيًا مضاعفًا مع عدد المتغيرات، لذلك قد تنتهي المسائل ذات أربعة مجاهيل أو أكثر عند حد العمل. تُحسم المكمّمات لأسطر كثيرات الحدود الحقيقية فقط. وما لا يمكن حسمه بعد ينتهي بسبب مذكور، لا بجواب جزئي."
+    },
+    "sources": [
+      {
+        "label": "equation-reconstruction-roadmap.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/equation/equation-reconstruction-roadmap.md"
+      },
+      {
+        "label": "equation-capability-ledger.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/equation/equation-capability-ledger.md"
+      },
+      {
+        "label": "README.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/README.md"
+      }
+    ]
+  },
+  {
+    "id": "graphing",
+    "en": {
+      "title": "Graphing",
+      "summary": "Explore relations through a dedicated graph workspace, with separate controls for how a relation is sampled, displayed and analyzed.",
+      "bullets": [
+        "Explicit and implicit relations, inequality regions, chained conditions and exact first-match piecewise graphs with proved boundaries.",
+        "Complex domain colouring, implicit fields and 3D surfaces drawn on the GPU, with an exact reference renderer behind them.",
+        "Real, Complex and Both views: Argand trajectories, complex loci and roots, and synchronized real, imaginary, magnitude and phase maps.",
+        "An Analyze overlay for roots, intercepts, extrema, intersections and asymptotes; traced readouts proved by interval arithmetic where possible.",
+        "Parameters and sliders, equal axes, and layouts that adapt from narrow to ultra-wide windows."
+      ],
+      "limit": "Riemann-sheet/surface work, graph export closeout, durable graph-project persistence and cross-workspace Open in Graph flows are unfinished. Complex zero/pole evidence is bounded."
+    },
+    "ar": {
+      "title": "الرسم البياني",
+      "summary": "استكشف العلاقات في مساحة رسم مستقلة، مع التحكم في أخذ العينات والعرض والتحليل.",
+      "bullets": [
+        "علاقات صريحة وضمنية ومناطق متباينات وشروط متسلسلة ودوال متعددة التعريف دقيقة بحدود مُثبتة.",
+        "تلوين المجال المركب والحقول الضمنية والأسطح ثلاثية الأبعاد على معالج الرسوميات، مع راسم مرجعي دقيق خلفها.",
+        "عروض حقيقية ومركبة ومشتركة: مسارات في مستوى أرغاند ومحلات وجذور مركبة، وخرائط متزامنة للجزأين الحقيقي والتخيلي والمقدار والطور.",
+        "لوحة تحليل للجذور والتقاطعات والقيم القصوى والخطوط المقاربة؛ وقراءات متتبعة مُثبتة بحساب الفترات حيثما أمكن.",
+        "وسطاء ومنزلقات، ومحاور متساوية، وتخطيطات تتكيف من النوافذ الضيقة إلى العريضة جدًا."
+      ],
+      "limit": "لم يكتمل عمل سطوح ريمان وتصدير الرسوم وحفظ مشروعات الرسم الدائم وفتح النتائج في الرسم من مساحات أخرى. أدلة الأصفار والأقطاب المركبة محدودة النطاق."
+    },
+    "sources": [
+      {
+        "label": "CHANGELOG.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/CHANGELOG.md"
+      },
+      {
+        "label": "2026-07-20.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-20.md"
+      },
+      {
+        "label": "2026-07-21.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-21.md"
+      },
+      {
+        "label": "2026-09-27.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-09/2026-09-27.md"
+      }
+    ]
+  },
+  {
+    "id": "integration",
+    "en": {
+      "title": "Integration",
+      "summary": "Indefinite integrals decided by Risch-style procedures over differential fields: an antiderivative checked by differentiation, or a proof that no elementary one exists.",
+      "bullets": [
+        "Rational functions of any degree, with logarithmic parts summed over the roots of an exact polynomial.",
+        "Rational expressions in one exponential family, such as eˣ/(1 + e²ˣ) or 2x·e^{x²}.",
+        "Proofs of non-elementarity, such as for e^{x²} and eˣ/x.",
+        "The answer is shown first, then checked; every condition it relies on is listed.",
+        "Saved derivations can be reopened, and re-verified against the current problem."
+      ],
+      "limit": "The workspace accepts one indefinite integral of a rational expression in the variable and one exponential family. Logarithms, trigonometric and algebraic integrands are being added by the Integration program; definite integrals are not offered yet."
+    },
+    "ar": {
+      "title": "التكامل",
+      "summary": "تكاملات غير محددة تُحسم بإجراءات على طريقة ريش فوق الحقول التفاضلية: دالة أصلية يُتحقق منها بالاشتقاق، أو برهان على عدم وجود دالة أصلية أولية.",
+      "bullets": [
+        "الدوال الكسرية من أي درجة، مع أجزاء لوغاريتمية مجموعة على جذور كثيرة حدود دقيقة.",
+        "تعبيرات كسرية في عائلة أسية واحدة، مثل eˣ/(1 + e²ˣ) أو 2x·e^{x²}.",
+        "براهين على عدم وجود دالة أصلية أولية، كما في e^{x²} وeˣ/x.",
+        "يُعرض الجواب أولًا ثم يُتحقق منه، مع ذكر كل شرط يعتمد عليه.",
+        "يمكن إعادة فتح الاشتقاقات المحفوظة والتحقق منها مقابل المسألة الحالية."
+      ],
+      "limit": "تقبل المساحة تكاملًا غير محدد واحدًا لتعبير كسري في المتغير وعائلة أسية واحدة. يضيف برنامج التكامل اللوغاريتمات والدوال المثلثية والجبرية تدريجيًا، ولا تتوفر التكاملات المحددة بعد."
+    },
+    "sources": [
+      {
+        "label": "integration-reconstruction-roadmap.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/calculus/integration-reconstruction-roadmap.md"
+      },
+      {
+        "label": "integration-reconstruction-design.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/calculus/integration-reconstruction-design.md"
+      }
+    ]
+  },
+  {
+    "id": "notebook",
+    "en": {
+      "title": "Mathematical notebooks",
+      "summary": "Author local documents around your mathematics, with rich text, mathematical blocks, images and page-oriented publishing.",
+      "bullets": [
+        "Headings, lists, sections, callouts, inline mathematics and separate equation blocks.",
+        "Page size, margins, orientation, page breaks, Print Layout/Draft views, headers, footers and page numbers.",
+        "Local images with captions, alt text, crop, rotation and size controls, plus Outline and Objects & Layers.",
+        "A local document library with autosave, revisions, recovery and Trash; lossless .cwiznb packages.",
+        "Export-only PDF, editable DOCX and offline Web publication. Browser documents use IndexedDB; desktop documents use local storage managed by the app."
+      ],
+      "limit": "Video is removed. In-notebook solving, live graph embedding and cloud sync are not current features. Object interaction is still being consolidated; Word compatibility is provisional and PDF/DOCX/Web are not lossless round-trip formats."
+    },
+    "ar": {
+      "title": "الدفاتر الرياضية",
+      "summary": "أنشئ مستندات محلية حول رياضياتك، تجمع النص المنسق والكتل الرياضية والصور وإخراج الصفحات.",
+      "bullets": [
+        "عناوين وقوائم وأقسام وتنبيهات ورياضيات ضمن السطر وكتل معادلات مستقلة.",
+        "حجم الورق والهوامش والاتجاه وفواصل الصفحات وعرض الطباعة أو المسودة والرؤوس والتذييلات وأرقام الصفحات.",
+        "صور محلية مع تعليقات ونص بديل وقص وتدوير وتغيير الحجم، إلى جانب المخطط والكائنات والطبقات.",
+        "مكتبة مستندات محلية بحفظ تلقائي ومراجعات واستعادة وسلة محذوفات، وحزم .cwiznb تحفظ المستند دون فقد.",
+        "تصدير PDF وDOCX قابل للتحرير وموقع Web دون اتصال. يستخدم المتصفح IndexedDB ويحفظ تطبيق الحاسوب مستنداته محليًا."
+      ],
+      "limit": "أزيل دعم الفيديو. الحل داخل الدفتر وتضمين الرسوم الحية والمزامنة السحابية ليست ميزات حالية. يجري توحيد تفاعل الكائنات؛ وتوافق Word مبدئي، وصيغ PDF وDOCX وWeb ليست صيغ تبادل ذهابًا وإيابًا دون فقد."
+    },
+    "sources": [
+      {
+        "label": "CHANGELOG.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/CHANGELOG.md"
+      },
+      {
+        "label": "2026-07-14.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-14.md"
+      },
+      {
+        "label": "current-state.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/current-state.md"
+      }
+    ]
+  },
+  {
+    "id": "workspace",
+    "en": {
+      "title": "Tabs, history & control",
+      "summary": "The surrounding workspace helps you keep separate calculations organized and understand what the app is doing.",
+      "bullets": [
+        "Browser-style Workspace Tabs with independent session state, rename/duplicate/close actions and scoped job handling.",
+        "A searchable History ledger with filters and result inspection. It was cleared once when Equation was rebuilt, so saved results come from the new engines.",
+        "Settings for scale, high contrast, notation and Notebook preferences, plus searchable Guide and Formula Viewer.",
+        "Order of Execution controls job launch, cancellation and stale-result handling; compartment boundaries organize ownership and fault containment."
+      ],
+      "limit": "Workspace Tabs are not a general project-file system. Public plugins, an external SDK and Surface Protocol hosting remain future work. The calculator interface is currently English; this website is bilingual."
+    },
+    "ar": {
+      "title": "علامات التبويب والسجل والتحكم",
+      "summary": "تساعدك مساحة التطبيق على تنظيم الحسابات المنفصلة وفهم ما يحدث أثناء العمل.",
+      "bullets": [
+        "علامات تبويب شبيهة بالمتصفح بحالة جلسة مستقلة وإعادة تسمية ونسخ وإغلاق ومعالجة مهام مرتبطة بكل مساحة.",
+        "سجل قابل للبحث مع مرشحات وفحص للنتائج. مُسح مرة واحدة عند إعادة بناء المعادلات، لتأتي النتائج المحفوظة من المحركات الجديدة.",
+        "إعدادات للحجم والتباين العالي والترميز وتفضيلات الدفتر، مع دليل قابل للبحث وعارض للصيغ.",
+        "ينظم نظام Order of Execution بدء المهام وإلغاءها والتعامل مع النتائج القديمة، وتحدد المقصورات المسؤوليات واحتواء الأعطال."
+      ],
+      "limit": "علامات التبويب ليست نظام ملفات مشروعات عامًا. الإضافات العامة وSDK خارجي واستضافة Surface Protocol ما زالت مستقبلية. واجهة الحاسبة حاليًا إنجليزية، أما هذا الموقع فثنائي اللغة."
+    },
+    "sources": [
+      {
+        "label": "README.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/README.md"
+      },
+      {
+        "label": "2026-06-16.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-16.md"
+      },
+      {
+        "label": "2026-06-17.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-17.md"
+      },
+      {
+        "label": "current-state.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/current-state.md"
+      }
+    ]
+  }
+]

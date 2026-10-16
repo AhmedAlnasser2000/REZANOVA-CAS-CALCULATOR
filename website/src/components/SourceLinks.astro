@@ -1,0 +1,22 @@
+---
+import { editorial } from '../data/editorial';
+import type { Locale } from '../data/site';
+interface Props {
+  lang: Locale;
+  sources: { label: string; url: string }[];
+}
+const { lang, sources } = Astro.props;
+---
+
+<details class="source-disclosure">
+  <summary>{editorial[lang].sources}</summary>
+  <ul>
+    {sources.map((source) => (
+      <li>
+        <a href={source.url} dir="ltr">
+          {source.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</details>

@@ -1,0 +1,102 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Icon from '../../components/Icon.astro';
+import SourceLinks from '../../components/SourceLinks.astro';
+import Prose from '../../components/Prose.astro';
+import capabilities from '../../data/capabilities.json';
+import { editorial } from '../../data/editorial';
+import { content, links, type Locale } from '../../data/site';
+export function getStaticPaths() {
+  return ['en', 'ar'].map((lang) => ({ params: { lang } }));
+}
+const lang = Astro.params.lang as Locale;
+const t = content[lang];
+const e = editorial[lang];
+---
+
+<Base lang={lang} title={`${t.detailsLink} — REZANOVA`} description={t.detailsIntro} details>
+  <div class="details-mast">
+    <Header lang={lang} details />
+  </div>
+  <main id="main" class="details-page wrap">
+    <a class="back-link" href={`/${lang}/`}>
+      {t.back}
+    </a>
+    <p class="eyebrow">REZANOVA · {t.preview}</p>
+    <h1>{t.detailsTitle}</h1>
+    <p class="section-intro">{t.detailsIntro}</p>
+    <p class="reading-note">{e.scopeBody}</p>
+    <nav class="chapter-nav capability-nav" aria-label={e.jump}>
+      {capabilities.map((entry) => (
+        <a href={`#${entry.id}`}>{entry[lang].title}</a>
+      ))}
+      <a href="#limitations">{t.limitsTitle}</a>
+    </nav>
+    <section aria-labelledby="supported">
+      <h2 id="supported">{e.scope}</h2>
+      <div class="capability-details">
+        {capabilities.map((entry) => {
+          const c = entry[lang];
+          return (
+            <article class="capability-detail" id={entry.id} aria-labelledby={`title-${entry.id}`}>
+              <h3 id={`title-${entry.id}`}>{c.title}</h3>
+              <p>
+                <Prose text={c.summary} />
+              </p>
+              <ul class="change-list">
+                {c.bullets.map((bullet) => (
+                  <li>
+                    <Prose text={bullet} />
+                  </li>
+                ))}
+              </ul>
+              <p class="boundary-note">
+                <strong>{e.boundary}: </strong>
+                <Prose text={c.limit} />
+              </p>
+              <SourceLinks lang={lang} sources={entry.sources} />
+            </article>
+          );
+        })}
+      </div>
+    </section>
+    <section id="limitations" aria-labelledby="limits-title">
+      <h2 id="limits-title">{t.limitsTitle}</h2>
+      <p class="limits-intro">{e.limitsIntro}</p>
+      {t.limits.map(([title, body]) => (
+        <details open>
+          <summary>
+            {title}
+            <Icon name="chevron-down" size={20} />
+          </summary>
+          <p>{body}</p>
+        </details>
+      ))}
+    </section>
+    <section class="development-note">
+      <h2>{t.roadmapTitle}</h2>
+      <p>{t.roadmapBody}</p>
+      <a class="text-link" href={`/${lang}/history/`}>
+        {e.readHistory} ↗
+      </a>
+    </section>
+    <p class="source-note">{t.sourceNote}</p>
+    <div class="resource-links">
+      <a href={links.documentation}>
+        {t.docs}
+        <Icon name="arrow-up-right" />
+      </a>
+      <a href={links.issues}>
+        {t.report}
+        <Icon name="arrow-up-right" />
+      </a>
+      <a href={links.downloads}>
+        {t.releases}
+        <Icon name="arrow-up-right" />
+      </a>
+    </div>
+  </main>
+  <Footer lang={lang} />
+</Base>

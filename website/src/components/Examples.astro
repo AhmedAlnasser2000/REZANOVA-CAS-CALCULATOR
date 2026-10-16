@@ -1,0 +1,136 @@
+---
+// The pre-computed examples (tools/website-examples.ts) shown as Aero windows.
+import AeroWindow from './AeroWindow.astro';
+import Math from './Math.astro';
+import examples from '../data/examples.json';
+import { home } from '../data/home';
+import type { Locale } from '../data/site';
+interface Props {
+  lang: Locale;
+  kind: 'equation' | 'integration';
+}
+const { lang, kind } = Astro.props;
+const w = home[lang].window;
+// Screenshots of the same problem in the app (website/scripts/capture-app.mjs).
+const shots: Record<string, string> = {
+  forall: 'app-equation-forall',
+  cases: 'app-equation-cases',
+  'circle-line': 'app-equation-system',
+  disc: 'app-equation-region',
+  quartic: 'app-integration-quartic',
+  gaussian: 'app-integration-gaussian',
+};
+const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).toFixed(1)} s`);
+---
+
+<div class="window-grid">
+  {kind === 'equation' &&
+    examples.equation.map((e, index) => (
+      <AeroWindow id={`eq-${e.id}`} title={e.title[lang]} lang={lang} delay={index * 70}>
+        <div class="example-problem">
+          {e.rows.map((row) => (
+            <Math latex={row} class="example-row" />
+          ))}
+        </div>
+        <div class="example-answer">
+          <Math latex={e.answer} />
+        </div>
+        <p class="example-badge">
+          <span aria-hidden="true">✓</span> {w.headlines[e.verification.headline] ?? e.verification.headline} · {ms(e.elapsedMs)}
+        </p>
+        <Fragment slot="max">
+          <h4>{w.input}</h4>
+          <div class="example-problem">
+            {e.rows.map((row) => (
+              <Math latex={row} class="example-row" />
+            ))}
+          </div>
+          <h4>{w.answer}</h4>
+          <div class="example-answer">
+            <Math latex={e.answerWithDigits} />
+          </div>
+          <h4>
+            <span aria-hidden="true">✓</span> {w.headlines[e.verification.headline] ?? e.verification.headline}
+          </h4>
+          {w.english && <p class="example-meta">{w.english}</p>}
+          <p lang="en" dir="ltr">{e.verification.detail}</p>
+          <p class="example-meta">
+            {w.time} {ms(e.elapsedMs)} · {w.source}
+          </p>
+          {shots[e.id] && (
+            <figure class="example-shot">
+              <img src={`/images/${shots[e.id]}.webp`} alt="" width="1800" height="1475" loading="lazy" decoding="async" />
+              <figcaption>{w.inApp}</figcaption>
+            </figure>
+          )}
+        </Fragment>
+      </AeroWindow>
+    ))}
+  {kind === 'integration' &&
+    examples.integration.map((e, index) => (
+      <AeroWindow id={`int-${e.id}`} title={e.title[lang]} lang={lang} delay={index * 70}>
+        <div class="example-problem">
+          <Math latex={e.source} class="example-row" />
+        </div>
+        <div class="example-answer">
+          {e.negative ? (
+            <p class="example-negative">
+              <Math latex={`\\int ${e.answer}\\,dx`} />
+            </p>
+          ) : (
+            <>
+              <Math latex={`= ${e.answer}`} />
+              {e.terms.map((term) => (
+                <Math latex={term.definition} class="example-where" />
+              ))}
+            </>
+          )}
+        </div>
+        <p class="example-badge">
+          <span aria-hidden="true">✓</span> {e.negative ? `${w.proved} · ${w.nonElementary}` : w.antiderivative} · {ms(e.elapsedMs)}
+        </p>
+        <Fragment slot="max">
+          <h4>{w.input}</h4>
+          <Math latex={e.source} class="example-row" />
+          <h4>{w.answer}</h4>
+          <div class="example-answer">
+            {e.negative ? (
+              <>
+                <p class="example-negative-title">{w.nonElementary}</p>
+                {w.english && <p class="example-meta">{w.english}</p>}
+                <p lang="en" dir="ltr">{e.explanation}</p>
+              </>
+            ) : (
+              <>
+                <Math latex={`= ${e.answer}`} />
+                <p class="example-where-label">{w.where}</p>
+                {e.definition && <Math latex={e.definition} class="example-where" />}
+                {e.terms.map((term) => (
+                  <>
+                    <Math latex={term.definition} class="example-where" />
+                    <Math latex={term.modulus} class="example-where" />
+                    <Math latex={term.argument} class="example-where" />
+                  </>
+                ))}
+              </>
+            )}
+          </div>
+          <h4>{w.checks}</h4>
+          <ul class="example-checks" lang="en">
+            {e.checks.map((check) => (
+              <li dir="ltr">✓ {check}</li>
+            ))}
+          </ul>
+          <p class="example-meta">
+            {w.time} {ms(e.elapsedMs)} · {w.source}
+          </p>
+          {shots[e.id] && (
+            <figure class="example-shot">
+              <img src={`/images/${shots[e.id]}.webp`} alt="" width="1800" height="1250" loading="lazy" decoding="async" />
+              <figcaption>{w.inApp}</figcaption>
+            </figure>
+          )}
+        </Fragment>
+      </AeroWindow>
+    ))}
+</div>

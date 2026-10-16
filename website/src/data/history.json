@@ -1,0 +1,558 @@
+[
+  {
+    "id": "rest",
+    "kind": "milestone",
+    "en": {
+      "date": "16 October 2026",
+      "title": "Rebuilt, then a pause",
+      "summary": "With Equation, Graphing and Integration far stronger, development paused so I can catch up on my studies. It will resume next year, with the remaining workspaces rebuilt the same way.",
+      "bullets": [
+        "Equation became the app’s starting workspace; the old Equation engine and its workspace were retired.",
+        "Calculate, Table, Matrix, Vector, Calculus, Trigonometry, Geometry, Statistics and Labs stay visible, marked “Unavailable: being rebuilt”.",
+        "History was cleared once, with a notice, so every saved result comes from the new engines.",
+        "This website moved into the project repository, with examples pre-computed by the real engines."
+      ]
+    },
+    "ar": {
+      "date": "16 أكتوبر 2026",
+      "title": "إعادة البناء، ثم استراحة",
+      "summary": "بعد أن أصبحت المعادلات والرسم البياني والتكامل أقوى بكثير، توقف التطوير لأتمكن من اللحاق بدراستي. سيُستأنف العام القادم مع إعادة بناء مساحات العمل المتبقية بالطريقة نفسها.",
+      "bullets": [
+        "أصبحت المعادلات مساحة البدء في التطبيق، وأُحيل محرك المعادلات القديم ومساحته إلى التقاعد.",
+        "تبقى مساحات الحساب والجداول والمصفوفات والمتجهات والتفاضل والتكامل والمثلثات والهندسة والإحصاء والمختبرات ظاهرة مع علامة «غير متاحة: قيد إعادة البناء».",
+        "مُسح السجل مرة واحدة مع إشعار، لتأتي كل النتائج المحفوظة من المحركات الجديدة.",
+        "انتقل هذا الموقع إلى مستودع المشروع، مع أمثلة محسوبة مسبقًا بالمحركات الحقيقية."
+      ]
+    },
+    "sources": [
+      {
+        "label": "equation-reconstruction-closeout1-spec.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/equation/equation-reconstruction-closeout1-spec.md"
+      },
+      {
+        "label": "current-state.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/current-state.md"
+      }
+    ]
+  },
+  {
+    "id": "equation-reconstruction",
+    "kind": "milestone",
+    "en": {
+      "date": "3–16 October 2026",
+      "title": "Equation, rebuilt on decision procedures",
+      "summary": "Instead of adding the next family of equations, Equation was rebuilt from an exact-algebra core in seventeen stages. Every answer is verified independently before it is shown, and a problem it cannot decide yet ends with a stated reason.",
+      "bullets": [
+        "Exact arithmetic, polynomial factorization over ℚ and real and complex root isolation with exact algebraic numbers.",
+        "Exponentials, logarithms and Lambert W; absolute values and radicals; trigonometric equations as exact periodic families.",
+        "Parameters as exact case trees, and polynomial systems by Gröbner bases.",
+        "Certified numeric roots and square systems, proven by interval Newton and Krawczyk tests.",
+        "Cylindrical algebraic decomposition for regions, and ∀/∃ by quantifier elimination.",
+        "A corpus of more than 1,500 problems, then the retirement of the old engine."
+      ]
+    },
+    "ar": {
+      "date": "3–16 أكتوبر 2026",
+      "title": "المعادلات، معاد بناؤها على إجراءات الحسم",
+      "summary": "بدل إضافة العائلة التالية من المعادلات، أُعيد بناء المعادلات انطلاقًا من نواة جبر دقيق على سبع عشرة مرحلة. يُتحقق من كل جواب بصورة مستقلة قبل عرضه، والمسألة التي لا يمكن حسمها بعد تنتهي بسبب مذكور.",
+      "bullets": [
+        "حساب دقيق، وتحليل كثيرات الحدود على ℚ، وعزل الجذور الحقيقية والمركبة بأعداد جبرية دقيقة.",
+        "الدوال الأسية واللوغاريتمية ودالة Lambert W؛ القيم المطلقة والجذور؛ والمعادلات المثلثية كعائلات دورية دقيقة.",
+        "الوسطاء كأشجار حالات دقيقة، وأنظمة كثيرات الحدود بقواعد غروبنر.",
+        "جذور عددية مُثبتة وأنظمة مربعة، تُثبت باختباري نيوتن الفتري وكراوتشيك.",
+        "التفكيك الجبري الأسطواني للمناطق، و∀/∃ بحذف المكمّمات.",
+        "مجموعة تزيد على 1,500 مسألة، ثم إحالة المحرك القديم إلى التقاعد."
+      ]
+    },
+    "sources": [
+      {
+        "label": "equation-reconstruction-roadmap.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/equation/equation-reconstruction-roadmap.md"
+      },
+      {
+        "label": "equation-capability-ledger.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/equation/equation-capability-ledger.md"
+      }
+    ]
+  },
+  {
+    "id": "integration-reconstruction",
+    "kind": "milestone",
+    "en": {
+      "date": "26 September – 15 October 2026",
+      "title": "Integration, rebuilt as a decision",
+      "summary": "Integration was rebuilt on Risch-style decision procedures over differential fields. For the classes it covers so far, it returns an antiderivative checked by differentiation, or proves that no elementary antiderivative exists.",
+      "bullets": [
+        "A verified exact-algebra kernel, then rational functions with replayable proofs.",
+        "Differential fields and the Risch differential equation, with complete certificates.",
+        "Exponential, hyperexponential and logarithmic decisions, including proofs of non-elementarity.",
+        "Algebraic fields and divisors, toward algebraic integration.",
+        "Answers shown first, then checked; saved derivations can be reopened and re-verified."
+      ]
+    },
+    "ar": {
+      "date": "26 سبتمبر – 15 أكتوبر 2026",
+      "title": "التكامل، معاد بناؤه كعملية حسم",
+      "summary": "أُعيد بناء التكامل على إجراءات حسم على طريقة ريش فوق الحقول التفاضلية. ضمن الأصناف التي يغطيها حتى الآن، يعطي دالة أصلية يُتحقق منها بالاشتقاق، أو يثبت أنه لا توجد دالة أصلية أولية.",
+      "bullets": [
+        "نواة جبر دقيق مُتحقق منها، ثم الدوال الكسرية مع براهين قابلة لإعادة التشغيل.",
+        "الحقول التفاضلية ومعادلة ريش التفاضلية، مع شهادات كاملة.",
+        "حسم الحالات الأسية وفوق الأسية واللوغاريتمية، بما في ذلك براهين عدم وجود دالة أصلية أولية.",
+        "الحقول الجبرية والقواسم، تمهيدًا للتكامل الجبري.",
+        "يُعرض الجواب أولًا ثم يُتحقق منه؛ ويمكن إعادة فتح الاشتقاقات المحفوظة والتحقق منها مجددًا."
+      ]
+    },
+    "sources": [
+      {
+        "label": "integration-reconstruction-roadmap.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/calculus/integration-reconstruction-roadmap.md"
+      },
+      {
+        "label": "integration-reconstruction-design.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/docs/architecture/calculus/integration-reconstruction-design.md"
+      }
+    ]
+  },
+  {
+    "id": "graphing-gpu",
+    "kind": "milestone",
+    "en": {
+      "date": "Late September – early October 2026",
+      "title": "Graphing on the GPU",
+      "summary": "Graphing moved its drawing to the GPU while keeping an exact reference behind it, so pictures stay fast without losing their honesty.",
+      "bullets": [
+        "Complex domain colouring, implicit curves, regions and 3D surfaces drawn on the GPU.",
+        "Complex loci and roots on an Argand plane; equal axes so circles stay round.",
+        "Exact first-match piecewise graphs with proved boundaries.",
+        "Interval arithmetic and automatic derivatives behind traced readouts.",
+        "One app-wide scale and layouts that adapt to the window."
+      ]
+    },
+    "ar": {
+      "date": "أواخر سبتمبر – أوائل أكتوبر 2026",
+      "title": "الرسم البياني على معالج الرسوميات",
+      "summary": "نقل الرسم البياني الرسم إلى معالج الرسوميات مع إبقاء مرجع دقيق خلفه، لتبقى الصور سريعة دون أن تفقد صدقها.",
+      "bullets": [
+        "تلوين المجال المركب والمنحنيات الضمنية والمناطق والأسطح ثلاثية الأبعاد على معالج الرسوميات.",
+        "المحلات الهندسية المركبة والجذور على مستوى أرغاند، ومحاور متساوية لتبقى الدوائر دائرية.",
+        "دوال متعددة التعريف دقيقة مع حدود مُثبتة.",
+        "حساب الفترات والمشتقات التلقائية خلف القراءات المتتبعة.",
+        "مقياس واحد للتطبيق كله، وتخطيطات تتكيف مع النافذة."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-09-27.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-09/2026-09-27.md"
+      },
+      {
+        "label": "2026-10-06.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-10/2026-10-06.md"
+      }
+    ]
+  },
+  {
+    "id": "v030",
+    "en": {
+      "date": "7 September 2026",
+      "title": "v0.3.0 · A broader mathematics workbench",
+      "summary": "The v0.3.0 changelog brings together the largest expansion documented so far. Graphing and Notebook are new relative to v0.2.0; the established mathematical workspaces receive deeper capabilities rather than being introduced for the first time.",
+      "bullets": [
+        "Added Graphing with real/complex views, relation plotting, supported 3D surfaces and bounded analysis.",
+        "Added Notebook with rich authoring, images, local persistence, page layout and publication formats.",
+        "Expanded Equation and Calculus with more guarded symbolic, complex, integration and limit routes.",
+        "Expanded Matrix, Vector and Statistics, including exact algebra, numerical decompositions and richer result presentation.",
+        "Prepared Linux AppImage, Debian and RPM packages; retained explicit preview limitations."
+      ]
+    },
+    "ar": {
+      "date": "7 سبتمبر 2026",
+      "title": "v0.3.0 · مساحة رياضية أوسع",
+      "summary": "يجمع سجل v0.3.0 أكبر توسع موثق حتى الآن. الرسم البياني والدفتر جديدان مقارنةً بـ v0.2.0؛ أما المساحات الرياضية القائمة فقد تعمقت إمكاناتها ولم تُضف للمرة الأولى.",
+      "bullets": [
+        "إضافة الرسم البياني بعروض حقيقية ومركبة وعلاقات وأسـطح ثلاثية الأبعاد مدعومة وتحليل محدود.",
+        "إضافة الدفتر بالتحرير المنسق والصور والحفظ المحلي وتخطيط الصفحات وصيغ النشر.",
+        "توسيع المعادلات والتفاضل والتكامل بمسارات رمزية ومركبة وتكاملية ونهايات إضافية مضبوطة.",
+        "توسيع المصفوفات والمتجهات والإحصاء بالجبر الدقيق والتحليلات العددية وعرض أغنى للنتائج.",
+        "إعداد حزم AppImage وDebian وRPM للينكس، مع الإبقاء على وصف النسخة التجريبية وحدودها."
+      ]
+    },
+    "sources": [
+      {
+        "label": "CHANGELOG.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/CHANGELOG.md"
+      },
+      {
+        "label": "2026-09-07.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-09/2026-09-07.md"
+      }
+    ],
+    "kind": "version"
+  },
+  {
+    "id": "reliability",
+    "en": {
+      "date": "August – early September 2026",
+      "title": "Making results more dependable",
+      "summary": "A substantial part of this period went into correctness and reliable execution rather than adding another workspace. The records document fixes to the ownership of mathematical answers, history replay and the checks used to catch regressions.",
+      "bullets": [
+        "Repaired cross-workspace proof failures in Statistics, Calculus and Linear Algebra.",
+        "Preserved native root structures through Equation carrier transformations and finite-branch results.",
+        "Added a Calculate-only textual root(index, radicand) convenience with explicit invalid-input stops.",
+        "Repaired numerical-interval result commits and stale UI test assumptions; release records distinguish local verification from publication."
+      ]
+    },
+    "ar": {
+      "date": "أغسطس – أوائل سبتمبر 2026",
+      "title": "زيادة موثوقية النتائج",
+      "summary": "خُصص جزء كبير من هذه الفترة لصحة النتائج والتنفيذ الموثوق بدل إضافة مساحة أخرى. توثق السجلات إصلاحات لمرجعية الإجابات الرياضية وإعادة التشغيل من السجل وفحوص منع التراجع.",
+      "bullets": [
+        "إصلاح إخفاقات الإثبات عبر الإحصاء والتفاضل والتكامل والجبر الخطي.",
+        "الحفاظ على البنية الأصلية للجذور خلال تحويلات المعادلات ونتائج الفروع المنتهية.",
+        "إضافة الصيغة النصية root(index, radicand) للحساب فقط، مع توقف واضح للمدخلات غير الصالحة.",
+        "إصلاح اعتماد نتائج الحل العددي ضمن فترة وافتراضات اختبارات واجهة قديمة، مع الفصل بين التحقق المحلي والنشر."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-08-21.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-08/2026-08-21.md"
+      },
+      {
+        "label": "2026-08-24.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-08/2026-08-24.md"
+      },
+      {
+        "label": "2026-09-04.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-09/2026-09-04.md"
+      },
+      {
+        "label": "2026-09-07.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-09/2026-09-07.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "graphing-browser",
+    "en": {
+      "date": "20–21 July 2026",
+      "title": "Graphing gains depth—and a browser home",
+      "summary": "The Graphing program reached supported real surfaces and structured complex mappings. In the same period, the journal records a successful browser deployment, making the application accessible without installing the Linux package.",
+      "bullets": [
+        "Added on-demand Three.js rendering for supported 3D views and a separate Analyze overlay.",
+        "Introduced synchronized domain-color/component maps, Argand trajectories and Real/Complex/Both view policies.",
+        "Made branch cuts, bounded zeros/poles and incomplete-search evidence visible.",
+        "Recorded a successful Cloudflare deployment and clarified that browser and desktop work do not automatically synchronize.",
+        "Began v0.3.0 preparation; this July preparation date is distinct from its September changelog date."
+      ]
+    },
+    "ar": {
+      "date": "20–21 يوليو 2026",
+      "title": "عمق أكبر للرسم وإتاحة عبر المتصفح",
+      "summary": "وصل برنامج الرسم إلى أسطح حقيقية مدعومة وتمثيلات منظمة للدوال المركبة. وفي الفترة نفسها يسجل دفتر التطوير نجاح النشر في المتصفح، لإتاحة التطبيق دون تثبيت حزمة لينكس.",
+      "bullets": [
+        "إضافة عرض Three.js عند الطلب للمشاهد ثلاثية الأبعاد المدعومة ولوحة تحليل مستقلة.",
+        "إدخال خرائط متزامنة لتلوين المجال والمكونات ومسارات أرغاند وسياسات العرض الحقيقي والمركب والمشترك.",
+        "إظهار قطوع الفروع والأصفار والأقطاب المحدودة وأدلة عدم اكتمال البحث.",
+        "توثيق نجاح النشر على Cloudflare وتوضيح عدم وجود مزامنة تلقائية بين المتصفح والحاسوب.",
+        "بدء إعداد v0.3.0 في يوليو؛ وهذا تاريخ إعداد يختلف عن تاريخ سجل التغييرات في سبتمبر."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-07-20.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-20.md"
+      },
+      {
+        "label": "2026-07-21.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-21.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "notebook-results",
+    "en": {
+      "date": "14 July 2026",
+      "title": "From calculations to durable documents",
+      "summary": "Notebook developed into a local document workflow, while a parallel result-format program made mathematical output more consistent across display, copying and history. Internal result-format versions describe that engineering work, not new app releases.",
+      "bullets": [
+        "Added document-library identity, revisions, browser IndexedDB storage and desktop atomic storage.",
+        "Added autosave, recovery paths, recent documents, Trash and portable .cwiznb packages.",
+        "Expanded paragraph tools, outlines, inspectors and durable image insertion.",
+        "Removed legacy result-reading paths and advanced typed, producer-owned mathematical results.",
+        "Later records supersede early media experiments: video is removed from the current Notebook."
+      ]
+    },
+    "ar": {
+      "date": "14 يوليو 2026",
+      "title": "من الحسابات إلى مستندات محفوظة",
+      "summary": "تطور الدفتر إلى مسار مستندات محلية، وبالتوازي حسّن برنامج صيغ النتائج اتساق الرياضيات بين العرض والنسخ والسجل. أرقام صيغ النتائج الداخلية تصف هذا العمل الهندسي، وليست إصدارات جديدة للتطبيق.",
+      "bullets": [
+        "إضافة هوية المستند ومراجعاته وحفظ IndexedDB في المتصفح وحفظ ذري على الحاسوب.",
+        "إضافة الحفظ التلقائي والاستعادة والمستندات الأخيرة وسلة المحذوفات وحزم .cwiznb المحمولة.",
+        "توسيع أدوات الفقرات والمخطط ولوحات الفحص وإدراج الصور الدائم.",
+        "إزالة مسارات قراءة نتائج قديمة وتطوير نتائج رياضية ذات بنية يملكها منتج النتيجة.",
+        "تتجاوز السجلات اللاحقة تجارب الوسائط الأولى: أزيل الفيديو من الدفتر الحالي."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-07-14.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-14.md"
+      },
+      {
+        "label": "current-state.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/current-state.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "symbolic-frontier",
+    "en": {
+      "date": "Late June – early July 2026",
+      "title": "Deeper symbolic methods, clearer boundaries",
+      "summary": "The mathematical core grew through bounded algorithms and verification, rather than a claim to solve every expression. Integration and complex-equation work gained new routes and more explicit evidence about when an answer is valid.",
+      "bullets": [
+        "Expanded polynomial integration and integration-by-parts feeders with original-integrand backchecks.",
+        "Added bounded symbolic Hermite reductions and LRT logarithmic-part foundations, followed by the selected live routes recorded in the current state.",
+        "Improved integration output and visible parameter/domain conditions.",
+        "Hardened complex numerical solving with pole-aware evidence, branch-safe regional pullbacks, contour-moment seeds and local-box checks.",
+        "Kept uncertain multiple roots and unsupported branch compositions explicitly inconclusive or unsupported."
+      ]
+    },
+    "ar": {
+      "date": "أواخر يونيو – أوائل يوليو 2026",
+      "title": "طرق رمزية أعمق وحدود أوضح",
+      "summary": "نما المحرك الرياضي عبر خوارزميات محدودة والتحقق من النتائج، دون ادعاء حل كل تعبير. اكتسب التكامل والمعادلات المركبة مسارات جديدة وأدلة أوضح على شروط صحة الإجابة.",
+      "bullets": [
+        "توسيع التكامل كثير الحدود ومسارات مساعدة للتكامل بالتجزئة مع فحص التكامل الأصلي.",
+        "إضافة اختزال Hermite رمزي محدود وأسس الجزء اللوغاريتمي بطريقة LRT، تلتها المسارات الفعلية المختارة المسجلة في الحالة الحالية.",
+        "تحسين عرض التكامل وشروط المعاملات والمجالات المرئية.",
+        "تقوية الحل العددي المركب بأدلة تراعي الأقطاب وسلامة الفروع وعزوم المحيط وفحص صناديق محلية.",
+        "الإبقاء على الجذور المتعددة غير المحسومة والتراكيب غير المدعومة بنتائج صريحة غير حاسمة أو غير مدعومة."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-06-26.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-26.md"
+      },
+      {
+        "label": "2026-06-29.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-29.md"
+      },
+      {
+        "label": "2026-07-06.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-07/2026-07-06.md"
+      },
+      {
+        "label": "current-state.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/current-state.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "v020",
+    "en": {
+      "date": "22 June 2026",
+      "title": "v0.2.0 · Preparing a public Linux preview",
+      "summary": "The v0.2.0 entry formalized the Linux preview path and the public repository’s release discipline. Equation, Calculus, Matrix, Vector and Statistics already existed; this was not the point at which those workspaces first appeared.",
+      "bullets": [
+        "Aligned npm, Tauri, Cargo and release-workflow version metadata.",
+        "Documented Linux AppImage, Debian/Ubuntu and RPM packaging.",
+        "Added MIT package metadata, contribution/security guidance and repository review/CI guardrails.",
+        "Added the first-public-preview checklist and release-process documentation.",
+        "The journal explicitly deferred tagging and publication at that checkpoint; its date is not independent proof of a public release."
+      ]
+    },
+    "ar": {
+      "date": "22 يونيو 2026",
+      "title": "v0.2.0 · إعداد معاينة عامة للينكس",
+      "summary": "نظّم سجل v0.2.0 مسار النسخة التجريبية للينكس وإجراءات إصدار المستودع العام. كانت المعادلات والتفاضل والتكامل والمصفوفات والمتجهات والإحصاء موجودة بالفعل؛ فلم تُضف لأول مرة في هذه المرحلة.",
+      "bullets": [
+        "توحيد بيانات الإصدار بين npm وTauri وCargo وسير عمل الإصدار.",
+        "توثيق حزم AppImage وDebian/Ubuntu وRPM للينكس.",
+        "إضافة بيانات ترخيص MIT وإرشادات المساهمة والأمان وضوابط المراجعة والتكامل المستمر.",
+        "إضافة قائمة تحقق لأول معاينة عامة وتوثيق إجراءات الإصدار.",
+        "أجّل السجل إنشاء الوسم والنشر صراحةً عند تلك النقطة؛ فلا يُعد التاريخ وحده إثباتًا لنشر إصدار عام."
+      ]
+    },
+    "sources": [
+      {
+        "label": "CHANGELOG.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/CHANGELOG.md"
+      },
+      {
+        "label": "2026-06-22.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-22.md"
+      }
+    ],
+    "kind": "version"
+  },
+  {
+    "id": "tabs-foundation",
+    "en": {
+      "date": "16–18 June 2026",
+      "title": "Independent workspaces inside one app",
+      "summary": "The Supercarrier foundation established clearer ownership boundaries, and Workspace Tabs made separate calculations practical within one application shell. The aim was controlled execution and preserved workspace state.",
+      "bullets": [
+        "Closed the initial compartment foundation around ownership, diagnostics and fault containment.",
+        "Added visible browser-style tabs with rename, duplicate, close and new-Calculate actions.",
+        "Preserved inactive workspace state and gave results and Ans an instance-specific home.",
+        "Scoped job handling and cancellation to workspace instances; tab closure did not mean deleting global History."
+      ]
+    },
+    "ar": {
+      "date": "16–18 يونيو 2026",
+      "title": "مساحات مستقلة داخل تطبيق واحد",
+      "summary": "وضعت أسس Supercarrier حدودًا أوضح للمسؤوليات، وأتاحت علامات التبويب العمل على حسابات منفصلة داخل واجهة واحدة. كان الهدف تنفيذًا منضبطًا مع حفظ حالة كل مساحة.",
+      "bullets": [
+        "إتمام الأساس الأول للمقصورات حول المسؤوليات والتشخيص واحتواء الأعطال.",
+        "إضافة علامات تبويب مرئية مع إعادة التسمية والنسخ والإغلاق وفتح مساحة حساب جديدة.",
+        "حفظ حالة المساحات غير النشطة وربط النتائج وAns بمثيل المساحة.",
+        "ربط المهام والإلغاء بمثيلات المساحات؛ إغلاق تبويب لا يحذف السجل العام."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-06-16.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-16.md"
+      },
+      {
+        "label": "2026-06-17.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-17.md"
+      },
+      {
+        "label": "2026-06-18.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-06/2026-06-18.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "variables",
+    "en": {
+      "date": "23–29 May 2026",
+      "title": "Explicit variables and controlled execution",
+      "summary": "Work in May clarified which symbol a problem is solving for, how stored values are used, and what happens when calculations become stale. This made the calculator more predictable as its mathematical coverage expanded.",
+      "bullets": [
+        "Added selected-target solving beyond x and a Solve for selector.",
+        "Introduced explicit @name / var(name) identifiers while preserving ordinary adjacent-letter multiplication.",
+        "Expanded stored-value support with protection for active variables, bound variables and solve targets.",
+        "Advanced Order of Execution job identity, stale-result gates, cancellation and isolated runtime pilots."
+      ]
+    },
+    "ar": {
+      "date": "23–29 مايو 2026",
+      "title": "متغيرات صريحة وتنفيذ منضبط",
+      "summary": "وضّح عمل مايو المجهول المطلوب وكيفية استخدام القيم المحفوظة والتعامل مع الحسابات التي أصبحت قديمة. جعل ذلك سلوك الحاسبة أكثر قابلية للتوقع مع اتساع إمكاناتها.",
+      "bullets": [
+        "إضافة حل لمجهول مختار غير x وقائمة لتحديد المتغير المطلوب.",
+        "إدخال الأسماء الصريحة @name وvar(name) مع الحفاظ على دلالة ضرب الحروف المتجاورة.",
+        "توسيع استخدام القيم المحفوظة مع حماية المتغيرات النشطة والمقيدة والمجاهيل المختارة.",
+        "تطوير هوية المهام وبوابات النتائج القديمة والإلغاء وتجارب التنفيذ المعزول في Order of Execution."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-05-23.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-05/2026-05-23.md"
+      },
+      {
+        "label": "2026-05-25.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-05/2026-05-25.md"
+      },
+      {
+        "label": "2026-05-27.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-05/2026-05-27.md"
+      },
+      {
+        "label": "2026-05-29.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-05/2026-05-29.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "calculus-foundation",
+    "en": {
+      "date": "April 2026",
+      "title": "Clearer presentation and a shared calculus core",
+      "summary": "April strengthened both mathematical presentation and calculus behavior. Settings and History moved outside the calculator’s working area where space allowed, while previously separate calculus paths began sharing app-owned logic.",
+      "bullets": [
+        "Added outboard Settings/History panels with overlay fallback on narrower layouts.",
+        "Improved power, root and logarithm presentation while preserving underlying mathematical payloads.",
+        "Unified shared indefinite-integration behavior and extended verified substitution routes.",
+        "Expanded powered-function differentiation and supported inverse trigonometric/hyperbolic families."
+      ]
+    },
+    "ar": {
+      "date": "أبريل 2026",
+      "title": "عرض أوضح ونواة مشتركة للتفاضل والتكامل",
+      "summary": "عزّز أبريل عرض الرياضيات وسلوك التفاضل والتكامل. انتقلت لوحتا الإعدادات والسجل خارج منطقة الحساب عند توفر المساحة، وبدأت مسارات تفاضل وتكامل منفصلة تشترك في منطق يملكه التطبيق.",
+      "bullets": [
+        "إضافة لوحات خارجية للإعدادات والسجل تتحول إلى طبقات عند ضيق التخطيط.",
+        "تحسين عرض القوى والجذور واللوغاريتمات مع الحفاظ على البيانات الرياضية الأصلية.",
+        "توحيد السلوك المشترك للتكامل غير المحدد وتوسيع مسارات التعويض المتحقق منها.",
+        "توسيع اشتقاق الدوال المرفوعة لقوى وعائلات مثلثية وزائدية عكسية مدعومة."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-04-03.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-04/2026-04-03.md"
+      },
+      {
+        "label": "2026-04-25.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-04/2026-04-25.md"
+      }
+    ],
+    "kind": "milestone"
+  },
+  {
+    "id": "beginnings",
+    "en": {
+      "date": "2–10 March 2026",
+      "title": "The first calculator foundations",
+      "summary": "The earliest journal records establish the web and desktop scaffold and the separation between calculation and equation solving. Guided entry, algebra tools and display preferences quickly turned that scaffold into a usable mathematical workspace.",
+      "bullets": [
+        "Created the Vite, React and TypeScript project and initialized Tauri v2.",
+        "Separated Calculate from Equation and added a category-based launcher.",
+        "Added guided polynomial and simultaneous-system flows, complex-number utilities and numerical polynomial roots.",
+        "Added mathematical keyboard layouts, clipboard/editor transfers and signed-number input.",
+        "Built bounded exact algebra transformations and persisted settings for scale, contrast, angle units and output style."
+      ]
+    },
+    "ar": {
+      "date": "2–10 مارس 2026",
+      "title": "الأسس الأولى للحاسبة",
+      "summary": "توثق أقدم السجلات إنشاء أساس الويب والحاسوب والفصل بين الحساب وحل المعادلات. وسرعان ما أضاف الإدخال الموجه وأدوات الجبر وتفضيلات العرض ملامح مساحة رياضية قابلة للاستخدام.",
+      "bullets": [
+        "إنشاء مشروع Vite وReact وTypeScript وتهيئة Tauri v2.",
+        "الفصل بين الحساب والمعادلات وإضافة مشغّل قائم على الفئات.",
+        "إضافة إدخال موجه لكثيرات الحدود والأنظمة المتزامنة وأدوات للأعداد المركبة وجذور عددية لكثيرات الحدود.",
+        "إضافة تخطيطات لوحة مفاتيح رياضية والنقل بين الحافظة والمحرر وإدخال الأعداد الموقعة.",
+        "بناء تحويلات جبرية دقيقة محدودة وإعدادات محفوظة للحجم والتباين ووحدات الزوايا ونمط النتائج."
+      ]
+    },
+    "sources": [
+      {
+        "label": "2026-03-02.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-03/2026-03-02.md"
+      },
+      {
+        "label": "2026-03-03.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-03/2026-03-03.md"
+      },
+      {
+        "label": "2026-03-10.md",
+        "url": "https://github.com/AhmedAlnasser2000/REZANOVA-CAS-CALCULATOR/blob/main/.memory/journal/2026-03/2026-03-10.md"
+      }
+    ],
+    "kind": "milestone"
+  }
+]

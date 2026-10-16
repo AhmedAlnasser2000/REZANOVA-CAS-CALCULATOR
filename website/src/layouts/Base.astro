@@ -1,0 +1,92 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/noto-sans-arabic';
+import 'katex/dist/katex.min.css';
+import '../styles/index.css';
+import { content, type Locale } from '../data/site';
+interface Props {
+  lang: Locale;
+  title?: string;
+  description?: string;
+  details?: boolean;
+  page?: 'capabilities' | 'history';
+}
+const {
+  lang,
+  title = content[lang].title,
+  description = content[lang].description,
+  details = false,
+  page,
+} = Astro.props;
+const path = page ? `${page}/` : details ? 'capabilities/' : '';
+const canonical = Astro.site ? new URL(`/${lang}/${path}`, Astro.site) : undefined;
+const localeUrl = (locale: string) =>
+  Astro.site ? new URL(`/${locale}/${path}`, Astro.site) : `/${locale}/${path}`;
+---
+
+<!doctype html>
+<html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+  <head>
+    <meta charset="UTF-8" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#eaf7ff" />
+    <title>{title}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {!Astro.site && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="alternate" hreflang="en" href={localeUrl('en')} />
+    <link rel="alternate" hreflang="ar" href={localeUrl('ar')} />
+    <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {Astro.site && (
+      <meta property="og:image" content={new URL('/images/coast-wide.webp', Astro.site)} />
+    )}
+    <meta property="og:locale" content={lang === 'ar' ? 'ar_SA' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      {content[lang].skip}
+    </a>
+    <slot />
+    <script>
+      // Preserve the current section when switching language, without storing preferences.
+      document.querySelectorAll<HTMLAnchorElement>('[data-language-switch]').forEach((switcher) =>
+        switcher.addEventListener('click', (event) => {
+          const link = event.currentTarget as HTMLAnchorElement;
+          link.hash = location.hash;
+        }),
+      );
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
+      const elements = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if (!motion.matches && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.08 },
+        );
+        elements.forEach((element) => {
+          element.classList.add('will-reveal');
+          observer.observe(element);
+        });
+        motion.addEventListener('change', () => {
+          if (motion.matches) {
+            observer.disconnect();
+            elements.forEach((element) => element.classList.add('is-visible'));
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
