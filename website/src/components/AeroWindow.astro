@@ -63,7 +63,7 @@ const w = home[lang].window;
   const show = (element: HTMLElement) => {
     element.classList.add('is-open');
     // The problem is "written" first; the answer follows once the window has opened.
-    window.setTimeout(() => element.classList.add('is-solved'), motion.matches ? 0 : 900);
+    window.setTimeout(() => element.classList.add('is-solved'), motion.matches ? 0 : 650);
   };
   if (motion.matches || !('IntersectionObserver' in window)) windows.forEach(show);
   else {

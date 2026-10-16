@@ -1,7 +1,7 @@
 ---
 // The pre-computed examples (tools/website-examples.ts) shown as Aero windows.
 import AeroWindow from './AeroWindow.astro';
-import Math from './Math.astro';
+import Tex from './Math.astro';
 import examples from '../data/examples.json';
 import { home } from '../data/home';
 import type { Locale } from '../data/site';
@@ -20,20 +20,22 @@ const shots: Record<string, string> = {
   quartic: 'app-integration-quartic',
   gaussian: 'app-integration-gaussian',
 };
+// Answers with very long lines get a window spanning the grid's full width.
+const longest = (text: string) => Math.max(...text.split('\n').map((line) => line.length));
 const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).toFixed(1)} s`);
 ---
 
-<div class="window-grid">
+<div class:list={['window-grid', kind]}>
   {kind === 'equation' &&
     examples.equation.map((e, index) => (
-      <AeroWindow id={`eq-${e.id}`} title={e.title[lang]} lang={lang} delay={index * 70}>
+      <AeroWindow id={`eq-${e.id}`} title={e.title[lang]} lang={lang} delay={index * 70} wide={longest(e.plainText) > 60}>
         <div class="example-problem">
           {e.rows.map((row) => (
-            <Math latex={row} class="example-row" />
+            <Tex latex={row} class="example-row" />
           ))}
         </div>
         <div class="example-answer">
-          <Math latex={e.answer} />
+          <Tex latex={e.answer} />
         </div>
         <p class="example-badge">
           <span aria-hidden="true">✓</span> {w.headlines[e.verification.headline] ?? e.verification.headline} · {ms(e.elapsedMs)}
@@ -42,12 +44,12 @@ const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).
           <h4>{w.input}</h4>
           <div class="example-problem">
             {e.rows.map((row) => (
-              <Math latex={row} class="example-row" />
+              <Tex latex={row} class="example-row" />
             ))}
           </div>
           <h4>{w.answer}</h4>
           <div class="example-answer">
-            <Math latex={e.answerWithDigits} />
+            <Tex latex={e.answerWithDigits} />
           </div>
           <h4>
             <span aria-hidden="true">✓</span> {w.headlines[e.verification.headline] ?? e.verification.headline}
@@ -70,18 +72,16 @@ const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).
     examples.integration.map((e, index) => (
       <AeroWindow id={`int-${e.id}`} title={e.title[lang]} lang={lang} delay={index * 70}>
         <div class="example-problem">
-          <Math latex={e.source} class="example-row" />
+          <Tex latex={e.source} class="example-row" />
         </div>
         <div class="example-answer">
           {e.negative ? (
-            <p class="example-negative">
-              <Math latex={`\\int ${e.answer}\\,dx`} />
-            </p>
+            <p class="example-negative-title">{w.nonElementary}.</p>
           ) : (
             <>
-              <Math latex={`= ${e.answer}`} />
+              <Tex latex={`= ${e.answer}`} />
               {e.terms.map((term) => (
-                <Math latex={term.definition} class="example-where" />
+                <Tex latex={term.definition} class="example-where" />
               ))}
             </>
           )}
@@ -91,7 +91,7 @@ const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).
         </p>
         <Fragment slot="max">
           <h4>{w.input}</h4>
-          <Math latex={e.source} class="example-row" />
+          <Tex latex={e.source} class="example-row" />
           <h4>{w.answer}</h4>
           <div class="example-answer">
             {e.negative ? (
@@ -102,14 +102,14 @@ const ms = (value: number) => (value < 1000 ? `${value} ms` : `${(value / 1000).
               </>
             ) : (
               <>
-                <Math latex={`= ${e.answer}`} />
+                <Tex latex={`= ${e.answer}`} />
                 <p class="example-where-label">{w.where}</p>
-                {e.definition && <Math latex={e.definition} class="example-where" />}
+                {e.definition && <Tex latex={e.definition} class="example-where" />}
                 {e.terms.map((term) => (
                   <>
-                    <Math latex={term.definition} class="example-where" />
-                    <Math latex={term.modulus} class="example-where" />
-                    <Math latex={term.argument} class="example-where" />
+                    <Tex latex={term.definition} class="example-where" />
+                    <Tex latex={term.modulus} class="example-where" />
+                    <Tex latex={term.argument} class="example-where" />
                   </>
                 ))}
               </>

@@ -15,7 +15,7 @@ const t = editorial[lang];
 ---
 
 <Base lang={lang} title={`${t.history} — REZANOVA`} description={t.historyIntro} page="history">
-  <div class="details-mast">
+  <div class="details-mast history-mast">
     <Header lang={lang} page="history" />
   </div>
   <main id="main" class="details-page history-page wrap">
@@ -27,15 +27,11 @@ const t = editorial[lang];
     <p class="section-intro">{t.historyIntro}</p>
     <p class="reading-note">{t.historyNote}</p>
     <nav class="chapter-nav" aria-label={t.historyNav}>
-      <a href="#v030" dir="ltr">
-        v0.3.0
-      </a>
-      <a href="#graphing-browser">{lang === 'en' ? 'Graphs & browser' : 'الرسم والمتصفح'}</a>
-      <a href="#notebook-results">{lang === 'en' ? 'Notebook' : 'الدفتر'}</a>
-      <a href="#v020" dir="ltr">
-        v0.2.0
-      </a>
-      <a href="#beginnings">{lang === 'en' ? 'The beginnings' : 'البدايات'}</a>
+      {t.chapters.map(([id, label]) => (
+        <a href={`#${id}`} dir={label.startsWith('v0') ? 'ltr' : undefined}>
+          {label}
+        </a>
+      ))}
     </nav>
     <ol class="timeline">
       {history.map((entry) => {
@@ -77,5 +73,5 @@ const t = editorial[lang];
       </a>
     </section>
   </main>
-  <Footer lang={lang} />
+  <Footer lang={lang} page="history" />
 </Base>

@@ -304,3 +304,19 @@
     padding: 16px;
   }
 }
+.rebuilding-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+}
+.rebuilding-list li {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px dashed #d9a64a;
+  background: #fff8e8;
+  color: #6b4a0e;
+  font-size: 0.95rem;
+}

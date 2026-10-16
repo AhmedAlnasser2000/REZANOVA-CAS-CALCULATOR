@@ -8,6 +8,7 @@ import Prose from '../../components/Prose.astro';
 import capabilities from '../../data/capabilities.json';
 import { editorial } from '../../data/editorial';
 import { content, links, type Locale } from '../../data/site';
+import { workspacesRebuilding } from '../../data/home';
 export function getStaticPaths() {
   return ['en', 'ar'].map((lang) => ({ params: { lang } }));
 }
@@ -32,6 +33,7 @@ const e = editorial[lang];
       {capabilities.map((entry) => (
         <a href={`#${entry.id}`}>{entry[lang].title}</a>
       ))}
+      <a href="#rebuilding">{e.rebuildingTitle}</a>
       <a href="#limitations">{t.limitsTitle}</a>
     </nav>
     <section aria-labelledby="supported">
@@ -61,6 +63,15 @@ const e = editorial[lang];
           );
         })}
       </div>
+    </section>
+    <section id="rebuilding" aria-labelledby="rebuilding-title">
+      <h2 id="rebuilding-title">{e.rebuildingTitle}</h2>
+      <p>{e.rebuildingBody}</p>
+      <ul class="rebuilding-list">
+        {workspacesRebuilding[lang].map((name) => (
+          <li>{name}</li>
+        ))}
+      </ul>
     </section>
     <section id="limitations" aria-labelledby="limits-title">
       <h2 id="limits-title">{t.limitsTitle}</h2>
@@ -92,11 +103,11 @@ const e = editorial[lang];
         {t.report}
         <Icon name="arrow-up-right" />
       </a>
-      <a href={links.downloads}>
+      <a href={links.releases}>
         {t.releases}
         <Icon name="arrow-up-right" />
       </a>
     </div>
   </main>
-  <Footer lang={lang} />
+  <Footer lang={lang} page="capabilities" />
 </Base>

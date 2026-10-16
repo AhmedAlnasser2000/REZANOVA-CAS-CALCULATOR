@@ -25,7 +25,7 @@ async function fresh(height = 900) {
   await page.getByTestId('new-equation-page').waitFor({ timeout: 30_000 });
   return page;
 }
-async function setLatex(page, locator, latex) {
+async function setLatex(locator, latex) {
   await locator.evaluate((element, value) => {
     element.focus();
     element.setValue(value);
@@ -44,7 +44,7 @@ async function equation(name, rows, readme) {
   const workspace = page.getByTestId('new-equation-page');
   for (const [index, latex] of rows.entries()) {
     if (index > 0) await workspace.getByRole('button', { name: '+ Add row' }).click();
-    await setLatex(page, page.getByTestId(`new-equation-row-${index + 1}`), latex);
+    await setLatex(page.getByTestId(`new-equation-row-${index + 1}`), latex);
   }
   await workspace.getByRole('button', { name: 'Solve', exact: true }).click();
   const answer = page.getByTestId('new-equation-answer');
@@ -66,7 +66,7 @@ async function integration(name, source, heading, readme) {
   await page.getByTestId('workspace-tab-create-menu').getByRole('menuitem', { name: 'New Integration', exact: true }).click();
   const workspace = page.getByTestId('new-integration-page');
   await workspace.waitFor();
-  await setLatex(page, page.getByTestId('new-integration-editor'), source);
+  await setLatex(page.getByTestId('new-integration-editor'), source);
   await workspace.getByRole('button', { name: 'Integrate', exact: true }).click();
   const result = workspace.getByRole('heading', { name: heading });
   await result.waitFor({ timeout: 60_000 });
@@ -84,7 +84,7 @@ async function graph(name, latex, threeD) {
   await page.getByTestId('workspace-tab-add-menu').click();
   await page.getByRole('menuitem', { name: 'New Graph' }).click();
   await page.getByTestId('graph-page').waitFor();
-  await setLatex(page, page.locator('.graph-page math-field').first(), latex);
+  await setLatex(page.locator('.graph-page math-field').first(), latex);
   if (threeD) await page.getByRole('group', { name: 'Graph dimension' }).getByRole('button', { name: '3D' }).click();
   // Wait for the status bar to leave "Drawing preview…".
   await page.getByText('Ready', { exact: true }).first().waitFor({ timeout: 60_000 });
