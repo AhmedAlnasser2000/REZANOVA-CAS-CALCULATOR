@@ -1,5 +1,15 @@
 # Content research and editorial decisions
 
+## Update, 16 October 2026
+
+- The site moved into the project repository (`website/`).
+- Capabilities describe the workspaces that open today: Equation, Graphing, Integration and Notebook, plus Tabs, History and Settings. Calculate, Table, Matrix, Vector, Calculus, Trigonometry, Geometry, Statistics and Labs are listed as being rebuilt, without screenshots.
+- Four history chapters were added from the repository's git history and roadmaps: Graphing on the GPU, the Integration reconstruction (from 26 September), the Equation reconstruction (stages 1–17, 3–16 October; 1,540-problem corpus per `equation-capability-ledger.md`) and the pause.
+- The story and status wording (why the engines were rebuilt, development paused for studies and resuming next year with no date) is the owner's, approved 16 October 2026.
+- Examples are not hand-written: `tools/website-examples.ts` runs the engines and fails unless every example is verified.
+
+The notes below are the original research of 17 September 2026 and are kept for the older chapters.
+
 Reviewed 17 September 2026. The published copy describes repository records through 7 September 2026, not a newly tested calculator release.
 
 ## Evidence and scope

@@ -85,7 +85,7 @@ export const home = {
       oldIslands: ['Simple solving', 'Degree caps', 'Complex', 'Inequalities', 'Cardano · Ferrari'],
       oldCaption: 'One island per family, each reached by its own route. The sea between them stays out of reach.',
       newCaption: 'One chart for the whole sea. Every example on this page is a point on it.',
-      chartLabels: ['Polynomials', 'Parameters', 'Regions', '∀ ∃', 'Systems', 'Periodic', 'Lambert W', 'Radicals', '∫ rational', '∫ exponential', 'No elementary ∫'],
+      chartLabels: ['Polynomials', 'Parameters', 'Regions', 'For all · exists', 'Systems', 'Periodic', 'Lambert W', 'Radicals', '∫ rational', '∫ exponential', 'No elementary ∫'],
     },
     status: {
       eyebrow: 'Where it stands',
@@ -175,7 +175,7 @@ export const home = {
       oldIslands: ['الحل البسيط', 'سقوف الدرجة', 'المركبة', 'المتباينات', 'كاردانو · فيراري'],
       oldCaption: 'جزيرة لكل عائلة، يُوصل إليها بمسارها الخاص، ويبقى البحر بينها بعيد المنال.',
       newCaption: 'خريطة واحدة للبحر كله، وكل مثال في هذه الصفحة نقطة عليها.',
-      chartLabels: ['كثيرات الحدود', 'الوسطاء', 'المناطق', '∀ ∃', 'الأنظمة', 'الدورية', 'Lambert W', 'الجذور', '∫ كسري', '∫ أسي', 'لا ∫ أولي'],
+      chartLabels: ['كثيرات الحدود', 'الوسطاء', 'المناطق', 'لكل · يوجد', 'الأنظمة', 'الدورية', 'Lambert W', 'الجذور', '∫ كسري', '∫ أسي', 'لا ∫ أولي'],
     },
     status: {
       eyebrow: 'أين وصلنا',

@@ -1,58 +1,80 @@
 # REZANOVA website
 
-A standalone Astro website for REZANOVA CAS Calculator. English and Arabic; static seaside artwork, lightweight Aero-inspired styling, and one-time entrance motion. The calculator remains in its existing React + Vite repository.
+The showcase website for REZANOVA, in English and Arabic. It is a static Astro site that lives in the calculator repository but is not part of the app: it has its own dependencies, its own CI job, and no math code.
+
+The design is nostalgic on purpose: a painted seaside ("mathematics is vast, and worth venturing into"), Windows 7 / XP glass, and a page that reads as a voyage — Equation, Graphing, Integration, then Notebook — from morning to golden hour.
 
 ## Run
 
-Requires Node.js 22.12+ (validated with Node 24).
+Requires Node.js 22.12 or newer (CI uses Node 24, from the repository's `package.json`).
 
 ```sh
+cd website
 npm ci
-npm run dev
-npm run check
-npm run build
-npm test
-npm run preview
+npx astro dev        # http://localhost:4173
+npx astro check      # types and templates
+npx astro build      # static output in dist/
+npm test             # checks the built output (run after a build)
+npx astro preview
 ```
 
-Astro generates a static site in `dist/`. `/` redirects to `/en/`. Home, capabilities and history pages exist at `/en/` and `/ar/`. Fonts, images, and icons are served locally; no analytics, third-party scripts, video, WebGL, live blur, or continuous animation is used. UI JavaScript handles accessible tabs, the launch dialog, and one-time visibility-triggered fades/translations. Content remains visible when JavaScript is disabled; only Graphing is selected without JavaScript, and the screenshot can be opened directly.
+`/` redirects to `/en/`. Home, Capabilities and Our story exist at `/en/` and `/ar/`.
 
-## Calculator and website addresses
+## What is on the page
 
-The calculator stays at `https://rezanova-cas.com/`, confirmed by the owner. The launch dialog now links to that address. The marketing website will use a separate domain chosen later.
+- **Hero.** The coast art, a glass orb that opens the browser app (`https://rezanova-cas.com/`), and a faint sine curve on the horizon that follows the pointer. It redraws only while the pointer moves.
+- **Example windows.** Every Equation and Integration example is an Aero window. The problem is "written" first, then the answer appears with its verification. Minimize folds a window, Maximize opens the full answer, its checks and an app screenshot, and Close leaves a Reopen chip.
+- **Why it was rebuilt.** A switch between the old way (one island per family of problems) and the new way (one chart for the whole sea).
+- **Where it stands.** The workspaces that open today and the ones being rebuilt.
+- **Footer.** A Windows 7 taskbar.
 
-The confirmed calculator link works by default. Copy `.env.example` to `.env` to override it or configure the website origin. Set `PUBLIC_WEBSITE_URL` when the marketing website's address is selected; until then, previews have no canonical origin or sitemap and are marked noindex. `PUBLIC_CALCULATOR_READY=false` can disable the launch link if needed.
+Motion is one-time and interaction-driven; there is no continuous animation. With `prefers-reduced-motion` everything appears at once and the wave stays still. Without JavaScript, every window is open and both story pictures are shown.
 
-`npm run check:launch` validates publication configuration, including distinct HTTPS origins. It intentionally fails until the marketing website address is set. Preview builds work without it.
+## Examples come from the real engines
+
+`src/data/examples.json` is generated, never hand-written. From the repository root:
+
+```sh
+node node_modules/vite-node/dist/cli.mjs --root . tools/website-examples.ts
+```
+
+It runs the Equation and Integration engines on a fixed list, and fails unless every example comes out verified. The JSON records the commit it came from. It is deliberately not a CI step, so engine changes never break the website build; rerun it by hand after the engines change.
+
+Math is rendered at build time with KaTeX. A formula KaTeX cannot render fails the build.
+
+## App screenshots
+
+`public/images/app-*.webp` (and the README's Equation and Integration screenshots in `docs/assets/screenshots/`) are captured from the real app:
+
+```sh
+# repository root
+npm run build
+npm run preview:test &
+node website/scripts/capture-app.mjs   # CHROMIUM_PATH=… to choose the browser
+```
+
+Only workspaces that open today are shown. Screenshots of workspaces being rebuilt were removed.
 
 ## Structure
 
-- `src/data/site.ts` and `src/data/editorial.ts`: English/Arabic UI copy and external links.
-- `src/data/capabilities.json`: ten sourced capability sections with summaries, bullets and limits in both languages.
-- `src/data/history.json`: two documented versions and eight chronological milestone chapters; each has a summary paragraph, bullet list and sources.
-- `CONTENT-SOURCES.md`: research scope, source fingerprints and resolved version/history inconsistencies.
-- `src/styles/global.css`: visual tokens, glass treatments and responsive layouts.
-- `src/components/Showcase.astro`: keyboard-accessible screenshot tabs.
-- `src/pages/[lang]/`: bilingual static routes.
-- `source-assets/`: full-size scenery and original/transparent logo sources.
-- `public/images/`: optimized production assets and authentic calculator screenshots.
-- `scripts/prepare-assets.mjs`: regenerate optimized scenery/logo and vendored Tabler icons.
-- `design-qa.md`: visual and interaction verification notes.
+- `src/data/site.ts`, `editorial.ts`, `home.ts`: English and Arabic copy. Edit both languages together.
+- `src/data/capabilities.json`, `history.json`: the Capabilities and Our story pages, with source links.
+- `src/data/examples.json`: generated examples (see above).
+- `src/components/`: `AeroWindow`, `Examples`, `Math` (KaTeX), `Wave`, `RebuiltStory`, `Header`, `Footer` (the taskbar).
+- `src/styles/`: `base.css`, `home.css`, `pages.css`, `aero.css` and `responsive.css`, imported in that order by `index.css`. No file passes 1000 lines.
+- `scripts/site.test.mjs`: output checks (language metadata, links and fragments, every example window and dialog, KaTeX output, no retired screenshots or stale download, JS and image budgets).
+- `CONTENT-SOURCES.md`, `ASSETS.md`, `THIRD-PARTY-LICENSE.txt`: sources and attribution.
 
-Edit both locales together. Arabic is RTL; mathematical screenshots stay LTR. The launch target and download links are separate. Documentation currently links to the existing GitHub README, which is in English. Website localization does not imply app localization.
+Arabic is right-to-left; mathematics and app screenshots stay left-to-right. Text the app shows in English (verification notes, checks) is marked `lang="en"`.
 
-## Device scope
+## Publishing
 
-Desktop/laptop and tablet are the first-release targets. At 950px the header becomes two rows and capabilities stack. A portrait-specific background preserves the birds and ship. Below 650px a basic single-column fallback avoids overflow; this is not a claim of supported mobile calculator UX. Validate browser zoom, tablet landscape/portrait and real touch hardware before public launch.
-
-## Deployment
-
-Use a **separate GitHub repository**, for example `rezanova-website`. This project is initialized locally; no GitHub repository, DNS changes, remote push, or deployment is performed automatically.
-
-For a static host such as Cloudflare Pages: build `npm ci && npm run check && npm run check:launch && npm run build`, output `dist`. Configure the public environment variables in the host. Root redirect is emitted as an HTML redirect; use a host redirect if desired. Assign the new marketing website domain to this project. Keep `rezanova-cas.com` serving the existing calculator. `_headers` adds basic response headers on compatible hosts.
+- The site is published separately from the app. Deploy it as its own static project (for example Cloudflare Pages) with root directory `website`, build command `npm ci && npx astro build`, and output directory `dist`.
+- `rezanova-cas.com` keeps serving the app; the app's `wrangler.jsonc` is unrelated to this site.
+- No website domain is chosen yet. Until `PUBLIC_WEBSITE_URL` is set in the host, pages carry `noindex` and have no canonical URL or sitemap. `npm run check:launch` fails until it is set.
+- The site offers the browser app only. The last Linux packages (v0.3.0) predate the rebuilt engines; add a download link back after the next release.
+- `PUBLIC_CALCULATOR_URL` overrides the app address; `PUBLIC_CALCULATOR_READY=false` hides the launch link.
 
 ## Content accuracy
 
-The website describes an evolving preview and known desktop/touch/storage limitations. It does not promise a release date, universal CAS coverage or browser/desktop parity. Screenshots originate from the supplied calculator repository and may be newer than packaged releases. Development-pause wording follows the owner's instructions and should be revised when work resumes.
-
-See `ASSETS.md` and `THIRD-PARTY-LICENSE.txt` for attribution. This website's final license should be confirmed by the owner; the displayed MIT reference describes the calculator project.
+The site describes the current source tree, which the browser app runs. It promises no release date. See `CONTENT-SOURCES.md` for sources and editorial decisions.

@@ -38,14 +38,32 @@ test('All generated local links, fragments and assets resolve', () => {
         );
     }
 });
-test('Screenshot tabs refer to unique real panels and shipped images', () => {
+test('Every pre-computed example is a window with a maximized view and rendered math', () => {
+  const examples = JSON.parse(readFileSync('src/data/examples.json', 'utf8'));
   for (const lang of ['en', 'ar']) {
     const body = html[`${lang}/index.html`];
-    for (const id of ['calculate', 'graphing', 'matrix', 'notebook']) {
-      assert.equal((body.match(new RegExp(`id="panel-${id}"`, 'g')) || []).length, 1);
-      assert.ok(body.includes(`aria-controls="panel-${id}"`));
-      assert.ok(statSync(`dist/images/${id}.webp`).size > 10000);
+    const ids = [
+      ...examples.equation.map((e) => `eq-${e.id}`),
+      ...examples.integration.map((e) => `int-${e.id}`),
+      'graph-0',
+      'graph-1',
+      'graph-2',
+      'notebook',
+    ];
+    for (const id of ids) {
+      assert.equal((body.match(new RegExp(`id="window-${id}"`, 'g')) || []).length, 1, `${lang}: window ${id}`);
+      assert.ok(body.includes(`id="dialog-title-${id}"`), `${lang}: dialog for ${id}`);
     }
+    assert.ok((body.match(/class="katex"/g) || []).length > 40, `${lang}: KaTeX output`);
+    assert.ok(!/katex-error/.test(body), `${lang}: a formula failed to render`);
+  }
+});
+test('Retired workspaces have no screenshots and the site offers no stale download', () => {
+  for (const file of ['calculate.webp', 'matrix.webp', 'graphing.webp'])
+    assert.ok(!existsSync(`dist/images/${file}`), `${file} should be gone`);
+  for (const [page, body] of Object.entries(html)) {
+    assert.ok(!/Download for Linux|تنزيل لنظام لينكس/.test(body), `${page}: download button`);
+    assert.ok(!/university commitments|الالتزامات الجامعية/.test(body), `${page}: old pause wording`);
   }
 });
 test('JavaScript and hero images stay within the initial performance budget', () => {
