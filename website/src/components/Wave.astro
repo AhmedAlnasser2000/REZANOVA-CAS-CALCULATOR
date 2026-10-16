@@ -1,0 +1,55 @@
+---
+// A faint sine curve along the horizon. It follows the pointer (amplitude from height, frequency and
+// phase from position) and redraws only while the pointer moves: no continuous animation.
+import { content, type Locale } from '../data/site';
+const { lang } = Astro.props as { lang: Locale };
+const width = 1000;
+const height = 60;
+function path(amplitude: number, frequency: number, phase: number) {
+  const points: string[] = [];
+  for (let x = 0; x <= width; x += 8) {
+    const t = (x / width) * Math.PI * 2 * frequency;
+    points.push(`${x},${(height / 2 - amplitude * Math.sin(t - phase)).toFixed(1)}`);
+  }
+  return `M${points.join(' L')}`;
+}
+---
+
+<div class="wave" aria-hidden="true" data-wave>
+  <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" focusable="false">
+    <path d={path(9, 6, 1.4)} data-wave-path></path>
+  </svg>
+  <span class="wave-label" dir="ltr" data-wave-label>y = 0.30·sin(6.0x − 1.40)</span>
+</div>
+<p class="visually-hidden">{content[lang].waveLabel}</p>
+
+<script>
+  const wave = document.querySelector<HTMLElement>('[data-wave]');
+  const hero = wave?.closest<HTMLElement>('.hero');
+  const line = wave?.querySelector<SVGPathElement>('[data-wave-path]');
+  const label = wave?.querySelector<HTMLElement>('[data-wave-label]');
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  if (wave && hero && line && label && !still.matches) {
+    let frame = 0;
+    let next: { x: number; y: number } | undefined;
+    const draw = () => {
+      frame = 0;
+      if (!next) return;
+      const amplitude = 3 + 22 * next.y;
+      const frequency = 3 + 7 * next.x;
+      const phase = next.x * Math.PI * 4;
+      const points: string[] = [];
+      for (let x = 0; x <= 1000; x += 8) {
+        const t = (x / 1000) * Math.PI * 2 * frequency;
+        points.push(`${x},${(30 - amplitude * Math.sin(t - phase)).toFixed(1)}`);
+      }
+      line.setAttribute('d', `M${points.join(' L')}`);
+      label.textContent = `y = ${(amplitude / 30).toFixed(2)}·sin(${frequency.toFixed(1)}x − ${(phase % (Math.PI * 2)).toFixed(2)})`;
+    };
+    hero.addEventListener('pointermove', (event) => {
+      const box = hero.getBoundingClientRect();
+      next = { x: (event.clientX - box.left) / box.width, y: 1 - (event.clientY - box.top) / box.height };
+      if (!frame) frame = requestAnimationFrame(draw);
+    });
+  }
+</script>

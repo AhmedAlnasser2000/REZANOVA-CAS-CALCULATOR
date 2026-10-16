@@ -1,0 +1,118 @@
+---
+// A Windows 7–style glass window. Minimize folds the body, Maximize opens the "max" slot in a
+// dialog, Close hides the window behind a Reopen chip. Without JavaScript every window is simply open.
+import { home } from '../data/home';
+import type { Locale } from '../data/site';
+interface Props {
+  id: string;
+  title: string;
+  lang: Locale;
+  delay?: number;
+  wide?: boolean;
+}
+const { id, title, lang, delay = 0, wide = false } = Astro.props;
+const w = home[lang].window;
+---
+
+<div class:list={['aero-slot', { wide }]}>
+  <article class="aero-window" id={`window-${id}`} data-window style={`--reveal-delay:${delay}ms`} aria-labelledby={`window-title-${id}`}>
+    <header class="aero-titlebar">
+      <h3 class="aero-title" id={`window-title-${id}`}>{title}</h3>
+      <div class="aero-controls">
+        <button
+          type="button"
+          class="aero-btn aero-min"
+          aria-label={w.minimize}
+          title={w.minimize}
+          aria-expanded="true"
+          aria-controls={`window-body-${id}`}
+          data-min
+          data-label-min={w.minimize}
+          data-label-restore={w.restore}
+        ><span aria-hidden="true"></span></button>
+        <button type="button" class="aero-btn aero-max" aria-label={w.maximize} title={w.maximize} aria-haspopup="dialog" data-max><span aria-hidden="true"></span></button>
+        <button type="button" class="aero-btn aero-close" aria-label={w.close} title={w.close} data-close><span aria-hidden="true"></span></button>
+      </div>
+    </header>
+    <div class="aero-body" id={`window-body-${id}`}>
+      <slot />
+    </div>
+  </article>
+  <p class="aero-closed" hidden>
+    <span>{title} · {w.closed}</span>
+    <button type="button" class="aero-reopen" data-reopen>{w.reopen}</button>
+  </p>
+  <dialog class="aero-dialog" aria-labelledby={`dialog-title-${id}`}>
+    <div class="aero-window is-max">
+      <header class="aero-titlebar">
+        <h3 class="aero-title" id={`dialog-title-${id}`}>{title}</h3>
+        <form method="dialog" class="aero-controls">
+          <button class="aero-btn aero-close" aria-label={w.close} title={w.close}><span aria-hidden="true"></span></button>
+        </form>
+      </header>
+      <div class="aero-body">
+        <slot name="max" />
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const windows = Array.from(document.querySelectorAll<HTMLElement>('[data-window]'));
+  const show = (element: HTMLElement) => {
+    element.classList.add('is-open');
+    // The problem is "written" first; the answer follows once the window has opened.
+    window.setTimeout(() => element.classList.add('is-solved'), motion.matches ? 0 : 900);
+  };
+  if (motion.matches || !('IntersectionObserver' in window)) windows.forEach(show);
+  else {
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          show(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }),
+      { threshold: 0.25 },
+    );
+    windows.forEach((element) => observer.observe(element));
+  }
+  document.querySelectorAll<HTMLElement>('.aero-slot').forEach((slot) => {
+    const win = slot.querySelector<HTMLElement>('[data-window]');
+    const body = win?.querySelector<HTMLElement>('.aero-body');
+    const min = slot.querySelector<HTMLButtonElement>('[data-min]');
+    const dialog = slot.querySelector<HTMLDialogElement>('dialog');
+    const closed = slot.querySelector<HTMLElement>('.aero-closed');
+    if (!win || !body || !min || !dialog || !closed) return;
+    min.addEventListener('click', () => {
+      const folding = !body.hidden;
+      body.hidden = folding;
+      win.classList.toggle('is-minimized', folding);
+      min.setAttribute('aria-expanded', String(!folding));
+      const label = folding ? min.dataset.labelRestore : min.dataset.labelMin;
+      if (label) {
+        min.setAttribute('aria-label', label);
+        min.title = label;
+      }
+    });
+    slot.querySelector('[data-max]')?.addEventListener('click', () => dialog.showModal());
+    dialog.addEventListener('click', (event) => {
+      if (event.target !== dialog) return;
+      const r = dialog.getBoundingClientRect();
+      const outside = event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom;
+      if (outside) dialog.close();
+    });
+    slot.querySelector('[data-close]')?.addEventListener('click', () => {
+      win.hidden = true;
+      closed.hidden = false;
+      closed.querySelector<HTMLButtonElement>('[data-reopen]')?.focus();
+    });
+    closed.querySelector('[data-reopen]')?.addEventListener('click', () => {
+      closed.hidden = true;
+      win.hidden = false;
+      win.classList.add('is-open', 'is-solved');
+      slot.querySelector<HTMLButtonElement>('[data-close]')?.focus();
+    });
+  });
+</script>

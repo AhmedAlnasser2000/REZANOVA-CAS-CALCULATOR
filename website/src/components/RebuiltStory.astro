@@ -1,0 +1,102 @@
+---
+// "Why REZANOVA was rebuilt": the old family-by-family islands versus one chart for the whole sea.
+// Without JavaScript both pictures are shown; with it, a two-button switch shows one at a time.
+import { home } from '../data/home';
+import type { Locale } from '../data/site';
+const { lang } = Astro.props as { lang: Locale };
+const s = home[lang].story;
+const islands = s.oldIslands.map((name, i) => ({ name, x: 90 + i * 155, y: i % 2 ? 150 : 118 }));
+// Points on the chart: one per kind of example, spread over the whole sea.
+const marks = [
+  [120, 70], [255, 120], [380, 60], [520, 105], [650, 55], [735, 140],
+  [150, 205], [300, 235], [445, 185], [590, 230], [700, 260],
+];
+const chart = s.chartLabels.map((name, i) => ({ name, x: marks[i][0], y: marks[i][1] }));
+---
+
+<section class="story wrap" aria-labelledby="story-title" data-story>
+  <p class="eyebrow">{s.eyebrow}</p>
+  <h2 id="story-title">{s.title}</h2>
+  <div class="story-grid">
+    <div class="story-text">
+      {s.paragraphs.map((p) => <p>{p}</p>)}
+      <div class="story-pillars">
+        {s.pillars.map((pillar) => (
+          <div class="story-pillar glass">
+            <h3>{pillar.title}</h3>
+            <p>{pillar.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="story-chart">
+      <div class="story-switch" role="group" aria-label={s.eyebrow} hidden data-story-switch>
+        <button type="button" aria-pressed="false" data-view="old">{s.old}</button>
+        <button type="button" aria-pressed="true" data-view="new">{s.new}</button>
+      </div>
+      <figure class="story-figure" data-figure="old">
+        <svg viewBox="0 0 800 300" role="img" aria-labelledby="story-old-caption" focusable="false">
+          <rect class="sea" width="800" height="300" rx="18"></rect>
+          <g class="fog">
+            <ellipse cx="400" cy="250" rx="380" ry="40"></ellipse>
+            <ellipse cx="400" cy="35" rx="360" ry="28"></ellipse>
+          </g>
+          <path class="route" d={`M${islands.map((i) => `${i.x},${i.y}`).join(' L')}`}></path>
+          {islands.map((island) => (
+            <g class="island" transform={`translate(${island.x} ${island.y})`}>
+              <ellipse class="sand" rx="46" ry="17"></ellipse>
+              <ellipse class="grass" rx="30" ry="10" cy="-4"></ellipse>
+              <text class="island-label" y="38" text-anchor="middle">{island.name}</text>
+            </g>
+          ))}
+          {[[70, 250], [250, 40], [430, 260], [610, 35], [760, 230]].map(([x, y]) => (
+            <text class="unknown" x={x} y={y} text-anchor="middle">?</text>
+          ))}
+        </svg>
+        <figcaption id="story-old-caption">{s.old}: {s.oldCaption}</figcaption>
+      </figure>
+      <figure class="story-figure" data-figure="new">
+        <svg viewBox="0 0 800 300" role="img" aria-labelledby="story-new-caption" focusable="false">
+          <rect class="sea" width="800" height="300" rx="18"></rect>
+          <g class="grid">
+            {[100, 200, 300, 400, 500, 600, 700].map((x) => <line x1={x} y1="0" x2={x} y2="300"></line>)}
+            {[60, 120, 180, 240].map((y) => <line x1="0" y1={y} x2="800" y2={y}></line>)}
+          </g>
+          <g class="compass" transform="translate(745 52)">
+            <circle r="30"></circle>
+            <path d="M0,-27 L6,0 L0,27 L-6,0 Z"></path>
+            <path d="M-27,0 L0,6 L27,0 L0,-6 Z" class="compass-cross"></path>
+          </g>
+          <g class="rhumb">
+            {chart.map((m) => <line x1="745" y1="52" x2={m.x} y2={m.y}></line>)}
+          </g>
+          {chart.map((m) => (
+            <g class="mark" transform={`translate(${m.x} ${m.y})`}>
+              <circle r="6"></circle>
+              <text y="-12" text-anchor="middle">{m.name}</text>
+            </g>
+          ))}
+        </svg>
+        <figcaption id="story-new-caption">{s.new}: {s.newCaption}</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<script>
+  const story = document.querySelector<HTMLElement>('[data-story]');
+  const toggle = story?.querySelector<HTMLElement>('[data-story-switch]');
+  if (story && toggle) {
+    const buttons = Array.from(toggle.querySelectorAll<HTMLButtonElement>('button'));
+    const figures = Array.from(story.querySelectorAll<HTMLElement>('[data-figure]'));
+    const select = (view: string) => {
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+      figures.forEach((f) => {
+        f.hidden = f.dataset.figure !== view;
+      });
+    };
+    toggle.hidden = false;
+    buttons.forEach((b) => b.addEventListener('click', () => select(b.dataset.view ?? 'new')));
+    select('new');
+  }
+</script>

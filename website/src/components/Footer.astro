@@ -1,0 +1,35 @@
+---
+// The footer as a Windows 7 taskbar: the start orb, pinned pages, and a tray with the language switch.
+import { content, links, type Locale } from '../data/site';
+import { editorial } from '../data/editorial';
+import Icon from './Icon.astro';
+const { lang, page } = Astro.props as { lang: Locale; page?: 'capabilities' | 'history' };
+const t = content[lang];
+const e = editorial[lang];
+const other = lang === 'en' ? 'ar' : 'en';
+const pinned = [
+  { href: `/${lang}/#explore`, label: t.explore, icon: 'chart-line', current: false },
+  { href: `/${lang}/capabilities/`, label: e.capabilities, icon: 'calculator', current: page === 'capabilities' },
+  { href: `/${lang}/history/`, label: e.history, icon: 'notebook', current: page === 'history' },
+  { href: links.repository, label: 'GitHub', icon: 'external-link', current: false },
+];
+---
+
+<footer class="taskbar">
+  <a class="start-orb" href={`/${lang}/`} aria-label="REZANOVA">
+    <img src="/images/logo.webp" width="34" height="34" alt="" />
+  </a>
+  <nav class="taskbar-pins" aria-label={t.navLabel}>
+    {pinned.map((pin) => (
+      <a href={pin.href} class:list={['taskbar-pin', { 'is-current': pin.current }]} aria-current={pin.current ? 'page' : undefined}>
+        <Icon name={pin.icon} size={20} />
+        <span>{pin.label}</span>
+      </a>
+    ))}
+  </nav>
+  <div class="taskbar-tray">
+    <a href={`/${other}/${page ? `${page}/` : ''}`} lang={other} hreflang={other} data-language-switch>{t.otherLanguage}</a>
+    <a href={links.license}>{t.footerLicense}</a>
+    <span class="taskbar-motto">{t.motto}</span>
+  </div>
+</footer>

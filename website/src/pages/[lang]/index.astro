@@ -1,0 +1,185 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Icon from '../../components/Icon.astro';
+import Wave from '../../components/Wave.astro';
+import AeroWindow from '../../components/AeroWindow.astro';
+import Examples from '../../components/Examples.astro';
+import RebuiltStory from '../../components/RebuiltStory.astro';
+import { editorial } from '../../data/editorial';
+import { home, workspacesRebuilding } from '../../data/home';
+import { content, links, calculatorUrl, calculatorReady, type Locale } from '../../data/site';
+export function getStaticPaths() {
+  return ['en', 'ar'].map((lang) => ({ params: { lang } }));
+}
+const lang = Astro.params.lang as Locale;
+const t = content[lang];
+const e = editorial[lang];
+const h = home[lang];
+---
+
+<Base lang={lang}>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <picture class="hero-art" aria-hidden="true">
+        <source media="(max-width: 950px)" srcset="/images/coast-tablet.webp" />
+        <source media="(max-width: 1100px)" srcset="/images/coast-medium.webp" />
+        <img src="/images/coast-wide.webp" alt="" width="1672" height="941" fetchpriority="high" />
+      </picture>
+      <Header lang={lang} />
+      <Wave lang={lang} />
+      <div class="hero-copy wrap">
+        <p class="eyebrow">{t.eyebrow}</p>
+        <h1 id="hero-title">
+          {t.headline.map((line) => (
+            <span>{line}</span>
+          ))}
+        </h1>
+        <p class="hero-intro">{t.introduction}</p>
+        <div class="hero-actions">
+          <button class="orb-button" id="open-calculator" type="button" aria-haspopup="dialog">
+            <span class="orb" aria-hidden="true">
+              <Icon name="arrow-up-right" size={20} />
+            </span>
+            <span>{t.open}</span>
+          </button>
+        </div>
+        <p class="preview-note glass-pill">
+          <a href={`/${lang}/capabilities/`}>{t.preview}</a>
+          <span aria-hidden="true">·</span>
+          <a href={`/${lang}/capabilities/#limitations`}>
+            {t.issues}
+            <Icon name="arrow-right" size={16} class="directional" />
+          </a>
+        </p>
+      </div>
+      <a href="#explore" class="explore-cue">
+        <Icon name="chevron-down" size={24} />
+        <span>{t.scroll}</span>
+      </a>
+    </section>
+
+    <section id="explore" class="voyage" data-sky="morning" aria-labelledby="equation-title">
+      <div class="wrap">
+        <p class="eyebrow">{h.equation.eyebrow}</p>
+        <h2 id="equation-title">{h.equation.title}</h2>
+        <p class="section-intro">{h.equation.intro}</p>
+        <Examples lang={lang} kind="equation" />
+      </div>
+    </section>
+
+    <section class="voyage" data-sky="noon" aria-labelledby="graphing-title">
+      <div class="wrap">
+        <p class="eyebrow">{h.graphing.eyebrow}</p>
+        <h2 id="graphing-title">{h.graphing.title}</h2>
+        <p class="section-intro">{h.graphing.intro}</p>
+        <div class="window-grid graphs">
+          {h.graphing.shots.map((shot, index) => (
+            <AeroWindow id={`graph-${index}`} title={shot.title} lang={lang} delay={index * 90}>
+              <figure class="window-shot">
+                <img src={`/images/${shot.file}.webp`} alt={shot.caption} width="1800" height="1125" loading="lazy" decoding="async" />
+                <figcaption>{shot.caption}</figcaption>
+              </figure>
+              <Fragment slot="max">
+                <figure class="window-shot">
+                  <img src={`/images/${shot.file}.webp`} alt={shot.caption} width="1800" height="1125" loading="lazy" decoding="async" />
+                  <figcaption>{shot.caption}</figcaption>
+                </figure>
+              </Fragment>
+            </AeroWindow>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="voyage" data-sky="afternoon" aria-labelledby="integration-title">
+      <div class="wrap">
+        <p class="eyebrow">{h.integration.eyebrow}</p>
+        <h2 id="integration-title">{h.integration.title}</h2>
+        <p class="section-intro">{h.integration.intro}</p>
+        <Examples lang={lang} kind="integration" />
+      </div>
+    </section>
+
+    <section class="voyage" data-sky="golden" aria-labelledby="notebook-title">
+      <div class="wrap notebook-stop">
+        <div>
+          <p class="eyebrow">{h.notebook.eyebrow}</p>
+          <h2 id="notebook-title">{h.notebook.title}</h2>
+          <p class="section-intro">{h.notebook.intro}</p>
+        </div>
+        <AeroWindow id="notebook" title="Notebook" lang={lang} wide>
+          <figure class="window-shot">
+            <img src={`/images/${h.notebook.file}.webp`} alt={h.notebook.caption} width="1800" height="894" loading="lazy" decoding="async" />
+            <figcaption>{h.notebook.caption}</figcaption>
+          </figure>
+          <Fragment slot="max">
+            <figure class="window-shot">
+              <img src={`/images/${h.notebook.file}.webp`} alt={h.notebook.caption} width="1800" height="894" loading="lazy" decoding="async" />
+              <figcaption>{h.notebook.caption}</figcaption>
+            </figure>
+          </Fragment>
+        </AeroWindow>
+      </div>
+    </section>
+
+    <RebuiltStory lang={lang} />
+
+    <section id="status" class="status wrap" aria-labelledby="status-title">
+      <div class="status-copy">
+        <p class="eyebrow">{h.status.eyebrow}</p>
+        <h2 id="status-title">{h.status.title}</h2>
+        {h.status.body.map((p) => <p>{p}</p>)}
+        <a class="text-link" href={`/${lang}/history/`}>
+          {e.readHistory} <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <div class="status-lists">
+        <div class="status-list glass">
+          <h3>{h.status.open}</h3>
+          <ul>{h.status.openNames.map((name) => <li class="is-open">{name}</li>)}</ul>
+        </div>
+        <div class="status-list glass">
+          <h3>{h.status.rebuilding}</h3>
+          <ul>{workspacesRebuilding[lang].map((name) => <li class="is-rebuilding">{name}</li>)}</ul>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer lang={lang} />
+  <dialog id="launch-dialog" aria-labelledby="launch-title" aria-describedby="launch-description">
+    <form method="dialog">
+      <button class="dialog-close" aria-label={t.close}>
+        <Icon name="x" />
+      </button>
+    </form>
+    <p class="eyebrow">REZANOVA</p>
+    <h2 id="launch-title">{t.launchTitle}</h2>
+    <p id="launch-description">{calculatorReady ? t.launchBody : t.launchPending}</p>
+    <div class="dialog-actions">
+      {calculatorReady ? (
+        <a class="button primary" href={calculatorUrl}>
+          {t.launchContinue}
+          <Icon name="arrow-up-right" />
+        </a>
+      ) : (
+        <a class="button primary" href={links.repository}>
+          GitHub
+        </a>
+      )}
+      <a href={`/${lang}/capabilities/#limitations`}>{t.issues}</a>
+    </div>
+  </dialog>
+  <script>
+    const launch = document.querySelector<HTMLDialogElement>('#launch-dialog');
+    document.querySelector('#open-calculator')?.addEventListener('click', () => launch?.showModal());
+    launch?.addEventListener('click', (event) => {
+      if (event.target !== launch) return;
+      const rect = launch.getBoundingClientRect();
+      const outside =
+        event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+      if (outside) launch.close();
+    });
+  </script>
+</Base>

@@ -1,0 +1,45 @@
+---
+import { content, links, type Locale } from '../data/site';
+import Icon from './Icon.astro';
+import { editorial } from '../data/editorial';
+interface Props {
+  lang: Locale;
+  details?: boolean;
+  page?: 'capabilities' | 'history';
+}
+const { lang, details = false, page } = Astro.props;
+const currentPage = page || (details ? 'capabilities' : '');
+const t = content[lang];
+const other = lang === 'en' ? 'ar' : 'en';
+---
+
+<header class="site-header glass wrap">
+  <a class="brand" href={`/${lang}/`} aria-label="REZANOVA">
+    <img src="/images/logo.webp" width="48" height="48" alt="" fetchpriority="high" />
+    <span dir="ltr">REZANOVA</span>
+  </a>
+  <nav aria-label={t.navLabel}>
+    <a href={`/${lang}/#explore`}>{t.explore}</a>
+    <a
+      href={`/${lang}/capabilities/`}
+      aria-current={currentPage === 'capabilities' ? 'page' : undefined}
+    >
+      {editorial[lang].capabilities}
+    </a>
+    <a href={`/${lang}/history/`} aria-current={currentPage === 'history' ? 'page' : undefined}>
+      {editorial[lang].history}
+    </a>
+    <a href={links.repository} dir="ltr">
+      GitHub <Icon name="arrow-up-right" size={16} />
+    </a>
+  </nav>
+  <a
+    class="language-switch"
+    href={`/${other}/${currentPage ? `${currentPage}/` : ''}`}
+    lang={other}
+    hreflang={other}
+    data-language-switch
+  >
+    {t.otherLanguage}
+  </a>
+</header>
