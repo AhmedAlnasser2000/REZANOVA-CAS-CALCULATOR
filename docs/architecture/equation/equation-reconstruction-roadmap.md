@@ -91,11 +91,12 @@ Rules for the ledger:
 
 **Holonomic foundation:** the operator algebra (linear differential operators, closure, recurrences, certified evaluation) is built in Phase 2 for ODEs. The special-function layers (pFq, Meijer G) sit on top of it in Phase 3.
 
-**Matrix equations, option 3 (direction only, not scheduled):**
-- one shared exact linear-algebra core, built when a stage needs it, and owned by no single workspace;
+**No shared logic between workspaces (user decision, 2026-10-16).** Every workspace keeps its own private math logic, even where two would do the same thing. Parallel agents each work on one workspace; logic shared between workspaces would be edited by several of them at once and drift apart. Code that should be shared is extracted later, in a deliberate rewrite, once the private versions are stable. This supersedes the earlier plans for a shared Matrix/Equation core ("option 3") and a Meijer G layer shared with Integration. App infrastructure (result contract, display, OOE runtime, app state) is not workspace logic.
+
+**Matrix equations (direction only, not scheduled):**
+- Equation solves matrix rows with its own private linear algebra; the Matrix workspace keeps its own;
 - the Matrix workspace is the native home and shows the full detail;
-- Equation also accepts matrix rows and shows a compact answer, with a link to Matrix;
-- same input, same answer, same verification in both places.
+- a shared core may be extracted later, once both are stable (see the rule above).
 
 The Matrix workspace itself has no design and no schedule yet; it will be designed from scratch.
 
@@ -147,9 +148,9 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Transcendental constants together with parameters (π·x = a); several relations or ≠ with transcendental constants over ℂ | `EQUATION-PARAMETERS1` | Phase 2 |
 | ~~Choosing the target automatically (prefer x, then other conventions); today the caller names it~~ (closed by `EQUATION-ADOPTION1`: x, y, z, t, then alphabetical, editable) | `EQUATION-PARAMETERS1` (user question) | `EQUATION-ADOPTION1` |
 | Complex or algebraic coefficients in systems (the polynomial atoms read rational coefficients) | `EQUATION-SYSTEMS1` | Phase 2 |
-| Nonlinear systems with parameters (comprehensive Gröbner systems) | `EQUATION-SYSTEMS1` | Phase 2 |
+| Nonlinear systems with parameters (comprehensive Gröbner systems). Example x² − yz = a, y² − zx = b with a > 0, b > a: eliminating z (linear in z when y ≠ 0) leaves one equation in four variables that the decomposition decides in 1.7 s; the answer then needs the root-in-conditions row below (measured 2026-10-16) | `EQUATION-SYSTEMS1` | Phase 2 |
 | Kernels with parameters or extra conditions in a system; elimination that leaves several targets or interval answers | `EQUATION-SYSTEMS1` | Phase 2 |
-| Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition) | `EQUATION-SYSTEMS1` | Phase 2 |
+| Positive-dimensional systems that are not triangular, or whose dependent target needs a root of degree ≥ 3 (regular-chain triangular decomposition; also a pre-reduction before the decomposition: w² + x² − yz = 1, wy − xz = 0, w² + x² + y² + z² < 3, w > z ∨ y < 0 runs out of work in 7 s today) | `EQUATION-SYSTEMS1` | Phase 2 |
 | ~~Systems with no exactly isolable target among kernels (eˣ + sin y = 1, eʸ + sin x = 1)~~ (closed by `EQUATION-CERTIFIED-NUMERICS1` PR B: square systems, with range rows where unbounded) | `EQUATION-SYSTEMS1` | `EQUATION-CERTIFIED-NUMERICS1` PR B |
 | Evidence cases still over 1 s to decide and verify (atan x + atan 2x = π/4 at 1.8 s; the depth-25 ln chain at 1.1 s); the user accepted them for now (2026-10-04) | `EQUATION-PROOF-PERFORMANCE1` | a later performance gate |
 | Radical simplification inside expressions with free symbols (√(−4(y² − 1)) is not shown as 2√(1 − y²)); rewrites are proven only on constant subexpressions | `EQUATION-PRESENTATION1` | Phase 2 |
@@ -185,6 +186,8 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | ~~Systems reduced by elimination to one numeric root verified forever (y = sin x, x + eʸ = 2)~~ (fixed in PR B: zero by identity in the root's variable) | `EQUATION-CERTIFIED-NUMERICS1` PR A | `EQUATION-CERTIFIED-NUMERICS1` PR B |
 | An exact root where f′ = 0 (a closed-form double root next to numeric roots) skips the cover | `EQUATION-CERTIFIED-NUMERICS1` PR A | Phase 2 |
 | Decomposition answers are verified at re-derivation strength (exact checks at each claimed cell's sample and a decomposition in the reversed variable order), not by a certificate | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
+| Exact zero signs in the decomposition are proven by bisecting each coordinate to the Liouville bound (4,700–9,300 bits): the solver runs out of work on xy + yz + zx = 1 ∧ x² + y² + z² < 4 ∧ (z ≤ (x² − y²)/(x + 2) ∨ y > x²), (x² + y²)² − 4(x² − y²) + z² = 0 ∧ x² + y² + z² < 3 ∧ (z > (x² − y²)/y ∨ x + z ≤ 0), xyz + xy + yz + zx = 0 ∧ x² + y² + z² < 4 ∧ (z² ≤ x − y ∨ x² + y² ≥ 1) and z/(x − y) < x/(x + y) ∧ x² + y² + z² < 2 ∧ (z ≥ xy ∨ x² + y² > 1). Profiled: every nonzero sign is decided at 32 bits; the work goes to zeros of a row's own polynomial at samples on its own section, which are zero by construction. Fix: zeros known from the cell's sections (and a row's factors), and Newton or quadratic interval refinement instead of bisection where an exact zero test remains | user test cases (with Gemini), measured 2026-10-16 | Phase 2 |
+| The verifier's second decomposition uses the reversed variable order, which can cost far more than the solver's: (x² + y² + z² + 3)² − 16(x² + y²) = 0 ∧ z > xy ∧ x, y > 0; z³ − 3xz + 2y = 0 ∧ x² + y² < 2 ∧ (z > x ∨ yz < 0); x² + y² + z² = 2 ∧ xy + z = 1 ∧ x³ − y + z > 0 ∧ (z > 0 ∨ x < y) are solved in 0.2–1.4 s, but the reversed order runs out of work while other orders finish in 0.2–1.3 s. The projection's degree sum ranks orders well for two of the three, not for the first. Fix: try the other orders by that ranking, each with a share of the work budget | user test cases (with Gemini), measured 2026-10-16 | Phase 2 |
 | Cylindrical algebraic coverings (fast feasibility for conjunctions) and single-cell or NLSAT-style search | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
 | Four or more unknowns often end in a work stop (the decomposition is doubly exponential in the number of variables, by nature) | `EQUATION-SEMIALGEBRAIC1` PR A | expansion roadmap |
 | ~~Rows with only inequalities choose one unknown automatically (one per equation row)~~ (closed by `EQUATION-SEMIALGEBRAIC1` PR B, user decision 2026-10-07: with no equation, every free name is an unknown) | `EQUATION-SEMIALGEBRAIC1` PR A | `EQUATION-SEMIALGEBRAIC1` PR B |
@@ -206,7 +209,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | --- | --- | --- |
 | S1 | Holonomic foundation: functions held as a linear ODE plus initial conditions; operator algebra, closure (sum, product, algebraic substitution), exact zero test, series via recurrences, certified evaluation | Phase 2 (operator algebra, for ODEs); Phase 3 (special functions) |
 | S2 | pFq layer: names and recognition (₁F₁(½; 3/2; −x²) → erf), contiguous relations, the Kummer, Pfaff and Euler transformations, symbolic parameters | Phase 3 |
-| S3 | Meijer G layer: definite integrals and transforms by Mellin convolution, products of special functions (shared with the Integration reconstruction) | Phase 3 |
+| S3 | Meijer G layer: definite integrals and transforms by Mellin convolution, products of special functions (Equation's own layer; Integration keeps its own until a later extraction, per the no-shared-logic rule) | Phase 3 |
 | S4 | Modules for functions outside the holonomic class: the Γ family (Γ, ψ, B, Γ ratios); inverses (all branches of Lambert W, Wright ω, generalized W, Γ⁻¹); elliptic functions (sn, cn, dn, ℘, θ); ζ and the polylogarithm in s; Painlevé last | Phase 3 |
 | S5 | What "covered" means for each function: certified evaluation at any precision (ℂ included, DLMF branch cuts); derivatives, series and asymptotics; identities; inverses and zeros; use in the solver and as an answer; verification | Phase 3 |
 | S6 | Scope by tier: tiers 1–2 at full depth; tiers 3–4 with a name, numerics and a conversion rule; tier 5 belongs to other workspaces (number theory, combinatorics); tier 6 only on request ([list](special-functions-priority.md)) | Phase 3 |
@@ -225,7 +228,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | E3 | Partial differential equations, classical linear ones first | Phase 3 |
 | E4 | Integer domain: linear Diophantine and Pell equations, modular equations, finite fields | Phase 3 |
 | E5 | ⌊x⌋, ⌈x⌉ and mod as kernels the user can type | Phase 2 |
-| E6 | Matrix equations (AX = B, Sylvester, det(A − λI) = 0, X² = A): option 3, one shared core with Matrix as the native home and an Equation entry point | place to be decided |
+| E6 | Matrix equations (AX = B, Sylvester, det(A − λI) = 0, X² = A): Equation's own private linear algebra, Matrix keeping its own (no shared logic, user decision 2026-10-16) | place to be decided |
 | E7 | Native-core speed for scale (large Gröbner bases, decompositions in four or more variables): the Rust core above | after the other workspace reconstructions |
 
 ## Attribution
