@@ -121,6 +121,10 @@ The Matrix workspace itself has no design and no schedule yet; it will be design
   2. **Where stochastic, delay, fractional and integral equations live:** Phase 3 after PDEs, or "place to be decided". None is in this roadmap yet.
   3. **Whether the measured olympiad cases (IMO 1983 P6, IMO 1984 P1, Nesbitt, IMO 1995 P2, IMO 2008 P2(a), each proven by an empty negation) enter the regression corpus now.**
 
+## Heuristics need the user's approval (user decision, 2026-11-16)
+
+Some territory has no complete method today: most nonlinear ODEs and PDEs, parametric torsion, nonlinear boundary-value problems. Heuristics there may find answers but cannot prove they found all of them. They are never added on an agent's own judgement. Before proposing one, search the recent literature for a decision procedure or newer complete method, then bring the findings to the user, who decides. Until then such problems end with a typed refusal naming the reason, or (where a theorem allows it) a proof that no closed form exists. A heuristic outcome ("found these; completeness not proven") would also be a new outcome kind, which needs its own design decision.
+
 ## Research leads (found 2026-11-16, not adopted)
 
 Read before planning the matching Phase 2 work; none is a decision.
