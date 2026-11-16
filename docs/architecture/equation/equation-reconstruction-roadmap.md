@@ -116,6 +116,20 @@ The Matrix workspace itself has no design and no schedule yet; it will be design
 - When, if ever, to extract a shared exact-arithmetic layer with the integration core.
 - ~~Whether complex modulus and complex radicals (`unsupported` since stage 7, by user decision) get a gate of their own.~~ Decided 2026-10-14: Phase 2 (C1).
 - Multivalued functions over ℂ (C6) are decided: the principal value, as already used since stage 9 (log z = ln|z| + i·Arg z with Arg ∈ (−π, π], √z with Re ≥ 0, z^w = e^{w·log z}), matching Mathematica.
+- **Open, asked 2026-11-16; the user decides later. Agents must raise these again at the next Equation planning discussion if they are still open:**
+  1. **Core pFq in Phase 2 or not.** (A) Build a core pFq layer in Phase 2 next to the ODE work (₀F₁, ₁F₁, ₂F₁ and their named cases: Bessel, Airy, Kummer/Whittaker, Legendre, erf), so linear ODEs such as Airy's y″ = xy get special-function answers; the full pFq machinery, Meijer G and S4–S9 stay in Phase 3. (B) Keep the phases as they are: Phase 2 ODE answers are elementary, Liouvillian or certified series, and anything needing a special function is refused with "needs the special-function layer (Phase 3)".
+  2. **Where stochastic, delay, fractional and integral equations live:** Phase 3 after PDEs, or "place to be decided". None is in this roadmap yet.
+  3. **Whether the measured olympiad cases (IMO 1983 P6, IMO 1984 P1, Nesbitt, IMO 1995 P2, IMO 2008 P2(a), each proven by an empty negation) enter the regression corpus now.**
+
+## Research leads (found 2026-11-16, not adopted)
+
+Read before planning the matching Phase 2 work; none is a decision.
+
+- **Parametric systems:** the Generic Rational Univariate Representation (Corniquel, arXiv 2602.06817, 2026) parametrises the solutions of a generically zero-dimensional system for generic parameter values, with degree and height bounds. It covers the main case, not the special parameter values; a complete answer still needs the discriminant variety of the system (Lazard–Rouillier) and a recursive treatment of the special values, or comprehensive Gröbner systems / regular chains. Parametric RUR with a full partition of the parameter space: Wang, Wei, Xiao, Zheng (arXiv 2403.16519).
+- **Quantifier elimination:** CAD-based QE with multiple equational constraints and parameter-aware output (arXiv 2604.23873, 2026); QE exploiting treewidth of the variable graph (arXiv 2601.00312, TACAS 2026); minimum CADs of algebraic sets in dimension three (ISSAC 2026); non-uniform CAD for QE (arXiv 2508.00505).
+- **Holonomic layer (S1):** reduction-based creative telescoping for holonomic functions (Brochet, thesis 2026); faster multivariate integration in D-modules (Brochet, Chyzak, Lairez, arXiv 2504.12724); partial Weyl closure (arXiv 2602.06209).
+- **Certified numerics:** a priori bounds for certified Krawczyk homotopy tracking (arXiv 2512.01355).
+- No new general algorithms were found for linear ODE solving (latest: third-order Liouvillian solutions, arXiv 2402.05143) or for Meijer G / pFq.
 
 ## Deferred follow-ups (all gates)
 
@@ -199,6 +213,9 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | Quotients with free symbols are not cancelled in closed forms (2ac/c² is not shown as 2a/c), and products of radicals are not joined (√a·√2/2) | `EQUATION-SEMIALGEBRAIC1` PR B | Phase 2 (presentation) |
 | Answers with parameters through the decomposition are checked at every cell of a reversed-order decomposition (cases disjoint and covering), not also at samples of each claimed case | `EQUATION-SEMIALGEBRAIC1` PR B | Phase 2 |
 | Input forms the old Equation tests used that New Equation's row reader refuses with a typed message: subscripted names, ±, ∪, Max/Min, factorial, degree signs, integrals inside equations ([capability ledger](equation-capability-ledger.md)) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
+| IMO 2006 P3 as a quantified row (∀a, ∀b, ∀c: ab(a² − b²) + bc(b² − c²) + ca(c² − a²) ≤ M·(a² + b² + c²)², answer M ≥ 9√2/32) runs out of work after about 114 s in four variables. Both sides are homogeneous, so normalising a² + b² + c² = 1 removes a variable: a homogeneity reduction before the decomposition | user benchmark ledger (with Gemini), measured 2026-11-16 | Phase 2 |
+| Inequalities with radicals in several unknowns (IMO 2001 P5: a/√(a² + 8bc) + … ≥ 1 for a, b, c > 0) stop with a typed incomplete-implementation reason | user benchmark ledger (with Gemini), measured 2026-11-16 | Phase 2 |
+| `M(a² + b² + c²)²` is read as a function M applied to an argument ("Predicate is not supported here"), so a parameter before parentheses must be typed `M·(…)` | measured 2026-11-16 | Phase 2 (row reader) |
 | The constant i in Real mode with parameters, several unknowns or orders (one unknown without parameters is decided over ℂ and intersected with ℝ) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
 | Real roots of ((z³ + z + 1)/(z − m))ⁿ = b and similar: after outer-power decomposition the inner cubic in two parameters needs a root of degree ≥ 3 inside conditions (the row above, from `EQUATION-SEMIALGEBRAIC1`) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
 | Exact real and imaginary parts of algebraic numbers off the unit circle compose resultants of degree d² (sin 4x + sin 6x = 1 over ℂ reaches the work stop) | `EQUATION-RECONSTRUCTION-CLOSEOUT1` | Phase 2 |
@@ -223,7 +240,7 @@ The user asked for one ledger of everything the gates deferred (2026-10-04, `EQU
 | C5 | Certified roots of non-polynomial functions over ℂ: Krawczyk on complex boxes, with the argument principle to prove completeness. Replaces Graphing's seed-grid Newton, which stage 17 moved temporarily to `src/lib/symbolic-engine/equation/numeric/complex-sampling/` (temporary, must be replaced later) | Phase 2 |
 | C6 | Multivalued functions over ℂ: the principal value (decided). Extend it consistently to z^w with symbolic w, inverse trig over ℂ and Lambert W branches; explicit branch functions such as W_k may come later | Phase 2 |
 | C7 | Display a + bi by default, with an optional polar form re^{iθ} | Phase 2 |
-| E1 | Benchmark stage: the Kamke ODE collection (about 1,900), the `Solve`/`Reduce`/`DSolve` documentation examples of Mathematica, SageMath's `solve` doctests. Count solved, refused with a typed reason, wrong (target 0), and time per case. Claim parity with other systems only from these numbers. | Phase 2 |
+| E1 | Benchmark stage: the Kamke ODE collection (about 1,900), the `Solve`/`Reduce`/`DSolve` documentation examples of Mathematica, SageMath's `solve` doctests. Count solved, refused with a typed reason, wrong (target 0), and time per case. Claim parity with other systems only from these numbers. Times are measured and published for comparison with other systems; target figures (for example under 0.5 s for typical queries and under 5 s for the heaviest cross-domain cases) are performance goals for that comparison, never limits in code (user decision, 2026-11-16). | Phase 2 |
 | E2 | Recurrences (the analogue of Mathematica's `RSolve`), with the ODE operator algebra | Phase 2 |
 | E3 | Partial differential equations, classical linear ones first | Phase 3 |
 | E4 | Integer domain: linear Diophantine and Pell equations, modular equations, finite fields | Phase 3 |
