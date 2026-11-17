@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-11-16
+Last updated: 2026-11-17
 
 ## Purpose
 
@@ -27,7 +27,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 ## Active Context
 
-- Equation planning (2026-11-16; [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | attribution_basis: live]): three decisions are open (core pFq in Phase 2; a home for stochastic, delay, fractional and integral equations; olympiad cases into the regression corpus). Ask the user again at the next Equation planning discussion. Timing figures are comparison targets, never caps.
+- Equation planning (2026-11-16; [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | attribution_basis: live]): three decisions are open (core pFq in Phase 2; a home for stochastic, delay, fractional and integral equations; olympiad cases into the regression corpus). Ask the user again at the next Equation planning discussion. Timing figures are comparison targets, never caps. Equation's ODEs will reuse Integration's indefinite integration (approved exception, read-only) and come last in Phase 2.
 
 - Development pause (2026-10-16; [agent: claude | model: claude-opus-5-5 | agent_family: opus-5.5 | primary_agent: claude | primary_agent_model: claude-opus-5-5 | primary_agent_family: opus-5.5 | recorded_by_agent: claude | recorded_by_agent_model: claude-opus-5-5 | recorded_by_agent_family: opus-5.5 | attribution_basis: live]): development is paused after the Equation, Graphing and Integration rebuilds so the user can catch up on studies; it resumes next year with no date promised. The showcase website lives in `website/` (no domain yet, preview mode); its examples come from `tools/website-examples.ts`.
 

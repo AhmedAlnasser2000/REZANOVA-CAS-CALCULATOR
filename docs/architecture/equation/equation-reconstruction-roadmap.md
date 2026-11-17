@@ -93,6 +93,8 @@ Rules for the ledger:
 
 **No shared logic between workspaces (user decision, 2026-10-16).** Every workspace keeps its own private math logic, even where two would do the same thing. Parallel agents each work on one workspace; logic shared between workspaces would be edited by several of them at once and drift apart. Code that should be shared is extracted later, in a deliberate rewrite, once the private versions are stable. This supersedes the earlier plans for a shared Matrix/Equation core ("option 3") and a Meijer G layer shared with Integration. App infrastructure (result contract, display, OOE runtime, app state) is not workspace logic.
 
+**Exception for ODEs (user decision, 2026-11-17).** ODE answers contain indefinite integrals (y′ + p(x)y = q(x) gives y = e^{−∫p}(∫q·e^{∫p} + C); reduction of order nests them). Equation will not rebuild indefinite integration: its ODE work calls the Integration workspace's public service as a read-only consumer. Integration (Codex) remains the only owner; Equation never edits, copies or forks that code, and requests changes from its owner. ODEs (and recurrences with them) therefore come **last in Phase 2**, after Integration has covered more integrands; integrals Integration cannot yet decide stay as typed refusals or unevaluated, checked integrals in ODE answers.
+
 **Matrix equations (direction only, not scheduled):**
 - Equation solves matrix rows with its own private linear algebra; the Matrix workspace keeps its own;
 - the Matrix workspace is the native home and shows the full detail;
