@@ -81,7 +81,7 @@ This roadmap rebuilds Equation and retires the old engine. Certified numerics ke
 | Phase | Contents |
 | --- | --- |
 | **Phase 1** | This roadmap: stages 1–17, ending with `EQUATION-RECONSTRUCTION-CLOSEOUT1`. |
-| **Phase 2** | The follow-up ledger below; ordinary differential equations; recurrences, with the same operator algebra; |z|, Re, Im, arg and conj on unknowns (C1); ⌊x⌋, ⌈x⌉ and mod as kernels (E5); wider ℂ coverage (C2–C7); the certified-numerics expansion above; the benchmark stage (E1); other enhancements. |
+| **Phase 2** | The follow-up ledger below; ordinary differential equations (last in Phase 2, with core pFq: user decisions 2026-11-17 and 2026-11-19); recurrences, with the same operator algebra; |z|, Re, Im, arg and conj on unknowns (C1); ⌊x⌋, ⌈x⌉ and mod as kernels (E5); wider ℂ coverage (C2–C7); the certified-numerics expansion above; the benchmark stage (E1); other enhancements. |
 | **Phase 3** | Special functions (S1–S9, [priority list](special-functions-priority.md)); partial differential equations (E3); the integer domain and Diophantine equations (E4). |
 | **Place to be decided** | Items that need another workspace or a decision on where they live: matrix equations (E6), global History, step-by-step explanations through MCP, the shared-editor MathLive bug. Not scheduled until the place is chosen. |
 
@@ -119,13 +119,15 @@ The Matrix workspace itself has no design and no schedule yet; it will be design
 - ~~Whether complex modulus and complex radicals (`unsupported` since stage 7, by user decision) get a gate of their own.~~ Decided 2026-10-14: Phase 2 (C1).
 - Multivalued functions over ℂ (C6) are decided: the principal value, as already used since stage 9 (log z = ln|z| + i·Arg z with Arg ∈ (−π, π], √z with Re ≥ 0, z^w = e^{w·log z}), matching Mathematica.
 - **Open, asked 2026-11-16; the user decides later. Agents must raise these again at the next Equation planning discussion if they are still open:**
-  1. **Core pFq in Phase 2 or not.** (A) Build a core pFq layer in Phase 2 next to the ODE work (₀F₁, ₁F₁, ₂F₁ and their named cases: Bessel, Airy, Kummer/Whittaker, Legendre, erf), so linear ODEs such as Airy's y″ = xy get special-function answers; the full pFq machinery, Meijer G and S4–S9 stay in Phase 3. (B) Keep the phases as they are: Phase 2 ODE answers are elementary, Liouvillian or certified series, and anything needing a special function is refused with "needs the special-function layer (Phase 3)".
+  1. ~~**Core pFq in Phase 2 or not.**~~ **Decided 2026-11-19: option A.** A core pFq layer (₀F₁, ₁F₁, ₂F₁ and their named cases: Bessel, Airy, Kummer/Whittaker, Legendre, erf) is built in Phase 2 with the ODE work; the full pFq machinery, Meijer G and S4–S9 stay in Phase 3.
   2. **Where stochastic, delay, fractional and integral equations live:** Phase 3 after PDEs, or "place to be decided". None is in this roadmap yet.
   3. **Whether the measured olympiad cases (IMO 1983 P6, IMO 1984 P1, Nesbitt, IMO 1995 P2, IMO 2008 P2(a), each proven by an empty negation) enter the regression corpus now.**
 
 ## Heuristics need the user's approval (user decision, 2026-11-16)
 
 Some territory has no complete method today: most nonlinear ODEs and PDEs, parametric torsion, nonlinear boundary-value problems. Heuristics there may find answers but cannot prove they found all of them. They are never added on an agent's own judgement. Before proposing one, search the recent literature for a decision procedure or newer complete method, then bring the findings to the user, who decides. Until then such problems end with a typed refusal naming the reason, or (where a theorem allows it) a proof that no closed form exists. A heuristic outcome ("found these; completeness not proven") would also be a new outcome kind, which needs its own design decision.
+
+The [Phase 2 handoff](equation-phase2-handoff.md) collects the agreed Phase 2 scope and the open questions for outside review.
 
 ## Research leads (found 2026-11-16, not adopted)
 
